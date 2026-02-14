@@ -1,7 +1,7 @@
 ---
 name: Feature request
 about: Suggest an idea for this project.
-title: "[FEATURE] ..."
+title: "[FEATURE] "
 labels: feature
 assignees: ''
 
@@ -14,4 +14,5 @@ assignees: ''
 ____
 
 **Sources**
+
 <!-- If applicable, add sources (e.g. links, screenshots ...) to help explain the feature. -->

@@ -1,8 +1,8 @@
 ---
 name: Bug report
 about: Create a report to help us improve.
-title: "[BUG] ..."
-labels: bug, documentation
+title: "[BUG] "
+labels: bug
 assignees: noahvsb
 
 ---
@@ -18,4 +18,5 @@ ____
 <!-- The browser you're experiencing the issue in. Also note if running in a development environment or not. -->
 
 **Sources**
+
 <!-- If applicable, add sources (e.g. links, screenshots ...) to help explain your problem. -->

@@ -1,7 +1,7 @@
 ---
 name: Development task
 about: Internal implementation work.
-title: "[DEV] ..."
+title: "[DEV] "
 labels: development
 assignees: ''
 
