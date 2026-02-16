@@ -7,4 +7,18 @@ assignees: ''
 
 ---
 
-<!-- TODO after the documentation architecture is decided -->
+**Where:**
+
+<!-- URL to location of issue in docs. -->
+
+____
+
+**Description**
+
+<!-- A clear and concise description of what the issue is. -->
+
+____
+
+**Sources**
+
+<!-- If applicable, add sources (e.g. links, screenshots ...) to help explain the issue. -->
