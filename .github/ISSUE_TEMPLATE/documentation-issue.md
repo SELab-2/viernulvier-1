@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-**Where:**
+**Location**
 
 <!-- URL to location of issue in docs. -->
 
