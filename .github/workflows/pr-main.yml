@@ -4,23 +4,45 @@ on:
   pull_request:
     branches: [ "main", "test-main" ]
 
+permissions:
+  pull-requests: write
+  contents: read
+
 jobs:
-  enforce-and-validate:
+  validate-main:
     runs-on: [self-hosted, linux, ARM64]
     steps:
-      - name: Enforce Staging Source
-        run: |
-          # Pull requests to main come only from staging
-          TARGET_BRANCH="${{ github.base_ref }}"
-          SOURCE_BRANCH="${{ github.head_ref }}"
+      - name: enforce stagin source, auto close if not
+        uses: actions/github-script@v7
+        script: |
+            const target = context.payload.pull_request.base.ref;
+            const source = context.payload.pull_request.head.ref;
+            
+            const isInvalidMain = (target === 'main' && source !== 'staging');
+            const isInvalidTestMain = (target === 'test-main' && source !== 'test-staging');
 
-          if [[ "$TARGET_BRANCH" == "main" && "$SOURCE_BRANCH" != "staging" ]]; then
-            echo "Error: Merges to 'main' are only allowed from 'staging'."
-            exit 1
-          elif [[ "$TARGET_BRANCH" == "test-main" && "$SOURCE_BRANCH" != "test-staging" ]]; then
-            echo "Error: Merges to 'test-main' are only allowed from 'test-staging'."
-            exit 1
-          fi
+            if (isInvalidMain || isInvalidTestMain) {
+              const allowedSource = target === 'main' ? 'staging' : 'test-staging';
+              
+              // 1. Leave a helpful comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `**PR Closed Automatically**\n\nPolicy Violation: Merges into \`${target}\` are only allowed from \`${allowedSource}\`.\nSource branch \`${source}\` is not permitted.`
+              });
+
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                state: 'closed'
+              });
+
+              core.setFailed(`Invalid merge source: ${source} -> ${target}`);
+            } else {
+              console.log(`Branch policy passed: ${source} -> ${target}`);
+            }
 
       - name: Checkout Code
         uses: actions/checkout@v4

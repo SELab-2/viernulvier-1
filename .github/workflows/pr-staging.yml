@@ -5,7 +5,7 @@ on:
     branches: [ "staging", "test-staging" ]
 
 jobs:
-  validate:
+  validate-staging:
     runs-on: [self-hosted, linux, ARM64]
     steps:
       - name: Checkout Code

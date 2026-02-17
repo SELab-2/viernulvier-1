@@ -1,24 +1,16 @@
 name: development branch code validation
 
 on:
-  # Trigger on pushes to feature branches
-  push:
-    branches:
-      - 'feat/**'
-      - 'fix/**'
-      - 'enhancement/**'
-      - 'test-feat/**'
-  
   # Trigger on PRs
   pull_request:
     branches:
       - 'feat/**'
       - 'fix/**'
-      # - 'enhancement/**'
+      - 'enhancement/**'
       - 'test-feat/**'
 
 jobs:
-  check-quality:
+  validate-dev:
     runs-on: [self-hosted, linux, ARM64]
     steps:
       - name: Checkout Code
