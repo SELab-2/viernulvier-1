@@ -1,0 +1,46 @@
+name: Production Gatekeeper
+
+on:
+  pull_request:
+    branches: [ "main", "test-main" ]
+
+jobs:
+  enforce-and-validate:
+    runs-on: [self-hosted, linux, ARM64]
+    steps:
+      - name: Enforce Staging Source
+        run: |
+          # Ensure PRs to main come only from staging
+          TARGET_BRANCH="${{ github.base_ref }}"
+          SOURCE_BRANCH="${{ github.head_ref }}"
+
+          if [[ "$TARGET_BRANCH" == "main" && "$SOURCE_BRANCH" != "staging" ]]; then
+            echo "Error: Merges to 'main' are only allowed from 'staging'."
+            exit 1
+          elif [[ "$TARGET_BRANCH" == "test-main" && "$SOURCE_BRANCH" != "test-staging" ]]; then
+            echo "Error: Merges to 'test-main' are only allowed from 'test-staging'."
+            exit 1
+          fi
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Lint
+        # Fails on errors, allows warnings
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        # Ensures the project builds successfully
+        run: npm run build

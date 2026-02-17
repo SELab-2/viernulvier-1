@@ -1,0 +1,40 @@
+name: Development Checks
+
+on:
+  # Trigger on pushes to feature branches
+  push:
+    branches:
+      - 'feat/**'
+      - 'fix/**'
+      - 'enhancement/**'
+      - 'test-feat/**'
+  
+  # Trigger on PRs
+  pull_request:
+    branches:
+      - 'feat/**'
+      - 'fix/**'
+      # - 'enhancement/**'
+      - 'test-feat/**'
+
+jobs:
+  check-quality:
+    runs-on: [self-hosted, linux, ARM64]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
