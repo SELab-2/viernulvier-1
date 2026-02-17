@@ -1,4 +1,4 @@
-name: Production Gatekeeper
+name: main branch code validation
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: Enforce Staging Source
         run: |
-          # Ensure PRs to main come only from staging
+          # Pull requests to main come only from staging
           TARGET_BRANCH="${{ github.base_ref }}"
           SOURCE_BRANCH="${{ github.head_ref }}"
 

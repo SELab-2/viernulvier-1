@@ -1,4 +1,4 @@
-name: Development Checks
+name: development branch code validation
 
 on:
   # Trigger on pushes to feature branches
