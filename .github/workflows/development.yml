@@ -1,7 +1,6 @@
 name: development branch code validation
 
 on:
-  # Trigger on PRs
   pull_request:
     branches:
       - 'feat/**'
