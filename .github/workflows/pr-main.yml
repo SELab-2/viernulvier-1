@@ -14,35 +14,36 @@ jobs:
     steps:
       - name: enforce stagin source, auto close if not
         uses: actions/github-script@v7
-        script: |
-            const target = context.payload.pull_request.base.ref;
-            const source = context.payload.pull_request.head.ref;
-            
-            const isInvalidMain = (target === 'main' && source !== 'staging');
-            const isInvalidTestMain = (target === 'test-main' && source !== 'test-staging');
-
-            if (isInvalidMain || isInvalidTestMain) {
-              const allowedSource = target === 'main' ? 'staging' : 'test-staging';
+        with:
+          script: |
+              const target = context.payload.pull_request.base.ref;
+              const source = context.payload.pull_request.head.ref;
               
-              // 1. Leave a helpful comment
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: `**PR Closed Automatically**\n\nPolicy Violation: Merges into \`${target}\` are only allowed from \`${allowedSource}\`.\nSource branch \`${source}\` is not permitted.`
-              });
+              const isInvalidMain = (target === 'main' && source !== 'staging');
+              const isInvalidTestMain = (target === 'test-main' && source !== 'test-staging');
 
-              await github.rest.pulls.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: context.issue.number,
-                state: 'closed'
-              });
+              if (isInvalidMain || isInvalidTestMain) {
+                const allowedSource = target === 'main' ? 'staging' : 'test-staging';
+                
+                // 1. Leave a helpful comment
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: `**PR Closed Automatically**\n\nPolicy Violation: Merges into \`${target}\` are only allowed from \`${allowedSource}\`.\nSource branch \`${source}\` is not permitted.`
+                });
 
-              core.setFailed(`Invalid merge source: ${source} -> ${target}`);
-            } else {
-              console.log(`Branch policy passed: ${source} -> ${target}`);
-            }
+                await github.rest.pulls.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: context.issue.number,
+                  state: 'closed'
+                });
+
+                core.setFailed(`Invalid merge source: ${source} -> ${target}`);
+              } else {
+                console.log(`Branch policy passed: ${source} -> ${target}`);
+              }
 
       - name: Checkout Code
         uses: actions/checkout@v4
