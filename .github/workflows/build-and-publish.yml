@@ -1,7 +1,7 @@
 name: Build and Publish
 
 on:
-  push:
+  push: # should trigger after PR goes through
     branches: 
       - "staging"
       - "test-staging"
