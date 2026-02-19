@@ -1,4 +1,4 @@
-name: main branch code validation
+name: Main Validation
 
 on:
   pull_request:

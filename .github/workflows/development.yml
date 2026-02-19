@@ -1,4 +1,4 @@
-name: development branch code validation
+name: Dev Validation
 
 on:
   pull_request:
