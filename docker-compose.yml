@@ -1,6 +1,7 @@
 name: viernulvier-archief
 services:
   db:
+    container_name: viernulvier-db
     image: postgres:18
     restart: always
     environment:
