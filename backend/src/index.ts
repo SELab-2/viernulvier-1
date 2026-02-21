@@ -1,22 +1,16 @@
 import Fastify from "fastify";
 
-const fastify = Fastify({
+export const app = Fastify({
   logger: true,
 });
 
-fastify.get("/", async (_request, _reply) => {
+app.get("/", async (_request, _reply) => {
   return { hello: "world" };
 });
 
-/**
- * Run the server!
- */
-const start = async () => {
-  try {
-    await fastify.listen({ port: 3000 });
-  } catch (err) {
-    fastify.log.error(err);
+if (require.main === module) {
+  app.listen({ port: 3000 }).catch(err => {
+    app.log.error(err);
     process.exit(1);
-  }
-};
-start();
+  });
+}

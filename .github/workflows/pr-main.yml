@@ -1,0 +1,77 @@
+name: Main Validation
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  enforce-policy:
+    runs-on: [self-hosted, linux, ARM64]
+    steps:
+      - name: Staging source validation
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const target = context.payload.pull_request.base.ref;
+            const source = context.payload.pull_request.head.ref;
+            
+            const isInvalidMain = (target === 'main' && source !== 'staging');
+            const isInvalidTestMain = (target === 'test-main' && source !== 'test-staging');
+
+            if (isInvalidMain || isInvalidTestMain) {
+              const allowedSource = target === 'main' ? 'staging' : 'test-staging';
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `**PR Closed Automatically**\n\nPolicy Violation: Merges into \`${target}\` are only allowed from \`${allowedSource}\`.\nSource branch \`${source}\` is not permitted.`
+              });
+
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                state: 'closed'
+              });
+
+              core.setFailed(`Invalid source branch: ${source}`);
+            }
+
+  validate:
+    needs: enforce-policy
+    runs-on: [self-hosted, linux, ARM64]
+    strategy:
+      matrix:
+        project: [frontend, backend]
+    
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+          cache-dependency-path: ./${{ matrix.project }}/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build

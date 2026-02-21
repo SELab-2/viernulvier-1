@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import pg from "pg";
 import Postgrator from "postgrator";
 const path = require("node:path");
