@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { expect, test } from 'vitest';
-import App from '@/App.vue'; 
+import App from '@/App.vue';
 
 test('renders the welcome message', () => {
   // Mount the component
@@ -12,7 +12,7 @@ test('renders the welcome message', () => {
 
 test('increments count when button is clicked', async () => {
   const wrapper = mount(App);
-  
+
   // Find the button and click it
   const button = wrapper.find('button');
   await button.trigger('click');

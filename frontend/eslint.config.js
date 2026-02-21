@@ -6,13 +6,6 @@ import globals from 'globals';
 
 export default tseslint.config(
   {
-    // 1. Setup the environments/globals
-    languageOptions: {
-      globals: {
-        ...globals.node,
-        ...globals.browser,
-      },
-    },
     ignores: ['dist/**', 'node_modules/**', 'public/**'],
   },
 
@@ -21,6 +14,15 @@ export default tseslint.config(
   ...pluginVue.configs['flat/recommended'],
 
   eslintPluginPrettierRecommended,
+
+  {
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+      },
+    },
+  },
 
   {
     files: ['**/*.vue'],

@@ -5,8 +5,6 @@ import nodePlugin from 'eslint-plugin-n';
 import prettierConfig from 'eslint-config-prettier';
 
 export default tseslint.config(
-  // 1. Global Ignores
-  // We ignore the config file itself to prevent the "file not found in project" error
   {
     ignores: [
       'dist/**',
