@@ -12,7 +12,8 @@ export default tseslint.config(
       'dist/**',
       'node_modules/**',
       'coverage/**',
-      'eslint.config.js'
+      'eslint.config.js',
+      'vitest.config.ts',
     ],
   },
 
@@ -20,6 +21,14 @@ export default tseslint.config(
   js.configs.recommended,
   security.configs.recommended,
   nodePlugin.configs['flat/recommended'],
+
+  {
+    files: ['**/test/**/*.ts', '**/*.test.ts', '**/*.spec.ts'],
+    rules: {
+      // Allows importing Vitest from devDependencies in test files
+      'n/no-unpublished-import': 'off',
+    },
+  },
 
   // 3. TypeScript & Type-Aware Rules
   {
