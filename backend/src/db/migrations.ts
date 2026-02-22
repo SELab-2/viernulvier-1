@@ -1,14 +1,13 @@
-/* eslint-disable */
-
+// TODO: Dit nog helemaal herwerken
 import pg from "pg";
 import Postgrator from "postgrator";
-const path = require("node:path");
+import path from "node:path";
 
 async function migrate() {
   const client = new pg.Client({
-    host: "localhost",
+    host: "db",
     port: 5432,
-    database: "example",
+    database: "public",
     user: "example",
     password: "example",
   });

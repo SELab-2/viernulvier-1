@@ -1,5 +1,5 @@
 import { expect, test, describe } from 'vitest';
-import { app } from '@/index.js';
+import { app } from '@/server.js';
 
 describe('Root Route', () => {
   test('GET / should return hello world', async () => {

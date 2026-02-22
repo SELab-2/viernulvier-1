@@ -1,1 +1,3 @@
 .vscode
+!.vscode/tasks.json
+.env

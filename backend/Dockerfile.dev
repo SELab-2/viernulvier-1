@@ -1,8 +1,11 @@
 FROM node:24
 
-WORKDIR /code
+WORKDIR /app
 
 COPY package*.json ./
 RUN npm install
 
+COPY . .
+
+RUN ls
 CMD ["npm", "run", "dev"]
