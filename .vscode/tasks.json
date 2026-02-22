@@ -1,0 +1,46 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "docker:dev:up",
+      "type": "shell",
+      "command": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d"
+    },
+    {
+      "label": "logs:backend",
+      "type": "shell",
+      "command": "docker compose logs -f backend",
+      "presentation": {
+        "panel": "dedicated",
+        "group": "logs",
+        "clear": true,
+        "focus": false
+      }
+    },
+    {
+      "label": "logs:frontend",
+      "type": "shell",
+      "command": "docker compose logs -f frontend",
+      "presentation": {
+        "panel": "dedicated",
+        "group": "logs",
+        "clear": true,
+        "focus": true
+      }
+    },
+    {
+      "label": "dev:all",
+      "dependsOn": [
+        "docker:dev:up",
+        "logs:backend",
+        "logs:frontend"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}
