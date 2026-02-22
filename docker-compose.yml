@@ -17,6 +17,8 @@ services:
       interval: 5s
       retries: 5
   backend:
+    env_file:
+      - .env
     container_name: viernulvier-backend
     restart: always
     build: ./backend
@@ -30,13 +32,13 @@ services:
       db:
         condition: service_healthy
   frontend:
+    env_file:
+      - .env
     restart: always
     tty: true
     networks:
       - viernulvier-network
     container_name: viernulvier-frontend
-    env_file:
-      - .env.docker
     build: ./frontend
     ports:
       - "5173:5173"

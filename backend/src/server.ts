@@ -4,19 +4,21 @@ import productionRoutes from "./routes/productions.js";
 
 import "dotenv/config";
 
-const server = Fastify({
-  logger: {
-    enabled: true,
-  },
+const isDebug = process.env["DEBUG"]?.toLowerCase() === "true";
 
+const server = Fastify({
+  logger: isDebug
+    ? {
+        level: "debug",
+      }
+    : false,
 });
 
 async function start() {
   try {
     // Register plugins
     await server.register(dbPlugin);
-    await server.pg.query("SELECT 1");
-    server.log.info("DB connection successful");
+
     // Register routes
     await server.register(productionRoutes);
 
