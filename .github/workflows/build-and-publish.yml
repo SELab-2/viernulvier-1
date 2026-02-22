@@ -3,6 +3,7 @@ name: Build and Publish
 on:
   push: # should trigger after PR goes through
     branches: 
+      - "feat/test-staging-deploy"
       - "staging"
       - "main"
       
@@ -62,11 +63,13 @@ jobs:
 
       - name: Push Frontend and Backend
         run: |
-          docker tag ghcr.io/selab-2/viernulvier-1-frontend:tmp ghcr.io/selab-2/viernulvier-1-frontend:${{ github.ref_name }}
+          # docker tag ghcr.io/selab-2/viernulvier-1-frontend:tmp ghcr.io/selab-2/viernulvier-1-frontend:${{ github.ref_name }}
+          docker tag ghcr.io/selab-2/viernulvier-1-frontend:tmp ghcr.io/selab-2/viernulvier-1-frontend:testing
           docker tag ghcr.io/selab-2/viernulvier-1-frontend:tmp ghcr.io/selab-2/viernulvier-1-frontend:${{ github.sha }}
           docker push ghcr.io/selab-2/viernulvier-1-frontend --all-tags
 
-          docker tag ghcr.io/selab-2/viernulvier-1-backend:tmp ghcr.io/selab-2/viernulvier-1-backend:${{ github.ref_name }}
+          # docker tag ghcr.io/selab-2/viernulvier-1-backend:tmp ghcr.io/selab-2/viernulvier-1-backend:${{ github.ref_name }}
+          docker tag ghcr.io/selab-2/viernulvier-1-backend:tmp ghcr.io/selab-2/viernulvier-1-backend:testing
           docker tag ghcr.io/selab-2/viernulvier-1-backend:tmp ghcr.io/selab-2/viernulvier-1-backend:${{ github.sha }}
           docker push ghcr.io/selab-2/viernulvier-1-backend --all-tags
 
