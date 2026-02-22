@@ -3,7 +3,7 @@ import pg from "pg";
 import Postgrator from "postgrator";
 import path from "node:path";
 
-async function migrate() {
+export async function migrate() {
   const client = new pg.Client({
     host: "db",
     port: 5432,
@@ -43,4 +43,4 @@ async function migrate() {
   await client.end();
 }
 
-migrate();
+// migrate();

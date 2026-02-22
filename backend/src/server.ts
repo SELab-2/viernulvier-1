@@ -4,7 +4,7 @@ import productionRoutes from "./routes/productions.js";
 
 import "dotenv/config";
 
-const fastify = Fastify({
+const server = Fastify({
   logger: {
     enabled: true,
   },
@@ -14,21 +14,19 @@ const fastify = Fastify({
 async function start() {
   try {
     // Register plugins
-    await fastify.register(dbPlugin);
-    await fastify.pg.query("SELECT 1");
-    fastify.log.info("DB connection successful");
+    await server.register(dbPlugin);
+    await server.pg.query("SELECT 1");
+    server.log.info("DB connection successful");
     // Register routes
-    await fastify.register(productionRoutes);
+    await server.register(productionRoutes);
 
-    await fastify.listen({
+    await server.listen({
       port: Number(process.env["BACKEND_PORT"]) || 3000,
       host: "0.0.0.0",
     });
-  } catch (err) {
-    fastify.log.error(err);
-    process.exit(1);
+  } catch(err) {
+    server.log.error(err)
   }
-
 }
 
-start();
+await start();
