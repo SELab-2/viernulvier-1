@@ -3,7 +3,6 @@ name: Build and Publish
 on:
   push: # should trigger after PR goes through
     branches: 
-      - "feat/test-staging"
       - "staging"
       - "main"
       
