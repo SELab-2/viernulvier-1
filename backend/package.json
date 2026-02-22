@@ -1,5 +1,5 @@
 {
-  "engines" : {
+  "engines": {
     "node": ">=24"
   },
   "dependencies": {
@@ -9,7 +9,8 @@
     "fastify-plugin": "^5.1.0",
     "pg": "^8.18.0",
     "postgrator": "^8.0.0",
-    "tsx": "^4.21.0"
+    "tsx": "^4.21.0",
+    "zod": "^4.3.6"
   },
   "name": "backend",
   "version": "1.0.0",
