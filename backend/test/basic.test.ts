@@ -1,17 +1,20 @@
-import type { FastifyInstance } from 'fastify';
-import { expect, test, describe } from 'vitest';
+import { describe, test, expect, beforeAll } from "vitest";
+import { buildServer } from "../src/server.js";
+import type { FastifyInstance } from "fastify";
 
-export function basicTests(server: FastifyInstance) {
-  describe('Root Route', () => {
-    test('GET / should return hello world', async () => {
-      // .inject() simulates a real HTTP request
-      const response = await server.inject({
-        method: 'GET',
-        url: '/',
-      });
+let server: FastifyInstance;
 
-      expect(response.statusCode).toBe(200);
-      expect(response.json()).toEqual({ hello: 'world' });
+beforeAll(async () => {
+  server = await buildServer();
+});
+
+describe("Root Route", () => {
+  test("GET /api/production", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/production",
     });
+
+    expect(response.statusCode).toBe(500);
   });
-}
+});

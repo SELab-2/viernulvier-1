@@ -6,7 +6,8 @@
     "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@shared/*": ["../shared/src/*"]
     },
 
     // Environment Settings
@@ -18,9 +19,9 @@
     "types": ["node"],
 
     // Other Outputs
-    "sourceMap": true,  
+    "sourceMap": true,
     "declaration": true,
-    "declarationMap": true, 
+    "declarationMap": true,
 
     // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
@@ -44,7 +45,7 @@
     "skipLibCheck": true
   },
 
-  
+
   "include": ["src/**/*", "test/**/*"],
   "exclude": ["node_modules", "dist"],
 }

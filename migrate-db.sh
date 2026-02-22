@@ -1,0 +1,1 @@
+docker exec -t viernulvier-backend npm run migrate

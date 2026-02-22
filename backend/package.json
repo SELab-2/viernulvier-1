@@ -15,6 +15,7 @@
     "dev": "tsx watch src/server.ts",
     "test": "vitest run",
     "build": "tsc -p tsconfig.json",
+    "migrate": "tsx scripts/migrate.ts",
     "start": "node dist/index.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"

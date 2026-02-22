@@ -6,7 +6,7 @@ import "dotenv/config";
 
 const isDebug = process.env["DEBUG"]?.toLowerCase() === "true";
 
-const server = Fastify({
+export const server = Fastify({
   logger: isDebug
     ? {
         level: "debug",
@@ -14,21 +14,29 @@ const server = Fastify({
     : false,
 });
 
+export async function buildServer() {
+  await server.register(dbPlugin);
+  await server.register(productionRoutes);
+
+  return await server;
+}
+
 async function start() {
   try {
-    // Register plugins
-    await server.register(dbPlugin);
+    server.log.info("Building Server...");
+    await buildServer();
 
-    // Register routes
-    await server.register(productionRoutes);
-
+    server.log.info("Starting up HTTP server...")
     await server.listen({
       port: Number(process.env["BACKEND_PORT"]) || 3000,
       host: "0.0.0.0",
     });
-  } catch(err) {
-    server.log.error(err)
+
+  } catch (err) {
+    server.log.error(err);
   }
 }
 
-await start();
+if (process.argv[1]?.includes("server.ts")) {
+  await start();
+}
