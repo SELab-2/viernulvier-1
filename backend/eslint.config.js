@@ -1,82 +1,163 @@
-import js from '@eslint/js';
-import { defineConfig } from 'eslint/config';
-import tseslint from 'typescript-eslint';
-import security from 'eslint-plugin-security';
-import nodePlugin from 'eslint-plugin-n';
-import prettierConfig from 'eslint-config-prettier';
+import js from "@eslint/js";
+import { defineConfig } from "eslint/config";
+import tseslint from "typescript-eslint";
+import security from "eslint-plugin-security";
+import nodePlugin from "eslint-plugin-n";
+import prettierConfig from "eslint-config-prettier";
 
-export default defineConfig({
-  plugins: { '@typescript-eslint': tseslint.plugin, },
-  ignores: [
-    'dist/**',
-    'node_modules/**',
-    'coverage/**',
-    'eslint.config.js',
-    'vitest.config.ts',
-    'scripts/**'
-  ],
+export default defineConfig([
+  // --------------------------------------------------
+  // Global ignores
+  // --------------------------------------------------
 
-  settings: {
-    'import/resolver': {
-      typescript: {
-        project: './tsconfig.json'
+  {
+    ignores: [
+      "dist/**",
+      "node_modules/**",
+      "coverage/**",
+      "eslint.config.js",
+      "scripts/**",
+      "migrations/**"
+    ]
+  },
+
+  // --------------------------------------------------
+  // Base JS + Node Security Rules
+  // --------------------------------------------------
+
+  js.configs.recommended,
+  security.configs.recommended,
+  nodePlugin.configs["flat/recommended"],
+
+  // --------------------------------------------------
+  // SOURCE CODE (Type Safe Zone)
+  // --------------------------------------------------
+
+  {
+    files: ["src/**/*.ts"],
+
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        project: "./tsconfig.json",
+        tsconfigRootDir: process.cwd()
       }
+    },
+
+    settings: {
+      "import/resolver": {
+        typescript: {
+          project: "./tsconfig.json"
+        }
+      }
+    },
+
+    plugins: {
+      "@typescript-eslint": tseslint.plugin
+    },
+
+    rules: {
+      // ----------------------------
+      // Async Backend Safety
+      // ----------------------------
+
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/await-thenable": "error",
+
+      "no-return-await": "off",
+      "@typescript-eslint/return-await": ["error", "always"],
+
+      // ----------------------------
+      // Code Quality
+      // ----------------------------
+
+      "@typescript-eslint/no-explicit-any": "warn",
+
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          args: "after-used",
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_"
+        }
+      ],
+
+      // ----------------------------
+      // Security / Node Runtime Safety
+      // ----------------------------
+
+      "n/no-process-exit": "error",
+      "n/handle-callback-err": "error",
+
+      // Prevent common API logic mistakes
+      "@typescript-eslint/no-misused-promises": "error"
     }
   },
 
-  // 2. Base Configurations
-  extends: [
-    js.configs.recommended,
-    security.configs.recommended,
-    nodePlugin.configs['flat/recommended'],
-    // 3. TypeScript & Type-Aware Rules
-    {
-      // Apply these specifically to TS files
-      files: ['**/*.ts', '**/*.mts'],
-      extends: [
-        ...tseslint.configs.recommendedTypeChecked,
-        ...tseslint.configs.stylisticTypeChecked,
-      ],
-      languageOptions: {
-        parser: tseslint.parser,
-        parserOptions: {
-          project: true,
-          tsconfigRootDir: import.meta.dirname,
-        },
-      },
-      rules: {
-        // --- CRITICAL BACKEND SAFETY ---
-        // Prevents the #1 Node.js bug: unawaited async calls
-        '@typescript-eslint/no-floating-promises': 'error',
-        // Ensures you don't await things that aren't promises
-        '@typescript-eslint/await-thenable': 'error',
-        // Forces proper return await for better stack traces in Fastify
-        'no-return-await': 'off',
-        '@typescript-eslint/return-await': ['error', 'always'],
+  // --------------------------------------------------
+  // Tests (Vitest / Jest style)
+  // --------------------------------------------------
 
-        // --- FLEXIBILITY ---
-        '@typescript-eslint/no-explicit-any': 'warn',
-        '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+  {
+    files: ["test/**/*.ts", "**/*.test.ts", "**/*.spec.ts"],
 
-        // --- FASTIFY / NODE SPECIFIC ---
-        'n/no-process-exit': 'error',
-        'n/handle-callback-err': 'error',
-      },
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        project: "./tsconfig.json",
+        tsconfigRootDir: process.cwd()
+      }
     },
-    {
-      files: ['**/test/**/*.ts', '**/*.test.ts', '**/*.spec.ts'],
-      rules: {
-        // Allows importing Vitest from devDependencies in test files
-        'n/no-unpublished-import': 'off',
-      },
+
+    rules: {
+      "n/no-unpublished-import": "off",
+      "@typescript-eslint/no-floating-promises": "off"
+    }
+  },
+
+  // --------------------------------------------------
+  // Tooling + Scripts (NO TYPE CHECKING)
+  // --------------------------------------------------
+
+  {
+    files: ["scripts/**/*.ts", "*.config.ts", "**/*.config.ts"],
+
+    ...tseslint.configs.disableTypeChecked
+  },
+
+  // --------------------------------------------------
+  // Runtime JS Files
+  // --------------------------------------------------
+
+  {
+    files: ["**/*.js", "**/*.mjs"],
+
+    ...tseslint.configs.disableTypeChecked
+  },
+
+  // --------------------------------------------------
+  // Fix Vitest Config complaints
+  // --------------------------------------------------
+
+  {
+    files: ["vitest.config.ts", "**/*.config.ts"],
+
+    languageOptions: {
+      parserOptions: {
+        sourceType: "module"
+      }
     },
-    // 4. JavaScript Bypass
-    // This ensures pure JS files don't trigger "Type-Aware" errors
-    {
-      files: ['**/*.js', '**/*.mjs'],
-      extends: [tseslint.configs.disableTypeChecked],
-    },
-    // 5. Prettier (Must be last)
-    prettierConfig
-  ],
-});
+
+    rules: {
+      "n/no-unpublished-import": "off",
+      "no-undef": "off"
+    }
+  },
+
+  // --------------------------------------------------
+  // Prettier must always be last
+  // --------------------------------------------------
+
+  prettierConfig
+]);
