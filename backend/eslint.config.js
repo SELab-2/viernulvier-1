@@ -4,6 +4,8 @@ import tseslint from "typescript-eslint";
 import security from "eslint-plugin-security";
 import nodePlugin from "eslint-plugin-n";
 import prettierConfig from "eslint-config-prettier";
+import importX from "eslint-plugin-import-x";
+import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
 
 export default defineConfig([
   // --------------------------------------------------
@@ -44,17 +46,19 @@ export default defineConfig([
       }
     },
 
-    settings: {
-      "import/resolver": {
-        typescript: {
-          project: "./tsconfig.json"
-        }
-      }
+    plugins: {
+      "@typescript-eslint": tseslint.plugin,
+      "import-x": importX
     },
 
-    plugins: {
-      "@typescript-eslint": tseslint.plugin
+    settings: {
+      "import-x/resolver-next": createTypeScriptImportResolver({
+        alwaysTryTypes: true,
+        project: './tsconfig.json'
+      })
     },
+
+
 
     rules: {
       // ----------------------------
@@ -95,7 +99,7 @@ export default defineConfig([
 
       // Rely on the beter import resolver
       "n/no-missing-import": "off",
-      "import/no-unresolved": "error"
+      "import-x/no-unresolved": "error"
     }
   },
 
