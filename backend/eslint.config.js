@@ -91,7 +91,11 @@ export default defineConfig([
       "n/handle-callback-err": "error",
 
       // Prevent common API logic mistakes
-      "@typescript-eslint/no-misused-promises": "error"
+      "@typescript-eslint/no-misused-promises": "error",
+
+      // Rely on the beter import resolver
+      "n/no-missing-import": "off",
+      "import/no-unresolved": "error"
     }
   },
 
