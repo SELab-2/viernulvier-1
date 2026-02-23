@@ -1,16 +1,51 @@
-FROM --platform=$BUILDPLATFORM node:24
-WORKDIR /code
+FROM node:24 AS base
 
-COPY package*.json ./
-RUN npm install
+RUN npm install -g pnpm
 
-COPY . .
-RUN npm run build
+WORKDIR /app
 
-FROM nginx:stable-alpine
 
-COPY --from=build-stage /app/dist /usr/share/nginx/html
+# ---------------------------
+# Dependency Fetch Layer
+# ---------------------------
 
-EXPOSE 80
+FROM base AS deps
 
-CMD ["nginx", "-g", "daemon off;"]
+COPY pnpm-workspace.yaml ./
+COPY pnpm-lock.yaml ./
+COPY package.json ./
+
+COPY shared/package.json ./shared/
+COPY backend/package.json ./backend/
+
+RUN pnpm fetch
+
+
+# ---------------------------
+# Build Layer
+# ---------------------------
+
+FROM base AS build
+
+WORKDIR /app
+
+COPY --from=deps /app /app
+
+RUN pnpm install --offline
+
+RUN pnpm --filter shared build
+RUN pnpm --filter backend build
+
+
+# ---------------------------
+# Runtime Layer (Tiny Image)
+# ---------------------------
+
+FROM node:24-slim
+
+WORKDIR /app
+
+COPY --from=build /app/backend/dist ./dist
+COPY --from=build /app/node_modules ./node_modules
+
+CMD ["node", "dist/server.js"]

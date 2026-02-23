@@ -2,9 +2,22 @@ FROM node:24
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
+RUN npm install -g pnpm
 
-COPY . .
+COPY pnpm-workspace.yaml ./
+COPY pnpm-lock.yaml ./
+COPY package.json ./
 
-CMD ["npm", "run", "dev"]
+COPY shared/package.json ./shared/
+COPY backend/package.json ./backend/
+
+RUN pnpm install --frozen-lockfile
+
+COPY shared ./shared
+COPY backend ./backend
+
+WORKDIR /app/backend
+
+ENV NODE_OPTIONS=--preserve-symlinks
+
+CMD ["pnpm", "dev"]

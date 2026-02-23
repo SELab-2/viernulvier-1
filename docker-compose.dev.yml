@@ -1,10 +1,24 @@
 services:
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: backend/Dockerfile.dev
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./backend:/app/backend
+      - ./shared:/app/shared
+      # --- ADD THESE TWO LINES ---
+      - /app/node_modules
+      - /app/backend/node_modules
+    restart: no
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: frontend/Dockerfile.dev
+    volumes:
+      - ./frontend:/app/frontend
+      - ./shared:/app/shared
+      - /app/node_modules
+      - /app/backend/node_modules

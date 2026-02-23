@@ -2,7 +2,19 @@ FROM node:24
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
+RUN npm install -g pnpm
 
-CMD ["npm", "run", "dev", "--", "--host"]
+COPY pnpm-workspace.yaml ./
+COPY pnpm-lock.yaml ./
+COPY package.json ./
+
+COPY shared ./shared
+COPY frontend ./frontend
+
+RUN pnpm install
+
+WORKDIR /app/frontend
+
+ENV NODE_OPTIONS=--preserve-symlinks
+
+CMD ["pnpm", "dev"]

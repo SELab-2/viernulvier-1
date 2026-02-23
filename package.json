@@ -1,0 +1,9 @@
+{
+  "name": "viernulvier",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend",
+    "shared"
+  ]
+}
