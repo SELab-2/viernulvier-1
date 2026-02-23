@@ -2,9 +2,21 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "docker:cleanup",
+      "type": "shell",
+      "command": "docker compose down", // No -v flag means volumes stay safe!
+      "problemMatcher": []
+    },
+    {
       "label": "docker:dev:up",
       "type": "shell",
-      "command": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d"
+      "command": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
+      "isBackground": false,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "dedicated"
+      }
     },
     {
       "label": "logs:backend",
