@@ -23,21 +23,29 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
-          cache-dependency-path: ./${{ matrix.project }}/package-lock.json
+          cache: 'pnpm'
+          cache-dependency-path: ./pnpm-lock.yaml
 
       - name: Install Dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Lint
-        run: npm run lint
+        working-directory: ${{ matrix.project }}
+        run: pnpm run lint
 
       - name: Test
-        run: npm run test
+        working-directory: ${{ matrix.project }}
+        run: pnpm run test
 
       - name: Build
-        run: npm run build
+        working-directory: ${{ matrix.project }}
+        run: pnpm run build
