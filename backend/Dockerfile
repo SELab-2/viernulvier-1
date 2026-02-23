@@ -1,8 +1,51 @@
-FROM node:25
+FROM node:24 AS base
 
-WORKDIR /code
+RUN npm install -g pnpm
 
-COPY package*.json ./
-RUN npm install
+WORKDIR /app
 
-CMD ["npm", "run", "dev"]
+
+# ---------------------------
+# Dependency Fetch Layer
+# ---------------------------
+
+FROM base AS deps
+
+COPY pnpm-workspace.yaml ./
+COPY pnpm-lock.yaml ./
+COPY package.json ./
+
+COPY shared/package.json ./shared/
+COPY backend/package.json ./backend/
+
+RUN pnpm fetch
+
+
+# ---------------------------
+# Build Layer
+# ---------------------------
+
+FROM base AS build
+
+WORKDIR /app
+
+COPY --from=deps /app /app
+
+RUN pnpm install --offline
+
+RUN pnpm --filter shared build
+RUN pnpm --filter backend build
+
+
+# ---------------------------
+# Runtime Layer (Tiny Image)
+# ---------------------------
+
+FROM node:24-slim
+
+WORKDIR /app
+
+COPY --from=build /app/backend/dist ./dist
+COPY --from=build /app/node_modules ./node_modules
+
+CMD ["node", "dist/server.js"]

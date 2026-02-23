@@ -1,0 +1,29 @@
+services:
+  backend:
+    working_dir: /app/backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.dev
+    environment:
+      - NODE_OPTIONS=--preserve-symlinks
+    volumes:
+      - ./backend:/app/backend
+      - ./shared:/app/shared
+      - /app/node_modules
+      - /app/backend/node_modules
+    restart: no
+
+
+  frontend:
+    working_dir: /app/frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile.dev
+    volumes:
+      - ./frontend:/app/frontend
+      - ./shared:/app/shared
+      - /app/node_modules
+      - /app/frontend/node_modules
+    restart: no
+    environment:
+      - NODE_OPTIONS=--preserve-symlinks

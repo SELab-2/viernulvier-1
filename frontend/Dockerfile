@@ -1,8 +1,28 @@
-FROM node:25
+FROM node:24 AS base
 
+RUN npm install -g pnpm
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
 
-CMD ["npm", "run", "dev", "--", "--host"]
+FROM base AS deps
+
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+
+COPY shared/package.json ./shared/
+COPY frontend/package.json ./frontend/
+
+RUN pnpm fetch
+
+FROM base AS build
+
+COPY --from=deps /app /app
+
+RUN pnpm install --offline
+RUN pnpm --filter shared build
+RUN pnpm --filter frontend build
+
+
+FROM nginx:stable-alpine
+
+COPY --from=build /app/frontend/dist /usr/share/nginx/html
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
