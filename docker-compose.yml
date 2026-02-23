@@ -6,12 +6,14 @@ services:
     restart: always
     environment:
       - POSTGRES_HOST_AUTH_METHOD=trust
+
     volumes:
       - database-data:/var/lib/postgresql
     networks:
       - viernulvier-network
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:${DB_PORT}"
+    command: -p ${DB_PORT}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -29,7 +31,7 @@ services:
     networks:
       - viernulvier-network
     ports:
-      - "3000:3000"
+      - "${BACKEND_POORT}:${BACKEND_POORT}"
     depends_on:
       db:
         condition: service_healthy
@@ -45,7 +47,7 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
     ports:
-      - "5173:5173"
+      - "${FRONTEND_POORT}:${FRONTEND_POORT}"
     volumes:
       - ./frontend:/app/frontend
     depends_on:
