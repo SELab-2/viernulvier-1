@@ -1,7 +1,10 @@
 import pg from "pg";
 import Postgrator from "postgrator";
 import path from "node:path";
-
+/**
+ *
+ * @returns a {@link Promise} that resolves once the DB connection is established and     healthy.
+ */
 async function waitForDB() {
   for (let i = 0; i < 10; i++) {
     const client = new pg.Client({
@@ -14,13 +17,16 @@ async function waitForDB() {
       return;
     } catch {
       console.log("Waiting for DB...");
-      await new Promise(r => setTimeout(r, 2000));
+      await new Promise((r) => setTimeout(r, 2000));
     }
   }
 
   throw new Error("Database not ready");
 }
-
+/**
+ * Function used to apply all missing migrations found in ./migrations.
+ * @see ./scripts/migrate.ts for how this is used.
+ */
 export async function migrate() {
   const client = new pg.Client({
     connectionString: process.env["DATABASE_URL"],
@@ -32,10 +38,7 @@ export async function migrate() {
       throw Error("Database client wasn't properly instantiated.");
     }
     const postgrator = new Postgrator({
-      migrationPattern: path.join(
-        process.cwd(),
-        "migrations/*"
-      ),
+      migrationPattern: path.join(process.cwd(), "migrations/*"),
       driver: "pg",
       database: client.database,
       schemaTable: "migrations",
@@ -50,7 +53,6 @@ export async function migrate() {
     } else {
       console.log("Migrations applied:", result);
     }
-
   } finally {
     await client.end();
   }

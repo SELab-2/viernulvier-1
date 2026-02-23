@@ -1,6 +1,12 @@
 import fp from "fastify-plugin";
 import pg from "@fastify/postgres";
 
+/**
+ *  Creates a fastify plugin that setups up the connection to our environment variables.
+ *  @see {@link server.ts | server init module} to see how this is used.
+ *
+ *  @internal
+ */
 export default fp(async (server) => {
   server.log.info("Registering Postgres connection...");
 
