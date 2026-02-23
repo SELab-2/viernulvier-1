@@ -3,14 +3,13 @@
     "node": ">=24"
   },
   "dependencies": {
-    "@viernulvier/shared": "workspace:*",
     "@fastify/postgres": "^6.0.2",
+    "@viernulvier/shared": "workspace:*",
     "dotenv": "^17.3.1",
     "fastify": "^5.7.4",
     "fastify-plugin": "^5.1.0",
     "pg": "^8.18.0",
     "postgrator": "^8.0.0",
-    "tsx": "^4.21.0",
     "zod": "^4.3.6"
   },
   "name": "backend",
@@ -37,10 +36,10 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-n": "^17.24.0",
     "eslint-plugin-security": "^4.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.0",
-    "vitest": "^4.0.18",
-    "tsx": "^4"
+    "vitest": "^4.0.18"
   },
   "overrides": {
     "minimatch": "^10.2.1"

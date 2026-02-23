@@ -25,7 +25,7 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     volumes:
-      - ./backend:/app
+      - ./backend:/app/backend
     networks:
       - viernulvier-network
     ports:
@@ -47,7 +47,7 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      - ./frontend:/app
+      - ./frontend:/app/frontend
     depends_on:
       - backend
 volumes:

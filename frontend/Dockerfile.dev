@@ -4,17 +4,13 @@ WORKDIR /app
 
 RUN npm install -g pnpm
 
-COPY pnpm-workspace.yaml ./
-COPY pnpm-lock.yaml ./
-COPY package.json ./
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc ./
 
-COPY shared ./shared
-COPY frontend ./frontend
+COPY shared/package.json ./shared/
+COPY frontend/package.json ./frontend/
 
 RUN pnpm install
 
 WORKDIR /app/frontend
-
-ENV NODE_OPTIONS=--preserve-symlinks
 
 CMD ["pnpm", "dev"]

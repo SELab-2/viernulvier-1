@@ -9,23 +9,25 @@
     {
       "label": "logs:backend",
       "type": "shell",
-      "command": "docker compose logs -f backend",
+      "command": "docker compose logs -f --tail 100 backend",
       "presentation": {
         "panel": "dedicated",
         "group": "logs",
         "clear": true,
-        "focus": false
+        "focus": false,
+        "close": false
       }
     },
     {
       "label": "logs:frontend",
       "type": "shell",
-      "command": "docker compose logs -f frontend",
+      "command": "docker compose logs -f --tail 100 frontend",
       "presentation": {
         "panel": "dedicated",
         "group": "logs",
         "clear": true,
-        "focus": true
+        "focus": true,
+        "close": false
       }
     },
     {
