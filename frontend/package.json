@@ -8,6 +8,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest run",
+    "coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview"
@@ -16,14 +17,15 @@
     "vue": "^3.5.25"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
+    "@eslint/js": "^9",
     "@types/node": "^24.10.1",
     "@vitejs/plugin-vue": "^6.0.2",
     "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.8.1",
-    "eslint": "^10.0.1",
+    "eslint": "^9",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-tsdoc": "^0.5.0",
     "eslint-plugin-vue": "^10.8.0",
     "globals": "^17.3.0",
     "jsdom": "^28.1.0",

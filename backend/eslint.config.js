@@ -6,6 +6,7 @@ import nodePlugin from "eslint-plugin-n";
 import prettierConfig from "eslint-config-prettier";
 import importX from "eslint-plugin-import-x";
 import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
+import tsdoc from 'eslint-plugin-tsdoc'
 
 export default defineConfig([
   // --------------------------------------------------
@@ -48,7 +49,8 @@ export default defineConfig([
 
     plugins: {
       "@typescript-eslint": tseslint.plugin,
-      "import-x": importX
+      "import-x": importX,
+      "tsdoc": tsdoc
     },
 
     settings: {
@@ -99,7 +101,10 @@ export default defineConfig([
 
       // Rely on the beter import resolver
       "n/no-missing-import": "off",
-      "import-x/no-unresolved": "error"
+      "import-x/no-unresolved": "error",
+
+      // tsdoc config
+      "tsdoc/syntax": "warn"
     }
   },
 
