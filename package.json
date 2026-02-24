@@ -10,6 +10,6 @@
     "dev": "./rundev.sh",
     "check-backend": "pnpm i --frozen-lockfile && pnpm run --filter backend lint && pnpm run --filter backend test",
     "check-frontend": "pnpm i --frozen-lockfile && pnpm run --filter frontend lint && pnpm run --filter frontend test",
-    "check-all": "pnpm i --frozen-lockfile && pnpm run --filter . lint && pnpm run --filter . test"
+    "check-all": "pnpm i --frozen-lockfile && pnpm run --filter backend lint && pnpm run --filter backend test && pnpm run --filter frontend lint && pnpm run --filter frontend test"
   }
 }

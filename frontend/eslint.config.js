@@ -38,7 +38,7 @@ export default tseslint.config(
 
   {
     plugins: {
-      tsdoc: tsdoc
+      tsdoc: tsdoc,
     },
 
     rules: {
