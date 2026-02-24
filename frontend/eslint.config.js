@@ -3,7 +3,7 @@ import tseslint from 'typescript-eslint';
 import pluginVue from 'eslint-plugin-vue';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
-import tsdoc from 'eslint-plugin-tsdoc'
+import tsdoc from 'eslint-plugin-tsdoc';
 
 export default tseslint.config(
   {
@@ -38,7 +38,7 @@ export default tseslint.config(
 
   {
     plugins: {
-      "tsdoc": tsdoc
+      tsdoc: tsdoc
     },
 
     rules: {
@@ -63,7 +63,7 @@ export default tseslint.config(
       'vue/no-v-html': 'warn', // XSS safety best practice
 
       // tsdoc config
-      "tsdoc/syntax": "warn",
+      'tsdoc/syntax': 'warn',
 
       // --- FORMATTING ---
       'prettier/prettier': [

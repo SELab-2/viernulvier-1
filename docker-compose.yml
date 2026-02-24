@@ -31,7 +31,7 @@ services:
     networks:
       - viernulvier-network
     ports:
-      - "${BACKEND_POORT}:${BACKEND_POORT}"
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
     depends_on:
       db:
         condition: service_healthy
@@ -47,7 +47,7 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
     ports:
-      - "${FRONTEND_POORT}:${FRONTEND_POORT}"
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
     volumes:
       - ./frontend:/app/frontend
     depends_on:
