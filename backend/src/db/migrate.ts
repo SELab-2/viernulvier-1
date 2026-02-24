@@ -3,7 +3,7 @@ import Postgrator from "postgrator";
 import path from "node:path";
 /**
  *
- * @returns a {@link Promise} that resolves once the DB connection is established and     healthy.
+ * @returns a {@link Promise} that resolves once the DB connection is established and healthy.
  */
 async function waitForDB() {
   for (let i = 0; i < 10; i++) {
