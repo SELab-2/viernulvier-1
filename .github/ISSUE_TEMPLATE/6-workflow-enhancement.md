@@ -1,6 +1,6 @@
 ---
-name: Workflow enhancements
-about: Any enhancements related to the workflow.
+name: Workflow enhancement
+about: Any enhancements related to the workflow. (e.g. github actions ...)
 title: "[WORKFLOW] "
 labels: workflow
 assignees: ''
