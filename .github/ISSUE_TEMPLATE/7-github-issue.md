@@ -1,6 +1,6 @@
 ---
 name: Github issue
-about: Any issue related to github stuff.
+about: Any issue related to github stuff. (e.g. these issue templates, the pull request template, the branch protection rules, ...).
 title: "[GITHUB] "
 labels: github
 assignees: ''
