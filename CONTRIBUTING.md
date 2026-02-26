@@ -23,7 +23,7 @@
 
 - Druk `F1` om de command prompt van vsc open te doen.
 - Zoek `Tasks: Run Build Tasks`, de standaard keyboard shortcut voor dit is ook `F7`.
-- Nu zal vsc 2 terminal windows open doen 1 met die de docker containers opstart en een ander die
+- Nu zal vsc 2 terminal windows open doen 1 met die de docker containers opstart en een ander die de logs toont van zowel de backend als de frontend in een split view.
 
 - Om de containers af te sluiten voer je het vscode commando `Tasks: Run Tasks` `docker:cleanup` uit.
 
