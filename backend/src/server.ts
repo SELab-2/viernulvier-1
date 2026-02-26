@@ -15,7 +15,7 @@ export const server = Fastify({
 });
 
 /**
- * This function is used to build te server before it is then starten. This allows us to
+ * This function is used to build te server before it is then started. This allows us to
  * start the server in a mock environment to be used in tests.
  *
  * @returns Server instance with all standaard plugins registered
