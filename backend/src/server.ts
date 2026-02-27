@@ -5,10 +5,9 @@ import productionRoutes from "./routes/productions.js";
 import "dotenv/config";
 
 /**
- * This function is used to build the server before it is then started. This allows us to
- * start the server in a mock environment to be used in tests.
+ * Creates a server instance and registers the standard plugins.
+ * This allows us to start the server in a mock environment to be used in tests.
  *
- * @param server - Optional. Previously created server instance to reuse.
  * @returns Server instance with all standard plugins registered.
  *
  * @internal
@@ -20,18 +19,15 @@ export async function buildServer(): Promise<FastifyInstance> {
 }
 
 /**
- *  
- * @returns Basic server instance.
+ * Create a server instance.
+ * 
+ * @returns Server instance.
  */
 function createServer(): FastifyInstance {
   const isDebug = process.env["DEBUG"]?.toLowerCase() === "true";
 
   return Fastify({
-    logger: isDebug
-      ? {
-          level: "debug",
-        }
-      : false,
+    logger: isDebug ? { level: "debug" } : false,
   });
 }
 
@@ -47,8 +43,10 @@ async function registerPlugins(server: FastifyInstance) {
 
 /**
  * Starts the fastify server on a port defined by our environmental variables
+ * 
+ * @internal
  */
-async function start() {
+export async function start(): Promise<FastifyInstance> {
   const server = createServer();
   
   try {
@@ -63,6 +61,8 @@ async function start() {
   } catch (err) {
     server.log.error(err);
   }
+
+  return server;
 }
 
 // Ensures that the server is only started if this is the entry point for our app.
