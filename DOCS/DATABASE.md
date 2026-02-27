@@ -1,6 +1,6 @@
 ## Database Schema (EER)
 
-Bekijk het schema visueel op https://dbdiagram.io/d/viernulvier-699b2e45bd82f5fce26f02d4.
+Bekijk het schema visueel op https://dbdiagram.io/d/viernulvier-699b2e45bd82f5fce26f02d4 of download de svg: ![Database Schema](./database-schema.svg)
 De DBML code vindt je hieronder terug.
 
 ### Uitleg
@@ -198,4 +198,3 @@ Table blogpost {
   "content" json
 }
 ```
-
