@@ -35,4 +35,35 @@ export const ProductionSchema: z.ZodObject = z.object({
   // custom_data: z.json().nullable(),
 });
 
+export const FieldTypeSchema = z.enum(["number", "string", "bool", "json"]);
+
+export const CustomProductionFieldDefinitionSchema: z.ZodObject = z.object({
+  // metadata
+  created_by: AdminSchema,
+  created_at: z.date(),
+  updated_at: z.date(),
+
+  id: z.number(),
+  name: z.string(),
+  field_type: FieldTypeSchema,
+});
+
+export const CustomProductionFieldSchema: z.ZodObject = z.object({
+  // metadata
+  created_by: AdminSchema,
+  created_at: z.date(),
+  updated_at: z.date(),
+
+  field_id: z.number(),
+  production_id: z.number(),
+  
+  value_bool: z.boolean().nullable(),
+  value_number: z.number().nullable(),
+  value_string: z.string().nullable(),
+  value_json: z.json().nullable(),
+});
+
 export type Production = z.infer<typeof ProductionSchema>;
+export type FieldType = z.infer<typeof FieldTypeSchema>;
+export type CustomProductionFieldDefinition = z.infer<typeof CustomProductionFieldDefinitionSchema>;
+export type CustomProductionField = z.infer<typeof CustomProductionFieldSchema>;
