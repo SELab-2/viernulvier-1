@@ -1,4 +1,4 @@
-FROM node:24 AS base
+FROM --platform=$BUILDPLATFORM node:24 AS base
 
 RUN npm install -g pnpm
 WORKDIR /app
