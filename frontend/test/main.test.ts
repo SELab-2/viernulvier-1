@@ -1,8 +1,9 @@
-import { describe, it, expect } from "vitest";
+import { describe, test, expect } from "vitest";
 
 describe("main", () => {
-  it("mounts app to #app", async () => {
-    document.body.innerHTML = `<div id="app"></div>`; // mock body
+  test("mounts app to #app", async () => {
+    // mock body
+    document.body.innerHTML = `<div id="app"></div>`;
 
     await import("@/main");
 
