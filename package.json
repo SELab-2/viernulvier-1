@@ -8,8 +8,10 @@
   ],
   "scripts": {
     "dev": "./rundev.sh",
-    "check-backend": "pnpm i --frozen-lockfile && pnpm run --filter backend lint && pnpm run --filter backend test",
-    "check-frontend": "pnpm i --frozen-lockfile && pnpm run --filter frontend lint && pnpm run --filter frontend test",
-    "check-all": "pnpm i --frozen-lockfile && pnpm run --filter backend lint && pnpm run --filter backend test && pnpm run --filter frontend lint && pnpm run --filter frontend test"
+    "check-backend": "pnpm i --frozen-lockfile && pnpm run --filter backend check",
+    "check-frontend": "pnpm i --frozen-lockfile && pnpm run --filter frontend check",
+    "check-all": "pnpm i --frozen-lockfile && pnpm run --filter backend check && pnpm run --filter frontend check",
+    "lint:fix-all": "pnpm i --frozen-lockfile && pnpm run --filter backend lint:fix && pnpm run --filter frontend lint:fix",
+    "coverage-all": "pnpm i --frozen-lockfile && pnpm run --filter backend coverage && pnpm run --filter frontend coverage"
   }
 }

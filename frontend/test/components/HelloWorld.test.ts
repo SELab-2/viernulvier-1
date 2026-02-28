@@ -23,4 +23,3 @@ describe("Buttons", () => {
     expect(button.text()).toContain("count is 1");
   });
 });
-

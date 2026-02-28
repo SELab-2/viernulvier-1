@@ -34,7 +34,7 @@ function createServer(): FastifyInstance {
 /**
  * Registers all standard plugins.
  * 
- * @param server The server instance on which the plugins are registered.
+ * @param server - The server instance on which the plugins are registered.
  */
 async function registerPlugins(server: FastifyInstance) {
   await server.register(dbPlugin);

@@ -23,7 +23,8 @@
     "migrate": "tsx scripts/migrate.ts",
     "start": "node dist/index.js",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "check": "pnpm run test && pnpm run lint"
   },
   "keywords": [],
   "author": "",
