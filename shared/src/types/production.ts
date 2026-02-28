@@ -1,5 +1,5 @@
 import z from "zod"
-import { AdminSchema } from "./index";
+import { AdminSchema } from "./index.js";
 
 export const ProductionSchema: z.ZodObject = z.object({
   // metadata
