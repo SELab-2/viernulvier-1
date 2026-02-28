@@ -30,3 +30,5 @@ export const EventSchema = z.object({
     // external_order_url: z.json().nullable(),
 
 });
+
+export type Event = z.infer<typeof EventSchema>;
