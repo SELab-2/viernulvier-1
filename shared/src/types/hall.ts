@@ -14,11 +14,11 @@ export const HallSchema = z.object({
   name: z.json(),
 
   // unnecessary
-  // box_office_id: z.number(),
-  // seat_selection: z.boolean(),
-  // open_seating: z.boolean(),
-  // remark: z.json(),
-  // space: z.json(),
+  // box_office_id: z.number().nullable(),
+  // seat_selection: z.boolean().nullable(),
+  // open_seating: z.boolean().nullable(),
+  // remark: z.json().nullable(),
+  // space: z.json().nullable(),
 });
 
 export type Hall = z.infer<typeof HallSchema>;
