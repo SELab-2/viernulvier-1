@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS hall (
 
   -- metadata
   created_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
-  created_at      TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_DATE,
+  created_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   updated_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
-  updated_at      TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_DATE
+  updated_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );

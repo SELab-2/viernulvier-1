@@ -33,9 +33,9 @@ CREATE TABLE IF NOT EXISTS event (
 
   -- metadata
   created_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
-  created_at      TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_DATE,
+  created_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   updated_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
-  updated_at      TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_DATE
+  updated_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
 -- Composite index on hall + starts_at (as defined in the EER)
@@ -57,6 +57,6 @@ CREATE TABLE IF NOT EXISTS event_price (
 
   -- metadata
   created_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
-  created_at      DATE          NOT NULL DEFAULT CURRENT_DATE,
-  updated_at      DATE          NOT NULL DEFAULT CURRENT_DATE
+  created_at      DATE          NOT NULL DEFAULT NOW(),
+  updated_at      DATE          NOT NULL DEFAULT NOW()
 );
