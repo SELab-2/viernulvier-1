@@ -42,7 +42,8 @@ jobs:
       - name: Build Frontend
         uses: docker/build-push-action@v5
         with:
-          context: ./frontend
+          context: .
+          file: ./frontend/Dockerfile
           platforms: linux/amd64
           push: false
           load: true 
@@ -53,7 +54,8 @@ jobs:
       - name: Build Backend
         uses: docker/build-push-action@v5
         with:
-          context: ./backend
+          context: .
+          file: ./frontend/Dockerfile
           platforms: linux/amd64
           push: false
           load: true
