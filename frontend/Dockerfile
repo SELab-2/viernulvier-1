@@ -18,7 +18,7 @@ FROM base AS build
 COPY --from=deps /app /app
 
 RUN pnpm install
-RUN pnpm --filter shared build
+# RUN pnpm --filter shared build
 RUN pnpm --filter frontend build
 
 
