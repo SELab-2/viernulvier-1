@@ -11,11 +11,14 @@ COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY shared/package.json ./shared/
 COPY frontend/package.json ./frontend/
 
+
 RUN pnpm fetch
 
 FROM base AS build
 
 COPY --from=deps /app /app
+
+COPY . .
 
 RUN pnpm install
 # RUN pnpm --filter shared build
