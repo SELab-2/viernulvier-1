@@ -6,15 +6,16 @@
 -- ADMIN
 -- ============================================================
 CREATE TABLE IF NOT EXISTS admin (
-  id              SERIAL        PRIMARY KEY,
-  username        VARCHAR(32)   NOT NULL,
-  password        VARCHAR(64)   NOT NULL,
-  profile_picture VARCHAR(128),
+  id                  SERIAL        PRIMARY KEY,
+  username            VARCHAR(32)   NOT NULL UNIQUE,
+  password            VARCHAR(64)   NOT NULL,
+  profile_picture_url VARCHAR(128),
 
   -- metadata
   created_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
-  created_at      DATE          NOT NULL DEFAULT CURRENT_DATE,
-  updated_at      DATE          NOT NULL DEFAULT CURRENT_DATE
+  created_at      TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_DATE,
+  updated_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
+  updated_at      TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_DATE
 );
 
 -- ============================================================
@@ -27,28 +28,29 @@ CREATE TABLE IF NOT EXISTS production (
   performer_field   VARCHAR(256),
   performer_type    VARCHAR(64),
   attendance_mode   VARCHAR(64),
-  supertitle        JSON,
-  title             JSON          NOT NULL,
-  artist            JSON,
-  meta_title        JSON,
-  meta_description  JSON,
-  tagline           JSON,
-  teaser            JSON,
-  description       JSON,
-  description_extra JSON,
-  description_2     JSON,
-  video_1           JSON,
-  video_2           JSON,
-  quote             JSON,
-  quote_source      JSON,
-  programma         JSON,
-  info              JSON,
-  description_short JSON,
-  eticket_info      JSON,
-  custom_data       JSON,
+  supertitle        JSONB,
+  title             JSONB          NOT NULL,
+  artist            JSONB,
+  meta_title        JSONB,
+  meta_description  JSONB,
+  tagline           JSONB,
+  teaser            JSONB,
+  description       JSONB,
+  description_extra JSONB,
+  description_2     JSONB,
+  video_1           JSONB,
+  video_2           JSONB,
+  quote             JSONB,
+  quote_source      JSONB,
+  programma         JSONB,
+  info              JSONB,
+  description_short JSONB,
+  eticket_info      JSONB,
+  custom_data       JSONB,
 
   -- metadata
   created_by        INT           REFERENCES admin(id) ON DELETE SET NULL,
-  created_at        DATE          NOT NULL DEFAULT CURRENT_DATE,
-  updated_at        DATE          NOT NULL DEFAULT CURRENT_DATE
+  created_at        TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_DATE,
+  updated_by        INT           REFERENCES admin(id) ON DELETE SET NULL,
+  updated_at        TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_DATE
 );
