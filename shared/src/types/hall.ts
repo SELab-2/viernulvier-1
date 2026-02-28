@@ -1,8 +1,10 @@
 import z from "zod"
 
-const HallSchema = z.object({
+import { AdminSchema } from "./index";
+
+export const HallSchema = z.object({
   // metadata
-  created_by: z.number(),
+  created_by: AdminSchema,
   created_at: z.date(),
   updated_at: z.date(),
 
