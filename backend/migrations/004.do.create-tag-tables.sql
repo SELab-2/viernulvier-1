@@ -37,5 +37,24 @@ CREATE TABLE IF NOT EXISTS tag (
   CONSTRAINT unique_tag_per_type UNIQUE (name, type_id)
 );
 
+-- ============================================================
+-- TAG X PRODUCTIONS
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS production_tag (
+  production_id INT NOT NULL REFERENCES production(id) ON DELETE CASCADE,
+  tag_id        INT NOT NULL REFERENCES tag(id) ON DELETE CASCADE,
+
+  -- metadata
+  created_by  INT             REFERENCES admin(id) ON DELETE SET NULL,
+  created_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+  updated_by  INT             REFERENCES admin(id) ON DELETE SET NULL,
+  updated_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+
+  PRIMARY KEY (production_id, tag_id)
+);
+
 -- Index for faster lookups when filtering productions by tag type
 CREATE INDEX IF NOT EXISTS idx_tag_type_id ON tag(type_id);
+-- Index for filtering productions by tag
+CREATE INDEX IF NOT EXISTS idx_prod_tag_tag_id ON production_tag(tag_id);
