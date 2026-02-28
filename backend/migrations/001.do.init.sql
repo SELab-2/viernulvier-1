@@ -1,3 +1,7 @@
+-- UNDER NO CIRCUMSTANCES MAY THIS FILE BE EDITED WHEN LIVE
+-- ANY EDITS WILL RESOLVE IN DIFFEREN CHECKSUMS AND THE DB REJECTING THE MIGRATION
+
+
 -- 001.do.init.sql
 -- Creates the admin table (needed first as all other tables reference admin via created_by)
 -- and the production table.

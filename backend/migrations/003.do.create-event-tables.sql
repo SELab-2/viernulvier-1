@@ -1,3 +1,6 @@
+-- UNDER NO CIRCUMSTANCES MAY THIS FILE BE EDITED WHEN LIVE
+-- ANY EDITS WILL RESOLVE IN DIFFEREN CHECKSUMS AND THE DB REJECTING THE MIGRATION
+
 -- 003.do.create-event-tables.sql
 -- Creates the event table and its child event_price table.
 -- event depends on production (002) and hall (002).

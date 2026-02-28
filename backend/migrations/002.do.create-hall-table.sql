@@ -1,3 +1,6 @@
+-- UNDER NO CIRCUMSTANCES MAY THIS FILE BE EDITED WHEN LIVE
+-- ANY EDITS WILL RESOLVE IN DIFFEREN CHECKSUMS AND THE DB REJECTING THE MIGRATION
+
 -- 002.do.create-hall-table.sql
 -- Creates the hall table (venues where events take place).
 
