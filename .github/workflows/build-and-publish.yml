@@ -3,6 +3,7 @@ name: Build and Publish
 on:
   push: # should trigger after PR goes through
     branches: 
+      - "feat/test-staging-temporary"
       - "staging"
       - "main"
       
@@ -60,30 +61,30 @@ jobs:
           cache-from: type=gha,scope=backend
           cache-to: type=gha,mode=max,scope=backend
 
-      - name: Push Frontend and Backend
-        run: |
-          docker tag ghcr.io/selab-2/viernulvier-1-frontend:tmp ghcr.io/selab-2/viernulvier-1-frontend:${{ github.ref_name }}
-          docker tag ghcr.io/selab-2/viernulvier-1-frontend:tmp ghcr.io/selab-2/viernulvier-1-frontend:${{ github.sha }}
-          docker push ghcr.io/selab-2/viernulvier-1-frontend --all-tags
+      # - name: Push Frontend and Backend
+      #   run: |
+      #     docker tag ghcr.io/selab-2/viernulvier-1-frontend:tmp ghcr.io/selab-2/viernulvier-1-frontend:${{ github.ref_name }}
+      #     docker tag ghcr.io/selab-2/viernulvier-1-frontend:tmp ghcr.io/selab-2/viernulvier-1-frontend:${{ github.sha }}
+      #     docker push ghcr.io/selab-2/viernulvier-1-frontend --all-tags
 
-          docker tag ghcr.io/selab-2/viernulvier-1-backend:tmp ghcr.io/selab-2/viernulvier-1-backend:${{ github.ref_name }}
-          docker tag ghcr.io/selab-2/viernulvier-1-backend:tmp ghcr.io/selab-2/viernulvier-1-backend:${{ github.sha }}
-          docker push ghcr.io/selab-2/viernulvier-1-backend --all-tags
+      #     docker tag ghcr.io/selab-2/viernulvier-1-backend:tmp ghcr.io/selab-2/viernulvier-1-backend:${{ github.ref_name }}
+      #     docker tag ghcr.io/selab-2/viernulvier-1-backend:tmp ghcr.io/selab-2/viernulvier-1-backend:${{ github.sha }}
+      #     docker push ghcr.io/selab-2/viernulvier-1-backend --all-tags
 
-  deploy:
-    needs: build-and-push
-    runs-on: [self-hosted, linux, ARM64]
-    steps:
-      - name: Deploy to Server via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: viernulvier-archive.be
-          username: selab2
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 2002
-          script: |
-            cd ~/viernulvier-server
-            docker compose pull
-            docker compose up -d --remove-orphans
-            # clean up old dangling images to save space
-            # docker image prune -f
+  # deploy:
+  #   needs: build-and-push
+  #   runs-on: [self-hosted, linux, ARM64]
+  #   steps:
+  #     - name: Deploy to Server via SSH
+  #       uses: appleboy/ssh-action@v1.0.3
+  #       with:
+  #         host: viernulvier-archive.be
+  #         username: selab2
+  #         key: ${{ secrets.SSH_PRIVATE_KEY }}
+  #         port: 2002
+  #         script: |
+  #           cd ~/viernulvier-server
+  #           docker compose pull
+  #           docker compose up -d --remove-orphans
+  #           # clean up old dangling images to save space
+  #           # docker image prune -f
