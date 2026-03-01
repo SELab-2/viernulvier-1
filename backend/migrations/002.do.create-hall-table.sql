@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS hall (
   id              SERIAL        PRIMARY KEY,
-  name            VARCHAR(64)   NOT NULL,
+  name            JSONB         NOT NULL,
   capacity        INT           CHECK (capacity >= 0),
   address         VARCHAR(256),
   vendor_id       INT,

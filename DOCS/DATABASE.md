@@ -62,7 +62,7 @@ Table production {
   "video_2" json
   "quote" json
   "quote_source" json
-  "programma" json
+  "programme" json
   "info" json
   "description_short" json
   "eticket_info" json

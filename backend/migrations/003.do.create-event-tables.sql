@@ -55,5 +55,6 @@ CREATE TABLE IF NOT EXISTS event_price (
   -- metadata
   created_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
   created_at      DATE          NOT NULL DEFAULT CURRENT_DATE,
+  updated_by        INT           REFERENCES admin(id) ON DELETE SET NULL,
   updated_at      DATE          NOT NULL DEFAULT CURRENT_DATE
 );
