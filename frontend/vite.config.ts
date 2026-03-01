@@ -28,7 +28,16 @@ export default defineConfig({
     environment: "jsdom",
     coverage: {
       provider: "v8",
-      include: ["src/**/*.{ts,tsx,vue}"],
+      include: ["src/**/*.{ts,tsx}"],
+      thresholds: {
+        "src/*/**/*.{ts,tsx}": {
+          statements: 97.5,
+          functions: 97.5,
+          branches: 97.5,
+          lines: 97.5,
+        },
+        perFile: true,
+      },
     },
   },
 });
