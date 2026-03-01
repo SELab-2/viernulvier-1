@@ -1,8 +1,8 @@
 import z from "zod"
 
-import { MetadataSchema } from "./index";
+import { MetadataSchema } from "./index.js";
 
-export const HallSchema = MetadataSchema.extend({
+export const HallSchema: z.ZodObject<any> = MetadataSchema.extend({
   id: z.number(),
   address: z.string(),
   vendor_id: z.number(),
