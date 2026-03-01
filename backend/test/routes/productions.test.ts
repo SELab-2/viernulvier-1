@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll, vi } from "vitest";
+import { describe, test, expect, beforeAll, vi, afterAll } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 
@@ -18,6 +18,10 @@ beforeAll(async () => {
     }
     return Promise.resolve({ rows: mockProductions });
   });
+});
+
+afterAll(async () => {
+  await server.close();
 });
 
 describe("Production Route", () => {
