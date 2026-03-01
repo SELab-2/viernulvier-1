@@ -1,12 +1,7 @@
 import z from "zod"
-import { AdminSchema } from "./index.js";
+import { MetadataSchema } from "./index.js";
 
-export const ProductionSchema: z.ZodObject = z.object({
-  // metadata
-  created_by: AdminSchema,
-  created_at: z.date(),
-  updated_at: z.date(),
-
+export const ProductionSchema: z.ZodObject<any> = MetadataSchema.extend({
   id: z.number(),
   vendor_id: z.number(),
   supertitle: z.json().nullable(),
@@ -37,23 +32,13 @@ export const ProductionSchema: z.ZodObject = z.object({
 
 export const FieldTypeSchema = z.enum(["number", "string", "bool", "json"]);
 
-export const CustomProductionFieldDefinitionSchema: z.ZodObject = z.object({
-  // metadata
-  created_by: AdminSchema,
-  created_at: z.date(),
-  updated_at: z.date(),
-
+export const CustomProductionFieldDefinitionSchema: z.ZodObject<any> = MetadataSchema.extend({
   id: z.number(),
   name: z.string(),
   field_type: FieldTypeSchema,
 });
 
-export const CustomProductionFieldSchema: z.ZodObject = z.object({
-  // metadata
-  created_by: AdminSchema,
-  created_at: z.date(),
-  updated_at: z.date(),
-
+export const CustomProductionFieldSchema: z.ZodObject<any> = MetadataSchema.extend({
   field_id: z.number(),
   production_id: z.number(),
   
