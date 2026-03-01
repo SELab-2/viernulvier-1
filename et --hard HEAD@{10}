@@ -1,0 +1,41 @@
+[33m2d5c111[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeat/hall-model[m[33m)[m HEAD@{0}: rebase (finish): returning to refs/heads/feat/hall-model
+[33m2d5c111[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeat/hall-model[m[33m)[m HEAD@{1}: rebase (pick): remove unnecessary type declaration
+[33mbc9d5bf[m HEAD@{2}: rebase (pick): small change
+[33m435bd33[m HEAD@{3}: rebase (pick): use metadataschema
+[33m722bea3[m HEAD@{4}: rebase (pick): make unnecessary fields nullable
+[33m1584010[m HEAD@{5}: rebase (pick): Use admin schema for created_by instead of id
+[33m761839e[m HEAD@{6}: rebase (continue): added a hall model
+[33m0c7e648[m[33m ([m[1;31morigin/feat/admin-model[m[33m, [m[1;32mfeat/admin-model[m[33m)[m HEAD@{7}: rebase (start): checkout feat/admin-model
+[33m7ae9af2[m HEAD@{8}: rebase (abort): returning to refs/heads/feat/hall-model
+[33m0c7e648[m[33m ([m[1;31morigin/feat/admin-model[m[33m, [m[1;32mfeat/admin-model[m[33m)[m HEAD@{9}: rebase (start): checkout feat/admin-model
+[33m7ae9af2[m HEAD@{10}: commit: remove unnecessary type declaration
+[33m542fa37[m[33m ([m[1;31morigin/feat/hall-model[m[33m)[m HEAD@{11}: checkout: moving from feat/admin-model to feat/hall-model
+[33m0c7e648[m[33m ([m[1;31morigin/feat/admin-model[m[33m, [m[1;32mfeat/admin-model[m[33m)[m HEAD@{12}: commit: remove unnecessary type declaration on metadatascheme
+[33m1a41923[m HEAD@{13}: checkout: moving from staging to feat/admin-model
+[33m82835e0[m[33m ([m[1;31morigin/staging[m[33m, [m[1;32mstaging[m[33m)[m HEAD@{14}: pull: Fast-forward
+[33m3700e34[m HEAD@{15}: checkout: moving from main to staging
+[33md65800c[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{16}: pull: Fast-forward
+[33m6a7a542[m HEAD@{17}: checkout: moving from 54a829b7243e0f51b90e0bc51ff12e8950b7f82f to main
+[33m54a829b[m HEAD@{18}: checkout: moving from main to origin/feat/repo-init
+[33m6a7a542[m HEAD@{19}: checkout: moving from main to main
+[33m6a7a542[m HEAD@{20}: checkout: moving from 54a829b7243e0f51b90e0bc51ff12e8950b7f82f to main
+[33m54a829b[m HEAD@{21}: checkout: moving from main to origin/feat/repo-init
+[33m6a7a542[m HEAD@{22}: checkout: moving from 54a829b7243e0f51b90e0bc51ff12e8950b7f82f to main
+[33m54a829b[m HEAD@{23}: checkout: moving from staging to origin/feat/repo-init
+[33m3700e34[m HEAD@{24}: checkout: moving from main to staging
+[33m6a7a542[m HEAD@{25}: checkout: moving from staging to main
+[33m3700e34[m HEAD@{26}: checkout: moving from e955d2924b4400b0126eae5f3bb838881ce8547d to staging
+[33me955d29[m HEAD@{27}: checkout: moving from staging to origin/feat/repo-init
+[33m3700e34[m HEAD@{28}: checkout: moving from main to staging
+[33m6a7a542[m HEAD@{29}: checkout: moving from e3034e6e1278ce6001e16b28d7fe00155b295e65 to main
+[33me3034e6[m[33m ([m[1;31morigin/feat/swap-to-pnpm[m[33m)[m HEAD@{30}: checkout: moving from main to origin/feat/swap-to-pnpm
+[33m6a7a542[m HEAD@{31}: pull: Fast-forward
+[33m3700e34[m HEAD@{32}: checkout: moving from staging to main
+[33m3700e34[m HEAD@{33}: rebase (finish): returning to refs/heads/staging
+[33m3700e34[m HEAD@{34}: rebase (start): checkout main
+[33m5f73361[m[33m ([m[1;31morigin/test-main[m[33m)[m HEAD@{35}: checkout: moving from main to staging
+[33m3700e34[m HEAD@{36}: merge enhancement/templates: Fast-forward
+[33m5f73361[m[33m ([m[1;31morigin/test-main[m[33m)[m HEAD@{37}: checkout: moving from enhancement/templates to main
+[33m3700e34[m HEAD@{38}: commit: add config for issue templates and pull request template
+[33m5f73361[m[33m ([m[1;31morigin/test-main[m[33m)[m HEAD@{39}: checkout: moving from main to enhancement/templates
+[33m5f73361[m[33m ([m[1;31morigin/test-main[m[33m)[m HEAD@{40}: clone: from github.com:SELab-2/viernulvier-1.git
