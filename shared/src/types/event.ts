@@ -1,17 +1,12 @@
 import z from "zod"
 
-import { AdminSchema, HallSchema } from "./index";
+import { AdminSchema, HallSchema, MetadataSchema } from "./index";
 
-export const EventSchema = z.object({
-    // metadata
-    created_by: AdminSchema,
-    created_at: z.date(),
-    updated_at: z.date(),
-
+export const EventSchema = MetadataSchema.extend({
     id: z.number(),
     starts_at: z.date(),
     ends_at: z.date(),
-    name: z.json(),
+    production_id: z.number(),
     hall: HallSchema,
     doors_at: z.date(),
     box_office_id: z.number(),
@@ -28,7 +23,6 @@ export const EventSchema = z.object({
     // eticket_info: z.json().nullable(),
     // order_url: z.string().nullable(),
     // external_order_url: z.json().nullable(),
-
 });
 
 export type Event = z.infer<typeof EventSchema>;
