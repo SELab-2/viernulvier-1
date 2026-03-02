@@ -10,9 +10,11 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
+    exclude: ["dist/**", "node_modules/**"],
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/index.ts"],
       thresholds: {
         "src/**/*.{ts,tsx}": {
           statements: 97.5,

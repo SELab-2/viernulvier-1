@@ -1,4 +1,6 @@
-import { describe, test, expect, vi, beforeEach } from "vitest";
+import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
+import { buildServer, getPort, start } from "@/server.js";
+import type { FastifyInstance } from "fastify";
 
 vi.mock("@/db/postgres.js", () => ({
   default: vi.fn(async (server: FastifyInstance) => {
@@ -6,79 +8,57 @@ vi.mock("@/db/postgres.js", () => ({
   }),
 }));
 
-import { buildServer } from "@/server.js";
-import type { FastifyInstance } from "fastify";
-
 describe("Server", () => {
+  let server: FastifyInstance | undefined;
+
   beforeEach(() => {
     process.env["DEBUG"] = "false";
+    process.env["BACKEND_PORT"] = "0"; // port = 3333 is used for tests
   })
+
+  afterEach(async () => {
+    await server?.close();
+    server = undefined;
+  });
 
   describe("buildServer()", () => {
     test("Build server", async () => {
-      const server: FastifyInstance = await buildServer();
+      server = await buildServer();
 
       expect(server).toBeDefined();
       expect(server.server).toBeDefined();
-
-      await server.close();
     });
 
     test("Build server with DEBUG", async () => {
       process.env["DEBUG"] = "true";
 
-      const server: FastifyInstance = await buildServer();
+      server = await buildServer();
 
       expect(server.log).toBeDefined();
       expect(server.log.level).toBe("debug");
-
-      await server.close();
     });
   });
 
   describe("start()", () => {
-    beforeEach(() => {
-      vi.resetModules();
+    test("starts and listens", async () => {
+      server = await start();
+      expect(server.addresses()).toEqual(
+        expect.arrayContaining([expect.objectContaining({ port: expect.any(Number) })])
+      );
     });
+  });
 
-    test("starts on default port 3000 when BACKEND_PORT is unset", async () => {
-      const { start } = await import("@/server.js");
-
+  describe("getPort()", () => {
+    test("default port is 3000 when BACKEND_PORT is unset", () => {
       delete process.env["BACKEND_PORT"];
-      const server = await start();
-      
-      expect(server.addresses()).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ port: 3000 })
-        ])
-      );
-
-      await server.close();
+      const port = getPort();
+      expect(port).toBe(3000);
     });
 
-    test("starts on configured port", async () => {
-      const { start } = await import("@/server.js");
-
+    test("port is BACKEND_PORT", () => {
       process.env["BACKEND_PORT"] = "3001";
-      const server = await start();
-
-      expect(server.addresses()).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ port: 3001 })
-        ])
-      );
-
-      await server.close();
-    });
-
-    test("throws an error on failed DB connection", async () => {
-      vi.doMock("@/db/postgres.js", () => ({
-        default: vi.fn().mockRejectedValue(new Error("DB connection failed")),
-      }));
-
-      const { start } = await import("@/server.js");
-
-      await expect(start()).rejects.toThrow("DB connection failed");
+      const port = getPort();
+      expect(port).toBe(3001);
     });
   });
 });

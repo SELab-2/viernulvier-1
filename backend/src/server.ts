@@ -2,8 +2,6 @@ import Fastify, { type FastifyInstance } from "fastify";
 import dbPlugin from "./db/postgres.js";
 import productionRoutes from "./routes/productions.js";
 
-import "dotenv/config";
-
 /**
  * Creates a server instance and registers the standard plugins.
  * This allows us to start the server in a mock environment to be used in tests.
@@ -42,7 +40,16 @@ async function registerPlugins(server: FastifyInstance) {
 }
 
 /**
- * Starts the fastify server on a port defined by our environmental variables
+ * Gets the port that the server will listen on.
+ * 
+ * @internal
+ */
+export function getPort() {
+  return Number(process.env["BACKEND_PORT"] ?? "3000");
+}
+
+/**
+ * Starts the fastify server on a port defined by our environmental variables;
  * 
  * @internal
  */
@@ -55,18 +62,13 @@ export async function start(): Promise<FastifyInstance> {
 
     server.log.info("Starting up HTTP server...");
     await server.listen({
-      port: Number(process.env["BACKEND_PORT"]) || 3000,
+      port: getPort(),
       host: "0.0.0.0",
     });
   } catch (err) {
     server.log.error(err);
+    throw err;
   }
 
   return server;
-}
-
-// Ensures that the server is only started if this is the entry point for our app.
-// Allows this file to be imported by other modules.
-if (process.argv[1]?.includes("server.ts")) {
-  await start();
 }
