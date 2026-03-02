@@ -28,7 +28,7 @@ export default defineConfig({
     environment: "jsdom",
     coverage: {
       provider: "v8",
-      include: ["src/**/*.{ts,tsx}"],
+      include: ["src/**/*.{ts,tsx,vue}"],
     },
   },
 });
