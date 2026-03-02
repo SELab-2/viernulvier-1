@@ -1,7 +1,6 @@
 -- UNDER NO CIRCUMSTANCES MAY THIS FILE BE EDITED WHEN LIVE
 -- ANY EDITS WILL RESOLVE IN DIFFERENT CHECKSUMS AND THE DB REJECTING THE MIGRATION
 
--- 002.undo.create-hall-table.sql
--- Reverses 002.do.create-hall-table.sql.
-
-DROP TABLE IF EXISTS hall;
+-- Drops the custom field tables
+DROP TABLE IF EXISTS production_custom_field;
+DROP TABLE IF EXISTS custom_production_field_definition;

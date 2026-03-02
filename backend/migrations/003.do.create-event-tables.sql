@@ -1,3 +1,6 @@
+-- UNDER NO CIRCUMSTANCES MAY THIS FILE BE EDITED WHEN LIVE
+-- ANY EDITS WILL RESOLVE IN DIFFERENT CHECKSUMS AND THE DB REJECTING THE MIGRATION
+
 -- 003.do.create-event-tables.sql
 -- Creates the event table and its child event_price table.
 -- event depends on production (002) and hall (002).
@@ -30,9 +33,9 @@ CREATE TABLE IF NOT EXISTS event (
 
   -- metadata
   created_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
-  created_at      TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_DATE,
+  created_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   updated_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
-  updated_at      TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_DATE
+  updated_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
 -- Composite index on hall + starts_at (as defined in the EER)
@@ -53,8 +56,8 @@ CREATE TABLE IF NOT EXISTS event_price (
   rank            JSON,
 
   -- metadata
-  created_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
-  created_at      DATE          NOT NULL DEFAULT CURRENT_DATE,
-  updated_by        INT           REFERENCES admin(id) ON DELETE SET NULL,
-  updated_at      DATE          NOT NULL DEFAULT CURRENT_DATE
+  created_by      INT                  REFERENCES admin(id) ON DELETE SET NULL,
+  created_at      TIMESTAMPTZ          NOT NULL DEFAULT NOW(),
+  updated_by      INT                  REFERENCES admin(id) ON DELETE SET NULL,
+  updated_at      TIMESTAMPTZ          NOT NULL DEFAULT NOW()
 );

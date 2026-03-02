@@ -1,3 +1,7 @@
+-- UNDER NO CIRCUMSTANCES MAY THIS FILE BE EDITED WHEN LIVE
+-- ANY EDITS WILL RESOLVE IN DIFFERENT CHECKSUMS AND THE DB REJECTING THE MIGRATION
+
+
 -- 001.do.init.sql
 -- Creates the admin table (needed first as all other tables reference admin via created_by)
 -- and the production table.
@@ -13,9 +17,9 @@ CREATE TABLE IF NOT EXISTS admin (
 
   -- metadata
   created_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
-  created_at      TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_DATE,
+  created_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   updated_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
-  updated_at      TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_DATE
+  updated_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
 -- ============================================================
@@ -50,7 +54,7 @@ CREATE TABLE IF NOT EXISTS production (
 
   -- metadata
   created_by        INT           REFERENCES admin(id) ON DELETE SET NULL,
-  created_at        TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_DATE,
+  created_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   updated_by        INT           REFERENCES admin(id) ON DELETE SET NULL,
-  updated_at        TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_DATE
+  updated_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
