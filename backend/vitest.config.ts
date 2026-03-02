@@ -14,18 +14,13 @@ export default defineConfig({
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
       thresholds: {
-        "src/*/**/*.{ts,tsx}": {
+        "src/**/*.{ts,tsx}": {
           statements: 97.5,
           functions: 97.5,
           branches: 97.5,
           lines: 97.5,
         },
         perFile: true,
-        "src/server.ts": {
-          lines: 90,
-          statements: 90,
-          functions: 100,
-        },
       },
     },
   },
