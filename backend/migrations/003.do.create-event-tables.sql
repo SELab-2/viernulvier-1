@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS event_price (
   rank            JSON,
 
   -- metadata
-  created_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
-  created_at      DATE          NOT NULL DEFAULT NOW(),
-  updated_at      DATE          NOT NULL DEFAULT NOW()
+  created_by      INT                  REFERENCES admin(id) ON DELETE SET NULL,
+  created_at      TIMESTAMPTZ          NOT NULL DEFAULT NOW(),
+  updated_by      INT                  REFERENCES admin(id) ON DELETE SET NULL,
+  updated_at      TIMESTAMPTZ          NOT NULL DEFAULT NOW()
 );
