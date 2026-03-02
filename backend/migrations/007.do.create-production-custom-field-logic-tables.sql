@@ -35,8 +35,8 @@ CREATE TABLE IF NOT EXISTS custom_production_field_definition (
 -- PRODUCTION CUSTOM FIELD (The EAV Table)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS production_custom_field (
-  field_id        INT             REFERENCES custom_production_field_definition(id) ON DELETE CASCADE,
-  production_id   INT             REFERENCES production(id) ON DELETE CASCADE,
+  field_definition_id     INT             REFERENCES custom_production_field_definition(id) ON DELETE CASCADE,
+  production_id           INT             REFERENCES production(id) ON DELETE CASCADE,
   
   -- The sparse matrix of values
   value_bool      BOOLEAN,
