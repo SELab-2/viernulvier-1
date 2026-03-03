@@ -1,6 +1,7 @@
 import pg from "pg";
 import Postgrator from "postgrator";
 import path from "node:path";
+
 /**
  *
  * @returns a {@link Promise} that resolves once the DB connection is established and healthy.
@@ -23,6 +24,7 @@ async function waitForDB() {
 
   throw new Error("Database not ready");
 }
+
 /**
  * Function used to apply all missing migrations found in ./migrations.
  * @see ./scripts/migrate.ts for how this is used.
