@@ -1,8 +1,10 @@
-import z from "zod"
+import z from "zod";
 
-const ProductionSchema = z.object({
-  id: z.number(),
-  title: z.string(),
-});
+export const ProductionSchema = z
+  .object({
+    id: z.number().describe("id for the production."),
+    title: z.string().describe("title for the given production."),
+  })
+  .describe("Production");
 
 export type Production = z.infer<typeof ProductionSchema>;

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { ProductionSchema } from "@viernulvier/shared/types/production.js";
 import type { Production } from "@viernulvier/shared/types/production.js";
 
 /**
@@ -8,15 +9,28 @@ import type { Production } from "@viernulvier/shared/types/production.js";
  */
 
 export default function productionRoutes(server: FastifyInstance) {
-  server.get("/api/production/:id", async (request) => {
-    const { id } = request.params as { id: string };
-    const result = await server.pg.query<Production>(
-      "SELECT id FROM productions WHERE id=$1",
-      [id],
-    );
-
-    return result.rows[0];
-  });
+  /**
+   * @param id - the id of the production
+   * @returns a production
+   */
+  server.get(
+    "/api/production/:id",
+    {
+      schema: {
+        response: {
+          200: ProductionSchema,
+        },
+      },
+    },
+    async (request) => {
+      const { id } = request.params as { id: string };
+      const result = await server.pg.query<Production>(
+        "SELECT id FROM productions WHERE id=$1",
+        [id],
+      );
+      return result.rows[0];
+    },
+  );
   server.get("/api/production", async () => {
     const result = await server.pg.query<Production>(
       "SELECT id FROM productions",
