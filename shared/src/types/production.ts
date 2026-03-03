@@ -1,7 +1,9 @@
 import z from "zod"
 import { MetadataSchema } from "./index.js";
 
-export const ProductionSchema = MetadataSchema.extend({
+export const ProductionSchema = z.object({
+  ...MetadataSchema.shape,
+
   id: z.number(),
   vendor_id: z.number(),
   supertitle: z.json().nullable(),
@@ -32,13 +34,17 @@ export const ProductionSchema = MetadataSchema.extend({
 
 export const FieldTypeSchema = z.enum(["number", "string", "bool", "json"]);
 
-export const CustomProductionFieldDefinitionSchema = MetadataSchema.extend({
+export const CustomProductionFieldDefinitionSchema = z.object({
+  ...MetadataSchema.shape,
+
   id: z.number(),
   name: z.string(),
   field_type: FieldTypeSchema,
 });
 
-export const CustomProductionFieldSchema = MetadataSchema.extend({
+export const CustomProductionFieldSchema = z.object({
+  ...MetadataSchema.shape,
+
   field_id: z.number(),
   production_id: z.number(),
   
