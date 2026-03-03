@@ -17,6 +17,8 @@ export default function productionRoutes(server: FastifyInstance) {
     "/api/production/:id",
     {
       schema: {
+        description: "Get a Production by id",
+        params: ProductionSchema.pick({ id: true }),
         response: {
           200: ProductionSchema,
         },
