@@ -23,13 +23,7 @@ CREATE TABLE IF NOT EXISTS custom_production_field_definition (
   name        VARCHAR(64)     NOT NULL,
   
   type        field_types     NOT NULL,
-
-  -- metadata
-  created_by  INT             REFERENCES admin(id) ON DELETE SET NULL,
-  created_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-  updated_by  INT             REFERENCES admin(id) ON DELETE SET NULL,
-  updated_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW()
-);
+) INHERITS (metadata);
 
 -- ============================================================
 -- PRODUCTION CUSTOM FIELD (The EAV Table)
@@ -44,15 +38,9 @@ CREATE TABLE IF NOT EXISTS production_custom_field (
   value_string    TEXT,           -- TEXT to be safe
   value_json      JSONB,
 
-  -- metadata
-  created_by      INT             REFERENCES admin(id) ON DELETE SET NULL,
-  created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-  updated_by      INT             REFERENCES admin(id) ON DELETE SET NULL,
-  updated_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-
   -- Composite Primary Key: A production can only have ONE value per field definition
   PRIMARY KEY (field_id, production_id)
-);
+) INHERITS (metadata);
 
 -- Index for querying all custom fields for a specific production
 CREATE INDEX IF NOT EXISTS idx_pcf_production_id ON production_custom_field(production_id);

@@ -7,20 +7,24 @@
 -- and the production table.
 
 -- ============================================================
--- ADMIN
+-- METADATA
 -- ============================================================
-CREATE TABLE IF NOT EXISTS admin (
-  id                  SERIAL        PRIMARY KEY,
-  username            VARCHAR(32)   NOT NULL UNIQUE,
-  password            VARCHAR(64)   NOT NULL,
-  profile_picture_url VARCHAR(128),
-
-  -- metadata
+CREATE TABLE IF NOT EXISTS metadata (
   created_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
   created_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   updated_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
   updated_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
+
+-- ============================================================
+-- ADMIN
+-- ============================================================
+CREATE TABLE IF NOT EXISTS admin (
+  id                  SERIAL        PRIMARY KEY,
+  username            VARCHAR(32)   NOT NULL UNIQUE,
+  password            VARCHAR(72)   NOT NULL,
+  profile_picture_url VARCHAR(2048) CONSTRAINT is_url CHECK (profile_picture_url :: VARCHAR(2048) ~* 'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,255}\.[a-z]{2,9}\y([-a-zA-Z0-9@:%_\+.~#?&//=]*)$')
+) INHERITS (metadata);
 
 -- ============================================================
 -- PRODUCTION
@@ -51,10 +55,4 @@ CREATE TABLE IF NOT EXISTS production (
   description_short JSONB,
   eticket_info      JSONB,
   custom_data       JSONB,
-
-  -- metadata
-  created_by        INT           REFERENCES admin(id) ON DELETE SET NULL,
-  created_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-  updated_by        INT           REFERENCES admin(id) ON DELETE SET NULL,
-  updated_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW()
-);
+) INHERITS (metadata);

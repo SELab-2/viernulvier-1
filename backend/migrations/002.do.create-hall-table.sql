@@ -14,10 +14,4 @@ CREATE TABLE IF NOT EXISTS hall (
   open_seating    BOOLEAN,
   remark          JSONB,
   space           JSONB,
-
-  -- metadata
-  created_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
-  created_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-  updated_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
-  updated_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW()
-);
+) INHERITS (metadata);

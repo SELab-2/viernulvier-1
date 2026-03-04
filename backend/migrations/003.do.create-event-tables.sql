@@ -53,11 +53,5 @@ CREATE TABLE IF NOT EXISTS event_price (
   contingent_id   INT,
   expires_at      TIMESTAMPTZ,
   price           JSONB,
-  rank            JSON,
-
-  -- metadata
-  created_by      INT                  REFERENCES admin(id) ON DELETE SET NULL,
-  created_at      TIMESTAMPTZ          NOT NULL DEFAULT NOW(),
-  updated_by      INT                  REFERENCES admin(id) ON DELETE SET NULL,
-  updated_at      TIMESTAMPTZ          NOT NULL DEFAULT NOW()
-);
+  rank            JSONB,
+) INHERITS (metadata);

@@ -7,13 +7,7 @@ CREATE TABLE IF NOT EXISTS image (
   id              SERIAL          PRIMARY KEY,
   production_id   INT             NOT NULL REFERENCES production(id) ON DELETE CASCADE,
   res             VARCHAR(16),    -- e.g., "3840x2160"
-
-  -- metadata
-  created_by      INT             REFERENCES admin(id) ON DELETE SET NULL,
-  created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-  updated_by      INT             REFERENCES admin(id) ON DELETE SET NULL,
-  updated_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW()
-);
+) INHERITS (metadata);
 
 -- ============================================================
 -- CROP
