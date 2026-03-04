@@ -50,4 +50,5 @@ WORKDIR /app
 COPY --from=build /app/backend/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
 
-CMD ["node", "dist/server.js"]
+EXPOSE $BACKEND_PORT
+CMD ["node", "dist/backend/src/index.js"]
