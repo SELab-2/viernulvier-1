@@ -10,7 +10,7 @@ export const AdminSchema: z.ZodObject<any> = z.object({
   updated_at: z.date(),
 
   id: z.number().int().positive(),
-  username: z.string(),
+  username: z.string().max(32),
   profile_picture: z.string().nullable(),
 });
 
