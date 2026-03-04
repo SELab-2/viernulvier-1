@@ -10,7 +10,7 @@ export const ImageSchema = z.object({
   id: z.number(),
 
   // relations
-  production: z.lazy(() => ProductionSchema),
+  production: z.number(),
 
   // image data
   res: z.string().max(16),
