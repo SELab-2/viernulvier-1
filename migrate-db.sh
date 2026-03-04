@@ -1,1 +1,1 @@
-docker exec -t viernulvier-backend npm run migrate
+docker exec -t viernulvier-backend pnpm run migrate
