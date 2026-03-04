@@ -21,6 +21,7 @@
     "coverage": "vitest run --coverage",
     "build": "tsc -p tsconfig.json",
     "migrate": "tsx scripts/migrate.ts",
+    "migrate:undo-all": "tsx scripts/migrate.ts 0",
     "start": "node dist/index.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
