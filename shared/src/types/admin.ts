@@ -11,7 +11,7 @@ export const AdminSchema: z.ZodObject<any> = z.object({
 
   id: z.number().int().positive(),
   username: z.string().max(32),
-  profile_picture: z.string().nullable(),
+  profile_picture: z.url().max(2048).nullable(),
 });
 
 export type Admin = z.infer<typeof AdminSchema>;
