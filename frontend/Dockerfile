@@ -29,5 +29,5 @@ FROM nginx:stable-alpine
 
 COPY --from=build /app/frontend/dist /usr/share/nginx/html
 
-EXPOSE 80
+EXPOSE $FRONTEND_PORT
 CMD ["nginx", "-g", "daemon off;"]
