@@ -15,7 +15,8 @@
     "check": "pnpm run build && pnpm run test && pnpm run lint"
   },
   "dependencies": {
-    "vue": "^3.5.25"
+    "vue": "^3.5.25",
+    "@viernulvier/shared": "workspace:*"
   },
   "devDependencies": {
     "@eslint/js": "^9",

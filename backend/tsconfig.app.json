@@ -9,7 +9,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@viernulvier/shared/*": ["../shared/*"] // Tell the linter where shared is
+      "@viernulvier/shared/*": ["../shared/src/*"] // Tell the linter where shared is
     },
     "preserveSymlinks": true
   },

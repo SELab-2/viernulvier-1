@@ -2,7 +2,7 @@ import z from "zod";
 
 export const ProductionSchema = z
   .object({
-    id: z.number().describe("id for the production."),
+    id: z.coerce.number().int().positive().describe("id for the production."),
     title: z.string().describe("title for the given production."),
   })
   .describe("Production");

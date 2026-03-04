@@ -1,4 +1,5 @@
 import { defineConfig } from "vitest/config";
+import tsconfigPaths from "vite-tsconfig-paths";
 import path from "path";
 
 export default defineConfig({
@@ -7,10 +8,16 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  plugins: [tsconfigPaths()],
   test: {
     globals: true,
     environment: "node",
     exclude: ["dist/**", "node_modules/**"],
+    server: {
+      deps: {
+        external: [/shared/],
+      },
+    },
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
