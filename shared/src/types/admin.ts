@@ -9,7 +9,7 @@ export const AdminSchema: z.ZodObject<any> = z.object({
   updated_by: z.lazy(() => AdminSchema),
   updated_at: z.date(),
 
-  id: z.number(),
+  id: z.number().int().positive(),
   username: z.string(),
   profile_picture: z.string().nullable(),
 });
