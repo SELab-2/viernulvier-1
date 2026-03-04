@@ -1,16 +1,15 @@
 import z from "zod";
-import { AdminSchema } from "./admin";
-import { ProductionSchema } from "./production";
+import { MetadataSchema } from "./metadata.js";
+import { ProductionSchema } from "./production.js";
 
-export const ImageSchema: z.ZodObject = z.object({
+export const ImageSchema = z.object({
   // metadata
-  created_by: z.lazy(() => AdminSchema),
-  created_at: z.date(),
-  updated_by: z.lazy(() => AdminSchema),
-  updated_at: z.date(),
+  ...MetadataSchema.shape,
 
   // core fields
   id: z.number(),
+
+  // relations
   production: z.lazy(() => ProductionSchema),
 
   // image data
