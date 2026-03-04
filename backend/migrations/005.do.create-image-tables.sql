@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS image (
 CREATE TABLE IF NOT EXISTS crop (
   id              SERIAL          PRIMARY KEY,
   image_id        INT             NOT NULL REFERENCES image(id) ON DELETE CASCADE,
-  url             VARCHAR(255)    NOT NULL,
-  type            VARCHAR(32),    NOT NULL,
+  url             VARCHAR(2048)   NOT NULL CONSTRAINT is_url CHECK (url :: VARCHAR(2048) ~* 'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,255}\.[a-z]{2,9}\y([-a-zA-Z0-9@:%_\+.~#?&//=]*)$'),
+  type            VARCHAR(32)     NOT NULL,
 
   -- metadata
   created_by      INT             REFERENCES admin(id) ON DELETE SET NULL,
