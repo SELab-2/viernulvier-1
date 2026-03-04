@@ -10,7 +10,7 @@ export const CropSchema = z.object({
   id: z.number(),
 
   // relations
-  image: z.lazy(() => ImageSchema),
+  image: z.number(),
 
   // crop data
   url: z.string().max(128),
