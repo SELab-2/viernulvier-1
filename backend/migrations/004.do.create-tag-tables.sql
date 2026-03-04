@@ -20,7 +20,6 @@ CREATE TABLE IF NOT EXISTS tag (
   public      BOOLEAN         NOT NULL DEFAULT FALSE, -- false = CMS only, true = Public
   type_id     INT             NOT NULL REFERENCES tag_type(id) ON DELETE CASCADE,
 
-
   -- Constraints & Indexes
   CONSTRAINT unique_tag_per_type UNIQUE (name, type_id)
 ) INHERITS (metadata);
@@ -32,7 +31,6 @@ CREATE TABLE IF NOT EXISTS tag (
 CREATE TABLE IF NOT EXISTS production_tag (
   production_id INT NOT NULL REFERENCES production(id) ON DELETE CASCADE,
   tag_id        INT NOT NULL REFERENCES tag(id) ON DELETE CASCADE,
-
 
   PRIMARY KEY (production_id, tag_id)
 ) INHERITS (metadata);
