@@ -25,6 +25,12 @@ CREATE TABLE IF NOT EXISTS admin (
   profile_picture_url VARCHAR(2048) CONSTRAINT is_url CHECK (profile_picture_url :: VARCHAR(2048) ~* 'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,255}\.[a-z]{2,9}\y([-a-zA-Z0-9@:%_\+.~#?&//=]*)$')
 ) INHERITS (metadata);
 
+-- This alter is needed because the admin table must exist before we can make these references.
+ALTER TABLE metadata
+  ADD COLUMN created_by INT REFERENCES admin(id) ON DELETE SET NULL,
+  ADD COLUMN updated_by INT REFERENCES admin(id) ON DELETE SET NULL;
+
+
 -- ============================================================
 -- PRODUCTION
 -- ============================================================
@@ -55,8 +61,3 @@ CREATE TABLE IF NOT EXISTS production (
   eticket_info      JSONB,
   custom_data       JSONB
 ) INHERITS (metadata);
-
--- This alter is needed because the admin table must exist before we can make these references.
-ALTER TABLE metadata
-  ADD COLUMN created_by INT REFERENCES admin(id) ON DELETE SET NULL,
-  ADD COLUMN updated_by INT REFERENCES admin(id) ON DELETE SET NULL
