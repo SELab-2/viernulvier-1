@@ -13,5 +13,5 @@ CREATE TABLE IF NOT EXISTS hall (
   seat_selection  BOOLEAN,
   open_seating    BOOLEAN,
   remark          JSONB,
-  space           JSONB,
+  space           JSONB
 ) INHERITS (metadata);

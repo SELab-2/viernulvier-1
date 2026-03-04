@@ -10,9 +10,8 @@
 -- METADATA
 -- ============================================================
 CREATE TABLE IF NOT EXISTS metadata (
-  created_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
+  -- The other 2 fields are added in a later alter table statement once the admin table exists.
   created_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-  updated_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
   updated_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
@@ -54,5 +53,10 @@ CREATE TABLE IF NOT EXISTS production (
   info              JSONB,
   description_short JSONB,
   eticket_info      JSONB,
-  custom_data       JSONB,
+  custom_data       JSONB
 ) INHERITS (metadata);
+
+-- This alter is needed because the admin table must exist before we can make these references.
+ALTER TABLE metadata
+  ADD COLUMN created_by INT REFERENCES admin(id) ON DELETE SET NULL,
+  ADD COLUMN updated_by INT REFERENCES admin(id) ON DELETE SET NULL

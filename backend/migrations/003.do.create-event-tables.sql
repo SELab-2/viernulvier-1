@@ -29,14 +29,8 @@ CREATE TABLE IF NOT EXISTS event (
 
   -- foreign keys
   production            INT           REFERENCES production(id) ON DELETE CASCADE,
-  hall                  INT           NOT NULL REFERENCES hall(id) ON DELETE RESTRICT,
-
-  -- metadata
-  created_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
-  created_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-  updated_by      INT           REFERENCES admin(id) ON DELETE SET NULL,
-  updated_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW()
-);
+  hall                  INT           NOT NULL REFERENCES hall(id) ON DELETE RESTRICT
+) INHERITS (metadata);
 
 -- Composite index on hall + starts_at (as defined in the EER)
 CREATE INDEX IF NOT EXISTS idx_event_hall_starts_at ON event(hall, starts_at);
@@ -53,5 +47,5 @@ CREATE TABLE IF NOT EXISTS event_price (
   contingent_id   INT,
   expires_at      TIMESTAMPTZ,
   price           JSONB,
-  rank            JSONB,
+  rank            JSONB
 ) INHERITS (metadata);
