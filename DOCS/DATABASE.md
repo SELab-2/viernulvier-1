@@ -48,21 +48,21 @@ Table production {
   "performer_field" varchar(256) [null]
   "performer_type" varchar(64)
   "attendance_mode" varchar(64)
-	"supertitle" json
-	"title" json [not null]
+  "supertitle" json
+  "title" json [not null]
   "artist" json
   "meta_title" json
   "meta_description" json
   "tagline" json
-	"teaser" json 
-	"description" json 
-	"description_extra" json 
-	"description_2" json
+  "teaser" json 
+  "description" json 
+  "description_extra" json 
+  "description_2" json
   "video_1" json
   "video_2" json
   "quote" json
   "quote_source" json
-  "programme" json
+  "programma" json
   "info" json
   "description_short" json
   "eticket_info" json
@@ -73,7 +73,6 @@ Table hall {
   ~metadata
   "id" int [PK]
   "name" varchar(64)
-  "capacity" int
   "address" varchar(256)
   "vendor_id" int
   "box_office_id" int
@@ -83,14 +82,13 @@ Table hall {
   "space" json
 }
 
-
 Table event {
   ~metadata
   "id" int [PK]
-	"starts_at" timestamp
-  "production" int [ref: > production.id]
-	"ends_at" timestamp
-	"hall" int [ref: <> hall.id, not null]
+  "starts_at" timestamp
+  "production_id" int [ref: > production.id]
+  "ends_at" timestamp
+  "hall_id" int [ref: <> hall.id, not null]
   "intermission_at" timestamp
   "doors_at" varchar(64)
   "box_office_id" int
@@ -106,12 +104,104 @@ Table event {
   "order_url" varchar(256)
 
   indexes {
-    (hall, starts_at)
+    (hall_id, starts_at)
   }
 }
 
 Table event_price {
   ~metadata
+  "event_id" int [PK, ref: > event.id]
+  "amount" varchar(32)
+  "box_office_id" int [null]
+  "available" int
+  "contingent_id" int
+  "expires_at" timestamp
+  "price" json
+  "rank" json
+}
+
+Table production_tag {
+  ~metadata
+  tag_id int [ref: > tag.id]
+  production_id int [ref: > production.id]
+}
+
+Table tag {
+  ~metadata
+  "id" int [PK]
+  "name" varchar(32) [not null]
+  "type" int [ref: > tag_type.id, not null]
+
+  indexes {
+    type
+  }
+}
+
+Table tag_type {
+  ~metadata
+  "id" int [PK]
+  "name" varchar(32)
+  "visible" bool // false = only visible in CMS, true = visible in CMS and public front-end
+}
+
+Enum field_types {
+  "number"
+  "string"
+  "bool"
+  "json"
+}
+
+Table image {
+  ~metadata
+  "id" int [PK]
+  "production_id" int [ref: > production.id]
+  "res" varchar(16)
+}
+
+Table crop {
+  ~metadata
+  "id" int [PK]
+  "image_id" int [ref: > image.id]
+  "url" varchar(128)
+}
+
+Table custom_production_field_definition {
+  ~metadata
+  "id" int [PK]
+  "name" varchar(32) [unique]
+  "field_type" field_types
+}
+
+Table production_custom_field {
+  ~metadata
+  "field_defenition_id" int [PK, ref: > custom_production_field_definition.id]
+  "production_id" int [PK, ref: > production.id]
+  "value_bool" bool [null]
+  "value_number" numeric [null]
+  "value_string" varchar(32) [null]
+  "value_json" json [null]
+}
+
+Table admin {
+  ~metadata
+  "id" int [PK]
+  "username" varchar(32)
+  "password" varchar(64)
+  "profile_picture" varchar(128) 
+}
+
+Table blog {
+  ~metadata
+  "id" int [PK]
+  "name" varchar(32)
+}
+
+Table blogpost {
+  ~metadata
+  "id" int [PK]
+  "blog_id" int [ref: > blog.id]
+  "content" json
+}
   "event" int [PK, ref: > event.id]
   "amount" varchar(32)
   "box_office_id" int [null]

@@ -29,17 +29,29 @@ CREATE TABLE IF NOT EXISTS custom_production_field_definition (
 -- PRODUCTION CUSTOM FIELD (The EAV Table)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS production_custom_field (
-  field_definition_id     INT             REFERENCES custom_production_field_definition(id) ON DELETE CASCADE,
+  field_definition_id     INT             NOT NULL,
   production_id           INT             REFERENCES production(id) ON DELETE CASCADE,
+  -- We also add type to this to allow for good constraints
+  type field_types     NOT NULL,
+  -- This foreign key ensure the type of this and the type of the definition stay the same.
+  FOREIGN KEY (field_definition_id, type) REFERENCES custom_production_field_definition (id, type) ON DELETE CASCADE,
   
   -- The sparse matrix of values
   value_bool      BOOLEAN,
   value_number    NUMERIC,
   value_string    TEXT,           -- TEXT to be safe
   value_json      JSONB,
-
   -- Composite Primary Key: A production can only have ONE value per field definition
-  PRIMARY KEY (field_id, production_id)
+  PRIMARY KEY (field_definition_id, production_id),
+  
+  -- Now that we know the type variable should match the definition we can add the checks
+  CONSTRAINT check_data_type CHECK (
+          (type = 'bool'   AND value_bool IS NOT NULL   AND value_number IS NULL AND value_string IS NULL AND value_json IS NULL) OR
+          (type = 'number' AND value_number IS NOT NULL AND value_bool IS NULL   AND value_string IS NULL AND value_json IS NULL) OR
+          (type = 'string' AND value_string IS NOT NULL AND value_bool IS NULL   AND value_number IS NULL AND value_json IS NULL) OR
+          (type = 'json'   AND value_json IS NOT NULL   AND value_bool IS NULL   AND value_number IS NULL AND value_string IS NULL)
+      )
+  -- metadata
 ) INHERITS (metadata);
 
 -- Index for querying all custom fields for a specific production
