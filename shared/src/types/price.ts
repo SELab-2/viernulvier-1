@@ -1,11 +1,11 @@
 import z from 'zod'
 
-import { createSchema, EventSchema } from './index.js'
+import { createSchema, EventSchema, SchemaWithMeta } from './index.js'
 import { foreignKey, primaryKey } from './helpers.js'
 
-export const PriceSchema = createSchema({
+export const PriceSchema: SchemaWithMeta<any> = createSchema({
     id: primaryKey(),
-    event: foreignKey(() => EventSchema),
+    event: foreignKey((): typeof EventSchema => EventSchema),
     amount: z.number().nonnegative(),
 
     // unnecessary
@@ -16,3 +16,6 @@ export const PriceSchema = createSchema({
     // price: z.json(),
     // rank: z.json(),
 });
+
+export type Price = z.infer<typeof PriceSchema>;
+export type PriceWithMeta = z.infer<ReturnType<typeof PriceSchema.withMeta>>;

@@ -1,9 +1,9 @@
 import z from "zod"
 
-import { createSchema, HallSchema, ProductionSchema } from "./index.js";
+import { createSchema, HallSchema, PriceSchema, ProductionSchema, SchemaWithMeta } from "./index.js";
 import { foreignKey, languageMap, primaryKey } from "./helpers.js";
 
-export const EventSchema = createSchema({
+export const EventSchema: SchemaWithMeta<any> = createSchema({
     id: primaryKey(),
     starts_at: z.date(),
     ends_at: z.date(),
@@ -12,6 +12,7 @@ export const EventSchema = createSchema({
     doors_at: z.date(),
     vendor_id: z.int().nonnegative(),
     info: languageMap,
+    pricing: z.array(foreignKey(() => PriceSchema)),
 
     // unnecessary
     // box_office_id: z.int().nonnegative(),
