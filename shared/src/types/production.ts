@@ -1,8 +1,6 @@
 import z from "zod";
-import { AdminSchema, createSchema } from "./index.js";
+import { EventSchema, createSchema } from "./index.js";
 import { foreignKey, primaryKey, languageMap } from "./helpers.js";
-
-const EventSchema = AdminSchema; // placeholder
 
 export const ProductionSchema = createSchema({
   id: primaryKey(),
