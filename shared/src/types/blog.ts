@@ -9,6 +9,7 @@ export const BlogSchema = createSchema({
 });
 
 export type Blog = z.infer<typeof BlogSchema>;
+export type BlogWithMeta = z.infer<ReturnType<typeof BlogSchema.withMeta>>;
 
 export const BlogPostSchema = createSchema({
     id: primaryKey(),
@@ -17,3 +18,4 @@ export const BlogPostSchema = createSchema({
 });
 
 export type BlogPost = z.infer<typeof BlogPostSchema>;
+export type BlogPostWithMeta = z.infer<ReturnType<typeof BlogPostSchema.withMeta>>;
