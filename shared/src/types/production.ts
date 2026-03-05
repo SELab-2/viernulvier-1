@@ -1,11 +1,14 @@
 import z from "zod";
-import { createSchema } from "./index.js";
+import { AdminSchema, createSchema } from "./index.js";
 import { foreignKey, primaryKey, languageMap } from "./helpers.js";
+
+const EventSchema = AdminSchema; // placeholder
 
 export const ProductionSchema = createSchema({
   id: primaryKey(),
   vendor_id: z.int().nonnegative(),
   box_office_id: z.int().nonnegative(),
+  events: z.array(foreignKey(() => EventSchema)),
   supertitle: languageMap.nullable(),
   title: languageMap,
   artist: languageMap,
