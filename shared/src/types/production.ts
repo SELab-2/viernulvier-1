@@ -47,29 +47,68 @@ export const CustomProductionFieldDefinitionSchema = createSchema({
   type: FieldTypeSchema,
 });
 
-export const CustomProductionFieldSchema = createSchema({
+const BaseFields = z.object({
   field_definition_id: foreignKey(() => CustomProductionFieldDefinitionSchema),
   production_id: foreignKey(() => ProductionSchema),
-
-  type: FieldTypeSchema,
-
-  value_bool: z.boolean().nullable(),
-  value_number: z.number().nullable(),
-  value_string: z.string().nullable(),
-  value_json: z.json({ params: {} }).nullable(),
-}).refine((schema) => {
-  // This refine is a check to make sure that the value provided
-  // matches the one we expect to receive. It just check that the one we
-  // want is not null and the rest are.
-  return (
-    schema[`value_${schema.type}`] != null &&
-    Object.entries(schema)
-      .filter(
-        ([key, _]) => key.startsWith("value") && !key.endsWith(schema.type),
-      )
-      .reduce((acc, [_, val]) => acc && val == null, true)
-  );
 });
+
+const CustomProductionFieldSchemaBase = z
+  .object({
+    ...BaseFields.shape,
+
+    type: FieldTypeSchema,
+
+    value_bool: z.boolean().nullable(),
+    value_number: z.number().nullable(),
+    value_string: z.string().nullable(),
+    value_json: z.json().nullable(),
+  })
+  .refine((schema) => {
+    // This refine is a check to make sure that the value provided
+    // matches the one we expect to receive. It just check that the one we
+    // want is not null and the rest are.
+    return (
+      schema[`value_${schema.type}`] != null &&
+      Object.entries(schema)
+        .filter(
+          ([key, _]) =>
+            !(key.startsWith("value") && !key.endsWith(schema.type)),
+        )
+        .reduce((acc, [_, val]) => acc && val == null, true)
+    );
+  });
+
+const CustomProductionFieldSchemaResult = z.discriminatedUnion("type", [
+  BaseFields.extend({ type: z.literal("bool"), value: z.boolean() }),
+  BaseFields.extend({ type: z.literal("number"), value: z.number() }),
+  BaseFields.extend({ type: z.literal("string"), value: z.string() }),
+  BaseFields.extend({ type: z.literal("json"), value: z.json() }),
+]);
+
+export const CustomProductionFieldSchema = z.codec(
+  CustomProductionFieldSchemaBase,
+  CustomProductionFieldSchemaResult,
+  {
+    decode: (schema) => {
+      return {
+        ...schema,
+        value: schema[`value_${schema.type}`],
+      } as z.infer<typeof CustomProductionFieldSchemaResult>;
+    },
+    encode: (data) => {
+      const type = data.type;
+      return {
+        field_definition_id: data.field_definition_id,
+        production_id: data.production_id,
+        type: type,
+        value_bool: type === "bool" ? data.value : null,
+        value_number: type === "number" ? data.value : null,
+        value_string: type === "string" ? data.value : null,
+        value_json: type === "json" ? data.value : null,
+      } as z.infer<typeof CustomProductionFieldSchemaBase>;
+    },
+  },
+);
 
 export type Production = z.infer<typeof ProductionSchema>;
 export type FieldType = z.infer<typeof FieldTypeSchema>;
@@ -77,3 +116,13 @@ export type CustomProductionFieldDefinition = z.infer<
   typeof CustomProductionFieldDefinitionSchema
 >;
 export type CustomProductionField = z.infer<typeof CustomProductionFieldSchema>;
+
+CustomProductionFieldSchema.decode({
+  type: "number",
+  production_id: 0,
+  value_string: null,
+  value_bool: null,
+  value_json: null,
+  value_number: 10,
+  field_definition_id: 10,
+}).value;
