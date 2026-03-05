@@ -1,4 +1,4 @@
-FROM node:24 AS base
+FROM --platform=$BUILDPLATFORM node:24 AS base
 
 RUN npm install -g pnpm
 
@@ -31,9 +31,11 @@ WORKDIR /app
 
 COPY --from=deps /app /app
 
-RUN pnpm install --offline
+COPY . .
 
-RUN pnpm --filter shared build
+RUN pnpm install
+
+# RUN pnpm --filter shared build 
 RUN pnpm --filter backend build
 
 
@@ -48,4 +50,5 @@ WORKDIR /app
 COPY --from=build /app/backend/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
 
-CMD ["node", "dist/server.js"]
+EXPOSE 80
+CMD ["node", "dist/backend/src/index.js"]

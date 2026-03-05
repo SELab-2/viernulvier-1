@@ -1,6 +1,7 @@
 import pg from "pg";
 import Postgrator from "postgrator";
 import path from "node:path";
+
 /**
  *
  * @returns a {@link Promise} that resolves once the DB connection is established and healthy.
@@ -23,11 +24,12 @@ async function waitForDB() {
 
   throw new Error("Database not ready");
 }
+
 /**
  * Function used to apply all missing migrations found in ./migrations.
  * @see ./scripts/migrate.ts for how this is used.
  */
-export async function migrate() {
+export async function migrate(target: string | undefined = undefined) {
   const client = new pg.Client({
     connectionString: process.env["DATABASE_URL"],
   });
@@ -46,7 +48,7 @@ export async function migrate() {
       execQuery: (query) => client.query(query),
     });
 
-    const result = await postgrator.migrate();
+    const result = await postgrator.migrate(target);
 
     if (result.length === 0) {
       console.log("No migrations needed");
