@@ -1,22 +1,19 @@
 import z from "zod"
 
-import { MetadataSchema } from "./index";
+import { createSchema } from "./index";
+import { foreignKey, primaryKey } from "./helpers";
 
-export const BlogSchema = z.object({
-    ...MetadataSchema.shape,
-
-    id: z.number().int().positive(),
+export const BlogSchema = createSchema({
+    id: primaryKey(),
     name: z.string(),
 });
 
 export type Blog = z.infer<typeof BlogSchema>;
 
-export const BlogPostSchema = z.object({
-    ...MetadataSchema.shape,
-
-    id: z.number().int().positive(),
+export const BlogPostSchema = createSchema({
+    id: primaryKey(),
     content: z.string(),
-    blog: BlogSchema,
+    blog: foreignKey(() => BlogSchema),
 });
 
 export type BlogPost = z.infer<typeof BlogPostSchema>;
