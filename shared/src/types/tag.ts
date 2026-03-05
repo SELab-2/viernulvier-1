@@ -1,18 +1,19 @@
 import z from "zod"
-import { MetadataSchema } from "./metadata";
+import { primaryKey, foreignKey } from "./helpers";
+import { createSchema, MetadataShape } from ".";
 
-export const TagTypeSchema = MetadataSchema.extend({
-    id: z.number(),
+export const TagTypeSchema = createSchema({
+    id: primaryKey(),
     name: z.string(),
     visible: z.boolean(),
 });
 
 export type TagType = z.infer<typeof TagTypeSchema>;
 
-export const TagSchema = MetadataSchema.extend({
-    id: z.number(),
+export const TagSchema = createSchema({
+    id: primaryKey(),
     name: z.string(),
-    type: TagTypeSchema,
+    type: foreignKey(() => TagTypeSchema),
 });
 
 export type Tag = z.infer<typeof TagSchema>;
