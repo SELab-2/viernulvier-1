@@ -57,6 +57,9 @@ export const CustomProductionFieldSchema = createSchema({
   value_string: z.string().nullable(),
   value_json: z.json({ params: {} }).nullable(),
 }).refine((schema) => {
+  // This refine is a check to make sure that the value provided
+  // matches the one we expect to receive. It just check that the one we
+  // want is not null and the rest are.
   return (
     schema[`value_${schema.type}`] != null &&
     Object.entries(schema)
