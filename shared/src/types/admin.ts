@@ -1,17 +1,18 @@
-import z from "zod"
+import z from "zod";
+import { primaryKey } from "./helpers";
+import { createSchema, MetadataShape } from ".";
 
-export const AdminSchema: z.ZodObject<any> = z.object({
-  // METADATA
-  // only time this is hardcoded to avoid infinite import loops
-  // normally you would use ...MetadataSchema.shape instead of hardcoding
-  created_by: z.lazy(() => AdminSchema),
-  created_at: z.date(),
-  updated_by: z.lazy(() => AdminSchema),
-  updated_at: z.date(),
-
-  id: z.number().int().positive(),
+export const AdminBase = {
+  id: primaryKey(),
   username: z.string().max(32),
   profile_picture: z.url().max(2048).nullable(),
-});
+};
+
+type AdminSchemaType = z.ZodObject<typeof AdminBase> & {
+  withMeta: () => z.ZodObject<typeof AdminBase & typeof MetadataShape>;
+};
+
+export const AdminSchema: AdminSchemaType = createSchema(AdminBase);
 
 export type Admin = z.infer<typeof AdminSchema>;
+export type AdminWithMeta = z.infer<ReturnType<typeof AdminSchema.withMeta>>;
