@@ -1,19 +1,21 @@
 import z from "zod";
-import { MetadataSchema } from "./metadata.js";
-import { ProductionSchema } from "./production.js";
+import { createSchema, ProductionSchema } from "./index.js";
+import type { SchemaWithMeta } from "./index.js";
+import { primaryKey, foreignKey } from "./helpers.js";
 
-export const ImageSchema = z.object({
-  // metadata
-  ...MetadataSchema.shape,
+export const ImageSchema: SchemaWithMeta<any> = createSchema({
+  id: primaryKey(),
 
-  // core fields
-  id: z.number(),
+  production_id: foreignKey(() => ProductionSchema),
 
-  // relations
-  production: z.number(),
-
-  // image data
-  res: z.string().max(16),
+  res: z
+    .string()
+    .max(16)
+    .min(1)
+}).refine((img) => {
+  // resolution should not be empty or whitespace
+  return img.res.trim().length > 0;
 });
 
 export type Image = z.infer<typeof ImageSchema>;
+export type ImageWithMeta = z.infer<ReturnType<typeof ImageSchema.withMeta>>;
