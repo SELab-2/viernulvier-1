@@ -1,6 +1,6 @@
 import z from "zod";
-import { primaryKey } from "./helpers";
-import { createSchema, MetadataShape } from ".";
+import { primaryKey } from "./helpers.js";
+import { createSchema, MetadataShape } from "./index.js";
 
 export const AdminBase = {
   id: primaryKey(),
