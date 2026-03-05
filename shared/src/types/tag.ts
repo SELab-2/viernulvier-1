@@ -4,7 +4,7 @@ import { createSchema } from ".";
 
 export const TagTypeSchema = createSchema({
     id: primaryKey(),
-    name: z.string(),
+    name: languageMap,
     visible: z.boolean(),
 });
 
