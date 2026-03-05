@@ -8,7 +8,7 @@ export const MetadataShape = {
   updated_at: z.date(),
 };
 
-// helper function to add a withMeta() function to the Schema's
+// use this createSchema({...}) function instead of z.object({...}) to create new Schema's
 export function createSchema<T extends z.ZodRawShape>(shape: T) {
   const base = z.object(shape);
   return Object.assign(base, {
