@@ -1,14 +1,12 @@
-import z from "zod"
+import z from "zod";
+import { createSchema } from "./metadata";
+import { languageMap, primaryKey } from "./helpers";
 
-import { MetadataSchema } from "./index.js";
-
-export const HallSchema = z.object({
-  ...MetadataSchema.shape,
-  
-  id: z.number(),
+export const HallSchema = createSchema({
+  id: primaryKey(),
   address: z.string(),
-  vendor_id: z.number(),
-  name: z.json(),
+  vendor_id: z.int().nonnegative(),
+  name: languageMap,
 
   // unnecessary
   // box_office_id: z.number().nullable(),
