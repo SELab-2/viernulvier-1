@@ -63,3 +63,9 @@ export function primaryKey<T extends z.ZodType>(type: T): PrimaryKey<T>;
 export function primaryKey<T extends z.ZodType>(type?: T) {
   return (type ?? z.int().nonnegative()).brand<"PrimaryKey">();
 }
+
+export const VALID_LANGUAGES = z.enum(["nl", "en", "fr"]);
+
+export const languageMap = z
+  .partialRecord(VALID_LANGUAGES, z.string())
+  .refine((map) => Object.keys(map).length >= 1);
