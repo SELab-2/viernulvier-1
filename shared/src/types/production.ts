@@ -1,5 +1,6 @@
 import z from "zod";
-import { EventSchema, SchemaWithMeta, createSchema } from "./index.js";
+import { EventSchema, createSchema } from "./index.js";
+import type { SchemaWithMeta } from "./index.js";
 import { foreignKey, primaryKey, languageMap } from "./helpers.js";
 
 export const ProductionSchema: SchemaWithMeta<any> = createSchema({
