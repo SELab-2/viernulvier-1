@@ -1,6 +1,7 @@
 import z from 'zod'
 
-import { createSchema, EventSchema, SchemaWithMeta } from './index.js'
+import { createSchema, EventSchema } from './index.js'
+import type { SchemaWithMeta } from './index.js'
 import { foreignKey, primaryKey } from './helpers.js'
 
 export const PriceSchema: SchemaWithMeta<any> = createSchema({
