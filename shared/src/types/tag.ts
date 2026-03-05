@@ -1,5 +1,5 @@
 import z from "zod"
-import { primaryKey, foreignKey } from "./helpers";
+import { primaryKey, foreignKey, languageMap } from "./helpers";
 import { createSchema, MetadataShape } from ".";
 
 export const TagTypeSchema = createSchema({
@@ -12,7 +12,7 @@ export type TagType = z.infer<typeof TagTypeSchema>;
 
 export const TagSchema = createSchema({
     id: primaryKey(),
-    name: z.string(),
+    name: languageMap,
     type: foreignKey(() => TagTypeSchema),
 });
 
