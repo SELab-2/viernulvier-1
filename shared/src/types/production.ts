@@ -1,8 +1,8 @@
 import z from "zod";
-import { EventSchema, createSchema } from "./index.js";
+import { EventSchema, SchemaWithMeta, createSchema } from "./index.js";
 import { foreignKey, primaryKey, languageMap } from "./helpers.js";
 
-export const ProductionSchema = createSchema({
+export const ProductionSchema: SchemaWithMeta<any> = createSchema({
   id: primaryKey(),
   vendor_id: z.int().nonnegative(),
   box_office_id: z.int().nonnegative(),
@@ -66,8 +66,12 @@ export const CustomProductionFieldSchema = createSchema({
 });
 
 export type Production = z.infer<typeof ProductionSchema>;
+export type ProductionWithMeta = z.infer<ReturnType<typeof ProductionSchema.withMeta>>;
+
 export type FieldType = z.infer<typeof FieldTypeSchema>;
-export type CustomProductionFieldDefinition = z.infer<
-  typeof CustomProductionFieldDefinitionSchema
->;
+
+export type CustomProductionFieldDefinition = z.infer<typeof CustomProductionFieldDefinitionSchema>;
+export type CustomProductionFieldDefinitionWithMeta = z.infer<ReturnType<typeof CustomProductionFieldDefinitionSchema.withMeta>>;
+
 export type CustomProductionField = z.infer<typeof CustomProductionFieldSchema>;
+export type CustomProductionFieldWithMeta = z.infer<ReturnType<typeof CustomProductionFieldSchema.withMeta>>;
