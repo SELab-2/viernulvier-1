@@ -1,6 +1,6 @@
 import z from "zod";
-import { createSchema } from "./metadata";
-import { languageMap, primaryKey } from "./helpers";
+import { createSchema } from "./index.js";
+import { languageMap, primaryKey } from "./helpers.js";
 
 export const HallSchema = createSchema({
   id: primaryKey(),
