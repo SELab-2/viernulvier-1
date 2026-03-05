@@ -1,7 +1,7 @@
 import z from "zod"
 
-import { createSchema, HallSchema, ProductionSchema } from "./index";
-import { foreignKey, languageMap, primaryKey } from "./helpers";
+import { createSchema, HallSchema, ProductionSchema } from "./index.js";
+import { foreignKey, languageMap, primaryKey } from "./helpers.js";
 
 export const EventSchema = createSchema({
     id: primaryKey,
