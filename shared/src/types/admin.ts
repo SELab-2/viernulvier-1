@@ -1,15 +1,17 @@
 import z from "zod"
 
 export const AdminSchema: z.ZodObject<any> = z.object({
-  // metadata (only time this is hardcoded)
+  // METADATA
+  // only time this is hardcoded to avoid infinite import loops
+  // normally you would use ...MetadataSchema.shape instead of hardcoding
   created_by: z.lazy(() => AdminSchema),
   created_at: z.date(),
   updated_by: z.lazy(() => AdminSchema),
   updated_at: z.date(),
 
-  id: z.number(),
-  username: z.string(),
-  profile_picture: z.string().nullable(),
+  id: z.number().int().positive(),
+  username: z.string().max(32),
+  profile_picture: z.url().max(2048).nullable(),
 });
 
 export type Admin = z.infer<typeof AdminSchema>;
