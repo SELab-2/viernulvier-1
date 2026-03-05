@@ -9,6 +9,7 @@ export const TagTypeSchema = createSchema({
 });
 
 export type TagType = z.infer<typeof TagTypeSchema>;
+export type TagTypeWithMeta = z.infer<ReturnType<typeof TagTypeSchema.withMeta>>;
 
 export const TagSchema = createSchema({
     id: primaryKey(),
@@ -17,3 +18,4 @@ export const TagSchema = createSchema({
 });
 
 export type Tag = z.infer<typeof TagSchema>;
+export type TagWithMeta = z.infer<ReturnType<typeof TagSchema.withMeta>>;
