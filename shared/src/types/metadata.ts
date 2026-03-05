@@ -12,7 +12,12 @@ export const MetadataShape = {
 // use this createSchema({...}) function instead of z.object({...}) to create new Schema's
 export function createSchema<T extends z.ZodRawShape>(shape: T) {
   const base = z.object(shape);
-  return Object.assign(base, {
-    withMeta: () => base.extend(MetadataShape),
-  });
+  return Object.defineProperty(base, 'withMeta', {
+    value: () => base.extend(MetadataShape),
+    writable: false,
+    enumerable: false,
+    configurable: false,
+  }) as typeof base & {
+    withMeta: () => z.ZodObject<T & typeof MetadataShape>;
+  };
 }
