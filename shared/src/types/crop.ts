@@ -10,7 +10,7 @@ export const CropSchema: SchemaWithMeta<any> = createSchema({
 
   url: z
     .string()
-    .max(128)
+    .max(2048)
     .url()
 }).refine((crop) => {
   // extra sanity check
