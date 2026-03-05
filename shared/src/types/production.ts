@@ -1,25 +1,31 @@
-import z from "zod"
-import { MetadataSchema } from "./index.js";
+import z, { string } from "zod";
+import { createSchema } from "./index.js";
+import { foreignKey, primaryKey } from "./helpers.js";
 
-export const ProductionSchema = z.object({
-  ...MetadataSchema.shape,
+const VALID_LANGUAGES = z.enum(["nl", "en", "fr"]);
 
-  id: z.number(),
-  vendor_id: z.number(),
-  supertitle: z.json().nullable(),
-  title: z.json(),
-  artist: z.json(),
-  tagline: z.json().nullable(),
-  teaser: z.json().nullable(),
-  description: z.json().nullable(),
-  description_extra: z.json().nullable(),
-  description_2: z.json().nullable(),
-  video_1: z.json().nullable(),
-  video_2: z.json().nullable(),
-  quote: z.json().nullable(),
-  quote_source: z.json().nullable(),
-  programme: z.json().nullable(),
-  info: z.json().nullable(),
+const languageMap = z
+  .partialRecord(VALID_LANGUAGES, z.string())
+  .refine((map) => Object.keys(map).length >= 1);
+
+export const ProductionSchema = createSchema({
+  id: primaryKey(),
+  vendor_id: z.int().nonnegative(),
+  box_office_id: z.int().nonnegative(),
+  supertitle: languageMap.nullable(),
+  title: languageMap,
+  artist: languageMap,
+  tagline: languageMap,
+  teaser: languageMap,
+  description: languageMap.nullable(),
+  description_extra: languageMap.nullable(),
+  description_2: languageMap.nullable(),
+  video_1: languageMap.nullable(),
+  video_2: languageMap.nullable(),
+  quote: languageMap.nullable(),
+  quote_source: languageMap.nullable(),
+  programme: languageMap.nullable(),
+  info: languageMap.nullable(),
 
   // unnecessary
   // performer_field: z.string().nullable(),
@@ -34,27 +40,36 @@ export const ProductionSchema = z.object({
 
 export const FieldTypeSchema = z.enum(["number", "string", "bool", "json"]);
 
-export const CustomProductionFieldDefinitionSchema = z.object({
-  ...MetadataSchema.shape,
-
-  id: z.number(),
-  name: z.string(),
-  field_type: FieldTypeSchema,
+export const CustomProductionFieldDefinitionSchema = createSchema({
+  id: primaryKey(),
+  name: z.string().max(64),
+  type: FieldTypeSchema,
 });
 
-export const CustomProductionFieldSchema = z.object({
-  ...MetadataSchema.shape,
+export const CustomProductionFieldSchema = createSchema({
+  field_definition_id: foreignKey(() => CustomProductionFieldDefinitionSchema),
+  production_id: foreignKey(() => ProductionSchema),
 
-  field_id: z.number(),
-  production_id: z.number(),
-  
+  type: FieldTypeSchema,
+
   value_bool: z.boolean().nullable(),
   value_number: z.number().nullable(),
   value_string: z.string().nullable(),
-  value_json: z.json().nullable(),
+  value_json: z.json({ params: {} }).nullable(),
+}).refine((schema) => {
+  return (
+    schema[`value_${schema.type}`] != null &&
+    Object.entries(schema)
+      .filter(
+        ([key, _]) => key.startsWith("value") && !key.endsWith(schema.type),
+      )
+      .reduce((acc, [_, val]) => acc && val == null, true)
+  );
 });
 
 export type Production = z.infer<typeof ProductionSchema>;
 export type FieldType = z.infer<typeof FieldTypeSchema>;
-export type CustomProductionFieldDefinition = z.infer<typeof CustomProductionFieldDefinitionSchema>;
+export type CustomProductionFieldDefinition = z.infer<
+  typeof CustomProductionFieldDefinitionSchema
+>;
 export type CustomProductionField = z.infer<typeof CustomProductionFieldSchema>;
