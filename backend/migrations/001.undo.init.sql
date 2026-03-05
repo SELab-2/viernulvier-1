@@ -5,4 +5,10 @@
 -- Reverses 001.do.init.sql: drops production first (depends on admin), then admin.
 
 DROP TABLE IF EXISTS production;
+
+ALTER TABLE metadata
+  DROP COLUMN IF EXISTS created_by,
+  DROP COLUMN IF EXISTS updated_by;
+
 DROP TABLE IF EXISTS admin;
+DROP TABLE IF EXISTS metadata;

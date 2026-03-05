@@ -1,14 +1,14 @@
 -- UNDER NO CIRCUMSTANCES MAY THIS FILE BE EDITED WHEN LIVE
 -- ANY EDITS WILL RESOLVE IN DIFFERENT CHECKSUMS AND THE DB REJECTING THE MIGRATION
 
--- Creates custom field definitions 
+-- Creates custom field definitions
 
 
 -- ============================================================
 -- ENUMS
 -- ============================================================
 -- Creating the enum type first so it can be used in table definitions
-DO $$ 
+DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'field_types') THEN
         CREATE TYPE field_types AS ENUM ('number', 'string', 'bool', 'json');
@@ -21,8 +21,11 @@ END $$;
 CREATE TABLE IF NOT EXISTS custom_production_field_definition (
   id          SERIAL          PRIMARY KEY,
   name        VARCHAR(64)     NOT NULL,
-  
+
   type        field_types     NOT NULL,
+
+  -- Constraints
+  CONSTRAINT unique_type_per_id UNIQUE (id, type)
 ) INHERITS (metadata);
 
 -- ============================================================
@@ -35,7 +38,6 @@ CREATE TABLE IF NOT EXISTS production_custom_field (
   type field_types     NOT NULL,
   -- This foreign key ensure the type of this and the type of the definition stay the same.
   FOREIGN KEY (field_definition_id, type) REFERENCES custom_production_field_definition (id, type) ON DELETE CASCADE,
-  
   -- The sparse matrix of values
   value_bool      BOOLEAN,
   value_number    NUMERIC,
@@ -43,7 +45,6 @@ CREATE TABLE IF NOT EXISTS production_custom_field (
   value_json      JSONB,
   -- Composite Primary Key: A production can only have ONE value per field definition
   PRIMARY KEY (field_definition_id, production_id),
-  
   -- Now that we know the type variable should match the definition we can add the checks
   CONSTRAINT check_data_type CHECK (
           (type = 'bool'   AND value_bool IS NOT NULL   AND value_number IS NULL AND value_string IS NULL AND value_json IS NULL) OR
