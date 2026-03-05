@@ -2,7 +2,7 @@ name: Main Validation
 
 on:
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   pull-requests: write
@@ -18,13 +18,13 @@ jobs:
           script: |
             const target = context.payload.pull_request.base.ref;
             const source = context.payload.pull_request.head.ref;
-            
+
             const isInvalidMain = (target === 'main' && source !== 'staging');
             const isInvalidTestMain = (target === 'test-main' && source !== 'test-staging');
 
             if (isInvalidMain || isInvalidTestMain) {
               const allowedSource = target === 'main' ? 'staging' : 'test-staging';
-              
+
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -48,7 +48,7 @@ jobs:
     strategy:
       matrix:
         project: [frontend, backend]
-    
+
     defaults:
       run:
         working-directory: ${{ matrix.project }}
@@ -66,7 +66,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'pnpm'
+          cache: "pnpm"
           cache-dependency-path: ./pnpm-lock.yaml
 
       - name: Install Dependencies
@@ -76,9 +76,9 @@ jobs:
         working-directory: ${{ matrix.project }}
         run: pnpm run lint
 
-      - name: Test
+      - name: Coverage Tests
         working-directory: ${{ matrix.project }}
-        run: pnpm run test
+        run: pnpm run coverage
 
       - name: Build
         working-directory: ${{ matrix.project }}
