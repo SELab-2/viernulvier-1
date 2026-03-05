@@ -1,10 +1,11 @@
 import z from "zod";
 import { AdminSchema } from "./index.js";
+import { foreignKey } from "./helpers.js";
 
 export const MetadataShape = {
-  created_by: AdminSchema,
+  created_by: foreignKey(() => AdminSchema),
   created_at: z.date(),
-  updated_by: AdminSchema,
+  updated_by: foreignKey(() => AdminSchema),
   updated_at: z.date(),
 };
 
