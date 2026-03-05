@@ -29,6 +29,15 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
+      thresholds: {
+        "src/*/**/*.{ts,tsx}": {
+          statements: 80,
+          functions: 80,
+          branches: 80,
+          lines: 80,
+        },
+        perFile: true,
+      },
     },
   },
 });
