@@ -1,6 +1,6 @@
 import z from "zod"
 import { primaryKey, foreignKey, languageMap } from "./helpers";
-import { createSchema, MetadataShape } from ".";
+import { createSchema } from ".";
 
 export const TagTypeSchema = createSchema({
     id: primaryKey(),
