@@ -1,7 +1,8 @@
-import z, { string } from "zod";
+import z from "zod";
 import { createSchema } from "./index.js";
 import { foreignKey, primaryKey } from "./helpers.js";
 
+// A way to be more strict about the types we allow in our language maps.
 const VALID_LANGUAGES = z.enum(["nl", "en", "fr"]);
 
 const languageMap = z
