@@ -11,9 +11,6 @@ export type ForeignKey<T extends z.ZodType, O extends z.ZodObject<any>> = T & {
 /**
  * Helper function used to declare foreign keys.
  *
- * Returns
- *
- * @export
  * @template O - The type of the schema to which this key references
  * @param {() => O} schema - A callback that returns the schema which this key references
  * @return {ForeignKey<Serial, O>} A branded `z.int().nonnegative()` which has a property `.references` which
@@ -25,9 +22,6 @@ export function foreignKey<O extends z.ZodObject<any>>(
 /**
  * Helper function used to declare foreign keys.
  *
- * Returns
- *
- * @export
  * @template T - The type of zod type used as key
  * @template O - The type of the schema to which this key references
  * @param {T} type - The zod type to be used as a key
@@ -56,14 +50,12 @@ export function foreignKey<T extends z.ZodType, O extends z.ZodObject<any>>(
 /**
  * A helper function used to declare a primary key.
  *
- * @export
  * @return {PrimaryKey<Serial>}  A branded `z.int().nonnegative()`
  */
 export function primaryKey(): PrimaryKey<Serial>;
 /**
  * A helper function used to declare a primary key.
  *
- * @export
  * @param {T} type - The type of zod type used as key
  * @return {PrimaryKey<Serial>}  A branded `T`
  */
