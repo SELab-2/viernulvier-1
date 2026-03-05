@@ -17,3 +17,4 @@ export const TagSchema = createSchema({
 });
 
 export type Tag = z.infer<typeof TagSchema>;
+export type TagWithMeta = z.infer<ReturnType<typeof TagSchema.withMeta>>;
