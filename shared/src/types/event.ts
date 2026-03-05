@@ -4,7 +4,7 @@ import { createSchema, HallSchema, ProductionSchema } from "./index.js";
 import { foreignKey, languageMap, primaryKey } from "./helpers.js";
 
 export const EventSchema = createSchema({
-    id: primaryKey,
+    id: primaryKey(),
     starts_at: z.date(),
     ends_at: z.date(),
     production_id: foreignKey(() => ProductionSchema),
