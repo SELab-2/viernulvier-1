@@ -18,7 +18,7 @@ export const MetadataShape = {
  */
 export function createSchema<T extends z.ZodRawShape>(shape: T) {
   const base = z.object(shape);
-  return Object.defineProperty(base, 'withMeta', {
+  return Object.defineProperty(base, "withMeta", {
     value: () => base.extend(MetadataShape),
     writable: false,
     enumerable: false,
