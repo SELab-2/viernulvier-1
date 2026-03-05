@@ -11,7 +11,6 @@ export const ImageSchema: SchemaWithMeta<any> = createSchema({
   res: z
     .string()
     .max(16)
-    .min(1)
 }).refine((img) => {
   // resolution should not be empty or whitespace
   return img.res.trim().length > 0;
