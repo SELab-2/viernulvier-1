@@ -9,7 +9,13 @@ export const MetadataShape = {
   updated_at: z.date(),
 };
 
-// use this createSchema({...}) function instead of z.object({...}) to create new Schema's
+/**
+ * Creates a Zod schema with an additional `withMeta` method that extends the schema with metadata fields.
+ * Use this instead of `z.object({...})` when defining new schemas.
+ *
+ * @param shape - The Zod raw shape to create the schema from
+ * @returns A Zod object schema with a non-enumerable `withMeta` method
+ */
 export function createSchema<T extends z.ZodRawShape>(shape: T) {
   const base = z.object(shape);
   return Object.defineProperty(base, 'withMeta', {
