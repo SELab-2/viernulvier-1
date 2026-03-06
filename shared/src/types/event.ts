@@ -1,6 +1,6 @@
 import z from "zod"
 
-import { createSchema, HallSchema, PriceSchema, ProductionSchema } from "./index.js";
+import { createSchema, HallSchema, ProductionSchema } from "./index.js";
 import type { SchemaWithMeta } from "./index.js";
 import { foreignKey, languageMap, primaryKey } from "./helpers.js";
 
@@ -13,7 +13,7 @@ export const EventSchema: SchemaWithMeta<any> = createSchema({
     doors_at: z.date(),
     vendor_id: z.int().nonnegative(),
     info: languageMap,
-    pricing: z.array(foreignKey(() => PriceSchema)),
+    price: z.array(foreignKey(() => PriceSchema)),
 
     // unnecessary
     // box_office_id: z.int().nonnegative(),
@@ -30,3 +30,20 @@ export const EventSchema: SchemaWithMeta<any> = createSchema({
 
 export type Event = z.infer<typeof EventSchema>;
 export type EventWithMeta = z.infer<ReturnType<typeof EventSchema.withMeta>>;
+
+export const PriceSchema: SchemaWithMeta<any> = createSchema({
+    id: primaryKey(),
+    event: foreignKey((): typeof EventSchema => EventSchema),
+    amount: z.number().nonnegative(),
+
+    // unnecessary
+    // box_office_id: z.int().nonnegative(),
+    // available: z.int().nonnegative(),
+    // contingent_id: z.int().nonnegative().nullable(),
+    // expires_at: z.date().nullable(),
+    // price: z.json(),
+    // rank: z.json(),
+});
+
+export type Price = z.infer<typeof PriceSchema>;
+export type PriceWithMeta = z.infer<ReturnType<typeof PriceSchema.withMeta>>;
