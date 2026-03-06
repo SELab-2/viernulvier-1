@@ -7,12 +7,14 @@ export class HttpError extends Error {
   }
 }
 
-export enum ParseContext {
-  Request,
-  Database,
-}
+export const ParseContext = {
+  Request: "Request",
+  Database: "Database",
+} as const;
 
-const parseErrors: Record<ParseContext, HttpError> = {
+type ParseContextType = (typeof ParseContext)[keyof typeof ParseContext];
+
+const parseErrors: Record<ParseContextType, HttpError> = {
   [ParseContext.Request]: new HttpError(400, "Invalid request data"),
   [ParseContext.Database]: new HttpError(500, "Internal server error"),
 };
@@ -24,9 +26,10 @@ const parseErrors: Record<ParseContext, HttpError> = {
  * @param request - The Fastify request to extract params from.
  * @param key - The parameter key to extract.
  * @returns The parameter value as a string.
- * @throws {Error} If the parameter is not present in the request.
+ * @throws `Error` If the parameter is not present in the request.
  */
 export function getParam(request: FastifyRequest, key: string): string {
+  // eslint-disable-next-line security/detect-object-injection
   const value = (request.params as Record<string, string>)[key];
   if (value === undefined) throw new HttpError(400, `Missing route parameter: "${key}"`);
   return value;
@@ -41,7 +44,7 @@ export function getParam(request: FastifyRequest, key: string): string {
  * @param value - The raw value to parse.
  * @param context - The context in which the parse is happening, used to determine the error response.
  * @returns The parsed and typed value.
- * @throws {HttpError} If validation failed.
+ * @throws `HttpError` If validation failed.
  *
  * @internal
  */
@@ -49,11 +52,12 @@ export function safeParse<T>(
   server: FastifyInstance,
   schema: z.ZodType<T>,
   value: unknown,
-  context: ParseContext = ParseContext.Request
+  context: ParseContextType = ParseContext.Request
 ): T {
   const parsed = schema.safeParse(value);
   if (!parsed.success) {
     server.log.error(parsed.error);
+    // eslint-disable-next-line security/detect-object-injection
     throw parseErrors[context];
   }
   return parsed.data;
@@ -67,7 +71,7 @@ export function safeParse<T>(
  * @param schema - The Zod schema to validate and parse the row against.
  * @param rows - The array of rows returned from a database query.
  * @returns The parsed and typed value, or `null` if not found.
- * @throws {HttpError} If validation failed.
+ * @throws `HttpError` If validation failed.
  *
  * @internal
  */
@@ -86,7 +90,7 @@ export function parseFirstRow<T>(server: FastifyInstance, schema: z.ZodType<T>, 
  */
 export function replyHandler<T>(
   server: FastifyInstance,
-  handler: (server: FastifyInstance, request: FastifyRequest) => Promise<T | null>
+  handler: (server: FastifyInstance, reply: FastifyRequest) => Promise<T | null>
 ) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     try {
@@ -95,7 +99,7 @@ export function replyHandler<T>(
       return result;
     } catch (err) {
       if (err instanceof HttpError) {
-        return reply.status(err.status).send({ error: err.message });
+        return await reply.status(err.status).send({ error: err.message });
       }
       throw err;
     }

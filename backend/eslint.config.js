@@ -88,6 +88,7 @@ export default defineConfig([
           caughtErrorsIgnorePattern: "^_"
         }
       ],
+      "no-unused-vars": "off",
 
       // ----------------------------
       // Security / Node Runtime Safety
