@@ -1,229 +1,228 @@
+# VierNulVier Archive — Domain Model
 
-# VierNulVier Archief — Domeinmodel
+## Overview
 
-## Overzicht
+This document describes the **domain model of the VierNulVier Archive**.
 
-Dit document beschrijft het **domeinmodel van het VierNulVier Archief**.
+The archive is a digital platform that documents cultural productions and events in Ghent. Users can browse the archive and view information about performances, artists, and events.
 
-Het archief is een digitaal platform dat culturele producties en evenementen in Gent documenteert. Gebruikers kunnen het archief doorzoeken en informatie bekijken over voorstellingen, artiesten en evenementen. :contentReference[oaicite:2]{index=2}
+Administrators can manage productions and events through an admin interface.
 
-Beheerders kunnen via een adminomgeving producties en evenementen beheren.
-
-Het domeinmodel beschrijft de **belangrijkste concepten en relaties** binnen dit systeem.
+The domain model describes the **main concepts and relationships** within this system.
 
 ---
 
-# Belangrijkste Domeinconcepten
+# Main Domain Concepts
 
-## Productie
+## Production
 
-Een **culturele voorstelling of artistieke productie**.
+A **cultural performance or artistic production**.
 
-Voorbeelden:
-- theaterstuk
-- dansvoorstelling
+Examples:
+- theatre play
+- dance performance
 - concert
-- filmvertoning
+- film screening
 
-**Belangrijkste eigenschappen**
+**Main properties**
 
-- titel
-- beschrijving
+- title
+- description
 - teaser
 - tags
 - media
-- extra informatie
+- additional information
 
-**Relaties**
+**Relationships**
 
-- een productie kan meerdere **evenementen** hebben
-- een productie kan meerdere **tags** hebben
-- een productie kan meerdere **afbeeldingen** hebben
-- een productie kan meerdere **custom velden** bevatten
+- a production can have multiple **events**
+- a production can have multiple **tags**
+- a production can have multiple **images**
+- a production can contain multiple **custom fields**
 
 ---
 
-## Evenement
+## Event
 
-Een **specifieke uitvoering van een productie op een bepaald moment**.
+A **specific occurrence of a production at a particular time**.
 
-Een productie kan meerdere keren plaatsvinden.
+A production can take place multiple times.
 
-**Eigenschappen**
+**Properties**
 
-- startdatum
-- einddatum
-- deuren open tijd
+- start date
+- end date
+- doors open time
 - status
 
-**Relaties**
+**Relationships**
 
-- hoort bij **één productie**
-- vindt plaats op **één locatie**
-- kan meerdere **prijzen** hebben
+- belongs to **one production**
+- takes place at **one location**
+- can have multiple **prices**
 
 ---
 
-## Locatie
+## Location
 
-Een fysieke plaats waar evenementen plaatsvinden.
+A physical place where events take place.
 
-Voorbeelden:
+Examples:
 
 - NTGent
 - Vooruit
-- concertzaal
+- concert hall
 
-**Eigenschappen**
+**Properties**
 
-- naam
-- adres
-- zaal informatie
+- name
+- address
+- venue information
 
-**Relaties**
+**Relationships**
 
-- een locatie kan meerdere **evenementen** hosten
+- a location can host multiple **events**
 
 ---
 
-## EventPrijs
+## EventPrice
 
-Prijsinformatie voor een evenement.
+Price information for an event.
 
-**Eigenschappen**
+**Properties**
 
-- prijs
-- beschikbaar aantal tickets
-- vervaldatum
+- price
+- available number of tickets
+- expiration date
 
-**Relaties**
+**Relationships**
 
-- hoort bij **één evenement**
+- belongs to **one event**
 
 ---
 
 ## Tag
 
-Tags worden gebruikt om producties te classificeren.
+Tags are used to classify productions.
 
-Voorbeelden:
+Examples:
 
-- theater
-- klassiek
-- dans
+- theatre
+- classical
+- dance
 - festival
 
-**Relaties**
+**Relationships**
 
-- een tag kan gekoppeld zijn aan meerdere **producties**
+- a tag can be linked to multiple **productions**
 
 ---
 
-## Afbeelding
+## Image
 
-Afbeelding die bij een productie hoort.
+Image associated with a production.
 
-**Relaties**
+**Relationships**
 
-- hoort bij **één productie**
-- kan meerdere **crops** hebben
+- belongs to **one production**
+- can have multiple **crops**
 
 ---
 
 ## Crop
 
-Uitsnede van een afbeelding.
+A cropped version of an image.
 
-**Eigenschappen**
+**Properties**
 
 - url
 
-**Relaties**
+**Relationships**
 
-- hoort bij **één afbeelding**
-
----
-
-## CustomProductieVeld
-
-Extra veld dat aan een productie kan worden toegevoegd.
-
-Dit laat toe om flexibel metadata toe te voegen.
-
-**Relaties**
-
-- hoort bij **één productie**
-- gebruikt een **velddefinitie**
+- belongs to **one image**
 
 ---
 
-## Gebruiker
+## CustomProductionField
 
-Bezoeker van de website.
+An additional field that can be added to a production.
 
-Gebruikers kunnen het archief raadplegen.
+This allows flexible metadata to be added.
 
-**Mogelijkheden**
+**Relationships**
 
-- producties bekijken
-- evenementen bekijken
-- zoeken in het archief
+- belongs to **one production**
+- uses a **field definition**
 
 ---
 
-## Beheerder (Admin)
+## User
 
-Beheerder van het archief.
+Visitor of the website.
 
-**Mogelijkheden**
+Users can browse the archive.
 
-- producties beheren
-- evenementen beheren
-- media beheren
-- blogs beheren
+**Capabilities**
+
+- view productions
+- view events
+- search the archive
+
+---
+
+## Administrator (Admin)
+
+Administrator of the archive.
+
+**Capabilities**
+
+- manage productions
+- manage events
+- manage media
+- manage blogs
 
 ---
 
 ## Blog
 
-Nieuws of artikels op de website.
+News or articles on the website.
 
-**Relaties**
+**Relationships**
 
-- bevat meerdere **blogposts**
+- contains multiple **blog posts**
 
 ---
 
 ## BlogPost
 
-Artikel binnen een blog.
+Article within a blog.
 
-**Relaties**
+**Relationships**
 
-- hoort bij **één blog**
-
----
-
-# Belangrijkste Relaties
-
-| Entiteit | Relatie | Entiteit | Cardinaliteit |
-|--------|--------|--------|--------|
-| Productie | heeft | Evenement | 1 → 0..* |
-| Evenement | vindt plaats in | Locatie | * → 1 |
-| Evenement | heeft | EventPrijs | 1 → 0..* |
-| Productie | heeft | Afbeelding | 1 → 0..* |
-| Afbeelding | heeft | Crop | 1 → 0..* |
-| Productie | heeft | Tag | * ↔ * |
-| Productie | heeft | CustomVeld | 1 → 0..* |
-| Blog | bevat | BlogPost | 1 → 0..* |
-| Gebruiker | bekijkt | Productie | 0..* |
-| Gebruiker | bekijkt | Evenement | 0..* |
-| Admin | beheert | Productie | 0..* |
-| Admin | beheert | Evenement | 0..* |
+- belongs to **one blog**
 
 ---
 
-# Domeinmodel (Mermaid Diagram)
+# Main Relationships
+
+| Entity | Relationship | Entity | Cardinality |
+|------|------|------|------|
+| Production | has | Event | 1 → 0..* |
+| Event | takes place in | Location | * → 1 |
+| Event | has | EventPrice | 1 → 0..* |
+| Production | has | Image | 1 → 0..* |
+| Image | has | Crop | 1 → 0..* |
+| Production | has | Tag | * ↔ * |
+| Production | has | CustomField | 1 → 0..* |
+| Blog | contains | BlogPost | 1 → 0..* |
+| User | views | Production | 0..* |
+| User | views | Event | 0..* |
+| Admin | manages | Production | 0..* |
+| Admin | manages | Event | 0..* |
+
+---
+
+# Domain Model (Mermaid Diagram)
 
 ```mermaid
 classDiagram
@@ -253,8 +252,8 @@ Productie "1" --> "0..*" CustomProductieVeld
 
 Blog "1" --> "0..*" BlogPost
 
-Gebruiker --> Productie : bekijkt
-Gebruiker --> Evenement : bekijkt
+Gebruiker --> Productie : views
+Gebruiker --> Evenement : views
 
-Admin --> Productie : beheert
-Admin --> Evenement : beheert
+Admin --> Productie : manages
+Admin --> Evenement : manages
