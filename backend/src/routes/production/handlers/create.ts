@@ -81,6 +81,6 @@ export async function createProduction(server: FastifyInstance, request: Fastify
   const row = insertResult.rows[0];
   if (!row) return null;
 
-  return getProductionById(server, row.id);
+  return await getProductionById(server, row.id);
 }
 

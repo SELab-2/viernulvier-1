@@ -50,7 +50,7 @@ export async function getProductionById(server: FastifyInstance, id: string | nu
  */
 export async function fetchProduction(server: FastifyInstance, request: FastifyRequest): Promise<Production | null> {
   const id = getParam(request, "id");
-  return getProductionById(server, id);
+  return await getProductionById(server, id);
 }
 
 /**

@@ -105,5 +105,5 @@ export async function editProduction(server: FastifyInstance, request: FastifyRe
     values,
   );
 
-  return getProductionById(server, id);
+  return await getProductionById(server, id);
 }
