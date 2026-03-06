@@ -245,7 +245,7 @@ Event "*" --> "1" Location
 Event "1" --> "0..*" EventPrice
 
 Production "1" --> "0..*" Image
-Afbeelding "1" --> "0..*" Crop
+Image "1" --> "0..*" Crop
 
 Production "*" --> "*" Tag
 Production "1" --> "0..*" CustomProductionField
