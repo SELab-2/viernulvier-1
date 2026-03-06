@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Admin } from "@viernulvier/shared/index.js";
 import { AdminSchema } from "@viernulvier/shared/index.js";
-import { parseFirstRow, safeParse } from "@/routes/helpers.js";
+import { getMetadata, parseFirstRow, safeParse } from "@/routes/helpers.js";
 import { z } from "zod";
 import { hashPassword } from "./hash.js";
 
@@ -20,14 +20,14 @@ export async function createAdmin(server: FastifyInstance, request: FastifyReque
   const body = safeParse(server, CreateAdminBodySchema, request.body);
   if (!body) return null;
 
-  const { admin, current_time } = {admin: 0, current_time: 0};
+  const { admin, current_time } = getMetadata();
   const hashedPassword = await hashPassword(body.password);
 
   const result = await server.pg.query<Admin>(
-    `INSERT INTO admin (username, password, created_at, updated_at, created_by, updated_by)
+    `INSERT INTO admin (username, password, created_by, updated_by, created_at, updated_at)
      VALUES ($1, $2, $3, $3, $4, $4)
      RETURNING id, username, profile_picture_url AS profile_picture`,
-    [body.username, hashedPassword, current_time, admin]
+    [body.username, hashedPassword, admin, current_time]
   );
 
   return parseFirstRow(server, AdminSchema, result.rows);
