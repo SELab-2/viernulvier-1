@@ -24,9 +24,7 @@ export function createSchema<T extends z.ZodRawShape>(shape: T) {
     writable: false,
     enumerable: false,
     configurable: false,
-  }) as typeof base & {
-    withMeta: () => z.ZodObject<T & typeof MetadataShape>;
-  };
+  }) as SchemaWithMeta<T>;
 }
 
 export type SchemaWithMeta<T extends z.ZodRawShape> = z.ZodObject<T> & {
