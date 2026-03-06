@@ -15,15 +15,8 @@ export const TagSchema = createSchema({
     id: primaryKey(),
     name: languageMap,
     type: foreignKey(() => TagTypeSchema),
+    productions: z.array(foreignKey(() => ProductionSchema)),
 });
 
 export type Tag = z.infer<typeof TagSchema>;
 export type TagWithMeta = z.infer<ReturnType<typeof TagSchema.withMeta>>;
-
-export const ProductionTagSchema = createSchema({
-    production_id: foreignKey(() => ProductionSchema),
-    tag_id: foreignKey(() => TagSchema),
-});
-
-export type ProductionTag = z.infer<typeof ProductionTagSchema>;
-export type ProductionTagWithMeta = z.infer<ReturnType<typeof ProductionTagSchema.withMeta>>;
