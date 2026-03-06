@@ -1,339 +1,351 @@
-# VierNulVier Archief – Website Documentatie
 
-## Overzicht
+# VierNulVier Archive – Website Documentation
 
-Het VierNulVier Archief is een digitale website die culturele producties en evenementen in Gent documenteert. De website bevat informatie over theater, dans, film, muziek en andere culturele activiteiten die doorheen de jaren plaatsvonden.
+## Overview
 
-Het doel van de website is:
-- Cultureel erfgoed digitaal archiveren
-- Gebruikers toelaten om producties en evenementen te doorzoeken
-- Informatie over artiesten, locaties en reeksen toegankelijk maken
-- Administrators de mogelijkheid geven om nieuwe producties en evenementen toe te voegen of te bewerken
+The VierNulVier Archive is a digital website that documents cultural productions and events in Ghent. The website contains information about theatre, dance, film, music, and other cultural activities that took place over the years.
 
-De website bestaat uit verschillende hoofdonderdelen:
+The purpose of the website is to:
 
-- Homepagina
-- Archief overzicht
-- Productie detailpagina
-- Reeks (festival/serie) detailpagina
-- Zoek- en filterinterface
+- Digitally archive cultural heritage
+- Allow users to search productions and events
+- Provide access to information about artists, locations, and series
+- Allow administrators to add or edit productions and events
+
+The website consists of several main sections:
+
+- Homepage
+- Archive overview
+- Production detail page
+- Series (festival/collection) detail page
+- Search and filtering interface
 - Admin interface
+
+---
 
 ## Mockup Links
 
-Voor een beter begrip van de interface en de gebruikersflow van de website kan je onderstaande Figma links bekijken.
+To better understand the interface and user flow of the website, the following Figma links can be used.
 
-### Interactieve Demo
-De interactieve demo laat toe om door de mockup te navigeren alsof het een echte website is. Dit helpt om de navigatie, pagina-overgangen en algemene gebruikerservaring te begrijpen.
+### Interactive Demo
+
+The interactive demo allows navigation through the mockup as if it were a real website. This helps to understand the navigation, page transitions, and overall user experience.
 
 **Link:**  
 https://www.figma.com/proto/hEaVRZNy64S4fkTYIwgFzR/Archive-site-mockup--Visual-board-?node-id=0-1&t=lVJVFJV7LQ5pnXwc-1
 
-### Overzicht van de Mockup
-Deze link toont het volledige designbestand met alle schermen en componenten van de mockup. Hier kan je het volledige ontwerp en de structuur van de website bekijken.
+### Mockup Overview
+
+This link shows the full design file with all screens and components of the mockup. It allows viewing the complete design and structure of the website.
 
 **Link:**  
 https://www.figma.com/design/hEaVRZNy64S4fkTYIwgFzR/Archive-site-mockup--Visual-board-?node-id=0-1&t=lVJVFJV7LQ5pnXwc-1
 
+---
 
+# 1. Homepage
+
+## Purpose
+
+The homepage introduces the archive and provides users access to browse the archive.
+
+## Content
+
+The page contains:
+
+- Introductory text about the VierNulVier archive
+- General statistics about the archive
+- Navigation to the archive
+
+Example statistics:
+
+- number of productions
+- number of years
+- number of series
+
+## Possible actions
+
+Users can:
+
+- Navigate to the archive
+- Read more information about the archive
+- View statistics about the contents of the database
 
 ---
 
+# 2. Archive Overview (Browse Archive)
 
+## Purpose
 
-# 1. Homepagina
+The archive page displays an overview of all productions in the database.
 
-## Doel
-De homepagina introduceert het archief en geeft gebruikers toegang tot het browsen van het archief.
+Each production is shown as a card containing:
 
-## Inhoud
+- Title
+- Artist or group
+- Short description
+- Tags (genre, type, festival)
+- Location
+- Date or period
 
-De pagina bevat:
-- Introductietekst over het VierNulVier archief
-- Algemene statistieken over het archief
-- Navigatie naar het archief
+## Search functionality
 
-Voorbeeld statistieken:
-- aantal producties
-- aantal jaren
-- aantal reeksen
+Users can search using a search bar.
 
-## Mogelijke acties
+Search queries can match:
 
-Gebruikers kunnen:
-
-- Doorklikken naar het archief
-- Meer informatie lezen over het archief
-- Statistieken bekijken over de inhoud van de database
-
----
-
-# 2. Archief Overzicht (Browse Archive)
-
-## Doel
-De archiefpagina toont een overzicht van alle producties in de database.
-
-Elke productie wordt weergegeven als een kaart met:
-
-- Titel
-- Artiest of gezelschap
-- Korte beschrijving
-- Tags (genre, soort, festival)
-- Locatie
-- Datum of periode
-
-## Zoekfunctionaliteit
-
-Gebruikers kunnen zoeken via een zoekbalk.
-
-Zoekopdrachten kunnen matchen op:
-- productietitel
-- artiest
-- locatie
+- production title
+- artist
+- location
 - tags
 
-## Sorteren
+## Sorting
 
-De lijst kan gesorteerd worden op verschillende velden:
+The list can be sorted by different fields:
 
-- titel
-- artiest
-- datum
+- title
+- artist
+- date
 - genre
 - festival
 
-Sortering kan oplopend of aflopend zijn.
+Sorting can be ascending or descending.
 
 ## Filters
 
-Gebruikers kunnen de resultaten filteren op:
+Users can filter results by:
 
-### Festival / Reeks
-Filter producties die onderdeel zijn van een bepaalde reeks.
+### Festival / Series
+Filter productions that belong to a specific series.
 
-### Locatie
-Filter producties die op een specifieke locatie plaatsvinden.
+### Location
+Filter productions that take place at a specific location.
 
-### Artiest
-Filter producties van een bepaalde artiest of groep.
+### Artist
+Filter productions by a specific artist or group.
 
 ### Genre
-Filter op type voorstelling zoals:
-- theater
-- dans
-- muziek
+Filter by type of performance such as:
+
+- theatre
+- dance
+- music
 - film
 
-### Datum
-Filter op een specifieke datum of periode.
+### Date
+Filter by a specific date or period.
 
-Dit kan via:
-- jaarselectie
-- kalender
-- datumrange
+This can be done through:
 
-## Mogelijke acties
+- year selection
+- calendar
+- date range
 
-Gebruikers kunnen:
+## Possible actions
 
-- Producties bekijken
-- Filters toepassen
-- Zoekopdrachten uitvoeren
-- Resultaten sorteren
-- Doorklikken naar een productiepagina
+Users can:
+
+- View productions
+- Apply filters
+- Perform search queries
+- Sort results
+- Navigate to a production page
 
 ---
 
-# 3. Productie Detailpagina
+# 3. Production Detail Page
 
-## Doel
-De detailpagina toont uitgebreide informatie over een specifieke productie.
+## Purpose
 
-## Inhoud
+The detail page shows detailed information about a specific production.
 
-De pagina bevat:
+## Content
 
-### Basisinformatie
-- titel
-- artiest of gezelschap
-- beschrijving
+The page contains:
+
+### Basic information
+
+- title
+- artist or group
+- description
 - genre
-- soort
-- locatie
+- type
+- location
 - tags
 
-### Evenementen
-Een productie kan meerdere evenementen bevatten.
+### Events
 
-Voor elk evenement wordt getoond:
+A production can contain multiple events.
 
-- datum
-- tijd
-- locatie
-- prijs
+For each event the following is shown:
 
-Voorbeeld:
-- 15/07/2024 – 20:00 – NTGent hoofdzaal – €17
-- 16/07/2024 – 20:00 – NTGent hoofdzaal – €17
+- date
+- time
+- location
+- price
 
+### Series information
 
-### Reeks informatie
-Indien de productie deel uitmaakt van een reeks (bijvoorbeeld een festival), wordt deze hier vermeld.
+If the production is part of a series (for example a festival), this is shown here.
 
-Bijvoorbeeld:
+Example:
+
 - Gentse Feesten 2024
 
-## Mogelijke acties
+## Possible actions
 
-Gebruikers kunnen:
+Users can:
 
-- Details van een productie bekijken
-- Evenementdata bekijken
-- Doorklikken naar de bijhorende reeks
+- View details of a production
+- View event dates
+- Navigate to the related series
 
 ---
 
-# 4. Reeks Detailpagina
+# 4. Series Detail Page
 
-## Doel
-Toont informatie over een specifieke reeks of festival.
+## Purpose
 
-Bijvoorbeeld:
+Shows information about a specific series or festival.
+
+Example:
+
 - Gentse Feesten 2024
 
-## Inhoud
+## Content
 
-De pagina bevat:
+The page contains:
 
-### Basisinformatie
-- naam van de reeks
-- jaar
-- beschrijving
+### Basic information
 
-### Producties in de reeks
+- name of the series
+- year
+- description
 
-Een lijst met alle producties die onderdeel zijn van deze reeks.
+### Productions in the series
 
-Voor elke productie wordt getoond:
+A list of all productions that belong to this series.
 
-- titel
-- artiest
+For each production the following is shown:
+
+- title
+- artist
 - genre
-- aantal evenementen
+- number of events
 
-## Mogelijke acties
+## Possible actions
 
-Gebruikers kunnen:
+Users can:
 
-- Producties binnen de reeks bekijken
-- Doorklikken naar individuele producties
+- View productions within the series
+- Navigate to individual productions
 
 ---
 
 # 5. Admin Interface
 
-De admin interface is bedoeld voor beheerders van het archief.
+The admin interface is intended for archive administrators.
 
-Hier kunnen zij producties en evenementen beheren.
+Here they can manage productions and events.
 
-## Productie overzicht
+## Production overview
 
-In de adminpagina wordt een tabel getoond met alle producties.
+The admin page displays a table containing all productions.
 
-Deze tabel werkt vergelijkbaar met een spreadsheet.
+This table works similarly to a spreadsheet.
 
-Velden kunnen rechtstreeks aangepast worden.
+Fields can be edited directly.
 
-Voorbeelden van kolommen:
+Example columns:
 
-- producent
-- productie
-- uitvoerders
+- producer
+- production
+- performers
 - genres
 - tags
-- beschrijving
+- description
 - media
 
-## Bewerken
+## Editing
 
-Administrators kunnen:
+Administrators can:
 
-- een cel aanklikken
-- waarde wijzigen
-- bevestigen met Enter
-- navigeren met pijltjestoetsen
+- click a cell
+- modify the value
+- confirm with Enter
+- navigate with arrow keys
 
-Wijzigingen moeten opgeslagen worden.
+Changes must be saved.
 
 ---
 
-# 6. Productie Aanmaken
+# 6. Creating a Production
 
-Administrators kunnen nieuwe producties toevoegen.
+Administrators can add new productions.
 
-## Basisinformatie
+## Basic information
 
-Verplichte velden:
+Required fields:
 
-- titel
-- artiest
-- beschrijving
+- title
+- artist
+- description
 - tags
 
-## Evenementen
+## Events
 
-Bij het aanmaken van een productie kunnen één of meerdere evenementen toegevoegd worden.
+When creating a production, one or more events can be added.
 
-Voor elk evenement:
+For each event:
 
-- datum
-- tijd
-- locatie
-- prijs
+- date
+- time
+- location
+- price
 
-Er kan een extra evenement toegevoegd worden via een knop.
-
----
-
-# 7. Evenementen Beheer
-
-Binnen de admin interface kunnen evenementen per productie beheerd worden.
-
-Mogelijke acties:
-
-- bestaande evenementen bekijken
-- evenementen aanpassen
-- nieuwe evenementen toevoegen
-- evenementen verwijderen
-
-Een evenement bevat minimaal:
-
-- datum
-- tijd
-- locatie
-- prijs
+Additional events can be added using a button.
 
 ---
 
-# 8. Navigatie
+# 7. Event Management
 
-De website bevat een eenvoudige navigatiestructuur.
+Within the admin interface, events can be managed per production.
 
-Belangrijke navigatiepunten:
+Possible actions:
+
+- view existing events
+- edit events
+- add new events
+- delete events
+
+An event contains at minimum:
+
+- date
+- time
+- location
+- price
+
+---
+
+# 8. Navigation
+
+The website contains a simple navigation structure.
+
+Important navigation elements:
 
 - Home
-- Archief
-- Admin (alleen zichtbaar voor beheerders)
+- Archive
+- Admin (visible only to administrators)
 
 ---
 
-# Samenvatting
+# Summary
 
-De VierNulVier archiefwebsite biedt:
+The VierNulVier archive website provides:
 
-- een publiek archief van culturele producties
-- uitgebreide zoek- en filtermogelijkheden
-- detailpagina’s voor producties en reeksen
-- een admininterface voor het beheren van data
+- a public archive of cultural productions
+- extensive search and filtering options
+- detailed pages for productions and series
+- an admin interface for managing data
 
-Hierdoor kunnen zowel bezoekers als beheerders efficiënt met het culturele archief werken.
+This allows both visitors and administrators to efficiently work with the cultural archive.
