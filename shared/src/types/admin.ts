@@ -1,6 +1,8 @@
 import z from "zod";
-import { primaryKey } from "./helpers";
-import { createSchema, MetadataShape } from ".";
+
+import { primaryKey } from "./helpers.js";
+import { createSchema } from "./index.js";
+import type { SchemaWithMeta } from "./index.js";
 
 export const AdminBase = {
   id: primaryKey(),
@@ -8,11 +10,7 @@ export const AdminBase = {
   profile_picture: z.url().max(2048).nullable(),
 };
 
-type AdminSchemaType = z.ZodObject<typeof AdminBase> & {
-  withMeta: () => z.ZodObject<typeof AdminBase & typeof MetadataShape>;
-};
-
-export const AdminSchema: AdminSchemaType = createSchema(AdminBase);
+export const AdminSchema: SchemaWithMeta<any> = createSchema(AdminBase);
 
 export type Admin = z.infer<typeof AdminSchema>;
 export type AdminWithMeta = z.infer<ReturnType<typeof AdminSchema.withMeta>>;

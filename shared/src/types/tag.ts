@@ -1,6 +1,6 @@
-import z from "zod"
-import { primaryKey, foreignKey, languageMap } from "./helpers";
-import { createSchema } from ".";
+import z from "zod";
+import { primaryKey, foreignKey, languageMap } from "./helpers.js";
+import { createSchema, ProductionSchema } from "./index.js";
 
 export const TagTypeSchema = createSchema({
     id: primaryKey(),
@@ -15,6 +15,7 @@ export const TagSchema = createSchema({
     id: primaryKey(),
     name: languageMap,
     type: foreignKey(() => TagTypeSchema),
+    productions: z.array(foreignKey(() => ProductionSchema)),
 });
 
 export type Tag = z.infer<typeof TagSchema>;

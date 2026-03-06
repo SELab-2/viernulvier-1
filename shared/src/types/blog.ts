@@ -1,7 +1,7 @@
-import z from "zod"
+import z from "zod";
 
-import { createSchema } from "./index";
-import { foreignKey, primaryKey } from "./helpers";
+import { createSchema } from "./index.js";
+import { foreignKey, primaryKey } from "./helpers.js";
 
 export const BlogSchema = createSchema({
     id: primaryKey(),

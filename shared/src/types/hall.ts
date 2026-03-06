@@ -1,8 +1,10 @@
 import z from "zod";
-import { createSchema } from "./metadata";
-import { languageMap, primaryKey } from "./helpers";
 
-export const HallSchema = createSchema({
+import { createSchema } from "./index.js";
+import type { SchemaWithMeta } from "./index.js";
+import { languageMap, primaryKey } from "./helpers.js";
+
+export const HallSchema: SchemaWithMeta<any> = createSchema({
   id: primaryKey(),
   address: z.string(),
   vendor_id: z.int().nonnegative(),
@@ -17,3 +19,4 @@ export const HallSchema = createSchema({
 });
 
 export type Hall = z.infer<typeof HallSchema>;
+export type HallWithMeta = z.infer<ReturnType<typeof HallSchema.withMeta>>;
