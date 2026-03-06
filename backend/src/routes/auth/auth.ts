@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { replyHandler } from "@/routes/helpers.js";
-import { fetchAdmin, fetchAdminWithMeta, createAdmin, replaceAdmin, editAdmin, deleteAdmin } from "./handlers/index.js";
+import { fetchAdmin, fetchAdminWithMeta, createAdmin, replaceAdmin, editAdmin, deleteAdmin, login } from "./handlers/index.js";
 
 /**
  * Registers authentication routes on the Fastify instance.
@@ -11,6 +11,8 @@ import { fetchAdmin, fetchAdminWithMeta, createAdmin, replaceAdmin, editAdmin, d
  * - `POST /api/v1/auth` — create a new admin.
  * - `PUT /api/v1/auth/:id` — replace an existing admin's data.
  * - `PATCH /api/v1/auth/:id` — partially update an existing admin.
+ * - `DELETE /api/v1/auth/:id` — delete an admin by ID.
+ * - `POST /api/v1/auth/login` — authenticate an admin and return a session token.
  *
  * @param server - The Fastify instance to register routes on.
  */
@@ -21,4 +23,5 @@ export default function authRoutes(server: FastifyInstance) {
   server.put("/api/v1/auth/:id", replyHandler(server, replaceAdmin));
   server.patch("/api/v1/auth/:id", replyHandler(server, editAdmin));
   server.delete("/api/v1/auth/:id", replyHandler(server, deleteAdmin));
+  server.post("/api/v1/auth/login", replyHandler(server, login));
 }
