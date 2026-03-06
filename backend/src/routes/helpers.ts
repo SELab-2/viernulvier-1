@@ -48,7 +48,7 @@ export function getParam(request: FastifyRequest, key: string): string {
  *
  * @internal
  */
-export function safeParse<T>(
+export function parse<T>(
   server: FastifyInstance,
   schema: z.ZodType<T>,
   value: unknown,
@@ -77,7 +77,7 @@ export function safeParse<T>(
  */
 export function parseFirstRow<T>(server: FastifyInstance, schema: z.ZodType<T>, rows: unknown[]): T | null {
   if (rows.length === 0) return null;
-  return safeParse(server, schema, rows[0], ParseContext.Database);
+  return parse(server, schema, rows[0], ParseContext.Database);
 }
 
 /**
