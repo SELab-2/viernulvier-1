@@ -53,18 +53,18 @@ export function parseFirstRow<T>(server: FastifyInstance, schema: z.ZodType<T>, 
 }
 
 /**
- * Wraps a fetch function and sends a 404 response if the result is null.
+ * Wraps a handler function and sends a 404 response if the result is null.
  *
  * @param server - The Fastify instance, used for route registration.
- * @param fetch - The fetch function to wrap.
+ * @param handler - The handler function to wrap.
  * @returns A Fastify route handler.
  */
-export function fetchHandler<T>(
+export function replyHandler<T>(
   server: FastifyInstance,
-  fetch: (server: FastifyInstance, request: FastifyRequest) => Promise<T | null>
+  handler: (server: FastifyInstance, request: FastifyRequest) => Promise<T | null>
 ) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
-    const result = await fetch(server, request);
+    const result = await handler(server, request);
     if (!result) return reply.status(404).send({ error: "Not found" });
     return result;
   };
