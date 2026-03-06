@@ -33,6 +33,7 @@
   "description": "",
   "devDependencies": {
     "@eslint/js": "^9",
+    "@types/bcrypt": "^6.0.0",
     "@types/node": "^25.3.0",
     "@types/pg": "^8.16.0",
     "@vitest/coverage-v8": "4.0.18",
