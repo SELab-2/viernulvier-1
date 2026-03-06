@@ -1,9 +1,6 @@
 import type { FastifyInstance } from "fastify";
-import { fetchAdmin, fetchAdminWithMeta } from "./fetch.js";
 import { replyHandler } from "@/routes/helpers.js";
-import { createAdmin } from "./create.js";
-import { editAdmin } from "./edit.js";
-import { replaceAdmin } from "./replace.js";
+import { fetchAdmin, fetchAdminWithMeta, createAdmin, replaceAdmin, editAdmin, deleteAdmin } from "./handlers/index.js";
 
 /**
  * Registers authentication routes on the Fastify instance.
@@ -23,4 +20,5 @@ export default function authRoutes(server: FastifyInstance) {
   server.post("/api/v1/auth", replyHandler(server, createAdmin));
   server.put("/api/v1/auth/:id", replyHandler(server, replaceAdmin));
   server.patch("/api/v1/auth/:id", replyHandler(server, editAdmin));
+  server.delete("/api/v1/auth/:id", replyHandler(server, deleteAdmin));
 }

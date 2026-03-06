@@ -1,34 +1,32 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Admin } from "@viernulvier/shared/index.js";
 import { AdminSchema } from "@viernulvier/shared/index.js";
-import { getMetadata, getParam, parseFirstRow, safeParse } from "@/routes/helpers.js";
+import { getMetadata, parseFirstRow, parse } from "@/routes/helpers.js";
 import { z } from "zod";
 import { hashPassword } from "./hash.js";
 
-const ReplaceAdminBodySchema = AdminSchema.pick({ username: true }).extend({
+const CreateAdminBodySchema = AdminSchema.pick({ username: true }).extend({
   password: z.string().min(8).max(72),
 });
 
 /**
- * Replaces an existing admin's data and returns the updated record.
- * Unlike `editAdmin`, all fields are required and will be overwritten.
+ * Creates a new admin and returns the created record.
  *
  * @param server - The Fastify instance, used for database access and logging.
  * @param request - The Fastify request, expected to contain `username` and `password` in its body.
- * @returns The updated admin, or `null` if the update failed or parsing failed.
+ * @returns The created admin, or `null` if the insert failed or parsing failed.
  */
-export async function replaceAdmin(server: FastifyInstance, request: FastifyRequest): Promise<Admin | null> {
-  const id = getParam(request, "id");
-  const body = safeParse(server, ReplaceAdminBodySchema, request.body);
+export async function createAdmin(server: FastifyInstance, request: FastifyRequest): Promise<Admin | null> {
+  const body = parse(server, CreateAdminBodySchema, request.body);
 
   const { admin, current_time } = getMetadata();
   const hashedPassword = await hashPassword(body.password);
 
   const result = await server.pg.query<Admin>(
-    `UPDATE admin SET username = $1, password = $2, updated_by = $3, updated_at = $4
-     WHERE id = $5
+    `INSERT INTO admin (username, password, created_by, updated_by, created_at, updated_at)
+     VALUES ($1, $2, $3, $3, $4, $4)
      RETURNING id, username, profile_picture_url AS profile_picture`,
-    [body.username, hashedPassword, admin, current_time, id]
+    [body.username, hashedPassword, admin, current_time]
   );
 
   return parseFirstRow(server, AdminSchema, result.rows);
