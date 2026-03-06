@@ -1,59 +1,59 @@
-## Dev omgeving opstarten voor dummies.
+## Dev Environment Setup for Dummies
 
-- Zorg eerst dat je node versie 24 hebt door `nvm install --lts` uit te voeren. Als u systeem geen nvm heeft zoek zelf uit hoe node te updaten.
-- Node komt standaard met npm maar wij gebruiken pnpm dus doe hierna ook. `npm i -g pnpm`
-- Eens dit gedaan is kan je alle dependencies downloaden met door `pnpm i` in de hoofd repo uit te voeren.
-- Om een scriptje te runnen verander je eerst daar ofwel `backend` of `frontend` dir en voer je `pnpm run <NAAM>` uit.
+- First make sure you have node version 24 by running `nvm install --lts`. If your system doesn't have nvm, figure out how to update node yourself.
+- Node comes with npm by default but we use pnpm so do this as well: `npm i -g pnpm`
+- Once that's done you can download all dependencies by running `pnpm i` in the root repo.
+- To run a script you first change to either the `backend` or `frontend` dir and run `pnpm run <NAME>`.
 
-### .env opstellen
+### Setting up .env
 
-- Omdat we in de toekomst met geheime sleutels zullen werken wordt de `.env` file ge ignored door git. Ik heb wel een `.env.example` file aangemaakt met wat standaard poorten. Een later zal dit ook `<REPLACE ME>` placeholder bevatten voor geheime data.
+- Because we'll be working with secret keys in the future, the `.env` file is ignored by git. I did create a `.env.example` file with some default ports. Later this will also contain `<REPLACE ME>` placeholders for secret data.
 
-- Voor dat je docker container kan opstarten moet je eerst dus `cp .env.example .env` uitvoeren en de missende velden invullen.
+- Before you can start the docker container you first need to run `cp .env.example .env` and fill in the missing fields.
 
-## Docker containers opstarten.
+## Starting Docker Containers
 
-- Zorg eerst en vooral dat je docker engine op u laptop ge geïnstalleerd hebt. [Install Guide](https://docs.docker.com/engine/install/)
+- First and foremost make sure you have docker engine installed on your laptop. [Install Guide](https://docs.docker.com/engine/install/)
 
-- Check dat docker engine aant runnen is met, `sudo systemctl status docker`.
+- Check that docker engine is running with `sudo systemctl status docker`.
 
-- Indien niet het geval `sudo systemctl start docker`.
+- If not the case: `sudo systemctl start docker`.
 
-### Met vsc (easy mode)
+### With VSCode (easy mode)
 
-- Druk `F1` om de command prompt van vsc open te doen.
-- Zoek `Tasks: Run Build Tasks`, de standaard keyboard shortcut voor dit is ook `F7`.
-- Nu zal vsc 2 terminal windows open doen 1 met die de docker containers opstart en een ander die de logs toont van zowel de backend als de frontend in een split view.
+- Press `F1` to open the VSCode command prompt.
+- Search for `Tasks: Run Build Tasks`, the default keyboard shortcut for this is also `F7`.
+- VSCode will now open 2 terminal windows: one that starts the docker containers and another that shows the logs of both the backend and frontend in a split view.
 
-- Om de containers af te sluiten voer je het vscode commando `Tasks: Run Tasks` `docker:cleanup` uit.
+- To shut down the containers run the VSCode command `Tasks: Run Tasks` → `docker:cleanup`.
 
-### Via de helper scriptjes
+### Via the helper scripts
 
-- In de root directory vind je 2 scriptjes `rundev.sh`(Unix) en `rundev.bat`(Windows). Voer het scriptje uit dat bij u OS past.
+- In the root directory you'll find 2 scripts: `rundev.sh` (Unix) and `rundev.bat` (Windows). Run the script that matches your OS.
 
-- Eens docker is opgestart kan je de output van de backend/frontend zien door `docker logs --tail 100 viernulvier-(backend|frontend)` uit te voeren.
+- Once docker is started you can view the output of the backend/frontend by running `docker logs --tail 100 viernulvier-(backend|frontend)`.
 
-- Om de containers af te sluiten voer je gwn `docker compose down` uit.
+- To shut down the containers just run `docker compose down`.
 
-## Het bekijken van de endpoints
+## Viewing the Endpoints
 
-- De frontend wordt normaal gezien op <http:://localhost:5173> geserveerd. Als je de env variable `FRONTEND_PORT` aangepast hebt in de `.env` file moet je die raadplegen om de juiste poort te vinden.
+- The frontend is normally served at <http://localhost:5173>. If you've changed the `FRONTEND_PORT` env variable in the `.env` file you'll need to check that for the correct port.
 
-- De backend kan ofwel bereikt worden door het frontent url met `/api` er achter ofwel op het default url <http:://localhost:3000>. Idem dito over het veranderen van de env variable `BACKEND_PORT`.
+- The backend can be reached either via the frontend URL with `/api` appended, or at the default URL <http://localhost:3000>. Same goes for changing the `BACKEND_PORT` env variable.
 
-## Linting testing en zo voort
+## Linting, Testing, and So On
 
-- Om te checken dat u code de juiste standaard behaald dat zal worden gecheckt door onze github actions kan je op u eigen de pnpm scriptjes uitvoeren in de root repo. `pnpm run check-(backend|frontend|all)` deze zullen op hun beurt zowel de linter als de tests uitvoeren voor u code.
+- To check that your code meets the standard that will be verified by our GitHub Actions, you can run the pnpm scripts in the root repo yourself: `pnpm run check-(backend|frontend|all)` — these will in turn run both the linter and the tests for your code.
 
-- Als je wenst enkel te checken of de linter slaagt in een gegeven package (frontend/backend) kan je in die directory `pnpm run lint` uitvoeren.
+- If you only want to check whether the linter passes in a given package (frontend/backend), you can run `pnpm run lint` in that directory.
 
-- Als je wenst enkel te checken of de testen slagen in een gegeven package (frontend/backend) kan je in die directory `pnpm run test` uitvoeren.
+- If you only want to check whether the tests pass in a given package (frontend/backend), you can run `pnpm run test` in that directory.
 
-### Enkel voor vsc gebruikers
+### VSCode users only
 
-- Ik raad aan de eslint extension te gebruiken. die zal vanzelf de eslint.config files vinden en constant de linter in de background runnen, om u meer directe info te geven.
+- I recommend using the eslint extension. It will automatically find the eslint.config files and constantly run the linter in the background, giving you more direct feedback.
 
-## Veel voorkomende problemen
+## Common Problems
 
-- Als na het runnen van de docker startup je het probleem van permission denied krijgt voer dan `sudo usermod -aG docker $USER` uit om te zorgen dat u user toegang heeft to de docker groep.
-- Als ge docker probeert te gebruiken op wsl, dan is het belangrijk dat je docker engine via docker desktop die op je windows draait. In de settings kan je dan naar `Resources -> WSL Integration` gaan om de engine ook toegang te geven tot u WSL distro's.
+- If after running the docker startup you get a permission denied error, run `sudo usermod -aG docker $USER` to ensure your user has access to the docker group.
+- If you're trying to use docker on WSL, it's important that you run docker engine via Docker Desktop running on your Windows. In the settings you can go to `Resources → WSL Integration` to also give the engine access to your WSL distros.
