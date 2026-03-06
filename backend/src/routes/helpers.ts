@@ -101,3 +101,16 @@ export function replyHandler<T>(
     }
   };
 }
+
+/**
+ * Returns metadata for database operations.
+ * Until authorization is implemented, `admin` is hardcoded to `0`.
+ *
+ * @returns An object containing the current admin ID and the current timestamp.
+ */
+export function getMetadata() {
+  return {
+    admin: 0,
+    current_time: new Date(),
+  };
+}
