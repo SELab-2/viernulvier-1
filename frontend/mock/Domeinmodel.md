@@ -252,8 +252,8 @@ Production "1" --> "0..*" CustomProductionField
 
 Blog "1" --> "0..*" BlogPost
 
-Gebruiker --> Production : views
-Gebruiker --> Event : views
+User --> Production : views
+User --> Event : views
 
 Admin --> Production : manages
 Admin --> Event : manages
