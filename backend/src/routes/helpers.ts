@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import type { z } from "zod";
 
 /**
@@ -50,4 +50,22 @@ export function safeParse<T>(server: FastifyInstance, schema: z.ZodType<T>, valu
 export function parseFirstRow<T>(server: FastifyInstance, schema: z.ZodType<T>, rows: unknown[]): T | null {
   if (rows.length === 0) return null;
   return safeParse(server, schema, rows[0]);
+}
+
+/**
+ * Wraps a fetch function and sends a 404 response if the result is null.
+ *
+ * @param server - The Fastify instance, used for route registration.
+ * @param fetch - The fetch function to wrap.
+ * @returns A Fastify route handler.
+ */
+export function fetchHandler<T>(
+  server: FastifyInstance,
+  fetch: (server: FastifyInstance, request: FastifyRequest) => Promise<T | null>
+) {
+  return async (request: FastifyRequest, reply: FastifyReply) => {
+    const result = await fetch(server, request);
+    if (!result) return reply.status(404).send({ error: "Not found" });
+    return result;
+  };
 }

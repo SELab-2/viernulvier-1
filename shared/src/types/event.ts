@@ -8,7 +8,7 @@ export const EventSchema: SchemaWithMeta<any> = createSchema({
     id: primaryKey(),
     starts_at: z.date(),
     ends_at: z.date(),
-    production_id: foreignKey(() => ProductionSchema),
+    production: foreignKey(() => ProductionSchema),
     hall: foreignKey(() => HallSchema),
     doors_at: z.date(),
     vendor_id: z.int().nonnegative(),
