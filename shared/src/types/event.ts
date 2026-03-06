@@ -1,4 +1,4 @@
-import z from "zod"
+import z from "zod";
 
 import { createSchema, HallSchema, ProductionSchema } from "./index.js";
 import { foreignKey, languageMap, primaryKey } from "./helpers.js";

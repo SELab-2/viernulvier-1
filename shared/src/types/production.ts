@@ -1,5 +1,5 @@
 import z from "zod";
-import { EventSchema, createSchema } from "./index.js";
+import { EventSchema, TagSchema, createSchema } from "./index.js";
 import type { SchemaWithMeta } from "./index.js";
 import { foreignKey, primaryKey, languageMap } from "./helpers.js";
 
@@ -22,6 +22,7 @@ export const ProductionSchema: SchemaWithMeta<any> = createSchema({
   quote_source: languageMap.nullable(),
   programme: languageMap.nullable(),
   info: languageMap.nullable(),
+  tags: z.array(foreignKey(() => TagSchema)),
 
   // unnecessary
   // performer_field: z.string().nullable(),
