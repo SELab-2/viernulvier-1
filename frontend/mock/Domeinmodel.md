@@ -227,33 +227,33 @@ Article within a blog.
 ```mermaid
 classDiagram
 
-class Productie
-class Evenement
-class Locatie
-class EventPrijs
+class Production
+class Event
+class Location
+class EventPrice
 class Tag
-class Afbeelding
+class Image
 class Crop
-class CustomProductieVeld
-class Gebruiker
+class CustomProductionField
+class User
 class Admin
 class Blog
 class BlogPost
 
-Productie "1" --> "0..*" Evenement
-Evenement "*" --> "1" Locatie
-Evenement "1" --> "0..*" EventPrijs
+Production "1" --> "0..*" Event
+Event "*" --> "1" Location
+Event "1" --> "0..*" EventPrice
 
-Productie "1" --> "0..*" Afbeelding
+Production "1" --> "0..*" Image
 Afbeelding "1" --> "0..*" Crop
 
-Productie "*" --> "*" Tag
-Productie "1" --> "0..*" CustomProductieVeld
+Production "*" --> "*" Tag
+Production "1" --> "0..*" CustomProductionField
 
 Blog "1" --> "0..*" BlogPost
 
-Gebruiker --> Productie : views
-Gebruiker --> Evenement : views
+Gebruiker --> Production : views
+Gebruiker --> Event : views
 
-Admin --> Productie : manages
-Admin --> Evenement : manages
+Admin --> Production : manages
+Admin --> Event : manages
