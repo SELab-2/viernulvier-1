@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 
 import { parseFirstRow, parse } from "@/routes/helpers.js";
 import { EventSchema } from "@viernulvier/shared/types/event.js";
@@ -7,12 +7,12 @@ import type { Event } from "@viernulvier/shared/types/event.js";
 
 /**
  * Creates a new event row in the database.
- * Returns a 400 response when the request body is invalid.
+ * Helpers returns a 400 response when the request body is invalid.
  *
  * @param server - The Fastify instance, used for database access and logging.
  * @param request - The Fastify request containing the event payload.
  * @param reply - The Fastify reply used to send HTTP error responses.
- * @returns The created event.
+ * @returns The created event or `null` upon failure.
  */
 export async function createEvent(
 	server: FastifyInstance,
