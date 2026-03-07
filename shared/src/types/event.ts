@@ -1,10 +1,11 @@
 import z from "zod";
 
-import { createSchema, HallSchema, ProductionSchema } from "./index.js";
+import { createSchema } from "./metadata.js";
+import { HallSchema, ProductionSchema } from "./index.js";
 import type { SchemaWithMeta } from "./index.js";
 import { foreignKey, languageMap, primaryKey } from "./helpers.js";
 
-export const EventSchema: SchemaWithMeta<any> = createSchema({
+export const EventSchema = createSchema({
     id: primaryKey(),
     starts_at: z.date(),
     ends_at: z.date(),

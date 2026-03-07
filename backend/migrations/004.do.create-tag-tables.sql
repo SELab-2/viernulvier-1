@@ -8,7 +8,7 @@
 -- ============================================================
 CREATE TABLE IF NOT EXISTS tag_type (
   id          SERIAL          PRIMARY KEY,
-  name        VARCHAR(32)     NOT NULL UNIQUE
+  name        JSONB           NOT NULL UNIQUE
 ) INHERITS (metadata);
 
 -- ============================================================
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS tag_type (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS tag (
   id          SERIAL          PRIMARY KEY,
-  name        VARCHAR(32)     NOT NULL,
+  name        JSONB           NOT NULL,
   public      BOOLEAN         NOT NULL DEFAULT FALSE, -- false = CMS only, true = Public
   type_id     INT             NOT NULL REFERENCES tag_type(id) ON DELETE CASCADE,
 

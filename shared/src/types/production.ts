@@ -1,9 +1,10 @@
 import z from "zod";
-import { EventSchema, TagSchema, createSchema } from "./index.js";
+import { createSchema } from "./metadata.js";
+import { EventSchema, TagSchema } from "./index.js";
 import type { SchemaWithMeta } from "./index.js";
 import { foreignKey, primaryKey, languageMap } from "./helpers.js";
 
-export const ProductionSchema: SchemaWithMeta<any> = createSchema({
+export const ProductionSchema: SchemaWithMeta<Record<string, z.ZodTypeAny>> = createSchema({
   id: primaryKey(),
   vendor_id: z.int().nonnegative(),
   box_office_id: z.int().nonnegative(),

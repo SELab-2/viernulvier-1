@@ -1,5 +1,6 @@
 import z from "zod";
-import { createSchema, ImageSchema } from "./index.js";
+import { createSchema } from "./metadata.js";
+import { ImageSchema } from "./index.js";
 import type { SchemaWithMeta } from "./index.js";
 import { primaryKey, foreignKey } from "./helpers.js";
 
