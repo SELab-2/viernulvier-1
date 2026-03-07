@@ -1,0 +1,92 @@
+import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
+import { buildServer } from "@/server.js";
+import type { FastifyInstance } from "fastify";
+import productionRoutes from "@/routes/production/production.js";
+import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
+
+let server: FastifyInstance;
+
+const baseProduction: Production = {
+  id: 1,
+  vendor_id: 10,
+  box_office_id: 20,
+  events: [],
+  supertitle: null,
+  title: { nl: "Titel" },
+  artist: { nl: "Artiest" },
+  tagline: { nl: "Tagline" },
+  teaser: { nl: "Teaser" },
+  description: null,
+  description_extra: null,
+  description_2: null,
+  video_1: null,
+  video_2: null,
+  quote: null,
+  quote_source: null,
+  programme: null,
+  info: null,
+  tags: [],
+};
+
+beforeAll(async () => {
+  server = await buildServer();
+  await server.register(productionRoutes);
+
+  server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+    const upper = query.trim().toUpperCase();
+
+    if (upper.startsWith("SELECT") && upper.includes("WHERE P.ID = $1")) {
+      const id = Number(params?.[0]);
+      if (id === baseProduction["id"]) {
+        return Promise.resolve({ rows: [baseProduction], rowCount: 1 });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    }
+
+    if (upper.startsWith("SELECT")) {
+      return Promise.resolve({ rows: [baseProduction], rowCount: 1 });
+    }
+
+    throw new Error(`Unexpected query in fetch tests: ${query}`);
+  });
+});
+
+afterAll(async () => {
+  await server.close();
+});
+
+describe("Production fetch routes", () => {
+  test("GET /api/v1/production -> returns a list of productions", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production",
+    });
+
+    expect(response.statusCode).toBe(200);
+
+    const json = response.json();
+    const parsed = ProductionSchema.array().parse(json);
+    expect(parsed).toEqual([baseProduction]);
+  });
+
+  test("GET /api/v1/production/:id -> returns a single production", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/production/${baseProduction["id"]}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const parsed = ProductionSchema.parse(response.json());
+    expect(parsed).toEqual(baseProduction);
+  });
+
+  test("GET /api/v1/production/:id -> returns 404 for unknown id", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production/9999",
+    });
+
+    expect(response.statusCode).toBe(404);
+  });
+});
+
