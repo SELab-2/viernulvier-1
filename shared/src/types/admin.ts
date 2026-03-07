@@ -1,7 +1,7 @@
 import z from "zod";
 
 import { primaryKey } from "./helpers.js";
-import { createSchema } from "./index.js";
+import { createSchema } from "./metadata.js";
 
 export const AdminBase = {
   id: primaryKey().describe("Primary key of admin."),

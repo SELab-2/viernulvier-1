@@ -1,6 +1,7 @@
 import z from "zod";
 
-import { createSchema, HallSchema, ProductionSchema } from "./index.js";
+import { createSchema } from "./metadata.js";
+import { HallSchema, ProductionSchema } from "./index.js";
 import type { SchemaWithMeta } from "./index.js";
 import { foreignKey, languageMap, primaryKey } from "./helpers.js";
 

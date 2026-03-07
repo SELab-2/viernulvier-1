@@ -40,11 +40,11 @@ export function foreignKey<T extends z.ZodType, O extends z.ZodObject<any>>(
   const base = (
     obj ? (typeOrObj as T) : z.int().nonnegative()
   ).brand<"ForeignKey">();
-  const target = (obj ?? (typeOrObj as () => O))();
+  const getTarget = obj ?? (typeOrObj as () => O);
   return Object.defineProperty(base, "references", {
-    value: target,
+    get: () => getTarget(),
     enumerable: false,
-    writable: false,
+    configurable: true,
   }) as ForeignKey<T, O>;
 }
 /**
