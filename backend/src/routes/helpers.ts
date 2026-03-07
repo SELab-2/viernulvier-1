@@ -1,38 +1,43 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import type { z } from "zod";
+import { z } from "zod";
 
 export class HttpError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
     super(message);
   }
 }
 
-export const ParseContext = {
-  Request: "Request",
-  Database: "Database",
-} as const;
+export const enum ParseContext {
+  Request,
+  Database,
+}
 
 type ParseContextType = (typeof ParseContext)[keyof typeof ParseContext];
 
-const parseErrors: Record<ParseContextType, HttpError> = {
+const parseErrors: Readonly<Record<ParseContextType, HttpError>> = {
   [ParseContext.Request]: new HttpError(400, "Invalid request data"),
   [ParseContext.Database]: new HttpError(500, "Internal server error"),
 };
 
 /**
- * Extracts a typed parameter from a Fastify request.
- * Throws an error if the parameter is not present.
+ * Uses a zod schema to validate the params and returns them as an object.
  *
  * @param request - The Fastify request to extract params from.
- * @param key - The parameter key to extract.
+ * @param schema - The parameter key to extract.
  * @returns The parameter value as a string.
- * @throws `Error` If the parameter is not present in the request.
+ * @throws `Error` If params don't match the schema.
  */
-export function getParam(request: FastifyRequest, key: string): string {
-  // eslint-disable-next-line security/detect-object-injection
-  const value = (request.params as Record<string, string>)[key];
-  if (value === undefined) throw new HttpError(400, `Missing route parameter: "${key}"`);
-  return value;
+export function parseParams<
+  ParamType extends z.ZodRawShape,
+  ParamSchema extends z.ZodObject<ParamType>,
+>(request: FastifyRequest, schema: ParamSchema): z.output<ParamSchema> {
+  const parsed = schema.safeParse(request.params);
+  request.log.error(parsed.error);
+  if (!parsed.success) throw new HttpError(400, "Invalid params");
+  return parsed.data;
 }
 
 /**
@@ -48,12 +53,12 @@ export function getParam(request: FastifyRequest, key: string): string {
  *
  * @internal
  */
-export function parse<T>(
+export function parse<ResultSchema extends z.ZodType>(
   server: FastifyInstance,
-  schema: z.ZodType<T>,
+  schema: ResultSchema,
   value: unknown,
-  context: ParseContextType = ParseContext.Request
-): T {
+  context: ParseContextType = ParseContext.Request,
+): z.output<ResultSchema> {
   const parsed = schema.safeParse(value);
   if (!parsed.success) {
     server.log.error(parsed.error);
@@ -75,9 +80,45 @@ export function parse<T>(
  *
  * @internal
  */
-export function parseFirstRow<T>(server: FastifyInstance, schema: z.ZodType<T>, rows: unknown[]): T | null {
+export function parseFirstRow<
+  ResultType extends z.ZodRawShape,
+  ResultSchema extends z.ZodObject<ResultType>,
+>(
+  server: FastifyInstance,
+  schema: ResultSchema,
+  rows: unknown[],
+): z.output<ResultSchema> | null {
   if (rows.length === 0) return null;
   return parse(server, schema, rows[0], ParseContext.Database);
+}
+
+export function buildQuery<
+  FilterFields extends z.ZodTuple,
+  ResultType extends z.ZodRawShape,
+  ResultSchema extends z.ZodObject<ResultType>,
+>(
+  server: FastifyInstance,
+  queryConfig: Parameters<typeof server.pg.query>[0],
+  filterFields: FilterFields,
+  resultSchema: ResultSchema,
+): (
+  ...values: z.infer<FilterFields>
+) => Promise<z.output<z.ZodArray<ResultSchema>>> {
+  return async (...values: z.infer<FilterFields>) => {
+    const parsed = filterFields.safeParse(values);
+    if (!parsed.success) {
+      server.log.error(parsed.error);
+      throw parseErrors[ParseContext.Request];
+    }
+    let res;
+    try {
+      res = await server.pg.query(queryConfig, parsed.data as unknown[]);
+    } catch (err) {
+      server.log.error(err);
+      throw parseErrors[ParseContext.Database];
+    }
+    return parse(server, z.array(resultSchema), res);
+  };
 }
 
 /**
@@ -88,9 +129,12 @@ export function parseFirstRow<T>(server: FastifyInstance, schema: z.ZodType<T>, 
  * @param handler - The handler function to wrap.
  * @returns A Fastify route handler.
  */
-export function replyHandler<T>(
+export function replyHandler<T extends z.ZodRawShape, Z extends z.ZodObject<T>>(
   server: FastifyInstance,
-  handler: (server: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => Promise<T | null>
+  handler: (
+    server: FastifyInstance,
+    reply: FastifyRequest,
+  ) => Promise<Z | null>,
 ) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     try {
