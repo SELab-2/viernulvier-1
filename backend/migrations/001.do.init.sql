@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS production (
   video_2           JSONB,
   quote             JSONB,
   quote_source      JSONB,
-  programme        JSONB,
+  programme         JSONB,
   info              JSONB,
   description_short JSONB,
   eticket_info      JSONB,
