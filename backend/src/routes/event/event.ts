@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 
-import { fetchHandler } from "./helpers.js";
-import { fetchEvent, fetchEvents, fetchEventWithMeta } from "./event/fetch.js";
+import { fetchHandler } from "../helpers.js";
+import { fetchEvent, fetchEvents, fetchEventWithMeta } from "./handlers/fetch.js";
 
 export default function eventRoutes(server: FastifyInstance) {
     server.get("/api/event/:id", fetchHandler(server, fetchEvent));
