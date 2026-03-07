@@ -9,7 +9,7 @@ const CreateHallBodySchema = HallSchema.omit({ id: true });
  * Creates a new hall and returns the created hall.
  *
  * @param server - The Fastify instance, used for database access and logging.
- * @param request - The Fastify request, expected to contain a production body.
+ * @param request - The Fastify request, expected to contain a hall body.
  * @returns The created hall, or `null` if the insert failed or parsing failed.
  */
 export async function createHall(server: FastifyInstance, request: FastifyRequest): Promise<Hall | null> {
