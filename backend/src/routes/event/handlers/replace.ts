@@ -5,8 +5,8 @@ import { EventSchema } from "@viernulvier/shared/types/event.js";
 import type { Event } from "@viernulvier/shared/types/event.js";
 
 /**
- * Replaces a single event by ID in the database.
- * Returns `null` when the event does not exist or validation fails.
+ * Replaces a single event by ID in the database or creates a new one if not found.
+ * Returns `null` when validation fails.
  *
  * @param server - The Fastify instance, used for database access and logging.
  * @param request - The Fastify request containing the event route parameter and updated data.
