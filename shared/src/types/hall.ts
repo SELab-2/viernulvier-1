@@ -1,6 +1,6 @@
 import z from "zod";
 
-import { createSchema } from "./index.js";
+import { createSchema } from "./metadata.js";
 import type { SchemaWithMeta } from "./index.js";
 import { languageMap, primaryKey } from "./helpers.js";
 
