@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { buildServer, getPort, start } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 
-vi.mock("@/db/postgres.js", () => ({
+vi.mock("@/plugin/postgres.js", () => ({
   default: vi.fn(async (server: FastifyInstance) => {
     server.pg = { query: vi.fn() } as any;
   }),

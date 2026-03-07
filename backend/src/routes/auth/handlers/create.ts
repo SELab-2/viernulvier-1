@@ -19,7 +19,7 @@ const CreateAdminBodySchema = AdminSchema.pick({ username: true }).extend({
 export async function createAdmin(server: FastifyInstance, request: FastifyRequest): Promise<Admin | null> {
   const body = parse(server, CreateAdminBodySchema, request.body);
 
-  const { admin, current_time } = getMetadata();
+  const { admin, current_time } = getMetadata(request);
   const hashedPassword = await hashPassword(body.password);
 
   const result = await server.pg.query<Admin>(

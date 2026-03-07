@@ -3,6 +3,8 @@
     "node": ">=24"
   },
   "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/jwt": "^10.0.0",
     "@fastify/postgres": "^6.0.2",
     "@viernulvier/shared": "workspace:*",
     "bcrypt": "^6.0.0",

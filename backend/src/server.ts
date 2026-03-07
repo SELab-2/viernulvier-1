@@ -1,5 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
-import dbPlugin from "./db/postgres.js";
+import dbPlugin from "./plugins/postgres.js";
+import jwtPlugin from "./plugins/jwt.js";
+import authorizePlugin from "./plugins/authorize.js";
 import registerRoutes from "./routes/registerRoutes.js";
 
 /**
@@ -36,6 +38,8 @@ function createServer(): FastifyInstance {
  */
 async function registerPlugins(server: FastifyInstance) {
   await server.register(dbPlugin);
+  await server.register(jwtPlugin);
+  await server.register(authorizePlugin);
   await registerRoutes(server);
 }
 

@@ -13,6 +13,7 @@
     "check-all": "pnpm i --frozen-lockfile && pnpm run --filter backend check && pnpm run --filter frontend check",
     "lint:fix-all": "pnpm i --frozen-lockfile && pnpm run --filter backend lint:fix && pnpm run --filter frontend lint:fix",
     "coverage-all": "pnpm i --frozen-lockfile && pnpm run --filter backend coverage && pnpm run --filter frontend coverage",
-    "build-all": "pnpm i --frozen-lockfile && pnpm run --filter backend build && pnpm run --filter frontend build"
+    "build-all": "pnpm i --frozen-lockfile && pnpm run --filter backend build && pnpm run --filter frontend build",
+    "generate-secret": "tsx backend/scripts/generate-secret.ts"
   }
 }

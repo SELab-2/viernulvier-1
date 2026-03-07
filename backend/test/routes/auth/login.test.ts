@@ -29,7 +29,11 @@ describe("Login on auth route", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ session: "placeholder-session-token" });
+    expect(response.cookies).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "session", httpOnly: true }),
+      ])
+    );
   });
 
   test("POST /api/v1/auth/login — returns 401 when username not found", async () => {

@@ -21,7 +21,7 @@ export async function replaceAdmin(server: FastifyInstance, request: FastifyRequ
   const id = getParam(request, "id");
   const body = parse(server, ReplaceAdminBodySchema, request.body);
 
-  const { admin, current_time } = getMetadata();
+  const { admin, current_time } = getMetadata(request);
   const hashedPassword = await hashPassword(body.password);
 
   const result = await server.pg.query<Admin>(

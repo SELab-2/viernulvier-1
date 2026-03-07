@@ -4,6 +4,7 @@ import type { FastifyInstance } from "fastify";
 import { AdminSchema, type Admin } from "@viernulvier/shared/index.js";
 
 let server: FastifyInstance;
+let sessionCookie: string;
 
 const mockUsername = "Karel"
 const mockPassword = "securepassword123";
@@ -15,6 +16,7 @@ const mockCreatedAdmin: Admin = {
 
 beforeAll(async () => {
   server = await buildServer();
+  sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
 
   server.pg.query = vi.fn().mockImplementation((query: string) => {
     const isInsert = query.trim().toUpperCase().startsWith("INSERT");
@@ -36,6 +38,7 @@ describe("Create on auth route", () => {
     const response = await server.inject({
       method: "POST",
       url: "/api/v1/auth",
+      cookies: { session: sessionCookie },
       payload: {
         username: mockUsername,
         password: mockPassword,
@@ -50,6 +53,7 @@ describe("Create on auth route", () => {
     const response = await server.inject({
       method: "POST",
       url: "/api/v1/auth",
+      cookies: { session: sessionCookie },
       payload: {
         username: mockUsername,
         password: "short",
@@ -63,6 +67,7 @@ describe("Create on auth route", () => {
     const response = await server.inject({
       method: "POST",
       url: "/api/v1/auth",
+      cookies: { session: sessionCookie },
       payload: {
         password: mockPassword,
       },
@@ -75,6 +80,7 @@ describe("Create on auth route", () => {
     const response = await server.inject({
       method: "POST",
       url: "/api/v1/auth",
+      cookies: { session: sessionCookie },
       payload: {
         username: mockUsername,
       },

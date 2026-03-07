@@ -4,6 +4,7 @@ import type { FastifyInstance } from "fastify";
 import { AdminSchema, type Admin } from "@viernulvier/shared/index.js";
 
 let server: FastifyInstance;
+let sessionCookie: string;
 
 const mockUsername = "Karel";
 const mockPassword = "securepassword123";
@@ -15,6 +16,7 @@ const mockCreatedAdmin: Admin = {
 
 beforeAll(async () => {
   server = await buildServer();
+  sessionCookie = server.jwt.sign({ id: 404, username: "Karel" });
 
   server.pg.query = vi.fn().mockImplementation((query: string) => {
     const isUpdate = query.trim().toUpperCase().startsWith("UPDATE");
@@ -36,6 +38,7 @@ describe("Edit on auth route", () => {
     const response = await server.inject({
       method: "PATCH",
       url: `/api/v1/auth/${mockCreatedAdmin.id}`,
+      cookies: { session: sessionCookie },
       payload: { username: mockUsername },
     });
 
@@ -47,6 +50,7 @@ describe("Edit on auth route", () => {
     const response = await server.inject({
       method: "PATCH",
       url: `/api/v1/auth/${mockCreatedAdmin.id}`,
+      cookies: { session: sessionCookie },
       payload: { password: mockPassword },
     });
 
@@ -58,6 +62,7 @@ describe("Edit on auth route", () => {
     const response = await server.inject({
       method: "PATCH",
       url: `/api/v1/auth/${mockCreatedAdmin.id}`,
+      cookies: { session: sessionCookie },
       payload: { username: mockUsername, password: mockPassword },
     });
 
@@ -69,6 +74,7 @@ describe("Edit on auth route", () => {
     const response = await server.inject({
       method: "PATCH",
       url: `/api/v1/auth/${mockCreatedAdmin.id}`,
+      cookies: { session: sessionCookie },
       payload: { password: "short" },
     });
 

@@ -20,7 +20,7 @@ export async function editAdmin(server: FastifyInstance, request: FastifyRequest
   const id = getParam(request, "id");
   const body = parse(server, EditAdminBodySchema, request.body);
 
-  const { admin, current_time } = getMetadata();
+  const { admin, current_time } = getMetadata(request);
 
   const fields: string[] = [];
   const values: unknown[] = [];

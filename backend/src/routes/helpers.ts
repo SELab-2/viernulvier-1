@@ -90,11 +90,11 @@ export function parseFirstRow<T>(server: FastifyInstance, schema: z.ZodType<T>, 
  */
 export function replyHandler<T>(
   server: FastifyInstance,
-  handler: (server: FastifyInstance, reply: FastifyRequest) => Promise<T | null>
+  handler: (server: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => Promise<T | null>
 ) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const result = await handler(server, request);
+      const result = await handler(server, request, reply);
       if (!result) throw new HttpError(404, "Not Found");
       return result;
     } catch (err) {
@@ -112,9 +112,10 @@ export function replyHandler<T>(
  *
  * @returns An object containing the current admin ID and the current timestamp.
  */
-export function getMetadata() {
+export function getMetadata(request: FastifyRequest) {
+  const payload = request.user as { id: number };
   return {
-    admin: 0,
+    admin: payload.id,
     current_time: new Date(),
   };
 }
