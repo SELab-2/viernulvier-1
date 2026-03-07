@@ -1,6 +1,7 @@
 import z from "zod";
 import { primaryKey, foreignKey, languageMap } from "./helpers.js";
-import { createSchema, ProductionSchema } from "./index.js";
+import { createSchema } from "./metadata.js";
+import { ProductionSchema } from "./index.js";
 
 export const TagTypeSchema = createSchema({
     id: primaryKey(),
