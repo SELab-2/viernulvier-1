@@ -1,19 +1,9 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
-import { parseFirstRow } from "@/routes/helpers.js";
+import { parseFirstRow, parse } from "@/routes/helpers.js";
 import { EventSchema } from "@viernulvier/shared/types/event.js";
 import type { Event } from "@viernulvier/shared/types/event.js";
 
-const CreateEventBodySchema = EventSchema.pick({
-    starts_at: true,
-    ends_at: true,
-    production_id: true,
-    hall: true,
-    doors_at: true,
-    vendor_id: true,
-    info: true,
-    price: true
-});
 
 /**
  * Creates a new event row in the database.
@@ -27,14 +17,8 @@ const CreateEventBodySchema = EventSchema.pick({
 export async function createEvent(
 	server: FastifyInstance,
 	request: FastifyRequest,
-	reply: FastifyReply,
-): Promise<Event | FastifyReply> {
-	const parsedBody = CreateEventBodySchema.safeParse(request.body);
-	if (!parsedBody.success) {
-		return reply.status(400).send({ error: "Invalid event payload" });
-	}
-
-	const body = parsedBody.data;
+): Promise<Event | null> {
+	const body = parse<Event>(server, EventSchema, request.body, "Request");
 
 	const result = await server.pg.query<Event>(
 		`INSERT INTO events (starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, price)
@@ -52,11 +36,6 @@ export async function createEvent(
 		],
 	);
 
-	const createdEvent = parseFirstRow(server, EventSchema, result.rows);
-	if (!createdEvent) {
-		return reply.status(500).send({ error: "Failed to create event" });
-	}
-
-	return reply.status(201).send(createdEvent);
+	return parseFirstRow(server, EventSchema, result.rows);
 }
 
