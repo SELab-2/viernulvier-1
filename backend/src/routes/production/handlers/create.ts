@@ -8,22 +8,22 @@ import { getProductionById } from "./fetch.js";
 const ProductionShape = ProductionSchema.shape;
 
 const CreateProductionBodySchema = z.object({
-  vendor_id: ProductionShape.vendor_id,
-  box_office_id: ProductionShape.box_office_id,
-  supertitle: ProductionShape.supertitle.optional(),
-  title: ProductionShape.title,
-  artist: ProductionShape.artist,
-  tagline: ProductionShape.tagline,
-  teaser: ProductionShape.teaser,
-  description: ProductionShape.description.optional(),
-  description_extra: ProductionShape.description_extra.optional(),
-  description_2: ProductionShape.description_2.optional(),
-  video_1: ProductionShape.video_1.optional(),
-  video_2: ProductionShape.video_2.optional(),
-  quote: ProductionShape.quote.optional(),
-  quote_source: ProductionShape.quote_source.optional(),
-  programme: ProductionShape.programme.optional(),
-  info: ProductionShape.info.optional(),
+  vendor_id: ProductionShape["vendor_id"]!,
+  box_office_id: ProductionShape["box_office_id"]!,
+  supertitle: ProductionShape["supertitle"]!.optional(),
+  title: ProductionShape["title"]!,
+  artist: ProductionShape["artist"]!,
+  tagline: ProductionShape["tagline"]!,
+  teaser: ProductionShape["teaser"]!,
+  description: ProductionShape["description"]!.optional(),
+  description_extra: ProductionShape["description_extra"]!.optional(),
+  description_2: ProductionShape["description_2"]!.optional(),
+  video_1: ProductionShape["video_1"]!.optional(),
+  video_2: ProductionShape["video_2"]!.optional(),
+  quote: ProductionShape["quote"]!.optional(),
+  quote_source: ProductionShape["quote_source"]!.optional(),
+  programme: ProductionShape["programme"]!.optional(),
+  info: ProductionShape["info"]!.optional(),
 });
 /**
  * Creates a new production and returns the created record.
@@ -43,7 +43,6 @@ export async function createProduction(server: FastifyInstance, request: Fastify
   let i = 1;
 
   const addField = (column: string, value: unknown) => {
-    if (value === undefined) return;
     fields.push(column);
     placeholders.push(`$${i++}`);
     values.push(value);
