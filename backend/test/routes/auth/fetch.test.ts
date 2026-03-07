@@ -6,17 +6,17 @@ import { AdminSchema, type Admin, type AdminWithMeta } from "@viernulvier/shared
 let server: FastifyInstance;
 
 const mockAdmins: Array<Admin> = [
-  { id: 0, username: "", profile_picture: null },
-  { id: 1, username: "", profile_picture: null },
+  { id: 404, username: "Karel", profile_picture: null },
+  { id: 405, username: "Stagaire", profile_picture: null },
 ];
 
 const mockTime = new Date();
 
 const mockAdminsWithMeta: Array<AdminWithMeta> = mockAdmins.map((admin) => ({
   ...admin,
-  created_by: 0,
+  created_by: 404,
   created_at: mockTime,
-  updated_by: 0,
+  updated_by: 404,
   updated_at: mockTime,
 }));
 
@@ -50,28 +50,39 @@ afterAll(async () => {
 
 describe("Fetch on auth route", () => {
   test("GET /api/v1/auth/:id", async () => {
-    const id = 1
+    const admin = mockAdmins[0];
+
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/auth/${admin?.id}`,
+    });
+
+    console.log(response.statusCode, response.body);
+
+    expect(response.statusCode).toBe(200);
+    expect(AdminSchema.parse(response.json())).toEqual(admin);
+  });
+
+  test("GET /api/v1/auth/:id/meta", async () => {
+    const admin = mockAdminsWithMeta[1]
+
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/auth/${admin?.id}/meta`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(AdminSchema.withMeta().parse(response.json())).toEqual(admin);
+  });
+
+  test("GET /api/v1/auth/:id — returns 404 when admin not found", async () => {
+    const id = 123456;
 
     const response = await server.inject({
       method: "GET",
       url: `/api/v1/auth/${id}`,
     });
 
-    console.log(response.statusCode, response.body);
-
-    expect(response.statusCode).toBe(200);
-    expect(AdminSchema.parse(response.json())).toEqual(mockAdmins[id]);
-  });
-
-  test("GET /api/v1/auth/:id/meta", async () => {
-    const id = 1
-
-    const response = await server.inject({
-      method: "GET",
-      url: `/api/v1/auth/${id}/meta`,
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(AdminSchema.withMeta().parse(response.json())).toEqual(mockAdminsWithMeta[id]);
+    expect(response.statusCode).toBe(404);
   });
 });
