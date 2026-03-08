@@ -1,3 +1,4 @@
+import { primaryKey } from "@viernulvier/shared/types/helpers.js";
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { z } from "zod";
 
@@ -157,7 +158,7 @@ export function replyHandler<T extends z.ZodRawShape, Z extends z.ZodObject<T>>(
  * @returns An object containing the current admin ID and the current timestamp.
  */
 export function getMetadata(request: FastifyRequest) {
-  const payload = request.user as { id: number };
+  const payload = z.object({ id: primaryKey() }).parse(request.user);
   return {
     admin: payload.id,
     current_time: new Date(),

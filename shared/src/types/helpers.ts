@@ -2,23 +2,57 @@ import z from "zod";
 
 export type Serial = z.ZodInt;
 
-export type PrimaryKey<T extends z.ZodType> = T & z.$brand<"PrimaryKey">;
+type RecursionHelper<O extends z.ZodType> = z.ZodType<{
+  [Key in keyof z.output<O>]: z.output<O>[Key] extends ForeignKey<any, any>
+    ? ForeignKey<any, any>
+    : z.output<O>[Key];
+}>;
 
-export type ForeignKey<T extends z.ZodType, O extends z.ZodObject<any>> = T & {
-  references: O;
-} & z.$brand<"ForeignKey">;
+const blah = z.object({
+  get other(): z.ZodArray<ForeignKey<typeof foo>> {
+    return z.array(foreignKey(() => foo));
+  },
+});
+const foo = z.object({
+  id: z.number(),
+  other: z.array(foreignKey(() => blah)),
+});
+
+type example = RecursionHelper<typeof foo>;
+
+export class ForeignKey<O extends z.ZodType, T extends z.ZodType = Serial>
+  extends z.ZodType
+{
+  private _foreignKeyRef: z.ZodLazy<O>;
+  constructor(type: T, target: () => O) {
+    super(type.brand<"ForeignKey">().def);
+    this._foreignKeyRef = z.lazy(target);
+  }
+
+  public get references(): z.ZodType<RecursionHelper<O>> {
+    return this._foreignKeyRef as z.ZodType<RecursionHelper<O>>;
+  }
+}
+
+export type PrimaryKey<T extends z.ZodType = Serial> = T &
+  z.$brand<"PrimaryKey">;
+
+// export type ForeignKey<
+//   T extends z.ZodType = Serial,
+//   O extends z.ZodType = z.ZodType,
+// > = T & z.$brand<"ForeignKey"> & { references: z.ZodLazy<O> };
 
 /**
  * Helper function used to declare foreign keys.
  *
  * @template O - The type of the schema to which this key references
  * @param {() => O} schema - A callback that returns the schema which this key references
- * @return {ForeignKey<Serial, O>} A branded `z.int().nonnegative()` which has a property `.references` which
+ * @return {ForeignKey<O, Serial>} A branded `z.int().nonnegative()` which has a property `.references` which
  * returns the schema to which the key points to.
  */
-export function foreignKey<O extends z.ZodObject<any>>(
+export function foreignKey<O extends z.ZodObject>(
   schema: () => O,
-): ForeignKey<Serial, O>;
+): ForeignKey<O>;
 /**
  * Helper function used to declare foreign keys.
  *
@@ -26,26 +60,20 @@ export function foreignKey<O extends z.ZodObject<any>>(
  * @template O - The type of the schema to which this key references
  * @param {T} type - The zod type to be used as a key
  * @param {() => O} schema - A callback that returns the schema which this key references
- * @return {ForeignKey<Serial, O>} A branded `T` which has a property `.references` which returns the schema
+ * @return {ForeignKey<O, T>} A branded `T` which has a property `.references` which returns the schema
  * to which the key points to.
  */
-export function foreignKey<T extends z.ZodType, O extends z.ZodObject<any>>(
+export function foreignKey<T extends z.ZodType, O extends z.ZodObject>(
   type: T,
   schema: () => O,
-): ForeignKey<T, O>;
-export function foreignKey<T extends z.ZodType, O extends z.ZodObject<any>>(
+): ForeignKey<O, T>;
+export function foreignKey<T extends z.ZodType, O extends z.ZodObject>(
   typeOrObj: (() => O) | T,
   obj?: () => O,
 ) {
-  const base = (
-    obj ? (typeOrObj as T) : z.int().nonnegative()
-  ).brand<"ForeignKey">();
-  const getTarget = obj ?? (typeOrObj as () => O);
-  return Object.defineProperty(base, "references", {
-    get: () => getTarget(),
-    enumerable: false,
-    configurable: true,
-  }) as ForeignKey<T, O>;
+  const base = obj ? (typeOrObj as T) : z.int().nonnegative();
+  const target = obj ?? (typeOrObj as () => O);
+  return new ForeignKey(base, target);
 }
 /**
  * A helper function used to declare a primary key.
@@ -69,3 +97,20 @@ export const VALID_LANGUAGES = z.enum(["nl", "en", "fr"]);
 export const languageMap = z
   .partialRecord(VALID_LANGUAGES, z.string())
   .refine((map) => Object.keys(map).length >= 1);
+
+export const stringToInt = z.codec(
+  z.string().regex(z.regexes.integer),
+  z.int(),
+  {
+    decode: (str) => Number.parseInt(str, 10),
+    encode: (num) => num.toString(),
+  },
+);
+
+const stuff = z.object({
+  get bibs(): ForeignKey<typeof stuff> {
+    return foreignKey(() => stuff);
+  },
+});
+
+stuff.omit({}).shape.bibs.references;
