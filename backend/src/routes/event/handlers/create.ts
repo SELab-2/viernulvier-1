@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 
-import { parseFirstRow, parse } from "@/routes/helpers.js";
+import { parseFirstRow, parse, ParseContext } from "@/routes/helpers.js";
 import { EventSchema } from "@viernulvier/shared/types/event.js";
 import type { Event } from "@viernulvier/shared/types/event.js";
 
@@ -18,7 +18,7 @@ export async function createEvent(
 	server: FastifyInstance,
 	request: FastifyRequest,
 ): Promise<Event | null> {
-	const body = parse<Event>(server, EventSchema, request.body, "Request");
+	const body = parse<Event>(server, EventSchema, request.body, ParseContext.Request);
 
 	const result = await server.pg.query<Event>(
 		`INSERT INTO events (starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, price)

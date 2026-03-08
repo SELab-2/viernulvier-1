@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 
-import { getParam, parse, parseFirstRow } from "@/routes/helpers.js";
+import { getParam, parse, parseFirstRow, ParseContext } from "@/routes/helpers.js";
 import { EventSchema } from "@viernulvier/shared/types/event.js";
 import type { Event } from "@viernulvier/shared/types/event.js";
 import { fetchEvent } from "./fetch.js";
@@ -19,7 +19,7 @@ export async function editEvent(
     server: FastifyInstance,
     request: FastifyRequest
 ): Promise<Event | null> {
-    const body = parse<Event>(server, EventUpdateSchema, request.body, "Request");
+    const body = parse<Event>(server, EventUpdateSchema, request.body, ParseContext.Request);
     const selectedEvent = await fetchEvent(server, request);
 
     if (!selectedEvent) return null;

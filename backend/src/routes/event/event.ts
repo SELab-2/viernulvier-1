@@ -8,7 +8,8 @@ import {
     fetchEvents, 
     fetchEventWithMeta, 
     replaceEvent, 
-    editEvent
+    editEvent,
+    editEvents
  } from "./handlers/index.js";
 
 export default function eventRoutes(server: FastifyInstance) {
@@ -19,4 +20,5 @@ export default function eventRoutes(server: FastifyInstance) {
     server.delete("/api/event/:id", replyHandler(server, deleteEvent));
     server.put("/api/event/:id", replyHandler(server, replaceEvent));
     server.patch("/api/event/:id", replyHandler(server, editEvent));
+    server.patch("/api/event", replyHandler(server, editEvents));
 }
