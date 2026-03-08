@@ -25,6 +25,28 @@ const CreateProductionBodySchema = z.object({
   programme: ProductionShape["programme"]!.optional(),
   info: ProductionShape["info"]!.optional(),
 });
+
+const RequiredCreateColumns = [
+  "vendor_id",
+  "box_office_id",
+  "title",
+  "artist",
+  "tagline",
+  "teaser",
+] as const;
+
+const NullableCreateColumns = [
+  "supertitle",
+  "description",
+  "description_extra",
+  "description_2",
+  "video_1",
+  "video_2",
+  "quote",
+  "quote_source",
+  "programme",
+  "info",
+] as const;
 /**
  * Creates a new production and returns the created record.
  *
@@ -48,22 +70,12 @@ export async function createProduction(server: FastifyInstance, request: Fastify
     values.push(value);
   };
 
-  addField("vendor_id", body.vendor_id);
-  addField("box_office_id", body.box_office_id);
-  addField("supertitle", body.supertitle ?? null);
-  addField("title", body.title);
-  addField("artist", body.artist);
-  addField("tagline", body.tagline);
-  addField("teaser", body.teaser);
-  addField("description", body.description ?? null);
-  addField("description_extra", body.description_extra ?? null);
-  addField("description_2", body.description_2 ?? null);
-  addField("video_1", body.video_1 ?? null);
-  addField("video_2", body.video_2 ?? null);
-  addField("quote", body.quote ?? null);
-  addField("quote_source", body.quote_source ?? null);
-  addField("programme", body.programme ?? null);
-  addField("info", body.info ?? null);
+  for (const column of RequiredCreateColumns) {
+    addField(column, body[column]);
+  }
+  for (const column of NullableCreateColumns) {
+    addField(column, body[column] ?? null);
+  }
 
   // Metadata
   fields.push("created_by", "updated_by", "created_at", "updated_at");

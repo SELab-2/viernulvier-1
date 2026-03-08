@@ -27,6 +27,28 @@ const EditProductionBodySchema = z
     info: ProductionShape["info"]!.optional(),
   }).partial();
 
+const DirectEditColumns = [
+  "vendor_id",
+  "box_office_id",
+  "title",
+  "artist",
+  "tagline",
+  "teaser",
+] as const;
+
+const NullableEditColumns = [
+  "supertitle",
+  "description",
+  "description_extra",
+  "description_2",
+  "video_1",
+  "video_2",
+  "quote",
+  "quote_source",
+  "programme",
+  "info",
+] as const;
+
 /**
  * Partially updates an existing production and returns the updated record.
  *
@@ -50,49 +72,17 @@ export async function editProduction(server: FastifyInstance, request: FastifyRe
     values.push(value);
   };
 
-  addField("vendor_id", body.vendor_id);
-  addField("box_office_id", body.box_office_id);
-  if (Object.prototype.hasOwnProperty.call(body, "supertitle")) {
-    addField("supertitle", body.supertitle ?? null);
+  const bodyRecord = body as Record<string, unknown>;
+
+  for (const column of DirectEditColumns) {
+    if (Object.prototype.hasOwnProperty.call(bodyRecord, column)) {
+      addField(column, bodyRecord[column]);
+    }
   }
-  if (Object.prototype.hasOwnProperty.call(body, "title")) {
-    addField("title", body.title);
-  }
-  if (Object.prototype.hasOwnProperty.call(body, "artist")) {
-    addField("artist", body.artist);
-  }
-  if (Object.prototype.hasOwnProperty.call(body, "tagline")) {
-    addField("tagline", body.tagline);
-  }
-  if (Object.prototype.hasOwnProperty.call(body, "teaser")) {
-    addField("teaser", body.teaser);
-  }
-  if (Object.prototype.hasOwnProperty.call(body, "description")) {
-    addField("description", body.description ?? null);
-  }
-  if (Object.prototype.hasOwnProperty.call(body, "description_extra")) {
-    addField("description_extra", body.description_extra ?? null);
-  }
-  if (Object.prototype.hasOwnProperty.call(body, "description_2")) {
-    addField("description_2", body.description_2 ?? null);
-  }
-  if (Object.prototype.hasOwnProperty.call(body, "video_1")) {
-    addField("video_1", body.video_1 ?? null);
-  }
-  if (Object.prototype.hasOwnProperty.call(body, "video_2")) {
-    addField("video_2", body.video_2 ?? null);
-  }
-  if (Object.prototype.hasOwnProperty.call(body, "quote")) {
-    addField("quote", body.quote ?? null);
-  }
-  if (Object.prototype.hasOwnProperty.call(body, "quote_source")) {
-    addField("quote_source", body.quote_source ?? null);
-  }
-  if (Object.prototype.hasOwnProperty.call(body, "programme")) {
-    addField("programme", body.programme ?? null);
-  }
-  if (Object.prototype.hasOwnProperty.call(body, "info")) {
-    addField("info", body.info ?? null);
+  for (const column of NullableEditColumns) {
+    if (Object.prototype.hasOwnProperty.call(bodyRecord, column)) {
+      addField(column, bodyRecord[column] ?? null);
+    }
   }
 
   // Always update metadata
