@@ -67,7 +67,7 @@ export async function fetchHallWithMeta(server: FastifyInstance, request: Fastif
  * Fetches a list of halls.
  *
  * @param server - The Fastify instance, used for database access and logging.
- * @param _request - The Fastify request (currently unused, reserved for future filters).
+ * @param _request - The Fastify request.
  * @returns The list of halls, or `null` if parsing failed.
  */
 export async function fetchHalls(server: FastifyInstance, _request: FastifyRequest): Promise<Hall[] | null> {
