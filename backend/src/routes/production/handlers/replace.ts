@@ -1,30 +1,8 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Production } from "@viernulvier/shared/index.js";
-import { ProductionSchema } from "@viernulvier/shared/index.js";
 import { getMetadata, getParam, parse } from "@/routes/helpers.js";
-import z from "zod";
 import { getProductionById } from "./fetch.js";
-
-const ProductionShape = ProductionSchema.shape;
-
-const ReplaceProductionBodySchema = z.object({
-  vendor_id: ProductionShape["vendor_id"]!,
-  box_office_id: ProductionShape["box_office_id"]!,
-  supertitle: ProductionShape["supertitle"]!,
-  title: ProductionShape["title"]!,
-  artist: ProductionShape["artist"]!,
-  tagline: ProductionShape["tagline"]!,
-  teaser: ProductionShape["teaser"]!,
-  description: ProductionShape["description"]!,
-  description_extra: ProductionShape["description_extra"]!,
-  description_2: ProductionShape["description_2"]!,
-  video_1: ProductionShape["video_1"]!,
-  video_2: ProductionShape["video_2"]!,
-  quote: ProductionShape["quote"]!,
-  quote_source: ProductionShape["quote_source"]!,
-  programme: ProductionShape["programme"]!,
-  info: ProductionShape["info"]!,
-});
+import { ProductionBodySchema } from "./body-schema.js";
 
 const ReplaceColumns = [
   "vendor_id",
@@ -54,7 +32,7 @@ const ReplaceColumns = [
  */
 export async function replaceProduction(server: FastifyInstance, request: FastifyRequest): Promise<Production | null> {
   const id = getParam(request, "id");
-  const body = parse(server, ReplaceProductionBodySchema, request.body);
+  const body = parse(server, ProductionBodySchema, request.body);
 
   const { admin, current_time } = getMetadata();
 

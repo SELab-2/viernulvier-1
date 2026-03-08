@@ -1,16 +1,13 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Production } from "@viernulvier/shared/index.js";
-import { ProductionSchema } from "@viernulvier/shared/index.js";
 import { getMetadata, parse } from "@/routes/helpers.js";
 import z from "zod";
 import { getProductionById } from "./fetch.js";
-import { EditProductionBodySchema } from "./edit.js";
-
-const ProductionShape = ProductionSchema.shape;
+import { PartialProductionBodySchema, ProductionIdSchema } from "./body-schema.js";
 
 const BulkEditProductionsBodySchema = z.object({
-  ids: z.array(ProductionShape["id"]!).min(1),
-  data: EditProductionBodySchema,
+  ids: z.array(ProductionIdSchema).min(1),
+  data: PartialProductionBodySchema,
 });
 
 const DirectBulkEditColumns = [
