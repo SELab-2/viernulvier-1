@@ -7,7 +7,7 @@ import { getProductionById } from "./fetch.js";
 
 const ProductionShape = ProductionSchema.shape;
 
-const EditProductionBodySchema = z
+export const EditProductionBodySchema = z
   .object({
     vendor_id: ProductionShape["vendor_id"]!,
     box_office_id: ProductionShape["box_office_id"]!,

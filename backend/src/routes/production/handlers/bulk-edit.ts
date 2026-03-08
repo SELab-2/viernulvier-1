@@ -4,28 +4,9 @@ import { ProductionSchema } from "@viernulvier/shared/index.js";
 import { getMetadata, parse } from "@/routes/helpers.js";
 import z from "zod";
 import { getProductionById } from "./fetch.js";
+import { EditProductionBodySchema } from "./edit.js";
 
 const ProductionShape = ProductionSchema.shape;
-
-const EditProductionBodySchema = z
-  .object({
-    vendor_id: ProductionShape["vendor_id"]!,
-    box_office_id: ProductionShape["box_office_id"]!,
-    supertitle: ProductionShape["supertitle"]!.optional(),
-    title: ProductionShape["title"]!,
-    artist: ProductionShape["artist"]!,
-    tagline: ProductionShape["tagline"]!,
-    teaser: ProductionShape["teaser"]!,
-    description: ProductionShape["description"]!.optional(),
-    description_extra: ProductionShape["description_extra"]!.optional(),
-    description_2: ProductionShape["description_2"]!.optional(),
-    video_1: ProductionShape["video_1"]!.optional(),
-    video_2: ProductionShape["video_2"]!.optional(),
-    quote: ProductionShape["quote"]!.optional(),
-    quote_source: ProductionShape["quote_source"]!.optional(),
-    programme: ProductionShape["programme"]!.optional(),
-    info: ProductionShape["info"]!.optional(),
-  }).partial();
 
 const BulkEditProductionsBodySchema = z.object({
   ids: z.array(ProductionShape["id"]!).min(1),
