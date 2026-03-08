@@ -1,7 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import {
   ProductionSchema,
-  type Production,
 } from "@viernulvier/shared/types/production.js";
 import { buildQuery, parseParams } from "./helpers.js";
 import z from "zod";
@@ -19,7 +18,7 @@ export default function productionRoutes(server: FastifyInstance) {
       server,
       "SELECT id FROM productions WHERE id=$1",
       z.tuple([ProductionSchema.shape.id]),
-      ProductionSchema,
+      ProductionSchema.pick({id: true}),
     )(id);
 
     return result[0];
