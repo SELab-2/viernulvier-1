@@ -3,6 +3,7 @@ import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import productionRoutes from "@/routes/production/production.js";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
+import { bulkEditProductions } from "@/routes/production/handlers/bulk-edit.js";
 
 let server: FastifyInstance;
 
@@ -349,6 +350,35 @@ describe("Bulk edit on production route", () => {
     expect(response.statusCode).toBe(200);
     const parsed = ProductionSchema.array().parse(response.json());
     expect(parsed).toEqual([baseProduction1, baseProduction2]);
+  });
+
+  test("bulkEditProductions() -> ignores explicitly undefined fields", async () => {
+    const ids = [baseProduction1["id"]];
+
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+
+      if (upper.startsWith("UPDATE")) {
+        return Promise.resolve({ rows: [], rowCount: 1 });
+      }
+
+      if (upper.startsWith("SELECT")) {
+        return Promise.resolve({ rows: [baseProduction1], rowCount: 1 });
+      }
+
+      throw new Error(`Unexpected query in bulk-edit undefined test: ${query}`);
+    });
+
+    const result = await bulkEditProductions(server, {
+      body: {
+        ids,
+        data: {
+          vendor_id: undefined,
+        },
+      },
+    } as any);
+
+    expect(result).toEqual([baseProduction1]);
   });
 });
 

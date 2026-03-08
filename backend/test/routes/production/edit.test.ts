@@ -3,6 +3,7 @@ import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import productionRoutes from "@/routes/production/production.js";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
+import { editProduction } from "@/routes/production/handlers/edit.js";
 
 let server: FastifyInstance;
 
@@ -250,6 +251,29 @@ describe("Edit on production route", () => {
     expect(response.statusCode).toBe(200);
     const parsed = ProductionSchema.parse(response.json());
     expect(parsed).toEqual(originalProduction);
+  });
+
+  test("editProduction() -> ignores explicitly undefined fields", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+
+      if (upper.startsWith("UPDATE")) {
+        return Promise.resolve({ rows: [], rowCount: 1 });
+      }
+
+      if (upper.startsWith("SELECT")) {
+        return Promise.resolve({ rows: [originalProduction], rowCount: 1 });
+      }
+
+      throw new Error(`Unexpected query in edit tests: ${query}`);
+    });
+
+    const result = await editProduction(server, {
+      params: { id: String(originalProduction["id"]) },
+      body: { vendor_id: undefined },
+    } as any);
+
+    expect(result).toEqual(originalProduction);
   });
 });
 
