@@ -2,12 +2,20 @@ import z from "zod";
 
 export type Serial = z.ZodInt;
 
+export const serial = z.int().nonnegative
+
 type RecursionHelper<O extends z.ZodType> = z.ZodType<{
   [Key in keyof z.output<O>]: z.output<O>[Key] extends ForeignKey<any, any>
     ? ForeignKey<any, any>
     : z.output<O>[Key];
 }>;
 
+export type PrimaryKey<T extends z.ZodType> = T & z.$brand<"PrimaryKey">;
+
+/**
+ * ForeignKey class that extends ZodType to add a references getter.
+ *
+ */
 export class ForeignKey<O extends z.ZodType, T extends z.ZodType = Serial>
   extends z.ZodType
 {
@@ -21,14 +29,6 @@ export class ForeignKey<O extends z.ZodType, T extends z.ZodType = Serial>
     return this._foreignKeyRef as z.ZodType<RecursionHelper<O>>;
   }
 }
-
-export type PrimaryKey<T extends z.ZodType = Serial> = T &
-  z.$brand<"PrimaryKey">;
-
-// export type ForeignKey<
-//   T extends z.ZodType = Serial,
-//   O extends z.ZodType = z.ZodType,
-// > = T & z.$brand<"ForeignKey"> & { references: z.ZodLazy<O> };
 
 /**
  * Helper function used to declare foreign keys.
@@ -95,10 +95,7 @@ export const stringToInt = z.codec(
   },
 );
 
-const stuff = z.object({
-  get bibs(): ForeignKey<typeof stuff> {
-    return foreignKey(() => stuff);
-  },
-});
-
-stuff.omit({}).shape.bibs.references;
+export const stringToSerial = z.codec(z.string().regex(z.regexes.integer), serial(), {
+  decode: (str) => Number.parseInt(str, 10),
+  encode: (num) => num.toString(),
+})
