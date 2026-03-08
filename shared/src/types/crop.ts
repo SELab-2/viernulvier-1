@@ -9,13 +9,7 @@ export const CropSchema: SchemaWithMeta<any> = createSchema({
 
   image_id: foreignKey(() => ImageSchema),
 
-  url: z
-    .string()
-    .max(2048)
-    .url()
-}).refine((crop) => {
-  // extra sanity check
-  return crop.url.length > 0;
+  url: z.url().min(1).max(2048),
 });
 
 export type Crop = z.infer<typeof CropSchema>;
