@@ -8,18 +8,6 @@ type RecursionHelper<O extends z.ZodType> = z.ZodType<{
     : z.output<O>[Key];
 }>;
 
-const blah = z.object({
-  get other(): z.ZodArray<ForeignKey<typeof foo>> {
-    return z.array(foreignKey(() => foo));
-  },
-});
-const foo = z.object({
-  id: z.number(),
-  other: z.array(foreignKey(() => blah)),
-});
-
-type example = RecursionHelper<typeof foo>;
-
 export class ForeignKey<O extends z.ZodType, T extends z.ZodType = Serial>
   extends z.ZodType
 {
