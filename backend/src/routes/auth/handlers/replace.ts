@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Admin } from "@viernulvier/shared/index.js";
 import { AdminSchema } from "@viernulvier/shared/index.js";
-import { getMetadata, getParam, parseFirstRow, parse } from "@/routes/helpers.js";
+import { getMetadata, getParam, parseFirstRow, parseSchema } from "@/routes/helpers.js";
 import { z } from "zod";
 import { hashPassword } from "./hash.js";
 
@@ -19,7 +19,7 @@ const ReplaceAdminBodySchema = AdminSchema.pick({ username: true }).extend({
  */
 export async function replaceAdmin(server: FastifyInstance, request: FastifyRequest): Promise<Admin | null> {
   const id = getParam(request, "id");
-  const body = parse(server, ReplaceAdminBodySchema, request.body);
+  const body = parseSchema(server, ReplaceAdminBodySchema, request.body);
 
   const { admin, current_time } = getMetadata(request);
   const hashedPassword = await hashPassword(body.password);

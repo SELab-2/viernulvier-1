@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Admin } from "@viernulvier/shared/index.js";
 import { AdminSchema } from "@viernulvier/shared/index.js";
-import { getMetadata, parseFirstRow, parse } from "@/routes/helpers.js";
+import { getMetadata, parseFirstRow, parseSchema } from "@/routes/helpers.js";
 import { z } from "zod";
 import { hashPassword } from "./hash.js";
 
@@ -17,7 +17,7 @@ const CreateAdminBodySchema = AdminSchema.pick({ username: true }).extend({
  * @returns The created admin, or `null` if the insert failed or parsing failed.
  */
 export async function createAdmin(server: FastifyInstance, request: FastifyRequest): Promise<Admin | null> {
-  const body = parse(server, CreateAdminBodySchema, request.body);
+  const body = parseSchema(server, CreateAdminBodySchema, request.body);
 
   const { admin, current_time } = getMetadata(request);
   const hashedPassword = await hashPassword(body.password);
