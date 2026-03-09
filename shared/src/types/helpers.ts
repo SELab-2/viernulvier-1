@@ -2,7 +2,7 @@ import z from "zod";
 
 export type Serial = z.ZodInt;
 
-export const serial = z.int().nonnegative
+export const serial = z.int().nonnegative;
 
 export type PrimaryKey<T extends z.ZodType> = T & z.$brand<"PrimaryKey">;
 
@@ -82,11 +82,14 @@ export const languageMap = z
   .partialRecord(VALID_LANGUAGES, z.string())
   .refine((map) => Object.keys(map).length >= 1);
 
-
-export const stringToSerial = z.codec(z.string().regex(z.regexes.integer), serial(), {
-  decode: (str) => Number.parseInt(str, 10),
-  encode: (num) => num.toString(),
-})
+export const stringToSerial = z.codec(
+  z.string().regex(z.regexes.integer),
+  serial(),
+  {
+    decode: (str) => Number.parseInt(str, 10),
+    encode: (num) => num.toString(),
+  },
+);
 export const stringToInt = z.codec(
   z.string().regex(z.regexes.integer),
   z.int(),
