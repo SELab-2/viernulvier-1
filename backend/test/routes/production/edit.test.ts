@@ -253,7 +253,17 @@ describe("Edit on production route", () => {
     expect(parsed).toEqual(originalProduction);
   });
 
-  test("editProduction() -> ignores explicitly undefined fields", async () => {
+  test("PATCH /api/v1/production/:id -> rejects empty body", async () => {
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/production/${originalProduction["id"]}`,
+      payload: {},
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  test("editProduction() -> rejects body with only undefined fields", async () => {
     server.pg.query = vi.fn().mockImplementation((query: string) => {
       const upper = query.trim().toUpperCase();
 
@@ -268,12 +278,10 @@ describe("Edit on production route", () => {
       throw new Error(`Unexpected query in edit tests: ${query}`);
     });
 
-    const result = await editProduction(server, {
+    await expect(editProduction(server, {
       params: { id: String(originalProduction["id"]) },
       body: { vendor_id: undefined },
-    } as any);
-
-    expect(result).toEqual(originalProduction);
+    } as any)).rejects.toMatchObject({ status: 400 });
   });
 });
 
