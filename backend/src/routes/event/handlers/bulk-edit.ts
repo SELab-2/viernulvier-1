@@ -21,6 +21,30 @@ interface EventBulkUpdate {
     price?: unknown;
 }
 
+function normalizeEventDates(value: unknown): unknown {
+    if (!value || typeof value !== "object") return value;
+
+    const payload = value as Record<string, unknown>;
+    return {
+        ...payload,
+        starts_at: payload["starts_at"] === undefined
+            ? undefined
+            : payload["starts_at"] instanceof Date
+                ? payload["starts_at"]
+                : new Date(String(payload["starts_at"])),
+        ends_at: payload["ends_at"] === undefined
+            ? undefined
+            : payload["ends_at"] instanceof Date
+                ? payload["ends_at"]
+                : new Date(String(payload["ends_at"])),
+        doors_at: payload["doors_at"] === undefined
+            ? undefined
+            : payload["doors_at"] instanceof Date
+                ? payload["doors_at"]
+                : new Date(String(payload["doors_at"])),
+    };
+}
+
 /**
  * Updates certain fields from multiple events by ID in the database.
  * Returns `null` when the event does not exist or validation fails.
@@ -33,7 +57,8 @@ export async function editEvents(
     server: FastifyInstance,
     request: FastifyRequest
 ): Promise<Event[] | null> {
-    const body = parse<EventBulkUpdate>(server, EventBulkUpdateSchema, request.body, ParseContext.Request);
+    const normalizedBody = normalizeEventDates(request.body);
+    const body = parse<EventBulkUpdate>(server, EventBulkUpdateSchema, normalizedBody, ParseContext.Request);
     const selectedEvents = await Promise.all(
         body.ids.map((id: string) => fetchEvent(
             server,

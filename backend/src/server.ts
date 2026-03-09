@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import dbPlugin from "./db/postgres.js";
 import productionRoutes from "./routes/productions.js";
+import eventRoutes from "./routes/event/event.js";
 
 /**
  * Creates a server instance and registers the standard plugins.
@@ -37,6 +38,7 @@ function createServer(): FastifyInstance {
 async function registerPlugins(server: FastifyInstance) {
   await server.register(dbPlugin);
   await server.register(productionRoutes);
+  await server.register(eventRoutes);
 }
 
 /**

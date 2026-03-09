@@ -4,6 +4,18 @@ import { getParam, parse, ParseContext, parseFirstRow } from "@/routes/helpers.j
 import { EventSchema } from "@viernulvier/shared/types/event.js";
 import type { Event } from "@viernulvier/shared/types/event.js";
 
+function normalizeEventDates(value: unknown): unknown {
+    if (!value || typeof value !== "object") return value;
+
+    const payload = value as Record<string, unknown>;
+    return {
+        ...payload,
+        starts_at: payload["starts_at"] instanceof Date ? payload["starts_at"] : new Date(String(payload["starts_at"])),
+        ends_at: payload["ends_at"] instanceof Date ? payload["ends_at"] : new Date(String(payload["ends_at"])),
+        doors_at: payload["doors_at"] instanceof Date ? payload["doors_at"] : new Date(String(payload["doors_at"])),
+    };
+}
+
 /**
  * Replaces a single event by ID in the database or creates a new one if not found.
  * Returns `null` when validation fails.
@@ -16,7 +28,8 @@ export async function replaceEvent(
     server: FastifyInstance,
     request: FastifyRequest
 ): Promise<Event | null> {
-    const body = parse<Event>(server, EventSchema, request.body, ParseContext.Request);
+    const normalizedBody = normalizeEventDates(request.body);
+    const body = parse<Event>(server, EventSchema, normalizedBody, ParseContext.Request);
 
     const result = await server.pg.query<Event>(
         `UPDATE events
