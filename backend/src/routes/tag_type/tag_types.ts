@@ -7,11 +7,8 @@ import {
   createTagType,
   editTagType,
   deleteTagType,
-} from "./handlers/tag_type/index.js";
+} from "./handlers/index.js";
 
-/**
- * Registers tag type routes.
- */
 export default function tagTypeRoutes(server: FastifyInstance) {
   server.get("/api/v1/tag-type", replyHandler(server, fetchTagTypes));
   server.get("/api/v1/tag-type/:id", replyHandler(server, fetchTagType));
