@@ -174,16 +174,16 @@ export function parseFirstRow<
   return parseSchema(server, schema, rows[0], ParseContext.Database);
 }
 export function buildQuery<
-  FilterFields extends z.ZodTuple<any, null>,
+  FilterFields extends z.ZodTuple,
   ResultType extends z.ZodRawShape,
   ResultSchema extends z.ZodObject<ResultType>,
 >(
   server: FastifyInstance,
   queryConfig: Parameters<typeof server.pg.query>[0],
   resultSchema: ResultSchema,
-): () => Promise<z.output<z.ZodArray<ResultSchema>>>;
+): (...values: z.infer<FilterFields>) => Promise<z.output<z.ZodArray<ResultSchema>>>;
 export function buildQuery<
-  FilterFields extends z.ZodTuple<any, null>,
+  FilterFields extends z.ZodTuple,
   ResultType extends z.ZodRawShape,
   ResultSchema extends z.ZodObject<ResultType>,
 >(
@@ -204,7 +204,7 @@ export function buildQuery<
  * @return {*} A query that can then be executed by supplying the needed parameters.
  */
 export function buildQuery<
-  FilterFields extends z.ZodTuple<any, null>,
+  FilterFields extends z.ZodTuple,
   ResultType extends z.ZodRawShape,
   ResultSchema extends z.ZodObject<ResultType>,
 >(
@@ -212,10 +212,8 @@ export function buildQuery<
   queryConfig: Parameters<typeof server.pg.query>[0],
   filterFieldsOrResultSchema: FilterFields | ResultSchema,
   resultSchema?: ResultSchema,
-): (
-  ...values: z.infer<FilterFields>
-  ) => Promise<z.output<z.ZodArray<ResultSchema>>> {
-  const filterFields = resultSchema ? filterFieldsOrResultSchema : z.tuple([]) as unknown as FilterFields
+) {
+  const filterFields = (resultSchema ? filterFieldsOrResultSchema : z.tuple([])) as FilterFields
   resultSchema = resultSchema ?? filterFieldsOrResultSchema as ResultSchema
   return async (...values: z.infer<FilterFields>) => {
     const parsed = filterFields.safeParse(values);
@@ -230,7 +228,7 @@ export function buildQuery<
       server.log.error(err);
       throw parseErrors[ParseContext.Database];
     }
-    return parseSchema(server, z.array(resultSchema), res);
+    return parseSchema(server, z.array(resultSchema), res, ParseContext.Database);
   };
 }
 
