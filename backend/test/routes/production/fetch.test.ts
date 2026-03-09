@@ -3,6 +3,7 @@ import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import productionRoutes from "@/routes/production/production.js";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
+import { getProductionsByIds } from "@/routes/production/handlers/fetch.js";
 
 let server: FastifyInstance;
 
@@ -87,6 +88,43 @@ describe("Production fetch routes", () => {
     });
 
     expect(response.statusCode).toBe(404);
+  });
+});
+
+describe("Production fetch helpers", () => {
+  test("getProductionsByIds -> returns empty array for empty ids", async () => {
+    const querySpy = vi.spyOn(server.pg, "query");
+    querySpy.mockClear();
+
+    const result = await getProductionsByIds(server, []);
+
+    expect(result).toEqual([]);
+    expect(querySpy).not.toHaveBeenCalled();
+    querySpy.mockRestore();
+  });
+
+  test("getProductionsByIds -> fetches with ANY(ids) in one query", async () => {
+    const ids = [2, 1];
+    const secondProduction: Production = {
+      ...baseProduction,
+      id: 2,
+      title: { nl: "Tweede titel" },
+    };
+
+    server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+      const upper = query.trim().toUpperCase();
+
+      if (upper.startsWith("SELECT") && upper.includes("WHERE P.ID = ANY($1::INT[])")) {
+        expect(params?.[0]).toEqual(ids);
+        return Promise.resolve({ rows: [secondProduction, baseProduction], rowCount: 2 });
+      }
+
+      throw new Error(`Unexpected query in getProductionsByIds test: ${query}`);
+    });
+
+    const result = await getProductionsByIds(server, ids);
+
+    expect(result).toEqual([secondProduction, baseProduction]);
   });
 });
 

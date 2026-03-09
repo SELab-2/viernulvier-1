@@ -126,13 +126,8 @@ describe("Bulk edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        const id = params?.[0] as number;
-        if (id === baseProduction1["id"]) {
-          return Promise.resolve({ rows: [updatedBulkA1], rowCount: 1 });
-        }
-        if (id === baseProduction2["id"]) {
-          return Promise.resolve({ rows: [updatedBulkA2], rowCount: 1 });
-        }
+        expect(params?.[0]).toEqual(ids);
+        return Promise.resolve({ rows: [updatedBulkA1, updatedBulkA2], rowCount: 2 });
       }
 
       throw new Error(`Unexpected query in bulk-edit tests A: ${query}`);
@@ -167,13 +162,8 @@ describe("Bulk edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        const id = params?.[0] as number;
-        if (id === baseProduction1["id"]) {
-          return Promise.resolve({ rows: [updatedBulkB1], rowCount: 1 });
-        }
-        if (id === baseProduction2["id"]) {
-          return Promise.resolve({ rows: [updatedBulkB2], rowCount: 1 });
-        }
+        expect(params?.[0]).toEqual(ids);
+        return Promise.resolve({ rows: [updatedBulkB1, updatedBulkB2], rowCount: 2 });
       }
 
       throw new Error(`Unexpected query in bulk-edit tests B: ${query}`);
@@ -221,14 +211,9 @@ describe("Bulk edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        const id = params?.[0] as number;
-        if (id === baseProduction1["id"]) {
-          return Promise.resolve({ rows: [baseProduction1], rowCount: 1 });
-        }
-        if (id === baseProduction2["id"]) {
-          // Explicitly return no rows for one id to exercise null filtering path.
-          return Promise.resolve({ rows: [], rowCount: 0 });
-        }
+        expect(params?.[0]).toEqual(ids);
+        // Explicitly return only one row to exercise "missing ID" path.
+        return Promise.resolve({ rows: [baseProduction1], rowCount: 1 });
       }
 
       throw new Error(`Unexpected query in bulk-edit metadata-only test: ${query}`);
@@ -260,13 +245,8 @@ describe("Bulk edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        const id = params?.[0] as number;
-        if (id === baseProduction1["id"]) {
-          return Promise.resolve({ rows: [updatedBulkC1], rowCount: 1 });
-        }
-        if (id === baseProduction2["id"]) {
-          return Promise.resolve({ rows: [updatedBulkC2], rowCount: 1 });
-        }
+        expect(params?.[0]).toEqual(ids);
+        return Promise.resolve({ rows: [updatedBulkC1, updatedBulkC2], rowCount: 2 });
       }
 
       throw new Error(`Unexpected query in bulk-edit tests C: ${query}`);
@@ -315,13 +295,8 @@ describe("Bulk edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        const id = params?.[0] as number;
-        if (id === baseProduction1["id"]) {
-          return Promise.resolve({ rows: [baseProduction1], rowCount: 1 });
-        }
-        if (id === baseProduction2["id"]) {
-          return Promise.resolve({ rows: [baseProduction2], rowCount: 1 });
-        }
+        expect(params?.[0]).toEqual(ids);
+        return Promise.resolve({ rows: [baseProduction1, baseProduction2], rowCount: 2 });
       }
 
       throw new Error(`Unexpected query in bulk-edit null test: ${query}`);

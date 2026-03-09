@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Production } from "@viernulvier/shared/index.js";
 import { getMetadata, parse } from "@/routes/helpers.js";
 import z from "zod";
-import { getProductionById } from "./fetch.js";
+import { getProductionsByIds } from "./fetch.js";
 import { PartialProductionBodySchema, ProductionIdSchema } from "./body-schema.js";
 import { getFieldValue, getNullableFieldValue, hasOwn } from "./field-utils.js";
 
@@ -77,7 +77,5 @@ export async function bulkEditProductions(server: FastifyInstance, request: Fast
     values,
   );
 
-  const updatedProductions = await Promise.all(ids.map((id) => getProductionById(server, id as string | number)));
-
-  return updatedProductions.filter((p): p is Production => p !== null);
+  return await getProductionsByIds(server, ids as number[]);
 }

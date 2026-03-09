@@ -42,6 +42,26 @@ export async function getProductionById(server: FastifyInstance, id: string | nu
 }
 
 /**
+ * Internal helper to fetch multiple productions by IDs.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param ids - The production IDs to fetch.
+ * @returns The productions that were found, preserving the input ID order.
+ */
+export async function getProductionsByIds(server: FastifyInstance, ids: number[]): Promise<Production[]> {
+  if (ids.length === 0) return [];
+
+  const result = await server.pg.query<Production>(
+    `${ProductionSelect}
+     WHERE p.id = ANY($1::int[])
+     ORDER BY array_position($1::int[], p.id)`,
+    [ids],
+  );
+
+  return parse(server, z.array(ProductionSchema), result.rows, ParseContext.Database);
+}
+
+/**
  * Fetches a single production by ID.
  *
  * @param server - The Fastify instance, used for database access and logging.
