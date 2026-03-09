@@ -47,7 +47,10 @@ jobs:
     runs-on: [self-hosted, linux, ARM64]
     strategy:
       matrix:
-        project: [frontend, backend]
+        project: [frontend, backend, shared]
+        include:
+          - project: shared
+            skip_tests: true
 
     defaults:
       run:
@@ -77,6 +80,7 @@ jobs:
         run: pnpm run lint
 
       - name: Coverage Tests
+        if: ${{ !matrix.skip_tests }}
         working-directory: ${{ matrix.project }}
         run: pnpm run coverage
 
