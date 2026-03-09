@@ -1,7 +1,11 @@
 import { primaryKey } from "@viernulvier/shared/types/helpers.js";
-import { type FastifyInstance, type FastifyRequest, type FastifyReply } from "fastify";
+import {
+  type FastifyInstance,
+  type FastifyRequest,
+  type FastifyReply,
+} from "fastify";
+import type { QueryResult } from "pg";
 import { z } from "zod";
-
 
 export enum HttpInformation {
   Continue = 100,
@@ -20,7 +24,7 @@ export enum HttpSuccess {
   PartialContent = 206,
   MultiStatus = 207,
   AlreadyReported = 208,
-  IMUsed = 226
+  IMUsed = 226,
 }
 
 export enum HttpRedirect {
@@ -30,7 +34,7 @@ export enum HttpRedirect {
   SeeOther = 303,
   NotModified = 304,
   TemporaryRedirect = 307,
-  PermanentRedirect = 308
+  PermanentRedirect = 308,
 }
 
 export enum HttpClientError {
@@ -61,7 +65,7 @@ export enum HttpClientError {
   PreconditionRequired = 428,
   TooManyRequests = 429,
   RequestHeaderFieldsTooLarge = 431,
-  UnavailableForLegalReasons = 451
+  UnavailableForLegalReasons = 451,
 }
 
 export enum HttpServerError {
@@ -75,10 +79,15 @@ export enum HttpServerError {
   InsufficientStorage = 507,
   LoopDetected = 508,
   NotExtended = 510,
-  NetworkAuthenticationRequired = 511
+  NetworkAuthenticationRequired = 511,
 }
 
-export type HTTPErrorCode = HttpInformation | HttpSuccess | HttpRedirect | HttpClientError | HttpServerError
+export type HTTPErrorCode =
+  | HttpInformation
+  | HttpSuccess
+  | HttpRedirect
+  | HttpClientError
+  | HttpServerError;
 
 export class HttpError extends Error {
   constructor(
@@ -98,8 +107,14 @@ export const enum ParseContext {
 type ParseContextType = (typeof ParseContext)[keyof typeof ParseContext];
 
 const parseErrors: Readonly<Record<ParseContextType, HttpError>> = {
-  [ParseContext.Request]: new HttpError(HttpClientError.BadRequest, "Invalid request data"),
-  [ParseContext.Database]: new HttpError(HttpServerError.InternalServerError, "Internal server error"),
+  [ParseContext.Request]: new HttpError(
+    HttpClientError.BadRequest,
+    "Invalid request data",
+  ),
+  [ParseContext.Database]: new HttpError(
+    HttpServerError.InternalServerError,
+    "Internal server error",
+  ),
 };
 
 /**
@@ -138,7 +153,8 @@ export function parseParams<
 export function getParam(request: FastifyRequest, key: string): string {
   // eslint-disable-next-line security/detect-object-injection
   const value = (request.params as Record<string, string>)[key];
-  if (value === undefined) throw new HttpError(400, `Missing route parameter: "${key}"`);
+  if (value === undefined)
+    throw new HttpError(400, `Missing route parameter: "${key}"`);
   return value;
 }
 /* v8 ignore stop */
@@ -205,7 +221,6 @@ export function parseFirstRow<
 }
 /* v8 ignore stop */
 
-
 /**
  * Helper function that adds data validation to both the input and output of a db query.
  *
@@ -231,7 +246,7 @@ export function buildQuery<
  * @param {Parameters<typeof server.pg.query>[0]} queryConfig - Any query config supported by `server.pg.query`
  * @param {FilterFields} filterFields - A ZodTuple that specifies which types the values going into the query should have.
  * @param {ResultSchema} resultSchema - The schema that will be used to validate the data retrieved from the query. This is automatically wrapped in `z.array()`
- * @return {*} A query that can then be executed by supplying the needed parameters.
+ * @returns A query that can then be executed by supplying the needed parameters.
  * @throws Http error on either a database error or a validation error. Logs the details.
  */
 export function buildQuery<
@@ -256,22 +271,32 @@ export function buildQuery<
   filterFieldsOrResultSchema: FilterFields | ResultSchema,
   resultSchema?: ResultSchema,
 ) {
-  const filterFields = (resultSchema ? filterFieldsOrResultSchema : z.tuple([])) as FilterFields
-  resultSchema = resultSchema ?? filterFieldsOrResultSchema as ResultSchema
+  const filterFields = (
+    resultSchema ? filterFieldsOrResultSchema : z.tuple([])
+  ) as FilterFields;
+  resultSchema = resultSchema ?? (filterFieldsOrResultSchema as ResultSchema);
   return async (...values: z.infer<FilterFields>) => {
     const parsed = filterFields.safeParse(values);
     if (!parsed.success) {
       server.log.error(parsed.error);
       throw parseErrors[ParseContext.Request];
     }
-    let res;
+    let res: QueryResult<z.output<ResultSchema>>;
     try {
-      res = await server.pg.query(queryConfig, parsed.data as unknown[]);
+      res = await server.pg.query<z.output<ResultSchema>>(
+        queryConfig,
+        parsed.data as unknown[],
+      );
     } catch (err) {
       server.log.error(err);
       throw parseErrors[ParseContext.Database];
     }
-    return parseSchema(server, z.array(resultSchema), res, ParseContext.Database);
+    return parseSchema(
+      server,
+      z.array(resultSchema),
+      res.rows,
+      ParseContext.Database,
+    );
   };
 }
 
