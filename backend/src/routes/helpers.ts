@@ -181,7 +181,7 @@ export function buildQuery<
   server: FastifyInstance,
   queryConfig: Parameters<typeof server.pg.query>[0],
   resultSchema: ResultSchema,
-): (...values: z.infer<FilterFields>) => Promise<z.output<z.ZodArray<ResultSchema>>>;
+): () => Promise<z.output<z.ZodArray<ResultSchema>>>;
 export function buildQuery<
   FilterFields extends z.ZodTuple,
   ResultType extends z.ZodRawShape,
