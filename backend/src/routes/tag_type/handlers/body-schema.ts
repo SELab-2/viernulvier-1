@@ -1,5 +1,5 @@
 import z from "zod";
-import { languageMap } from "@viernulvier/shared/helpers.js";
+import { languageMap } from "@viernulvier/shared/types/helpers.js";
 
 export const CreateTagTypeBodySchema = z.object({
   name: languageMap,
