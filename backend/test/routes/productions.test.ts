@@ -19,7 +19,6 @@ beforeAll(async () => {
           ),
         });
       }
-      1;
       return Promise.resolve({ rows: mockProductions });
     });
 });
