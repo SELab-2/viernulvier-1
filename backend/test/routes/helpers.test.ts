@@ -310,12 +310,14 @@ describe(buildQuery, () => {
         { filterExp, selectedFields }: { filterExp?:(obj: T, ...values: any[]) => boolean; selectedFields?: string[]; } = {}) => ({
         log: { error: vi.fn() },
         pg: {
-            query: vi.fn().mockImplementation((_, values) => { rows: (DBSetup ?? []) }
-                .filter((obj) => filterExp ? filterExp(obj, ...values) : true)
-                .map((obj) => selectedFields ?
-                    Object.fromEntries(Object.entries(obj)
-                        .filter(([key, _]) => selectedFields.includes(key))
-                    ): obj))
+            query: vi.fn().mockImplementation((_, values) => ({
+                rows: (DBSetup ?? [])
+                    .filter((obj) => filterExp ? filterExp(obj, ...values) : true)
+                    .map((obj) => selectedFields ?
+                        Object.fromEntries(Object.entries(obj)
+                            .filter(([key, _]) => selectedFields.includes(key))
+                        ) : obj)
+            }))
         }
     } as unknown as FastifyInstance)
     let MockServer: ReturnType<typeof generateMockServer>
