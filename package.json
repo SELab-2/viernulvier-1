@@ -10,9 +10,10 @@
     "dev": "./rundev.sh",
     "check-backend": "pnpm i --frozen-lockfile && pnpm run --filter backend check",
     "check-frontend": "pnpm i --frozen-lockfile && pnpm run --filter frontend check",
-    "check-all": "pnpm i --frozen-lockfile && pnpm run --filter backend check && pnpm run --filter frontend check",
-    "lint:fix-all": "pnpm i --frozen-lockfile && pnpm run --filter backend lint:fix && pnpm run --filter frontend lint:fix",
+    "check-shared": "pnpm i --frozen-lockfile && pnpm run --filter shared check",
+    "check-all": "pnpm i --frozen-lockfile && pnpm run --filter backend check && pnpm run --filter frontend check && pnpm run --filter shared check",
+    "lint:fix-all": "pnpm i --frozen-lockfile && pnpm run --filter backend lint:fix && pnpm run --filter frontend lint:fix && pnpm run --filter shared lint:fix",
     "coverage-all": "pnpm i --frozen-lockfile && pnpm run --filter backend coverage && pnpm run --filter frontend coverage",
-    "build-all": "pnpm i --frozen-lockfile && pnpm run --filter backend build && pnpm run --filter frontend build"
+    "build-all": "pnpm i --frozen-lockfile && pnpm run --filter backend build && pnpm run --filter frontend build && pnpm run --filter shared build"
   }
 }
