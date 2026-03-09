@@ -202,6 +202,7 @@ export function buildQuery<
  * @param {FilterFields} filterFields - A ZodTuple that specifies which types the values going into the query should have.
  * @param {ResultSchema} resultSchema - The schema that will be used to validate the data retrieved from the query. This is automatically wrapped in `z.array()`
  * @return {*} A query that can then be executed by supplying the needed parameters.
+ * @throws Http error on either a database error or a validation error. Logs the details.
  */
 export function buildQuery<
   FilterFields extends z.ZodTuple,
