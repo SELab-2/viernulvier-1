@@ -14,7 +14,7 @@ interface EventBulkUpdate {
     ids: string[];
     starts_at?: unknown;
     ends_at?: unknown;
-    production_id?: unknown;
+    production?: unknown;
     hall?: unknown;
     doors_at?: unknown;
     vendor_id?: unknown;
@@ -49,7 +49,7 @@ export async function editEvents(
     const updatedEvents = existingEvents.map((selectedEvent: Event) => ({
         starts_at: body.starts_at ?? (selectedEvent as unknown as Record<string, unknown>)["starts_at"],
         ends_at: body.ends_at ?? (selectedEvent as unknown as Record<string, unknown>)["ends_at"],
-        production: body.production_id ?? (selectedEvent as unknown as Record<string, unknown>)["production_id"],
+        production: body.production ?? (selectedEvent as unknown as Record<string, unknown>)["production"],
         hall: body.hall ?? (selectedEvent as unknown as Record<string, unknown>)["hall"],
         doors_at: body.doors_at ?? (selectedEvent as unknown as Record<string, unknown>)["doors_at"],
         vendor_id: body.vendor_id ?? (selectedEvent as unknown as Record<string, unknown>)["vendor_id"],
