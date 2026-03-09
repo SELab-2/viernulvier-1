@@ -125,10 +125,10 @@ export function parseParams<
   }
   return parsed.data;
 }
-
+// Coverage ignore as it is being deprecated.
+/* v8 ignore start */
 /**
- * @deprecated
- * Please use {@link parseParams()} instead.
+ * @deprecated Please use {@link parseParams()} instead.
  *
  * @param request - The Fastify request to extract params from.
  * @param key - The parameter key to extract.
@@ -141,6 +141,7 @@ export function getParam(request: FastifyRequest, key: string): string {
   if (value === undefined) throw new HttpError(400, `Missing route parameter: "${key}"`);
   return value;
 }
+/* v8 ignore stop */
 
 /**
  * Parses an unknown value against a Zod schema.
@@ -170,13 +171,18 @@ export function parseSchema<ResultSchema extends z.ZodType>(
   return parsed.data;
 }
 
+// Coverage ignore as it is being deprecated.
+/* v8 ignore start */
 /**
  *  @deprecated currently just an alias for {@link parseSchema}, I suggest using that instead
  */
 export const parse = parseSchema;
+/* v8 ignore stop */
 
+// Coverage ignore as it is being deprecated
+/* v8 ignore start */
 /**
- * @deprecated pls use BuildQuery(...)(...values)[0]
+ * @deprecated please use {@link buildQuery()} instead
  *
  * @param server - The Fastify instance, used for error logging.
  * @param schema - The Zod schema to validate and parse the row against.
@@ -197,7 +203,7 @@ export function parseFirstRow<
   if (rows.length === 0) return null;
   return parseSchema(server, schema, rows[0], ParseContext.Database);
 }
-
+/* v8 ignore stop */
 
 
 /**
