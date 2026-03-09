@@ -22,62 +22,36 @@ beforeEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("Create on hall route", () => {
-  test("POST /api/v1/hall — creates a hall and returns it", async () => {
+describe("Delete on hall route", () => {
+  test("DELETE /api/v1/hall/:id — deletes a hall and returns it", async () => {
     server.pg.query = vi.fn().mockResolvedValue({ rows: [mockHall], rowCount: 1 });
 
     const response = await server.inject({
-      method: "POST",
-      url: "/api/v1/hall",
+      method: "DELETE",
+      url: `/api/v1/hall/${mockHall?.["id"]}`,
       cookies: { session: sessionCookie },
-      payload: {
-        name: { nl: "Grote Zaal" },
-        address: "Sint-Pietersnieuwstraat 23",
-        vendor_id: 42,
-      },
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
     expect(HallSchema.parse(response.json())).toEqual(mockHall);
   });
 
-  test("POST /api/v1/hall — returns 404 when insert returns no row", async () => {
+  test("DELETE /api/v1/hall/:id — returns 404 when hall not found", async () => {
     server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
 
     const response = await server.inject({
-      method: "POST",
-      url: "/api/v1/hall",
+      method: "DELETE",
+      url: `/api/v1/hall/${mockHall?.["id"]}`,
       cookies: { session: sessionCookie },
-      payload: {
-        name: { nl: "Grote Zaal" },
-        address: "Sint-Pietersnieuwstraat 23",
-        vendor_id: 42,
-      },
     });
 
     expect(response.statusCode).toBe(HttpClientError.NotFound);
   });
 
-  test("POST /api/v1/hall — rejects invalid body", async () => {
+  test("DELETE /api/v1/hall/:id — returns 401 when not logged in", async () => {
     const response = await server.inject({
-      method: "POST",
-      url: "/api/v1/hall",
-      cookies: { session: sessionCookie },
-      payload: {},
-    });
-
-    expect(response.statusCode).toBe(HttpClientError.BadRequest);
-  });
-
-  test("POST /api/v1/hall — returns 401 when not logged in", async () => {
-    const response = await server.inject({
-      method: "POST",
-      url: "/api/v1/hall",
-      payload: {
-        name: { nl: "Grote Zaal" },
-        address: "Sint-Pietersnieuwstraat 23",
-        vendor_id: 42,
-      },
+      method: "DELETE",
+      url: `/api/v1/hall/${mockHall?.["id"]}`,
     });
 
     expect(response.statusCode).toBe(HttpClientError.Unauthorized);
