@@ -231,7 +231,6 @@ export function parseFirstRow<
  * @throws - {@link HttpError} on either a database error or a validation error. Logs the details.
  */
 export function buildQuery<
-  FilterFields extends z.ZodTuple,
   ResultType extends z.ZodRawShape,
   ResultSchema extends z.ZodObject<ResultType>,
 >(
@@ -320,7 +319,9 @@ export function replyHandler<T extends z.ZodRawShape, Z extends z.ZodObject<T>>(
     try {
       const result = await handler(server, request, reply);
       if (!result) throw new HttpError(HttpClientError.NotFound, "Not Found");
-      return result;
+      return await reply.status(HttpSuccess.OK).send({
+        body: result,
+      });
     } catch (err) {
       if (err instanceof HttpError) {
         return await reply.status(err.status).send({ error: err.message });
