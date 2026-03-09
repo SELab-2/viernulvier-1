@@ -307,7 +307,7 @@ export function buildQuery<
  * @param handler - The handler function to wrap.
  * @returns A Fastify route handler.
  */
-export function replyHandler<T extends z.ZodRawShape, Z extends z.ZodObject<T>>(
+export function replyHandler<Z extends z.ZodType>(
   server: FastifyInstance,
   handler: (
     server: FastifyInstance,
