@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Hall } from "@viernulvier/shared/index.js";
 import { HallSchema } from "@viernulvier/shared/index.js";
-import { getMetadata, parseParams, parseFirstRow, parseSchema } from "@/routes/helpers.js";
+import { getMetadata, parseParams, parseFirstRow, parseSchema, HttpError, HttpClientError } from "@/routes/helpers.js";
 import { z } from "zod";
 
 const EditHallBodySchema = HallSchema.omit({ id: true }).partial();
@@ -33,6 +33,10 @@ export async function editHall(server: FastifyInstance, request: FastifyRequest)
   addField("name", body["name"]);
   addField("address", body["address"]);
   addField("vendor_id", body["vendor_id"]);
+
+  if (fields.length === 0) {
+    throw new HttpError(HttpClientError.BadRequest, "No fields to update");
+  }
 
   fields.push(`updated_by = $${i++}`, `updated_at = $${i++}`);
   values.push(admin, current_time, id);

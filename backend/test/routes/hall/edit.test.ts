@@ -1,9 +1,8 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
 import { buildServer } from "@/server.js";
-import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { HallSchema, type Hall } from "@viernulvier/shared/index.js";
 import { HttpSuccess, HttpClientError } from "@/routes/helpers.js";
-import { editHall } from "@/routes/hall/handlers/edit.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
@@ -137,23 +136,14 @@ describe("Edit on hall route", () => {
     expect(response.statusCode).toBe(HttpClientError.BadRequest);
   });
 
-  test("editHall() — ignores explicitly undefined fields", async () => {
-    server.pg.query = vi.fn().mockImplementation((query: string) => {
-      const upper = query.trim().toUpperCase();
-
-      if (upper.startsWith("UPDATE")) {
-        return Promise.resolve({ rows: [originalHall], rowCount: 1 });
-      }
-
-      throw new Error(`Unexpected query in edit tests: ${query}`);
+  test("PATCH /api/v1/hall/:id — rejects empty body", async () => {
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/hall/${originalHall["id"]}`,
+      cookies: { session: sessionCookie },
+      payload: {},
     });
 
-    const result = await editHall(server, {
-      params: { id: String(originalHall["id"]) },
-      body: { name: undefined },
-      user: { id: 1 },
-    } as unknown as FastifyRequest);
-
-    expect(result).toEqual(originalHall);
+    expect(response.statusCode).toBe(HttpClientError.BadRequest);
   });
 });
