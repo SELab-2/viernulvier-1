@@ -1,7 +1,8 @@
 import type { Hall } from "@viernulvier/shared/index.js";
 import { HallSchema } from "@viernulvier/shared/index.js";
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import { getParam, parseFirstRow } from "@/routes/helpers.js";
+import { parseParams, parseFirstRow } from "@/routes/helpers.js";
+import { z } from "zod";
 
 /**
  * Deletes a hall by ID and returns the deleted record.
@@ -11,10 +12,14 @@ import { getParam, parseFirstRow } from "@/routes/helpers.js";
  * @returns The deleted hall, or `null` if not found or parsing failed.
  */
 export async function deleteHall(server: FastifyInstance, request: FastifyRequest): Promise<Hall | null> {
+  const { id } = parseParams(request, z.object({ 
+    id: z.coerce.number() 
+  }));
+
   const result = await server.pg.query<Hall>(
     `DELETE FROM hall WHERE id = $1
      RETURNING id, name, address, vendor_id`,
-    [getParam(request, "id")]
+    [id]
   );
 
   return parseFirstRow(server, HallSchema, result.rows);

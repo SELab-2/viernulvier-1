@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Hall, HallWithMeta } from "@viernulvier/shared/index.js";
 import { HallSchema } from "@viernulvier/shared/index.js";
-import { getParam, parseFirstRow, parse, ParseContext } from "@/routes/helpers.js";
+import { parseParams, parseFirstRow, parseSchema, ParseContext } from "@/routes/helpers.js";
 import z from "zod";
 
 const HallSelect = `
@@ -34,7 +34,9 @@ export async function getHallById(server: FastifyInstance, id: string | number):
  * @returns The hall, or `null` if not found or parsing failed.
  */
 export async function fetchHall(server: FastifyInstance, request: FastifyRequest): Promise<Hall | null> {
-  const id = getParam(request, "id");
+  const { id } = parseParams(request, z.object({ 
+    id: z.coerce.number() 
+  }));
   return await getHallById(server, id);
 }
 
@@ -46,6 +48,9 @@ export async function fetchHall(server: FastifyInstance, request: FastifyRequest
  * @returns The hall with metadata, or `null` if not found or parsing failed.
  */
 export async function fetchHallWithMeta(server: FastifyInstance, request: FastifyRequest): Promise<HallWithMeta | null> {
+  const { id } = parseParams(request, z.object({ 
+    id: z.coerce.number() 
+  }));
   const result = await server.pg.query<HallWithMeta>(
     `SELECT
       id,
@@ -58,7 +63,7 @@ export async function fetchHallWithMeta(server: FastifyInstance, request: Fastif
       updated_by
     FROM hall
     WHERE id = $1`,
-    [getParam(request, "id")]
+    [id]
   );
   return parseFirstRow(server, HallSchema.withMeta(), result.rows);
 }
@@ -73,5 +78,5 @@ export async function fetchHallWithMeta(server: FastifyInstance, request: Fastif
 export async function fetchHalls(server: FastifyInstance, _request: FastifyRequest): Promise<Hall[] | null> {
   const result = await server.pg.query<Hall>(`${HallSelect} ORDER BY id ASC`);
 
-  return parse(server, z.array(HallSchema), result.rows, ParseContext.Database);
+  return parseSchema(server, z.array(HallSchema), result.rows, ParseContext.Database);
 }

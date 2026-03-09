@@ -1,7 +1,8 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Hall } from "@viernulvier/shared/index.js";
 import { HallSchema } from "@viernulvier/shared/index.js";
-import { getMetadata, getParam, parseFirstRow, parse } from "@/routes/helpers.js";
+import { getMetadata, parseParams, parseFirstRow, parseSchema } from "@/routes/helpers.js";
+import { z } from "zod";
 
 const ReplaceHallBodySchema = HallSchema.omit({ id: true });
 
@@ -14,8 +15,10 @@ const ReplaceHallBodySchema = HallSchema.omit({ id: true });
  * @returns The updated hall, or `null` if the update failed or parsing failed.
  */
 export async function replaceHall(server: FastifyInstance, request: FastifyRequest): Promise<Hall | null> {
-  const id = getParam(request, "id");
-  const body = parse(server, ReplaceHallBodySchema, request.body);
+  const { id } = parseParams(request, z.object({ 
+    id: z.coerce.number() 
+  }));
+  const body = parseSchema(server, ReplaceHallBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
 
   const result = await server.pg.query<Hall>(

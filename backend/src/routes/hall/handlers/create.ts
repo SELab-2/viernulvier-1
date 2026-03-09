@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Hall } from "@viernulvier/shared/index.js";
 import { HallSchema } from "@viernulvier/shared/index.js";
-import { getMetadata, parse, parseFirstRow } from "@/routes/helpers.js";
+import { getMetadata, parseSchema, parseFirstRow } from "@/routes/helpers.js";
 
 const CreateHallBodySchema = HallSchema.omit({ id: true });
 
@@ -13,7 +13,7 @@ const CreateHallBodySchema = HallSchema.omit({ id: true });
  * @returns The created hall, or `null` if the insert failed or parsing failed.
  */
 export async function createHall(server: FastifyInstance, request: FastifyRequest): Promise<Hall | null> {
-  const body = parse(server, CreateHallBodySchema, request.body);
+  const body = parseSchema(server, CreateHallBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
 
   const insertResult = await server.pg.query<Hall>(
