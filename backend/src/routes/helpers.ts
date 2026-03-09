@@ -1,6 +1,6 @@
 import { primaryKey } from "@viernulvier/shared/types/helpers.js";
 import { type FastifyInstance, type FastifyRequest, type FastifyReply } from "fastify";
-import { tuple, z } from "zod";
+import { z } from "zod";
 
 
 export enum HttpInformation {
@@ -105,7 +105,10 @@ const parseErrors: Readonly<Record<ParseContextType, HttpError>> = {
 /**
  * Uses a zod schema to validate the params and returns them as an object.
  *
- * @usage `const { id } = parseParams(request, z.object({ id: z.int() }))`
+ * @usage `const { id } = parseParams(request, z.object({ id: stringToInt() }))`
+ *
+ * Remember that all params are strings and thus must be converted to the right data type
+ * with a codec. {@linkplain https://zod.dev/codecs}
  * @param request - The Fastify request to extract parameters from.
  * @param schema - The schema to ber used to validate the parameters.
  * @returns A type safe object where all required params have been validated.
@@ -168,8 +171,7 @@ export function parseSchema<ResultSchema extends z.ZodType>(
 }
 
 /**
- *  @deprecated currently just an alias for {@link parseSchema}
- *    use that instead
+ *  @deprecated currently just an alias for {@link parseSchema}, I suggest using that instead
  */
 export const parse = parseSchema;
 
