@@ -4,32 +4,9 @@ import { getParam, parse, parseFirstRow, ParseContext } from "@/routes/helpers.j
 import { EventSchema } from "@viernulvier/shared/types/event.js";
 import type { Event } from "@viernulvier/shared/types/event.js";
 import { fetchEvent } from "./fetch.js";
+import { normalizePartialEventDates } from "./helper.js";
 
 const EventUpdateSchema = EventSchema.partial();
-
-function normalizeEventDates(value: unknown): unknown {
-    if (!value || typeof value !== "object") return value;
-
-    const payload = value as Record<string, unknown>;
-    return {
-        ...payload,
-        starts_at: payload["starts_at"] === undefined
-            ? undefined
-            : payload["starts_at"] instanceof Date
-                ? payload["starts_at"]
-                : new Date(String(payload["starts_at"])),
-        ends_at: payload["ends_at"] === undefined
-            ? undefined
-            : payload["ends_at"] instanceof Date
-                ? payload["ends_at"]
-                : new Date(String(payload["ends_at"])),
-        doors_at: payload["doors_at"] === undefined
-            ? undefined
-            : payload["doors_at"] instanceof Date
-                ? payload["doors_at"]
-                : new Date(String(payload["doors_at"])),
-    };
-}
 
 /**
  * Updates certain fields from a single event by ID in the database.
@@ -43,7 +20,7 @@ export async function editEvent(
     server: FastifyInstance,
     request: FastifyRequest
 ): Promise<Event | null> {
-    const normalizedBody = normalizeEventDates(request.body);
+    const normalizedBody = normalizePartialEventDates(request.body);
     const body = parse<Event>(server, EventUpdateSchema, normalizedBody, ParseContext.Request);
     const selectedEvent = await fetchEvent(server, request);
 

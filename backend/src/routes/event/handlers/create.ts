@@ -3,19 +3,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { parseFirstRow, parse, ParseContext } from "@/routes/helpers.js";
 import { EventSchema } from "@viernulvier/shared/types/event.js";
 import type { Event } from "@viernulvier/shared/types/event.js";
-
-function normalizeEventDates(value: unknown): unknown {
-	if (!value || typeof value !== "object") return value;
-
-	const payload = value as Record<string, unknown>;
-	return {
-		...payload,
-		starts_at: payload["starts_at"] instanceof Date ? payload["starts_at"] : new Date(String(payload["starts_at"])),
-		ends_at: payload["ends_at"] instanceof Date ? payload["ends_at"] : new Date(String(payload["ends_at"])),
-		doors_at: payload["doors_at"] instanceof Date ? payload["doors_at"] : new Date(String(payload["doors_at"])),
-	};
-}
-
+import { normalizeEventDates } from "./helper.js";
 
 /**
  * Creates a new event row in the database.
