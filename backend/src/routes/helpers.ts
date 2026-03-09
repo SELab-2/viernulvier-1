@@ -289,7 +289,7 @@ export function replyHandler<T extends z.ZodRawShape, Z extends z.ZodObject<T>>(
     server: FastifyInstance,
     request: FastifyRequest,
     reply?: FastifyReply,
-  ) => Promise<Z | null>,
+  ) => Promise<z.output<Z> | null>,
 ) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     try {
