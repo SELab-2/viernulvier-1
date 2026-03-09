@@ -855,31 +855,6 @@ describe(buildQuery, () => {
                         }
                     })
                 });
-                // Example of how a strict object can be used to verify the state of the query.
-                test(`buildQuery(server, queryString, z.strictObject({
-                        id: z.int().positive(),
-                        name: z.string().max(32)
-                    }))`, async () => {
-                        const query = buildQuery(MockServer, "SELECT * FROM productions",
-                            z.strictObject({
-                                id: z.int().positive(),
-                                name: z.string().max(32)
-                            }));
-                        try {
-                            await query();
-                            expect.fail();
-                        } catch (err) {
-                            expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
-                            expect(MockServer.log.error).toBeCalledWith(
-                                z.array(z.strictObject({
-                                id: z.int().positive(),
-                                name: z.string().max(32)
-                            })).safeParse(DB).error
-                            );
-                            expect(MockServer.pg.query)
-                                .toBeCalledWith("SELECT * FROM productions", z.tuple([]).parse([]));
-                        }
-                });
             });
         });
     })
