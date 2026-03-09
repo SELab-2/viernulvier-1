@@ -33,7 +33,7 @@ describe("Delete on hall route", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(HallSchema.parse(response.json())).toEqual(mockHall);
+    expect(HallSchema.parse(response.json().body)).toEqual(mockHall);
   });
 
   test("DELETE /api/v1/hall/:id — returns 404 when hall not found", async () => {

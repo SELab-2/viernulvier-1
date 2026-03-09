@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
 import { buildServer } from "@/server.js";
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { HallSchema, type Hall } from "@viernulvier/shared/index.js";
 import { HttpSuccess, HttpClientError } from "@/routes/helpers.js";
 import { editHall } from "@/routes/hall/handlers/edit.js";
@@ -62,7 +62,7 @@ describe("Edit on hall route", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(HallSchema.parse(response.json())).toEqual(updatedHallA);
+    expect(HallSchema.parse(response.json().body)).toEqual(updatedHallA);
   });
 
   test("PATCH /api/v1/hall/:id — updates vendor_id", async () => {
@@ -86,7 +86,7 @@ describe("Edit on hall route", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(HallSchema.parse(response.json())).toEqual(updatedHallB);
+    expect(HallSchema.parse(response.json().body)).toEqual(updatedHallB);
   });
 
   test("PATCH /api/v1/hall/:id — returns 404 when hall not found", async () => {
@@ -152,7 +152,7 @@ describe("Edit on hall route", () => {
       params: { id: String(originalHall["id"]) },
       body: { name: undefined },
       user: { id: 1 },
-    } as any);
+    } as unknown as FastifyRequest);
 
     expect(result).toEqual(originalHall);
   });

@@ -38,7 +38,7 @@ describe("Create on hall route", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(HallSchema.parse(response.json())).toEqual(mockHall);
+    expect(HallSchema.parse(response.json().body)).toEqual(mockHall);
   });
 
   test("POST /api/v1/hall — returns 404 when insert returns no row", async () => {

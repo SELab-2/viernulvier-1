@@ -58,7 +58,7 @@ describe("Hall fetch routes", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(response.json()).toEqual(mockHalls);
+    expect(response.json().body).toEqual(mockHalls);
   });
 
   test("GET /api/v1/hall/:id -> returns a single hall", async () => {
@@ -70,7 +70,7 @@ describe("Hall fetch routes", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(HallSchema.parse(response.json())).toEqual(hall);
+    expect(HallSchema.parse(response.json().body)).toEqual(hall);
   });
 
   test("GET /api/v1/hall/:id/meta — returns a hall with metadata", async () => {
@@ -80,10 +80,9 @@ describe("Hall fetch routes", () => {
       method: "GET",
       url: `/api/v1/hall/${hall?.["id"]}/meta`,
     });
-    console.log(response.body);
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(HallSchema.withMeta().parse(response.json())).toEqual(hall);
+    expect(HallSchema.withMeta().parse(response.json().body)).toEqual(hall);
   });
 
   test("GET /api/v1/hall/:id — returns 404 when hall not found", async () => {

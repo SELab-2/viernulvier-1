@@ -51,7 +51,7 @@ describe("Replace on hall route", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(HallSchema.parse(response.json())).toEqual(replacedHall);
+    expect(HallSchema.parse(response.json().body)).toEqual(replacedHall);
   });
 
   test("PUT /api/v1/hall/:id — returns 404 when hall not found", async () => {
