@@ -1,6 +1,8 @@
 import type { FastifyInstance } from "fastify";
-import { ProductionSchema } from "@viernulvier/shared/types/production.js";
-import type { Production } from "@viernulvier/shared/types/production.js";
+import {
+  ProductionSchema,
+  type Production,
+} from "@viernulvier/shared/types/production.js";
 
 /**
  * Defines the api requests for /api/productions
