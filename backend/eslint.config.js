@@ -88,6 +88,10 @@ export default defineConfig([
           caughtErrorsIgnorePattern: "^_"
         }
       ],
+
+      "@typescript-eslint/no-redeclare": "error",
+
+      "no-redeclare": "off",
       "no-unused-vars": "off",
 
       // ----------------------------
@@ -106,6 +110,7 @@ export default defineConfig([
 
       // tsdoc config
       "tsdoc/syntax": "warn"
+      "tsdoc/syntax/"
     }
   },
 
