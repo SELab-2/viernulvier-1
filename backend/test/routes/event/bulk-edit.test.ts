@@ -89,6 +89,20 @@ describe("Event Bulk Edit Routes", () => {
 			server.pg.query = originalMock;
 		});
 
+		test("returns 400 when request payload is invalid", async () => {
+			const response = await server.inject({
+				method: "PATCH",
+				url: "/api/v1/event",
+				payload: {
+					ids: [1, 2],
+					production: "not a number",
+				},
+			});
+
+			expect(response.statusCode).toBe(400);
+			expect(response.json()).toEqual({ error: "Invalid request data" });
+		});
+
 		test("returns 404 when any event not in database", async () => {
 			const response = await server.inject({
 				method: "PATCH",

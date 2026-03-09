@@ -106,123 +106,139 @@ describe("Event Replace Routes", () => {
 			expect(response.statusCode).toBe(500);
 			server.pg.query = originalMock;
 		});
-	});
 
-	test("creates event when target id does not exist", async () => {
-		const replacement = {
-			id: 9,
-			starts_at: new Date("2026-03-01T18:00:00.000Z"),
-			ends_at: new Date("2026-03-01T21:00:00.000Z"),
-			production: 19,
-			hall: 8,
-			doors_at: new Date("2026-03-01T17:00:00.000Z"),
-			vendor_id: 190,
-			info: { nl: "Info inserted" },
-			price: [19],
-		};
+        test("returns 400 when request payload is invalid", async () => {
+            const response = await server.inject({
+                method: "PUT",
+                url: "/api/v1/event/1",
+                payload: {
+                    id: 1,
+                    production: 20,
+                },
+            });
 
-		const replaceResponse = await server.inject({
-			method: "PUT",
-			url: "/api/v1/event/9",
-			payload: replacement,
-		});
+            expect(response.statusCode).toBe(400);
+            expect(response.json()).toEqual({ error: "Invalid request data" });
+        });
+    });
 
-		expect(replaceResponse.statusCode).toBe(200);
-		expect(replaceResponse.json()).toEqual({
-			...replacement,
-			id: 4,
-			starts_at: replacement.starts_at.toISOString(),
-			ends_at: replacement.ends_at.toISOString(),
-			doors_at: replacement.doors_at.toISOString(),
-		});
+    describe("replacing events", () => {
+        test("replaces one event and adds missing one", async () => {
+            const replacement = {
+                id: 9,
+                starts_at: new Date("2026-03-01T18:00:00.000Z"),
+                ends_at: new Date("2026-03-01T21:00:00.000Z"),
+                production: 19,
+                hall: 8,
+                doors_at: new Date("2026-03-01T17:00:00.000Z"),
+                vendor_id: 190,
+                info: { nl: "Info inserted" },
+                price: [19],
+            };
 
-		const listResponse = await server.inject({
-			method: "GET",
-			url: "/api/v1/event",
-		});
+            const replaceResponse = await server.inject({
+                method: "PUT",
+                url: "/api/v1/event/9",
+                payload: replacement,
+            });
 
-		expect(listResponse.statusCode).toBe(200);
-		expect(listResponse.json()).toHaveLength(4);
-		expect(listResponse.json()).toEqual([
-			{
-				...initialEvents[0]!,
-				starts_at: initialEvents[0]!.starts_at.toISOString(),
-				ends_at: initialEvents[0]!.ends_at.toISOString(),
-				doors_at: initialEvents[0]!.doors_at.toISOString(),
-			},
-			{
-				...initialEvents[1]!,
-				starts_at: initialEvents[1]!.starts_at.toISOString(),
-				ends_at: initialEvents[1]!.ends_at.toISOString(),
-				doors_at: initialEvents[1]!.doors_at.toISOString(),
-			},
-			{
-				...initialEvents[2]!,
-				starts_at: initialEvents[2]!.starts_at.toISOString(),
-				ends_at: initialEvents[2]!.ends_at.toISOString(),
-				doors_at: initialEvents[2]!.doors_at.toISOString(),
-			},
-			{
-				...replacement,
-				id: 4,
-				starts_at: replacement.starts_at.toISOString(),
-				ends_at: replacement.ends_at.toISOString(),
-				doors_at: replacement.doors_at.toISOString(),
-			},
-		]);
-	});
+            expect(replaceResponse.statusCode).toBe(200);
+            expect(replaceResponse.json()).toEqual({
+                ...replacement,
+                id: 4,
+                starts_at: replacement.starts_at.toISOString(),
+                ends_at: replacement.ends_at.toISOString(),
+                doors_at: replacement.doors_at.toISOString(),
+            });
 
-	test("replaces one event and keeps the others", async () => {
-		const replacement = {
-			...initialEvents[1]!,
-			starts_at: new Date("2026-02-01T18:00:00.000Z"),
-			ends_at: new Date("2026-02-01T21:00:00.000Z"),
-			hall: 9,
-			vendor_id: 99,
-			info: { nl: "Info replaced" },
-			price: [9],
-		};
+            const listResponse = await server.inject({
+                method: "GET",
+                url: "/api/v1/event",
+            });
 
-		const replaceResponse = await server.inject({
-			method: "PUT",
-			url: "/api/v1/event/2",
-			payload: replacement,
-		});
+            expect(listResponse.statusCode).toBe(200);
+            expect(listResponse.json()).toHaveLength(4);
+            expect(listResponse.json()).toEqual([
+                {
+                    ...initialEvents[0]!,
+                    starts_at: initialEvents[0]!.starts_at.toISOString(),
+                    ends_at: initialEvents[0]!.ends_at.toISOString(),
+                    doors_at: initialEvents[0]!.doors_at.toISOString(),
+                },
+                {
+                    ...initialEvents[1]!,
+                    starts_at: initialEvents[1]!.starts_at.toISOString(),
+                    ends_at: initialEvents[1]!.ends_at.toISOString(),
+                    doors_at: initialEvents[1]!.doors_at.toISOString(),
+                },
+                {
+                    ...initialEvents[2]!,
+                    starts_at: initialEvents[2]!.starts_at.toISOString(),
+                    ends_at: initialEvents[2]!.ends_at.toISOString(),
+                    doors_at: initialEvents[2]!.doors_at.toISOString(),
+                },
+                {
+                    ...replacement,
+                    id: 4,
+                    starts_at: replacement.starts_at.toISOString(),
+                    ends_at: replacement.ends_at.toISOString(),
+                    doors_at: replacement.doors_at.toISOString(),
+                },
+            ]);
+        });
 
-		expect(replaceResponse.statusCode).toBe(200);
-		expect(replaceResponse.json()).toEqual({
-			...replacement,
-			starts_at: replacement.starts_at.toISOString(),
-			ends_at: replacement.ends_at.toISOString(),
-			doors_at: replacement.doors_at.toISOString(),
-		});
+        test("replaces one event and keeps the others", async () => {
+            const replacement = {
+                ...initialEvents[1]!,
+                starts_at: new Date("2026-02-01T18:00:00.000Z"),
+                ends_at: new Date("2026-02-01T21:00:00.000Z"),
+                hall: 9,
+                vendor_id: 99,
+                info: { nl: "Info replaced" },
+                price: [9],
+            };
 
-		const listResponse = await server.inject({
-			method: "GET",
-			url: "/api/v1/event",
-		});
+            const replaceResponse = await server.inject({
+                method: "PUT",
+                url: "/api/v1/event/2",
+                payload: replacement,
+            });
 
-		expect(listResponse.statusCode).toBe(200);
-		expect(listResponse.json()).toHaveLength(3);
-		expect(listResponse.json()).toEqual([
-			{
-				...initialEvents[0]!,
-				starts_at: initialEvents[0]!.starts_at.toISOString(),
-				ends_at: initialEvents[0]!.ends_at.toISOString(),
-				doors_at: initialEvents[0]!.doors_at.toISOString(),
-			},
-			{
-				...replacement,
-				starts_at: replacement.starts_at.toISOString(),
-				ends_at: replacement.ends_at.toISOString(),
-				doors_at: replacement.doors_at.toISOString(),
-			},
-			{
-				...initialEvents[2]!,
-				starts_at: initialEvents[2]!.starts_at.toISOString(),
-				ends_at: initialEvents[2]!.ends_at.toISOString(),
-				doors_at: initialEvents[2]!.doors_at.toISOString(),
-			},
-		]);
-	});
+            expect(replaceResponse.statusCode).toBe(200);
+            expect(replaceResponse.json()).toEqual({
+                ...replacement,
+                starts_at: replacement.starts_at.toISOString(),
+                ends_at: replacement.ends_at.toISOString(),
+                doors_at: replacement.doors_at.toISOString(),
+            });
+
+            const listResponse = await server.inject({
+                method: "GET",
+                url: "/api/v1/event",
+            });
+
+            expect(listResponse.statusCode).toBe(200);
+            expect(listResponse.json()).toHaveLength(3);
+            expect(listResponse.json()).toEqual([
+                {
+                    ...initialEvents[0]!,
+                    starts_at: initialEvents[0]!.starts_at.toISOString(),
+                    ends_at: initialEvents[0]!.ends_at.toISOString(),
+                    doors_at: initialEvents[0]!.doors_at.toISOString(),
+                },
+                {
+                    ...replacement,
+                    starts_at: replacement.starts_at.toISOString(),
+                    ends_at: replacement.ends_at.toISOString(),
+                    doors_at: replacement.doors_at.toISOString(),
+                },
+                {
+                    ...initialEvents[2]!,
+                    starts_at: initialEvents[2]!.starts_at.toISOString(),
+                    ends_at: initialEvents[2]!.ends_at.toISOString(),
+                    doors_at: initialEvents[2]!.doors_at.toISOString(),
+                },
+            ]);
+        });
+    });
 });
