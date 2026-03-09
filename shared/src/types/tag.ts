@@ -6,7 +6,7 @@ import {
   languageMap,
   type ForeignKey,
 } from "./helpers.js";
-import {createSchema} from "./metadata.js"
+import { createSchema } from "./metadata.js";
 
 export const TagTypeSchema = createSchema({
   id: primaryKey(),

@@ -17,7 +17,9 @@ vi.mock("pg", () => ({
   },
 }));
 
-const mockMigrate = vi.fn().mockResolvedValue([{ filename: "001.do.init.sql" }]);
+const mockMigrate = vi
+  .fn()
+  .mockResolvedValue([{ filename: "001.do.init.sql" }]);
 
 vi.mock("postgrator", () => ({
   default: vi.fn(function () {
@@ -41,10 +43,9 @@ describe("migrate()", () => {
 
     expect(mockClientInstance.connect).toHaveBeenCalled();
     expect(mockMigrate).toHaveBeenCalled();
-    expect(consoleSpy).toHaveBeenCalledWith(
-      "Migrations applied:",
-      [{ filename: "001.do.init.sql" }]
-    );
+    expect(consoleSpy).toHaveBeenCalledWith("Migrations applied:", [
+      { filename: "001.do.init.sql" },
+    ]);
     expect(mockClientInstance.end).toHaveBeenCalled();
 
     consoleSpy.mockRestore();
@@ -62,15 +63,17 @@ describe("migrate()", () => {
   });
 
   it("Throws if database client wasn't properly instantiated", async () => {
-    mockClientInstance.database = undefined as any;
+    mockClientInstance.database = undefined as unknown as string;
 
     await expect(migrate()).rejects.toThrow(
-      "Database client wasn't properly instantiated."
+      "Database client wasn't properly instantiated.",
     );
   });
 
   it("Throws 'Database not ready' if DB never becomes available", async () => {
-    mockClientInstance.connect.mockRejectedValue(new Error("Connection refused"));
+    mockClientInstance.connect.mockRejectedValue(
+      new Error("Connection refused"),
+    );
     vi.useFakeTimers();
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
@@ -83,7 +86,7 @@ describe("migrate()", () => {
             await vi.advanceTimersByTimeAsync(2000);
           }
         })(),
-      ])
+      ]),
     ).rejects.toThrow("Database not ready");
 
     consoleSpy.mockRestore();
@@ -95,6 +98,7 @@ describe("migrate()", () => {
 
     await migrate();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const postgratorConfig = (MockPostgrator as any).mock.calls[0][0];
     await postgratorConfig.execQuery("SELECT 1");
 
