@@ -1,3 +1,23 @@
+/**
+ * Normalizes all date fields in an event object to Date instances.
+ *
+ * Converts the date string fields (`starts_at`, `ends_at`, `doors_at`) to JavaScript Date objects.
+ * Non-object inputs are returned unchanged. This function is used for complete event updates
+ * where all date fields are provided.
+ *
+ * @param value - The value to normalize, typically an event object with date strings
+ * @returns The normalized object with date fields converted to Date instances, or the original value if not an object
+ *
+ * @example
+ * const event = {
+ *   starts_at: "2026-01-01T18:00:00.000Z",
+ *   ends_at: "2026-01-01T20:00:00.000Z",
+ *   doors_at: "2026-01-01T17:30:00.000Z",
+ *   production: 10
+ * };
+ * const normalized = normalizeEventDates(event);
+ * // normalized.starts_at is now a Date object
+ */
 export function normalizeEventDates(value: unknown): unknown {
     if (!value || typeof value !== "object") return value;
 
@@ -10,6 +30,29 @@ export function normalizeEventDates(value: unknown): unknown {
     };
 }
 
+/**
+ * Normalizes date fields in a partial event object to Date instances.
+ *
+ * Similar to {@link normalizeEventDates}, but safely handles partial updates where
+ * date fields may be undefined. Only converts date fields that are explicitly provided,
+ * leaving undefined fields as undefined. This function is used for partial event updates
+ * (PATCH requests) where only some fields are being modified.
+ *
+ * @param value - The value to normalize, typically a partial event object
+ * @returns The normalized object with provided date fields converted to Date instances,
+ *          undefined fields preserved as undefined, or the original value if not an object
+ *
+ * @example
+ * const partialEvent = {
+ *   starts_at: "2026-02-01T18:00:00.000Z",
+ *   production: 20
+ *   // ends_at and doors_at are not provided
+ * };
+ * const normalized = normalizePartialEventDates(partialEvent);
+ * // normalized.starts_at is a Date object
+ * // normalized.ends_at is undefined (not provided)
+ * // normalized.doors_at is undefined (not provided)
+ */
 export function normalizePartialEventDates(value: unknown): unknown {
     if (!value || typeof value !== "object") return value;
 
