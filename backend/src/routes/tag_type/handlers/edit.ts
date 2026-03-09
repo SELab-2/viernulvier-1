@@ -7,8 +7,10 @@ import { getTagTypeById } from "./fetch.js";
 
 export async function editTagType(
   server: FastifyInstance,
-  request: FastifyRequest<{ Params: { id: number } }>
+  request: FastifyRequest
 ): Promise<TagType | null> {
+
+  const { id } = request.params as { id: number };
 
   const body = parse(server, EditTagTypeBodySchema, request.body);
   const { admin, current_time } = getMetadata();
@@ -38,10 +40,10 @@ export async function editTagType(
     WHERE id = $${i}
     RETURNING id
     `,
-    [...values, request.params.id]
+    [...values, id]
   );
 
   if (!result.rows[0]) return null;
 
-  return getTagTypeById(server, request.params.id);
+  return await getTagTypeById(server, id);
 }

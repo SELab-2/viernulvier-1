@@ -20,19 +20,18 @@ export async function getTagTypeById(
 
 export async function fetchTagType(
   server: FastifyInstance,
-  request: FastifyRequest<{ Params: { id: number } }>
+  request: FastifyRequest
 ) {
-  return getTagTypeById(server, request.params.id);
-}
+  const { id } = request.params as { id: number };
 
-export async function fetchTagTypes(server: FastifyInstance) {
-
-  const result = await server.pg.query<TagType>(
+  const result = await server.pg.query(
     `
-    SELECT id, name, visible
+    SELECT id, name
     FROM tag_type
-    `
+    WHERE id = $1
+    `,
+    [id]
   );
 
-  return result.rows;
+  return result.rows[0] ?? null;
 }
