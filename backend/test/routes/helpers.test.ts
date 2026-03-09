@@ -6,9 +6,17 @@ import {
   HttpClientError,
   HttpServerError,
   buildQuery,
+  replyHandler,
+  type HTTPErrorCode,
+  HttpSuccess,
 } from "@/routes/helpers.js";
 import { serial, stringToSerial } from "@viernulvier/shared/types/helpers.js";
-import { type FastifyInstance, type FastifyRequest } from "fastify";
+import {
+  type FastifyInstance,
+  type FastifyReply,
+  type FastifyRequest,
+} from "fastify";
+import { afterEach } from "node:test";
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import z from "zod";
 
@@ -1048,6 +1056,90 @@ describe(buildQuery, () => {
             }
           });
         });
+      });
+    });
+  });
+});
+
+describe(replyHandler, () => {
+  const generateMockServer = <T extends object>(
+    DBSetup?: T[],
+    {
+      filterExp,
+      selectedFields,
+    }: {
+      filterExp?: (obj: T, ...values: unknown[]) => boolean;
+      selectedFields?: string[];
+    } = {},
+  ) =>
+    ({
+      log: { error: vi.fn() },
+      pg: {
+        query: vi.fn().mockImplementation((_, values) => ({
+          rows: (DBSetup ?? [])
+            .filter((obj) => (filterExp ? filterExp(obj, ...values) : true))
+            .map((obj) =>
+              selectedFields
+                ? Object.fromEntries(
+                    Object.entries(obj).filter(([key]) =>
+                      selectedFields.includes(key),
+                    ),
+                  )
+                : obj,
+            ),
+        })),
+      },
+    }) as unknown as FastifyInstance;
+  let mockServer: ReturnType<typeof generateMockServer>;
+  const mockReply = {
+    status: vi.fn().mockImplementation((status: HTTPErrorCode) => ({
+      send: vi
+        .fn()
+        .mockImplementation(
+          (members: { error?: string; message?: string; body: unknown }) => ({
+            status,
+            ...members,
+          }),
+        ),
+    })),
+  } as unknown as FastifyReply;
+  const mockRequest = {} as unknown as FastifyRequest;
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+  describe("When given a basic handler that returns a null value: () => null", () => {
+    beforeEach(() => {
+      mockServer = generateMockServer();
+    });
+    const handler = vi.fn(async () => null);
+    describe("const endpoint = replyHandler(server, handler)", async () => {
+      const endpoint = await replyHandler(mockServer, handler);
+      test("endpoint(request, reply)", async () => {
+        const res = await endpoint(mockRequest, mockReply);
+        expect(res).toStrictEqual({
+          status: HttpClientError.NotFound,
+          error: "Not Found",
+        });
+        expect(mockReply.status).toBeCalledWith(HttpClientError.NotFound);
+      });
+    });
+  });
+
+  describe("When given a handler that returns a valid value: () => {id: 1}", () => {
+    beforeEach(() => {
+      mockServer = generateMockServer();
+    });
+    const handler = vi.fn(async () => ({ id: 1 }));
+    describe("const endpoint = replyHandler(server, handler)", async () => {
+      const endpoint = await replyHandler(mockServer, handler);
+      test("endpoint(request, reply)", async () => {
+        const res = await endpoint(mockRequest, mockReply);
+        expect(res).toStrictEqual({
+          status: HttpSuccess.OK,
+          body: { id: 1 },
+        });
+        expect(mockReply.status).toBeCalledWith(HttpClientError.NotFound);
       });
     });
   });
