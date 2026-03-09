@@ -34,9 +34,11 @@ export async function getTagById(
 
 export async function fetchTag(
   server: FastifyInstance,
-  request: FastifyRequest<{ Params: { id: number } }>
+  request: FastifyRequest
 ) {
-  return getTagById(server, request.params.id);
+  const { id } = request.params as { id: number };
+
+  return await getTagById(server, id);
 }
 
 export async function fetchTags(server: FastifyInstance) {

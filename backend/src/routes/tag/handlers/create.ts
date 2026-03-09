@@ -47,5 +47,5 @@ export async function createTag(
     );
   }
 
-  return getTagById(server, row.id);
+  return await getTagById(server, row.id);
 }
