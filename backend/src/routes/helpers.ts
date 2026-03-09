@@ -1,6 +1,6 @@
 import { primaryKey } from "@viernulvier/shared/types/helpers.js";
 import { type FastifyInstance, type FastifyRequest, type FastifyReply } from "fastify";
-import { z } from "zod";
+import { tuple, z } from "zod";
 
 
 export enum HttpInformation {
@@ -173,9 +173,17 @@ export function parseFirstRow<
   if (rows.length === 0) return null;
   return parseSchema(server, schema, rows[0], ParseContext.Database);
 }
-
 export function buildQuery<
-  FilterFields extends z.ZodTuple,
+  FilterFields extends z.ZodTuple<any, null>,
+  ResultType extends z.ZodRawShape,
+  ResultSchema extends z.ZodObject<ResultType>,
+>(
+  server: FastifyInstance,
+  queryConfig: Parameters<typeof server.pg.query>[0],
+  resultSchema: ResultSchema,
+): () => Promise<z.output<z.ZodArray<ResultSchema>>>;
+export function buildQuery<
+  FilterFields extends z.ZodTuple<any, null>,
   ResultType extends z.ZodRawShape,
   ResultSchema extends z.ZodObject<ResultType>,
 >(
@@ -185,7 +193,30 @@ export function buildQuery<
   resultSchema: ResultSchema,
 ): (
   ...values: z.infer<FilterFields>
-) => Promise<z.output<z.ZodArray<ResultSchema>>> {
+) => Promise<z.output<z.ZodArray<ResultSchema>>>;
+/**
+ * Helper function that adds data validation to both the input and output of a db query.
+ *
+ * @param {FastifyInstance} server - The fastify server instance to be used to report errors.
+ * @param {Parameters<typeof server.pg.query>[0]} queryConfig - Any query config supported by `server.pg.query`
+ * @param {FilterFields} filterFields - A ZodTuple that specifies which types the values going into the query should have.
+ * @param {ResultSchema} resultSchema - The schema that will be used to validate the data retrieved from the query. This is automatically wrapped in `z.array()`
+ * @return {*} A query that can then be executed by supplying the needed parameters.
+ */
+export function buildQuery<
+  FilterFields extends z.ZodTuple<any, null>,
+  ResultType extends z.ZodRawShape,
+  ResultSchema extends z.ZodObject<ResultType>,
+>(
+  server: FastifyInstance,
+  queryConfig: Parameters<typeof server.pg.query>[0],
+  filterFieldsOrResultSchema: FilterFields | ResultSchema,
+  resultSchema?: ResultSchema,
+): (
+  ...values: z.infer<FilterFields>
+  ) => Promise<z.output<z.ZodArray<ResultSchema>>> {
+  const filterFields = resultSchema ? filterFieldsOrResultSchema : z.tuple([]) as unknown as FilterFields
+  resultSchema = resultSchema ?? filterFieldsOrResultSchema as ResultSchema
   return async (...values: z.infer<FilterFields>) => {
     const parsed = filterFields.safeParse(values);
     if (!parsed.success) {
