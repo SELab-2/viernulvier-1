@@ -3,6 +3,7 @@ import type { Production } from "@viernulvier/shared/index.js";
 import { getMetadata, getParam, parse } from "@/routes/helpers.js";
 import { getProductionById } from "./fetch.js";
 import { PartialProductionBodySchema } from "./body-schema.js";
+import { getFieldValue, getNullableFieldValue, hasOwn } from "./field-utils.js";
 
 const DirectEditColumns = [
   "vendor_id",
@@ -49,16 +50,14 @@ export async function editProduction(server: FastifyInstance, request: FastifyRe
     values.push(value);
   };
 
-  const bodyRecord = body as Record<string, unknown>;
-
   for (const column of DirectEditColumns) {
-    if (Object.prototype.hasOwnProperty.call(bodyRecord, column)) {
-      addField(column, bodyRecord[column]);
+    if (hasOwn(body, column)) {
+      addField(column, getFieldValue(body, column));
     }
   }
   for (const column of NullableEditColumns) {
-    if (Object.prototype.hasOwnProperty.call(bodyRecord, column)) {
-      addField(column, bodyRecord[column] ?? null);
+    if (hasOwn(body, column)) {
+      addField(column, getNullableFieldValue(body, column));
     }
   }
 

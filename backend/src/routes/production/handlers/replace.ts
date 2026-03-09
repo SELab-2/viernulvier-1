@@ -3,6 +3,7 @@ import type { Production } from "@viernulvier/shared/index.js";
 import { getMetadata, getParam, parse } from "@/routes/helpers.js";
 import { getProductionById } from "./fetch.js";
 import { ProductionBodySchema } from "./body-schema.js";
+import { getFieldValue } from "./field-utils.js";
 
 const ReplaceColumns = [
   "vendor_id",
@@ -42,7 +43,7 @@ export async function replaceProduction(server: FastifyInstance, request: Fastif
 
   for (const column of ReplaceColumns) {
     fields.push(`${column} = $${i++}`);
-    values.push(body[column]);
+    values.push(getFieldValue(body, column));
   }
 
   fields.push(`updated_by = $${i++}`, `updated_at = $${i++}`);

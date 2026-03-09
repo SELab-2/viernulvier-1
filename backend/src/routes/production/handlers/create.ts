@@ -3,6 +3,7 @@ import type { Production } from "@viernulvier/shared/index.js";
 import { getMetadata, parse } from "@/routes/helpers.js";
 import { getProductionById } from "./fetch.js";
 import { CreateProductionBodySchema } from "./body-schema.js";
+import { getFieldValue, getNullableFieldValue } from "./field-utils.js";
 
 const RequiredCreateColumns = [
   "vendor_id",
@@ -49,10 +50,10 @@ export async function createProduction(server: FastifyInstance, request: Fastify
   };
 
   for (const column of RequiredCreateColumns) {
-    addField(column, body[column]);
+    addField(column, getFieldValue(body, column));
   }
   for (const column of NullableCreateColumns) {
-    addField(column, body[column] ?? null);
+    addField(column, getNullableFieldValue(body, column));
   }
 
   // Metadata

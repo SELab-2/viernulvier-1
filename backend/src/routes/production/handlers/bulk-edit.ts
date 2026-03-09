@@ -4,6 +4,7 @@ import { getMetadata, parse } from "@/routes/helpers.js";
 import z from "zod";
 import { getProductionById } from "./fetch.js";
 import { PartialProductionBodySchema, ProductionIdSchema } from "./body-schema.js";
+import { getFieldValue, getNullableFieldValue, hasOwn } from "./field-utils.js";
 
 const BulkEditProductionsBodySchema = z.object({
   ids: z.array(ProductionIdSchema).min(1),
@@ -55,16 +56,14 @@ export async function bulkEditProductions(server: FastifyInstance, request: Fast
     values.push(value);
   };
 
-  const dataRecord = data as Record<string, unknown>;
-
   for (const column of DirectBulkEditColumns) {
-    if (Object.prototype.hasOwnProperty.call(dataRecord, column)) {
-      addField(column, dataRecord[column]);
+    if (hasOwn(data, column)) {
+      addField(column, getFieldValue(data, column));
     }
   }
   for (const column of NullableBulkEditColumns) {
-    if (Object.prototype.hasOwnProperty.call(dataRecord, column)) {
-      addField(column, dataRecord[column] ?? null);
+    if (hasOwn(data, column)) {
+      addField(column, getNullableFieldValue(data, column));
     }
   }
 
