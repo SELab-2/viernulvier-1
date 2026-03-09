@@ -2,6 +2,7 @@ import { describe, test, expect, beforeAll, beforeEach, vi, afterAll } from "vit
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import { HallSchema, type Hall } from "@viernulvier/shared/index.js";
+import { HttpSuccess, HttpClientError } from "@/routes/helpers.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
@@ -41,7 +42,7 @@ describe("Create on hall route", () => {
       },
     });
 
-    expect(response.statusCode).toBe(200);
+    expect(response.statusCode).toBe(HttpSuccess.OK);
     expect(HallSchema.parse(response.json())).toEqual(mockHall);
   });
 
@@ -59,7 +60,7 @@ describe("Create on hall route", () => {
       },
     });
 
-    expect(response.statusCode).toBe(404);
+    expect(response.statusCode).toBe(HttpClientError.NotFound);
   });
 
   test("POST /api/v1/hall — rejects invalid body", async () => {
@@ -70,7 +71,7 @@ describe("Create on hall route", () => {
       payload: {},
     });
 
-    expect(response.statusCode).toBe(400);
+    expect(response.statusCode).toBe(HttpClientError.BadRequest);
   });
 
   test("POST /api/v1/hall — returns 401 when not logged in", async () => {
@@ -84,6 +85,6 @@ describe("Create on hall route", () => {
       },
     });
 
-    expect(response.statusCode).toBe(401);
+    expect(response.statusCode).toBe(HttpClientError.Unauthorized);
   });
 });
