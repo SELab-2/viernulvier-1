@@ -15,8 +15,8 @@
     "check": "pnpm run build && pnpm run test && pnpm run lint"
   },
   "dependencies": {
-    "vue": "^3.5.25",
-    "@viernulvier/shared": "workspace:*"
+    "@viernulvier/shared": "workspace:*",
+    "vue": "^3.5.25"
   },
   "devDependencies": {
     "@eslint/js": "^9",
@@ -34,6 +34,7 @@
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.56.0",
     "vite": "^7.3.1",
+    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.0.18",
     "vue-tsc": "^3.1.5"
   },
