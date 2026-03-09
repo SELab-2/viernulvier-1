@@ -22,13 +22,13 @@ export async function createEvent(
 	const body = parse<Event>(server, EventSchema, normalizedBody, ParseContext.Request);
 
 	const result = await server.pg.query<Event>(
-		`INSERT INTO events (starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, price)
+		`INSERT INTO events (starts_at, ends_at, production, hall, doors_at, vendor_id, info, price)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		 RETURNING id, starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, price`,
+		 RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, price`,
 		[
 			body.starts_at,
 			body.ends_at,
-			body.production_id,
+			body.production,
 			body.hall,
 			body.doors_at,
 			body.vendor_id,

@@ -25,7 +25,7 @@ const mockEventWithMeta = {
 	updated_by: 8,
 };
 
-const mockEvents: [typeof baseMockEvent, ...typeof baseMockEvent[]] = [
+const mockEvents = [
 	baseMockEvent,
 	{ ...baseMockEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" }, price: [2] },
 	{ ...baseMockEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" }, price: [3] },
@@ -115,21 +115,21 @@ describe("Event Fetch Routes", () => {
 			expect(response.json()).toEqual([
 				{
 					...mockEvents[0],
-					starts_at: mockEvents[0].starts_at.toISOString(),
-					ends_at: mockEvents[0].ends_at.toISOString(),
-					doors_at: mockEvents[0].doors_at.toISOString(),
+					starts_at: mockEvents[0]!.starts_at.toISOString(),
+					ends_at: mockEvents[0]!.ends_at.toISOString(),
+					doors_at: mockEvents[0]!.doors_at.toISOString(),
 				},
 				{
 					...mockEvents[1],
-					starts_at: mockEvents[1].starts_at.toISOString(),
-					ends_at: mockEvents[1].ends_at.toISOString(),
-					doors_at: mockEvents[1].doors_at.toISOString(),
+					starts_at: mockEvents[1]!.starts_at.toISOString(),
+					ends_at: mockEvents[1]!.ends_at.toISOString(),
+					doors_at: mockEvents[1]!.doors_at.toISOString(),
 				},
 				{
 					...mockEvents[2],
-					starts_at: mockEvents[2].starts_at.toISOString(),
-					ends_at: mockEvents[2].ends_at.toISOString(),
-					doors_at: mockEvents[2].doors_at.toISOString(),
+					starts_at: mockEvents[2]!.starts_at.toISOString(),
+					ends_at: mockEvents[2]!.ends_at.toISOString(),
+					doors_at: mockEvents[2]!.doors_at.toISOString(),
 				},
 			]);
 		});

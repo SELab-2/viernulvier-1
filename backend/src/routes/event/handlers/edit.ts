@@ -29,7 +29,7 @@ export async function editEvent(
     const updatedEvent: Event = {
         starts_at: body.starts_at ?? selectedEvent.starts_at,
         ends_at: body.ends_at ?? selectedEvent.ends_at,
-        production_id: body.production_id ?? selectedEvent.production_id,
+        production: body.production ?? selectedEvent.production,
         hall: body.hall ?? selectedEvent.hall,
         doors_at: body.doors_at ?? selectedEvent.doors_at,
         vendor_id: body.vendor_id ?? selectedEvent.vendor_id,
@@ -39,13 +39,13 @@ export async function editEvent(
 
     const result = await server.pg.query<Event>(
         `UPDATE events
-         SET starts_at = $1, ends_at = $2, production_id = $3, hall = $4, doors_at = $5, vendor_id = $6, info = $7, price = $8
+         SET starts_at = $1, ends_at = $2, production = $3, hall = $4, doors_at = $5, vendor_id = $6, info = $7, price = $8
          WHERE id = $9
-         RETURNING id, starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, price`,
+         RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, price`,
         [
             updatedEvent.starts_at,
             updatedEvent.ends_at,
-            updatedEvent.production_id,
+            updatedEvent.production,
             updatedEvent.hall,
             updatedEvent.doors_at,
             updatedEvent.vendor_id,

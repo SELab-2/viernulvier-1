@@ -49,7 +49,7 @@ export async function editEvents(
     const updatedEvents = existingEvents.map((selectedEvent: Event) => ({
         starts_at: body.starts_at ?? (selectedEvent as unknown as Record<string, unknown>)["starts_at"],
         ends_at: body.ends_at ?? (selectedEvent as unknown as Record<string, unknown>)["ends_at"],
-        production_id: body.production_id ?? (selectedEvent as unknown as Record<string, unknown>)["production_id"],
+        production: body.production_id ?? (selectedEvent as unknown as Record<string, unknown>)["production_id"],
         hall: body.hall ?? (selectedEvent as unknown as Record<string, unknown>)["hall"],
         doors_at: body.doors_at ?? (selectedEvent as unknown as Record<string, unknown>)["doors_at"],
         vendor_id: body.vendor_id ?? (selectedEvent as unknown as Record<string, unknown>)["vendor_id"],
@@ -60,13 +60,13 @@ export async function editEvents(
     const results = await Promise.all(
         updatedEvents.map((updatedEvent, index) => server.pg.query<Event>(
             `UPDATE events
-             SET starts_at = $1, ends_at = $2, production_id = $3, hall = $4, doors_at = $5, vendor_id = $6, info = $7, price = $8
+             SET starts_at = $1, ends_at = $2, production = $3, hall = $4, doors_at = $5, vendor_id = $6, info = $7, price = $8
              WHERE id = $9
-             RETURNING id, starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, price`,
+             RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, price`,
             [
                 updatedEvent.starts_at,
                 updatedEvent.ends_at,
-                updatedEvent.production_id,
+                updatedEvent.production,
                 updatedEvent.hall,
                 updatedEvent.doors_at,
                 updatedEvent.vendor_id,

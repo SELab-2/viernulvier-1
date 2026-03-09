@@ -4,6 +4,7 @@ import { getParam, parse, ParseContext, parseFirstRow } from "@/routes/helpers.j
 import { EventSchema } from "@viernulvier/shared/types/event.js";
 import type { Event } from "@viernulvier/shared/types/event.js";
 import { normalizeEventDates } from "./helper.js";
+import { fetchEvent } from "./fetch.js";
 
 /**
  * Replaces a single event by ID in the database or creates a new one if not found.
@@ -17,8 +18,30 @@ export async function replaceEvent(
     server: FastifyInstance,
     request: FastifyRequest
 ): Promise<Event | null> {
+    const existing = await fetchEvent(server, request);
     const normalizedBody = normalizeEventDates(request.body);
     const body = parse<Event>(server, EventSchema, normalizedBody, ParseContext.Request);
+    const id = getParam(request, "id");
+
+    if (!existing) {
+        const insertResult = await server.pg.query<Event>(
+            `INSERT INTO events (starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, price)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             RETURNING id, starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, price`,
+            [
+                body.starts_at,
+                body.ends_at,
+                body.production,
+                body.hall,
+                body.doors_at,
+                body.vendor_id,
+                body.info,
+                body.price,
+            ],
+        );
+
+        return parseFirstRow(server, EventSchema, insertResult.rows);
+    }
 
     const result = await server.pg.query<Event>(
         `UPDATE events
@@ -28,13 +51,13 @@ export async function replaceEvent(
         [
             body.starts_at,
             body.ends_at,
-            body.production_id,
+            body.production,
             body.hall,
             body.doors_at,
             body.vendor_id,
             body.info,
             body.price,
-            getParam(request, "id"),
+            id,
         ],
     );
 
