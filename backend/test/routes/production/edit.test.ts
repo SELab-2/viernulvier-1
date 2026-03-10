@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
 import { buildServer } from "@/server.js";
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import productionRoutes from "@/routes/production/production.js";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
 import { editProduction } from "@/routes/production/handlers/edit.js";
@@ -11,7 +11,6 @@ const originalProduction: Production = {
   id: 1,
   vendor_id: 10,
   box_office_id: 20,
-  events: [],
   supertitle: null,
   title: { nl: "Oude titel" },
   artist: { nl: "Oude artiest" },
@@ -26,7 +25,6 @@ const originalProduction: Production = {
   quote_source: null,
   programme: null,
   info: null,
-  tags: [],
 };
 
 const updatedProductionA: Production = {
@@ -285,7 +283,7 @@ describe("Edit on production route", () => {
       params: { id: String(originalProduction["id"]) },
       user: { id: 1 },
       body: { vendor_id: undefined },
-    } as any)).rejects.toMatchObject({ status: 400 });
+    } as unknown as FastifyRequest)).rejects.toMatchObject({ status: 400 });
   });
 });
 

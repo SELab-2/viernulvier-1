@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
 import { buildServer } from "@/server.js";
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import productionRoutes from "@/routes/production/production.js";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
 import { bulkEditProductions } from "@/routes/production/handlers/bulk-edit.js";
@@ -11,7 +11,6 @@ const baseProduction1: Production = {
   id: 1,
   vendor_id: 10,
   box_office_id: 20,
-  events: [],
   supertitle: null,
   title: { nl: "Titel 1" },
   artist: { nl: "Artiest 1" },
@@ -26,7 +25,6 @@ const baseProduction1: Production = {
   quote_source: null,
   programme: null,
   info: null,
-  tags: [],
 };
 
 const baseProduction2: Production = {
@@ -367,7 +365,7 @@ describe("Bulk edit on production route", () => {
           vendor_id: undefined,
         },
       },
-    } as any);
+    } as unknown as FastifyRequest);
 
     expect(result).toEqual([ProductionSchema.parse(baseProduction1)]);
   });
