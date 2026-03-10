@@ -107,7 +107,7 @@ The list can be sorted by different fields:
 - artist
 - date
 - location
-- tag categories (genre, festival,...)
+- tag categories (genre, festival ...)
 
 Sorting can be ascending or descending.
 
