@@ -9,6 +9,12 @@
     "./types/*.js": "./types/*.ts",
     "./types/*": "./types/*.ts"
   },
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "build": "tsc -p tsconfig.json",
+    "check": "pnpm run lint && pnpm run build"
+  },
   "dependencies": {
     "zod": "^4.3.6"
   }
