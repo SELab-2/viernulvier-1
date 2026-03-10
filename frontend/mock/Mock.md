@@ -115,7 +115,7 @@ Sorting can be ascending or descending.
 
 Users can filter results by:
 
-### Tags on Productions
+### Tags of Productions
 
 Filter productions that belong to a specific **series or festival**.
 
@@ -200,43 +200,26 @@ Users can:
 
 ---
 
-# 4. Series Detail Page
+# 4. Series Tag
 
 ## Purpose
 
-Shows information about a specific series or festival.
+In the database structure, festivals or series are represented as **tags** within a tag category (for example the "festival" category).
+
+A series is therefore essentially a **collection of productions that share a specific tag**.
+
+Because tags do not currently contain additional metadata such as descriptions, the series page can be interpreted as a **filtered archive view** showing productions associated with that tag.
 
 Example:
 
 - Gentse Feesten 2024
 
-## Content
-
-The page contains:
-
-### Basic information
-
-- name of the series
-- year
-- description
-
-### Productions in the series
-
-A list of all productions that belong to this series.
-
-For each production the following is shown:
-
-- title
-- artist
-- genre
-- number of events
 
 ## Possible actions
 
 Users can:
 
-- View productions within the series
-- Navigate to individual productions
+- Filter productions on series
 
 ---
 
@@ -325,7 +308,47 @@ An event contains at minimum:
 
 ---
 
-# 8. Navigation
+## 8. Tag and Category Management
+
+Administrators can also manage the tagging system used throughout the archive.
+
+This includes the ability to:
+
+- create new **tags**
+- create new **tag categories**
+- edit or remove existing tags
+- assign tags to productions
+
+---
+
+## 9. Bulk Editing
+
+The admin interface supports **bulk editing**, allowing administrators to edit multiple productionsefficiently from a grid interface.
+
+This grid behaves similarly to a spreadsheet (such as Excel):
+
+- each production is displayed as a row
+- fields such as producer, performers, genres, tags and descriptions appear as columns
+- administrators can click a cell to edit its value directly
+- changes can be confirmed using **Enter**
+- navigation between cells is possible using the **arrow keys**
+
+Because edits are made directly inside the table, administrators can quickly update multiple productions in sequence without opening separate edit pages.
+
+For each production, administrators can also open and manage the associated **events**, where they can:
+
+- view existing events
+- edit event information
+- add new events
+- delete events
+
+All modifications must be **saved** once editing is complete.
+
+
+
+---
+
+# 10. Navigation
 
 The website contains a simple navigation structure.
 
