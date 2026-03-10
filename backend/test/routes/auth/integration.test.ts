@@ -1,3 +1,4 @@
+/* eslint-disable security/detect-object-injection */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
 import { vi } from "vitest";
 import { buildServer } from "@/server.js";
@@ -20,7 +21,7 @@ const newAdminPayload = {
 const editedUsername = "KarelEdited";
 
 // In-memory database
-let mockDb: Array<{
+const mockDb: Array<{
   id: number;
   username: string;
   password: string;
