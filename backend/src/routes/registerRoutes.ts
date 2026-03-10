@@ -1,7 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import productionRoutes from "./productions.js";
 import authRoutes from "./auth/auth.js";
-import hallRoutes from "./hall/hall.js";
 
 /**
  * Registers all application routes on the Fastify instance.
@@ -11,5 +10,4 @@ import hallRoutes from "./hall/hall.js";
 export default async function registerRoutes(server: FastifyInstance) {
   await server.register(productionRoutes);
   await server.register(authRoutes);
-  await server.register(hallRoutes);
 }

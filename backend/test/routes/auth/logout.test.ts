@@ -13,7 +13,7 @@ afterAll(async () => {
 });
 
 describe("Logout on auth route", () => {
-  test("POST /api/v1/auth/logout — clears session cookie", async () => {
+  test("POST /api/v1/auth/logout — clears session cookie and returns success", async () => {
     const sessionCookie = server.jwt.sign({ id: 404, username: "Karel" });
 
     const response = await server.inject({
@@ -23,6 +23,7 @@ describe("Logout on auth route", () => {
     });
 
     expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ success: true });
     expect(response.cookies).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: "session", value: "" }),

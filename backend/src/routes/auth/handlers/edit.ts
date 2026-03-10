@@ -1,8 +1,8 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Admin } from "@viernulvier/shared/index.js";
-import { AdminSchema } from "@viernulvier/shared/index.js";
-import { getMetadata, getParam, parseFirstRow, parseSchema } from "@/routes/helpers.js";
-import { z } from "zod";
+import { AdminSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { getMetadata, parseParams, parseSchema, ParseContext } from "@/routes/helpers.js";
+import z from "zod";
 import { hashPassword } from "./hash.js";
 
 const EditAdminBodySchema = AdminSchema.pick({ username: true }).extend({
@@ -17,9 +17,8 @@ const EditAdminBodySchema = AdminSchema.pick({ username: true }).extend({
  * @returns The updated admin, or `null` if the update failed or parsing failed.
  */
 export async function editAdmin(server: FastifyInstance, request: FastifyRequest): Promise<Admin | null> {
-  const id = getParam(request, "id");
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
   const body = parseSchema(server, EditAdminBodySchema, request.body);
-
   const { admin, current_time } = getMetadata(request);
 
   const fields: string[] = [];
@@ -39,11 +38,11 @@ export async function editAdmin(server: FastifyInstance, request: FastifyRequest
   fields.push(`updated_by = $${i++}`, `updated_at = $${i++}`);
   values.push(admin, current_time, id);
 
-  const result = await server.pg.query<Admin>(
+  const result = await server.pg.query(
     `UPDATE admin SET ${fields.join(", ")} WHERE id = $${i}
      RETURNING id, username, profile_picture_url AS profile_picture`,
-    values
+    values,
   );
 
-  return parseFirstRow(server, AdminSchema, result.rows);
+  return parseSchema(server, z.array(AdminSchema), result.rows, ParseContext.Database)[0] ?? null;
 }

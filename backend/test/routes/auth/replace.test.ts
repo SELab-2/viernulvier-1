@@ -45,4 +45,17 @@ describe("Replace on auth route", () => {
     expect(response.statusCode).toBe(200);
     expect(AdminSchema.parse(response.json())).toEqual(mockCreatedAdmin);
   });
+
+  test("PUT /api/v1/auth/:id — returns 404 when update returns no rows", async () => {
+    server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
+
+    const response = await server.inject({
+      method: "PUT",
+      url: `/api/v1/auth/${mockCreatedAdmin.id}`,
+      cookies: { session: sessionCookie },
+      payload: { username: mockUsername, password: mockPassword },
+    });
+
+    expect(response.statusCode).toBe(404);
+  });
 });

@@ -1,10 +1,9 @@
 import z from "zod";
 import { createSchema } from "./metadata.js";
 import { ImageSchema } from "./index.js";
-import type { SchemaWithMeta } from "./index.js";
 import { primaryKey, foreignKey } from "./helpers.js";
 
-export const CropSchema: SchemaWithMeta<any> = createSchema({
+export const CropSchema = createSchema({
   id: primaryKey(),
 
   image_id: foreignKey(() => ImageSchema),

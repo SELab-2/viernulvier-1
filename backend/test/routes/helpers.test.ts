@@ -1059,6 +1059,50 @@ describe(buildQuery, () => {
       });
     });
   });
+
+  describe("When the database throws an error", () => {
+    beforeEach(() => {
+      MockServer = {
+        log: { error: vi.fn() },
+        pg: {
+          query: vi.fn().mockRejectedValue(new Error("Connection refused")),
+        },
+      } as unknown as FastifyInstance;
+    });
+
+    test("buildQuery(server, queryString, z.object()) rejects with a Database HttpError", async () => {
+      const query = buildQuery(
+        MockServer,
+        "SELECT * FROM productions",
+        z.object(),
+      );
+      try {
+        await query();
+        expect.fail();
+      } catch (err) {
+        expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
+        expect(MockServer.log.error).toBeCalledWith(new Error("Connection refused"));
+        expect(MockServer.pg.query).toBeCalled();
+      }
+    });
+
+    test("buildQuery(server, queryString, z.tuple([z.int()]), z.object()) rejects with a Database HttpError", async () => {
+      const query = buildQuery(
+        MockServer,
+        "SELECT * FROM productions WHERE id = $1",
+        z.tuple([z.int()]),
+        z.object(),
+      );
+      try {
+        await query(1);
+        expect.fail();
+      } catch (err) {
+        expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
+        expect(MockServer.log.error).toBeCalledWith(new Error("Connection refused"));
+        expect(MockServer.pg.query).toBeCalled();
+      }
+    });
+  });
 });
 
 describe(replyHandler, () => {
@@ -1132,15 +1176,31 @@ describe(replyHandler, () => {
     });
     const handler = vi.fn(async () => ({ id: 1 }));
     describe("const endpoint = replyHandler(server, handler)", async () => {
-      const endpoint = await replyHandler(mockServer, handler);
+      const endpoint = replyHandler(mockServer, handler);
       test("endpoint(request, reply)", async () => {
         const res = await endpoint(mockRequest, mockReply);
         expect(res).toStrictEqual({
           status: HttpSuccess.OK,
-          body: { id: 1 },
+          id: 1 ,
         });
         expect(mockReply.status).toBeCalledWith(HttpClientError.NotFound);
       });
+    });
+  });
+
+  describe("When given a handler that throws a non-HttpError", () => {
+    beforeEach(() => {
+      mockServer = generateMockServer();
+    });
+
+    const unexpectedError = new Error("Unexpected failure");
+    const handler = vi.fn(async () => {
+      throw unexpectedError;
+    });
+
+    test("endpoint(request, reply) rethrows the error", async () => {
+      const endpoint = replyHandler(mockServer, handler);
+      await expect(endpoint(mockRequest, mockReply)).rejects.toThrow(unexpectedError);
     });
   });
 });

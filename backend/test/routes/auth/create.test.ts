@@ -88,4 +88,20 @@ describe("Create on auth route", () => {
 
     expect(response.statusCode).toBe(400);
   });
+
+  test("POST /api/v1/auth — returns 404 when insert returns no rows", async () => {
+    server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/auth",
+      cookies: { session: sessionCookie },
+      payload: {
+        username: mockUsername,
+        password: mockPassword,
+      },
+    });
+
+    expect(response.statusCode).toBe(404);
+  });
 });

@@ -1,19 +1,19 @@
 import { describe, test, expect, beforeAll, vi, afterAll } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-import { AdminSchema, type Admin, type AdminWithMeta } from "@viernulvier/shared/index.js";
+import { AdminSchema } from "@viernulvier/shared/index.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
 
-const mockAdmins: Array<Admin> = [
+const mockAdmins = [
   { id: 404, username: "Karel", profile_picture: null },
   { id: 405, username: "Stagaire", profile_picture: null },
 ];
 
 const mockTime = new Date();
 
-const mockAdminsWithMeta: Array<AdminWithMeta> = mockAdmins.map((admin) => ({
+const mockAdminsWithMeta = mockAdmins.map((admin) => ({
   ...admin,
   created_by: 404,
   created_at: mockTime,
@@ -51,43 +51,57 @@ afterAll(async () => {
 });
 
 describe("Fetch on auth route", () => {
-  test("GET /api/v1/auth/:id", async () => {
-    const admin = mockAdmins[0];
+  describe("Without meta", () => {
+    test("GET /api/v1/auth/:id", async () => {
+      const admin = mockAdmins[0];
 
-    const response = await server.inject({
-      method: "GET",
-      url: `/api/v1/auth/${admin?.id}`,
-      cookies: { session: sessionCookie },
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/auth/${admin?.id}`,
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(AdminSchema.parse(response.json())).toEqual(admin);
     });
 
-    console.log(response.statusCode, response.body);
+    test("GET /api/v1/auth/:id — returns 404 when admin not found", async () => {
+      const id = 123456;
 
-    expect(response.statusCode).toBe(200);
-    expect(AdminSchema.parse(response.json())).toEqual(admin);
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/auth/${id}`,
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
   });
 
-  test("GET /api/v1/auth/:id/meta", async () => {
-    const admin = mockAdminsWithMeta[1]
+  describe("With meta", () => {
+    test("GET /api/v1/auth/:id/meta", async () => {
+      const admin = mockAdminsWithMeta[1]
 
-    const response = await server.inject({
-      method: "GET",
-      url: `/api/v1/auth/${admin?.id}/meta`,
-      cookies: { session: sessionCookie },
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/auth/${admin?.id}/meta`,
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(AdminSchema.withMeta().parse(response.json())).toEqual(admin);
     });
+    
+    test("GET /api/v1/auth/:id/meta — returns 404 when admin not found", async () => {
+      server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
 
-    expect(response.statusCode).toBe(200);
-    expect(AdminSchema.withMeta().parse(response.json())).toEqual(admin);
-  });
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/auth/123456/meta`,
+        cookies: { session: sessionCookie },
+      });
 
-  test("GET /api/v1/auth/:id — returns 404 when admin not found", async () => {
-    const id = 123456;
-
-    const response = await server.inject({
-      method: "GET",
-      url: `/api/v1/auth/${id}`,
-      cookies: { session: sessionCookie },
+      expect(response.statusCode).toBe(404);
     });
-
-    expect(response.statusCode).toBe(404);
   });
 });

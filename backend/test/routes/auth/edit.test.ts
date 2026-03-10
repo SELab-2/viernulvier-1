@@ -80,4 +80,17 @@ describe("Edit on auth route", () => {
 
     expect(response.statusCode).toBe(400);
   });
+
+  test("PATCH /api/v1/auth/:id — returns 404 when update returns no rows", async () => {
+    server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/auth/${mockCreatedAdmin.id}`,
+      cookies: { session: sessionCookie },
+      payload: { username: mockUsername },
+    });
+
+    expect(response.statusCode).toBe(404);
+  });
 });
