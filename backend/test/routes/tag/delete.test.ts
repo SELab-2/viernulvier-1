@@ -33,7 +33,7 @@ describe("Delete tag", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(TagSchema.parse(response.json().body)).toEqual(mockTag);
+    expect(TagSchema.parse(response.json())).toEqual(mockTag);
   });
 
   test("DELETE /api/v1/tag/:id returns 404", async () => {

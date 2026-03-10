@@ -62,7 +62,7 @@ describe("Replace tag_type", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(TagTypeSchema.parse(response.json().body)).toEqual(tagType);
+    expect(TagTypeSchema.parse(response.json())).toEqual(tagType);
   });
 
 });

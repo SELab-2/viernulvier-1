@@ -46,7 +46,7 @@ describe("Fetch tags", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(TagSchema.parse(response.json().body)).toEqual(mockTags[0]);
+    expect(TagSchema.parse(response.json())).toEqual(mockTags[0]);
   });
 
   test("GET /api/v1/tag/:id returns 404", async () => {

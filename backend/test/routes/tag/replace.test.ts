@@ -37,6 +37,6 @@ describe("Replace tag", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(TagSchema.parse(response.json().body)).toEqual(mockTag);
+    expect(TagSchema.parse(response.json())).toEqual(mockTag);
   });
 });

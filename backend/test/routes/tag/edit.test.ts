@@ -34,7 +34,7 @@ describe("Edit tag", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(TagSchema.parse(response.json().body)).toEqual(mockTag);
+    expect(TagSchema.parse(response.json())).toEqual(mockTag);
   });
 
   test("PATCH /api/v1/tag/:id type only", async () => {
