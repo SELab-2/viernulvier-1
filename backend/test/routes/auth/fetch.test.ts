@@ -51,41 +51,57 @@ afterAll(async () => {
 });
 
 describe("Fetch on auth route", () => {
-  test("GET /api/v1/auth/:id", async () => {
-    const admin = mockAdmins[0];
+  describe("Without meta", () => {
+    test("GET /api/v1/auth/:id", async () => {
+      const admin = mockAdmins[0];
 
-    const response = await server.inject({
-      method: "GET",
-      url: `/api/v1/auth/${admin?.id}`,
-      cookies: { session: sessionCookie },
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/auth/${admin?.id}`,
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(AdminSchema.parse(response.json().body)).toEqual(admin);
     });
 
-    expect(response.statusCode).toBe(200);
-    expect(AdminSchema.parse(response.json().body)).toEqual(admin);
+    test("GET /api/v1/auth/:id — returns 404 when admin not found", async () => {
+      const id = 123456;
+
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/auth/${id}`,
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
   });
 
-  test("GET /api/v1/auth/:id/meta", async () => {
-    const admin = mockAdminsWithMeta[1]
+  describe("With meta", () => {
+    test("GET /api/v1/auth/:id/meta", async () => {
+      const admin = mockAdminsWithMeta[1]
 
-    const response = await server.inject({
-      method: "GET",
-      url: `/api/v1/auth/${admin?.id}/meta`,
-      cookies: { session: sessionCookie },
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/auth/${admin?.id}/meta`,
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(AdminSchema.withMeta().parse(response.json().body)).toEqual(admin);
     });
+    
+    test("GET /api/v1/auth/:id/meta — returns 404 when admin not found", async () => {
+      server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
 
-    expect(response.statusCode).toBe(200);
-    expect(AdminSchema.withMeta().parse(response.json().body)).toEqual(admin);
-  });
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/auth/123456/meta`,
+        cookies: { session: sessionCookie },
+      });
 
-  test("GET /api/v1/auth/:id — returns 404 when admin not found", async () => {
-    const id = 123456;
-
-    const response = await server.inject({
-      method: "GET",
-      url: `/api/v1/auth/${id}`,
-      cookies: { session: sessionCookie },
+      expect(response.statusCode).toBe(404);
     });
-
-    expect(response.statusCode).toBe(404);
   });
 });
