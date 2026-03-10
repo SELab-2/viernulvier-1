@@ -1,28 +1,29 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Tag } from "@viernulvier/shared/index.js";
 import { TagSchema } from "@viernulvier/shared/index.js";
-import { getMetadata, parseFirstRow, parseSchema } from "@/routes/helpers.js";
+import { getMetadata, getParam, parseFirstRow, parseSchema } from "@/routes/helpers.js";
 
-const CreateTagBodySchema = TagSchema.pick({
+const ReplaceTagBodySchema = TagSchema.pick({
   name: true,
   type: true,
 });
 
-export async function createTag(
+export async function replaceTag(
   server: FastifyInstance,
   request: FastifyRequest
 ): Promise<Tag | null> {
 
-  // Authentication will be enforced once auth branch is merged
-  const body = parseSchema(server, CreateTagBodySchema, request.body);
+  const id = getParam(request, "id");
+  const body = parseSchema(server, ReplaceTagBodySchema, request.body);
 
   const { admin, current_time } = getMetadata(request);
 
   const result = await server.pg.query<Tag>(
-    `INSERT INTO tag (name, type, created_by, updated_by, created_at, updated_at)
-     VALUES ($1, $2, $3, $3, $4, $4)
+    `UPDATE tag
+     SET name = $1, type = $2, updated_by = $3, updated_at = $4
+     WHERE id = $5
      RETURNING id, name, type`,
-    [body.name, body.type, admin, current_time]
+    [body.name, body.type, admin, current_time, id]
   );
 
   return parseFirstRow(server, TagSchema, result.rows);

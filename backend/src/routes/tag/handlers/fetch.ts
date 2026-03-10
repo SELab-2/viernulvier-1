@@ -1,90 +1,46 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Tag } from "@viernulvier/shared/index.js";
+import { TagSchema } from "@viernulvier/shared/index.js";
+import { getParam, parseFirstRow } from "@/routes/helpers.js";
 
-export async function getTagById(
+async function fetchTag(
   server: FastifyInstance,
-  id: number
+  request: FastifyRequest
 ): Promise<Tag | null> {
 
   const result = await server.pg.query<Tag>(
-    `
-    SELECT
-      t.id,
-      t.name,
-      json_build_object(
-        'id', tt.id,
-        'name', tt.name,
-        'visible', tt.visible
-      ) as type,
-      COALESCE(
-        json_agg(pt.production_id) FILTER (WHERE pt.production_id IS NOT NULL),
-        '[]'
-      ) as productions
-    FROM tag t
-    JOIN tag_type tt ON tt.id = t.type_id
-    LEFT JOIN production_tag pt ON pt.tag_id = t.id
-    WHERE t.id = $1
-    GROUP BY t.id, tt.id
-    `,
-    [id]
+    `SELECT id, name, type
+     FROM tag
+     WHERE id = $1`,
+    [getParam(request, "id")]
   );
 
-  return result.rows[0] ?? null;
+  return parseFirstRow(server, TagSchema, result.rows);
 }
 
-export async function fetchTag(
+async function fetchTags(server: FastifyInstance): Promise<Tag[]> {
+
+  const result = await server.pg.query<Tag>(
+    `SELECT id, name, type FROM tag`
+  );
+
+  return result.rows;
+}
+
+async function fetchTagsForProduction(
   server: FastifyInstance,
   request: FastifyRequest
-) {
-  const { id } = request.params as { id: number };
-
-  return await getTagById(server, id);
-}
-
-export async function fetchTags(server: FastifyInstance) {
+): Promise<Tag[]> {
 
   const result = await server.pg.query<Tag>(
-    `
-    SELECT
-      t.id,
-      t.name,
-      json_build_object(
-        'id', tt.id,
-        'name', tt.name,
-        'visible', tt.visible
-      ) as type,
-      '[]'::json as productions
-    FROM tag t
-    JOIN tag_type tt ON tt.id = t.type_id
-    `
+    `SELECT t.id, t.name, t.type
+     FROM tag t
+     JOIN tag_production tp ON tp.tag_id = t.id
+     WHERE tp.production_id = $1`,
+    [getParam(request, "id")]
   );
 
   return result.rows;
 }
 
-export async function fetchTagsForProduction(
-  server: FastifyInstance,
-  request: FastifyRequest<{ Params: { productionId: number } }>
-) {
-
-  const result = await server.pg.query<Tag>(
-    `
-    SELECT
-      t.id,
-      t.name,
-      json_build_object(
-        'id', tt.id,
-        'name', tt.name,
-        'visible', tt.visible
-      ) as type,
-      '[]'::json as productions
-    FROM production_tag pt
-    JOIN tag t ON t.id = pt.tag_id
-    JOIN tag_type tt ON tt.id = t.type_id
-    WHERE pt.production_id = $1
-    `,
-    [request.params.productionId]
-  );
-
-  return result.rows;
-}
+export { fetchTag, fetchTags, fetchTagsForProduction };

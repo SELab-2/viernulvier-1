@@ -1,15 +1,19 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { Tag } from "@viernulvier/shared/index.js";
+import { TagSchema } from "@viernulvier/shared/index.js";
+import { getParam, parseFirstRow } from "@/routes/helpers.js";
 
 export async function deleteTag(
   server: FastifyInstance,
   request: FastifyRequest
-) {
-  const { id } = request.params as { id: number };
+): Promise<Tag | null> {
 
-  const result = await server.pg.query(
-    `DELETE FROM tag WHERE id = $1 RETURNING id`,
-    [id]
+  const result = await server.pg.query<Tag>(
+    `DELETE FROM tag
+     WHERE id = $1
+     RETURNING id, name, type`,
+    [getParam(request, "id")]
   );
 
-  return result.rows[0] ?? null;
+  return parseFirstRow(server, TagSchema, result.rows);
 }

@@ -1,73 +1,45 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import { parse, getMetadata } from "@/routes/helpers.js";
-import { EditTagBodySchema } from "./body-schema.js";
+import type { Tag } from "@viernulvier/shared/index.js";
+import { TagSchema } from "@viernulvier/shared/index.js";
+import { getMetadata, getParam, parseFirstRow, parseSchema } from "@/routes/helpers.js";
 
-type IdParams = { id: number };
+const EditTagBodySchema = TagSchema.pick({
+  name: true,
+  type: true,
+}).partial();
 
 export async function editTag(
   server: FastifyInstance,
   request: FastifyRequest
-) {
-  const { id } = request.params as IdParams;
+): Promise<Tag | null> {
 
-  const body = parse(server, EditTagBodySchema, request.body);
+  const id = getParam(request, "id");
+  const body = parseSchema(server, EditTagBodySchema, request.body);
 
-  const metadata = getMetadata(request);
+  const { admin, current_time } = getMetadata(request);
 
-  const client = await server.pg.connect();
+  const fields: string[] = [];
+  const values: unknown[] = [];
+  let i = 1;
 
-  try {
-    await client.query("BEGIN");
-
-    // update tag
-    const result = await client.query(
-      `
-      UPDATE tag
-      SET
-        name = $1,
-        type = $2,
-        updated_at = NOW()
-      WHERE id = $3
-      RETURNING id, name, type
-      `,
-      [body.name, body.type, id]
-    );
-
-    if (result.rowCount === 0) {
-      await client.query("ROLLBACK");
-      return null;
-    }
-
-    // update production relations
-    if (body.productions) {
-      await client.query(
-        `DELETE FROM production_tag WHERE tag_id = $1`,
-        [id]
-      );
-
-      for (const productionId of body.productions) {
-        await client.query(
-          `
-          INSERT INTO production_tag (production_id, tag_id)
-          VALUES ($1, $2)
-          `,
-          [productionId, id]
-        );
-      }
-    }
-
-    await client.query("COMMIT");
-
-    return {
-      id: result.rows[0].id,
-      name: result.rows[0].name,
-      type: result.rows[0].type,
-      productions: body.productions ?? [],
-    };
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
+  if (body.name !== undefined) {
+    fields.push(`name = $${i++}`);
+    values.push(body.name);
   }
+
+  if (body.type !== undefined) {
+    fields.push(`type = $${i++}`);
+    values.push(body.type);
+  }
+
+  fields.push(`updated_by = $${i++}`, `updated_at = $${i++}`);
+  values.push(admin, current_time, id);
+
+  const result = await server.pg.query<Tag>(
+    `UPDATE tag SET ${fields.join(", ")} WHERE id = $${i}
+     RETURNING id, name, type`,
+    values
+  );
+
+  return parseFirstRow(server, TagSchema, result.rows);
 }
