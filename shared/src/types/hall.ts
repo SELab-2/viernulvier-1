@@ -1,10 +1,9 @@
 import z from "zod";
 
 import { createSchema } from "./metadata.js";
-import type { SchemaWithMeta } from "./index.js";
 import { languageMap, primaryKey } from "./helpers.js";
 
-export const HallSchema: SchemaWithMeta<any> = createSchema({
+export const HallSchema = createSchema({
   id: primaryKey(),
   address: z.string(),
   vendor_id: z.int().nonnegative(),

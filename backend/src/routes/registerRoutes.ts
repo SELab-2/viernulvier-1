@@ -1,15 +1,13 @@
 import type { FastifyInstance } from "fastify";
 import productionRoutes from "./productions.js";
-import tagRoutes from "./tag/tags.js";
-import tagTypeRoutes from "./tag_type/tag_types.js";
+import authRoutes from "./auth/auth.js";
 
 /**
  * Registers all application routes on the Fastify instance.
+ *
+ * @param server - The Fastify instance to register routes on.
  */
 export default async function registerRoutes(server: FastifyInstance) {
   await server.register(productionRoutes);
-
-  await server.register(tagRoutes);
-
-  await server.register(tagTypeRoutes);
+  await server.register(authRoutes);
 }

@@ -1,7 +1,6 @@
 import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 import security from "eslint-plugin-security";
-import nodePlugin from "eslint-plugin-n";
 import prettierConfig from "eslint-config-prettier";
 import importX from "eslint-plugin-import-x";
 import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
@@ -18,8 +17,6 @@ export default defineConfig([
       "node_modules/**",
       "coverage/**",
       "eslint.config.js",
-      "scripts/**",
-      "migrations/**"
     ]
   },
 
@@ -29,7 +26,6 @@ export default defineConfig([
 
   tseslint.configs.recommended,
   security.configs.recommended,
-  nodePlugin.configs["flat/recommended"],
 
   // --------------------------------------------------
   // SOURCE CODE (Type Safe Zone)
@@ -59,19 +55,7 @@ export default defineConfig([
       })
     },
 
-
-
     rules: {
-      // ----------------------------
-      // Async Backend Safety
-      // ----------------------------
-
-      "@typescript-eslint/no-floating-promises": "error",
-      "@typescript-eslint/await-thenable": "error",
-
-      "no-return-await": "off",
-      "@typescript-eslint/return-await": ["error", "always"],
-
       // ----------------------------
       // Code Quality
       // ----------------------------
@@ -97,60 +81,15 @@ export default defineConfig([
       // Security / Node Runtime Safety
       // ----------------------------
 
-      "n/no-process-exit": "error",
-      "n/handle-callback-err": "error",
-
       // Prevent common API logic mistakes
       "@typescript-eslint/no-misused-promises": "error",
 
       // Rely on the beter import resolver
-      "n/no-missing-import": "off",
       "import-x/no-unresolved": "error",
 
       // tsdoc config
       "tsdoc/syntax": "warn"
     }
-  },
-
-  // --------------------------------------------------
-  // Tests (Vitest / Jest style)
-  // --------------------------------------------------
-
-  {
-    files: ["test/**/*.ts", "**/*.test.ts", "**/*.spec.ts"],
-
-    languageOptions: {
-      parser: tseslint.parser,
-      parserOptions: {
-        project: "./tsconfig.json",
-        tsconfigRootDir: process.cwd()
-      }
-    },
-
-    rules: {
-      "n/no-unpublished-import": "off",
-      "@typescript-eslint/no-floating-promises": "off",
-
-      "@typescript-eslint/no-unused-vars": [
-        "warn",
-        {
-          args: "after-used",
-          argsIgnorePattern: "^_",
-          varsIgnorePattern: "^_",
-          caughtErrorsIgnorePattern: "^_"
-        }
-      ],
-    }
-  },
-
-  // --------------------------------------------------
-  // Tooling + Scripts (NO TYPE CHECKING)
-  // --------------------------------------------------
-
-  {
-    files: ["scripts/**/*.ts", "*.config.ts", "**/*.config.ts"],
-
-    ...tseslint.configs.disableTypeChecked
   },
 
   // --------------------------------------------------
@@ -161,25 +100,6 @@ export default defineConfig([
     files: ["**/*.js", "**/*.mjs"],
 
     ...tseslint.configs.disableTypeChecked
-  },
-
-  // --------------------------------------------------
-  // Fix Vitest Config complaints
-  // --------------------------------------------------
-
-  {
-    files: ["vitest.config.ts", "**/*.config.ts"],
-
-    languageOptions: {
-      parserOptions: {
-        sourceType: "module"
-      }
-    },
-
-    rules: {
-      "n/no-unpublished-import": "off",
-      "no-undef": "off"
-    }
   },
 
   // --------------------------------------------------

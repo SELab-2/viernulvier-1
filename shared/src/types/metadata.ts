@@ -1,12 +1,16 @@
 import z from "zod";
 
 import { AdminSchema } from "./admin.js";
-import { foreignKey } from "./helpers.js";
+import { ForeignKey, foreignKey } from "./helpers.js";
 
 export const MetadataShape = {
-  created_by: foreignKey(() => AdminSchema),
+  get created_by(): ForeignKey<typeof AdminSchema> {
+    return foreignKey(() => AdminSchema);
+  },
   created_at: z.coerce.date(),
-  updated_by: foreignKey(() => AdminSchema),
+  get updated_by(): ForeignKey<typeof AdminSchema> {
+    return foreignKey(() => AdminSchema);
+  },
   updated_at: z.coerce.date(),
 };
 
@@ -20,7 +24,11 @@ export const MetadataShape = {
 export function createSchema<T extends z.ZodRawShape>(shape: T) {
   const base = z.object(shape);
   return Object.defineProperty(base, "withMeta", {
-    value: () => base.extend(MetadataShape),
+    value: () => {
+      const descriptors = Object.getOwnPropertyDescriptors(MetadataShape);
+      const metaShape = Object.defineProperties({}, descriptors) as typeof MetadataShape;
+      return base.extend(metaShape);
+    },
     writable: false,
     enumerable: false,
     configurable: false,
