@@ -69,6 +69,9 @@ const updatedProductionC: Production = {
 
 beforeAll(async () => {
   server = await buildServer();
+  server.addHook("preHandler", async (request) => {
+    request.user = { id: 1 } as never;
+  });
   await server.register(productionRoutes);
 });
 
@@ -115,7 +118,7 @@ describe("Edit on production route", () => {
 
     expect(response.statusCode).toBe(200);
     const parsed = ProductionSchema.parse(response.json());
-    expect(parsed).toEqual(updatedProductionA);
+    expect(parsed).toEqual(ProductionSchema.parse(updatedProductionA));
   });
 
   test("PATCH /api/v1/production/:id -> updates other optional fields", async () => {
@@ -148,7 +151,7 @@ describe("Edit on production route", () => {
 
     expect(response.statusCode).toBe(200);
     const parsed = ProductionSchema.parse(response.json());
-    expect(parsed).toEqual(updatedProductionB);
+    expect(parsed).toEqual(ProductionSchema.parse(updatedProductionB));
   });
 
   test("PATCH /api/v1/production/:id -> returns 404 when production not found", async () => {
@@ -217,7 +220,7 @@ describe("Edit on production route", () => {
 
     expect(response.statusCode).toBe(200);
     const parsed = ProductionSchema.parse(response.json());
-    expect(parsed).toEqual(updatedProductionC);
+    expect(parsed).toEqual(ProductionSchema.parse(updatedProductionC));
   });
 
   test("PATCH /api/v1/production/:id -> accepts null for nullable media/info fields", async () => {
@@ -250,7 +253,7 @@ describe("Edit on production route", () => {
 
     expect(response.statusCode).toBe(200);
     const parsed = ProductionSchema.parse(response.json());
-    expect(parsed).toEqual(originalProduction);
+    expect(parsed).toEqual(ProductionSchema.parse(originalProduction));
   });
 
   test("PATCH /api/v1/production/:id -> rejects empty body", async () => {
@@ -280,6 +283,7 @@ describe("Edit on production route", () => {
 
     await expect(editProduction(server, {
       params: { id: String(originalProduction["id"]) },
+      user: { id: 1 },
       body: { vendor_id: undefined },
     } as any)).rejects.toMatchObject({ status: 400 });
   });

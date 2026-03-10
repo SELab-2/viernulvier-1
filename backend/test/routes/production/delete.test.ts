@@ -64,7 +64,7 @@ describe("Delete on production route", () => {
 
     expect(response.statusCode).toBe(200);
     const parsed = ProductionSchema.parse(response.json());
-    expect(parsed).toEqual(mockProduction);
+    expect(parsed).toEqual(ProductionSchema.parse(mockProduction));
   });
 
   test("DELETE /api/v1/production/:id -> returns 404 when production not found", async () => {

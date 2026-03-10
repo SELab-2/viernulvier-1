@@ -67,7 +67,7 @@ describe("Production fetch routes", () => {
 
     const json = response.json();
     const parsed = ProductionSchema.array().parse(json);
-    expect(parsed).toEqual([baseProduction]);
+    expect(parsed).toEqual([ProductionSchema.parse(baseProduction)]);
   });
 
   test("GET /api/v1/production/:id -> returns a single production", async () => {
@@ -78,7 +78,7 @@ describe("Production fetch routes", () => {
 
     expect(response.statusCode).toBe(200);
     const parsed = ProductionSchema.parse(response.json());
-    expect(parsed).toEqual(baseProduction);
+    expect(parsed).toEqual(ProductionSchema.parse(baseProduction));
   });
 
   test("GET /api/v1/production/:id -> returns 404 for unknown id", async () => {
@@ -124,7 +124,10 @@ describe("Production fetch helpers", () => {
 
     const result = await getProductionsByIds(server, ids);
 
-    expect(result).toEqual([secondProduction, baseProduction]);
+    expect(result).toEqual([
+      ProductionSchema.parse(secondProduction),
+      ProductionSchema.parse(baseProduction),
+    ]);
   });
 });
 

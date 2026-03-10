@@ -30,6 +30,9 @@ const replacedProduction: Production = {
 
 beforeAll(async () => {
   server = await buildServer();
+  server.addHook("preHandler", async (request) => {
+    request.user = { id: 1 } as never;
+  });
   await server.register(productionRoutes);
 });
 
@@ -82,7 +85,7 @@ describe("Replace on production route", () => {
 
     expect(response.statusCode).toBe(200);
     const parsed = ProductionSchema.parse(response.json());
-    expect(parsed).toEqual(replacedProduction);
+    expect(parsed).toEqual(ProductionSchema.parse(replacedProduction));
   });
 
   test("PUT /api/v1/production/:id -> returns 404 when production not found", async () => {

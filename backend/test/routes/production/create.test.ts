@@ -30,6 +30,9 @@ const createdProduction: Production = {
 
 beforeAll(async () => {
   server = await buildServer();
+  server.addHook("preHandler", async (request) => {
+    request.user = { id: 1 } as never;
+  });
   await server.register(productionRoutes);
 });
 
@@ -72,7 +75,7 @@ describe("Create on production route", () => {
 
     expect(response.statusCode).toBe(200);
     const parsed = ProductionSchema.parse(response.json());
-    expect(parsed).toEqual(createdProduction);
+    expect(parsed).toEqual(ProductionSchema.parse(createdProduction));
   });
 
   test("POST /api/v1/production -> returns 404 when insert returns no row", async () => {

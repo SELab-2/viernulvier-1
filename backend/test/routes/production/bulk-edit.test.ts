@@ -101,6 +101,9 @@ const updatedBulkC2: Production = {
 
 beforeAll(async () => {
   server = await buildServer();
+  server.addHook("preHandler", async (request) => {
+    request.user = { id: 1 } as never;
+  });
   await server.register(productionRoutes);
 });
 
@@ -147,7 +150,10 @@ describe("Bulk edit on production route", () => {
 
     expect(response.statusCode).toBe(200);
     const parsed = ProductionSchema.array().parse(response.json());
-    expect(parsed).toEqual([updatedBulkA1, updatedBulkA2]);
+    expect(parsed).toEqual([
+      ProductionSchema.parse(updatedBulkA1),
+      ProductionSchema.parse(updatedBulkA2),
+    ]);
   });
 
   test("PATCH /api/v1/production/bulk -> bulk updates other optional fields", async () => {
@@ -183,7 +189,10 @@ describe("Bulk edit on production route", () => {
 
     expect(response.statusCode).toBe(200);
     const parsed = ProductionSchema.array().parse(response.json());
-    expect(parsed).toEqual([updatedBulkB1, updatedBulkB2]);
+    expect(parsed).toEqual([
+      ProductionSchema.parse(updatedBulkB1),
+      ProductionSchema.parse(updatedBulkB2),
+    ]);
   });
 
   test("PATCH /api/v1/production/bulk -> rejects invalid body", async () => {
@@ -230,7 +239,7 @@ describe("Bulk edit on production route", () => {
 
     expect(response.statusCode).toBe(200);
     const parsed = ProductionSchema.array().parse(response.json());
-    expect(parsed).toEqual([baseProduction1]);
+    expect(parsed).toEqual([ProductionSchema.parse(baseProduction1)]);
   });
 
   test("PATCH /api/v1/production/bulk -> bulk updates all supported fields", async () => {
@@ -280,7 +289,10 @@ describe("Bulk edit on production route", () => {
 
     expect(response.statusCode).toBe(200);
     const parsed = ProductionSchema.array().parse(response.json());
-    expect(parsed).toEqual([updatedBulkC1, updatedBulkC2]);
+    expect(parsed).toEqual([
+      ProductionSchema.parse(updatedBulkC1),
+      ProductionSchema.parse(updatedBulkC2),
+    ]);
   });
 
   test("PATCH /api/v1/production/bulk -> accepts null for nullable media/info fields", async () => {
@@ -324,7 +336,10 @@ describe("Bulk edit on production route", () => {
 
     expect(response.statusCode).toBe(200);
     const parsed = ProductionSchema.array().parse(response.json());
-    expect(parsed).toEqual([baseProduction1, baseProduction2]);
+    expect(parsed).toEqual([
+      ProductionSchema.parse(baseProduction1),
+      ProductionSchema.parse(baseProduction2),
+    ]);
   });
 
   test("bulkEditProductions() -> ignores explicitly undefined fields", async () => {
@@ -345,6 +360,7 @@ describe("Bulk edit on production route", () => {
     });
 
     const result = await bulkEditProductions(server, {
+      user: { id: 1 },
       body: {
         ids,
         data: {
@@ -353,7 +369,7 @@ describe("Bulk edit on production route", () => {
       },
     } as any);
 
-    expect(result).toEqual([baseProduction1]);
+    expect(result).toEqual([ProductionSchema.parse(baseProduction1)]);
   });
 });
 
