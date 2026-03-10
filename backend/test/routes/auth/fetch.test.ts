@@ -1,19 +1,19 @@
 import { describe, test, expect, beforeAll, vi, afterAll } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-import { AdminSchema, type Admin, type AdminWithMeta } from "@viernulvier/shared/index.js";
+import { AdminSchema } from "@viernulvier/shared/index.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
 
-const mockAdmins: Array<Admin> = [
+const mockAdmins = [
   { id: 404, username: "Karel", profile_picture: null },
   { id: 405, username: "Stagaire", profile_picture: null },
 ];
 
 const mockTime = new Date();
 
-const mockAdminsWithMeta: Array<AdminWithMeta> = mockAdmins.map((admin) => ({
+const mockAdminsWithMeta = mockAdmins.map((admin) => ({
   ...admin,
   created_by: 404,
   created_at: mockTime,
@@ -60,10 +60,8 @@ describe("Fetch on auth route", () => {
       cookies: { session: sessionCookie },
     });
 
-    console.log(response.statusCode, response.body);
-
     expect(response.statusCode).toBe(200);
-    expect(AdminSchema.parse(response.json())).toEqual(admin);
+    expect(AdminSchema.parse(response.json().body)).toEqual(admin);
   });
 
   test("GET /api/v1/auth/:id/meta", async () => {
@@ -76,7 +74,7 @@ describe("Fetch on auth route", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(AdminSchema.withMeta().parse(response.json())).toEqual(admin);
+    expect(AdminSchema.withMeta().parse(response.json().body)).toEqual(admin);
   });
 
   test("GET /api/v1/auth/:id — returns 404 when admin not found", async () => {

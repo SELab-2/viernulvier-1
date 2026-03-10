@@ -1,13 +1,23 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Admin } from "@viernulvier/shared/index.js";
 import { AdminSchema } from "@viernulvier/shared/index.js";
-import { getMetadata, parseFirstRow, parseSchema } from "@/routes/helpers.js";
+import { getMetadata, parseSchema, buildQuery } from "@/routes/helpers.js";
 import { z } from "zod";
 import { hashPassword } from "./hash.js";
 
 const CreateAdminBodySchema = AdminSchema.pick({ username: true }).extend({
   password: z.string().min(8).max(72),
 });
+
+const insertAdmin = (server: FastifyInstance) =>
+  buildQuery(
+    server,
+    `INSERT INTO admin (username, password, created_by, updated_by, created_at, updated_at)
+     VALUES ($1, $2, $3, $3, $4, $4)
+     RETURNING id, username, profile_picture_url AS profile_picture`,
+    z.tuple([z.string(), z.string(), z.number().int(), z.date()]),
+    AdminSchema,
+  );
 
 /**
  * Creates a new admin and returns the created record.
@@ -16,18 +26,20 @@ const CreateAdminBodySchema = AdminSchema.pick({ username: true }).extend({
  * @param request - The Fastify request, expected to contain `username` and `password` in its body.
  * @returns The created admin, or `null` if the insert failed or parsing failed.
  */
-export async function createAdmin(server: FastifyInstance, request: FastifyRequest): Promise<Admin | null> {
+export async function createAdmin(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<Admin | null> {
   const body = parseSchema(server, CreateAdminBodySchema, request.body);
-
   const { admin, current_time } = getMetadata(request);
   const hashedPassword = await hashPassword(body.password);
 
-  const result = await server.pg.query<Admin>(
-    `INSERT INTO admin (username, password, created_by, updated_by, created_at, updated_at)
-     VALUES ($1, $2, $3, $3, $4, $4)
-     RETURNING id, username, profile_picture_url AS profile_picture`,
-    [body.username, hashedPassword, admin, current_time]
+  const rows = await insertAdmin(server)(
+    body.username,
+    hashedPassword,
+    admin,
+    current_time,
   );
 
-  return parseFirstRow(server, AdminSchema, result.rows);
+  return rows[0] ?? null;
 }

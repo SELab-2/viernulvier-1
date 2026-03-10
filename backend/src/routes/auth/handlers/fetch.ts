@@ -1,7 +1,27 @@
 import type { Admin, AdminWithMeta } from "@viernulvier/shared/index.js";
-import { AdminSchema } from "@viernulvier/shared/index.js";
+import { AdminSchema, stringToInt } from "@viernulvier/shared/index.js";
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import { getParam, parseFirstRow } from "@/routes/helpers.js";
+import { buildQuery, parseParams } from "@/routes/helpers.js";
+import z from "zod";
+
+const fetchAdminById = (server: FastifyInstance) =>
+  buildQuery(
+    server,
+    `SELECT id, username, profile_picture_url AS profile_picture
+     FROM admin WHERE id = $1`,
+    z.tuple([z.int()]),
+    AdminSchema,
+  );
+
+const fetchAdminWithMetaById = (server: FastifyInstance) =>
+  buildQuery(
+    server,
+    `SELECT id, username, profile_picture_url AS profile_picture,
+            created_at, updated_at, created_by, updated_by
+     FROM admin WHERE id = $1`,
+    z.tuple([z.int()]),
+    AdminSchema.withMeta(),
+  );
 
 /**
  * Fetches an admin by ID, without metadata.
@@ -10,14 +30,13 @@ import { getParam, parseFirstRow } from "@/routes/helpers.js";
  * @param request - The Fastify request, expected to contain `id` in its params.
  * @returns The admin, or `null` if not found or parsing failed.
  */
-async function fetchAdmin(server: FastifyInstance, request: FastifyRequest): Promise<Admin | null> {
-  const result = await server.pg.query<Admin>(
-    `SELECT id, username, profile_picture_url AS profile_picture
-     FROM admin WHERE id = $1`,
-    [getParam(request, "id")]
-  );
-
-  return parseFirstRow(server, AdminSchema, result.rows);
+async function fetchAdmin(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<Admin | null> {
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const rows = await fetchAdminById(server)(id);
+  return rows[0] ?? null;
 }
 
 /**
@@ -27,16 +46,13 @@ async function fetchAdmin(server: FastifyInstance, request: FastifyRequest): Pro
  * @param request - The Fastify request, expected to contain `id` in its params.
  * @returns The admin with metadata, or `null` if not found or parsing failed.
  */
-async function fetchAdminWithMeta(server: FastifyInstance, request: FastifyRequest): Promise<AdminWithMeta | null> {
-  const result = await server.pg.query<AdminWithMeta>(
-    `SELECT id, username, profile_picture_url AS profile_picture,
-            created_at, updated_at, created_by, updated_by
-     FROM admin
-     WHERE id = $1`,
-    [getParam(request, "id")]
-  );
-
-  return parseFirstRow(server, AdminSchema.withMeta(), result.rows);
+async function fetchAdminWithMeta(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<AdminWithMeta | null> {
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const rows = await fetchAdminWithMetaById(server)(id);
+  return rows[0] ?? null;
 }
 
 export { fetchAdmin, fetchAdminWithMeta };

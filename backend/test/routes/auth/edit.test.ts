@@ -43,7 +43,7 @@ describe("Edit on auth route", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(AdminSchema.parse(response.json())).toEqual(mockCreatedAdmin);
+    expect(AdminSchema.parse(response.json().body)).toEqual(mockCreatedAdmin);
   });
 
   test("PATCH /api/v1/auth/:id — updates password only", async () => {
@@ -55,7 +55,7 @@ describe("Edit on auth route", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(AdminSchema.parse(response.json())).toEqual(mockCreatedAdmin);
+    expect(AdminSchema.parse(response.json().body)).toEqual(mockCreatedAdmin);
   });
 
   test("PATCH /api/v1/auth/:id — updates both username and password", async () => {
@@ -67,7 +67,7 @@ describe("Edit on auth route", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(AdminSchema.parse(response.json())).toEqual(mockCreatedAdmin);
+    expect(AdminSchema.parse(response.json().body)).toEqual(mockCreatedAdmin);
   });
 
   test("PATCH /api/v1/auth/:id — rejects short password", async () => {

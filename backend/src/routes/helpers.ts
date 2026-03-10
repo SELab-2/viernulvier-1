@@ -119,7 +119,7 @@ const parseErrors: Readonly<Record<ParseContextType, HttpError>> = {
 /**
  * Uses a zod schema to validate the params and returns them as an object.
  *
- * Example: `const { id } = parseParams(request, z.object({ id: stringToInt() }))`
+ * Example: `const { id } = parseParams(request, z.object({ id: stringToInt }))`
  *
  * Remember that all params are strings and thus must be converted to the right data type
  * with a codec. See https://zod.dev/codecs
@@ -311,7 +311,7 @@ export function replyHandler<Z extends z.ZodType>(
   handler: (
     server: FastifyInstance,
     request: FastifyRequest,
-    reply?: FastifyReply,
+    reply: FastifyReply,
   ) => Promise<z.output<Z> | null>,
 ) {
   return async (request: FastifyRequest, reply: FastifyReply) => {

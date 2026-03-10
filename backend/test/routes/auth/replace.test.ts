@@ -43,6 +43,6 @@ describe("Replace on auth route", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(AdminSchema.parse(response.json())).toEqual(mockCreatedAdmin);
+    expect(AdminSchema.parse(response.json().body)).toEqual(mockCreatedAdmin);
   });
 });
