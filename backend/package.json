@@ -28,7 +28,8 @@
     "start": "node dist/index.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "check": "pnpm run build && pnpm run test && pnpm run lint"
+    "check": "pnpm run build && pnpm run test && pnpm run lint",
+    "create-admin": "tsx scripts/create-admin.ts"
   },
   "keywords": [],
   "author": "",
