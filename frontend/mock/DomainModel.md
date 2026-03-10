@@ -4,7 +4,7 @@
 
 This document describes the **domain model of the VierNulVier Archive**.
 
-The archive is a digital platform that documents cultural productions and events in Ghent. Users can browse the archive and view information about performances, artists, and events.
+The VierNulVier Archive is a  website that shows the collection of past cultural events organised by VIERNULVIER.
 
 Administrators can manage productions and events through an admin interface.
 
