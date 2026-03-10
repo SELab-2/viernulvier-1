@@ -84,7 +84,7 @@ Each production is shown as a card containing:
 - Title
 - Artist or group
 - Short description
-- Tags (genres, types, festivals,...)
+- Tags (genres, types, festivals ...)
 - Location
 - Date or period
 
