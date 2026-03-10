@@ -13,13 +13,20 @@ type RecursionHelper<O extends z.ZodType> = z.ZodType<{
     ? ForeignKey<any, any>
     : z.output<O>[Key];
 }>;
-
 export class ForeignKey<O extends z.ZodType, T extends z.ZodType = Serial>
   extends z.ZodType
 {
   private _foreignKeyRef: z.ZodLazy<O>;
+
   constructor(type: T, target: () => O) {
-    super(type.brand<"ForeignKey">().def);
+    const branded = type.brand<"ForeignKey">();
+    super(branded.def);
+    // Zod v4 does not assign `_zod.parse` in the base `ZodType` constructor —
+    // each subclass's initializer is responsible for setting it. Since we extend
+    // `ZodType` directly, we must manually wire it up by delegating to the
+    // branded type's `_zod.run`, which is the full parse+check pipeline.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (this._zod as any).parse = (branded as any)._zod.run.bind(branded._zod);
     this._foreignKeyRef = z.lazy(target);
   }
 
