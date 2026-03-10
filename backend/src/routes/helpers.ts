@@ -153,7 +153,7 @@ export function getParam(request: FastifyRequest, key: string): string {
   // eslint-disable-next-line security/detect-object-injection
   const value = (request.params as Record<string, string>)[key];
   if (value === undefined)
-    throw new HttpError(400, `Missing route parameter: "${key}"`);
+    throw new HttpError(HttpClientError.BadRequest, `Missing route parameter: "${key}"`);
   return value;
 }
 /* v8 ignore stop */
