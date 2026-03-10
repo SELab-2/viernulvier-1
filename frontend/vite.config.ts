@@ -18,7 +18,7 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
-        target: `http://backend:${process.env["FRONTEND_PORT"] ?? "3000"}`,
+        target: `http://backend:${process.env["BACKEND_PORT"] ?? "3000"}`,
         changeOrigin: true,
       },
     },
