@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 
-import { getParam, parse, ParseContext, parseFirstRow, getMetadata, HttpError, HttpClientError } from "@/routes/helpers.js";
+import { getParam, parse, ParseContext, parseFirstRow, getMetadata } from "@/routes/helpers.js";
 import { EventSchema } from "@viernulvier/shared/types/event.js";
 import type { Event } from "@viernulvier/shared/types/event.js";
 import { normalizeEventDates } from "./helper.js";

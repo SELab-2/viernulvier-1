@@ -106,9 +106,15 @@ export const enum ParseContext {
 
 type ParseContextType = (typeof ParseContext)[keyof typeof ParseContext];
 
-const parseErrors: Record<ParseContextType, HttpError> = {
-  [ParseContext.Request]: new HttpError(400, "Invalid request data"),
-  [ParseContext.Database]: new HttpError(500, "Internal server error"),
+const parseErrors: Readonly<Record<ParseContextType, HttpError>> = {
+  [ParseContext.Request]: new HttpError(
+    HttpClientError.BadRequest,
+    "Invalid request data",
+  ),
+  [ParseContext.Database]: new HttpError(
+    HttpServerError.InternalServerError,
+    "Internal server error",
+  ),
 };
 
 /**
@@ -306,16 +312,14 @@ export function replyHandler<Z extends z.ZodType>(
   handler: (
     server: FastifyInstance,
     request: FastifyRequest,
-    reply?: FastifyReply,
+    reply: FastifyReply,
   ) => Promise<z.output<Z> | null>,
 ) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const result = await handler(server, request, reply);
       if (!result) throw new HttpError(HttpClientError.NotFound, "Not Found");
-      return await reply.status(HttpSuccess.OK).send({
-        body: result,
-      });
+      return result;
     } catch (err) {
       if (err instanceof HttpError) {
         return await reply.status(err.status).send({ error: err.message });
