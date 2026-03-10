@@ -3,7 +3,7 @@
 
 ## Overview
 
-The VierNulVier Archive is a digital website that documents cultural productions and events in Ghent. The website contains information about theatre, dance, film, music, and other cultural activities that took place over the years.
+The VierNulVier Archive is a  website that shows the collection of past cultural events organised by VIERNULVIER.
 
 The purpose of the website is to:
 
