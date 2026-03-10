@@ -1,19 +1,19 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { TagType } from "@viernulvier/shared/index.js";
+import { TagTypeSchema } from "@viernulvier/shared/index.js";
+import { getParam, parseFirstRow } from "@/routes/helpers.js";
 
 export async function deleteTagType(
   server: FastifyInstance,
   request: FastifyRequest
-) {
-  const { id } = request.params as { id: number };
+): Promise<TagType | null> {
 
-  const result = await server.pg.query(
-    `
-    DELETE FROM tag_type
-    WHERE id = $1
-    RETURNING id
-    `,
-    [id]
+  const result = await server.pg.query<TagType>(
+    `DELETE FROM tag_type
+     WHERE id = $1
+     RETURNING id, name, visible`,
+    [getParam(request, "id")]
   );
 
-  return result.rows[0] ?? null;
+  return parseFirstRow(server, TagTypeSchema, result.rows);
 }

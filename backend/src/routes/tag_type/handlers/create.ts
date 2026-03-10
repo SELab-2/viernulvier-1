@@ -1,36 +1,28 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { TagType } from "@viernulvier/shared/index.js";
+import { TagTypeSchema } from "@viernulvier/shared/index.js";
+import { getMetadata, parseFirstRow, parseSchema } from "@/routes/helpers.js";
 
-import { parse, getMetadata } from "@/routes/helpers.js";
-import { CreateTagTypeBodySchema } from "./body-schema.js";
-import { getTagTypeById } from "./fetch.js";
+const CreateTagTypeBodySchema = TagTypeSchema.pick({
+  name: true,
+  visible: true,
+});
 
 export async function createTagType(
   server: FastifyInstance,
   request: FastifyRequest
 ): Promise<TagType | null> {
 
-  const body = parse(server, CreateTagTypeBodySchema, request.body);
-  const { admin, current_time } = getMetadata();
+  // Authentication will be enforced once the auth branch is merged
+  const body = parseSchema(server, CreateTagTypeBodySchema, request.body);
+  const { admin, current_time } = getMetadata(request);
 
-  const result = await server.pg.query<{ id: number }>(
-    `
-    INSERT INTO tag_type (name, visible, created_by, updated_by, created_at, updated_at)
-    VALUES ($1,$2,$3,$4,$5,$6)
-    RETURNING id
-    `,
-    [
-      body.name,
-      body.visible,
-      admin,
-      admin,
-      current_time,
-      current_time,
-    ]
+  const result = await server.pg.query<TagType>(
+    `INSERT INTO tag_type (name, visible, created_by, updated_by, created_at, updated_at)
+     VALUES ($1, $2, $3, $3, $4, $4)
+     RETURNING id, name, visible`,
+    [body.name, body.visible, admin, current_time]
   );
 
-  const row = result.rows[0];
-  if (!row) return null;
-
-  return getTagTypeById(server, row.id);
+  return parseFirstRow(server, TagTypeSchema, result.rows);
 }

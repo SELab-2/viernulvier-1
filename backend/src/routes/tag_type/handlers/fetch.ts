@@ -1,37 +1,30 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { TagType } from "@viernulvier/shared/index.js";
+import { TagTypeSchema } from "@viernulvier/shared/index.js";
+import { getParam, parseFirstRow } from "@/routes/helpers.js";
 
-export async function getTagTypeById(
+async function fetchTagType(
   server: FastifyInstance,
-  id: number
+  request: FastifyRequest
 ): Promise<TagType | null> {
 
   const result = await server.pg.query<TagType>(
-    `
-    SELECT id, name, visible
-    FROM tag_type
-    WHERE id = $1
-    `,
-    [id]
+    `SELECT id, name, visible
+     FROM tag_type
+     WHERE id = $1`,
+    [getParam(request, "id")]
   );
 
-  return result.rows[0] ?? null;
+  return parseFirstRow(server, TagTypeSchema, result.rows);
 }
 
-export async function fetchTagType(
-  server: FastifyInstance,
-  request: FastifyRequest
-) {
-  const { id } = request.params as { id: number };
+async function fetchTagTypes(server: FastifyInstance): Promise<TagType[]> {
 
-  const result = await server.pg.query(
-    `
-    SELECT id, name
-    FROM tag_type
-    WHERE id = $1
-    `,
-    [id]
+  const result = await server.pg.query<TagType>(
+    `SELECT id, name, visible FROM tag_type`
   );
 
-  return result.rows[0] ?? null;
+  return result.rows;
 }
+
+export { fetchTagType, fetchTagTypes };

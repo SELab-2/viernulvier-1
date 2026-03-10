@@ -1,4 +1,5 @@
-export { fetchTagType, fetchTagTypes, getTagTypeById } from "./fetch.js";
-export { createTagType } from "./create.js";
-export { editTagType } from "./edit.js";
-export { deleteTagType } from "./delete.js";
+export * from "./fetch.js";
+export * from "./create.js";
+export * from "./edit.js";
+export * from "./replace.js";
+export * from "./delete.js";
