@@ -15,6 +15,7 @@ describe("Server", () => {
   beforeEach(() => {
     process.env["DEBUG"] = "false";
     process.env["BACKEND_PORT"] = "0"; // port = 3333 is used for tests
+    process.env["JWT_SECRET"] = "secret";
   });
 
   afterEach(async () => {
@@ -37,6 +38,12 @@ describe("Server", () => {
 
       expect(server.log).toBeDefined();
       expect(server.log.level).toBe("debug");
+    });
+
+    test("Build server without JWT_SECRET", async () => {
+      delete(process.env["JWT_SECRET"]);
+
+      await expect(buildServer()).rejects.toThrow("JWT_SECRET environment variable is not defined");
     });
   });
 
