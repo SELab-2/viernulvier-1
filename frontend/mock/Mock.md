@@ -115,22 +115,20 @@ Sorting can be ascending or descending.
 
 Users can filter results by:
 
-### Festival / Series
-Filter productions that belong to a specific series.
+### Tags on Productions
+
+Filter productions that belong to a specific **series or festival**.
+
+Filtering in the archive is based on **tags and tag categories**.  
+The mockups currently show examples such as **genre, type, and festival**, but the system is not limited to these categories.
+
+An administrators can create **new tag categories and tags**, and users will be able to filter productions using any of those categories.
 
 ### Location
 Filter productions that take place at a specific location.
 
 ### Artist
 Filter productions by a specific artist or group.
-
-### Genre
-Filter by type of performance such as:
-
-- theatre
-- dance
-- music
-- film
 
 ### Date
 Filter by a specific date or period.
