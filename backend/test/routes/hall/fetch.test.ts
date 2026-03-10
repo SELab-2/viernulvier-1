@@ -93,4 +93,13 @@ describe("Hall fetch routes", () => {
 
     expect(response.statusCode).toBe(HttpClientError.NotFound);
   });
+
+  test("GET /api/v1/hall/:id/meta — returns 404 when hall not found", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/hall/99999/meta",
+    });
+
+    expect(response.statusCode).toBe(HttpClientError.NotFound);
+  });
 });
