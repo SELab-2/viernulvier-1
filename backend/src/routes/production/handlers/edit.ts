@@ -1,9 +1,11 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Production } from "@viernulvier/shared/index.js";
-import { HttpError, getMetadata, getParam, parse } from "@/routes/helpers.js";
+import { HttpClientError, HttpError, getMetadata, parseParams, parseSchema } from "@/routes/helpers.js";
+import { stringToInt } from "@viernulvier/shared/index.js";
 import { getProductionById } from "./fetch.js";
 import { PartialProductionBodySchema } from "./body-schema.js";
 import { getFieldValue, getNullableFieldValue, hasOwn } from "./field-utils.js";
+import z from "zod";
 
 const DirectEditColumns = [
   "vendor_id",
@@ -35,10 +37,10 @@ const NullableEditColumns = [
  * @returns The updated production, or `null` if the update failed or parsing failed.
  */
 export async function editProduction(server: FastifyInstance, request: FastifyRequest): Promise<Production | null> {
-  const id = getParam(request, "id");
-  const body = parse(server, PartialProductionBodySchema, request.body);
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const body = parseSchema(server, PartialProductionBodySchema, request.body);
 
-  const { admin, current_time } = getMetadata();
+  const { admin, current_time } = getMetadata(request);
 
   const fields: string[] = [];
   const values: unknown[] = [];
@@ -62,7 +64,7 @@ export async function editProduction(server: FastifyInstance, request: FastifyRe
   }
 
   if (fields.length === 0) {
-    throw new HttpError(400, "No fields to update");
+    throw new HttpError(HttpClientError.BadRequest, "No fields to update");
   }
 
   // Always update metadata

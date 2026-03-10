@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Production } from "@viernulvier/shared/index.js";
-import { getMetadata, parse } from "@/routes/helpers.js";
+import { getMetadata, parseSchema } from "@/routes/helpers.js";
 import { getProductionById } from "./fetch.js";
 import { CreateProductionBodySchema } from "./body-schema.js";
 import { getFieldValue, getNullableFieldValue } from "./field-utils.js";
@@ -34,9 +34,9 @@ const NullableCreateColumns = [
  * @returns The created production, or `null` if the insert failed or parsing failed.
  */
 export async function createProduction(server: FastifyInstance, request: FastifyRequest): Promise<Production | null> {
-  const body = parse(server, CreateProductionBodySchema, request.body);
+  const body = parseSchema(server, CreateProductionBodySchema, request.body);
 
-  const { admin, current_time } = getMetadata();
+  const { admin, current_time } = getMetadata(request);
 
   const fields: string[] = [];
   const placeholders: string[] = [];

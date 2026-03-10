@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Production } from "@viernulvier/shared/index.js";
-import { ProductionSchema } from "@viernulvier/shared/index.js";
-import { getParam, parseFirstRow, parse, ParseContext } from "@/routes/helpers.js";
+import { ProductionSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { parseParams, parseSchema, ParseContext } from "@/routes/helpers.js";
 import z from "zod";
 
 const ProductionSelect = `
@@ -38,7 +38,7 @@ FROM production p
 export async function getProductionById(server: FastifyInstance, id: string | number): Promise<Production | null> {
   const result = await server.pg.query<Production>(`${ProductionSelect} WHERE p.id = $1`, [id]);
 
-  return parseFirstRow(server, ProductionSchema, result.rows);
+  return parseSchema(server, z.array(ProductionSchema), result.rows, ParseContext.Database)[0] ?? null;
 }
 
 /**
@@ -58,7 +58,7 @@ export async function getProductionsByIds(server: FastifyInstance, ids: number[]
     [ids],
   );
 
-  return parse(server, z.array(ProductionSchema), result.rows, ParseContext.Database);
+  return parseSchema(server, z.array(ProductionSchema), result.rows, ParseContext.Database);
 }
 
 /**
@@ -69,7 +69,7 @@ export async function getProductionsByIds(server: FastifyInstance, ids: number[]
  * @returns The production, or `null` if not found or parsing failed.
  */
 export async function fetchProduction(server: FastifyInstance, request: FastifyRequest): Promise<Production | null> {
-  const id = getParam(request, "id");
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
   return await getProductionById(server, id);
 }
 
@@ -83,6 +83,6 @@ export async function fetchProduction(server: FastifyInstance, request: FastifyR
 export async function fetchProductions(server: FastifyInstance, _request: FastifyRequest): Promise<Production[] | null> {
   const result = await server.pg.query<Production>(`${ProductionSelect} ORDER BY p.id ASC`);
 
-  return parse(server, z.array(ProductionSchema), result.rows, ParseContext.Database);
+  return parseSchema(server, z.array(ProductionSchema), result.rows, ParseContext.Database);
 }
 

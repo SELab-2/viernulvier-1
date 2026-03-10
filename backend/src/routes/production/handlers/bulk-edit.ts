@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Production } from "@viernulvier/shared/index.js";
-import { getMetadata, parse } from "@/routes/helpers.js";
+import { getMetadata, parseSchema } from "@/routes/helpers.js";
 import z from "zod";
 import { getProductionsByIds } from "./fetch.js";
 import { PartialProductionBodySchema, ProductionIdSchema } from "./body-schema.js";
@@ -41,10 +41,10 @@ const NullableBulkEditColumns = [
  * @returns The updated productions array (can be empty), or `null` if parsing failed.
  */
 export async function bulkEditProductions(server: FastifyInstance, request: FastifyRequest): Promise<Production[] | null> {
-  const body = parse(server, BulkEditProductionsBodySchema, request.body);
+  const body = parseSchema(server, BulkEditProductionsBodySchema, request.body);
   const { ids, data } = body;
 
-  const { admin, current_time } = getMetadata();
+  const { admin, current_time } = getMetadata(request);
 
   const fields: string[] = [];
   const values: unknown[] = [];

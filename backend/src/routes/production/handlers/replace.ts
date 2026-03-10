@@ -1,9 +1,11 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Production } from "@viernulvier/shared/index.js";
-import { getMetadata, getParam, parse } from "@/routes/helpers.js";
+import { stringToInt } from "@viernulvier/shared/index.js";
+import { getMetadata, parseParams, parseSchema } from "@/routes/helpers.js";
 import { getProductionById } from "./fetch.js";
 import { ProductionBodySchema } from "./body-schema.js";
 import { getFieldValue } from "./field-utils.js";
+import z from "zod";
 
 const ReplaceColumns = [
   "vendor_id",
@@ -32,10 +34,10 @@ const ReplaceColumns = [
  * @returns The replaced production, or `null` if not found.
  */
 export async function replaceProduction(server: FastifyInstance, request: FastifyRequest): Promise<Production | null> {
-  const id = getParam(request, "id");
-  const body = parse(server, ProductionBodySchema, request.body);
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const body = parseSchema(server, ProductionBodySchema, request.body);
 
-  const { admin, current_time } = getMetadata();
+  const { admin, current_time } = getMetadata(request);
 
   const fields: string[] = [];
   const values: unknown[] = [];
