@@ -4,6 +4,7 @@ import type { FastifyInstance } from "fastify";
 import { TagSchema, type Tag } from "@viernulvier/shared/index.js";
 
 let server: FastifyInstance;
+let sessionCookie: string;
 
 const mockTag: Tag = {
   id: 5,
@@ -14,6 +15,14 @@ const mockTag: Tag = {
 
 beforeAll(async () => {
   server = await buildServer();
+  sessionCookie = server.jwt.sign({ id: 1, username: "Admin" });
+
+  server.addHook('preHandler', (request, reply, done) => {
+    if (!request.user) {
+      request.user = { id: 1 };
+    }
+    done();
+  });
 
   server.pg.query = vi.fn().mockResolvedValue({
     rows: [mockTag],
@@ -30,6 +39,7 @@ describe("Edit tag", () => {
     const response = await server.inject({
       method: "PATCH",
       url: `/api/v1/tag/${mockTag.id}`,
+      cookies: { session: sessionCookie },
       payload: { name: mockTag.name },
     });
 
@@ -41,6 +51,7 @@ describe("Edit tag", () => {
     const response = await server.inject({
       method: "PATCH",
       url: `/api/v1/tag/${mockTag.id}`,
+      cookies: { session: sessionCookie },
       payload: { type: mockTag.type },
     });
 
