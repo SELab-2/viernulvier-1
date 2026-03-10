@@ -10,7 +10,6 @@ const replacedProduction: Production = {
   id: 1,
   vendor_id: 111,
   box_office_id: 222,
-  events: [],
   supertitle: { nl: "Nieuwe supertitel" },
   title: { nl: "Nieuwe titel" },
   artist: { nl: "Nieuwe artiest" },
@@ -25,7 +24,6 @@ const replacedProduction: Production = {
   quote_source: null,
   programme: null,
   info: null,
-  tags: [],
 };
 
 beforeAll(async () => {

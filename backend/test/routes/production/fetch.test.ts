@@ -11,7 +11,6 @@ const baseProduction: Production = {
   id: 1,
   vendor_id: 10,
   box_office_id: 20,
-  events: [],
   supertitle: null,
   title: { nl: "Titel" },
   artist: { nl: "Artiest" },
@@ -26,7 +25,6 @@ const baseProduction: Production = {
   quote_source: null,
   programme: null,
   info: null,
-  tags: [],
 };
 
 beforeAll(async () => {
