@@ -1,4 +1,3 @@
-import js from "@eslint/js";
 import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 import security from "eslint-plugin-security";
@@ -28,7 +27,7 @@ export default defineConfig([
   // Base JS + Node Security Rules
   // --------------------------------------------------
 
-  js.configs.recommended,
+  tseslint.configs.recommended,
   security.configs.recommended,
   nodePlugin.configs["flat/recommended"],
 
@@ -88,6 +87,10 @@ export default defineConfig([
           caughtErrorsIgnorePattern: "^_"
         }
       ],
+
+      "@typescript-eslint/no-redeclare": "error",
+
+      "no-redeclare": "off",
       "no-unused-vars": "off",
 
       // ----------------------------

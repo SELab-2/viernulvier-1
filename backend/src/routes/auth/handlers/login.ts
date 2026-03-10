@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { AdminSchema } from "@viernulvier/shared/index.js";
-import { parse, HttpError } from "@/routes/helpers.js";
+import { parseSchema, HttpError } from "@/routes/helpers.js";
 import { z } from "zod";
 import { comparePassword } from "./hash.js";
 
@@ -18,7 +18,7 @@ const LoginBodySchema = AdminSchema.pick({ username: true }).extend({
  * @throws `HttpError` If the credentials are invalid.
  */
 export async function login(server: FastifyInstance, request: FastifyRequest, reply: FastifyReply) {
-  const { username, password } = parse(server, LoginBodySchema, request.body);
+  const { username, password } = parseSchema(server, LoginBodySchema, request.body);
 
   const result = await server.pg.query(
     `SELECT id, password FROM admin WHERE username = $1`,

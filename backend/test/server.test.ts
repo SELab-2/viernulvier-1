@@ -4,6 +4,7 @@ import type { FastifyInstance } from "fastify";
 
 vi.mock("@/plugin/postgres.js", () => ({
   default: vi.fn(async (server: FastifyInstance) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     server.pg = { query: vi.fn() } as any;
   }),
 }));
@@ -14,7 +15,7 @@ describe("Server", () => {
   beforeEach(() => {
     process.env["DEBUG"] = "false";
     process.env["BACKEND_PORT"] = "0"; // port = 3333 is used for tests
-  })
+  });
 
   afterEach(async () => {
     await server?.close();
@@ -43,7 +44,9 @@ describe("Server", () => {
     test("starts and listens", async () => {
       server = await start();
       expect(server.addresses()).toEqual(
-        expect.arrayContaining([expect.objectContaining({ port: expect.any(Number) })])
+        expect.arrayContaining([
+          expect.objectContaining({ port: expect.any(Number) }),
+        ]),
       );
     });
   });
