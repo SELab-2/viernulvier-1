@@ -61,7 +61,7 @@ describe("Edit on hall route", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(HallSchema.parse(response.json().body)).toEqual(updatedHallA);
+    expect(HallSchema.parse(response.json())).toEqual(updatedHallA);
   });
 
   test("PATCH /api/v1/hall/:id — updates vendor_id", async () => {
@@ -85,7 +85,7 @@ describe("Edit on hall route", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(HallSchema.parse(response.json().body)).toEqual(updatedHallB);
+    expect(HallSchema.parse(response.json())).toEqual(updatedHallB);
   });
 
   test("PATCH /api/v1/hall/:id — returns 404 when hall not found", async () => {

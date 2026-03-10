@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Hall } from "@viernulvier/shared/index.js";
-import { HallSchema } from "@viernulvier/shared/index.js";
-import { getMetadata, parseParams, parseFirstRow, parseSchema, HttpError, HttpClientError } from "@/routes/helpers.js";
+import { HallSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { getMetadata, parseParams, parseSchema, HttpError, HttpClientError, ParseContext } from "@/routes/helpers.js";
 import { z } from "zod";
 
 const EditHallBodySchema = HallSchema.omit({ id: true }).partial();
@@ -14,9 +14,7 @@ const EditHallBodySchema = HallSchema.omit({ id: true }).partial();
  * @returns The updated hall, or `null` if the update failed or parsing failed.
  */
 export async function editHall(server: FastifyInstance, request: FastifyRequest): Promise<Hall | null> {  
-  const { id } = parseParams(request, z.object({ 
-    id: z.coerce.number() 
-  }));
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
   const body = parseSchema(server, EditHallBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
 
@@ -47,5 +45,6 @@ export async function editHall(server: FastifyInstance, request: FastifyRequest)
     values
   );
 
-  return parseFirstRow(server, HallSchema, result.rows);
+  return parseSchema(server, z.array(HallSchema), result.rows, ParseContext.Database)[0] ?? null;
+
 }

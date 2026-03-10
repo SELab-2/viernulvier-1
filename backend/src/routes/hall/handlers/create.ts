@@ -1,9 +1,27 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Hall } from "@viernulvier/shared/index.js";
 import { HallSchema } from "@viernulvier/shared/index.js";
-import { getMetadata, parseSchema, parseFirstRow } from "@/routes/helpers.js";
+import { getMetadata, parseSchema, buildQuery } from "@/routes/helpers.js";
+import { z } from "zod";
+import { languageMap } from "@viernulvier/shared/types/helpers.js";
 
 const CreateHallBodySchema = HallSchema.omit({ id: true });
+
+const insertHall = (server: FastifyInstance) =>
+  buildQuery(
+    server,
+    `INSERT INTO hall (name, address, vendor_id, created_by, updated_by, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $4, $5, $5)
+     RETURNING id, name, address, vendor_id`,
+    z.tuple([
+      languageMap,            // name
+      z.string(),             // address
+      z.int().nonnegative(),  // vendor_id
+      z.int(),       // admin
+      z.date(),               // current_time
+    ]),
+    HallSchema,
+  );
 
 /**
  * Creates a new hall and returns the created hall.
@@ -16,12 +34,13 @@ export async function createHall(server: FastifyInstance, request: FastifyReques
   const body = parseSchema(server, CreateHallBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
 
-  const insertResult = await server.pg.query<Hall>(
-    `INSERT INTO hall (name, address, vendor_id, created_by, updated_by, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $4, $5, $5)
-     RETURNING id, name, address, vendor_id`,
-    [body["name"], body["address"], body["vendor_id"], admin, current_time]
+  const rows = await insertHall(server)(
+    body["name"],
+    body["address"],
+    body["vendor_id"],
+    admin,
+    current_time,
   );
 
-  return parseFirstRow(server, HallSchema, insertResult.rows);
+  return rows[0] ?? null;
 }
