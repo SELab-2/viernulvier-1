@@ -21,7 +21,11 @@ beforeAll(async () => {
 
       if (id === tagType.id) {
         return Promise.resolve({
-          rows: [{ id }],
+          rows: [{
+            id: tagType.id,
+            name: tagType.name,
+            visible: tagType.visible
+          }],
           rowCount: 1,
         });
       }

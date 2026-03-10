@@ -9,7 +9,7 @@ async function fetchTag(
 ): Promise<Tag | null> {
 
   const result = await server.pg.query<Tag>(
-    `SELECT id, name, type
+    `SELECT id, name, type_id
      FROM tag
      WHERE id = $1`,
     [getParam(request, "id")]
@@ -21,7 +21,7 @@ async function fetchTag(
 async function fetchTags(server: FastifyInstance): Promise<Tag[]> {
 
   const result = await server.pg.query<Tag>(
-    `SELECT id, name, type FROM tag`
+    `SELECT id, name, type_id FROM tag`
   );
 
   return result.rows;
@@ -33,9 +33,9 @@ async function fetchTagsForProduction(
 ): Promise<Tag[]> {
 
   const result = await server.pg.query<Tag>(
-    `SELECT t.id, t.name, t.type
+    `SELECT t.id, t.name, t.type_id
      FROM tag t
-     JOIN tag_production tp ON tp.tag_id = t.id
+     JOIN production_tag tp ON tp.tag_id = t.id
      WHERE tp.production_id = $1`,
     [getParam(request, "id")]
   );

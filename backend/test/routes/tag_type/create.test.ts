@@ -18,7 +18,11 @@ beforeAll(async () => {
 
     if (query.includes("INSERT")) {
       return Promise.resolve({
-        rows: [{ id: tagType.id }],
+        rows: [{
+          id: tagType.id,
+          name: tagType.name,
+          visible: tagType.visible
+        }],
         rowCount: 1,
       });
     }

@@ -21,7 +21,7 @@ export async function createTag(
   const result = await server.pg.query<Tag>(
     `INSERT INTO tag (name, type, created_by, updated_by, created_at, updated_at)
      VALUES ($1, $2, $3, $3, $4, $4)
-     RETURNING id, name, type`,
+     RETURNING id, name, type_id`,
     [body.name, body.type, admin, current_time]
   );
 
