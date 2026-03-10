@@ -1,41 +1,41 @@
 ## Database Schema (EER)
 
-##### (Disclaimer: there are a few minor inconsistencies between the EER and API — the API is final)
+##### (Disclaimer: er zijn een aantal kleine inconsistenties tussen EER en API — de API is finaal)
 
-View the schema visually at https://dbdiagram.io/d/viernulvier-699b2e45bd82f5fce26f02d4 or download the svg: ![Database Schema](./database-schema.svg)
-The DBML code can be found below.
+Bekijk het schema visueel op https://dbdiagram.io/d/viernulvier-699b2e45bd82f5fce26f02d4 of download de svg: ![Database Schema](./database-schema.svg)
+De DBML code vindt je hieronder terug.
 
-### Explanation
+### Uitleg
 
 #### Production-Event-Hall
-The database follows a parent-child model. A production contains the fixed information about a show (title, description, artist, media). An event is a specific instance of that show at a particular time in a particular hall. One production can have multiple events, e.g. a theatre show running three evenings.
+De database volgt een parent-child model. Een `production` bevat de vaste informatie over een voorstelling (titel, beschrijving, artiest, media). Een `event` is een specifieke instantie van die voorstelling op een bepaald tijdstip in een bepaalde `hall` (zaal). Eén productie kan meerdere events hebben, bv. een theatervoorstelling die drie avonden speelt.
 
-#### Multilingual via JSON
-All content text fields (title, descriptions, info, ...) are JSON columns containing multilingual values: `{nl: "...", en: "..."}`. Historical data from the CSV import (2006–2018) will often only contain a NL value.
+#### Meertaligheid via JSON
+Alle inhoudelijke tekstvelden (titel, beschrijvingen, info, ...) zijn JSON-kolommen die meertalige waarden bevatten: `{nl: "...", en: "..."}`. Historische data uit de CSV-import (2006–2018) zal vaak enkel een NL-waarde bevatten.
 
 #### Metadata partial
-Every table contains `created_by`, `created_at` and `updated_at` via a reusable `TablePartial`. This makes it traceable on every record who created it and when it was last modified.
+Elke tabel bevat `created_by`, `created_at` en `updated_at` via een herbruikbaar `TablePartial`. Zo is op elk record traceerbaar wie het heeft aangemaakt en wanneer het laatst is aangepast.
 
-#### Tagging and series
-Tags categorize productions and bundle them into series. Each tag belongs to a `tag_type` (e.g. "genre", "festival", "series") so the frontend can distinguish between different kinds of tags. The relationship between productions and tags is many-to-many via the junction table `production_tag`: one production can have multiple tags, and one tag can belong to multiple productions.
+#### Tagging en reeksen
+Tags categoriseren producties en bundelen ze tot reeksen. Elke tag hoort bij een `tag_type` (bv. "genre", "festival", "reeks") zodat de frontend onderscheid kan maken tussen verschillende soorten tags. De relatie tussen producties en tags is veel-op-veel via de tussentabel `production_tag`: één productie kan meerdere tags hebben, en één tag kan bij meerdere producties horen.
 
-#### Deduplication via vendor_id
-`production`, `event` and `hall` all have a `vendor_id` — the unique ID from the VIERNULVIER API. During automatic synchronization this field is used to check whether a record already exists in the database, preventing duplicates.
+#### Deduplicatie via vendor_id
+Zowel `production`, `event` als `hall` hebben een `vendor_id` — het unieke ID uit de VIERNULVIER API. Bij de automatische synchronisatie wordt dit veld gebruikt om te controleren of een record al in de databank bestaat, zodat er geen duplicaten ontstaan.
 
 #### Event_price
-Pricing information is stored per event in a separate table, with fields such as amount, availability and expiry date.
+Prijsinformatie wordt per event opgeslagen in een aparte tabel, met velden zoals bedrag, beschikbaarheid en vervaldatum.
 
-#### Image and Crop
-Media storage is split into two tables. `Image` is the original image linked to a production. `Crop` is a specific cropped version of that image (e.g. `hd_ready`, `FE3_header`) with a URL. This allows multiple crops per image to exist without duplicating metadata.
+#### Image en Crop
+Media-opslag is opgesplitst in twee tabellen. `Image` is het originele beeld gekoppeld aan een productie. `Crop` is een specifieke bijgesneden versie van dat beeld (bv. `hd_ready`, `FE3_header`) met een URL. Zo kunnen meerdere crops per afbeelding bestaan zonder duplicatie van metadata.
 
 #### Custom_production_field
-A system for dynamic extra fields on productions. Each custom field has a type (`bool`, `number`, `string`, `json`) and its corresponding value. This provides flexibility to add new fields later without modifying the schema.
+Een systeem voor dynamische extra velden op producties. Elk custom field heeft een type (`bool`, `number`, `string`, `json`) en de bijhorende waarde. Dit biedt flexibiliteit om later nieuwe velden toe te voegen zonder het schema aan te passen.
 
 #### Admin
-A table for CMS users with login credentials. The password is stored hashed. The `created_by` reference in the metadata partial links every change in the database to the admin who made it.
+Een tabel voor CMS-gebruikers met inloggegevens. Het wachtwoord wordt gehashed opgeslagen. De `created_by` verwijzing in de metadata-partial koppelt elke wijziging in de databank aan de admin die ze uitvoerde.
 
-#### Blog and Blogpost
-The blog functionality (nice to have) consists of a blog as a container and individual blogposts with JSON content, linkable to productions and events from the archive.
+#### Blog en Blogpost
+De blogfunctionaliteit (nice to have) bestaat uit een `blog` als container en individuele `blogpost`s met JSON-content, koppelbaar aan producties en events uit het archief.
 
 
 ### DBML code
