@@ -7,7 +7,9 @@ export const serial = z.int().nonnegative;
 export type PrimaryKey<T extends z.ZodType> = T & z.$brand<"PrimaryKey">;
 
 type RecursionHelper<O extends z.ZodType> = z.ZodType<{
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [Key in keyof z.output<O>]: z.output<O>[Key] extends ForeignKey<any, any>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ? ForeignKey<any, any>
     : z.output<O>[Key];
 }>;
@@ -29,9 +31,9 @@ export class ForeignKey<O extends z.ZodType, T extends z.ZodType = Serial>
 /**
  * Helper function used to declare foreign keys.
  *
- * @template O - The type of the schema to which this key references
- * @param {() => O} schema - A callback that returns the schema which this key references
- * @return {ForeignKey<O, Serial>} A branded `z.int().nonnegative()` which has a property `.references` which
+ * @typeParam O - The type of the schema to which this key references
+ * @param schema - A callback that returns the schema which this key references
+ * @returns A branded `z.int().nonnegative()` which has a property `.references` which
  * returns the schema to which the key points to.
  */
 export function foreignKey<O extends z.ZodObject>(
@@ -40,11 +42,11 @@ export function foreignKey<O extends z.ZodObject>(
 /**
  * Helper function used to declare foreign keys.
  *
- * @template T - The type of zod type used as key
- * @template O - The type of the schema to which this key references
- * @param {T} type - The zod type to be used as a key
- * @param {() => O} schema - A callback that returns the schema which this key references
- * @return {ForeignKey<O, T>} A branded `T` which has a property `.references` which returns the schema
+ * @typeParam T - The type of zod type used as key
+ * @typeParam O - The type of the schema to which this key references
+ * @param type - The zod type to be used as a key
+ * @param schema - A callback that returns the schema which this key references
+ * @returns A branded `T` which has a property `.references` which returns the schema
  * to which the key points to.
  */
 export function foreignKey<T extends z.ZodType, O extends z.ZodObject>(
@@ -62,14 +64,14 @@ export function foreignKey<T extends z.ZodType, O extends z.ZodObject>(
 /**
  * A helper function used to declare a primary key.
  *
- * @return {PrimaryKey<Serial>}  A branded `z.int().nonnegative()`
+ * @returns A branded `z.int().nonnegative()`
  */
 export function primaryKey(): PrimaryKey<Serial>;
 /**
  * A helper function used to declare a primary key.
  *
- * @param {T} type - The type of zod type used as key
- * @return {PrimaryKey<Serial>}  A branded `T`
+ * @param type - The type of zod type used as key
+ * @returns A branded `T`
  */
 export function primaryKey<T extends z.ZodType>(type: T): PrimaryKey<T>;
 export function primaryKey<T extends z.ZodType>(type?: T) {

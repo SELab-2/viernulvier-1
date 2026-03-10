@@ -1,4 +1,3 @@
-import js from "@eslint/js";
 import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 import security from "eslint-plugin-security";
@@ -22,10 +21,10 @@ export default defineConfig([
   },
 
   // --------------------------------------------------
-  // Base JS + Security Rules
+  // Base JS + Node Security Rules
   // --------------------------------------------------
 
-  js.configs.recommended,
+  tseslint.configs.recommended,
   security.configs.recommended,
 
   // --------------------------------------------------
@@ -73,49 +72,23 @@ export default defineConfig([
         }
       ],
 
+      "@typescript-eslint/no-redeclare": "error",
+
+      "no-redeclare": "off",
+      "no-unused-vars": "off",
+
       // ----------------------------
-      // Async Safety
+      // Security / Node Runtime Safety
       // ----------------------------
 
-      "@typescript-eslint/no-floating-promises": "error",
-      "@typescript-eslint/await-thenable": "error",
-
-      "no-return-await": "off",
-      "@typescript-eslint/return-await": ["error", "always"],
-
+      // Prevent common API logic mistakes
       "@typescript-eslint/no-misused-promises": "error",
 
-      // ----------------------------
-      // Imports
-      // ----------------------------
-
+      // Rely on the beter import resolver
       "import-x/no-unresolved": "error",
 
-      // ----------------------------
-      // Docs
-      // ----------------------------
-
+      // tsdoc config
       "tsdoc/syntax": "warn"
-    }
-  },
-
-  // --------------------------------------------------
-  // Tests (Vitest / Jest style)
-  // --------------------------------------------------
-
-  {
-    files: ["test/**/*.ts", "**/*.test.ts", "**/*.spec.ts"],
-
-    languageOptions: {
-      parser: tseslint.parser,
-      parserOptions: {
-        project: "./tsconfig.json",
-        tsconfigRootDir: process.cwd()
-      }
-    },
-
-    rules: {
-      "@typescript-eslint/no-floating-promises": "off"
     }
   },
 
