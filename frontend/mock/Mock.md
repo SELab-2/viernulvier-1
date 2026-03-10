@@ -3,7 +3,7 @@
 
 ## Overview
 
-The VierNulVier Archive is a  website that shows the collection of past cultural events organised by VIERNULVIER.
+The VierNulVier Archive is a website that shows the collection of past cultural events organised by VIERNULVIER.
 
 The purpose of the website is to:
 

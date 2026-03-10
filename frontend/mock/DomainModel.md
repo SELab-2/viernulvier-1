@@ -4,7 +4,7 @@
 
 This document describes the **domain model of the VierNulVier Archive**.
 
-The VierNulVier Archive is a  website that shows the collection of past cultural events organised by VIERNULVIER.
+The VierNulVier Archive is a website that shows the collection of past cultural events organised by VIERNULVIER.
 
 Administrators can manage productions and events through an admin interface.
 
