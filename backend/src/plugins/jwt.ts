@@ -11,10 +11,16 @@ import fastifyCookie from "@fastify/cookie";
  * @param server - The Fastify instance to register the plugins on.
  */
 export default fp(async function jwtPlugin(server: FastifyInstance) {
+  const jwtSecret = process.env["JWT_SECRET"];
+
+  if (!jwtSecret) {
+    throw new Error("JWT_SECRET environment variable is not defined");
+  }
+
   await server.register(fastifyCookie);
 
   await server.register(fastifyJwt, {
-    secret: process.env["JWT_SECRET"]!,
+    secret: jwtSecret,
     cookie: {
       cookieName: "session",
       signed: false,
