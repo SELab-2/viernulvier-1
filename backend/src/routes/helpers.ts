@@ -94,7 +94,7 @@ export function replyHandler(
     try {
       const result = await handler(server, request, reply);
 
-      if (!result) {
+      if (result === null || result === undefined) {
         throw new HttpError(HttpClientError.NotFound, "Not Found");
       }
 
