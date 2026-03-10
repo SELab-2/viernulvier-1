@@ -1176,12 +1176,12 @@ describe(replyHandler, () => {
     });
     const handler = vi.fn(async () => ({ id: 1 }));
     describe("const endpoint = replyHandler(server, handler)", async () => {
-      const endpoint = await replyHandler(mockServer, handler);
+      const endpoint = replyHandler(mockServer, handler);
       test("endpoint(request, reply)", async () => {
         const res = await endpoint(mockRequest, mockReply);
         expect(res).toStrictEqual({
           status: HttpSuccess.OK,
-          body: { id: 1 },
+          id: 1 ,
         });
         expect(mockReply.status).toBeCalledWith(HttpClientError.NotFound);
       });

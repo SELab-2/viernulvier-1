@@ -318,9 +318,7 @@ export function replyHandler<Z extends z.ZodType>(
     try {
       const result = await handler(server, request, reply);
       if (!result) throw new HttpError(HttpClientError.NotFound, "Not Found");
-      return await reply.status(HttpSuccess.OK).send({
-        body: result,
-      });
+      return await reply.status(HttpSuccess.OK).send(result);
     } catch (err) {
       if (err instanceof HttpError) {
         return await reply.status(err.status).send({ error: err.message });

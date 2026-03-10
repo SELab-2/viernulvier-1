@@ -18,7 +18,7 @@ afterAll(async () => {
 });
 
 describe("Login on auth route", () => {
-  test("POST /api/v1/auth/login — returns session token on valid credentials", async () => {
+  test("POST /api/v1/auth/login — stores a cookie and returns success on valid credentials", async () => {
     const hashed = await hashPassword(mockPassword);
     server.pg.query = vi.fn().mockResolvedValue({ rows: [{ id: 404, password: hashed }], rowCount: 1 });
 
@@ -29,6 +29,7 @@ describe("Login on auth route", () => {
     });
 
     expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ success: true });
     expect(response.cookies).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: "session", httpOnly: true }),
