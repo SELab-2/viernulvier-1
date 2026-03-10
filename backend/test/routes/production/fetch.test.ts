@@ -6,6 +6,7 @@ import { ProductionSchema, type Production } from "@viernulvier/shared/index.js"
 import { getProductionsByIds } from "@/routes/production/handlers/fetch.js";
 
 let server: FastifyInstance;
+let sessionCookie: string;
 
 const baseProduction: Production = {
   id: 1,
@@ -29,6 +30,7 @@ const baseProduction: Production = {
 
 beforeAll(async () => {
   server = await buildServer();
+  sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
   await server.register(productionRoutes);
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
@@ -59,6 +61,7 @@ describe("Production fetch routes", () => {
     const response = await server.inject({
       method: "GET",
       url: "/api/v1/production",
+      cookies: { session: sessionCookie },
     });
 
     expect(response.statusCode).toBe(200);
@@ -72,6 +75,7 @@ describe("Production fetch routes", () => {
     const response = await server.inject({
       method: "GET",
       url: `/api/v1/production/${baseProduction["id"]}`,
+      cookies: { session: sessionCookie },
     });
 
     expect(response.statusCode).toBe(200);
@@ -83,6 +87,7 @@ describe("Production fetch routes", () => {
     const response = await server.inject({
       method: "GET",
       url: "/api/v1/production/9999",
+      cookies: { session: sessionCookie },
     });
 
     expect(response.statusCode).toBe(404);

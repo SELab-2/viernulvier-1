@@ -5,6 +5,7 @@ import productionRoutes from "@/routes/production/production.js";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
 
 let server: FastifyInstance;
+let sessionCookie: string;
 
 const createdProduction: Production = {
   id: 1,
@@ -28,6 +29,7 @@ const createdProduction: Production = {
 
 beforeAll(async () => {
   server = await buildServer();
+  sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
   server.addHook("preHandler", async (request) => {
     request.user = { id: 1 } as never;
   });
@@ -61,6 +63,7 @@ describe("Create on production route", () => {
     const response = await server.inject({
       method: "POST",
       url: "/api/v1/production",
+      cookies: { session: sessionCookie },
       payload: {
         vendor_id: createdProduction["vendor_id"],
         box_office_id: createdProduction["box_office_id"],
@@ -82,6 +85,7 @@ describe("Create on production route", () => {
     const response = await server.inject({
       method: "POST",
       url: "/api/v1/production",
+      cookies: { session: sessionCookie },
       payload: {
         vendor_id: createdProduction["vendor_id"],
         box_office_id: createdProduction["box_office_id"],
@@ -100,6 +104,7 @@ describe("Create on production route", () => {
     const response = await server.inject({
       method: "POST",
       url: "/api/v1/production",
+      cookies: { session: sessionCookie },
       payload: {},
     });
 

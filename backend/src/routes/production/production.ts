@@ -25,12 +25,14 @@ import {
  * @param server - The Fastify instance to register routes on.
  */
 export default function productionRoutes(server: FastifyInstance) {
-  server.get("/api/v1/production", replyHandler(server, fetchProductions));
-  server.get("/api/v1/production/:id", replyHandler(server, fetchProduction));
-  server.post("/api/v1/production", replyHandler(server, createProduction));
-  server.put("/api/v1/production/:id", replyHandler(server, replaceProduction));
-  server.patch("/api/v1/production/:id", replyHandler(server, editProduction));
-  server.patch("/api/v1/production/bulk", replyHandler(server, bulkEditProductions));
-  server.delete("/api/v1/production/:id", replyHandler(server, deleteProduction));
+  const protect = { preHandler: [server.authorize] };
+
+  server.get("/api/v1/production", protect, replyHandler(server, fetchProductions));
+  server.get("/api/v1/production/:id", protect, replyHandler(server, fetchProduction));
+  server.post("/api/v1/production", protect, replyHandler(server, createProduction));
+  server.put("/api/v1/production/:id", protect, replyHandler(server, replaceProduction));
+  server.patch("/api/v1/production/:id", protect, replyHandler(server, editProduction));
+  server.patch("/api/v1/production/bulk", protect, replyHandler(server, bulkEditProductions));
+  server.delete("/api/v1/production/:id", protect, replyHandler(server, deleteProduction));
 }
 

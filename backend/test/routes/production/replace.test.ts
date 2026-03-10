@@ -5,6 +5,7 @@ import productionRoutes from "@/routes/production/production.js";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
 
 let server: FastifyInstance;
+let sessionCookie: string;
 
 const replacedProduction: Production = {
   id: 1,
@@ -28,6 +29,7 @@ const replacedProduction: Production = {
 
 beforeAll(async () => {
   server = await buildServer();
+  sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
   server.addHook("preHandler", async (request) => {
     request.user = { id: 1 } as never;
   });
@@ -61,6 +63,7 @@ describe("Replace on production route", () => {
     const response = await server.inject({
       method: "PUT",
       url: `/api/v1/production/${replacedProduction["id"]}`,
+      cookies: { session: sessionCookie },
       payload: {
         vendor_id: replacedProduction["vendor_id"],
         box_office_id: replacedProduction["box_office_id"],
@@ -104,6 +107,7 @@ describe("Replace on production route", () => {
     const response = await server.inject({
       method: "PUT",
       url: `/api/v1/production/${replacedProduction["id"]}`,
+      cookies: { session: sessionCookie },
       payload: {
         vendor_id: replacedProduction["vendor_id"],
         box_office_id: replacedProduction["box_office_id"],
@@ -131,6 +135,7 @@ describe("Replace on production route", () => {
     const response = await server.inject({
       method: "PUT",
       url: `/api/v1/production/${replacedProduction["id"]}`,
+      cookies: { session: sessionCookie },
       payload: {
         vendor_id: replacedProduction["vendor_id"],
       },

@@ -5,6 +5,7 @@ import productionRoutes from "@/routes/production/production.js";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
 
 let server: FastifyInstance;
+let sessionCookie: string;
 
 const mockProduction: Production = {
   id: 1,
@@ -28,6 +29,7 @@ const mockProduction: Production = {
 
 beforeAll(async () => {
   server = await buildServer();
+  sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
   await server.register(productionRoutes);
 });
 
@@ -58,6 +60,7 @@ describe("Delete on production route", () => {
     const response = await server.inject({
       method: "DELETE",
       url: `/api/v1/production/${mockProduction["id"]}`,
+      cookies: { session: sessionCookie },
     });
 
     expect(response.statusCode).toBe(200);
@@ -71,6 +74,7 @@ describe("Delete on production route", () => {
     const response = await server.inject({
       method: "DELETE",
       url: `/api/v1/production/${mockProduction["id"]}`,
+      cookies: { session: sessionCookie },
     });
 
     expect(response.statusCode).toBe(404);

@@ -6,6 +6,7 @@ import { ProductionSchema, type Production } from "@viernulvier/shared/index.js"
 import { editProduction } from "@/routes/production/handlers/edit.js";
 
 let server: FastifyInstance;
+let sessionCookie: string;
 
 const originalProduction: Production = {
   id: 1,
@@ -67,6 +68,7 @@ const updatedProductionC: Production = {
 
 beforeAll(async () => {
   server = await buildServer();
+  sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
   server.addHook("preHandler", async (request) => {
     request.user = { id: 1 } as never;
   });
@@ -100,6 +102,7 @@ describe("Edit on production route", () => {
     const response = await server.inject({
       method: "PATCH",
       url: `/api/v1/production/${originalProduction['id']}`,
+      cookies: { session: sessionCookie },
       payload: {
         vendor_id: originalProduction["vendor_id"],
         box_office_id: originalProduction["box_office_id"],
@@ -137,6 +140,7 @@ describe("Edit on production route", () => {
     const response = await server.inject({
       method: "PATCH",
       url: `/api/v1/production/${originalProduction['id']}`,
+      cookies: { session: sessionCookie },
       payload: {
         video_1: updatedProductionB["video_1"],
         video_2: updatedProductionB["video_2"],
@@ -170,6 +174,7 @@ describe("Edit on production route", () => {
     const response = await server.inject({
       method: "PATCH",
       url: `/api/v1/production/${originalProduction["id"]}`,
+      cookies: { session: sessionCookie },
       payload: {
         title: { nl: "Niet bestaand" },
       },
@@ -196,6 +201,7 @@ describe("Edit on production route", () => {
     const response = await server.inject({
       method: "PATCH",
       url: `/api/v1/production/${originalProduction["id"]}`,
+      cookies: { session: sessionCookie },
       payload: {
         vendor_id: updatedProductionC["vendor_id"],
         box_office_id: updatedProductionC["box_office_id"],
@@ -239,6 +245,7 @@ describe("Edit on production route", () => {
     const response = await server.inject({
       method: "PATCH",
       url: `/api/v1/production/${originalProduction["id"]}`,
+      cookies: { session: sessionCookie },
       payload: {
         video_1: null,
         video_2: null,
@@ -258,6 +265,7 @@ describe("Edit on production route", () => {
     const response = await server.inject({
       method: "PATCH",
       url: `/api/v1/production/${originalProduction["id"]}`,
+      cookies: { session: sessionCookie },
       payload: {},
     });
 

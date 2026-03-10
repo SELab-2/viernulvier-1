@@ -6,6 +6,7 @@ import { ProductionSchema, type Production } from "@viernulvier/shared/index.js"
 import { bulkEditProductions } from "@/routes/production/handlers/bulk-edit.js";
 
 let server: FastifyInstance;
+let sessionCookie: string;
 
 const baseProduction1: Production = {
   id: 1,
@@ -99,6 +100,7 @@ const updatedBulkC2: Production = {
 
 beforeAll(async () => {
   server = await buildServer();
+  sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
   server.addHook("preHandler", async (request) => {
     request.user = { id: 1 } as never;
   });
@@ -137,6 +139,7 @@ describe("Bulk edit on production route", () => {
     const response = await server.inject({
       method: "PATCH",
       url: "/api/v1/production/bulk",
+      cookies: { session: sessionCookie },
       payload: {
         ids,
         data: {
@@ -176,6 +179,7 @@ describe("Bulk edit on production route", () => {
     const response = await server.inject({
       method: "PATCH",
       url: "/api/v1/production/bulk",
+      cookies: { session: sessionCookie },
       payload: {
         ids,
         data: {
@@ -197,6 +201,7 @@ describe("Bulk edit on production route", () => {
     const response = await server.inject({
       method: "PATCH",
       url: "/api/v1/production/bulk",
+      cookies: { session: sessionCookie },
       payload: {
         ids: [],
         data: {},
@@ -229,6 +234,7 @@ describe("Bulk edit on production route", () => {
     const response = await server.inject({
       method: "PATCH",
       url: "/api/v1/production/bulk",
+      cookies: { session: sessionCookie },
       payload: {
         ids,
         data: {},
@@ -262,6 +268,7 @@ describe("Bulk edit on production route", () => {
     const response = await server.inject({
       method: "PATCH",
       url: "/api/v1/production/bulk",
+      cookies: { session: sessionCookie },
       payload: {
         ids,
         data: {
@@ -315,6 +322,7 @@ describe("Bulk edit on production route", () => {
     const response = await server.inject({
       method: "PATCH",
       url: "/api/v1/production/bulk",
+      cookies: { session: sessionCookie },
       payload: {
         ids,
         data: {
