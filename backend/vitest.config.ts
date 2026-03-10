@@ -6,6 +6,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@viernulvier/shared": path.resolve(__dirname, "../shared/src"),
     },
   },
   plugins: [tsconfigPaths()],
@@ -13,6 +14,7 @@ export default defineConfig({
     globals: true,
     environment: "node",
     exclude: ["dist/**", "node_modules/**"],
+    setupFiles: ["./test/setup.ts"],
     server: {
       deps: {
         external: [/shared/],

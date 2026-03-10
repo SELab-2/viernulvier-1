@@ -1,15 +1,14 @@
 import type { FastifyInstance } from "fastify";
-import {
-  ProductionSchema,
-  type Production,
-} from "@viernulvier/shared/types/production.js";
+import { ProductionSchema } from "@viernulvier/shared/types/production.js";
+import { buildQuery, parseParams } from "./helpers.js";
+import z from "zod";
+import { stringToInt } from "@viernulvier/shared/types/helpers.js";
 
 /**
  * Defines the api requests for /api/productions
  * @alpha
  * @param server - The fastify server instance on which this request will be served
  */
-
 export default function productionRoutes(server: FastifyInstance) {
   /**
    * @param id - the id of the production
@@ -27,19 +26,24 @@ export default function productionRoutes(server: FastifyInstance) {
       },
     },
     async (request) => {
-      const { id } = request.params as { id: string };
-      const result = await server.pg.query<Production>(
+      const { id } = parseParams(request, z.object({ id: stringToInt }));
+      const result = await buildQuery(
+        server,
         "SELECT id FROM productions WHERE id=$1",
-        [id],
-      );
-      return result.rows[0];
+        z.tuple([ProductionSchema.shape.id]),
+        ProductionSchema.pick({ id: true }),
+      )(id);
+      return result[0];
     },
   );
   server.get("/api/production", async () => {
-    const result = await server.pg.query<Production>(
+    const result = await buildQuery(
+      server,
       "SELECT id FROM productions",
-    );
+      z.tuple([]),
+      ProductionSchema.pick({ id: true }),
+    )();
 
-    return result.rows;
+    return result;
   });
 }

@@ -5,10 +5,7 @@ import type { FastifyInstance } from "fastify";
 
 let server: FastifyInstance;
 
-const mockProductions: Production[] = [
-  { id: 1, title: "blah" },
-  { id: 2, title: "blah" },
-];
+const mockProductions = [{ id: 1 }, { id: 2 }];
 
 beforeAll(async () => {
   server = await buildServer();
@@ -44,6 +41,7 @@ describe("Production Route", () => {
   test("GET /api/production/:id", async () => {
     const response = await server.inject({
       method: "GET",
+      url: "/api/production/1",
       url: "/api/production/1",
     });
 

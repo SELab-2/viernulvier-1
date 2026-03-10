@@ -3,7 +3,7 @@ import { start } from "@/server.js";
 
 // This is a different file than server.test.ts, because it needs a different mock.
 
-vi.mock("@/db/postgres.js", () => ({
+vi.mock("@/plugins/postgres.js", () => ({
   default: vi.fn().mockRejectedValue(new Error("DB connection failed")),
 }));
 
