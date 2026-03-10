@@ -67,6 +67,7 @@ beforeAll(async () => {
 
 		return Promise.resolve({ rows: [] });
 	});
+    
 	server.pg.query = queryMock;
 });
 

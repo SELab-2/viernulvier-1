@@ -4,24 +4,31 @@ import { createSchema } from "./metadata.js";
 import { HallSchema, ProductionSchema } from "./index.js";
 import { foreignKey, languageMap, primaryKey, ForeignKey } from "./helpers.js";
 
-const isoDatetimeToDate = z.codec(z.iso.datetime(), z.date(), {
-    encode: (date: Date) => date.toISOString(),
-    decode: (iso: string) => new Date(iso),
-});
+/*
+const isoDatetimeToDate = z.codec(
+    z.union([z.string(), z.date()]),  // Input: accept BOTH strings AND Date objects
+    z.date(),                          // Output: always Date
+    {
+        encode: (date: Date) => date.toISOString(),  // Date → ISO string (for storage/transmission)
+        decode: (value: string | Date) => {          // ISO string or Date → Date
+            if (value instanceof Date) {
+                return value;  // Already a Date, pass through
+            }
+            return new Date(value);  // Convert string to Date
+        },
+    }
+);*/
 
 export const EventSchema = createSchema({
   id: primaryKey(),
-  starts_at: isoDatetimeToDate,
-  ends_at: isoDatetimeToDate,
-  doors_at: isoDatetimeToDate,
+  starts_at: z.date(),
+  ends_at: z.date(),
+  doors_at: z.date(),
   vendor_id: z.int().nonnegative(),
   info: languageMap,
-  get production_id(): ForeignKey<typeof ProductionSchema> {
-    return foreignKey(() => ProductionSchema);
-  },
-  get hall(): ForeignKey<typeof HallSchema> {
-    return foreignKey(() => HallSchema);
-  },
+    production: foreignKey(() => ProductionSchema),
+    hall: foreignKey(() => HallSchema),
+    price: z.json(),
 
   // unnecessary
   // box_office_id: z.int().nonnegative(),
