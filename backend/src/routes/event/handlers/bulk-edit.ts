@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 
-import { parse, ParseContext } from "@/routes/helpers.js";
+import { getMetadata, parse, ParseContext } from "@/routes/helpers.js";
 import { EventSchema } from "@viernulvier/shared/types/event.js";
 import type { Event } from "@viernulvier/shared/types/event.js";
 import { fetchEvent } from "./fetch.js";
@@ -44,6 +44,9 @@ export async function editEvents(
     );
 
     if (!selectedEvents.length || selectedEvents.some((event: Event | null) => !event)) return null;
+
+    const { admin, current_time } = getMetadata(request);
+
     const existingEvents = selectedEvents as Event[];
 
     const updatedEvents = existingEvents.map((selectedEvent: Event) => ({
@@ -60,8 +63,8 @@ export async function editEvents(
     const results = await Promise.all(
         updatedEvents.map((updatedEvent, index) => server.pg.query<Event>(
             `UPDATE events
-             SET starts_at = $1, ends_at = $2, production = $3, hall = $4, doors_at = $5, vendor_id = $6, info = $7, price = $8
-             WHERE id = $9
+             SET starts_at = $1, ends_at = $2, production = $3, hall = $4, doors_at = $5, vendor_id = $6, info = $7, price = $8, updated_by = $9, updated_at = $10
+             WHERE id = $11
              RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, price`,
             [
                 updatedEvent.starts_at,
@@ -72,6 +75,8 @@ export async function editEvents(
                 updatedEvent.vendor_id,
                 updatedEvent.info,
                 updatedEvent.price,
+                admin,
+                current_time,
                 body.ids[index],
             ],
         ))

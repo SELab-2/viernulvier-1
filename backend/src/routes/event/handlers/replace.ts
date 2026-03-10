@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 
-import { getParam, parse, ParseContext, parseFirstRow } from "@/routes/helpers.js";
+import { getParam, parse, ParseContext, parseFirstRow, getMetadata } from "@/routes/helpers.js";
 import { EventSchema } from "@viernulvier/shared/types/event.js";
 import type { Event } from "@viernulvier/shared/types/event.js";
 import { normalizeEventDates } from "./helper.js";
@@ -23,11 +23,14 @@ export async function replaceEvent(
     const body = parse<Event>(server, EventSchema, normalizedBody, ParseContext.Request);
     const id = getParam(request, "id");
 
+    const { admin, current_time } = getMetadata(request);
+
     if (!existing) {
         const insertResult = await server.pg.query<Event>(
-            `INSERT INTO events (starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, price)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-             RETURNING id, starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, price`,
+            `INSERT INTO events (starts_at, ends_at, production, hall, doors_at, vendor_id, info, price, 
+            created_by, updated_by, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9, $10, $10)
+            RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, price`,
             [
                 body.starts_at,
                 body.ends_at,
@@ -37,6 +40,8 @@ export async function replaceEvent(
                 body.vendor_id,
                 body.info,
                 body.price,
+                admin,
+                current_time,
             ],
         );
 
@@ -45,8 +50,8 @@ export async function replaceEvent(
 
     const result = await server.pg.query<Event>(
         `UPDATE events
-         SET starts_at = $1, ends_at = $2, production_id = $3, hall = $4, doors_at = $5, vendor_id = $6, info = $7, price = $8
-         WHERE id = $9
+         SET starts_at = $1, ends_at = $2, production_id = $3, hall = $4, doors_at = $5, vendor_id = $6, info = $7, price = $8, updated_by = $9, updated_at = $10
+         WHERE id = $11
          RETURNING id, starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, price`,
         [
             body.starts_at,
@@ -57,6 +62,8 @@ export async function replaceEvent(
             body.vendor_id,
             body.info,
             body.price,
+            admin,
+            current_time,
             id,
         ],
     );

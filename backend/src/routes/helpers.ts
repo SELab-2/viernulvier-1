@@ -106,30 +106,6 @@ export const enum ParseContext {
 
 type ParseContextType = (typeof ParseContext)[keyof typeof ParseContext];
 
-const parseErrors: Readonly<Record<ParseContextType, HttpError>> = {
-  [ParseContext.Request]: new HttpError(
-    HttpClientError.BadRequest,
-    "Invalid request data",
-  ),
-  [ParseContext.Database]: new HttpError(
-    HttpServerError.InternalServerError,
-    "Internal server error",
-  ),
-};
-
-export class HttpError extends Error {
-  constructor(public status: number, message: string) {
-    super(message);
-  }
-}
-
-export const ParseContext = {
-  Request: "Request",
-  Database: "Database",
-} as const;
-
-type ParseContextType = (typeof ParseContext)[keyof typeof ParseContext];
-
 const parseErrors: Record<ParseContextType, HttpError> = {
   [ParseContext.Request]: new HttpError(400, "Invalid request data"),
   [ParseContext.Database]: new HttpError(500, "Internal server error"),

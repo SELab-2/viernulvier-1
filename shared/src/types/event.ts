@@ -4,11 +4,16 @@ import { createSchema } from "./metadata.js";
 import { HallSchema, ProductionSchema } from "./index.js";
 import { foreignKey, languageMap, primaryKey, ForeignKey } from "./helpers.js";
 
+const isoDatetimeToDate = z.codec(z.iso.datetime(), z.date(), {
+    encode: (date: Date) => date.toISOString(),
+    decode: (iso: string) => new Date(iso),
+});
+
 export const EventSchema = createSchema({
   id: primaryKey(),
-  starts_at: z.date(),
-  ends_at: z.date(),
-  doors_at: z.date(),
+  starts_at: isoDatetimeToDate,
+  ends_at: isoDatetimeToDate,
+  doors_at: isoDatetimeToDate,
   vendor_id: z.int().nonnegative(),
   info: languageMap,
   get production_id(): ForeignKey<typeof ProductionSchema> {
