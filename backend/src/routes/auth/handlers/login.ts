@@ -21,23 +21,25 @@ const fetchAdminCredentials = (server: FastifyInstance) =>
     LoginRowSchema,
   );
 
+// A pre-computed bcrypt hash used as a dummy target
+const DUMMY_HASH = "$2b$12$invalidhashvaluethatwillnevermatchangything";
+
 /**
- * Authenticates an admin by username and password.
- * Returns a placeholder session token until proper auth is implemented.
+ * Authenticates an admin by username and password and sets a session cookie.
  *
  * @param server - The Fastify instance, used for database access and logging.
  * @param request - The Fastify request, expected to contain `username` and `password` in its body.
  * @param reply - The Fastify reply, used to set the session cookie.
  * @returns An object indicating success.
- * @throws `HttpError` If the credentials are invalid.
+ * @throws `HttpError` With status 401 if the username is not found or the password is incorrect.
  */
 export async function login(server: FastifyInstance, request: FastifyRequest, reply: FastifyReply) {
   const { username, password } = parseSchema(server, LoginBodySchema, request.body);
 
   const rows = await fetchAdminCredentials(server)(username);
-  if (rows.length === 0) throw new HttpError(401, "Invalid credentials");
 
-  const valid = await comparePassword(password, rows[0]!.password);
+  // always compare hash to prevent a timing attack
+  const valid = await comparePassword(password, rows[0]?.password ?? DUMMY_HASH);
   if (!valid) throw new HttpError(401, "Invalid credentials");
 
   const token = server.jwt.sign(
