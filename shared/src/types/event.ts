@@ -4,7 +4,7 @@ import { createSchema } from "./metadata.js";
 import { HallSchema, ProductionSchema } from "./index.js";
 import { foreignKey, languageMap, primaryKey, ForeignKey } from "./helpers.js";
 
-export const EventSchema = createSchema({
+export const EventSchemaWithoutBackwardsRef = createSchema({
   id: primaryKey(),
   starts_at: z.date(),
   ends_at: z.date(),
@@ -31,7 +31,7 @@ export const EventSchema = createSchema({
   // external_order_url: languageMap.nullable(),
 });
 
-export const EventSchemaWithBackwardsRef = createSchema({
+export const EventSchema = createSchema({
   get price(): z.ZodArray<ForeignKey<typeof EventPriceSchema>> {
     return z.array(foreignKey(() => EventPriceSchema));
   },
@@ -42,8 +42,8 @@ export type EventWithMeta = z.infer<ReturnType<typeof EventSchema.withMeta>>;
 
 export const EventPriceSchema = createSchema({
   id: primaryKey(),
-  get event(): ForeignKey<typeof EventSchema> {
-    return foreignKey(() => EventSchema);
+  get event(): ForeignKey<typeof EventSchemaWithoutBackwardsRef> {
+    return foreignKey(() => EventSchemaWithoutBackwardsRef);
   },
   amount: z.number().nonnegative(),
 

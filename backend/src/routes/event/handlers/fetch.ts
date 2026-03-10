@@ -1,9 +1,9 @@
 import z from "zod";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 
-import { getParam, parseFirstRow, parse } from "@/routes/helpers.js";
-import { EventSchema } from "@viernulvier/shared/types/event.js";
-import type { Event, EventWithMeta } from "@viernulvier/shared/types/event.js";
+import { getParam, parseFirstRow, parse, buildQuery, parseParams } from "@/routes/helpers.js";
+import { EventSchema, stringToInt } from "@viernulvier/shared/index.js";
+import type { Event, EventWithMeta } from "@viernulvier/shared/index.js";
 
 /**
  * Fetches a single event by ID from the database.
@@ -17,13 +17,16 @@ export async function fetchEvent(
     server: FastifyInstance,
     request: FastifyRequest
 ): Promise<Event | null> {
-    const result = await server.pg.query<Event>(
-        `SELECT id, starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, price
-         FROM events WHERE id = $1`,
-        [getParam(request, "id")]
-    );
+    const { id } = parseParams(request, z.object({ id: stringToInt }));
+    const result = await buildQuery(server,
+        `SELECT id, starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, 
+            (SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price
+        FROM events WHERE id = $1`,
+        z.tuple([z.int()]),
+        EventSchema,
+    )(id);
 
-    return parseFirstRow(server, EventSchema, result.rows);
+    return result[0] ?? null;
 }
 
 /**
@@ -38,14 +41,18 @@ export async function fetchEventWithMeta(
     server: FastifyInstance,
     request: FastifyRequest
 ): Promise<EventWithMeta | null> {
-    const result = await server.pg.query<EventWithMeta>(
-        `SELECT id, starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, price,
-              created_at, updated_at, created_by, updated_by
-         FROM events WHERE id = $1`,
-        [getParam(request, "id")]
-    );
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
+    const result = await buildQuery(
+        server,
+        `SELECT id, starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, 
+            (SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price,
+            created_at, updated_at, created_by, updated_by
+        FROM events WHERE id = $1`,
+        z.tuple([z.int()]),
+        EventSchema.withMeta(),
+    )(id);
 
-    return parseFirstRow(server, EventSchema.withMeta(), result.rows);
+    return result[0] ?? null;
 }
 
 /**
@@ -58,10 +65,13 @@ export async function fetchEventWithMeta(
 export async function fetchEvents(
     server: FastifyInstance
 ): Promise<Event[]> {
-    const result = await server.pg.query<Event>(
-        `SELECT id, starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, price
-         FROM events`
-    );
+    const result = await buildQuery(
+        server,
+        `SELECT id, starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, 
+            (SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price
+        FROM events`,
+        EventSchema
+    )();
 
-    return parse(server, z.array(EventSchema), result.rows) ?? [];
+    return result ?? [];
 }

@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import z from "zod";
 
 import { parse, ParseContext } from "@/routes/helpers.js";
 import { EventSchema } from "@viernulvier/shared/types/event.js";
@@ -7,7 +8,7 @@ import { fetchEvent } from "./fetch.js";
 import { normalizePartialEventDates } from "./helper.js";
 
 const EventBulkUpdateSchema = EventSchema.partial().extend({
-    ids: EventSchema.shape.id.array(),
+    ids: z.array(EventSchema.shape.id),
 });
 
 interface EventBulkUpdate {
