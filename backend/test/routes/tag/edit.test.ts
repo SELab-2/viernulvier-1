@@ -1,63 +1,49 @@
-import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
+import { describe, test, expect, beforeAll, vi, afterAll } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-
-import tagRoutes from "@/routes/tag/tags.js";
-import { TagSchema } from "@viernulvier/shared/index.js";
+import { TagSchema, type Tag } from "@viernulvier/shared/index.js";
 
 let server: FastifyInstance;
 
-const tag = {
-  id: 1,
-  name: { nl: "Updated" },
-  type: { id: 1, name: { nl: "Genre" }, visible: true },
+const mockTag: Tag = {
+  id: 5,
+  name: { en: "Music", nl: "Muziek" },
+  type: 1,
   productions: [],
 };
 
 beforeAll(async () => {
   server = await buildServer();
-  await server.register(tagRoutes);
+
+  server.pg.query = vi.fn().mockResolvedValue({
+    rows: [mockTag],
+    rowCount: 1,
+  });
 });
 
 afterAll(async () => {
   await server.close();
 });
 
-beforeEach(() => {
-  vi.restoreAllMocks();
-});
-
-describe("Edit tag route", () => {
-
-  test("PATCH /api/v1/tag/:id -> updates tag", async () => {
-
-    server.pg.query = vi.fn().mockImplementation((query: string) => {
-
-      const upper = query.trim().toUpperCase();
-
-      if (upper.startsWith("UPDATE")) {
-        return Promise.resolve({ rows: [{ id: tag.id }], rowCount: 1 });
-      }
-
-      if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [tag], rowCount: 1 });
-      }
-
-      return Promise.resolve({ rows: [], rowCount: 0 });
-    });
-
+describe("Edit tag", () => {
+  test("PATCH /api/v1/tag/:id name only", async () => {
     const response = await server.inject({
       method: "PATCH",
-      url: "/api/v1/tag/1",
-      payload: {
-        name: tag.name,
-      },
+      url: `/api/v1/tag/${mockTag.id}`,
+      payload: { name: mockTag.name },
     });
 
     expect(response.statusCode).toBe(200);
-
-    const parsed = TagSchema.parse(response.json());
-    expect(parsed).toEqual(tag);
+    expect(TagSchema.parse(response.json().body)).toEqual(mockTag);
   });
 
+  test("PATCH /api/v1/tag/:id type only", async () => {
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/tag/${mockTag.id}`,
+      payload: { type: mockTag.type },
+    });
+
+    expect(response.statusCode).toBe(200);
+  });
 });

@@ -14,39 +14,29 @@ const mockTag: Tag = {
 
 beforeAll(async () => {
   server = await buildServer();
+
+  server.pg.query = vi.fn().mockResolvedValue({
+    rows: [mockTag],
+    rowCount: 1,
+  });
 });
 
 afterAll(async () => {
   await server.close();
 });
 
-describe("Delete tag", () => {
-  test("DELETE /api/v1/tag/:id", async () => {
-    server.pg.query = vi.fn().mockResolvedValue({
-      rows: [mockTag],
-      rowCount: 1,
-    });
-
+describe("Replace tag", () => {
+  test("PUT /api/v1/tag/:id", async () => {
     const response = await server.inject({
-      method: "DELETE",
+      method: "PUT",
       url: `/api/v1/tag/${mockTag.id}`,
+      payload: {
+        name: mockTag.name,
+        type: mockTag.type,
+      },
     });
 
     expect(response.statusCode).toBe(200);
     expect(TagSchema.parse(response.json().body)).toEqual(mockTag);
-  });
-
-  test("DELETE /api/v1/tag/:id returns 404", async () => {
-    server.pg.query = vi.fn().mockResolvedValue({
-      rows: [],
-      rowCount: 0,
-    });
-
-    const response = await server.inject({
-      method: "DELETE",
-      url: `/api/v1/tag/${mockTag.id}`,
-    });
-
-    expect(response.statusCode).toBe(404);
   });
 });
