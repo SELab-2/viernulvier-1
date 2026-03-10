@@ -1,14 +1,11 @@
 import z from "zod";
-import { createSchema } from "./metadata.js";
-import { EventSchema, TagSchema } from "./index.js";
-import type { SchemaWithMeta } from "./index.js";
-import { foreignKey, primaryKey, languageMap } from "./helpers.js";
+import { EventSchema, TagSchema, createSchema } from "./index.js";
+import { foreignKey, primaryKey, languageMap, ForeignKey } from "./helpers.js";
 
-export const ProductionSchema: SchemaWithMeta<Record<string, z.ZodTypeAny>> = createSchema({
+export const ProductionSchema = createSchema({
   id: primaryKey(),
   vendor_id: z.int().nonnegative(),
   box_office_id: z.int().nonnegative(),
-  events: z.array(foreignKey(() => EventSchema)),
   supertitle: languageMap.nullable(),
   title: languageMap,
   artist: languageMap,
@@ -23,7 +20,6 @@ export const ProductionSchema: SchemaWithMeta<Record<string, z.ZodTypeAny>> = cr
   quote_source: languageMap.nullable(),
   programme: languageMap.nullable(),
   info: languageMap.nullable(),
-  tags: z.array(foreignKey(() => TagSchema)),
 
   // unnecessary
   // performer_field: z.string().nullable(),
@@ -36,6 +32,16 @@ export const ProductionSchema: SchemaWithMeta<Record<string, z.ZodTypeAny>> = cr
   // custom_data: z.json().nullable(),
 });
 
+export const ProductionSchemaWithBackwardsRefs = createSchema({
+  ...ProductionSchema.shape,
+  get tags(): z.ZodArray<ForeignKey<typeof TagSchema>> {
+    return z.array(foreignKey(() => TagSchema));
+  },
+  get events(): z.ZodArray<ForeignKey<typeof EventSchema>> {
+    return z.array(foreignKey(() => EventSchema));
+  },
+});
+
 export const FieldTypeSchema = z.enum(["number", "string", "bool", "json"]);
 
 export const CustomProductionFieldDefinitionSchema = createSchema({
@@ -45,9 +51,14 @@ export const CustomProductionFieldDefinitionSchema = createSchema({
 });
 
 export const CustomProductionFieldSchema = createSchema({
-  field_definition_id: foreignKey(() => CustomProductionFieldDefinitionSchema),
-  production_id: foreignKey(() => ProductionSchema),
-
+  get field_definition_id(): ForeignKey<
+    typeof CustomProductionFieldDefinitionSchema
+  > {
+    return foreignKey(() => CustomProductionFieldDefinitionSchema);
+  },
+  get production_id(): ForeignKey<typeof ProductionSchema> {
+    return foreignKey(() => ProductionSchema);
+  },
   type: FieldTypeSchema,
 
   value_bool: z.boolean().nullable(),
@@ -69,12 +80,20 @@ export const CustomProductionFieldSchema = createSchema({
 });
 
 export type Production = z.infer<typeof ProductionSchema>;
-export type ProductionWithMeta = z.infer<ReturnType<typeof ProductionSchema.withMeta>>;
+export type ProductionWithMeta = z.infer<
+  ReturnType<typeof ProductionSchema.withMeta>
+>;
 
 export type FieldType = z.infer<typeof FieldTypeSchema>;
 
-export type CustomProductionFieldDefinition = z.infer<typeof CustomProductionFieldDefinitionSchema>;
-export type CustomProductionFieldDefinitionWithMeta = z.infer<ReturnType<typeof CustomProductionFieldDefinitionSchema.withMeta>>;
+export type CustomProductionFieldDefinition = z.infer<
+  typeof CustomProductionFieldDefinitionSchema
+>;
+export type CustomProductionFieldDefinitionWithMeta = z.infer<
+  ReturnType<typeof CustomProductionFieldDefinitionSchema.withMeta>
+>;
 
 export type CustomProductionField = z.infer<typeof CustomProductionFieldSchema>;
-export type CustomProductionFieldWithMeta = z.infer<ReturnType<typeof CustomProductionFieldSchema.withMeta>>;
+export type CustomProductionFieldWithMeta = z.infer<
+  ReturnType<typeof CustomProductionFieldSchema.withMeta>
+>;
