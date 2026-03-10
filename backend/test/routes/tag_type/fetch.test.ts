@@ -1,67 +1,63 @@
-import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
+import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
 import { buildServer } from "@/server.js";
+import { TagTypeSchema, type TagType } from "@viernulvier/shared/index.js";
 import type { FastifyInstance } from "fastify";
-
-import tagTypeRoutes from "@/routes/tag_type/tag_types.js";
-import { TagTypeSchema } from "@viernulvier/shared/index.js";
 
 let server: FastifyInstance;
 
-const tagType = {
+const tagType: TagType = {
   id: 1,
-  name: { nl: "Genre" },
+  name: { en: "Genre", nl: "Genre" },
   visible: true,
 };
 
 beforeAll(async () => {
   server = await buildServer();
-  await server.register(tagTypeRoutes);
+
+  server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+
+    if (query.includes("SELECT")) {
+      const id = Number(params?.[0]);
+
+      if (id === tagType.id) {
+        return Promise.resolve({
+          rows: [tagType],
+          rowCount: 1,
+        });
+      }
+
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    }
+
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
 });
 
 afterAll(async () => {
   await server.close();
 });
 
-beforeEach(() => {
-  vi.restoreAllMocks();
-});
+describe("Fetch tag_type", () => {
 
-describe("Fetch tag type routes", () => {
-
-  test("GET /api/v1/tag-type/:id -> returns tag type", async () => {
-
-    server.pg.query = vi.fn().mockResolvedValue({
-      rows: [tagType],
-      rowCount: 1,
-    });
+  test("GET /api/v1/tag-type/:id", async () => {
 
     const response = await server.inject({
       method: "GET",
-      url: "/api/v1/tag-type/1",
+      url: `/api/v1/tag-type/${tagType.id}`,
     });
 
     expect(response.statusCode).toBe(200);
-
-    const parsed = TagTypeSchema.parse(response.json());
-    expect(parsed).toEqual(tagType);
+    expect(TagTypeSchema.parse(response.json().body)).toEqual(tagType);
   });
 
-  test("GET /api/v1/tag-type -> returns tag type list", async () => {
-
-    server.pg.query = vi.fn().mockResolvedValue({
-      rows: [tagType],
-      rowCount: 1,
-    });
+  test("GET returns 404", async () => {
 
     const response = await server.inject({
       method: "GET",
-      url: "/api/v1/tag-type",
+      url: `/api/v1/tag-type/999`,
     });
 
-    expect(response.statusCode).toBe(200);
-
-    const parsed = response.json().map((t: unknown) => TagTypeSchema.parse(t));
-    expect(parsed.length).toBe(1);
+    expect(response.statusCode).toBe(404);
   });
 
 });

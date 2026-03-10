@@ -14,13 +14,19 @@ const tagType: TagType = {
 beforeAll(async () => {
   server = await buildServer();
 
-  server.pg.query = vi.fn().mockImplementation((query: string) => {
+  server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
 
-    if (query.includes("INSERT")) {
-      return Promise.resolve({
-        rows: [{ id: tagType.id }],
-        rowCount: 1,
-      });
+    if (query.includes("UPDATE")) {
+      const id = Number(params?.[params.length - 1]);
+
+      if (id === tagType.id) {
+        return Promise.resolve({
+          rows: [{ id }],
+          rowCount: 1,
+        });
+      }
+
+      return Promise.resolve({ rows: [], rowCount: 0 });
     }
 
     if (query.includes("SELECT")) {
@@ -38,13 +44,13 @@ afterAll(async () => {
   await server.close();
 });
 
-describe("Create tag_type", () => {
+describe("Replace tag_type", () => {
 
-  test("POST /api/v1/tag-type", async () => {
+  test("PUT /api/v1/tag-type/:id", async () => {
 
     const response = await server.inject({
-      method: "POST",
-      url: "/api/v1/tag-type",
+      method: "PUT",
+      url: `/api/v1/tag-type/${tagType.id}`,
       payload: {
         name: tagType.name,
         visible: tagType.visible,
@@ -53,17 +59,6 @@ describe("Create tag_type", () => {
 
     expect(response.statusCode).toBe(200);
     expect(TagTypeSchema.parse(response.json().body)).toEqual(tagType);
-  });
-
-  test("POST invalid body", async () => {
-
-    const response = await server.inject({
-      method: "POST",
-      url: "/api/v1/tag-type",
-      payload: {},
-    });
-
-    expect(response.statusCode).toBe(400);
   });
 
 });

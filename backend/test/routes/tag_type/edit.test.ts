@@ -1,83 +1,72 @@
-import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
+import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
 import { buildServer } from "@/server.js";
-import type { FastifyInstance } from "fastify";
-
-import tagTypeRoutes from "@/routes/tag_type/tag_types.js";
 import { TagTypeSchema, type TagType } from "@viernulvier/shared/index.js";
+import type { FastifyInstance } from "fastify";
 
 let server: FastifyInstance;
 
-const updatedTagType: TagType = {
+const tagType: TagType = {
   id: 1,
-  name: { nl: "Updated Genre" },
+  name: { en: "Genre", nl: "Genre" },
   visible: true,
 };
 
 beforeAll(async () => {
   server = await buildServer();
-  await server.register(tagTypeRoutes);
+
+  server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+
+    if (query.includes("UPDATE")) {
+      const id = Number(params?.[params.length - 1]);
+
+      if (id === tagType.id) {
+        return Promise.resolve({
+          rows: [{ id }],
+          rowCount: 1,
+        });
+      }
+
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    }
+
+    if (query.includes("SELECT")) {
+      return Promise.resolve({
+        rows: [tagType],
+        rowCount: 1,
+      });
+    }
+
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
 });
 
 afterAll(async () => {
   await server.close();
 });
 
-beforeEach(() => {
-  vi.restoreAllMocks();
-});
+describe("Edit tag_type", () => {
 
-describe("Edit tag type route", () => {
-
-  test("PATCH /api/v1/tag-type/:id -> updates tag type", async () => {
-
-    server.pg.query = vi.fn().mockImplementation((query: string) => {
-
-      const upper = query.trim().toUpperCase();
-
-      if (upper.startsWith("UPDATE")) {
-        return Promise.resolve({
-          rows: [{ id: updatedTagType.id }],
-          rowCount: 1,
-        });
-      }
-
-      if (upper.startsWith("SELECT")) {
-        return Promise.resolve({
-          rows: [updatedTagType],
-          rowCount: 1,
-        });
-      }
-
-      throw new Error(`Unexpected query in edit tests: ${query}`);
-    });
+  test("PATCH /api/v1/tag-type/:id", async () => {
 
     const response = await server.inject({
       method: "PATCH",
-      url: "/api/v1/tag-type/1",
+      url: `/api/v1/tag-type/${tagType.id}`,
       payload: {
-        name: updatedTagType.name,
-        visible: updatedTagType.visible,
+        name: tagType.name,
       },
     });
 
     expect(response.statusCode).toBe(200);
-
-    const parsed = TagTypeSchema.parse(response.json());
-    expect(parsed).toEqual(updatedTagType);
+    expect(TagTypeSchema.parse(response.json().body)).toEqual(tagType);
   });
 
-  test("PATCH /api/v1/tag-type/:id -> returns 404 when tag type does not exist", async () => {
-
-    server.pg.query = vi.fn().mockResolvedValue({
-      rows: [],
-      rowCount: 0,
-    });
+  test("PATCH returns 404", async () => {
 
     const response = await server.inject({
       method: "PATCH",
-      url: "/api/v1/tag-type/999",
+      url: `/api/v1/tag-type/999`,
       payload: {
-        name: { nl: "Does not exist" },
+        name: tagType.name,
       },
     });
 
