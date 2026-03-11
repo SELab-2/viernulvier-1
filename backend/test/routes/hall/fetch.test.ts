@@ -5,6 +5,7 @@ import { HallSchema, type Hall, type HallWithMeta } from "@viernulvier/shared/in
 import { HttpSuccess, HttpClientError } from "@/routes/helpers.js";
 
 let server: FastifyInstance;
+let sessionCookie: string;
 
 const mockHalls: Array<Hall> = [
   { id: 1, name: { nl: "Grote Zaal" }, address: "Sint-Pietersnieuwstraat 23", vendor_id: 42 },
@@ -22,6 +23,7 @@ const mockHallsWithMeta: Array<HallWithMeta> = mockHalls.map((hall) => ({
 
 beforeAll(async () => {
   server = await buildServer();
+  sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     const upper = query.trim().toUpperCase();
@@ -79,6 +81,7 @@ describe("Hall fetch routes", () => {
     const response = await server.inject({
       method: "GET",
       url: `/api/v1/hall/${hall?.["id"]}/meta`,
+      cookies: { session: sessionCookie },
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
@@ -98,8 +101,20 @@ describe("Hall fetch routes", () => {
     const response = await server.inject({
       method: "GET",
       url: "/api/v1/hall/99999/meta",
+      cookies: { session: sessionCookie },
     });
 
     expect(response.statusCode).toBe(HttpClientError.NotFound);
+  });
+
+  test("GET /api/v1/hall/:id/meta — returns 401 when not logged in", async () => {
+    const hall = mockHallsWithMeta[1];
+
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/hall/${hall?.["id"]}/meta`,
+    });
+  
+      expect(response.statusCode).toBe(HttpClientError.Unauthorized);
   });
 });

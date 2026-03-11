@@ -21,7 +21,7 @@ export default function hallRoutes(server: FastifyInstance) {
 
   server.get("/api/v1/hall", replyHandler(server, fetchHalls));
   server.get("/api/v1/hall/:id", replyHandler(server, fetchHall));
-  server.get("/api/v1/hall/:id/meta", replyHandler(server, fetchHallWithMeta));
+  server.get("/api/v1/hall/:id/meta", protect, replyHandler(server, fetchHallWithMeta));
   server.post("/api/v1/hall", protect, replyHandler(server, createHall));
   server.put("/api/v1/hall/:id", protect, replyHandler(server, replaceHall));
   server.patch("/api/v1/hall/:id", protect, replyHandler(server, editHall));
