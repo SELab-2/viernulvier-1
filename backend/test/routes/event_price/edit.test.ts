@@ -64,7 +64,7 @@ describe("Event Price Edit Route", () => {
 	test("updates amount of an event price", async () => {
 		const response = await server.inject({
 			method: "PATCH",
-			url: "/api/v1/event_price/1",
+			url: "/event_price/api/v1/1",
 			cookies: { session: sessionCookie },
 			payload: {
 				amount: 29.99,
@@ -82,7 +82,7 @@ describe("Event Price Edit Route", () => {
 	test("updates event of an event price", async () => {
 		const response = await server.inject({
 			method: "PATCH",
-			url: "/api/v1/event_price/1",
+			url: "/event_price/api/v1/1",
 			cookies: { session: sessionCookie },
 			payload: {
 				event: 20,
@@ -100,7 +100,7 @@ describe("Event Price Edit Route", () => {
 	test("updates multiple fields", async () => {
 		const response = await server.inject({
 			method: "PATCH",
-			url: "/api/v1/event_price/1",
+			url: "/event_price/api/v1/1",
 			cookies: { session: sessionCookie },
 			payload: {
 				event: 20,
@@ -119,7 +119,7 @@ describe("Event Price Edit Route", () => {
 	test("returns 404 when event price not found", async () => {
 		const response = await server.inject({
 			method: "PATCH",
-			url: "/api/v1/event_price/999",
+			url: "/event_price/api/v1/999",
 			cookies: { session: sessionCookie },
 			payload: {
 				amount: 29.99,
@@ -133,7 +133,7 @@ describe("Event Price Edit Route", () => {
 	test("returns 400 when payload is invalid", async () => {
 		const response = await server.inject({
 			method: "PATCH",
-			url: "/api/v1/event_price/1",
+			url: "/event_price/api/v1/1",
 			cookies: { session: sessionCookie },
 			payload: {
 				amount: -5, // negative amount
@@ -147,7 +147,7 @@ describe("Event Price Edit Route", () => {
 	test("requires authentication", async () => {
 		const response = await server.inject({
 			method: "PATCH",
-			url: "/api/v1/event_price/1",
+			url: "/event_price/api/v1/1",
 			payload: {
 				amount: 29.99,
 			},

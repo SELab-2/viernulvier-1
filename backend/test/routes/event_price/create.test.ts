@@ -54,7 +54,7 @@ describe("Event Price Create Route", () => {
 	test("creates a new event price", async () => {
 		const response = await server.inject({
 			method: "POST",
-			url: "/api/v1/event_price",
+			url: "/event_price/api/v1",
 			cookies: { session: sessionCookie },
 			payload: {
 				event: 15,
@@ -73,7 +73,7 @@ describe("Event Price Create Route", () => {
 	test("returns 400 when amount is invalid", async () => {
 		const response = await server.inject({
 			method: "POST",
-			url: "/api/v1/event_price",
+			url: "/event_price/api/v1",
 			cookies: { session: sessionCookie },
 			payload: {
 				event: 15,
@@ -88,7 +88,7 @@ describe("Event Price Create Route", () => {
 	test("returns 400 when required fields are missing", async () => {
 		const response = await server.inject({
 			method: "POST",
-			url: "/api/v1/event_price",
+			url: "/event_price/api/v1",
 			cookies: { session: sessionCookie },
 			payload: {
 				// missing event and amount
@@ -102,7 +102,7 @@ describe("Event Price Create Route", () => {
 	test("requires authentication", async () => {
 		const response = await server.inject({
 			method: "POST",
-			url: "/api/v1/event_price",
+			url: "/event_price/api/v1",
 			payload: {
 				event: 15,
 				amount: 35.99,
@@ -116,13 +116,13 @@ describe("Event Price Create Route", () => {
 		const responses = await Promise.all([
 			server.inject({
 				method: "POST",
-				url: "/api/v1/event_price",
+				url: "/event_price/api/v1",
 				cookies: { session: sessionCookie },
 				payload: { event: 30, amount: 50.00 },
 			}),
 			server.inject({
 				method: "POST",
-				url: "/api/v1/event_price",
+				url: "/event_price/api/v1",
 				cookies: { session: sessionCookie },
 				payload: { event: 31, amount: 55.00 },
 			}),
@@ -138,7 +138,7 @@ describe("Event Price Create Route", () => {
 
 		await server.inject({
 			method: "POST",
-			url: "/api/v1/event_price",
+			url: "/event_price/api/v1",
 			cookies: { session: sessionCookie },
 			payload: { event: 32, amount: 18.50 },
 		});

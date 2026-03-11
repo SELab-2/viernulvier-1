@@ -58,7 +58,7 @@ describe("Event Price Delete Route", () => {
 	test("deletes an event price by ID", async () => {
 		const response = await server.inject({
 			method: "DELETE",
-			url: "/api/v1/event_price/1",
+			url: "/event_price/api/v1/1",
 			cookies: { session: sessionCookie },
 		});
 
@@ -72,7 +72,7 @@ describe("Event Price Delete Route", () => {
 		// Verify it's actually deleted
 		const getResponse = await server.inject({
 			method: "GET",
-			url: "/api/v1/event_price/1",
+			url: "/event_price/api/v1/1",
 		});
 
 		expect(getResponse.statusCode).toBe(404);
@@ -81,7 +81,7 @@ describe("Event Price Delete Route", () => {
 	test("returns 404 when event price not found", async () => {
 		const response = await server.inject({
 			method: "DELETE",
-			url: "/api/v1/event_price/999",
+			url: "/event_price/api/v1/999",
 			cookies: { session: sessionCookie },
 		});
 
@@ -92,7 +92,7 @@ describe("Event Price Delete Route", () => {
 	test("requires authentication", async () => {
 		const response = await server.inject({
 			method: "DELETE",
-			url: "/api/v1/event_price/1",
+			url: "/event_price/api/v1/1",
 		});
 
 		expect(response.statusCode).toBe(401);
