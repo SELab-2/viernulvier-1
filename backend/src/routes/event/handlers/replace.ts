@@ -38,5 +38,5 @@ export async function replaceEvent(
     id,
   );
 
-  return result[0] || null;
+  return result[0]!;
 }

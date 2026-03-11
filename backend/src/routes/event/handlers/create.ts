@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import z from "zod";
 
-import { getMetadata, parseFirstRow, parseSchema, ParseContext } from "@/routes/helpers.js";
+import { getMetadata, parseSchema, ParseContext, buildQuery } from "@/routes/helpers.js";
 import { EventSchema } from "@viernulvier/shared/index.js";
 import type { Event } from "@viernulvier/shared/index.js";
 import { normalizeEventDates, EventCreateSchema, selectPriceSubquery } from "./helper.js";
@@ -23,11 +24,25 @@ export async function createEvent(
 
   const { admin, current_time } = getMetadata(request);
 
-  const result = await server.pg.query<Event>(
-    `INSERT INTO events (starts_at, ends_at, production, hall, doors_at, vendor_id, info, created_at, updated_at, created_by, updated_by)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8, $9, $9)
-    RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}`,
-    [
+  const result = await buildQuery(
+      server,
+      `INSERT INTO events (starts_at, ends_at, production, hall, doors_at, vendor_id, info, created_at, updated_at, created_by, updated_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8, $9, $9)
+      RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}`,
+      z.tuple([
+        EventCreateSchema.shape.starts_at,
+        EventCreateSchema.shape.ends_at,
+        EventCreateSchema.shape.production,
+        EventCreateSchema.shape.hall,
+        EventCreateSchema.shape.doors_at,
+        EventCreateSchema.shape.vendor_id,
+        EventCreateSchema.shape.info,
+        z.date(),
+        z.number().nonnegative(),
+
+      ]),
+      EventSchema,
+    )(
       body.starts_at,
       body.ends_at,
       body.production,
@@ -37,9 +52,8 @@ export async function createEvent(
       body.info,
       current_time,
       admin,
-    ],
   );
 
-  return parseFirstRow(server, EventSchema, result.rows);
+  return result[0]!;
 }
 
