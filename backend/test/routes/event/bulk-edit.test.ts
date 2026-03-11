@@ -4,7 +4,7 @@ import type { FastifyInstance } from "fastify";
 import { buildServer } from "@/server.js";
 
 let server: FastifyInstance;
-let storedEvents: Array<Record<string, unknown>>;
+let storedEvents: Array<{ id: number; [key: string]: unknown }>;
 let sessionCookie: string;
 
 const baseEvent = {
@@ -31,9 +31,10 @@ beforeAll(async () => {
 	server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
 		if (query.includes("UPDATE events")) {
 			const id = Number(params?.[9]);
-			const index = storedEvents.findIndex((event) => Number(event["id"]) === id);
+			const index = storedEvents.findIndex((event) => Number(event.id) === id);
 			if (index === -1) return Promise.resolve({ rows: [] });
 
+      // eslint-disable-next-line security/detect-object-injection
 			const current = storedEvents[index]!;
 			const updated = {
 				...current,
@@ -46,6 +47,7 @@ beforeAll(async () => {
 				info: params?.[6] ?? current["info"],
 			};
 
+      // eslint-disable-next-line security/detect-object-injection
 			storedEvents[index] = updated;
 			const event = {...updated, price: []};
 			return Promise.resolve({ rows: [event] });
@@ -54,7 +56,7 @@ beforeAll(async () => {
 		if (query.includes("FROM events WHERE id = $1")) {
 			const id = Number(params?.[0]);
 			if (id > storedEvents.length) return Promise.resolve({ rows: [] });
-			const event = { ...storedEvents.find((row) => Number(row["id"]) === id), price: [] };
+			const event = { ...storedEvents.find((row) => Number(row.id) === id), price: [] };
 			return Promise.resolve({ rows: event ? [event] : [] });
 		}
 
@@ -312,4 +314,3 @@ describe("Event Bulk Edit Routes", () => {
 		});
 	});
 });
-

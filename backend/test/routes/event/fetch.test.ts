@@ -233,4 +233,3 @@ describe("Event Fetch Routes", () => {
 		});
 	});
 });
-

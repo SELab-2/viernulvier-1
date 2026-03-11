@@ -13,15 +13,16 @@ import { EventSchemaWithoutPrice } from "@viernulvier/shared/index.js";
  * @returns The normalized object with date fields converted to Date instances, or the original value if not an object
  *
  * @example
- * const event = {
+ * const event = \{
  *   starts_at: "2026-01-01T18:00:00.000Z",
  *   ends_at: "2026-01-01T20:00:00.000Z",
  *   doors_at: "2026-01-01T17:30:00.000Z",
  *   production: 10
- * };
+ * \};
  * const normalized = normalizeEventDates(event);
  * // normalized.starts_at is now a Date object
  */
+
 export function normalizeEventDates(value: unknown): unknown {
   if (!value || typeof value !== "object") return value;
 
@@ -47,11 +48,11 @@ export function normalizeEventDates(value: unknown): unknown {
  *          undefined fields preserved as undefined, or the original value if not an object
  *
  * @example
- * const partialEvent = {
+ * const partialEvent = \{
  *   starts_at: "2026-02-01T18:00:00.000Z",
  *   production: 20
  *   // ends_at and doors_at are not provided
- * };
+ * \};
  * const normalized = normalizePartialEventDates(partialEvent);
  * // normalized.starts_at is a Date object
  * // normalized.ends_at is undefined (not provided)

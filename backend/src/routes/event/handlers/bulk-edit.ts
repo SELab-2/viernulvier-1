@@ -27,23 +27,23 @@ export async function editEvents(
   const normalizedBody = normalizePartialEventDates(request.body);
   const body = parse(server, EventBulkUpdateSchema, normalizedBody, ParseContext.Request);
   const selectedEvents = await Promise.all(
-      body.ids.map((id: number) => fetchEvent(
-          server,
-          { ...request, params: { ...(request.params as Record<string, string>), id: String(id) } }
-      ))
+    body.ids.map((id: number) => fetchEvent(
+      server,
+      { ...request, params: { ...(request.params as Record<string, string>), id: String(id) } }
+    ))
   );
 
   if (!selectedEvents.length || selectedEvents.some((event: Event | null) => !event)) return null;
   const existingEvents = selectedEvents as Event[];
 
   const updatedEvents = existingEvents.map((selectedEvent: Event) => ({
-    starts_at: body.starts_at ?? (selectedEvent as unknown as Record<string, unknown>)["starts_at"],
-    ends_at: body.ends_at ?? (selectedEvent as unknown as Record<string, unknown>)["ends_at"],
-    production: body.production ?? (selectedEvent as unknown as Record<string, unknown>)["production"],
-    hall: body.hall ?? (selectedEvent as unknown as Record<string, unknown>)["hall"],
-    doors_at: body.doors_at ?? (selectedEvent as unknown as Record<string, unknown>)["doors_at"],
-    vendor_id: body.vendor_id ?? (selectedEvent as unknown as Record<string, unknown>)["vendor_id"],
-    info: body.info ?? (selectedEvent as unknown as Record<string, unknown>)["info"],
+    starts_at: body.starts_at ?? selectedEvent.starts_at,
+    ends_at: body.ends_at ?? selectedEvent.ends_at,
+    production: body.production ?? selectedEvent.production,
+    hall: body.hall ?? selectedEvent.hall,
+    doors_at: body.doors_at ?? selectedEvent.doors_at,
+    vendor_id: body.vendor_id ?? selectedEvent.vendor_id,
+    info: body.info ?? selectedEvent.info,
   }));
 
   const { admin, current_time } = getMetadata(request);
@@ -65,6 +65,7 @@ export async function editEvents(
         updatedEvent.info,
         current_time,
         admin,
+        // eslint-disable-next-line security/detect-object-injection
         body.ids[index],
       ],
     ))

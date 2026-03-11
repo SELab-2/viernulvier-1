@@ -4,7 +4,7 @@ import type { FastifyInstance } from "fastify";
 import { buildServer } from "@/server.js";
 
 let server: FastifyInstance;
-let storedEvents: Array<Record<string, unknown>>;
+let storedEvents: Array<{ id: number; [key: string]: unknown }>;
 let sessionCookie: string;
 
 const baseEvent = {
@@ -35,9 +35,10 @@ beforeAll(async () => {
 	server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
 		if (query.includes("UPDATE events")) {
 			const id = Number(params?.[9]);
-			const index = storedEvents.findIndex((event) => Number(event["id"]) === id);
+			const index = storedEvents.findIndex((event) => Number(event.id) === id);
 			if (index === -1) return Promise.resolve({ rows: [] });
 
+      // eslint-disable-next-line security/detect-object-injection
 			const current = storedEvents[index]!;
 			const updated = {
 				...current,
@@ -52,6 +53,7 @@ beforeAll(async () => {
                 updated_by: params?.[8],
 			};
 
+      // eslint-disable-next-line security/detect-object-injection
 			storedEvents[index] = updated;
 			const event = { ...updated, price: [] };
 			return Promise.resolve({ rows: [event] });
@@ -59,7 +61,7 @@ beforeAll(async () => {
 
 		if (query.includes("FROM events WHERE id = $1")) {
 			const id = Number(params?.[0]);
-			const foundEvent = storedEvents.find((row) => Number(row["id"]) === id);
+			const foundEvent = storedEvents.find((row) => Number(row.id) === id);
 			if (!foundEvent) return Promise.resolve({ rows: [] });
 			const event = { ...foundEvent, price: [] };
 			return Promise.resolve({ rows: [event] });
