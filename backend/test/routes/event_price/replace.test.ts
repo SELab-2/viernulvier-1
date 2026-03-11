@@ -32,11 +32,13 @@ beforeAll(async () => {
 			if (index === -1) return Promise.resolve({ rows: [] });
 
 			const updated = {
+				//eslint-disable-next-line security/detect-object-injection
 				...storedEventPrices[index]!,
 				event: params?.[0] as number,
 				amount: params?.[1] as number,
 			};
 
+			//eslint-disable-next-line security/detect-object-injection
 			storedEventPrices[index] = updated;
 			return Promise.resolve({ rows: [updated] });
 		}
