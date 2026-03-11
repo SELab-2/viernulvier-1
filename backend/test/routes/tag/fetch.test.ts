@@ -6,13 +6,28 @@ import { TagSchema, type Tag } from "@viernulvier/shared/index.js";
 let server: FastifyInstance;
 let sessionCookie: string;
 
-
 const tag1: Tag = {
   id: 5,
   name: { en: "Music", nl: "Muziek" },
   type: 1,
   productions: [1],
   public: true,
+};
+
+const tag2: Tag = {
+  id: 6,
+  name: { en: "Family", nl: "Familie" },
+  type: 1,
+  productions: [1, 2],
+  public: true,
+};
+
+const privateTag: Tag = {
+  id: 10,
+  name: { en: "Private", nl: "Privé" },
+  type: 1,
+  productions: [1], // important for production tests
+  public: false,
 };
 
 const tag1WithMeta = {
@@ -23,16 +38,7 @@ const tag1WithMeta = {
   updated_by: 1,
 };
 
-const mockTags: Tag[] = [
-  tag1,
-  {
-    id: 6,
-    name: { en: "Family", nl: "Familie" },
-    type: 1,
-    productions: [1,2],
-    public: true,
-  },
-];
+const mockTags: Tag[] = [tag1, tag2, privateTag];
 
 beforeAll(async () => {
   server = await buildServer();
@@ -40,9 +46,9 @@ beforeAll(async () => {
   sessionCookie = server.jwt.sign({ id: 1, username: "Admin" });
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
-  const id = params?.[0];
-
+    const id = params?.[0];
     const isMetaQuery = query.includes("created_at");
+    const isVisibleQuery = query.includes("public = true");
 
     let rows;
 
@@ -54,6 +60,10 @@ beforeAll(async () => {
       rows = mockTags.filter((t) => t.id === Number(id));
     } else {
       rows = mockTags;
+    }
+
+    if (isVisibleQuery) {
+      rows = rows.filter((t) => t.public);
     }
 
     if (isMetaQuery) {
@@ -75,15 +85,15 @@ afterAll(async () => {
 });
 
 describe("Fetch tag on id", () => {
-  test("GET /api/v1/tags/:id", async () => {
+  test("GET /api/v1/tags/:id/all", async () => {
     const response = await server.inject({
       method: "GET",
       cookies: { session: sessionCookie },
-      url: `/api/v1/tags/${mockTags[0]!.id}`,
+      url: `/api/v1/tags/${tag1.id}/all`,
     });
 
     expect(response.statusCode).toBe(200);
-    expect(TagSchema.parse(response.json())).toEqual(mockTags[0]);
+    expect(TagSchema.parse(response.json())).toEqual(tag1);
   });
 
   test("GET /api/v1/tags/:id returns 404", async () => {
@@ -97,13 +107,35 @@ describe("Fetch tag on id", () => {
   });
 });
 
+describe("Fetch visible tag on id", () => {
+
+  test("GET /api/v1/tags/:id returns visible tag", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/tags/${tag1.id}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(TagSchema.parse(response.json())).toEqual(tag1);
+  });
+
+  test("GET /api/v1/tags/:id returns 404 when tag is not public", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/tags/${privateTag.id}`,
+    });
+
+    expect(response.statusCode).toBe(404);
+  });
+
+});
 
 describe("Fetch tags", () => {
-  test("GET /api/v1/tags", async () => {
+  test("GET /api/v1/tags/all", async () => {
     const response = await server.inject({
       method: "GET",
       cookies: { session: sessionCookie },
-      url: `/api/v1/tags`,
+      url: `/api/v1/tags/all`,
     });
 
     expect(response.statusCode).toBe(200);
@@ -111,17 +143,59 @@ describe("Fetch tags", () => {
   });
 });
 
+describe("Fetch visible tags", () => {
+
+  test("GET /api/v1/tags returns only public tags", async () => {
+
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/tags`,
+    });
+
+    expect(response.statusCode).toBe(200);
+
+    const result = TagSchema.array().parse(response.json());
+
+    expect(result).toEqual(mockTags.filter((t) => t.public));
+  });
+
+});
+
 describe("Fetch tags for production", () => {
-  test("GET /api/v1/tags?production={id}", async () => {
+
+  test("GET /api/v1/tags/all?production={id}", async () => {
     const response = await server.inject({
       method: "GET",
       cookies: { session: sessionCookie },
+      url: `/api/v1/tags/all?production=1`,
+    });
+
+    expect(response.statusCode).toBe(200);
+
+    const result = TagSchema.array().parse(response.json());
+
+    expect(result).toEqual(mockTags.filter((t) => t.productions.includes(1)));
+  });
+
+});
+
+describe("Fetch visible tags for production", () => {
+
+  test("GET /api/v1/tags?production={id}", async () => {
+    const response = await server.inject({
+      method: "GET",
       url: `/api/v1/tags?production=1`,
     });
 
     expect(response.statusCode).toBe(200);
-    expect(TagSchema.array().parse(response.json())).toEqual(mockTags);
+
+    const result = TagSchema.array().parse(response.json());
+
+    expect(result).toEqual(
+      mockTags.filter((t) => t.public && t.productions.includes(1))
+    );
   });
+
 });
 
 describe("Fetch tag with metadata", () => {
