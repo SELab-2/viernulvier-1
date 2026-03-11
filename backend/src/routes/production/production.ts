@@ -27,8 +27,8 @@ import {
 export default function productionRoutes(server: FastifyInstance) {
   const protect = { preHandler: [server.authorize] };
 
-  server.get("/api/v1/production", protect, replyHandler(server, fetchProductions));
-  server.get("/api/v1/production/:id", protect, replyHandler(server, fetchProduction));
+  server.get("/api/v1/production", replyHandler(server, fetchProductions));
+  server.get("/api/v1/production/:id", replyHandler(server, fetchProduction));
   server.post("/api/v1/production", protect, replyHandler(server, createProduction));
   server.put("/api/v1/production/:id", protect, replyHandler(server, replaceProduction));
   server.patch("/api/v1/production/:id", protect, replyHandler(server, editProduction));
