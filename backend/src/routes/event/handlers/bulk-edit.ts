@@ -63,5 +63,5 @@ export async function editEvents(
     ))
   );
 
-  return results.map(result => result[0]).filter((event): event is Event => !!event) || null;
+  return results.map(result => result[0]).filter((event): event is Event => !!event)!;
 }

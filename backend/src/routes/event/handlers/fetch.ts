@@ -26,7 +26,7 @@ export async function fetchEvent(
     EventSchema,
   )(id);
 
-  return result[0] ?? null;
+  return result[0]!;
 }
 
 /**
@@ -51,7 +51,7 @@ export async function fetchEventWithMeta(
     EventSchema.withMeta(),
   )(id);
 
-  return result[0] ?? null;
+  return result[0]!;
 }
 
 /**

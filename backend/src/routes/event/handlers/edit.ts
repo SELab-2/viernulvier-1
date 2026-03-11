@@ -54,5 +54,5 @@ export async function editEvent(
     id,
   );
 
-  return result[0] || null;
+  return result[0]!;
 }
