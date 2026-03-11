@@ -2,8 +2,8 @@ import z from "zod";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 
 import { buildQuery, parseParams } from "@/routes/helpers.js";
-import { EventSchema, stringToInt } from "@viernulvier/shared/index.js";
-import type { Event } from "@viernulvier/shared/index.js";
+import { EventPriceSchema, stringToInt } from "@viernulvier/shared/index.js";
+import type { EventPrice } from "@viernulvier/shared/index.js";
 
 /**
  * Deletes a single event price by ID from the database.
@@ -16,13 +16,13 @@ import type { Event } from "@viernulvier/shared/index.js";
 export async function deleteEventPrice(
     server: FastifyInstance,
     request: FastifyRequest
-): Promise<Event | null> {
+): Promise<EventPrice | null> {
     const { id } = parseParams(request, z.object({ id: stringToInt }));
     const result = await buildQuery(server,
         `RETURNING id, event, amount
         DELETE FROM event_price WHERE id = $1`,
         z.tuple([z.int()]),
-        EventSchema,
+        EventPriceSchema,
     )(id);
 
     return result[0] ?? null;

@@ -16,7 +16,7 @@ export default function eventPriceRoutes(server: FastifyInstance) {
 
     server.get("/event_price/:id", replyHandler(server, fetchEventPrice));
     server.get("/event_price/:id/meta", replyHandler(server, fetchEventPriceWithMeta));
-    server.get("/event_price", protect, replyHandler(server, fetchEventPrices));
+    server.get("/event_price", replyHandler(server, fetchEventPrices));
     server.post("/event_price", protect, replyHandler(server, createEventPrice));
     server.put("/event_price/:id", protect, replyHandler(server, replaceEventPrice));
     server.patch("/event_price/:id", protect, replyHandler(server, editEventPrice));

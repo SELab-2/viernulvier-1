@@ -2,8 +2,8 @@ import z from "zod";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 
 import { buildQuery, parseParams } from "@/routes/helpers.js";
-import { EventSchema, stringToInt } from "@viernulvier/shared/index.js";
-import type { Event, EventWithMeta } from "@viernulvier/shared/index.js";
+import { EventPriceSchema, stringToInt } from "@viernulvier/shared/index.js";
+import type { EventPrice, EventPriceWithMeta } from "@viernulvier/shared/index.js";
 
 /**
  * Fetches a single event price by ID from the database.
@@ -16,13 +16,13 @@ import type { Event, EventWithMeta } from "@viernulvier/shared/index.js";
 export async function fetchEventPrice(
     server: FastifyInstance,
     request: FastifyRequest
-): Promise<Event | null> {
+): Promise<EventPrice | null> {
     const { id } = parseParams(request, z.object({ id: stringToInt }));
     const result = await buildQuery(server,
         `SELECT id, event, amount
         FROM event_price WHERE id = $1`,
         z.tuple([z.int()]),
-        EventSchema,
+        EventPriceSchema,
     )(id);
 
     return result[0] ?? null;
@@ -39,14 +39,14 @@ export async function fetchEventPrice(
 export async function fetchEventPriceWithMeta(
     server: FastifyInstance,
     request: FastifyRequest
-): Promise<EventWithMeta | null> {
+): Promise<EventPriceWithMeta | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
     const result = await buildQuery(
         server,
-        `SELECT id, event, amount
+        `SELECT id, event, amount, created_at, updated_at, created_by, updated_by
         FROM event_price WHERE id = $1`,
         z.tuple([z.int()]),
-        EventSchema.withMeta(),
+        EventPriceSchema.withMeta(),
     )(id);
 
     return result[0] ?? null;
@@ -61,12 +61,12 @@ export async function fetchEventPriceWithMeta(
  */
 export async function fetchEventPrices(
     server: FastifyInstance
-): Promise<Event[]> {
+): Promise<EventPrice[]> {
     const result = await buildQuery(
         server,
         `SELECT id, event, amount
         FROM event_price`,
-        EventSchema
+        EventPriceSchema
     )();
 
     return result ?? [];

@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import z from "zod";
 
 import { getMetadata, parseFirstRow, parse, parseParams, ParseContext } from "@/routes/helpers.js";
 import { EventPriceSchema, stringToInt } from "@viernulvier/shared/index.js";
