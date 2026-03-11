@@ -1,11 +1,9 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import z from "zod";
 
 import { getMetadata, parseFirstRow, parse, ParseContext } from "@/routes/helpers.js";
 import { EventSchema } from "@viernulvier/shared/index.js";
 import type { Event } from "@viernulvier/shared/index.js";
 import { normalizeEventDates, EventCreateSchema } from "./helper.js";
-import type { EventCreate } from "./helper.js";
 
 /**
  * Creates a new event row in the database.

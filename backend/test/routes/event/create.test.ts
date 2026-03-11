@@ -70,7 +70,7 @@ beforeAll(async () => {
 
 		return Promise.resolve({ rows: [] });
 	});
-	server.pg.query = queryMock;
+	server.pg.query = queryMock as any;
 });
 
 afterAll(async () => {
