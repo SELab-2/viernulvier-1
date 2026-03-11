@@ -2,11 +2,12 @@ import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import type { FastifyInstance } from "fastify";
 
 import { buildServer } from "@/server.js";
+import type { Event, EventPrice } from "@viernulvier/shared/index.js";
 
 let server: FastifyInstance;
-let storedEventPrices: Array<Record<string, unknown>>;
+let storedEventPrices: EventPrice[];
 
-const baseMockEvent = {
+const baseMockEvent: Event = {
 	id: 1,
 	starts_at: new Date("2026-01-01T18:00:00.000Z"),
 	ends_at: new Date("2026-01-01T20:00:00.000Z"),
@@ -24,19 +25,19 @@ const metaData = {
 	updated_by: 8,
 };
 
-const mockEvents = [
+const mockEvents: Event[] = [
 	baseMockEvent,
-	{ ...baseMockEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" }},
-	{ ...baseMockEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" }},
+	{ ...baseMockEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" } },
+	{ ...baseMockEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" } },
 ];
 
-const mockInvalidEvent = {
+const mockInvalidEvent: Event = {
 	...baseMockEvent,
     id: 500,
 	doors_at: "invalid-date",
 };
 
-const mockEventPrices = [
+const mockEventPrices: EventPrice[] = [
 	{ id: 1, event: 1, amount: 25.50 },
 	{ id: 2, event: 2, amount: 30.00 },
 	{ id: 3, event: 3, amount: 22.75 },
@@ -48,15 +49,7 @@ beforeAll(async () => {
 	storedEventPrices = structuredClone(mockEventPrices);
 
 	server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
-		// Handle queries that fetch event_prices
-		if (query.includes("FROM event_prices")) {
-			const eventId = params?.[0] as number | undefined;
-			if (eventId) {
-				const prices = storedEventPrices.filter(p => p["event"] === eventId);
-				return Promise.resolve({ rows: prices });
-			}
-			return Promise.resolve({ rows: storedEventPrices });
-		}
+		const includePrice = query.includes("FROM event_prices");
 
 		// Handle single event with metadata (created_at, updated_at fields)
 		if (query.includes("created_at") && query.includes("updated_at") && query.includes("WHERE id = $1")) {
@@ -66,11 +59,13 @@ beforeAll(async () => {
 			}
 			if (id > 0 && id <= mockEvents.length) {
                 const event = { ...mockEvents[Number(id) - 1], ...metaData };
+                if (includePrice) {
+                    event.price = storedEventPrices.filter(p => p["event"] === id).map(p => p.id);
+                }
                 return Promise.resolve({ rows: [event] });
             }
 
-			const event = { ...baseMockEvent };
-			return Promise.resolve({ rows: [event] });
+			return Promise.resolve({ rows: [] });
 		}
 
 		// Handle single event fetch by ID
@@ -81,14 +76,23 @@ beforeAll(async () => {
 			}
 			if (id > 0 && id <= mockEvents.length) {
                 const event = { ...mockEvents[Number(id) - 1] };
+                if (includePrice) {
+                    event.price = storedEventPrices.filter(p => p["event"] === id).map(p => p.id);
+                }
                 return Promise.resolve({ rows: [event] });
             }
 
-			const event = { ...baseMockEvent };
-			return Promise.resolve({ rows: [event] });
+			return Promise.resolve({ rows: [] });
 		}
 
 		// Handle fetching all events (no WHERE clause)
+		if (includePrice) {
+			const allEventsWithPrices = mockEvents.map(event => ({
+				...event,
+				price: storedEventPrices.filter(p => p["event"] === event.id).map(p => p.id)
+			}));
+			return Promise.resolve({ rows: allEventsWithPrices });
+		}
 		return Promise.resolve({ rows: mockEvents });
 	});
 });
@@ -108,6 +112,7 @@ describe("Event Fetch Routes", () => {
 			expect(response.statusCode).toBe(200);
 			expect(response.json()).toEqual({
 				...baseMockEvent,
+				price: storedEventPrices.filter(p => p["event"] === mockEvents[0].id).map(p => p.id),
 				starts_at: baseMockEvent.starts_at.toISOString(),
 				ends_at: baseMockEvent.ends_at.toISOString(),
 				doors_at: baseMockEvent.doors_at.toISOString(),
@@ -147,18 +152,21 @@ describe("Event Fetch Routes", () => {
 			expect(response.json()).toEqual([
 				{
 					...mockEvents[0],
+                    price: storedEventPrices.filter(p => p["event"] === mockEvents[0].id).map(p => p.id),
 					starts_at: mockEvents[0]!.starts_at.toISOString(),
 					ends_at: mockEvents[0]!.ends_at.toISOString(),
 					doors_at: mockEvents[0]!.doors_at.toISOString(),
 				},
 				{
 					...mockEvents[1],
+                    price: storedEventPrices.filter(p => p["event"] === mockEvents[1].id).map(p => p.id),
 					starts_at: mockEvents[1]!.starts_at.toISOString(),
 					ends_at: mockEvents[1]!.ends_at.toISOString(),
 					doors_at: mockEvents[1]!.doors_at.toISOString(),
 				},
 				{
 					...mockEvents[2],
+                    price: storedEventPrices.filter(p => p["event"] === mockEvents[2].id).map(p => p.id),
 					starts_at: mockEvents[2]!.starts_at.toISOString(),
 					ends_at: mockEvents[2]!.ends_at.toISOString(),
 					doors_at: mockEvents[2]!.doors_at.toISOString(),
@@ -181,6 +189,7 @@ describe("Event Fetch Routes", () => {
 				updated_at: metaData.updated_at.toISOString(),
 				created_by: metaData.created_by,
 				updated_by: metaData.updated_by,
+				price: storedEventPrices.filter(p => p["event"] === mockEvents[0].id).map(p => p.id),
 				starts_at: baseMockEvent.starts_at.toISOString(),
 				ends_at: baseMockEvent.ends_at.toISOString(),
 				doors_at: baseMockEvent.doors_at.toISOString(),

@@ -11,7 +11,7 @@ export const EventSchemaWithoutBackwardsRef = createSchema({
   doors_at: z.date(),
   vendor_id: z.int().nonnegative(),
   info: languageMap,
-  get production_id(): ForeignKey<typeof ProductionSchema> {
+  get production(): ForeignKey<typeof ProductionSchema> {
     return foreignKey(() => ProductionSchema);
   },
   get hall(): ForeignKey<typeof HallSchema> {
@@ -32,6 +32,7 @@ export const EventSchemaWithoutBackwardsRef = createSchema({
 });
 
 export const EventSchema = createSchema({
+  ...EventSchemaWithoutBackwardsRef.shape,
   get price(): z.ZodArray<ForeignKey<typeof EventPriceSchema>> {
     return z.array(foreignKey(() => EventPriceSchema));
   },
