@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import type { Production } from "@viernulvier/shared/index.js";
+import type { Production, ProductionWithMeta } from "@viernulvier/shared/index.js";
 import { ProductionSchema, stringToInt } from "@viernulvier/shared/index.js";
 import { parseParams, parseSchema, ParseContext } from "@/routes/helpers.js";
 import z from "zod";
@@ -71,6 +71,49 @@ export async function getProductionsByIds(server: FastifyInstance, ids: number[]
 export async function fetchProduction(server: FastifyInstance, request: FastifyRequest): Promise<Production | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   return await getProductionById(server, id);
+}
+
+/**
+ * Fetches a single production by ID, including metadata.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request, expected to contain `id` in its params.
+ * @returns The production with metadata, or `null` if not found or parsing failed.
+ */
+export async function fetchProductionWithMeta(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<ProductionWithMeta | null> {
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const result = await server.pg.query<ProductionWithMeta>(
+    `SELECT
+       p.id,
+       p.vendor_id,
+       p.box_office_id,
+       p.supertitle,
+       p.title,
+       p.artist,
+       p.tagline,
+       p.teaser,
+       p.description,
+       p.description_extra,
+       p.description_2,
+       p.video_1,
+       p.video_2,
+       p.quote,
+       p.quote_source,
+       p.programme,
+       p.info,
+       p.created_at,
+       p.updated_at,
+       p.created_by,
+       p.updated_by
+     FROM production p
+     WHERE p.id = $1`,
+    [id],
+  );
+
+  return parseSchema(server, z.array(ProductionSchema.withMeta()), result.rows, ParseContext.Database)[0] ?? null;
 }
 
 /**

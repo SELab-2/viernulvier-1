@@ -1,4 +1,4 @@
-export { fetchProduction, fetchProductions, getProductionById } from "./fetch.js";
+export {fetchProduction, fetchProductionWithMeta, fetchProductions, getProductionById} from "./fetch.js";
 export { createProduction } from "./create.js";
 export { replaceProduction } from "./replace.js";
 export { editProduction } from "./edit.js";

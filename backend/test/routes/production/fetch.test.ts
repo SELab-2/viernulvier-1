@@ -28,6 +28,14 @@ const baseProduction: Production = {
   info: null,
 };
 
+const baseProductionWithMeta = {
+  ...baseProduction,
+  created_at: new Date("2026-01-01T12:00:00.000Z"),
+  updated_at: new Date("2026-01-02T12:00:00.000Z"),
+  created_by: 1,
+  updated_by: 1,
+};
+
 beforeAll(async () => {
   server = await buildServer();
   sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
@@ -35,6 +43,14 @@ beforeAll(async () => {
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     const upper = query.trim().toUpperCase();
+
+    if (upper.startsWith("SELECT") && upper.includes("WHERE P.ID = $1") && upper.includes("CREATED_AT")) {
+      const id = Number(params?.[0]);
+      if (id === baseProduction["id"]) {
+        return Promise.resolve({ rows: [baseProductionWithMeta], rowCount: 1 });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    }
 
     if (upper.startsWith("SELECT") && upper.includes("WHERE P.ID = $1")) {
       const id = Number(params?.[0]);
@@ -87,6 +103,28 @@ describe("Production fetch routes", () => {
     const response = await server.inject({
       method: "GET",
       url: "/api/v1/production/9999",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(404);
+  });
+
+  test("GET /api/v1/production/:id/meta -> returns a single production with metadata", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/production/${baseProduction["id"]}/meta`,
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const parsed = ProductionSchema.withMeta().parse(response.json());
+    expect(parsed).toEqual(ProductionSchema.withMeta().parse(baseProductionWithMeta));
+  });
+
+  test("GET /api/v1/production/:id/meta -> returns 404 for unknown id", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production/9999/meta",
       cookies: { session: sessionCookie },
     });
 

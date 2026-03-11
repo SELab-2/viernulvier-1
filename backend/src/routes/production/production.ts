@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { replyHandler } from "@/routes/helpers.js";
 import {
   fetchProduction,
+  fetchProductionWithMeta,
   fetchProductions,
   createProduction,
   replaceProduction,
@@ -16,6 +17,7 @@ import {
  * @remarks
  * - `GET /api/v1/production` — fetch a list of productions.
  * - `GET /api/v1/production/:id` — fetch a single production by ID.
+ * - `GET /api/v1/production/:id/meta` — fetch a single production with metadata by ID. 🔒
  * - `POST /api/v1/production` — create a new production.
  * - `PUT /api/v1/production/:id` — replace an existing production.
  * - `PATCH /api/v1/production/:id` — partially update an existing production.
@@ -29,6 +31,7 @@ export default function productionRoutes(server: FastifyInstance) {
 
   server.get("/api/v1/production", replyHandler(server, fetchProductions));
   server.get("/api/v1/production/:id", replyHandler(server, fetchProduction));
+  server.get("/api/v1/production/:id/meta", protect, replyHandler(server, fetchProductionWithMeta));
   server.post("/api/v1/production", protect, replyHandler(server, createProduction));
   server.put("/api/v1/production/:id", protect, replyHandler(server, replaceProduction));
   server.patch("/api/v1/production/:id", protect, replyHandler(server, editProduction));
