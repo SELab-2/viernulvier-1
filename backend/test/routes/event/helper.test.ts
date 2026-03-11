@@ -1,6 +1,5 @@
 import { describe, expect, test } from "vitest";
 
-import { buildServer } from "@/server.js";
 import { normalizeEventDates, normalizePartialEventDates } from "@/routes/event/handlers/helper.js";
 
 describe("Event Date Normalization Helpers", () => {
