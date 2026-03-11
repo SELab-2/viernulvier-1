@@ -140,17 +140,18 @@ describe("Event Replace Routes", () => {
     });
 
     describe("replacing events", () => {
-        test("replaces one event and keeps the others", async () => {
-            const replacement = {
-                starts_at: new Date("2026-03-01T18:00:00.000Z"),
-                ends_at: new Date("2026-03-01T21:00:00.000Z"),
-                production: 19,
-                hall: 8,
-                doors_at: new Date("2026-03-01T17:00:00.000Z"),
-                vendor_id: 190,
-                info: { nl: "Info replaced" },
-            };
+        const replacement = {
+            starts_at: new Date("2026-03-01T18:00:00.000Z"),
+            ends_at: new Date("2026-03-01T21:00:00.000Z"),
+            production: 19,
+            hall: 8,
+            doors_at: new Date("2026-03-01T17:00:00.000Z"),
+            vendor_id: 190,
+            info: { nl: "Info replaced" },
+        };
 
+        
+        test("replaces one event", async () => {
             const replaceResponse = await server.inject({
                 method: "PUT",
                 url: "/api/v1/event/1",
@@ -167,7 +168,15 @@ describe("Event Replace Routes", () => {
                 ends_at: replacement.ends_at.toISOString(),
                 doors_at: replacement.doors_at.toISOString(),
             });
+        });
 
+        test("control if others are unchanged", async () => {
+            await server.inject({
+                method: "PUT",
+                url: "/api/v1/event/1",
+                payload: replacement,
+                cookies: { session: sessionCookie },
+            });
             const listResponse = await server.inject({
                 method: "GET",
                 url: "/api/v1/event",
@@ -191,8 +200,15 @@ describe("Event Replace Routes", () => {
             // Check other events are unchanged
             expect(events[1]!.id).toBe(2);
             expect(events[2]!.id).toBe(3);
-            
+        });
+        test("updates metadata on replace", async () => {
             // Verify metadata was updated via individual GET request
+            await server.inject({
+                method: "PUT",
+                url: "/api/v1/event/1",
+                payload: replacement,
+                cookies: { session: sessionCookie },
+            });
             const getResponse = await server.inject({
                 method: "GET",
                 url: "/api/v1/event/1/meta",

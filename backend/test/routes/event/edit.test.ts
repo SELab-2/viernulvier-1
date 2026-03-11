@@ -59,14 +59,14 @@ beforeAll(async () => {
 
 		if (query.includes("FROM events WHERE id = $1")) {
 			const id = Number(params?.[0]);
-			const foundEvent = storedEvents.find((row) => Number(row["id"]) === id);
-			if (!foundEvent) return Promise.resolve({ rows: [] });
-			const event = { ...foundEvent, price: [] };
-			return Promise.resolve({ rows: [event] });
+			if (id > storedEvents.length) return Promise.resolve({ rows: [] });
+			const event = { ...storedEvents.find((row) => Number(row["id"]) === id), price: [] };
+			return Promise.resolve({ rows: event ? [event] : [] });
 		}
 
 		if (query.includes("FROM events")) {
-			return Promise.resolve({ rows: storedEvents });
+			const events = storedEvents.map((row) => ({ ...row, price: [] }));
+			return Promise.resolve({ rows: events });
 		}
 
 		return Promise.resolve({ rows: [] });
@@ -147,7 +147,6 @@ describe("Event Edit Routes", () => {
 			expect(body.info).toEqual(initialEvents[1]!.info);
 			expect(body.price).toEqual([]);
 
-			/*
 			const listResponse = await server.inject({
 				method: "GET",
 				url: "/api/v1/event",
@@ -166,7 +165,6 @@ describe("Event Edit Routes", () => {
 			expect(listedEvent.vendor_id).toBe(initialEvents[1]!.vendor_id);
 			expect(listedEvent.info).toEqual(initialEvents[1]!.info);
 			expect(listedEvent.price).toEqual([]);
-			*/
 		});
 
 		test("updates multiple fields on one event", async () => {
@@ -196,7 +194,6 @@ describe("Event Edit Routes", () => {
 			expect(editBody.info).toEqual(initialEvents[1]!.info);
 			expect(editBody.price).toEqual([]);
 
-			/*
 			const listResponse = await server.inject({
 				method: "GET",
 				url: "/api/v1/event",
@@ -211,7 +208,6 @@ describe("Event Edit Routes", () => {
 			expect(listedEvent2.ends_at).toBe(newEndsAt.toISOString());
 			expect(listedEvent2.hall).toBe(9);
 			expect(listedEvent2.doors_at).toBe(initialEvents[1]!.doors_at.toISOString());
-			*/
 		});
 
 		test("edits one event and keeps the others unchanged", async () => {
@@ -234,7 +230,6 @@ describe("Event Edit Routes", () => {
 			expect(editBody.info).toEqual(initialEvents[0]!.info);
 			expect(editBody.price).toEqual([]);
 
-			/*
 			const listResponse = await server.inject({
 				method: "GET",
 				url: "/api/v1/event",
@@ -255,7 +250,6 @@ describe("Event Edit Routes", () => {
 			expect(events[1]!.vendor_id).toBe(initialEvents[1]!.vendor_id);
 			expect(events[2]!.id).toBe(3);
 			expect(events[2]!.vendor_id).toBe(initialEvents[2]!.vendor_id);
-			*/
 		});
 	});
 
