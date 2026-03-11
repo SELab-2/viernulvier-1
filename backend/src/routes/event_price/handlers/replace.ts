@@ -1,13 +1,13 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 
-import { getMetadata, parseFirstRow, parse, ParseContext } from "@/routes/helpers.js";
+import { getMetadata, parseFirstRow, parse, parseParams, ParseContext } from "@/routes/helpers.js";
 import { EventPriceSchema, stringToInt } from "@viernulvier/shared/index.js";
 import type { EventPrice } from "@viernulvier/shared/index.js";
 import { EventPriceCreateSchema } from "./helper.js";
 import type { EventPriceCreate } from "./helper.js";
 
 /**
- * Updates a single event price row in the database.
+ * Replaces a single event price row in the database.
  * Helpers returns a 400 response when the request body is invalid.
  *
  * @param server - The Fastify instance, used for database access and logging.
@@ -15,7 +15,7 @@ import type { EventPriceCreate } from "./helper.js";
  * @param reply - The Fastify reply used to send HTTP error responses.
  * @returns The updated event or `null` upon failure.
  */
-export async function updateEventPrice(
+export async function replaceEventPrice(
 	server: FastifyInstance,
 	request: FastifyRequest,
 ): Promise<EventPrice | null> {
