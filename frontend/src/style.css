@@ -1,79 +1,235 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
+*, *::before, *::after {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-.card {
-  padding: 2em;
+html, body {
+  width: 100%;
+  height: 100%;
 }
 
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  text-align: unset;
+}
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background: #fff;
+  color: #111;
+  overflow-x: hidden;
+}
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0 !important;
+  padding: 0 !important;
+  max-width: none !important;
+  text-align: unset !important;
+}
+
+.app {
+  width: 100%;
+  min-height: 100vh;
+  background: #fff;
+  color: #111;
+  transition: background 0.2s, color 0.2s;
+}
+
+.app.dark {
+  background: #111;
+  color: #fff;
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  background: #1a1a1a;
+  color: #fff;
+  padding: 0 2.5rem;
+  height: 72px;
+}
+
+.nav-left {
+  display: flex;
+  gap: 2.5rem;
+  min-width: 180px;
+}
+
+.nav-link {
+  color: #fff;
+  text-decoration: none;
+  font-size: 1.1rem;
+}
+
+.nav-link:hover {
+  text-decoration: underline;
+}
+
+.nav-logo {
+  flex: 1;
   text-align: center;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+.logo-img {
+  height: 38px;
+  filter: brightness(0) invert(1);
+}
+
+.nav-right {
+  display: flex;
+  gap: 1.2rem;
+  align-items: center;
+  min-width: 180px;
+  justify-content: flex-end;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn:hover {
+  color: #fff;
+}
+
+/* Main content */
+.main-content {
+  width: 80%;
+  padding: 3.5rem 5rem;
+  margin: 0 auto;
+}
+
+/* Hero */
+.hero {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.hero-title {
+  font-size: 2.6rem;
+  font-weight: 700;
+  margin-bottom: 1.2rem;
+}
+
+.hero-subtitle {
+  font-size: 1.05rem;
+  color: #444;
+  line-height: 1.8;
+  margin-bottom: 2rem;
+}
+
+.app.dark .hero-subtitle {
+  color: #aaa;
+}
+
+.cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.8rem 1.8rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.app.dark .cta-btn {
+  background: #fff;
+  color: #111;
+}
+
+.cta-btn:hover {
+  opacity: 0.85;
+}
+
+/* Info card */
+.info-card {
+  background: #e8e8e8;
+  border-radius: 12px;
+  padding: 2rem 2.4rem;
+  margin-bottom: 2rem;
+}
+
+.app.dark .info-card {
+  background: #2a2a2a;
+}
+
+.info-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.7rem;
+}
+
+.info-text {
+  font-size: 1rem;
+  color: #333;
+  line-height: 1.7;
+}
+
+.app.dark .info-text {
+  color: #bbb;
+}
+
+/* Stats */
+.stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.stat-card {
+  background: #e8e8e8;
+  border-radius: 10px;
+  padding: 1.2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 0 1 25%;
+}
+
+.app.dark .stat-card {
+  background: #2a2a2a;
+}
+
+.stat-number {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: #555;
+}
+
+.app.dark .stat-label {
+  color: #999;
 }
