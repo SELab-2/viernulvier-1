@@ -2,12 +2,12 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import z from "zod";
 
 import { parse, ParseContext } from "@/routes/helpers.js";
-import { EventSchema } from "@viernulvier/shared/types/event.js";
+import { EventSchema, EventSchemaWithoutPrice } from "@viernulvier/shared/types/event.js";
 import type { Event } from "@viernulvier/shared/types/event.js";
 import { fetchEvent } from "./fetch.js";
 import { normalizePartialEventDates } from "./helper.js";
 
-const EventBulkUpdateSchema = EventSchema.partial().extend({
+const EventBulkUpdateSchema = EventSchemaWithoutPrice.partial().extend({
     ids: z.array(EventSchema.shape.id),
 });
 

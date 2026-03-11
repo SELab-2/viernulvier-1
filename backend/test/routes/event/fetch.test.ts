@@ -6,6 +6,7 @@ import type { Event, EventPrice } from "@viernulvier/shared/index.js";
 
 let server: FastifyInstance;
 let storedEventPrices: EventPrice[];
+let sessionCookie: string;
 
 const baseMockEvent: Event = {
 	id: 1,
@@ -47,6 +48,8 @@ const mockEventPrices: EventPrice[] = [
 beforeAll(async () => {
 	server = await buildServer();
 	storedEventPrices = structuredClone(mockEventPrices);
+	sessionCookie = server.jwt.sign({ id: 1, username: "TestAdmin" });
+
 
 	server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
 		const includePrice = query.includes("FROM event_prices");
@@ -145,6 +148,7 @@ describe("Event Fetch Routes", () => {
 			const response = await server.inject({
 				method: "GET",
 				url: "/api/v1/event",
+				cookies: { session: sessionCookie },
 			});
 
 			expect(response.statusCode).toBe(200);
@@ -200,6 +204,7 @@ describe("Event Fetch Routes", () => {
 			const response = await server.inject({
 				method: "GET",
 				url: "/api/v1/event/404/meta",
+				cookies: { session: sessionCookie },
 			});
 
 			expect(response.statusCode).toBe(404);

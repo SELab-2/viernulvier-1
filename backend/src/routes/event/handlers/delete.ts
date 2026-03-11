@@ -17,7 +17,8 @@ export async function deleteEvent(
     request: FastifyRequest
 ): Promise<Event | null> {  
     const result = await server.pg.query<Event>(
-        `DELETE FROM events WHERE id = $1 RETURNING id, starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, price`,
+        `DELETE FROM events WHERE id = $1 RETURNING id, starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, 
+            (SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price`,
         [getParam(request, "id")]
     );
 

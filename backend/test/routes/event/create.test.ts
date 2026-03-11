@@ -3,21 +3,22 @@ import type { FastifyInstance } from "fastify";
 
 import { buildServer } from "@/server.js";
 
+
 let server: FastifyInstance;
 let queryMock: ReturnType<typeof vi.fn>;
 let storedEvents: Array<Record<string, unknown>>;
+let idCounter = 1;
 let shouldRejectQuery = false;
+let sessionCookie: string;
 
 const basePayload = {
-	id: 1,
-	starts_at: new Date("2026-01-01T18:00:00.000Z"),
-	ends_at: new Date("2026-01-01T20:00:00.000Z"),
+	starts_at: "2026-01-01T18:00:00.000Z",
+	ends_at: "2026-01-01T20:00:00.000Z",
 	production: 10,
 	hall: 3,
-	doors_at: new Date("2026-01-01T17:30:00.000Z"),
+	doors_at: "2026-01-01T17:30:00.000Z",
 	vendor_id: 42,
 	info: { nl: "Info mock create" },
-	price: [1],
 };
 
 function buildPayload(vendorId: number) {
@@ -29,6 +30,7 @@ function buildPayload(vendorId: number) {
 
 beforeAll(async () => {
 	server = await buildServer();
+	sessionCookie = server.jwt.sign({ id: 1, username: "TestAdmin" });
 
 	queryMock = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
 		if (shouldRejectQuery) {
@@ -36,33 +38,34 @@ beforeAll(async () => {
 		}
 
 		if (query.includes("INSERT INTO events")) {
-			const vendorId = params?.[5];
+			const vendorId = params?.[5] as number;
 			if (vendorId === 404) return Promise.resolve({ rows: [] });
 
-			const createdEvent = {
-				id: 1,
-				starts_at: params?.[0] as Date,
-				ends_at: params?.[1] as Date,
-				production: params?.[2] as number,
-				hall: params?.[3] as number,
-				doors_at: params?.[4] as Date,
-				vendor_id: params?.[5] as number,
-				info: params?.[6],
-				price: params?.[7],
-			};
-
-			storedEvents.push(createdEvent);
-			return Promise.resolve({ rows: [createdEvent] });
+			// Return event with data from params
+			return Promise.resolve({
+				rows: [{
+					id: idCounter++,
+					starts_at: params?.[0],
+					ends_at: params?.[1],
+					production: params?.[2],
+					hall: params?.[3],
+					doors_at: params?.[4],
+					vendor_id: params?.[5],
+					info: params?.[6],
+					price: [],
+				}],
+			});
 		}
 
 		if (query.includes("FROM events WHERE id = $1")) {
 			const id = Number(params?.[0]);
 			const event = storedEvents.find((row) => Number(row["id"]) === id);
-			return Promise.resolve({ rows: event ? [event] : [] });
+			return Promise.resolve({ rows: event ? [{ ...event, price: [] }] : [] });
 		}
 
 		if (query.includes("FROM events")) {
-			return Promise.resolve({ rows: storedEvents });
+			const events = storedEvents.map((row) => ({ ...row, price: [] }));
+			return Promise.resolve({ rows: events });
 		}
 
 		return Promise.resolve({ rows: [] });
@@ -93,6 +96,7 @@ describe("Event Create Routes", () => {
 				method: "POST",
 				url: "/api/v1/event",
 				payload: buildPayload(42),
+				cookies: { session: sessionCookie },
 			});
 
 			expect(response.statusCode).toBe(500);
@@ -106,6 +110,7 @@ describe("Event Create Routes", () => {
 					id: 1,
 					vendor_id: 42,
 				},
+				cookies: { session: sessionCookie },
 			});
 
 			expect(response.statusCode).toBe(400);
@@ -118,6 +123,7 @@ describe("Event Create Routes", () => {
 				method: "POST",
 				url: "/api/v1/event",
 				payload: buildPayload(404),
+				cookies: { session: sessionCookie },
 			});
 
 			expect(response.statusCode).toBe(404);
@@ -131,14 +137,14 @@ describe("Event Create Routes", () => {
 				method: "POST",
 				url: "/api/v1/event",
 				payload: buildPayload(42),
+				cookies: { session: sessionCookie },
 			});
 
 			expect(response.statusCode).toBe(200);
 			expect(response.json()).toEqual({
+				id: 1,
 				...basePayload,
-				starts_at: basePayload.starts_at.toISOString(),
-				ends_at: basePayload.ends_at.toISOString(),
-				doors_at: basePayload.doors_at.toISOString(),
+				price: [],
 			});
 			expect(queryMock).toHaveBeenCalledOnce();
 			const params = queryMock.mock.calls[0]?.[1] as unknown[];
