@@ -1,8 +1,8 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 
 import { getParam, parseFirstRow } from "@/routes/helpers.js";
-import { EventSchema } from "@viernulvier/shared/types/event.js";
-import type { Event } from "@viernulvier/shared/types/event.js";
+import { EventSchema } from "@viernulvier/shared/index.js";
+import type { Event } from "@viernulvier/shared/index.js";
 
 /**
  * Deletes a single event by ID from the database.
