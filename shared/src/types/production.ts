@@ -1,6 +1,6 @@
 import z from "zod";
-import { createSchema } from "./metadata.js";
 import { EventSchema } from "./event.js";
+import { createSchema } from "./metadata.js";
 import { TagSchema } from "./tag.js";
 import { foreignKey, primaryKey, languageMap, ForeignKey } from "./helpers.js";
 

@@ -11,7 +11,6 @@ import { createSchema } from "./metadata.js";
 export const TagTypeSchema = createSchema({
   id: primaryKey(),
   name: languageMap,
-  visible: z.boolean(),
 });
 
 export type TagType = z.infer<typeof TagTypeSchema>;
@@ -23,6 +22,8 @@ export const TagSchema = createSchema({
   id: primaryKey(),
   name: languageMap,
   type: foreignKey(() => TagTypeSchema),
+  public: z.boolean(),
+
   get productions(): z.ZodArray<ForeignKey<typeof ProductionSchema>> {
     return z.array(foreignKey(() => ProductionSchema));
   },
