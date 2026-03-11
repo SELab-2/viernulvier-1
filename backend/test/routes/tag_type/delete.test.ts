@@ -58,7 +58,7 @@ describe("Delete tag_type", () => {
     const response = await server.inject({
       method: "DELETE",
       cookies: { session: sessionCookie },
-      url: `/api/v1/tag/type/999`,
+      url: `/api/v1/tags/type/999`,
     });
 
     expect(response.statusCode).toBe(404);
