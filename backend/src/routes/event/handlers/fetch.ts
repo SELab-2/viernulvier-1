@@ -14,19 +14,19 @@ import type { Event, EventWithMeta } from "@viernulvier/shared/index.js";
  * @returns The parsed event, or `null` if not found or validation failed.
  */
 export async function fetchEvent(
-    server: FastifyInstance,
-    request: FastifyRequest
+  server: FastifyInstance,
+  request: FastifyRequest
 ): Promise<Event | null> {
-    const { id } = parseParams(request, z.object({ id: stringToInt }));
-    const result = await buildQuery(server,
-        `SELECT id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, 
-            (SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price
-        FROM events WHERE id = $1`,
-        z.tuple([z.int()]),
-        EventSchema,
-    )(id);
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const result = await buildQuery(server,
+    `SELECT id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, 
+        (SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price
+    FROM events WHERE id = $1`,
+    z.tuple([z.int()]),
+    EventSchema,
+  )(id);
 
-    return result[0] ?? null;
+  return result[0] ?? null;
 }
 
 /**
@@ -38,21 +38,21 @@ export async function fetchEvent(
  * @returns The parsed event with metadata, or `null` if not found or validation failed.
  */
 export async function fetchEventWithMeta(
-    server: FastifyInstance,
-    request: FastifyRequest
+  server: FastifyInstance,
+  request: FastifyRequest
 ): Promise<EventWithMeta | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
-    const result = await buildQuery(
-        server,
-        `SELECT id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, 
-            (SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price,
-            created_at, updated_at, created_by, updated_by
-        FROM events WHERE id = $1`,
-        z.tuple([z.int()]),
-        EventSchema.withMeta(),
-    )(id);
+const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const result = await buildQuery(
+    server,
+    `SELECT id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, 
+        (SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price,
+        created_at, updated_at, created_by, updated_by
+    FROM events WHERE id = $1`,
+    z.tuple([z.int()]),
+    EventSchema.withMeta(),
+  )(id);
 
-    return result[0] ?? null;
+  return result[0] ?? null;
 }
 
 /**
@@ -63,15 +63,15 @@ export async function fetchEventWithMeta(
  * @returns An array of parsed events.
  */
 export async function fetchEvents(
-    server: FastifyInstance
+  server: FastifyInstance
 ): Promise<Event[]> {
-    const result = await buildQuery(
-        server,
-        `SELECT id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, 
-            (SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price
-        FROM events`,
-        EventSchema
-    )();
+  const result = await buildQuery(
+    server,
+    `SELECT id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, 
+        (SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price
+    FROM events`,
+    EventSchema
+  )();
 
-    return result;
+  return result;
 }

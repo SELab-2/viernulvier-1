@@ -312,3 +312,4 @@ describe("Event Bulk Edit Routes", () => {
 		});
 	});
 });
+
