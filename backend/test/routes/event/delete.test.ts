@@ -5,6 +5,7 @@ import { buildServer } from "@/server.js";
 
 let server: FastifyInstance;
 let storedEvents: Array<Record<string, unknown>>;
+let sessionCookie: string;
 
 const baseEvent = {
 	id: 1,
@@ -26,6 +27,7 @@ const initialEvents = [
 
 beforeAll(async () => {
 	server = await buildServer();
+	sessionCookie = server.jwt.sign({ id: 1, username: "TestAdmin" });
 
 	server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
 		if (query.includes("DELETE FROM events WHERE id = $1")) {
@@ -68,6 +70,7 @@ describe("Event Delete Routes", () => {
 			const response = await server.inject({
 				method: "DELETE",
 				url: "/api/v1/event/1",
+				cookies: { session: sessionCookie },
 			});
 
 			expect(response.statusCode).toBe(500);
@@ -78,6 +81,7 @@ describe("Event Delete Routes", () => {
 			const response = await server.inject({
 				method: "DELETE",
 				url: "/api/v1/event/999",
+				cookies: { session: sessionCookie },
 			});
 
 			expect(response.statusCode).toBe(404);
@@ -90,6 +94,7 @@ describe("Event Delete Routes", () => {
 		const deleteResponse = await server.inject({
 			method: "DELETE",
 			url: "/api/v1/event/2",
+			cookies: { session: sessionCookie },
 		});
 
 		expect(deleteResponse.statusCode).toBe(200);
@@ -103,6 +108,7 @@ describe("Event Delete Routes", () => {
 		const listResponse = await server.inject({
 			method: "GET",
 			url: "/api/v1/event",
+			cookies: { session: sessionCookie },
 		});
 
 		expect(listResponse.statusCode).toBe(200);

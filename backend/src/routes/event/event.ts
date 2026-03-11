@@ -17,7 +17,7 @@ export default function eventRoutes(server: FastifyInstance) {
 
     server.get("/api/v1/event/:id", replyHandler(server, fetchEvent));
     server.get("/api/v1/event/:id/meta", replyHandler(server, fetchEventWithMeta));
-    server.get("/api/v1/event", protect, replyHandler(server, fetchEvents));
+    server.get("/api/v1/event", replyHandler(server, fetchEvents));
     server.post("/api/v1/event", protect, replyHandler(server, createEvent));
     server.delete("/api/v1/event/:id", protect, replyHandler(server, deleteEvent));
     server.put("/api/v1/event/:id", protect, replyHandler(server, replaceEvent));

@@ -41,20 +41,20 @@ beforeAll(async () => {
 			const vendorId = params?.[5] as number;
 			if (vendorId === 404) return Promise.resolve({ rows: [] });
 
-			// Return event with data from params
-			return Promise.resolve({
-				rows: [{
-					id: idCounter++,
-					starts_at: params?.[0],
-					ends_at: params?.[1],
-					production: params?.[2],
-					hall: params?.[3],
-					doors_at: params?.[4],
-					vendor_id: params?.[5],
-					info: params?.[6],
-					price: [],
-				}],
-			});
+			const createdEvent = {
+				id: idCounter++,
+				starts_at: params?.[0] as Date,
+				ends_at: params?.[1] as Date,
+				production: params?.[2] as number,
+				hall: params?.[3] as number,
+				doors_at: params?.[4] as Date,
+				vendor_id: params?.[5] as number,
+				info: params?.[6],
+			};
+
+			storedEvents.push(createdEvent);
+			const event = { ...createdEvent, price: [] };
+			return Promise.resolve({ rows: [event] });
 		}
 
 		if (query.includes("FROM events WHERE id = $1")) {
