@@ -137,3 +137,4 @@ describe("Event Price Replace Route", () => {
 		expect(response.statusCode).toBe(401);
 	});
 });
+

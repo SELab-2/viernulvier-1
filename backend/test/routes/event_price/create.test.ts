@@ -147,3 +147,4 @@ describe("Event Price Create Route", () => {
 		expect(storedEventPrices[0]).toEqual(initialEventPrices[0]);
 	});
 });
+

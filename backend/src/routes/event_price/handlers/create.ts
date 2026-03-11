@@ -37,4 +37,3 @@ export async function createEventPrice(
 
 	return parseFirstRow(server, EventPriceSchema, result.rows);
 }
-

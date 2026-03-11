@@ -14,18 +14,18 @@ import type { EventPrice, EventPriceWithMeta } from "@viernulvier/shared/index.j
  * @returns The parsed event price, or `null` if not found or validation failed.
  */
 export async function fetchEventPrice(
-    server: FastifyInstance,
-    request: FastifyRequest
+  server: FastifyInstance,
+  request: FastifyRequest
 ): Promise<EventPrice | null> {
-    const { id } = parseParams(request, z.object({ id: stringToInt }));
-    const result = await buildQuery(server,
-        `SELECT id, event, amount
-        FROM event_price WHERE id = $1`,
-        z.tuple([z.int()]),
-        EventPriceSchema,
-    )(id);
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const result = await buildQuery(server,
+    `SELECT id, event, amount
+    FROM event_price WHERE id = $1`,
+    z.tuple([z.int()]),
+    EventPriceSchema,
+  )(id);
 
-    return result[0] ?? null;
+  return result[0] ?? null;
 }
 
 /**
@@ -37,19 +37,19 @@ export async function fetchEventPrice(
  * @returns The parsed event price with metadata, or `null` if not found or validation failed.
  */
 export async function fetchEventPriceWithMeta(
-    server: FastifyInstance,
-    request: FastifyRequest
+  server: FastifyInstance,
+  request: FastifyRequest
 ): Promise<EventPriceWithMeta | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
-    const result = await buildQuery(
-        server,
-        `SELECT id, event, amount, created_at, updated_at, created_by, updated_by
-        FROM event_price WHERE id = $1`,
-        z.tuple([z.int()]),
-        EventPriceSchema.withMeta(),
-    )(id);
+const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const result = await buildQuery(
+    server,
+    `SELECT id, event, amount, created_at, updated_at, created_by, updated_by
+    FROM event_price WHERE id = $1`,
+    z.tuple([z.int()]),
+    EventPriceSchema.withMeta(),
+  )(id);
 
-    return result[0] ?? null;
+  return result[0] ?? null;
 }
 
 /**
@@ -60,14 +60,14 @@ export async function fetchEventPriceWithMeta(
  * @returns An array of parsed event prices.
  */
 export async function fetchEventPrices(
-    server: FastifyInstance
+  server: FastifyInstance
 ): Promise<EventPrice[]> {
-    const result = await buildQuery(
-        server,
-        `SELECT id, event, amount
-        FROM event_price`,
-        EventPriceSchema
-    )();
+  const result = await buildQuery(
+    server,
+    `SELECT id, event, amount
+    FROM event_price`,
+    EventPriceSchema
+  )();
 
-    return result;
+  return result;
 }

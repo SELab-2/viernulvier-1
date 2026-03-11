@@ -156,3 +156,4 @@ describe("Event Price Edit Route", () => {
 		expect(response.statusCode).toBe(401);
 	});
 });
+

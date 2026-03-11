@@ -14,16 +14,16 @@ import type { EventPrice } from "@viernulvier/shared/index.js";
  * @returns The parsed event price, or `null` if not found or validation failed.
  */
 export async function deleteEventPrice(
-    server: FastifyInstance,
-    request: FastifyRequest
+  server: FastifyInstance,
+  request: FastifyRequest
 ): Promise<EventPrice | null> {
-    const { id } = parseParams(request, z.object({ id: stringToInt }));
-    const result = await buildQuery(server,
-        `RETURNING id, event, amount
-        DELETE FROM event_price WHERE id = $1`,
-        z.tuple([z.int()]),
-        EventPriceSchema,
-    )(id);
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const result = await buildQuery(server,
+    `RETURNING id, event, amount
+    DELETE FROM event_price WHERE id = $1`,
+    z.tuple([z.int()]),
+    EventPriceSchema,
+  )(id);
 
-    return result[0] ?? null;
+  return result[0] ?? null;
 }

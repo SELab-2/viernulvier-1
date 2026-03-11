@@ -98,3 +98,4 @@ describe("Event Price Delete Route", () => {
 		expect(response.statusCode).toBe(401);
 	});
 });
+
