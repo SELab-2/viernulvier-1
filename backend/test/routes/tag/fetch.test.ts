@@ -15,6 +15,14 @@ const tag1: Tag = {
   public: true,
 };
 
+const tag1WithMeta = {
+  ...tag1,
+  created_at: new Date(),
+  updated_at: new Date(),
+  created_by: 1,
+  updated_by: 1,
+};
+
 const mockTags: Tag[] = [
   tag1,
   {
@@ -32,7 +40,9 @@ beforeAll(async () => {
   sessionCookie = server.jwt.sign({ id: 1, username: "Admin" });
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
-    const id = params?.[0];
+  const id = params?.[0];
+
+    const isMetaQuery = query.includes("created_at");
 
     let rows;
 
@@ -44,6 +54,16 @@ beforeAll(async () => {
       rows = mockTags.filter((t) => t.id === Number(id));
     } else {
       rows = mockTags;
+    }
+
+    if (isMetaQuery) {
+      rows = rows.map((t) => ({
+        ...t,
+        created_at: tag1WithMeta.created_at,
+        updated_at: tag1WithMeta.updated_at,
+        created_by: 1,
+        updated_by: 1,
+      }));
     }
 
     return Promise.resolve({ rows, rowCount: rows.length });
@@ -102,4 +122,31 @@ describe("Fetch tags for production", () => {
     expect(response.statusCode).toBe(200);
     expect(TagSchema.array().parse(response.json())).toEqual(mockTags);
   });
+});
+
+describe("Fetch tag with metadata", () => {
+
+  test("GET /api/v1/tags/:id/meta", async () => {
+
+    const response = await server.inject({
+      method: "GET",
+      cookies: { session: sessionCookie },
+      url: `/api/v1/tags/${tag1WithMeta.id}/meta`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(TagSchema.withMeta().parse(response.json())).toEqual(tag1WithMeta);
+  });
+
+  test("GET returns 404 when tag not found", async () => {
+
+    const response = await server.inject({
+      method: "GET",
+      cookies: { session: sessionCookie },
+      url: `/api/v1/tags/999/meta`,
+    });
+
+    expect(response.statusCode).toBe(404);
+  });
+
 });

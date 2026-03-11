@@ -8,6 +8,7 @@ import {
   editTagType,
   deleteTagType,
   replaceTagType,
+  fetchTagTypeWithMeta,
 } from "./handlers/index.js";
 
 export default function tagTypeRoutes(server: FastifyInstance) {
@@ -15,6 +16,7 @@ export default function tagTypeRoutes(server: FastifyInstance) {
 
   server.get("/api/v1/tags/type", replyHandler(server, fetchTagTypes));
   server.get("/api/v1/tags/type/:id", replyHandler(server, fetchTagType));
+  server.get("/api/v1/tags/type/:id/meta",protect, replyHandler(server, fetchTagTypeWithMeta));
   server.post("/api/v1/tags/type", protect, replyHandler(server, createTagType));
 
   server.patch("/api/v1/tags/type/:id", protect, replyHandler(server, editTagType));

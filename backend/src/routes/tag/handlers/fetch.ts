@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import type { Tag } from "@viernulvier/shared/index.js";
+import type { Tag, TagWithMeta } from "@viernulvier/shared/index.js";
 import { TagSchema } from "@viernulvier/shared/index.js";
 import { getParam, parseFirstRow } from "@/routes/helpers.js";
 
@@ -16,6 +16,25 @@ async function fetchTag(
   );
 
   return parseFirstRow(server, TagSchema, result.rows);
+}
+
+
+
+async function fetchTagWithMeta(
+  server: FastifyInstance,
+  request: FastifyRequest
+): Promise<TagWithMeta | null> {
+
+  const result = await server.pg.query<TagWithMeta>(
+    `SELECT id, name, type_id, public,
+            created_at, updated_at,
+            created_by, updated_by
+     FROM tag
+     WHERE id = $1`,
+    [getParam(request, "id")]
+  );
+
+  return parseFirstRow(server, TagSchema.withMeta(), result.rows);
 }
 
 async function fetchTags(
@@ -45,4 +64,4 @@ async function fetchTags(
   return result.rows;
 }
 
-export { fetchTag, fetchTags};
+export { fetchTag, fetchTags, fetchTagWithMeta };

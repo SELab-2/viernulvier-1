@@ -88,15 +88,13 @@ describe("Edit tag_type", () => {
 
 });
 
-test("PATCH /api/v1/tags/type/:id updates visible", async () => {
+test("PATCH /api/v1/tags/type/:id without name still updates metadata", async () => {
 
   const response = await server.inject({
     method: "PATCH",
     url: `/api/v1/tags/type/${tagType.id}`,
     cookies: { session: sessionCookie },
-    payload: {
-      visible: tagType.visible,
-    },
+    payload: {}, // no name field
   });
 
   expect(response.statusCode).toBe(200);

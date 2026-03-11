@@ -8,13 +8,15 @@ import {
   editTag,
   deleteTag,
   replaceTag,
+  fetchTagWithMeta,
 } from "./handlers/index.js";
 
 export default function tagRoutes(server: FastifyInstance) {
   const protect = { preHandler: [server.authorize] };
 
-  server.get("/api/v1/tags",protect, replyHandler(server, fetchTags));
+  server.get("/api/v1/tags", protect, replyHandler(server, fetchTags));
   server.get("/api/v1/tags/:id", protect, replyHandler(server, fetchTag));
+  server.get("/api/v1/tags/:id/meta", protect, replyHandler(server, fetchTagWithMeta));
   server.post("/api/v1/tags", protect, replyHandler(server, createTag));
 
   server.put("/api/v1/tags/:id", protect, replyHandler(server, replaceTag));
