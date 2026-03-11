@@ -40,7 +40,8 @@ export async function login(server: FastifyInstance, request: FastifyRequest, re
 
   // always compare hash to prevent a timing attack
   const valid = await comparePassword(password, rows[0]?.password ?? DUMMY_HASH);
-  if (!valid) throw new HttpError(401, "Invalid credentials");
+
+  if (!valid || rows.length == 0) throw new HttpError(401, "Invalid credentials");
 
   const token = server.jwt.sign(
     { id: rows[0]!.id, username },
@@ -54,5 +55,5 @@ export async function login(server: FastifyInstance, request: FastifyRequest, re
     path: "/",
   });
 
-  return { succes: true };
+  return { success: true };
 }

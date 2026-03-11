@@ -116,18 +116,17 @@ const parseErrors: Readonly<Record<ParseContextType, HttpError>> = {
     "Internal server error",
   ),
 };
-
 /**
  * Uses a zod schema to validate the params and returns them as an object.
  *
- * @usage `const { id } = parseParams(request, z.object({ id: stringToInt() }))`
+ * Example: `const { id } = parseParams(request, z.object({ id: stringToInt }))`
  *
  * Remember that all params are strings and thus must be converted to the right data type
- * with a codec. {@linkplain https://zod.dev/codecs}
+ * with a codec. See https://zod.dev/codecs
  * @param request - The Fastify request to extract parameters from.
- * @param schema - The schema to ber used to validate the parameters.
+ * @param schema - The schema to be used to validate the parameters.
  * @returns A type safe object where all required params have been validated.
- * @throws - {@link HttpError} If parameters don't match the schema.
+ * @throws `HttpError` If parameters don't match the schema.
  */
 export function parseParams<
   ParamType extends z.ZodRawShape,
@@ -143,7 +142,7 @@ export function parseParams<
 // Coverage ignore as it is being deprecated.
 /* v8 ignore start */
 /**
- * @deprecated Please use {@link parseParams()} instead.
+ * @deprecated Please use `parseParams()` instead.
  *
  * @param request - The Fastify request to extract params from.
  * @param key - The parameter key to extract.
@@ -154,7 +153,7 @@ export function getParam(request: FastifyRequest, key: string): string {
   // eslint-disable-next-line security/detect-object-injection
   const value = (request.params as Record<string, string>)[key];
   if (value === undefined)
-    throw new HttpError(400, `Missing route parameter: "${key}"`);
+    throw new HttpError(HttpClientError.BadRequest, `Missing route parameter: "${key}"`);
   return value;
 }
 /* v8 ignore stop */
@@ -168,7 +167,7 @@ export function getParam(request: FastifyRequest, key: string): string {
  * @param value - The raw value to parse.
  * @param context - The context in which the parse is happening, used to determine the error response.
  * @returns The parsed and typed value.
- * @throws - {@link HttpError} if validation failed.
+ * @throws {@link HttpError} if validation failed.
  *
  * @internal
  */
@@ -190,7 +189,7 @@ export function parseSchema<ResultSchema extends z.ZodType>(
 // Coverage ignore as it is being deprecated.
 /* v8 ignore start */
 /**
- *  @deprecated currently just an alias for {@link parseSchema}, I suggest using that instead
+ *  @deprecated currently just an alias for `parseSchema`, I suggest using that instead.
  */
 export const parse = parseSchema;
 /* v8 ignore stop */
@@ -198,7 +197,7 @@ export const parse = parseSchema;
 // Coverage ignore as it is being deprecated
 /* v8 ignore start */
 /**
- * @deprecated please use {@link buildQuery()} instead
+ * @deprecated please use `buildQuery()` instead
  *
  * @param server - The Fastify instance, used for error logging.
  * @param schema - The Zod schema to validate and parse the row against.
@@ -224,11 +223,11 @@ export function parseFirstRow<
 /**
  * Helper function that adds data validation to both the input and output of a db query.
  *
- * @param {FastifyInstance} server - The fastify server instance to be used to report errors.
- * @param {Parameters<typeof server.pg.query>[0]} queryConfig - Any query config supported by `server.pg.query`
- * @param {ResultSchema} resultSchema - The schema that will be used to validate the data retrieved from the query. This is automatically wrapped in `z.array()`
- * @return {*} A query that can then be executed returning a promise with type safe and validated results.
- * @throws - {@link HttpError} on either a database error or a validation error. Logs the details.
+ * @param server - The Fastify instance, used for error reporting.
+ * @param queryConfig - Any query config supported by `server.pg.query`
+ * @param resultSchema - The schema that will be used to validate the data retrieved from the query. This is automatically wrapped in `z.array()`
+ * @returns A query that can then be executed returning a promise with type safe and validated results.
+ * @throws `HttpError` on either a database error or a validation error. Logs the details.
  */
 export function buildQuery<
   ResultType extends z.ZodRawShape,
@@ -241,10 +240,10 @@ export function buildQuery<
 /**
  * Helper function that adds data validation to both the input and output of a db query.
  *
- * @param {FastifyInstance} server - The fastify server instance to be used to report errors.
- * @param {Parameters<typeof server.pg.query>[0]} queryConfig - Any query config supported by `server.pg.query`
- * @param {FilterFields} filterFields - A ZodTuple that specifies which types the values going into the query should have.
- * @param {ResultSchema} resultSchema - The schema that will be used to validate the data retrieved from the query. This is automatically wrapped in `z.array()`
+ * @param server - The fastify server instance to be used to report errors.
+ * @param queryConfig - Any query config supported by `server.pg.query`
+ * @param filterFields - A ZodTuple that specifies which types the values going into the query should have.
+ * @param resultSchema - The schema that will be used to validate the data retrieved from the query. This is automatically wrapped in `z.array()`
  * @returns A query that can then be executed by supplying the needed parameters.
  * @throws Http error on either a database error or a validation error. Logs the details.
  */
@@ -319,7 +318,7 @@ export function replyHandler<Z extends z.ZodType>(
     try {
       const result = await handler(server, request, reply);
       if (!result) throw new HttpError(HttpClientError.NotFound, "Not Found");
-      return result;
+      return await reply.status(HttpSuccess.OK).send(result);
     } catch (err) {
       if (err instanceof HttpError) {
         return await reply.status(err.status).send({ error: err.message });

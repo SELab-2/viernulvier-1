@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { buildServer, getPort, start } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 
-vi.mock("@/plugin/postgres.js", () => ({
+vi.mock("@/plugins/postgres.js", () => ({
   default: vi.fn(async (server: FastifyInstance) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     server.pg = { query: vi.fn() } as any;
@@ -14,7 +14,7 @@ describe("Server", () => {
 
   beforeEach(() => {
     process.env["DEBUG"] = "false";
-    process.env["BACKEND_PORT"] = "0"; // port = 3333 is used for tests
+    process.env["BACKEND_PORT"] = "0"; // port = 0 means the OS will use a random port
     process.env["JWT_SECRET"] = "secret";
   });
 

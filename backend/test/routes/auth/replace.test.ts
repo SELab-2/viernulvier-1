@@ -43,7 +43,7 @@ describe("Replace on auth route", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(AdminSchema.parse(response.json().body)).toEqual(mockCreatedAdmin);
+    expect(AdminSchema.parse(response.json())).toEqual(mockCreatedAdmin);
   });
 
   test("PUT /api/v1/auth/:id — returns 404 when update returns no rows", async () => {

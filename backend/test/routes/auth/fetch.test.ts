@@ -62,7 +62,7 @@ describe("Fetch on auth route", () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(AdminSchema.parse(response.json().body)).toEqual(admin);
+      expect(AdminSchema.parse(response.json())).toEqual(admin);
     });
 
     test("GET /api/v1/auth/:id — returns 404 when admin not found", async () => {
@@ -89,7 +89,11 @@ describe("Fetch on auth route", () => {
       });
 
       expect(response.statusCode).toBe(200);
+<<<<<<< HEAD
       expect(AdminSchema.withMeta().parse(response.json().body)).toEqual(admin);
+=======
+      expect(AdminSchema.withMeta().parse(response.json())).toEqual(admin);
+>>>>>>> c1e0e5befdb6ab98fc41efd4d16b718931a4a697
     });
     
     test("GET /api/v1/auth/:id/meta — returns 404 when admin not found", async () => {
