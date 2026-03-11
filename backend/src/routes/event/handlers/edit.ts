@@ -27,7 +27,7 @@ export async function editEvent(
 
     if (!selectedEvent) return null;
 
-    const updatedEvent: Event = {
+    const updatedEvent: EventCreate = {
         starts_at: body.starts_at ?? selectedEvent.starts_at,
         ends_at: body.ends_at ?? selectedEvent.ends_at,
         production: body.production ?? selectedEvent.production,

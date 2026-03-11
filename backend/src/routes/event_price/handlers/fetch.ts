@@ -6,12 +6,12 @@ import { EventSchema, stringToInt } from "@viernulvier/shared/index.js";
 import type { Event, EventWithMeta } from "@viernulvier/shared/index.js";
 
 /**
- * Fetches a single event by ID from the database.
- * Returns `null` when the event does not exist or validation fails.
+ * Fetches a single event price by ID from the database.
+ * Returns `null` when the event price does not exist or validation fails.
  *
  * @param server - The Fastify instance, used for database access and logging.
- * @param request - The Fastify request containing the event route parameter.
- * @returns The parsed event, or `null` if not found or validation failed.
+ * @param request - The Fastify request containing the event price route parameter.
+ * @returns The parsed event price, or `null` if not found or validation failed.
  */
 export async function fetchEventPrice(
     server: FastifyInstance,
@@ -20,7 +20,7 @@ export async function fetchEventPrice(
     const { id } = parseParams(request, z.object({ id: stringToInt }));
     const result = await buildQuery(server,
         `SELECT id, event, amount
-        FROM events WHERE id = $1`,
+        FROM event_price WHERE id = $1`,
         z.tuple([z.int()]),
         EventSchema,
     )(id);
@@ -29,12 +29,12 @@ export async function fetchEventPrice(
 }
 
 /**
- * Fetches a single event by ID including metadata fields.
- * Returns `null` when the event does not exist or validation fails.
+ * Fetches a single event price by ID including metadata fields.
+ * Returns `null` when the event price does not exist or validation fails.
  *
  * @param server - The Fastify instance, used for database access and logging.
- * @param request - The Fastify request containing the event route parameter.
- * @returns The parsed event with metadata, or `null` if not found or validation failed.
+ * @param request - The Fastify request containing the event price route parameter.
+ * @returns The parsed event price with metadata, or `null` if not found or validation failed.
  */
 export async function fetchEventPriceWithMeta(
     server: FastifyInstance,
@@ -44,7 +44,7 @@ export async function fetchEventPriceWithMeta(
     const result = await buildQuery(
         server,
         `SELECT id, event, amount
-        FROM events WHERE id = $1`,
+        FROM event_price WHERE id = $1`,
         z.tuple([z.int()]),
         EventSchema.withMeta(),
     )(id);
@@ -53,11 +53,11 @@ export async function fetchEventPriceWithMeta(
 }
 
 /**
- * Fetches all events from the database.
+ * Fetches all event prices from the database.
  * Returns an empty array when parsing fails.
  *
  * @param server - The Fastify instance, used for database access and logging.
- * @returns An array of parsed events.
+ * @returns An array of parsed event prices.
  */
 export async function fetchEventPrices(
     server: FastifyInstance
@@ -65,7 +65,7 @@ export async function fetchEventPrices(
     const result = await buildQuery(
         server,
         `SELECT id, event, amount
-        FROM events`,
+        FROM event_price`,
         EventSchema
     )();
 
