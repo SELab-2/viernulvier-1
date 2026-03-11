@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import productionRoutes from "./productions.js";
+import productionRoutes from "./production/production.js";
 import authRoutes from "./auth/auth.js";
 
 /**
