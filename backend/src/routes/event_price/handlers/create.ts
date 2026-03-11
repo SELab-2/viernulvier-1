@@ -38,5 +38,5 @@ export async function createEventPrice(
     EventPriceSchema,
   )(body.event, body.amount, current_time, admin);
 
-  return result[0] || null;
+  return result[0]!;
 }

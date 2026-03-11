@@ -33,5 +33,5 @@ export async function replaceEventPrice(
     id,
   );
 
-  return result[0] || null;
+  return result[0]!;
 }

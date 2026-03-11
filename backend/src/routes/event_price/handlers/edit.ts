@@ -44,5 +44,5 @@ export async function editEventPrice(
     id,
   );
 
-  return result[0] || null;
+  return result[0]!;
 }

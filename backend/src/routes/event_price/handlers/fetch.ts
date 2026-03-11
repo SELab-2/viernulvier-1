@@ -25,7 +25,7 @@ export async function fetchEventPrice(
     EventPriceSchema,
   )(id);
 
-  return result[0] ?? null;
+  return result[0]!;
 }
 
 /**
@@ -49,7 +49,7 @@ const { id } = parseParams(request, z.object({ id: stringToInt }));
     EventPriceSchema.withMeta(),
   )(id);
 
-  return result[0] ?? null;
+  return result[0]!;
 }
 
 /**

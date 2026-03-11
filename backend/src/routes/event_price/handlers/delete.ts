@@ -25,5 +25,5 @@ export async function deleteEventPrice(
     EventPriceSchema,
   )(id);
 
-  return result[0] ?? null;
+  return result[0]!;
 }
