@@ -11,12 +11,14 @@ import {
 } from "./handlers/index.js";
 
 export default function tagRoutes(server: FastifyInstance) {
-  server.get("/api/v1/tags", replyHandler(server, fetchTags));
-  server.get("/api/v1/tags/:id", replyHandler(server, fetchTag));
-  server.post("/api/v1/tags", replyHandler(server, createTag));
+  const protect = { preHandler: [server.authorize] };
 
-  server.put("/api/v1/tags/:id", replyHandler(server, replaceTag));
-  server.patch("/api/v1/tags/:id", replyHandler(server, editTag));
+  server.get("/api/v1/tags", protect, replyHandler(server, fetchTags));
+  server.get("/api/v1/tags/:id", protect, replyHandler(server, fetchTag));
+  server.post("/api/v1/tags", protect, replyHandler(server, createTag));
+
+  server.put("/api/v1/tags/:id", protect, replyHandler(server, replaceTag));
+  server.patch("/api/v1/tags/:id", protect, replyHandler(server, editTag));
   
-  server.delete("/api/v1/tags/:id", replyHandler(server, deleteTag));
+  server.delete("/api/v1/tags/:id", protect, replyHandler(server, deleteTag));
 }
