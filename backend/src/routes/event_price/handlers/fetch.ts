@@ -69,5 +69,5 @@ export async function fetchEventPrices(
         EventPriceSchema
     )();
 
-    return result ?? [];
+    return result;
 }
