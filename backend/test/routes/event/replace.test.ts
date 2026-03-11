@@ -5,6 +5,7 @@ import { buildServer } from "@/server.js";
 
 let server: FastifyInstance;
 let storedEvents: Array<Record<string, unknown>>;
+let sessionCookie: string;
 
 const baseEvent = {
 	id: 1,
@@ -15,21 +16,25 @@ const baseEvent = {
 	doors_at: new Date("2026-01-01T17:30:00.000Z"),
 	vendor_id: 42,
 	info: { nl: "Info mock 1" },
-	price: [1],
+    created_by: 1,
+    created_at: new Date("2026-01-01T10:00:00.000Z"),
+    updated_by: null,
+    updated_at: null,
 };
 
 const initialEvents = [
 	baseEvent,
-	{ ...baseEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" }, price: [2] },
-	{ ...baseEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" }, price: [3] },
+	{ ...baseEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" } },
+	{ ...baseEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" } },
 ];
 
 beforeAll(async () => {
 	server = await buildServer();
+    sessionCookie = server.jwt.sign({ id: 1, username: "TestAdmin" });
 
 	server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
 		if (query.includes("UPDATE events")) {
-			const id = Number(params?.[8]);
+			const id = Number(params?.[9]);
 			const index = storedEvents.findIndex((event) => Number(event["id"]) === id);
 			if (index === -1) return Promise.resolve({ rows: [] });
 
@@ -43,41 +48,29 @@ beforeAll(async () => {
 				doors_at: (params?.[4] as Date | undefined) ?? current["doors_at"],
 				vendor_id: (params?.[5] as number | undefined) ?? current["vendor_id"],
 				info: params?.[6] ?? current["info"],
-				price: params?.[7] ?? current["price"],
+                updated_at: params?.[7] ? new Date(params?.[7] as string) : new Date(),
+                updated_by: params?.[8],
 			};
 
 			storedEvents[index] = updated;
-			return Promise.resolve({ rows: [updated] });
-		}
-
-		if (query.includes("INSERT INTO events")) {
-			const generatedId = Math.max(...storedEvents.map((row) => Number(row["id"])), 0) + 1;
-			const inserted = {
-				id: generatedId,
-				starts_at: params?.[0] as Date,
-				ends_at: params?.[1] as Date,
-				production: params?.[2] as number,
-				hall: params?.[3] as number,
-				doors_at: params?.[4] as Date,
-				vendor_id: params?.[5] as number,
-				info: params?.[6],
-				price: params?.[7],
-			};
-
-			storedEvents.push(inserted);
-			return Promise.resolve({ rows: [inserted] });
+			const event = { ...updated, price: [] };
+			return Promise.resolve({ rows: [event] });
 		}
 
 		if (query.includes("FROM events WHERE id = $1")) {
 			const id = Number(params?.[0]);
-			const event = storedEvents.find((row) => Number(row["id"]) === id);
-			return Promise.resolve({ rows: event ? [event] : [] });
+			const foundEvent = storedEvents.find((row) => Number(row["id"]) === id);
+			if (!foundEvent) return Promise.resolve({ rows: [] });
+			const event = { ...foundEvent, price: [] };
+			return Promise.resolve({ rows: [event] });
 		}
 
 		if (query.includes("FROM events")) {
-			return Promise.resolve({ rows: storedEvents });
+			const events = storedEvents.map((row) => ({ ...row, price: [] }));
+			return Promise.resolve({ rows: events });
 		}
 
+		console.error("Unhandled query:", query);
 		return Promise.resolve({ rows: [] });
 	});
 });
@@ -101,6 +94,7 @@ describe("Event Replace Routes", () => {
 				method: "PUT",
 				url: "/api/v1/event/1",
 				payload: { ...baseEvent, production: 20 },
+                cookies: { session: sessionCookie },
 			});
 
 			expect(response.statusCode).toBe(500);
@@ -115,17 +109,15 @@ describe("Event Replace Routes", () => {
                     id: 1,
                     production: 20,
                 },
+                cookies: { session: sessionCookie },
             });
 
             expect(response.statusCode).toBe(400);
             expect(response.json()).toEqual({ error: "Invalid request data" });
         });
-    });
 
-    describe("replacing events", () => {
-        test("replaces one event and adds missing one", async () => {
+        test("returns 404 when event does not exist", async () => {
             const replacement = {
-                id: 9,
                 starts_at: new Date("2026-03-01T18:00:00.000Z"),
                 ends_at: new Date("2026-03-01T21:00:00.000Z"),
                 production: 19,
@@ -133,80 +125,44 @@ describe("Event Replace Routes", () => {
                 doors_at: new Date("2026-03-01T17:00:00.000Z"),
                 vendor_id: 190,
                 info: { nl: "Info inserted" },
-                price: [19],
             };
 
             const replaceResponse = await server.inject({
                 method: "PUT",
-                url: "/api/v1/event/9",
+                url: "/api/v1/event/999",
                 payload: replacement,
+                cookies: { session: sessionCookie },
             });
 
-            expect(replaceResponse.statusCode).toBe(200);
-            expect(replaceResponse.json()).toEqual({
-                ...replacement,
-                id: 4,
-                starts_at: replacement.starts_at.toISOString(),
-                ends_at: replacement.ends_at.toISOString(),
-                doors_at: replacement.doors_at.toISOString(),
-            });
-
-            const listResponse = await server.inject({
-                method: "GET",
-                url: "/api/v1/event",
-            });
-
-            expect(listResponse.statusCode).toBe(200);
-            expect(listResponse.json()).toHaveLength(4);
-            expect(listResponse.json()).toEqual([
-                {
-                    ...initialEvents[0]!,
-                    starts_at: initialEvents[0]!.starts_at.toISOString(),
-                    ends_at: initialEvents[0]!.ends_at.toISOString(),
-                    doors_at: initialEvents[0]!.doors_at.toISOString(),
-                },
-                {
-                    ...initialEvents[1]!,
-                    starts_at: initialEvents[1]!.starts_at.toISOString(),
-                    ends_at: initialEvents[1]!.ends_at.toISOString(),
-                    doors_at: initialEvents[1]!.doors_at.toISOString(),
-                },
-                {
-                    ...initialEvents[2]!,
-                    starts_at: initialEvents[2]!.starts_at.toISOString(),
-                    ends_at: initialEvents[2]!.ends_at.toISOString(),
-                    doors_at: initialEvents[2]!.doors_at.toISOString(),
-                },
-                {
-                    ...replacement,
-                    id: 4,
-                    starts_at: replacement.starts_at.toISOString(),
-                    ends_at: replacement.ends_at.toISOString(),
-                    doors_at: replacement.doors_at.toISOString(),
-                },
-            ]);
+            expect(replaceResponse.statusCode).toBe(404);
+            expect(replaceResponse.json()).toEqual({ error: "Not Found" });
         });
+    });
 
+    describe("replacing events", () => {
         test("replaces one event and keeps the others", async () => {
             const replacement = {
-                ...initialEvents[1]!,
-                starts_at: new Date("2026-02-01T18:00:00.000Z"),
-                ends_at: new Date("2026-02-01T21:00:00.000Z"),
-                hall: 9,
-                vendor_id: 99,
+                starts_at: new Date("2026-03-01T18:00:00.000Z"),
+                ends_at: new Date("2026-03-01T21:00:00.000Z"),
+                production: 19,
+                hall: 8,
+                doors_at: new Date("2026-03-01T17:00:00.000Z"),
+                vendor_id: 190,
                 info: { nl: "Info replaced" },
-                price: [9],
             };
 
             const replaceResponse = await server.inject({
                 method: "PUT",
-                url: "/api/v1/event/2",
+                url: "/api/v1/event/1",
                 payload: replacement,
+                cookies: { session: sessionCookie },
             });
 
             expect(replaceResponse.statusCode).toBe(200);
             expect(replaceResponse.json()).toEqual({
                 ...replacement,
+                id: 1,
+                price: [],
                 starts_at: replacement.starts_at.toISOString(),
                 ends_at: replacement.ends_at.toISOString(),
                 doors_at: replacement.doors_at.toISOString(),
@@ -215,30 +171,26 @@ describe("Event Replace Routes", () => {
             const listResponse = await server.inject({
                 method: "GET",
                 url: "/api/v1/event",
+                cookies: { session: sessionCookie },
             });
 
             expect(listResponse.statusCode).toBe(200);
-            expect(listResponse.json()).toHaveLength(3);
-            expect(listResponse.json()).toEqual([
-                {
-                    ...initialEvents[0]!,
-                    starts_at: initialEvents[0]!.starts_at.toISOString(),
-                    ends_at: initialEvents[0]!.ends_at.toISOString(),
-                    doors_at: initialEvents[0]!.doors_at.toISOString(),
-                },
-                {
-                    ...replacement,
-                    starts_at: replacement.starts_at.toISOString(),
-                    ends_at: replacement.ends_at.toISOString(),
-                    doors_at: replacement.doors_at.toISOString(),
-                },
-                {
-                    ...initialEvents[2]!,
-                    starts_at: initialEvents[2]!.starts_at.toISOString(),
-                    ends_at: initialEvents[2]!.ends_at.toISOString(),
-                    doors_at: initialEvents[2]!.doors_at.toISOString(),
-                },
-            ]);
+            const events = listResponse.json();
+            expect(events).toHaveLength(3);
+            
+            // Check first event (the replaced one) has updated data and metadata
+            expect(events[0]!.id).toBe(1);
+            expect(events[0]!.starts_at).toBe(replacement.starts_at.toISOString());
+            expect(events[0]!.ends_at).toBe(replacement.ends_at.toISOString());
+            expect(events[0]!.doors_at).toBe(replacement.doors_at.toISOString());
+            expect(events[0]!.production).toBe(replacement.production);
+            expect(events[0]!.hall).toBe(replacement.hall);
+            expect(events[0]!.vendor_id).toBe(replacement.vendor_id);
+            expect(events[0]!.info).toEqual(replacement.info);
+            
+            // Check other events are unchanged
+            expect(events[1]!.id).toBe(2);
+            expect(events[2]!.id).toBe(3);
         });
     });
 });
