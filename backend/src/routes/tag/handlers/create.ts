@@ -20,7 +20,7 @@ export async function createTag(
   const { admin, current_time } = getMetadata(request);
 
   const result = await server.pg.query<Tag>(
-    `INSERT INTO tag (name, type, public, created_by, updated_by, created_at, updated_at)
+    `INSERT INTO tag (name, type_id, public, created_by, updated_by, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $4, $5, $5)
      RETURNING id, name, type_id`,
     [body.name, body.type, body.public, admin, current_time]
