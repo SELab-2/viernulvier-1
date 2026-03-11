@@ -1,7 +1,6 @@
 import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-import productionRoutes from "@/routes/production/production.js";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
 import { getProductionsByIds } from "@/routes/production/handlers/fetch.js";
 
@@ -39,7 +38,6 @@ const baseProductionWithMeta = {
 beforeAll(async () => {
   server = await buildServer();
   sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
-  await server.register(productionRoutes);
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     const upper = query.trim().toUpperCase();
