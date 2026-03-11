@@ -73,5 +73,5 @@ export async function fetchEvents(
         EventSchema
     )();
 
-    return result ?? [];
+    return result;
 }
