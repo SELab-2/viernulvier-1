@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 
-import { getMetadata, parseFirstRow, parse, ParseContext } from "@/routes/helpers.js";
+import { getMetadata, parseFirstRow, parseSchema, ParseContext } from "@/routes/helpers.js";
 import { EventSchema } from "@viernulvier/shared/index.js";
 import type { Event } from "@viernulvier/shared/index.js";
 import { normalizeEventDates, EventCreateSchema } from "./helper.js";
@@ -19,7 +19,7 @@ export async function createEvent(
 	request: FastifyRequest,
 ): Promise<Event | null> {
 	const normalizedBody = normalizeEventDates(request.body);
-	const body = parse(server, EventCreateSchema, normalizedBody, ParseContext.Request);
+	const body = parseSchema(server, EventCreateSchema, normalizedBody, ParseContext.Request);
 
 	const { admin, current_time } = getMetadata(request);
 
