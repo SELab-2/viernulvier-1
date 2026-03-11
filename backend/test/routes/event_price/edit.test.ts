@@ -65,99 +65,117 @@ beforeEach(() => {
 });
 
 describe("Event Price Edit Route", () => {
-  test("updates amount of an event price", async () => {
-    const response = await server.inject({
-      method: "PATCH",
-      url: "/event_price/api/v1/1",
-      cookies: { session: sessionCookie },
-      payload: {
-          amount: 29.99,
-      },
-    });
 
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({
-      id: 1,
-      event: 10,
-      amount: 29.99,
-    });
-  });
-
-  test("updates event of an event price", async () => {
-    const response = await server.inject({
-      method: "PATCH",
-      url: "/event_price/api/v1/1",
-      cookies: { session: sessionCookie },
-      payload: {
-          event: 20,
-      },
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({
-      id: 1,
-      event: 20,
-      amount: 25.50,
-    });
-  });
-
-  test("updates multiple fields", async () => {
-    const response = await server.inject({
-      method: "PATCH",
-      url: "/event_price/api/v1/1",
-      cookies: { session: sessionCookie },
-      payload: {
-          event: 20,
-          amount: 40.00,
-      },
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({
-      id: 1,
-      event: 20,
-      amount: 40.00,
-    });
-  });
-
-  test("returns 404 when event price not found", async () => {
-    const response = await server.inject({
-      method: "PATCH",
-      url: "/event_price/api/v1/999",
-      cookies: { session: sessionCookie },
-      payload: {
-          amount: 29.99,
-      },
-    });
-
-    expect(response.statusCode).toBe(404);
-    expect(response.json()).toEqual({ error: "Not Found" });
-  });
-
-  test("returns 400 when payload is invalid", async () => {
-    const response = await server.inject({
-      method: "PATCH",
-      url: "/event_price/api/v1/1",
-      cookies: { session: sessionCookie },
-      payload: {
-          amount: -5, // negative amount
-      },
-    });
-
-    expect(response.statusCode).toBe(400);
-    expect(response.json()).toEqual({ error: "Invalid request data" });
-  });
-
-  test("requires authentication", async () => {
-    const response = await server.inject({
+  describe("success cases", () => {
+    test("updates amount of an event price", async () => {
+      const response = await server.inject({
         method: "PATCH",
         url: "/event_price/api/v1/1",
+        cookies: { session: sessionCookie },
         payload: {
             amount: 29.99,
         },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject({
+        id: 1,
+        event: 10,
+        amount: 29.99,
+      });
     });
 
-    expect(response.statusCode).toBe(401);
+    test("updates event of an event price", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: "/event_price/api/v1/1",
+        cookies: { session: sessionCookie },
+        payload: {
+            event: 20,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject({
+        id: 1,
+        event: 20,
+        amount: 25.50,
+      });
+    });
+
+    test("updates multiple fields", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: "/event_price/api/v1/1",
+        cookies: { session: sessionCookie },
+        payload: {
+            event: 20,
+            amount: 40.00,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject({
+        id: 1,
+        event: 20,
+        amount: 40.00,
+      });
+    });
+  });
+
+  describe("error validation", () => {
+    test("returns 404 when event price not found", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: "/event_price/api/v1/999",
+        cookies: { session: sessionCookie },
+        payload: {
+            amount: 29.99,
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(response.json()).toEqual({ error: "Not Found" });
+    });
+
+    test("returns 400 when payload is invalid", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: "/event_price/api/v1/1",
+        cookies: { session: sessionCookie },
+        payload: {
+            amount: -5, // negative amount
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual({ error: "Invalid request data" });
+    });
+
+    test("requires authentication", async () => {
+      const response = await server.inject({
+          method: "PATCH",
+          url: "/event_price/api/v1/1",
+          payload: {
+              amount: 29.99,
+          },
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+
+    test("returns 404 when insert returns no rows", async () => {
+      server.pg.query = vi.fn().mockResolvedValue({ rows: [] });
+      const response = await server.inject({
+        method: "PATCH",
+        url: "/event_price/api/v1/1",
+        cookies: { session: sessionCookie },
+        payload: {
+            amount: 29.99,
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
   });
 });
-
