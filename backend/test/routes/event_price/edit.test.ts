@@ -34,7 +34,7 @@ beforeAll(async () => {
 			const updated = {
 				...storedEventPrices[index]!,
 				event: params?.[0] ?? storedEventPrices[index]!.event,
-				amount: params?.[1] ?? storedEventPrices[index]!.amount,
+				amount: Number(params?.[1]) ?? storedEventPrices[index]!.amount,
 			};
 
 			storedEventPrices[index] = updated;

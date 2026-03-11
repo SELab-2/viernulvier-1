@@ -22,7 +22,7 @@ export async function editEventPrice(
 	server: FastifyInstance,
 	request: FastifyRequest,
 ): Promise<EventPrice | null> {
-	const body: EventPriceCreate = parse(server, EventPriceUpdateSchema, request.body, ParseContext.Request);
+	const body = parse(server, EventPriceUpdateSchema, request.body, ParseContext.Request);
 	const { id } = parseParams(request, z.object({ id: stringToInt }));
 
 	const selectedEventPrice = await fetchEventPrice(server, request);
