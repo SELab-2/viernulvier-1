@@ -5,7 +5,7 @@ import { getMetadata, getParam, parseFirstRow, parseSchema } from "@/routes/help
 
 const ReplaceTagTypeBodySchema = TagTypeSchema.pick({
   name: true,
-  visible: true,
+
 });
 
 export async function replaceTagType(
@@ -20,10 +20,10 @@ export async function replaceTagType(
 
   const result = await server.pg.query<TagType>(
     `UPDATE tag_type
-     SET name = $1, visible = $2, updated_by = $3, updated_at = $4
-     WHERE id = $5
-     RETURNING id, name, visible`,
-    [body.name, body.visible, admin, current_time, id]
+     SET name = $1, updated_by = $2, updated_at = $3
+     WHERE id = $4
+     RETURNING id, name`,
+    [body.name, admin, current_time, id]
   );
 
   return parseFirstRow(server, TagTypeSchema, result.rows);

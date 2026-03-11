@@ -4,6 +4,7 @@ import type { FastifyInstance } from "fastify";
 import { TagSchema, type Tag } from "@viernulvier/shared/index.js";
 
 let server: FastifyInstance;
+let sessionCookie: string;
 
 
 const tag1: Tag = {
@@ -11,6 +12,7 @@ const tag1: Tag = {
   name: { en: "Music", nl: "Muziek" },
   type: 1,
   productions: [1],
+  public: true,
 };
 
 const mockTags: Tag[] = [
@@ -20,12 +22,14 @@ const mockTags: Tag[] = [
     name: { en: "Family", nl: "Familie" },
     type: 1,
     productions: [1,2],
+    public: true,
   },
 ];
 
 beforeAll(async () => {
   server = await buildServer();
 
+  sessionCookie = server.jwt.sign({ id: 1, username: "Admin" });
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     const id = params?.[0];
@@ -54,6 +58,7 @@ describe("Fetch tag on id", () => {
   test("GET /api/v1/tags/:id", async () => {
     const response = await server.inject({
       method: "GET",
+      cookies: { session: sessionCookie },
       url: `/api/v1/tags/${mockTags[0]!.id}`,
     });
 
@@ -64,6 +69,7 @@ describe("Fetch tag on id", () => {
   test("GET /api/v1/tags/:id returns 404", async () => {
     const response = await server.inject({
       method: "GET",
+      cookies: { session: sessionCookie },
       url: `/api/v1/tags/999`,
     });
 
@@ -76,6 +82,7 @@ describe("Fetch tags", () => {
   test("GET /api/v1/tags", async () => {
     const response = await server.inject({
       method: "GET",
+      cookies: { session: sessionCookie },
       url: `/api/v1/tags`,
     });
 
@@ -88,6 +95,7 @@ describe("Fetch tags for production", () => {
   test("GET /api/v1/tags?production={id}", async () => {
     const response = await server.inject({
       method: "GET",
+      cookies: { session: sessionCookie },
       url: `/api/v1/tags?production=1`,
     });
 

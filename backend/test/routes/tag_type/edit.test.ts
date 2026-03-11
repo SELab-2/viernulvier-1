@@ -9,7 +9,6 @@ let sessionCookie: string;
 const tagType: TagType = {
   id: 1,
   name: { en: "Genre", nl: "Genre" },
-  visible: true,
 };
 
 beforeAll(async () => {
@@ -33,7 +32,6 @@ beforeAll(async () => {
           rows: [{
             id: tagType.id,
             name: tagType.name,
-            visible: tagType.visible
           }],
           rowCount: 1,
         });

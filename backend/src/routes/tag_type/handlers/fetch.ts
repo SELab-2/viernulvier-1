@@ -9,7 +9,7 @@ async function fetchTagType(
 ): Promise<TagType | null> {
 
   const result = await server.pg.query<TagType>(
-    `SELECT id, name, visible
+    `SELECT id, name
      FROM tag_type
      WHERE id = $1`,
     [getParam(request, "id")]
@@ -21,7 +21,7 @@ async function fetchTagType(
 async function fetchTagTypes(server: FastifyInstance): Promise<TagType[]> {
 
   const result = await server.pg.query<TagType>(
-    `SELECT id, name, visible FROM tag_type`
+    `SELECT id, name FROM tag_type`
   );
 
   return result.rows;

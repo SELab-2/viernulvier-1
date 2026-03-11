@@ -9,7 +9,7 @@ async function fetchTag(
 ): Promise<Tag | null> {
 
   const result = await server.pg.query<Tag>(
-    `SELECT id, name, type_id
+    `SELECT id, name, type_id, public
      FROM tag
      WHERE id = $1`,
     [getParam(request, "id")]
@@ -25,9 +25,10 @@ async function fetchTags(
 
   const { production } = request.query as { production?: string };
 
+
   if (production) {
     const result = await server.pg.query<Tag>(
-      `SELECT t.id, t.name, t.type_id
+      `SELECT t.id, t.name, t.type_id, public
        FROM tag t
        JOIN production_tag pt ON pt.tag_id = t.id
        WHERE pt.production_id = $1`,
@@ -38,26 +39,10 @@ async function fetchTags(
   }
 
   const result = await server.pg.query<Tag>(
-    `SELECT id, name, type_id FROM tag`
+    `SELECT id, name, type_id, public FROM tag`
   );
 
   return result.rows;
 }
-/*
-async function fetchTagsForProduction(
-  server: FastifyInstance,
-  request: FastifyRequest
-): Promise<Tag[]> {
 
-  const result = await server.pg.query<Tag>(
-    `SELECT t.id, t.name, t.type_id
-     FROM tag t
-     JOIN production_tag pt ON pt.tag_id = t.id
-     WHERE pt.production_id = $1`,
-    [getParam(request, "id")]
-  );
-
-  return result.rows;
-}*/
-
-export { fetchTag, fetchTags, /*fetchTagsForProduction,*/};
+export { fetchTag, fetchTags};

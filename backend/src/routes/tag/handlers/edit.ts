@@ -6,6 +6,7 @@ import { getMetadata, getParam, parseFirstRow, parseSchema } from "@/routes/help
 const EditTagBodySchema = TagSchema.pick({
   name: true,
   type: true,
+  public: true,
 }).partial();
 
 export async function editTag(
@@ -32,12 +33,17 @@ export async function editTag(
     values.push(body.type);
   }
 
+  if (body.public !== undefined) {
+    fields.push(`public = $${i++}`);
+    values.push(body.public);
+  }
+
   fields.push(`updated_by = $${i++}`, `updated_at = $${i++}`);
   values.push(admin, current_time, id);
 
   const result = await server.pg.query<Tag>(
     `UPDATE tag SET ${fields.join(", ")} WHERE id = $${i}
-     RETURNING id, name, type_id`,
+     RETURNING id, name, type_id, public`,
     values
   );
 

@@ -11,6 +11,7 @@ const mockTag: Tag = {
   name: { en: "Music", nl: "Muziek" },
   type: 1,
   productions: [],
+  public: true,
 };
 
 beforeAll(async () => {
@@ -57,4 +58,28 @@ describe("Edit tag", () => {
 
     expect(response.statusCode).toBe(200);
   });
+
+  test("PATCH /api/v1/tags/:id public only", async () => {
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/tags/${mockTag.id}`,
+      cookies: { session: sessionCookie },
+      payload: { public: mockTag.public },
+    });
+
+    expect(response.statusCode).toBe(200);
+  });
+
+  test("PATCH /api/v1/tags/:id all fields", async () => {
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/tags/${mockTag.id}`,
+      cookies: { session: sessionCookie },
+      payload: { name: mockTag.name, type: mockTag.type, public: mockTag.public },
+    });
+
+    expect(response.statusCode).toBe(200);
+  });
+
+
 });

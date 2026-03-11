@@ -8,7 +8,6 @@ let server: FastifyInstance;
 const tagType: TagType = {
   id: 1,
   name: { en: "Genre", nl: "Genre" },
-  visible: true,
 };
 
 beforeAll(async () => {

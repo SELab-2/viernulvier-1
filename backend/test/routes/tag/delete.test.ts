@@ -12,6 +12,7 @@ const mockTag: Tag = {
   name: { en: "Music", nl: "Muziek" },
   type: 1,
   productions: [],
+  public: true,
 };
 
 beforeAll(async () => {

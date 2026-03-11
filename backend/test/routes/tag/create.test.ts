@@ -11,6 +11,7 @@ const mockTag: Tag = {
   name: { en: "Music", nl: "Muziek" },
   type: 1,
   productions: [],
+  public: true,
 };
 
 beforeAll(async () => {
@@ -43,6 +44,7 @@ describe("Create tag", () => {
       payload: {
         name: mockTag.name,
         type: mockTag.type,
+        public: mockTag.public,
       },
     });
 

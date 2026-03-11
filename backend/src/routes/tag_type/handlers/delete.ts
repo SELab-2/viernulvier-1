@@ -11,7 +11,7 @@ export async function deleteTagType(
   const result = await server.pg.query<TagType>(
     `DELETE FROM tag_type
      WHERE id = $1
-     RETURNING id, name, visible`,
+     RETURNING id, name`,
     [getParam(request, "id")]
   );
 

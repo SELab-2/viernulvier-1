@@ -5,7 +5,6 @@ import { getMetadata, parseFirstRow, parseSchema } from "@/routes/helpers.js";
 
 const CreateTagTypeBodySchema = TagTypeSchema.pick({
   name: true,
-  visible: true,
 });
 
 export async function createTagType(
@@ -18,10 +17,10 @@ export async function createTagType(
   const { admin, current_time } = getMetadata(request);
 
   const result = await server.pg.query<TagType>(
-    `INSERT INTO tag_type (name, visible, created_by, updated_by, created_at, updated_at)
+    `INSERT INTO tag_type (name, created_by, updated_by, created_at, updated_at)
      VALUES ($1, $2, $3, $3, $4, $4)
-     RETURNING id, name, visible`,
-    [body.name, body.visible, admin, current_time]
+     RETURNING id, name`,
+    [body.name, admin, current_time]
   );
 
   return parseFirstRow(server, TagTypeSchema, result.rows);
