@@ -52,7 +52,6 @@ beforeAll(async () => {
 
 
 	server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
-		const includePrice = query.includes("FROM event_prices");
 
 		// Handle single event with metadata (created_at, updated_at fields)
 		if (query.includes("created_at") && query.includes("updated_at") && query.includes("WHERE id = $1")) {
@@ -61,10 +60,9 @@ beforeAll(async () => {
 				return Promise.resolve({ rows: [mockInvalidEvent] });
 			}
 			if (id > 0 && id <= mockEvents.length) {
-                const event = { ...mockEvents[Number(id) - 1], ...metaData };
-                if (includePrice) {
-                    event.price = storedEventPrices.filter(p => p["event"] === id).map(p => p.id);
-                }
+                const eventWithoutPrice = { ...mockEvents[Number(id) - 1], ...metaData };
+				const event = { ...eventWithoutPrice, price: storedEventPrices.filter(p => p["event"] === id).map(p => p.id) };
+
                 return Promise.resolve({ rows: [event] });
             }
 
@@ -78,10 +76,8 @@ beforeAll(async () => {
 				return Promise.resolve({ rows: [mockInvalidEvent] });
 			}
 			if (id > 0 && id <= mockEvents.length) {
-                const event = { ...mockEvents[Number(id) - 1] };
-                if (includePrice) {
-                    event.price = storedEventPrices.filter(p => p["event"] === id).map(p => p.id);
-                }
+                const eventWithoutPrice = { ...mockEvents[Number(id) - 1]};
+				const event = { ...eventWithoutPrice, price: storedEventPrices.filter(p => p["event"] === id).map(p => p.id) };
                 return Promise.resolve({ rows: [event] });
             }
 
@@ -89,14 +85,11 @@ beforeAll(async () => {
 		}
 
 		// Handle fetching all events (no WHERE clause)
-		if (includePrice) {
-			const allEventsWithPrices = mockEvents.map(event => ({
-				...event,
-				price: storedEventPrices.filter(p => p["event"] === event.id).map(p => p.id)
-			}));
-			return Promise.resolve({ rows: allEventsWithPrices });
-		}
-		return Promise.resolve({ rows: mockEvents });
+		const allEventsWithPrices = mockEvents.map(event => ({
+			...event,
+			price: storedEventPrices.filter(p => p["event"] === event.id).map(p => p.id)
+		}));
+		return Promise.resolve({ rows: allEventsWithPrices });
 	});
 });
 
