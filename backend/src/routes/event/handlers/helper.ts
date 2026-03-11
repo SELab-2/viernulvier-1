@@ -1,6 +1,6 @@
 import z from "zod";
 
-import { EventSchemaWithoutPrice } from "@viernulvier/shared/types/index.js";
+import { EventSchemaWithoutPrice } from "@viernulvier/shared/index.js";
 
 /**
  * Normalizes all date fields in an event object to Date instances.
