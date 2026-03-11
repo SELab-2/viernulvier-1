@@ -211,25 +211,8 @@ describe("Bulk edit on production route", () => {
     expect(response.statusCode).toBe(400);
   });
 
-  test("PATCH /api/v1/production/bulk -> supports metadata-only updates and filters missing productions", async () => {
+  test("PATCH /api/v1/production/bulk -> rejects empty data body", async () => {
     const ids = [baseProduction1["id"], baseProduction2["id"]];
-
-    server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
-      const upper = query.trim().toUpperCase();
-
-      if (upper.startsWith("UPDATE")) {
-        expect(params?.[params.length - 1]).toEqual(ids);
-        return Promise.resolve({ rows: [], rowCount: 2 });
-      }
-
-      if (upper.startsWith("SELECT")) {
-        expect(params?.[0]).toEqual(ids);
-        // Explicitly return only one row to exercise "missing ID" path.
-        return Promise.resolve({ rows: [baseProduction1], rowCount: 1 });
-      }
-
-      throw new Error(`Unexpected query in bulk-edit metadata-only test: ${query}`);
-    });
 
     const response = await server.inject({
       method: "PATCH",
@@ -241,9 +224,7 @@ describe("Bulk edit on production route", () => {
       },
     });
 
-    expect(response.statusCode).toBe(200);
-    const parsed = ProductionSchema.array().parse(response.json());
-    expect(parsed).toEqual([ProductionSchema.parse(baseProduction1)]);
+    expect(response.statusCode).toBe(400);
   });
 
   test("PATCH /api/v1/production/bulk -> bulk updates all supported fields", async () => {
@@ -348,34 +329,19 @@ describe("Bulk edit on production route", () => {
     ]);
   });
 
-  test("bulkEditProductions() -> ignores explicitly undefined fields", async () => {
+  test("bulkEditProductions() -> rejects explicitly undefined fields", async () => {
     const ids = [baseProduction1["id"]];
-
-    server.pg.query = vi.fn().mockImplementation((query: string) => {
-      const upper = query.trim().toUpperCase();
-
-      if (upper.startsWith("UPDATE")) {
-        return Promise.resolve({ rows: [], rowCount: 1 });
-      }
-
-      if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [baseProduction1], rowCount: 1 });
-      }
-
-      throw new Error(`Unexpected query in bulk-edit undefined test: ${query}`);
-    });
-
-    const result = await bulkEditProductions(server, {
-      user: { id: 1 },
-      body: {
-        ids,
-        data: {
-          vendor_id: undefined,
+    await expect(
+      bulkEditProductions(server, {
+        user: { id: 1 },
+        body: {
+          ids,
+          data: {
+            vendor_id: undefined,
+          },
         },
-      },
-    } as unknown as FastifyRequest);
-
-    expect(result).toEqual([ProductionSchema.parse(baseProduction1)]);
+      } as unknown as FastifyRequest),
+    ).rejects.toMatchObject({ status: 400 });
   });
 });
 

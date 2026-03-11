@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Production } from "@viernulvier/shared/index.js";
-import { getMetadata, parseSchema } from "@/routes/helpers.js";
+import { HttpClientError, HttpError, getMetadata, parseSchema } from "@/routes/helpers.js";
 import z from "zod";
 import { getProductionsByIds } from "./fetch.js";
 import { PartialProductionBodySchema, ProductionIdSchema } from "./body-schema.js";
@@ -65,6 +65,10 @@ export async function bulkEditProductions(server: FastifyInstance, request: Fast
     if (hasOwn(data, column)) {
       addField(column, getNullableFieldValue(data, column));
     }
+  }
+
+  if (fields.length === 0) {
+    throw new HttpError(HttpClientError.BadRequest, "No fields to update");
   }
 
   // Always update metadata
