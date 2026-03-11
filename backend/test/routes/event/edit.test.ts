@@ -33,45 +33,45 @@ beforeAll(async () => {
   sessionCookie = server.jwt.sign({ id: 1, username: "TestAdmin" });
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
-      if (query.includes("UPDATE events")) {
-          const id = Number(params?.[9]);
-          const index = storedEvents.findIndex((event) => Number(event.id) === id);
-          if (index === -1) return Promise.resolve({ rows: [] });
+    if (query.includes("UPDATE events")) {
+      const id = Number(params?.[9]);
+      const index = storedEvents.findIndex((event) => Number(event.id) === id);
+      if (index === -1) return Promise.resolve({ rows: [] });
 
-    // eslint-disable-next-line security/detect-object-injection
-          const current = storedEvents[index]!;
-          const updated = {
-              ...current,
-              starts_at: (params?.[0] as Date | undefined) ?? current["starts_at"],
-              ends_at: (params?.[1] as Date | undefined) ?? current["ends_at"],
-              production: (params?.[2] as number | undefined) ?? current["production"],
-              hall: (params?.[3] as number | undefined) ?? current["hall"],
-              doors_at: (params?.[4] as Date | undefined) ?? current["doors_at"],
-              vendor_id: (params?.[5] as number | undefined) ?? current["vendor_id"],
-              info: params?.[6] ?? current["info"],
-              updated_at: params?.[7] ? new Date(params?.[7] as string) : new Date(),
-              updated_by: params?.[8],
-          };
+  // eslint-disable-next-line security/detect-object-injection
+      const current = storedEvents[index]!;
+      const updated = {
+          ...current,
+        starts_at: (params?.[0] as Date | undefined) ?? current["starts_at"],
+        ends_at: (params?.[1] as Date | undefined) ?? current["ends_at"],
+        production: (params?.[2] as number | undefined) ?? current["production"],
+        hall: (params?.[3] as number | undefined) ?? current["hall"],
+        doors_at: (params?.[4] as Date | undefined) ?? current["doors_at"],
+        vendor_id: (params?.[5] as number | undefined) ?? current["vendor_id"],
+        info: params?.[6] ?? current["info"],
+        updated_at: params?.[7] ? new Date(params?.[7] as string) : new Date(),
+        updated_by: params?.[8],
+      };
 
-    // eslint-disable-next-line security/detect-object-injection
-          storedEvents[index] = updated;
-          const event = { ...updated, price: [] };
-          return Promise.resolve({ rows: [event] });
-      }
+  // eslint-disable-next-line security/detect-object-injection
+      storedEvents[index] = updated;
+      const event = { ...updated, price: [] };
+      return Promise.resolve({ rows: [event] });
+    }
 
-      if (query.includes("FROM events WHERE id = $1")) {
-          const id = Number(params?.[0]);
-          if (id > storedEvents.length) return Promise.resolve({ rows: [] });
-          const event = { ...storedEvents.find((row) => Number(row.id) === id), price: [] };
-          return Promise.resolve({ rows: event ? [event] : [] });
-      }
+    if (query.includes("FROM events WHERE id = $1")) {
+      const id = Number(params?.[0]);
+      if (id > storedEvents.length) return Promise.resolve({ rows: [] });
+      const event = { ...storedEvents.find((row) => Number(row.id) === id), price: [] };
+      return Promise.resolve({ rows: event ? [event] : [] });
+    }
 
-      if (query.includes("FROM events")) {
-          const events = storedEvents.map((row) => ({ ...row, price: [] }));
-          return Promise.resolve({ rows: events });
-      }
+    if (query.includes("FROM events")) {
+      const events = storedEvents.map((row) => ({ ...row, price: [] }));
+      return Promise.resolve({ rows: events });
+    }
 
-      return Promise.resolve({ rows: [] });
+    return Promise.resolve({ rows: [] });
   });
 });
 
