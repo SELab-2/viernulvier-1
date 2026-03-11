@@ -23,7 +23,7 @@ const mockTags: Tag[] = [
 
 beforeAll(async () => {
   server = await buildServer();
-  server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+  server.pg.query = vi.fn().mockImplementation((_: string, params?: unknown[]) => {
     const id = params?.[0];
 
     const rows = id
@@ -69,5 +69,24 @@ describe("Fetch tags", () => {
 
     expect(response.statusCode).toBe(200);
     expect(TagSchema.array().parse(response.json())).toEqual(mockTags);
+  });
+});
+
+describe("Fetch productions for tag", () => {
+  test("GET /api/v1/tag/:id/productions", async () => {
+    const mockProductions = [{ productions: [1, 2, 3] }];
+
+    server.pg.query = vi.fn().mockResolvedValue({
+      rows: mockProductions,
+      rowCount: 1,
+    });
+
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/tag/${mockTags[0]!.id}/productions`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual(mockProductions);
   });
 });

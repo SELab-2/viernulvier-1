@@ -33,10 +33,9 @@ async function fetchTagsForProduction(
 ): Promise<Tag[]> {
 
   const result = await server.pg.query<Tag>(
-    `SELECT t.id, t.name, t.type_id
-     FROM tag t
-     JOIN production_tag tp ON tp.tag_id = t.id
-     WHERE tp.production_id = $1`,
+    `SELECT COALESCE(ARRAY_AGG(pt.production_id), '{}') AS productions
+      FROM production_tag pt
+      WHERE pt.tag_id = $1`,
     [getParam(request, "id")]
   );
 

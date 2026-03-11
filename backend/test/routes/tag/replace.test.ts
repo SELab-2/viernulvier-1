@@ -17,7 +17,7 @@ beforeAll(async () => {
   server = await buildServer();
   sessionCookie = server.jwt.sign({ id: 1, username: "Admin" });
 
-  server.addHook('preHandler', (request, reply, done) => {
+  server.addHook('preHandler', (request, _, done) => {
     if (!request.user) {
       request.user = { id: 1 };
     }

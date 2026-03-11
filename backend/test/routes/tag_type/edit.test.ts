@@ -16,7 +16,7 @@ beforeAll(async () => {
   server = await buildServer();
   sessionCookie = server.jwt.sign({ id: 1, username: "Admin" });
 
-  server.addHook('preHandler', (request, reply, done) => {
+  server.addHook('preHandler', (request, _, done) => {
     if (!request.user) {
       request.user = { id: 1 };
     }
@@ -59,11 +59,11 @@ afterAll(async () => {
 
 describe("Edit tag_type", () => {
 
-  test("PATCH /api/v1/tag-type/:id", async () => {
+  test("PATCH /api/v1/tag/type/:id", async () => {
 
     const response = await server.inject({
       method: "PATCH",
-      url: `/api/v1/tag-type/${tagType.id}`,
+      url: `/api/v1/tag/type/${tagType.id}`,
       cookies: { session: sessionCookie },
       payload: {
         name: tagType.name,
@@ -78,7 +78,7 @@ describe("Edit tag_type", () => {
 
     const response = await server.inject({
       method: "PATCH",
-      url: `/api/v1/tag-type/999`,
+      url: `/api/v1/tag/type/999`,
       cookies: { session: sessionCookie },
       payload: {
         name: tagType.name,
@@ -90,11 +90,11 @@ describe("Edit tag_type", () => {
 
 });
 
-test("PATCH /api/v1/tag-type/:id updates visible", async () => {
+test("PATCH /api/v1/tag/type/:id updates visible", async () => {
 
   const response = await server.inject({
     method: "PATCH",
-    url: `/api/v1/tag-type/${tagType.id}`,
+    url: `/api/v1/tag/type/${tagType.id}`,
     cookies: { session: sessionCookie },
     payload: {
       visible: tagType.visible,

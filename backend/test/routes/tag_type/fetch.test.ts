@@ -48,11 +48,11 @@ afterAll(async () => {
 
 describe("Fetch tag_type", () => {
 
-  test("GET /api/v1/tag-type/:id", async () => {
+  test("GET /api/v1/tag/type/:id", async () => {
 
     const response = await server.inject({
       method: "GET",
-      url: `/api/v1/tag-type/${tagType.id}`,
+      url: `/api/v1/tag/type/${tagType.id}`,
     });
 
     expect(response.statusCode).toBe(200);
@@ -63,7 +63,7 @@ describe("Fetch tag_type", () => {
 
     const response = await server.inject({
       method: "GET",
-      url: `/api/v1/tag-type/999`,
+      url: `/api/v1/tag/type/999`,
     });
 
     expect(response.statusCode).toBe(404);
@@ -71,11 +71,11 @@ describe("Fetch tag_type", () => {
 
 });
 
-test("GET /api/v1/tag-type", async () => {
+test("GET /api/v1/tag/type", async () => {
 
   const response = await server.inject({
     method: "GET",
-    url: `/api/v1/tag-type`,
+    url: `/api/v1/tag/type`,
   });
 
   expect(response.statusCode).toBe(200);
