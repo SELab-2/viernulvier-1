@@ -69,7 +69,7 @@ describe("Event Price Fetch Routes", () => {
 		test("fetches a single event price by ID", async () => {
 			const response = await server.inject({
 				method: "GET",
-				url: "/event_price/1",
+				url: "/api/v1/event_price/1",
 			});
 
 			expect(response.statusCode).toBe(200);
@@ -81,7 +81,7 @@ describe("Event Price Fetch Routes", () => {
 		test("returns 404 when event price not found", async () => {
 			const response = await server.inject({
 				method: "GET",
-				url: "/event_price/999",
+				url: "/api/v1/event_price/999",
 			});
 
 			expect(response.statusCode).toBe(404);
@@ -91,7 +91,7 @@ describe("Event Price Fetch Routes", () => {
 		test("returns 400 when ID is invalid", async () => {
 			const response = await server.inject({
 				method: "GET",
-				url: "/event_price/invalid",
+				url: "/api/v1/event_price/invalid",
 			});
 
 			expect(response.statusCode).toBe(400);
@@ -102,7 +102,7 @@ describe("Event Price Fetch Routes", () => {
 		test("fetches a single event price with metadata", async () => {
 			const response = await server.inject({
 				method: "GET",
-				url: "/event_price/1/meta",
+				url: "/api/v1/event_price/1/meta",
 				cookies: { session: sessionCookie },
 			});
 
@@ -121,7 +121,7 @@ describe("Event Price Fetch Routes", () => {
 		test("returns 404 when event price not found", async () => {
 			const response = await server.inject({
 				method: "GET",
-				url: "/event_price/999/meta",
+				url: "/api/v1/event_price/999/meta",
 				cookies: { session: sessionCookie },
 			});
 
@@ -132,7 +132,7 @@ describe("Event Price Fetch Routes", () => {
 		test("returns 401 when not authenticated", async () => {
 			const response = await server.inject({
 				method: "GET",
-				url: "/event_price/1/meta",
+				url: "/api/v1/event_price/1/meta",
 			});
 
 			expect(response.statusCode).toBe(401);
@@ -141,7 +141,7 @@ describe("Event Price Fetch Routes", () => {
 		test("returns 400 when ID is invalid", async () => {
 			const response = await server.inject({
 				method: "GET",
-				url: "/event_price/invalid/meta",
+				url: "/api/v1/event_price/invalid/meta",
 				cookies: { session: sessionCookie },
 			});
 
@@ -153,7 +153,7 @@ describe("Event Price Fetch Routes", () => {
 		test("fetches all event prices", async () => {
 			const response = await server.inject({
 				method: "GET",
-				url: "/event_price",
+				url: "/api/v1/event_price",
 			});
 
 			expect(response.statusCode).toBe(200);
@@ -170,7 +170,7 @@ describe("Event Price Fetch Routes", () => {
 
 			const response = await server.inject({
 				method: "GET",
-				url: "/event_price",
+				url: "/api/v1/event_price",
 				cookies: { session: sessionCookie },
 			});
 
