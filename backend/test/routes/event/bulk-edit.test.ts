@@ -93,6 +93,16 @@ describe("Event Bulk Edit Routes", () => {
 			server.pg.query = originalMock;
 		});
 
+		test("requires authentication", async () => {
+			const response = await server.inject({
+				method: "PATCH",
+				url: "/api/v1/event",
+				payload: { ids: [1, 2], production: 20 },
+			});
+
+			expect(response.statusCode).toBe(401);
+		});
+
 		test("returns 400 when request payload is invalid", async () => {
 			const response = await server.inject({
 				method: "PATCH",
