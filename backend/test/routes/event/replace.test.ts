@@ -113,53 +113,53 @@ describe("Event Replace Routes", () => {
 		});
 
     test("returns 400 when request payload is invalid", async () => {
-        const response = await server.inject({
-            method: "PUT",
-            url: "/api/v1/event/1",
-            payload: {
-                id: 1,
-                production: 20,
-            },
-            cookies: { session: sessionCookie },
-        });
+      const response = await server.inject({
+        method: "PUT",
+        url: "/api/v1/event/1",
+        payload: {
+          id: 1,
+          production: 20,
+        },
+        cookies: { session: sessionCookie },
+      });
 
-        expect(response.statusCode).toBe(400);
-        expect(response.json()).toEqual({ error: "Invalid request data" });
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual({ error: "Invalid request data" });
     });
 
     test("returns 404 when event does not exist", async () => {
-        const replaceResponse = await server.inject({
-            method: "PUT",
-            url: "/api/v1/event/999",
-            payload: replacement,
-            cookies: { session: sessionCookie },
-        });
+      const replaceResponse = await server.inject({
+        method: "PUT",
+        url: "/api/v1/event/999",
+        payload: replacement,
+        cookies: { session: sessionCookie },
+      });
 
-        expect(replaceResponse.statusCode).toBe(404);
-        expect(replaceResponse.json()).toEqual({ error: "Not Found" });
+      expect(replaceResponse.statusCode).toBe(404);
+      expect(replaceResponse.json()).toEqual({ error: "Not Found" });
     });
 
     test("returns 400 when ID is invalid", async () => {
 
-        const replaceResponse = await server.inject({
-            method: "PUT",
-            url: "/api/v1/event/invalid",
-            payload: replacement,
-            cookies: { session: sessionCookie },
-        });
+      const replaceResponse = await server.inject({
+        method: "PUT",
+        url: "/api/v1/event/invalid",
+        payload: replacement,
+        cookies: { session: sessionCookie },
+      });
 
-        expect(replaceResponse.statusCode).toBe(400);
+      expect(replaceResponse.statusCode).toBe(400);
     });
 
     test("requires authentication", async () => {
 
-        const replaceResponse = await server.inject({
-            method: "PUT",
-            url: "/api/v1/event/1",
-            payload: replacement,
-        });
+      const replaceResponse = await server.inject({
+        method: "PUT",
+        url: "/api/v1/event/1",
+        payload: replacement,
+      });
 
-        expect(replaceResponse.statusCode).toBe(401);
+      expect(replaceResponse.statusCode).toBe(401);
     });
   });
 

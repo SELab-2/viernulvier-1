@@ -19,7 +19,7 @@ export async function deleteEvent(
 ): Promise<Event | null> {  
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const result = await buildQuery(server,
-    `DELETE FROM events WHERE id = $1 RETURNING id, starts_at, ends_at, production_id, hall, doors_at, vendor_id, info, 
+    `DELETE FROM events WHERE id = $1 RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, 
         (SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price`,
     z.tuple([z.int()]),
     EventSchema,
