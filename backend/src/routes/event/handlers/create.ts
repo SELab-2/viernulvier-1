@@ -3,7 +3,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { getMetadata, parseFirstRow, parseSchema, ParseContext } from "@/routes/helpers.js";
 import { EventSchema } from "@viernulvier/shared/index.js";
 import type { Event } from "@viernulvier/shared/index.js";
-import { normalizeEventDates, EventCreateSchema } from "./helper.js";
+import { normalizeEventDates, EventCreateSchema, selectPriceSubquery } from "./helper.js";
 
 /**
  * Creates a new event row in the database.
@@ -15,32 +15,31 @@ import { normalizeEventDates, EventCreateSchema } from "./helper.js";
  * @returns The created event or `null` upon failure.
  */
 export async function createEvent(
-	server: FastifyInstance,
-	request: FastifyRequest,
+  server: FastifyInstance,
+  request: FastifyRequest,
 ): Promise<Event | null> {
-	const normalizedBody = normalizeEventDates(request.body);
-	const body = parseSchema(server, EventCreateSchema, normalizedBody, ParseContext.Request);
+  const normalizedBody = normalizeEventDates(request.body);
+  const body = parseSchema(server, EventCreateSchema, normalizedBody, ParseContext.Request);
 
-	const { admin, current_time } = getMetadata(request);
+  const { admin, current_time } = getMetadata(request);
 
-	const result = await server.pg.query<Event>(
-		`INSERT INTO events (starts_at, ends_at, production, hall, doors_at, vendor_id, info, created_at, updated_at, created_by, updated_by)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8, $9, $9)
-		 RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, 
-			(SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price`,
-		[
-			body.starts_at,
-			body.ends_at,
-			body.production,
-			body.hall,
-			body.doors_at,
-			body.vendor_id,
-			body.info,
-			current_time,
-			admin,
-		],
-	);
+  const result = await server.pg.query<Event>(
+    `INSERT INTO events (starts_at, ends_at, production, hall, doors_at, vendor_id, info, created_at, updated_at, created_by, updated_by)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8, $9, $9)
+    RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}`,
+    [
+      body.starts_at,
+      body.ends_at,
+      body.production,
+      body.hall,
+      body.doors_at,
+      body.vendor_id,
+      body.info,
+      current_time,
+      admin,
+    ],
+  );
 
-	return parseFirstRow(server, EventSchema, result.rows);
+  return parseFirstRow(server, EventSchema, result.rows);
 }
 
