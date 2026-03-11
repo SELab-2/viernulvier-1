@@ -16,24 +16,24 @@ import type { EventPriceCreate } from "./helper.js";
  * @returns The created event or `null` upon failure.
  */
 export async function createEventPrice(
-	server: FastifyInstance,
-	request: FastifyRequest,
+  server: FastifyInstance,
+  request: FastifyRequest,
 ): Promise<EventPrice | null> {
-	const body: EventPriceCreate = parse(server, EventPriceCreateSchema, request.body, ParseContext.Request);
+  const body: EventPriceCreate = parse(server, EventPriceCreateSchema, request.body, ParseContext.Request);
 
-	const { admin, current_time } = getMetadata(request);
+  const { admin, current_time } = getMetadata(request);
 
-	const result = await server.pg.query<EventPrice>(
-		`INSERT INTO event_price (event, amount, created_at, updated_at, created_by, updated_by)
-		 VALUES ($1, $2, $3, $3, $4, $4)
-		 RETURNING id, event, amount`,
-		[
-			body.event,
-            body.amount,
-			current_time,
-			admin,
-		],
-	);
+  const result = await server.pg.query<EventPrice>(
+    `INSERT INTO event_price (event, amount, created_at, updated_at, created_by, updated_by)
+      VALUES ($1, $2, $3, $3, $4, $4)
+      RETURNING id, event, amount`,
+    [
+      body.event,
+      body.amount,
+      current_time,
+      admin,
+    ],
+  );
 
-	return parseFirstRow(server, EventPriceSchema, result.rows);
+  return parseFirstRow(server, EventPriceSchema, result.rows);
 }

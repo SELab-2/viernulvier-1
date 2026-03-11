@@ -19,36 +19,36 @@ const EventPriceUpdateSchema = EventPriceCreateSchema.partial();
  * @returns The parsed event price, or `null` if not found or validation failed.
  */
 export async function editEventPrice(
-	server: FastifyInstance,
-	request: FastifyRequest,
+  server: FastifyInstance,
+  request: FastifyRequest,
 ): Promise<EventPrice | null> {
-	const body = parse(server, EventPriceUpdateSchema, request.body, ParseContext.Request);
-	const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const body = parse(server, EventPriceUpdateSchema, request.body, ParseContext.Request);
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
 
-	const selectedEventPrice = await fetchEventPrice(server, request);
+  const selectedEventPrice = await fetchEventPrice(server, request);
 
-	if (!selectedEventPrice) return null;
+  if (!selectedEventPrice) return null;
 
-	const updatedEventPrice: EventPriceCreate = {
-		event: body.event ?? selectedEventPrice.event,
-		amount: body.amount ?? selectedEventPrice.amount,
-	};
+  const updatedEventPrice: EventPriceCreate = {
+    event: body.event ?? selectedEventPrice.event,
+    amount: body.amount ?? selectedEventPrice.amount,
+  };
 
-	const { admin, current_time } = getMetadata(request);
+  const { admin, current_time } = getMetadata(request);
 
-	const result = await server.pg.query<EventPrice>(
-		`UPDATE event_price
-		 SET event = $1, amount = $2, updated_at = $3, updated_by = $4
-		 WHERE id = $5
-		 RETURNING id, event, amount`,
-		[
-			updatedEventPrice.event,
-			updatedEventPrice.amount,
-			current_time,
-			admin,
-			id,
-		],
-	);
+  const result = await server.pg.query<EventPrice>(
+    `UPDATE event_price
+      SET event = $1, amount = $2, updated_at = $3, updated_by = $4
+      WHERE id = $5
+      RETURNING id, event, amount`,
+    [
+      updatedEventPrice.event,
+      updatedEventPrice.amount,
+      current_time,
+      admin,
+      id,
+    ],
+  );
 
-	return parseFirstRow(server, EventPriceSchema, result.rows);
+  return parseFirstRow(server, EventPriceSchema, result.rows);
 }

@@ -17,27 +17,27 @@ import type { EventPriceCreate } from "./helper.js";
  * @returns The updated event or `null` upon failure.
  */
 export async function replaceEventPrice(
-	server: FastifyInstance,
-	request: FastifyRequest,
+  server: FastifyInstance,
+  request: FastifyRequest,
 ): Promise<EventPrice | null> {
-	const body: EventPriceCreate = parse(server, EventPriceCreateSchema, request.body, ParseContext.Request);
-    const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const body: EventPriceCreate = parse(server, EventPriceCreateSchema, request.body, ParseContext.Request);
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
 
-	const { admin, current_time } = getMetadata(request);
+  const { admin, current_time } = getMetadata(request);
 
-	const result = await server.pg.query<EventPrice>(
-		`UPDATE event_price
-		 SET event = $1, amount = $2, updated_at = $3, updated_by = $4
-		 WHERE id = $5
-		 RETURNING id, event, amount`,
-		[
-			body.event,
-			body.amount,
-			current_time,
-			admin,
-			id,
-		],
-	);
+  const result = await server.pg.query<EventPrice>(
+    `UPDATE event_price
+      SET event = $1, amount = $2, updated_at = $3, updated_by = $4
+      WHERE id = $5
+      RETURNING id, event, amount`,
+    [
+      body.event,
+      body.amount,
+      current_time,
+      admin,
+      id,
+    ],
+  );
 
-	return parseFirstRow(server, EventPriceSchema, result.rows);
+  return parseFirstRow(server, EventPriceSchema, result.rows);
 }
