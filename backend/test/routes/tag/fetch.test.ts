@@ -8,7 +8,7 @@ const tag1: Tag = {
   id: 5,
   name: { en: "Music", nl: "Muziek" },
   type: 1,
-  productions: [],
+  productions: [1],
 };
 
 const mockTags: Tag[] = [
@@ -17,18 +17,26 @@ const mockTags: Tag[] = [
     id: 6,
     name: { en: "Family", nl: "Familie" },
     type: 1,
-    productions: [],
+    productions: [1,2],
   },
 ];
 
 beforeAll(async () => {
   server = await buildServer();
-  server.pg.query = vi.fn().mockImplementation((_: string, params?: unknown[]) => {
+    server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     const id = params?.[0];
 
-    const rows = id
-      ? mockTags.filter((t) => t.id === Number(id))
-      : mockTags;
+    let rows;
+
+    if (query.includes("production_tag")) {
+      rows = mockTags.filter((t) =>
+        t.productions.includes(Number(id))
+      );
+    } else if (id) {
+      rows = mockTags.filter((t) => t.id === Number(id));
+    } else {
+      rows = mockTags;
+    }
 
     return Promise.resolve({ rows, rowCount: rows.length });
   });
@@ -39,20 +47,20 @@ afterAll(async () => {
 });
 
 describe("Fetch tag on id", () => {
-  test("GET /api/v1/tag/:id", async () => {
+  test("GET /api/v1/tags/:id", async () => {
     const response = await server.inject({
       method: "GET",
-      url: `/api/v1/tag/${mockTags[0]!.id}`,
+      url: `/api/v1/tags/${mockTags[0]!.id}`,
     });
 
     expect(response.statusCode).toBe(200);
     expect(TagSchema.parse(response.json())).toEqual(mockTags[0]);
   });
 
-  test("GET /api/v1/tag/:id returns 404", async () => {
+  test("GET /api/v1/tags/:id returns 404", async () => {
     const response = await server.inject({
       method: "GET",
-      url: `/api/v1/tag/999`,
+      url: `/api/v1/tags/999`,
     });
 
     expect(response.statusCode).toBe(404);
@@ -61,10 +69,10 @@ describe("Fetch tag on id", () => {
 
 
 describe("Fetch tags", () => {
-  test("GET /api/v1/tag", async () => {
+  test("GET /api/v1/tags", async () => {
     const response = await server.inject({
       method: "GET",
-      url: `/api/v1/tag`,
+      url: `/api/v1/tags`,
     });
 
     expect(response.statusCode).toBe(200);
@@ -72,21 +80,14 @@ describe("Fetch tags", () => {
   });
 });
 
-describe("Fetch productions for tag", () => {
-  test("GET /api/v1/tag/:id/productions", async () => {
-    const mockProductions = [{ productions: [1, 2, 3] }];
-
-    server.pg.query = vi.fn().mockResolvedValue({
-      rows: mockProductions,
-      rowCount: 1,
-    });
-
+describe("Fetch tags for production", () => {
+  test("GET /api/v1/tags?production={id}", async () => {
     const response = await server.inject({
       method: "GET",
-      url: `/api/v1/tag/${mockTags[0]!.id}/productions`,
+      url: `/api/v1/tags?production=1`,
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual(mockProductions);
+    expect(TagSchema.array().parse(response.json())).toEqual(mockTags);
   });
 });

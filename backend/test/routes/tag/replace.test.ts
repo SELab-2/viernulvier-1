@@ -35,10 +35,10 @@ afterAll(async () => {
 });
 
 describe("Replace tag", () => {
-  test("PUT /api/v1/tag/:id", async () => {
+  test("PUT /api/v1/tags/:id", async () => {
     const response = await server.inject({
       method: "PUT",
-      url: `/api/v1/tag/${mockTag.id}`,
+      url: `/api/v1/tags/${mockTag.id}`,
       cookies: { session: sessionCookie },
       payload: {
         name: mockTag.name,

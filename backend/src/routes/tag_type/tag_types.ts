@@ -11,12 +11,12 @@ import {
 } from "./handlers/index.js";
 
 export default function tagTypeRoutes(server: FastifyInstance) {
-  server.get("/api/v1/tag/type", replyHandler(server, fetchTagTypes));
-  server.get("/api/v1/tag/type/:id", replyHandler(server, fetchTagType));
-  server.post("/api/v1/tag/type", replyHandler(server, createTagType));
+  server.get("/api/v1/tags/type", replyHandler(server, fetchTagTypes));
+  server.get("/api/v1/tags/type/:id", replyHandler(server, fetchTagType));
+  server.post("/api/v1/tags/type", replyHandler(server, createTagType));
 
-  server.patch("/api/v1/tag/type/:id", replyHandler(server, editTagType));
-  server.put("/api/v1/tag/type/:id", replyHandler(server, replaceTagType));
+  server.patch("/api/v1/tags/type/:id", replyHandler(server, editTagType));
+  server.put("/api/v1/tags/type/:id", replyHandler(server, replaceTagType));
 
-  server.delete("/api/v1/tag/type/:id", replyHandler(server, deleteTagType));
+  server.delete("/api/v1/tags/type/:id", replyHandler(server, deleteTagType));
 }

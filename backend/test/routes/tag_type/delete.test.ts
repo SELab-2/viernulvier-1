@@ -39,11 +39,11 @@ afterAll(async () => {
 
 describe("Delete tag_type", () => {
 
-  test("DELETE /api/v1/tag/type/:id", async () => {
+  test("DELETE /api/v1/tags/type/:id", async () => {
 
     const response = await server.inject({
       method: "DELETE",
-      url: `/api/v1/tag/type/${tagType.id}`,
+      url: `/api/v1/tags/type/${tagType.id}`,
     });
 
     expect(response.statusCode).toBe(200);

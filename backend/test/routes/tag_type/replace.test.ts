@@ -59,11 +59,11 @@ afterAll(async () => {
 
 describe("Replace tag_type", () => {
 
-  test("PUT /api/v1/tag/type/:id", async () => {
+  test("PUT /api/v1/tags/type/:id", async () => {
 
     const response = await server.inject({
       method: "PUT",
-      url: `/api/v1/tag/type/${tagType.id}`,
+      url: `/api/v1/tags/type/${tagType.id}`,
       cookies: { session: sessionCookie },
       payload: {
         name: tagType.name,

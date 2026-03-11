@@ -35,10 +35,10 @@ afterAll(async () => {
 });
 
 describe("Edit tag", () => {
-  test("PATCH /api/v1/tag/:id name only", async () => {
+  test("PATCH /api/v1/tags/:id name only", async () => {
     const response = await server.inject({
       method: "PATCH",
-      url: `/api/v1/tag/${mockTag.id}`,
+      url: `/api/v1/tags/${mockTag.id}`,
       cookies: { session: sessionCookie },
       payload: { name: mockTag.name },
     });
@@ -47,10 +47,10 @@ describe("Edit tag", () => {
     expect(TagSchema.parse(response.json())).toEqual(mockTag);
   });
 
-  test("PATCH /api/v1/tag/:id type only", async () => {
+  test("PATCH /api/v1/tags/:id type only", async () => {
     const response = await server.inject({
       method: "PATCH",
-      url: `/api/v1/tag/${mockTag.id}`,
+      url: `/api/v1/tags/${mockTag.id}`,
       cookies: { session: sessionCookie },
       payload: { type: mockTag.type },
     });

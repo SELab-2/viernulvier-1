@@ -35,10 +35,10 @@ afterAll(async () => {
 });
 
 describe("Create tag", () => {
-  test("POST /api/v1/tag", async () => {
+  test("POST /api/v1/tags", async () => {
     const response = await server.inject({
       method: "POST",
-      url: "/api/v1/tag",
+      url: "/api/v1/tags",
       cookies: { session: sessionCookie },
       payload: {
         name: mockTag.name,
@@ -50,10 +50,10 @@ describe("Create tag", () => {
     expect(TagSchema.parse(response.json())).toEqual(mockTag);
   });
 
-  test("POST /api/v1/tag invalid body", async () => {
+  test("POST /api/v1/tags invalid body", async () => {
     const response = await server.inject({
       method: "POST",
-      url: "/api/v1/tag",
+      url: "/api/v1/tags",
       payload: {},
     });
 

@@ -18,7 +18,24 @@ async function fetchTag(
   return parseFirstRow(server, TagSchema, result.rows);
 }
 
-async function fetchTags(server: FastifyInstance): Promise<Tag[]> {
+async function fetchTags(
+  server: FastifyInstance,
+  request: FastifyRequest
+): Promise<Tag[]> {
+
+  const { production } = request.query as { production?: string };
+
+  if (production) {
+    const result = await server.pg.query<Tag>(
+      `SELECT t.id, t.name, t.type_id
+       FROM tag t
+       JOIN production_tag pt ON pt.tag_id = t.id
+       WHERE pt.production_id = $1`,
+      [production]
+    );
+
+    return result.rows;
+  }
 
   const result = await server.pg.query<Tag>(
     `SELECT id, name, type_id FROM tag`
@@ -26,20 +43,21 @@ async function fetchTags(server: FastifyInstance): Promise<Tag[]> {
 
   return result.rows;
 }
-
+/*
 async function fetchTagsForProduction(
   server: FastifyInstance,
   request: FastifyRequest
 ): Promise<Tag[]> {
 
   const result = await server.pg.query<Tag>(
-    `SELECT COALESCE(ARRAY_AGG(pt.production_id), '{}') AS productions
-      FROM production_tag pt
-      WHERE pt.tag_id = $1`,
+    `SELECT t.id, t.name, t.type_id
+     FROM tag t
+     JOIN production_tag pt ON pt.tag_id = t.id
+     WHERE pt.production_id = $1`,
     [getParam(request, "id")]
   );
 
   return result.rows;
-}
+}*/
 
-export { fetchTag, fetchTags, fetchTagsForProduction };
+export { fetchTag, fetchTags, /*fetchTagsForProduction,*/};
