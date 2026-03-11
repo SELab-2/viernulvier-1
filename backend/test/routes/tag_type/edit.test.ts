@@ -89,3 +89,18 @@ describe("Edit tag_type", () => {
   });
 
 });
+
+test("PATCH /api/v1/tag-type/:id updates visible", async () => {
+
+  const response = await server.inject({
+    method: "PATCH",
+    url: `/api/v1/tag-type/${tagType.id}`,
+    cookies: { session: sessionCookie },
+    payload: {
+      visible: tagType.visible,
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(TagTypeSchema.parse(response.json())).toEqual(tagType);
+});

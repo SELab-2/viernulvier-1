@@ -16,7 +16,8 @@ beforeAll(async () => {
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
 
-    if (query.includes("SELECT")) {
+    // fetchTagType (single)
+    if (query.includes("WHERE id")) {
       const id = Number(params?.[0]);
 
       if (id === tagType.id) {
@@ -27,6 +28,14 @@ beforeAll(async () => {
       }
 
       return Promise.resolve({ rows: [], rowCount: 0 });
+    }
+
+    // fetchTagTypes (all)
+    if (query.includes("FROM tag_type")) {
+      return Promise.resolve({
+        rows: [tagType],
+        rowCount: 1,
+      });
     }
 
     return Promise.resolve({ rows: [], rowCount: 0 });
@@ -60,4 +69,15 @@ describe("Fetch tag_type", () => {
     expect(response.statusCode).toBe(404);
   });
 
+});
+
+test("GET /api/v1/tag-type", async () => {
+
+  const response = await server.inject({
+    method: "GET",
+    url: `/api/v1/tag-type`,
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(TagTypeSchema.array().parse(response.json())).toEqual([tagType]);
 });

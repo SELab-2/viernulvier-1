@@ -38,7 +38,7 @@ afterAll(async () => {
   await server.close();
 });
 
-describe("Fetch tags", () => {
+describe("Fetch tag on id", () => {
   test("GET /api/v1/tag/:id", async () => {
     const response = await server.inject({
       method: "GET",
@@ -56,5 +56,18 @@ describe("Fetch tags", () => {
     });
 
     expect(response.statusCode).toBe(404);
+  });
+});
+
+
+describe("Fetch tags", () => {
+  test("GET /api/v1/tag", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/tag`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(TagSchema.array().parse(response.json())).toEqual(mockTags);
   });
 });
