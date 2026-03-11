@@ -1,10 +1,11 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import z from "zod";
 
-import { getMetadata, getParam, parse, ParseContext, parseFirstRow } from "@/routes/helpers.js";
-import { EventSchema } from "@viernulvier/shared/index.js";
+import { getMetadata, getParam, parse, ParseContext, parseFirstRow, parseParams } from "@/routes/helpers.js";
+import { EventSchema, stringToInt } from "@viernulvier/shared/index.js";
 import type { Event } from "@viernulvier/shared/index.js";
 import { normalizeEventDates, EventCreateSchema } from "./helper.js";
-import type { EventCreate } from "./helper.js";
+
 
 /**
  * Replaces a single event by ID in the database.
@@ -19,8 +20,8 @@ export async function replaceEvent(
     request: FastifyRequest
 ): Promise<Event | null> {
     const normalizedBody = normalizeEventDates(request.body);
-    const body = parse<EventCreate>(server, EventCreateSchema, normalizedBody, ParseContext.Request);
-    const id = getParam(request, "id");
+    const body = parse(server, EventCreateSchema, normalizedBody, ParseContext.Request);
+    const { id } = parseParams(request, z.object({ id: stringToInt }));
 
     const { admin, current_time } = getMetadata(request);
 

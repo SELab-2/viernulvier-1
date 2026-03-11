@@ -1,7 +1,8 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import z from "zod";
 
-import { getParam, parse, parseFirstRow, ParseContext, getMetadata } from "@/routes/helpers.js";
-import { EventSchema } from "@viernulvier/shared/index.js";
+import { parse, parseFirstRow, ParseContext, getMetadata, parseParams } from "@/routes/helpers.js";
+import { EventSchema, stringToInt } from "@viernulvier/shared/index.js";
 import type { Event } from "@viernulvier/shared/index.js";
 import { fetchEvent } from "./fetch.js";
 import { normalizePartialEventDates, EventCreateSchema } from "./helper.js";
@@ -22,7 +23,7 @@ export async function editEvent(
     request: FastifyRequest
 ): Promise<Event | null> {
     const normalizedBody = normalizePartialEventDates(request.body);
-    const body = parse<EventCreate>(server, EventUpdateSchema, normalizedBody, ParseContext.Request);
+    const body = parse(server, EventUpdateSchema, normalizedBody, ParseContext.Request);
     const selectedEvent = await fetchEvent(server, request);
 
     if (!selectedEvent) return null;
@@ -37,6 +38,7 @@ export async function editEvent(
         info: body.info ?? selectedEvent.info,
     };
 
+    const { id } = parseParams(request, z.object({ id: stringToInt }));
     const { current_time, admin } = getMetadata(request);
 
     const result = await server.pg.query<Event>(
@@ -56,7 +58,7 @@ export async function editEvent(
             updatedEvent.info,
             current_time,
             admin,
-            getParam(request, "id"),
+            id,
         ],
     );
 

@@ -86,6 +86,15 @@ beforeEach(() => {
 
 describe("Event Replace Routes", () => {
 	describe("error handling", () => {
+        const replacement = {
+            starts_at: new Date("2026-03-01T18:00:00.000Z"),
+            ends_at: new Date("2026-03-01T21:00:00.000Z"),
+            production: 19,
+            hall: 8,
+            doors_at: new Date("2026-03-01T17:00:00.000Z"),
+            vendor_id: 190,
+            info: { nl: "Info inserted" },
+        };
 		test("returns 500 when database query fails", async () => {
 			const originalMock = server.pg.query;
 			server.pg.query = vi.fn().mockRejectedValue(new Error("Database error"));
@@ -117,16 +126,6 @@ describe("Event Replace Routes", () => {
         });
 
         test("returns 404 when event does not exist", async () => {
-            const replacement = {
-                starts_at: new Date("2026-03-01T18:00:00.000Z"),
-                ends_at: new Date("2026-03-01T21:00:00.000Z"),
-                production: 19,
-                hall: 8,
-                doors_at: new Date("2026-03-01T17:00:00.000Z"),
-                vendor_id: 190,
-                info: { nl: "Info inserted" },
-            };
-
             const replaceResponse = await server.inject({
                 method: "PUT",
                 url: "/api/v1/event/999",
@@ -136,6 +135,29 @@ describe("Event Replace Routes", () => {
 
             expect(replaceResponse.statusCode).toBe(404);
             expect(replaceResponse.json()).toEqual({ error: "Not Found" });
+        });
+
+        test("returns 400 when ID is invalid", async () => {
+
+            const replaceResponse = await server.inject({
+                method: "PUT",
+                url: "/api/v1/event/invalid",
+                payload: replacement,
+                cookies: { session: sessionCookie },
+            });
+
+            expect(replaceResponse.statusCode).toBe(400);
+        });
+
+        test("requires authentication", async () => {
+
+            const replaceResponse = await server.inject({
+                method: "PUT",
+                url: "/api/v1/event/1",
+                payload: replacement,
+            });
+
+            expect(replaceResponse.statusCode).toBe(401);
         });
     });
 

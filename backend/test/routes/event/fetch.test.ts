@@ -132,6 +132,15 @@ describe("Event Fetch Routes", () => {
 			//expect(response.json()).toEqual({ error: "Not Found" });
 		});
 
+		test("returns 400 when ID is invalid", async () => {
+			const response = await server.inject({
+				method: "GET",
+				url: "/api/v1/event/invalid",
+			});
+
+			expect(response.statusCode).toBe(400);
+		});
+
 		test("returns 500 when database row is invalid", async () => {
 			const response = await server.inject({
 				method: "GET",
@@ -209,6 +218,16 @@ describe("Event Fetch Routes", () => {
 
 			expect(response.statusCode).toBe(404);
 			//expect(response.json()).toEqual({ error: "Not Found" });
+		});
+
+		test("returns 400 when meta ID is invalid", async () => {
+			const response = await server.inject({
+				method: "GET",
+				url: "/api/v1/event/invalid/meta",
+				cookies: { session: sessionCookie },
+			});
+
+			expect(response.statusCode).toBe(400);
 		});
 	});
 });

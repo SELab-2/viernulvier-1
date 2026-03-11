@@ -87,6 +87,25 @@ describe("Event Delete Routes", () => {
 			expect(response.statusCode).toBe(404);
 			expect(response.json()).toEqual({ error: "Not Found" });
 		});
+
+		test("returns 400 when ID is invalid", async () => {
+			const response = await server.inject({
+				method: "DELETE",
+				url: "/api/v1/event/invalid",
+				cookies: { session: sessionCookie },
+			});
+
+			expect(response.statusCode).toBe(400);
+		});
+
+		test("requires authentication", async () => {
+			const response = await server.inject({
+				method: "DELETE",
+				url: "/api/v1/event/1",
+			});
+
+			expect(response.statusCode).toBe(401);
+		});
 	});
 
 

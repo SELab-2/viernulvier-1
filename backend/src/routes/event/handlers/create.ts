@@ -21,7 +21,7 @@ export async function createEvent(
 	request: FastifyRequest,
 ): Promise<Event | null> {
 	const normalizedBody = normalizeEventDates(request.body);
-	const body = parse<EventCreate>(server, EventCreateSchema, normalizedBody, ParseContext.Request);
+	const body = parse(server, EventCreateSchema, normalizedBody, ParseContext.Request);
 
 	const { admin, current_time } = getMetadata(request);
 

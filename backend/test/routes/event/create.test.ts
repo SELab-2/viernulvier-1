@@ -129,6 +129,16 @@ describe("Event Create Routes", () => {
 			expect(response.statusCode).toBe(404);
 			expect(response.json()).toEqual({ error: "Not Found" });
 		});
+
+		test("requires authentication", async () => {
+			const response = await server.inject({
+				method: "POST",
+				url: "/api/v1/event",
+				payload: buildPayload(42),
+			});
+
+			expect(response.statusCode).toBe(401);
+		});
 	});
 
 	describe("create event", () => {
