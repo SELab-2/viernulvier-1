@@ -8,7 +8,7 @@ import { fetchHalls, fetchHall, fetchHallWithMeta, createHall, replaceHall, edit
  * @remarks
  * - `GET /api/v1/hall` — fetch a list of halls.
  * - `GET /api/v1/hall/:id` — fetch a single hall by ID.
- * - `GET /api/v1/hall/:id/meta` — fetch a single hall with metadata by ID.
+ * - `GET /api/v1/hall/:id/meta` — fetch a single hall with metadata by ID. 🔒
  * - `POST /api/v1/hall` — create a new hall. 🔒
  * - `PUT /api/v1/hall/:id` — replace an existing hall's data. 🔒
  * - `PATCH /api/v1/hall/:id` — partially update an existing hall. 🔒
