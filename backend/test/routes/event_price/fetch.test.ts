@@ -103,6 +103,7 @@ describe("Event Price Fetch Routes", () => {
 			const response = await server.inject({
 				method: "GET",
 				url: "/event_price/1/meta",
+				cookies: { session: sessionCookie },
 			});
 
 			expect(response.statusCode).toBe(200);
@@ -121,10 +122,30 @@ describe("Event Price Fetch Routes", () => {
 			const response = await server.inject({
 				method: "GET",
 				url: "/event_price/999/meta",
+				cookies: { session: sessionCookie },
 			});
 
 			expect(response.statusCode).toBe(404);
 			//expect(response.json()).toEqual({ error: "Not Found" });
+		});
+
+		test("returns 401 when not authenticated", async () => {
+			const response = await server.inject({
+				method: "GET",
+				url: "/event_price/1/meta",
+			});
+
+			expect(response.statusCode).toBe(401);
+		});
+
+		test("returns 400 when ID is invalid", async () => {
+			const response = await server.inject({
+				method: "GET",
+				url: "/event_price/invalid/meta",
+				cookies: { session: sessionCookie },
+			});
+
+			expect(response.statusCode).toBe(400);
 		});
 	});
 
@@ -133,7 +154,6 @@ describe("Event Price Fetch Routes", () => {
 			const response = await server.inject({
 				method: "GET",
 				url: "/event_price",
-				cookies: { session: sessionCookie },
 			});
 
 			expect(response.statusCode).toBe(200);
