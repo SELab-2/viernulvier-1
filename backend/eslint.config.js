@@ -87,6 +87,7 @@ export default defineConfig([
           caughtErrorsIgnorePattern: "^_"
         }
       ],
+      "no-unused-vars": "off",
 
       "@typescript-eslint/no-redeclare": "error",
 

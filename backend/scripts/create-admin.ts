@@ -24,14 +24,14 @@ const client = new pg.Client({
   connectionString: process.env["DATABASE_URL"],
 });
 await waitForDB();
+await client.connect();
 
 const hash = await hashPassword(`password`);
 console.log(`password hash: ${hash}`);
 
-client.query(
+const res = await client.query(
   "INSERT INTO admin (username, password) VALUES ($1 , $2);",
   [`admin`, hash],
-  (err, res) => {
-    console.log(err ?? res);
-  },
 );
+console.log(res);
+await client.end();
