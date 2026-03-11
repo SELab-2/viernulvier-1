@@ -48,6 +48,53 @@ describe("Event Date Normalization Helpers", () => {
 		expect(result["doors_at"]).toBe(doorDate);
 		});
 
+		test("handles mixed Date instances and date strings", () => {
+			const startDate = new Date("2026-01-01T18:00:00.000Z");
+
+			const input = {
+				starts_at: startDate,
+				ends_at: "2026-01-01T20:00:00.000Z",
+				doors_at: new Date("2026-01-01T17:30:00.000Z"),
+				production: 15,
+			};
+
+		const result = normalizeEventDates(input) as Record<string, unknown>;
+
+		expect(result["starts_at"]).toBeInstanceOf(Date);
+		expect(result["starts_at"]).toBe(startDate);
+		expect(result["ends_at"]).toBeInstanceOf(Date);
+		expect(result["ends_at"]).toEqual(new Date("2026-01-01T20:00:00.000Z"));
+		expect(result["doors_at"]).toBeInstanceOf(Date);
+		expect(result["production"]).toBe(15);
+		});
+
+		test("handles doors_at as Date instance", () => {
+			const doorsDate = new Date("2026-01-01T17:30:00.000Z");
+			const input = {
+				starts_at: "2026-01-01T18:00:00.000Z",
+				ends_at: "2026-01-01T20:00:00.000Z",
+				doors_at: doorsDate,
+			};
+
+		const result = normalizeEventDates(input) as Record<string, unknown>;
+
+		expect(result["doors_at"]).toBeInstanceOf(Date);
+		expect(result["doors_at"]).toBe(doorsDate);
+		});
+
+		test("handles doors_at as date string", () => {
+			const input = {
+				starts_at: new Date("2026-01-01T18:00:00.000Z"),
+				ends_at: new Date("2026-01-01T20:00:00.000Z"),
+				doors_at: "2026-01-01T17:30:00.000Z",
+			};
+
+		const result = normalizeEventDates(input) as Record<string, unknown>;
+
+		expect(result["doors_at"]).toBeInstanceOf(Date);
+		expect(result["doors_at"]).toEqual(new Date("2026-01-01T17:30:00.000Z"));
+		});
+
 		test("preserves all other fields unchanged", () => {
 			const input = {
 				starts_at: "2026-01-01T18:00:00.000Z",
@@ -76,7 +123,7 @@ describe("Event Date Normalization Helpers", () => {
 			expect(normalizeEventDates(123)).toBe(123);
 		});
 
-		test("returns unchanged value for empty object", () => {
+		test("creates Date objects from undefined fields in empty object", () => {
 			const input = {};
 		const result = normalizeEventDates(input) as Record<string, unknown>;
 
@@ -118,6 +165,29 @@ describe("Event Date Normalization Helpers", () => {
 		expect(result["hall"]).toBe(5);
 		});
 
+		test("handles partial updates with all Date instances", () => {
+			const startDate = new Date("2026-01-01T18:00:00.000Z");
+			const endDate = new Date("2026-01-01T20:00:00.000Z");
+			const doorDate = new Date("2026-01-01T17:30:00.000Z");
+
+			const input = {
+				starts_at: startDate,
+				ends_at: endDate,
+				doors_at: doorDate,
+				vendor_id: 99,
+			};
+
+		const result = normalizePartialEventDates(input) as Record<string, unknown>;
+
+		expect(result["starts_at"]).toBeInstanceOf(Date);
+		expect(result["starts_at"]).toBe(startDate);
+		expect(result["ends_at"]).toBeInstanceOf(Date);
+		expect(result["ends_at"]).toBe(endDate);
+		expect(result["doors_at"]).toBeInstanceOf(Date);
+		expect(result["doors_at"]).toBe(doorDate);
+		expect(result["vendor_id"]).toBe(99);
+		});
+
 		test("handles partial updates with mixed date types", () => {
 			const doorDate = new Date("2026-01-01T17:30:00.000Z");
 
@@ -135,6 +205,58 @@ describe("Event Date Normalization Helpers", () => {
 		expect(result["doors_at"]).toBe(doorDate);
 		expect(result["ends_at"]).toBeUndefined();
 		expect(result["vendor_id"]).toBe(99);
+		});
+
+		test("handles partial updates with all Date instances and some undefined", () => {
+			const startDate = new Date("2026-01-01T18:00:00.000Z");
+			const endDate = new Date("2026-01-01T20:00:00.000Z");
+
+			const input = {
+				starts_at: startDate,
+				ends_at: endDate,
+				doors_at: undefined,
+				production: 25,
+			};
+
+		const result = normalizePartialEventDates(input) as Record<string, unknown>;
+
+		expect(result["starts_at"]).toBeInstanceOf(Date);
+		expect(result["starts_at"]).toBe(startDate);
+		expect(result["ends_at"]).toBeInstanceOf(Date);
+		expect(result["ends_at"]).toBe(endDate);
+		expect(result["doors_at"]).toBeUndefined();
+		expect(result["production"]).toBe(25);
+		});
+
+		test("handles partial doors_at as Date instance", () => {
+			const doorsDate = new Date("2026-01-01T17:30:00.000Z");
+			const input = {
+				doors_at: doorsDate,
+				production: 30,
+			};
+
+		const result = normalizePartialEventDates(input) as Record<string, unknown>;
+
+		expect(result["doors_at"]).toBeInstanceOf(Date);
+		expect(result["doors_at"]).toBe(doorsDate);
+		expect(result["starts_at"]).toBeUndefined();
+		expect(result["ends_at"]).toBeUndefined();
+		expect(result["production"]).toBe(30);
+		});
+
+		test("handles partial doors_at as date string", () => {
+			const input = {
+				doors_at: "2026-01-01T17:30:00.000Z",
+				hall: 8,
+			};
+
+		const result = normalizePartialEventDates(input) as Record<string, unknown>;
+
+		expect(result["doors_at"]).toBeInstanceOf(Date);
+		expect(result["doors_at"]).toEqual(new Date("2026-01-01T17:30:00.000Z"));
+		expect(result["starts_at"]).toBeUndefined();
+		expect(result["ends_at"]).toBeUndefined();
+		expect(result["hall"]).toBe(8);
 		});
 
 		test("preserves all other fields unchanged", () => {
