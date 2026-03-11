@@ -1,27 +1,16 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import z from "zod";
 
-import { parse, ParseContext } from "@/routes/helpers.js";
-import { EventSchema, EventSchemaWithoutPrice } from "@viernulvier/shared/types/event.js";
+import { getMetadata, parse, ParseContext } from "@/routes/helpers.js";
+import { EventSchema } from "@viernulvier/shared/types/event.js";
 import type { Event } from "@viernulvier/shared/types/event.js";
 import { fetchEvent } from "./fetch.js";
-import { normalizePartialEventDates } from "./helper.js";
+import { EventCreateSchema, normalizePartialEventDates } from "./helper.js";
 
-const EventBulkUpdateSchema = EventSchemaWithoutPrice.partial().extend({
-    ids: z.array(EventSchema.shape.id),
+// Define schema with explicit types to avoid ForeignKey issues
+const EventBulkUpdateSchema = EventCreateSchema.partial().extend({
+    ids: z.array(z.number().nonnegative()).nonempty()
 });
-
-interface EventBulkUpdate {
-    ids: string[];
-    starts_at?: unknown;
-    ends_at?: unknown;
-    production?: unknown;
-    hall?: unknown;
-    doors_at?: unknown;
-    vendor_id?: unknown;
-    info?: unknown;
-    price?: unknown;
-}
 
 /**
  * Updates certain fields from multiple events by ID in the database.
@@ -36,11 +25,11 @@ export async function editEvents(
     request: FastifyRequest
 ): Promise<Event[] | null> {
     const normalizedBody = normalizePartialEventDates(request.body);
-    const body = parse<EventBulkUpdate>(server, EventBulkUpdateSchema, normalizedBody, ParseContext.Request);
+    const body = parse(server, EventBulkUpdateSchema, normalizedBody, ParseContext.Request);
     const selectedEvents = await Promise.all(
-        body.ids.map((id: string) => fetchEvent(
+        body.ids.map((id: number) => fetchEvent(
             server,
-            { ...request, params: { ...(request.params as Record<string, string>), id } }
+            { ...request, params: { ...(request.params as Record<string, string>), id: String(id) } }
         ))
     );
 
@@ -55,15 +44,17 @@ export async function editEvents(
         doors_at: body.doors_at ?? (selectedEvent as unknown as Record<string, unknown>)["doors_at"],
         vendor_id: body.vendor_id ?? (selectedEvent as unknown as Record<string, unknown>)["vendor_id"],
         info: body.info ?? (selectedEvent as unknown as Record<string, unknown>)["info"],
-        price: body.price ?? (selectedEvent as unknown as Record<string, unknown>)["price"],
     }));
+
+    const { admin, current_time } = getMetadata(request);
 
     const results = await Promise.all(
         updatedEvents.map((updatedEvent, index) => server.pg.query<Event>(
             `UPDATE events
-             SET starts_at = $1, ends_at = $2, production = $3, hall = $4, doors_at = $5, vendor_id = $6, info = $7, price = $8
-             WHERE id = $9
-             RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, price`,
+             SET starts_at = $1, ends_at = $2, production = $3, hall = $4, doors_at = $5, vendor_id = $6, info = $7, updated_at = $8, updated_by = $9
+             WHERE id = $10
+             RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info,
+                (SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price`,
             [
                 updatedEvent.starts_at,
                 updatedEvent.ends_at,
@@ -72,7 +63,8 @@ export async function editEvents(
                 updatedEvent.doors_at,
                 updatedEvent.vendor_id,
                 updatedEvent.info,
-                updatedEvent.price,
+                current_time,
+                admin,
                 body.ids[index],
             ],
         ))

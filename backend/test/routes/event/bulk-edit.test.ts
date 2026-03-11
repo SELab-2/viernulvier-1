@@ -5,6 +5,7 @@ import { buildServer } from "@/server.js";
 
 let server: FastifyInstance;
 let storedEvents: Array<Record<string, unknown>>;
+let sessionCookie: string;
 
 const baseEvent = {
 	id: 1,
@@ -15,21 +16,21 @@ const baseEvent = {
 	doors_at: new Date("2026-01-01T17:30:00.000Z"),
 	vendor_id: 42,
 	info: { nl: "Info mock 1" },
-	price: [1],
 };
 
 const initialEvents = [
 	baseEvent,
-	{ ...baseEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" }, price: [2] },
-	{ ...baseEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" }, price: [3] },
+	{ ...baseEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" } },
+	{ ...baseEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" } },
 ];
 
 beforeAll(async () => {
 	server = await buildServer();
+	sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
 
 	server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
 		if (query.includes("UPDATE events")) {
-			const id = Number(params?.[8]);
+			const id = Number(params?.[9]);
 			const index = storedEvents.findIndex((event) => Number(event["id"]) === id);
 			if (index === -1) return Promise.resolve({ rows: [] });
 
@@ -43,21 +44,23 @@ beforeAll(async () => {
 				doors_at: (params?.[4] as Date | undefined) ?? current["doors_at"],
 				vendor_id: (params?.[5] as number | undefined) ?? current["vendor_id"],
 				info: params?.[6] ?? current["info"],
-				price: params?.[7] ?? current["price"],
 			};
 
 			storedEvents[index] = updated;
-			return Promise.resolve({ rows: [updated] });
+			const event = {...updated, price: []};
+			return Promise.resolve({ rows: [event] });
 		}
 
 		if (query.includes("FROM events WHERE id = $1")) {
 			const id = Number(params?.[0]);
-			const event = storedEvents.find((row) => Number(row["id"]) === id);
+			if (id > storedEvents.length) return Promise.resolve({ rows: [] });
+			const event = { ...storedEvents.find((row) => Number(row["id"]) === id), price: [] };
 			return Promise.resolve({ rows: event ? [event] : [] });
 		}
 
 		if (query.includes("FROM events")) {
-			return Promise.resolve({ rows: storedEvents });
+			const events = storedEvents.map((row) => ({ ...row, price: [] }));
+			return Promise.resolve({ rows: events });
 		}
 
 		return Promise.resolve({ rows: [] });
@@ -82,6 +85,7 @@ describe("Event Bulk Edit Routes", () => {
 			const response = await server.inject({
 				method: "PATCH",
 				url: "/api/v1/event",
+				cookies: { session: sessionCookie },
 				payload: { ids: [1, 2], production: 20 },
 			});
 
@@ -93,6 +97,7 @@ describe("Event Bulk Edit Routes", () => {
 			const response = await server.inject({
 				method: "PATCH",
 				url: "/api/v1/event",
+				cookies: { session: sessionCookie },
 				payload: {
 					ids: [1, 2],
 					production: "not a number",
@@ -107,6 +112,7 @@ describe("Event Bulk Edit Routes", () => {
 			const response = await server.inject({
 				method: "PATCH",
 				url: "/api/v1/event",
+				cookies: { session: sessionCookie },
 				payload: { ids: [1, 999], production: 20 },
 			});
 
@@ -120,6 +126,7 @@ describe("Event Bulk Edit Routes", () => {
 			const editResponse = await server.inject({
 				method: "PATCH",
 				url: "/api/v1/event",
+				cookies: { session: sessionCookie },
 				payload: { ids: [1, 3], production: 99 },
 			});
 
@@ -128,6 +135,7 @@ describe("Event Bulk Edit Routes", () => {
 				{
 					...initialEvents[0],
 					production: 99,
+					price: [],
 					starts_at: initialEvents[0]!.starts_at.toISOString(),
 					ends_at: initialEvents[0]!.ends_at.toISOString(),
 					doors_at: initialEvents[0]!.doors_at.toISOString(),
@@ -135,6 +143,7 @@ describe("Event Bulk Edit Routes", () => {
 				{
 					...initialEvents[2],
 					production: 99,
+					price: [],
 					starts_at: initialEvents[2]!.starts_at.toISOString(),
 					ends_at: initialEvents[2]!.ends_at.toISOString(),
 					doors_at: initialEvents[2]!.doors_at.toISOString(),
@@ -144,6 +153,7 @@ describe("Event Bulk Edit Routes", () => {
 			const listResponse = await server.inject({
 				method: "GET",
 				url: "/api/v1/event",
+				cookies: { session: sessionCookie },
 			});
 
 			expect(listResponse.statusCode).toBe(200);
@@ -151,6 +161,7 @@ describe("Event Bulk Edit Routes", () => {
 			expect(listResponse.json()[0]).toEqual({
 				...initialEvents[0],
 				production: 99,
+				price: [],
 				starts_at: initialEvents[0]!.starts_at.toISOString(),
 				ends_at: initialEvents[0]!.ends_at.toISOString(),
 				doors_at: initialEvents[0]!.doors_at.toISOString(),
@@ -158,6 +169,7 @@ describe("Event Bulk Edit Routes", () => {
 			expect(listResponse.json()[2]).toEqual({
 				...initialEvents[2],
 				production: 99,
+				price: [],
 				starts_at: initialEvents[2]!.starts_at.toISOString(),
 				ends_at: initialEvents[2]!.ends_at.toISOString(),
 				doors_at: initialEvents[2]!.doors_at.toISOString(),
@@ -171,6 +183,7 @@ describe("Event Bulk Edit Routes", () => {
 			const editResponse = await server.inject({
 				method: "PATCH",
 				url: "/api/v1/event",
+				cookies: { session: sessionCookie },
 				payload: {
 					ids: [2, 3],
 					starts_at: newStartsAt,
@@ -187,6 +200,7 @@ describe("Event Bulk Edit Routes", () => {
 					ends_at: newEndsAt.toISOString(),
 					hall: 9,
 					doors_at: initialEvents[1]!.doors_at.toISOString(),
+					price: [],
 				},
 				{
 					...initialEvents[2],
@@ -194,12 +208,14 @@ describe("Event Bulk Edit Routes", () => {
 					ends_at: newEndsAt.toISOString(),
 					hall: 9,
 					doors_at: initialEvents[2]!.doors_at.toISOString(),
+					price: [],
 				},
 			]);
 
 			const listResponse = await server.inject({
 				method: "GET",
 				url: "/api/v1/event",
+				cookies: { session: sessionCookie },
 			});
 
 			expect(listResponse.statusCode).toBe(200);
@@ -210,6 +226,7 @@ describe("Event Bulk Edit Routes", () => {
 				ends_at: newEndsAt.toISOString(),
 				hall: 9,
 				doors_at: initialEvents[1]!.doors_at.toISOString(),
+				price: [],
 			});
 			expect(listResponse.json()[2]).toEqual({
 				...initialEvents[2],
@@ -217,6 +234,7 @@ describe("Event Bulk Edit Routes", () => {
 				ends_at: newEndsAt.toISOString(),
 				hall: 9,
 				doors_at: initialEvents[2]!.doors_at.toISOString(),
+				price: [],
 			});
 		});
 
@@ -224,6 +242,7 @@ describe("Event Bulk Edit Routes", () => {
 			const editResponse = await server.inject({
 				method: "PATCH",
 				url: "/api/v1/event",
+				cookies: { session: sessionCookie },
 				payload: { ids: [1, 2], vendor_id: 555 },
 			});
 
@@ -235,6 +254,7 @@ describe("Event Bulk Edit Routes", () => {
 					starts_at: initialEvents[0]!.starts_at.toISOString(),
 					ends_at: initialEvents[0]!.ends_at.toISOString(),
 					doors_at: initialEvents[0]!.doors_at.toISOString(),
+					price: [],
 				},
 				{
 					...initialEvents[1],
@@ -242,12 +262,14 @@ describe("Event Bulk Edit Routes", () => {
 					starts_at: initialEvents[1]!.starts_at.toISOString(),
 					ends_at: initialEvents[1]!.ends_at.toISOString(),
 					doors_at: initialEvents[1]!.doors_at.toISOString(),
+					price: [],
 				},
 			]);
 
 			const listResponse = await server.inject({
 				method: "GET",
 				url: "/api/v1/event",
+				cookies: { session: sessionCookie },
 			});
 
 			expect(listResponse.statusCode).toBe(200);
@@ -259,6 +281,7 @@ describe("Event Bulk Edit Routes", () => {
 					starts_at: initialEvents[0]!.starts_at.toISOString(),
 					ends_at: initialEvents[0]!.ends_at.toISOString(),
 					doors_at: initialEvents[0]!.doors_at.toISOString(),
+					price: [],
 				},
 				{
 					...initialEvents[1],
@@ -266,12 +289,14 @@ describe("Event Bulk Edit Routes", () => {
 					starts_at: initialEvents[1]!.starts_at.toISOString(),
 					ends_at: initialEvents[1]!.ends_at.toISOString(),
 					doors_at: initialEvents[1]!.doors_at.toISOString(),
+					price: [],
 				},
 				{
 					...initialEvents[2],
 					starts_at: initialEvents[2]!.starts_at.toISOString(),
 					ends_at: initialEvents[2]!.ends_at.toISOString(),
 					doors_at: initialEvents[2]!.doors_at.toISOString(),
+					price: [],
 				},
 			]);
 		});
