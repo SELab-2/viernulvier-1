@@ -13,8 +13,8 @@ import {
 export default function tagRoutes(server: FastifyInstance) {
   const protect = { preHandler: [server.authorize] };
 
-  server.get("/api/v1/tags", protect, replyHandler(server, fetchTags));
-  server.get("/api/v1/tags/:id", protect, replyHandler(server, fetchTag));
+  server.get("/api/v1/tags", replyHandler(server, fetchTags));
+  server.get("/api/v1/tags/:id", replyHandler(server, fetchTag));
   server.post("/api/v1/tags", protect, replyHandler(server, createTag));
 
   server.put("/api/v1/tags/:id", protect, replyHandler(server, replaceTag));

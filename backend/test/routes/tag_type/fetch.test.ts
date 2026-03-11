@@ -14,6 +14,7 @@ const tagType: TagType = {
 beforeAll(async () => {
   server = await buildServer();
 
+
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
 
     // fetchTagType (single)

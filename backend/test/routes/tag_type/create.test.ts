@@ -74,6 +74,7 @@ describe("Create tag_type", () => {
     const response = await server.inject({
       method: "POST",
       url: "/api/v1/tags/type",
+      cookies: { session: sessionCookie },
       payload: {},
     });
 

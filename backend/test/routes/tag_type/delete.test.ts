@@ -4,6 +4,7 @@ import { TagTypeSchema, type TagType } from "@viernulvier/shared/index.js";
 import type { FastifyInstance } from "fastify";
 
 let server: FastifyInstance;
+let sessionCookie: string;
 
 const tagType: TagType = {
   id: 1,
@@ -13,6 +14,8 @@ const tagType: TagType = {
 
 beforeAll(async () => {
   server = await buildServer();
+
+  sessionCookie = server.jwt.sign({ id: 1, username: "Admin" });
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
 
@@ -43,6 +46,7 @@ describe("Delete tag_type", () => {
 
     const response = await server.inject({
       method: "DELETE",
+      cookies: { session: sessionCookie },
       url: `/api/v1/tags/type/${tagType.id}`,
     });
 
@@ -54,6 +58,7 @@ describe("Delete tag_type", () => {
 
     const response = await server.inject({
       method: "DELETE",
+      cookies: { session: sessionCookie },
       url: `/api/v1/tag/type/999`,
     });
 

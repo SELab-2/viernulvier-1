@@ -4,6 +4,8 @@ import type { FastifyInstance } from "fastify";
 import { TagSchema, type Tag } from "@viernulvier/shared/index.js";
 
 let server: FastifyInstance;
+let sessionCookie: string;
+
 
 const mockTag: Tag = {
   id: 5,
@@ -14,6 +16,8 @@ const mockTag: Tag = {
 
 beforeAll(async () => {
   server = await buildServer();
+  sessionCookie = server.jwt.sign({ id: 1, username: "Admin" });
+
 });
 
 afterAll(async () => {
@@ -29,6 +33,7 @@ describe("Delete tag", () => {
 
     const response = await server.inject({
       method: "DELETE",
+      cookies: { session: sessionCookie },
       url: `/api/v1/tags/${mockTag.id}`,
     });
 
@@ -44,6 +49,7 @@ describe("Delete tag", () => {
 
     const response = await server.inject({
       method: "DELETE",
+      cookies: { session: sessionCookie },
       url: `/api/v1/tags/${mockTag.id}`,
     });
 

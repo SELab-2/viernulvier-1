@@ -4,6 +4,8 @@ import type { FastifyInstance } from "fastify";
 import { TagSchema, type Tag } from "@viernulvier/shared/index.js";
 
 let server: FastifyInstance;
+
+
 const tag1: Tag = {
   id: 5,
   name: { en: "Music", nl: "Muziek" },
@@ -23,7 +25,9 @@ const mockTags: Tag[] = [
 
 beforeAll(async () => {
   server = await buildServer();
-    server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+
+
+  server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     const id = params?.[0];
 
     let rows;

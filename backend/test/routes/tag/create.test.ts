@@ -53,6 +53,7 @@ describe("Create tag", () => {
   test("POST /api/v1/tags invalid body", async () => {
     const response = await server.inject({
       method: "POST",
+      cookies: { session: sessionCookie },
       url: "/api/v1/tags",
       payload: {},
     });
