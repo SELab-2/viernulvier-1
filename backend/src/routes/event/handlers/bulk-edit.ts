@@ -58,6 +58,7 @@ export async function editEvents(
       updatedEvent.info,
       current_time,
       admin,
+      // eslint-disable-next-line security/detect-object-injection
       Number(body.ids[index]),
     ))
   );

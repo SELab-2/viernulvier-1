@@ -41,7 +41,7 @@ export async function fetchEventWithMeta(
   server: FastifyInstance,
   request: FastifyRequest
 ): Promise<EventWithMeta | null> {
-const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
   const result = await buildQuery(
     server,
     `SELECT id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery},
