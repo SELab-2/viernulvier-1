@@ -1,12 +1,13 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 
-import { getParam, parse, parseFirstRow, ParseContext } from "@/routes/helpers.js";
+import { getParam, parse, parseFirstRow, ParseContext, getMetadata } from "@/routes/helpers.js";
 import { EventSchema } from "@viernulvier/shared/types/event.js";
 import type { Event } from "@viernulvier/shared/types/event.js";
 import { fetchEvent } from "./fetch.js";
-import { normalizePartialEventDates } from "./helper.js";
+import { normalizePartialEventDates, EventCreateSchema } from "./helper.js";
+import type { EventCreate } from "./helper.js";
 
-const EventUpdateSchema = EventSchema.partial();
+const EventUpdateSchema = EventCreateSchema.partial();
 
 /**
  * Updates certain fields from a single event by ID in the database.
@@ -21,7 +22,7 @@ export async function editEvent(
     request: FastifyRequest
 ): Promise<Event | null> {
     const normalizedBody = normalizePartialEventDates(request.body);
-    const body = parse<Event>(server, EventUpdateSchema, normalizedBody, ParseContext.Request);
+    const body = parse<EventCreate>(server, EventUpdateSchema, normalizedBody, ParseContext.Request);
     const selectedEvent = await fetchEvent(server, request);
 
     if (!selectedEvent) return null;
@@ -34,14 +35,17 @@ export async function editEvent(
         doors_at: body.doors_at ?? selectedEvent.doors_at,
         vendor_id: body.vendor_id ?? selectedEvent.vendor_id,
         info: body.info ?? selectedEvent.info,
-        price: body.price ?? selectedEvent.price,
     };
+
+    const { current_time, admin } = getMetadata(request);
 
     const result = await server.pg.query<Event>(
         `UPDATE events
-         SET starts_at = $1, ends_at = $2, production = $3, hall = $4, doors_at = $5, vendor_id = $6, info = $7, price = $8
-         WHERE id = $9
-         RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, price`,
+         SET starts_at = $1, ends_at = $2, production = $3, hall = $4, doors_at = $5, vendor_id = $6, info = $7,
+            updated_at = $8, updated_by = $9
+         WHERE id = $10
+         RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, 
+            (SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price`,
         [
             updatedEvent.starts_at,
             updatedEvent.ends_at,
@@ -50,7 +54,8 @@ export async function editEvent(
             updatedEvent.doors_at,
             updatedEvent.vendor_id,
             updatedEvent.info,
-            updatedEvent.price,
+            current_time,
+            admin,
             getParam(request, "id"),
         ],
     );
