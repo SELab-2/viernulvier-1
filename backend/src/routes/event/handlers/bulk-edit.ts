@@ -1,11 +1,10 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import z from "zod";
 
-import { getMetadata, parse, ParseContext } from "@/routes/helpers.js";
-import { EventSchema } from "@viernulvier/shared/index.js";
+import { getMetadata, parseSchema, ParseContext } from "@/routes/helpers.js";
 import type { Event } from "@viernulvier/shared/index.js";
 import { fetchEvent } from "./fetch.js";
-import { EventCreateSchema, normalizePartialEventDates } from "./helper.js";
+import { EventCreateSchema, normalizePartialEventDates, updateEvent } from "./helper.js";
 
 // Define schema with explicit types to avoid ForeignKey issues
 const EventBulkUpdateSchema = EventCreateSchema.partial().extend({
@@ -25,7 +24,7 @@ export async function editEvents(
   request: FastifyRequest
 ): Promise<Event[] | null> {
   const normalizedBody = normalizePartialEventDates(request.body);
-  const body = parse(server, EventBulkUpdateSchema, normalizedBody, ParseContext.Request);
+  const body = parseSchema(server, EventBulkUpdateSchema, normalizedBody, ParseContext.Request);
   const selectedEvents = await Promise.all(
     body.ids.map((id: number) => fetchEvent(
       server,
@@ -49,29 +48,19 @@ export async function editEvents(
   const { admin, current_time } = getMetadata(request);
 
   const results = await Promise.all(
-    updatedEvents.map((updatedEvent, index) => server.pg.query<Event>(
-      `UPDATE events
-      SET starts_at = $1, ends_at = $2, production = $3, hall = $4, doors_at = $5, vendor_id = $6, info = $7, updated_at = $8, updated_by = $9
-      WHERE id = $10
-      RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info,
-        (SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price`,
-      [
-        updatedEvent.starts_at,
-        updatedEvent.ends_at,
-        updatedEvent.production,
-        updatedEvent.hall,
-        updatedEvent.doors_at,
-        updatedEvent.vendor_id,
-        updatedEvent.info,
-        current_time,
-        admin,
-        // eslint-disable-next-line security/detect-object-injection
-        body.ids[index],
-      ],
+    updatedEvents.map((updatedEvent, index) => updateEvent(server)(
+      updatedEvent.starts_at,
+      updatedEvent.ends_at,
+      updatedEvent.production,
+      updatedEvent.hall,
+      updatedEvent.doors_at,
+      updatedEvent.vendor_id,
+      updatedEvent.info,
+      current_time,
+      admin,
+      Number(body.ids[index]),
     ))
   );
 
-  return results
-    .flatMap((result) => result.rows)
-    .map((row) => parse(server, EventSchema, row, ParseContext.Database));
+  return results.map(result => result[0]).filter((event): event is Event => !!event) || null;
 }
