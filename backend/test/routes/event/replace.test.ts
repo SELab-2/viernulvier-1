@@ -191,6 +191,17 @@ describe("Event Replace Routes", () => {
             // Check other events are unchanged
             expect(events[1]!.id).toBe(2);
             expect(events[2]!.id).toBe(3);
+            
+            // Verify metadata was updated via individual GET request
+            const getResponse = await server.inject({
+                method: "GET",
+                url: "/api/v1/event/1/meta",
+                cookies: { session: sessionCookie },
+            });
+            expect(getResponse.statusCode).toBe(200);
+            const eventWithMeta = getResponse.json();
+            expect(eventWithMeta.updated_by).toBe(1);
+            expect(eventWithMeta.updated_at).toBeDefined();
         });
     });
 });
