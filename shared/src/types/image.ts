@@ -1,6 +1,6 @@
 import z from "zod";
 import { createSchema } from "./metadata.js";
-import { ProductionSchema } from "./index.js";
+import { ProductionSchema } from "./production.js";
 import { primaryKey, foreignKey } from "./helpers.js";
 
 export const ImageSchema = createSchema({
