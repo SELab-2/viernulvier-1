@@ -7,7 +7,6 @@ import { foreignKey, primaryKey, languageMap, ForeignKey } from "./helpers.js";
 export const ProductionSchema = createSchema({
   id: primaryKey(),
   vendor_id: z.int().nonnegative(),
-  box_office_id: z.int().nonnegative(),
   supertitle: languageMap.nullable(),
   title: languageMap,
   artist: languageMap,
@@ -24,6 +23,7 @@ export const ProductionSchema = createSchema({
   info: languageMap.nullable(),
 
   // unnecessary
+  // box_office_id: z.int().nonnegative(),
   // performer_field: z.string().nullable(),
   // performer_type: z.string().nullable(),
   // attendance_mode: z.string().nullable(),

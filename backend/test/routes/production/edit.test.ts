@@ -10,7 +10,6 @@ let sessionCookie: string;
 const originalProduction: Production = {
   id: 1,
   vendor_id: 10,
-  box_office_id: 20,
   supertitle: null,
   title: { nl: "Oude titel" },
   artist: { nl: "Oude artiest" },
@@ -48,7 +47,6 @@ const updatedProductionB: Production = {
 const updatedProductionC: Production = {
   ...originalProduction,
   vendor_id: 99,
-  box_office_id: 77,
   supertitle: { nl: "Supertitel C" },
   title: { nl: "Titel C" },
   artist: { nl: "Artiest C" },
@@ -100,7 +98,6 @@ describe("Edit on production route", () => {
       cookies: { session: sessionCookie },
       payload: {
         vendor_id: originalProduction["vendor_id"],
-        box_office_id: originalProduction["box_office_id"],
         supertitle: null,
         title: updatedProductionA["title"],
         artist: updatedProductionA["artist"],
@@ -199,7 +196,6 @@ describe("Edit on production route", () => {
       cookies: { session: sessionCookie },
       payload: {
         vendor_id: updatedProductionC["vendor_id"],
-        box_office_id: updatedProductionC["box_office_id"],
         supertitle: updatedProductionC["supertitle"],
         title: updatedProductionC["title"],
         artist: updatedProductionC["artist"],

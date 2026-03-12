@@ -7,7 +7,6 @@ import { getFieldValue, getNullableFieldValue } from "./field-utils.js";
 
 const RequiredCreateColumns = [
   "vendor_id",
-  "box_office_id",
   "title",
   "artist",
   "tagline",

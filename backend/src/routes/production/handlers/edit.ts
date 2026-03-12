@@ -9,7 +9,6 @@ import z from "zod";
 
 const DirectEditColumns = [
   "vendor_id",
-  "box_office_id",
   "title",
   "artist",
   "tagline",

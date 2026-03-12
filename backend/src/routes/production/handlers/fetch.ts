@@ -8,7 +8,6 @@ const ProductionSelect = `
 SELECT
   p.id,
   p.vendor_id,
-  p.box_office_id,
   (SELECT COALESCE(ARRAY_AGG(e.id), '{}') FROM event e WHERE e.production = p.id) AS events,
   p.supertitle,
   p.title,
@@ -89,7 +88,6 @@ export async function fetchProductionWithMeta(
     `SELECT
        p.id,
        p.vendor_id,
-       p.box_office_id,
        p.supertitle,
        p.title,
        p.artist,
