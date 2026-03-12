@@ -1,5 +1,7 @@
 import z from "zod";
-import { EventSchema, TagSchema, createSchema } from "./index.js";
+import { EventSchema } from "./event.js";
+import { createSchema } from "./metadata.js";
+import { TagSchema } from "./tag.js";
 import { foreignKey, primaryKey, languageMap, ForeignKey } from "./helpers.js";
 
 export const ProductionSchema = createSchema({
