@@ -1,0 +1,21 @@
+{
+  "name": "@viernulvier/shared",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "main": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./types/*.js": "./types/*.ts",
+    "./types/*": "./types/*.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "build": "tsc -p tsconfig.json",
+    "check": "pnpm run lint && pnpm run build"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  }
+}
