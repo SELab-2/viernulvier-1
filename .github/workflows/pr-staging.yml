@@ -8,6 +8,7 @@ permissions:
   pull-requests: write
   contents: read
 
+
 jobs:
   validate:
     runs-on: [self-hosted, linux, ARM64]
@@ -23,6 +24,9 @@ jobs:
         working-directory: ${{ matrix.project }}
 
     steps:
+      - name: Clear Docker build cache
+        run: docker builder prune -af
+
       - name: Checkout Code
         uses: actions/checkout@v4
 
