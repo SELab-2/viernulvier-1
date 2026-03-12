@@ -40,7 +40,7 @@ CREATE INDEX IF NOT EXISTS idx_event_hall_starts_at ON event(hall, starts_at);
 -- ============================================================
 -- event is both PK and FK: exactly one price record per event (1:1 extension).
 CREATE TABLE IF NOT EXISTS event_price (
-  id              INT           SERIAL        PRIMARY KEY,
+  id              SERIAL        PRIMARY KEY,
   amount          VARCHAR(32),
   box_office_id   INT,
   available       INT,
@@ -50,5 +50,5 @@ CREATE TABLE IF NOT EXISTS event_price (
   rank            JSONB,
 
   -- foreign keys
-  event           INT           REFERENCES event(id) ON DELETE CASCADE,
+  event           INT           REFERENCES event(id) ON DELETE CASCADE
 ) INHERITS (metadata);
