@@ -19,7 +19,6 @@ This document describes the full architecture of the **viernulvier-archive** app
 11. [Branching Strategy](#11-branching-strategy)
 12. [Testing Strategy](#12-testing-strategy)
 13. [Environment Variables](#13-environment-variables)
-14. [Key Design Patterns](#14-key-design-patterns)
 
 ---
 
@@ -53,90 +52,13 @@ All three services (frontend, backend, database) are orchestrated with **Docker 
 
 ## 2. Repository Layout
 
-```
-viernulvier-archive/
-├── backend/                  # Fastify REST API
-│   ├── src/
-│   │   ├── index.ts          # Entry point
-│   │   ├── server.ts         # Fastify creation & plugin registration
-│   │   ├── db/
-│   │   │   └── migrate.ts    # Postgrator migration runner
-│   │   ├── plugins/
-│   │   │   ├── postgres.ts   # @fastify/postgres connection pool
-│   │   │   ├── jwt.ts        # @fastify/jwt + @fastify/cookie
-│   │   │   └── authorize.ts  # preHandler authentication hook
-│   │   └── routes/
-│   │       ├── registerRoutes.ts
-│   │       ├── helpers.ts        # buildQuery, parseParams, replyHandler, HttpError
-│   │       ├── production/
-│   │       │   ├── production.ts # Route definitions
-│   │       │   └── handlers/     # fetch, create, replace, edit, bulk-edit, delete
-│   │       ├── auth/
-│   │       │   ├── auth.ts       # Route definitions
-│   │       │   └── handlers/     # login, logout, fetch, create, replace, edit, delete, hash
-│   │       ├── tag/
-│   │       │   ├── tags.ts       # Route definitions
-│   │       │   └── handlers/     # fetch, create, replace, edit, delete
-│   │       ├── tag_type/
-│   │       │   ├── tag_types.ts  # Route definitions
-│   │       │   └── handlers/     # fetch, create, replace, edit, delete
-│   │       └── hall/
-│   │           ├── hall.ts       # Route definitions
-│   │           └── handlers/     # fetch, create, replace, edit, delete
-│   ├── migrations/           # Numbered SQL migration files (001–007)
-│   ├── scripts/              # migrate.ts, create-admin.ts, generate-secret.ts
-│   ├── test/                 # Vitest tests
-│   ├── Dockerfile            # Production multi-stage build
-│   └── Dockerfile.dev        # Development with tsx hot-reload
-│
-├── frontend/                 # Vue 3 SPA
-│   ├── src/
-│   │   ├── main.ts           # App bootstrap
-│   │   ├── App.vue           # Root component
-│   │   ├── style.css         # Global styles
-│   │   ├── components/       # Reusable Vue components
-│   │   └── assets/           # Static images
-│   ├── mock/                 # UI mockups & domain model docs
-│   ├── test/                 # Vitest + jsdom tests
-│   ├── Dockerfile            # Production build → Nginx
-│   └── Dockerfile.dev        # Development with Vite HMR
-│
-├── shared/                   # Shared types & validation schemas
-│   ├── src/
-│   │   ├── index.ts          # Re-exports from types/
-│   │   └── types/
-│   │       ├── index.ts      # Barrel export
-│   │       ├── helpers.ts    # ForeignKey, primaryKey, serial, languageMap, codecs
-│   │       ├── metadata.ts   # createSchema, withMeta, MetadataShape
-│   │       ├── admin.ts
-│   │       ├── production.ts
-│   │       ├── event.ts
-│   │       ├── hall.ts
-│   │       ├── tag.ts
-│   │       ├── blog.ts
-│   │       ├── image.ts
-│   │       └── crop.ts
-│   └── package.json          # Exports raw .ts source for direct consumption
-│
-├── DOCS/                     # Project documentation
-│   ├── ARCHITECTURE.md       # ← You are here
-│   ├── CONTRIBUTING.md       # Setup, workflow, common problems
-│   └── DATABASE.md           # Full DBML schema & design rationale
-│
-├── .github/
-│   ├── workflows/            # CI/CD pipelines (4 workflow files)
-│   ├── CODEOWNERS
-│   └── pull_request_template.md
-│
-├── docker-compose.yml        # Production orchestration
-├── docker-compose.dev.yml    # Development overrides (hot-reload, volume mounts)
-├── pnpm-workspace.yaml       # Workspace & dependency override definitions
-├── .npmrc                    # pnpm config (hoisted node-linker)
-├── .env.example              # Required environment variables
-├── rundev.sh / rundev.bat    # Development startup scripts
-├── migrate-db.sh             # Database migration helper
-└── create-admin.sh           # Seed a test admin user
-```
+The monorepo contains three packages, each with its own `src/`, `test/`, `Dockerfile`, and configuration files:
+
+- **`backend/`** — Fastify REST API. Source code is in `src/` (entry point, server setup, plugins, and domain-organized routes). SQL migrations live in `migrations/`, utility scripts in `scripts/`.
+- **`frontend/`** — Vue 3 SPA. Source code in `src/`, UI mockups in `mock/`.
+- **`shared/`** — Zod schemas and TypeScript types consumed by both backend and frontend. Contains no tests — validated indirectly through the other packages.
+
+At the root level: Docker Compose files for production and development, pnpm workspace config, `.env.example`, CI/CD workflows in `.github/`, and helper shell scripts for starting dev containers and running migrations.
 
 ---
 
@@ -209,38 +131,7 @@ type AdminWithMeta = z.infer<ReturnType<typeof AdminSchema.withMeta>>;
 
 This pattern gives every entity two shapes: a **base** form (for creation/editing) and a **withMeta** form (for reading from the database, which includes audit fields).
 
-### 4.3 Foreign key system
-
-The `ForeignKey<O, T>` class extends `z.ZodType` with a `.references` property that returns the target schema. Foreign keys use lazy evaluation (`z.lazy(...)`) to support circular references between entities:
-
-```typescript
-// In event.ts — references ProductionSchema and HallSchema
-get production(): ForeignKey<typeof ProductionSchema> {
-  return foreignKey(() => ProductionSchema);
-},
-get hall(): ForeignKey<typeof HallSchema> {
-  return foreignKey(() => HallSchema);
-},
-```
-
-At the Zod validation level a foreign key is a branded non-negative integer. The `.references` property is used for type-level traversal, not runtime validation.
-
-### 4.4 Multilingual fields
-
-Text content is stored as a JSON object with language keys. The `languageMap` schema validates this:
-
-```typescript
-const VALID_LANGUAGES = z.enum(["nl", "en", "fr"]);
-const languageMap = z.partialRecord(VALID_LANGUAGES, z.string())
-  .refine((map) => Object.keys(map).length >= 1);
-
-// Valid: { nl: "Hallo", en: "Hello" }
-// Invalid: {} (at least one language required)
-```
-
-### 4.5 Codecs
-
-String-to-number codecs (`stringToSerial`, `stringToInt`) handle the conversion between URL parameters (always strings) and typed integers. They are used in the backend for route parameter parsing.
+The shared package also provides helpers for foreign key relationships (lazy-evaluated to avoid circular dependencies), multilingual field validation (`languageMap`), and string-to-number codecs for route parameter parsing.
 
 ---
 
@@ -248,112 +139,23 @@ String-to-number codecs (`stringToSerial`, `stringToInt`) handle the conversion 
 
 The backend is a **Fastify 5** REST API running on **Node.js 24**. It follows Fastify's plugin-based architecture.
 
-### 5.1 Server bootstrap
+### 5.1 Architecture
 
-```
-index.ts
-  └─▶ start()                          [server.ts]
-       ├─▶ createServer()              Create Fastify instance (optional debug logging)
-       └─▶ registerPlugins()           Register in strict order:
-            ├─▶ dbPlugin               @fastify/postgres (connection pool, max 30)
-            ├─▶ jwtPlugin              @fastify/cookie + @fastify/jwt
-            ├─▶ authorizePlugin        Decorates server with authorize hook
-            └─▶ registerRoutes()       Mounts all route modules
-```
+On startup the server registers three plugins in order — **postgres** (connection pool via `@fastify/postgres`), **jwt** (cookie-based JWT via `@fastify/jwt` + `@fastify/cookie`), and **authorize** (a `preHandler` hook for protected routes) — followed by the route modules.
 
-The `buildServer()` export creates a fully configured server without listening — used in tests.
+Routes are organized by domain. Each domain has its own directory under `routes/` containing route definitions and a `handlers/` folder. The current modules are:
 
-### 5.2 Plugin system
+| Module | Prefix | Public endpoints | Protected endpoints |
+|--------|--------|:----------------:|:-------------------:|
+| **Production** | `/api/v1/production` | Fetch all/one | CRUD, bulk edit |
+| **Auth** | `/api/v1/auth` | Login, logout | Admin CRUD |
+| **Tags** | `/api/v1/tags` | Fetch public tags | Full CRUD, fetch all |
+| **Tag Types** | `/api/v1/tags/type` | Fetch all/one | CRUD |
+| **Halls** | `/api/v1/hall` | Fetch all/one | CRUD |
 
-| Plugin | File | Responsibility |
-|--------|------|----------------|
-| **postgres** | `plugins/postgres.ts` | Registers `@fastify/postgres` with pooled connections. Decorates `server.pg` for raw SQL queries. |
-| **jwt** | `plugins/jwt.ts` | Registers `@fastify/cookie` and `@fastify/jwt`. Configures JWT signing with `JWT_SECRET`. Session tokens are stored in an `httpOnly`, `sameSite: strict` cookie named `session`. |
-| **authorize** | `plugins/authorize.ts` | Decorates the server with an `authorize` hook that verifies the JWT. Used as a `preHandler` on protected routes. Returns 401 if the token is missing or invalid. |
+Every domain follows a consistent REST pattern: public GET endpoints for reading, and authenticated POST/PUT/PATCH/DELETE for writing. Most entities also expose a `/meta` variant that includes audit fields.
 
-### 5.3 Route architecture
-
-Routes are organized by domain. Each route module is a Fastify plugin registered under a URL prefix. The five modules are registered in `registerRoutes.ts`:
-
-#### Production (`/api/v1/production`)
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|:----:|-------------|
-| GET | `/api/v1/production` | | Fetch all productions (with tags and events) |
-| GET | `/api/v1/production/:id` | | Fetch single production (with tags and events) |
-| GET | `/api/v1/production/:id/meta` | 🔒 | Fetch production with metadata |
-| POST | `/api/v1/production` | 🔒 | Create production |
-| PUT | `/api/v1/production/:id` | 🔒 | Replace production |
-| PATCH | `/api/v1/production/:id` | 🔒 | Partial update production |
-| PATCH | `/api/v1/production/bulk` | 🔒 | Bulk update multiple productions |
-| DELETE | `/api/v1/production/:id` | 🔒 | Delete production |
-
-#### Auth (`/api/v1/auth`)
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|:----:|-------------|
-| POST | `/api/v1/auth/login` | | Login (returns session cookie) |
-| POST | `/api/v1/auth/logout` | | Logout (clears session cookie) |
-| GET | `/api/v1/auth/:id` | 🔒 | Fetch admin |
-| GET | `/api/v1/auth/:id/meta` | 🔒 | Fetch admin with metadata |
-| POST | `/api/v1/auth` | 🔒 | Create admin |
-| PUT | `/api/v1/auth/:id` | 🔒 | Replace admin |
-| PATCH | `/api/v1/auth/:id` | 🔒 | Partial update admin |
-| DELETE | `/api/v1/auth/:id` | 🔒 | Delete admin |
-
-#### Tags (`/api/v1/tags`)
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|:----:|-------------|
-| GET | `/api/v1/tags` | | Fetch public tags (optionally filtered by `?production=<id>`) |
-| GET | `/api/v1/tags/all` | 🔒 | Fetch all tags including non-public |
-| GET | `/api/v1/tags/:id` | | Fetch single public tag |
-| GET | `/api/v1/tags/:id/all` | 🔒 | Fetch single tag (including non-public) |
-| GET | `/api/v1/tags/:id/meta` | 🔒 | Fetch tag with metadata |
-| POST | `/api/v1/tags` | 🔒 | Create tag |
-| PUT | `/api/v1/tags/:id` | 🔒 | Replace tag |
-| PATCH | `/api/v1/tags/:id` | 🔒 | Partial update tag |
-| DELETE | `/api/v1/tags/:id` | 🔒 | Delete tag |
-
-#### Tag Types (`/api/v1/tags/type`)
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|:----:|-------------|
-| GET | `/api/v1/tags/type` | | Fetch all tag types |
-| GET | `/api/v1/tags/type/:id` | | Fetch single tag type |
-| GET | `/api/v1/tags/type/:id/meta` | 🔒 | Fetch tag type with metadata |
-| POST | `/api/v1/tags/type` | 🔒 | Create tag type |
-| PUT | `/api/v1/tags/type/:id` | 🔒 | Replace tag type |
-| PATCH | `/api/v1/tags/type/:id` | 🔒 | Partial update tag type |
-| DELETE | `/api/v1/tags/type/:id` | 🔒 | Delete tag type |
-
-#### Halls (`/api/v1/hall`)
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|:----:|-------------|
-| GET | `/api/v1/hall` | | Fetch all halls |
-| GET | `/api/v1/hall/:id` | | Fetch single hall |
-| GET | `/api/v1/hall/:id/meta` | 🔒 | Fetch hall with metadata |
-| POST | `/api/v1/hall` | 🔒 | Create hall |
-| PUT | `/api/v1/hall/:id` | 🔒 | Replace hall |
-| PATCH | `/api/v1/hall/:id` | 🔒 | Partial update hall |
-| DELETE | `/api/v1/hall/:id` | 🔒 | Delete hall |
-
-🔒 = requires authentication (uses `server.authorize` preHandler)
-
-### 5.4 Request lifecycle
-
-Every route handler follows a standard pipeline:
-
-```
-1. preHandler  →  authorize hook (if protected) → verify JWT cookie
-2. parseParams →  validate URL params against a Zod schema
-3. parseSchema →  validate request body (if applicable)
-4. buildQuery  →  type-safe SQL query with validated input/output
-5. replyHandler → catch HttpError, send 404 for null results, 200 for success
-```
-
-### 5.5 Helper functions
+### 5.2 Helper functions
 
 The `routes/helpers.ts` module provides the core request-handling utilities:
 
@@ -374,80 +176,19 @@ Passwords are hashed with **bcrypt** (12 salt rounds). The login handler uses a 
 
 ## 6. Frontend
 
-The frontend is a **Vue 3** single-page application built with **Vite 7** and TypeScript.
+The frontend is a **Vue 3** single-page application (Composition API, `<script setup>`) built with **Vite 7** and TypeScript. It communicates with the backend through a Vite dev proxy (`/api` → backend container), which also handles cookie forwarding for authentication.
 
-### 6.1 Current state
-
-The frontend is currently in a **starter template** state with the core tooling configured and ready for feature development. The infrastructure is production-grade:
-
-| Concern | Solution |
-|---------|----------|
-| Framework | Vue 3 with `<script setup>` Composition API |
-| Build tool | Vite 7 with `@vitejs/plugin-vue` |
-| Language | TypeScript (strict mode) |
-| Testing | Vitest + Vue Test Utils (jsdom environment) |
-| Linting | ESLint 9 + Prettier + Vue recommended rules |
-| API access | Vite dev proxy: `/api/*` → `http://backend:3000` |
-| Shared types | `@viernulvier/shared` consumed directly as TypeScript source |
-
-### 6.2 Vite configuration
-
-- **Dev server** listens on `0.0.0.0` (accessible from Docker host) on port `FRONTEND_PORT` (default 5173).
-- **API proxy** forwards all `/api` requests to the backend container, enabling cookie-based auth without CORS issues.
-- **Filesystem access** is set to allow `..` so Vite can resolve the shared package.
-- **Path alias**: `@` resolves to `./src/`.
-
-### 6.3 Planned features (per mockups)
-
-The `mock/` directory contains UI specifications and a domain model:
-
-- **Homepage** — Archive introduction with statistics
-- **Archive overview** — Searchable, filterable, sortable production card grid
-- **Production detail** — Full production info with events and series
-- **Series/tag pages** — Filtered archive views
-- **Admin interface** — Spreadsheet-style bulk editing for productions, events, tags
+UI mockups and domain model documentation are in the `mock/` directory.
 
 ---
 
 ## 7. Database
 
-The database is **PostgreSQL 18**, managed through **Postgrator** migrations stored in `backend/migrations/`.
+The database is **PostgreSQL 18**, managed through **Postgrator** migrations stored in `backend/migrations/`. Migrations follow the `NNN.do.<name>.sql` / `NNN.undo.<name>.sql` convention and are run via `pnpm migrate` in the backend container.
 
-### 7.1 Migration system
+Every domain table includes four audit columns (`created_at`, `updated_at`, `created_by`, `updated_by`), mirrored in the shared package's `MetadataShape` / `withMeta()` pattern. Multilingual text fields are stored as `JSONB`. Deduplication against the external VIERNULVIER API uses `vendor_id` fields.
 
-Migrations follow the naming convention `NNN.do.<name>.sql` (up) and `NNN.undo.<name>.sql` (down). They are run via `pnpm migrate` in the backend container.
-
-| # | Migration | Creates |
-|---|-----------|---------|
-| 001 | `init` | `admin`, `production`, metadata fields |
-| 002 | `create-hall-table` | `hall` |
-| 003 | `create-event-tables` | `event`, `event_price` |
-| 004 | `create-tag-tables` | `tag_type`, `tag`, `production_tag` |
-| 005 | `create-image-tables` | `image`, `crop` |
-| 006 | `create-blog-tables` | `blog`, `blogpost` |
-| 007 | `create-production-custom-field-logic-tables` | `custom_production_field_definition`, `production_custom_field` |
-
-### 7.2 Metadata pattern
-
-Every domain table inherits four audit columns via PostgreSQL table inheritance:
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `created_at` | `TIMESTAMPTZ` | Auto-set to `NOW()` on insert |
-| `updated_at` | `TIMESTAMPTZ` | Auto-set to `NOW()` on insert |
-| `created_by` | `INT` | FK → `admin(id)`, `ON DELETE SET NULL` |
-| `updated_by` | `INT` | FK → `admin(id)`, `ON DELETE SET NULL` |
-
-This is mirrored in the shared package's `MetadataShape` and the `withMeta()` method on every schema.
-
-### 7.3 Key design decisions
-
-- **Multilingual content** is stored as `JSONB` (`{ "nl": "...", "en": "...", "fr": "..." }`), validated by the `languageMap` Zod schema.
-- **Deduplication** uses `vendor_id` fields (integers from the external VIERNULVIER API) to prevent importing the same production/event/hall twice.
-- **Custom fields** use an EAV (entity-attribute-value) pattern with a type-discriminated value column. A `CHECK` constraint ensures only the column matching the field's type is non-null.
-- **Images and crops** are separate entities. An `image` belongs to a production; a `crop` is a derived version with a URL and type label.
-
-See [DATABASE.md](./DATABASE.md) for the full DBML schema and detailed design rationale.
+See [DATABASE.md](./DATABASE.md) for the full schema and design rationale.
 
 ---
 
@@ -466,25 +207,9 @@ See [DATABASE.md](./DATABASE.md) for the full DBML schema and detailed design ra
 └────────┘                                 └─────────┘
 ```
 
-### 8.2 Token details
+The signed JWT (HS256, 24 h expiry) is stored in an `httpOnly` session cookie. Protected routes use the `server.authorize` preHandler hook which verifies the cookie and populates `request.user`.
 
-| Property | Value |
-|----------|-------|
-| Algorithm | Default Fastify JWT (HS256) |
-| Expiration | 24 hours |
-| Payload | `{ id: number, username: string }` |
-| Storage | `httpOnly` cookie named `session` |
-| Cookie flags | `sameSite: strict`, `secure: true` (production only), `path: /` |
-
-### 8.3 Protected routes
-
-Protected routes use `{ preHandler: server.authorize }`. The `authorize` hook calls `request.jwtVerify()`, which reads the `session` cookie, verifies the signature, and populates `request.user` with the JWT payload.
-
-### 8.4 Security considerations
-
-- Passwords require 8–72 characters (72 is bcrypt's maximum input length).
-- Failed login attempts use a **dummy bcrypt comparison** to prevent timing-based user enumeration.
-- The `JWT_SECRET` is generated via `crypto.randomBytes(32)` and stored in the `.env` file (never committed).
+Passwords are hashed with **bcrypt** (12 salt rounds). Failed login attempts use a dummy bcrypt comparison to prevent timing-based user enumeration. The `JWT_SECRET` is generated via `crypto.randomBytes(32)` and must never be committed.
 
 ---
 
@@ -593,24 +318,16 @@ enhancement/* ──── Improvements to existing features
 
 ### 12.1 Backend
 
-| Property | Value |
-|----------|-------|
-| Runner | Vitest 4 (Node environment) |
-| Coverage provider | V8 |
-| Coverage threshold | **97.5%** per file (statements, functions, branches, lines) |
-| Setup | `test/setup.ts` — sets `JWT_SECRET` for test JWT signing |
-| Pattern | Mock the `server.pg.query` function, use `server.inject()` for HTTP assertions |
+- **Runner**: Vitest 4 (Node environment)
+- **Coverage threshold**: **97.5%** per file (statements, functions, branches, lines)
 
-Tests mock the PostgreSQL plugin to avoid a real database connection. Each test file creates a server via `buildServer()`, overrides the `pg` decorator, and injects HTTP requests.
+Route tests use `buildServer()` to create a server instance, mock the `pg` decorator, and assert against injected HTTP requests. A global setup file configures `JWT_SECRET` for test JWT signing.
 
 ### 12.2 Frontend
 
-| Property | Value |
-|----------|-------|
-| Runner | Vitest 4 (jsdom environment) |
-| Coverage provider | V8 |
-| Coverage threshold | **80%** per file |
-| Utilities | `@vue/test-utils` for component mounting and interaction |
+- **Runner**: Vitest 4 (jsdom environment)
+- **Coverage threshold**: **80%** per file
+- **Utilities**: `@vue/test-utils` for component mounting and interaction
 
 ### 12.3 Shared
 
@@ -630,46 +347,6 @@ Defined in `.env` (copy from `.env.example`):
 | `DATABASE_URL` | `postgres://postgres@db:5432/postgres` | PostgreSQL connection string |
 | `DEBUG` | `True` | Enables Fastify debug logging when set to `"true"` |
 | `JWT_SECRET` | *(required)* | Secret for signing JWT tokens. Generate with `pnpm generate-secret`. |
-
----
-
-## 14. Key Design Patterns
-
-### Type-safe full-stack contracts
-
-Zod schemas in `@viernulvier/shared` are the single source of truth. The backend validates database output against them; the frontend will use the inferred TypeScript types for API response typing. A schema change in one place propagates to both sides at compile time.
-
-### `buildQuery` — validated SQL pipeline
-
-Every database query passes through `buildQuery()`, which validates both the input parameters and the output rows against Zod schemas. This provides two layers of defense: SQL injection is prevented by parameterized queries, and data integrity is enforced by runtime schema validation.
-
-```typescript
-const fetchAdmin = buildQuery(
-  server,
-  "SELECT id, username, profile_picture FROM admin WHERE id = $1",
-  z.tuple([z.int()]),         // input: one integer parameter
-  AdminSchema,                // output: each row must match AdminSchema
-);
-
-const [admin] = await fetchAdmin(42);
-// admin is fully typed as Admin
-```
-
-### `replyHandler` — centralized error handling
-
-Route handlers are wrapped in `replyHandler()`, which catches `HttpError` instances and converts them to proper HTTP responses. This keeps route logic focused on the happy path.
-
-### Plugin decoration
-
-Fastify's plugin system is used to decorate the server and request objects with capabilities (database client, JWT verification, authorization hook). This makes dependencies explicit and testable — tests can override decorators with mocks.
-
-### Lazy foreign keys
-
-The shared package uses getter-based lazy evaluation to define foreign key relationships between schemas. This allows schemas to reference each other without creating JavaScript circular dependency issues at module initialization time.
-
-### EAV for extensibility
-
-Custom production fields use an entity-attribute-value pattern. An admin defines field definitions (name + type), and each production can have values for any subset of definitions. A `CHECK` constraint ensures only the value column matching the field's type is non-null (`value_bool`, `value_number`, `value_string`, or `value_json`).
 
 ---
 
