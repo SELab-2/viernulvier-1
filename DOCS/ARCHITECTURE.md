@@ -148,6 +148,7 @@ Routes are organized by domain. Each domain has its own directory under `routes/
 | Module | Prefix | Public endpoints | Protected endpoints |
 |--------|--------|:----------------:|:-------------------:|
 | **Production** | `/api/v1/production` | Fetch all/one | CRUD, bulk edit |
+| **Event** | `/api/v1/event` | Fetch all/one | CRUD, bulk edit |
 | **Auth** | `/api/v1/auth` | Login, logout | Admin CRUD |
 | **Tags** | `/api/v1/tags` | Fetch public tags | Full CRUD, fetch all |
 | **Tag Types** | `/api/v1/tags/type` | Fetch all/one | CRUD |
