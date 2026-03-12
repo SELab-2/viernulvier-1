@@ -48,6 +48,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 2002
           script: |
-            cd ~/viernulvier-staging-server
+            cd ~/viernulvier-server
             docker compose pull
             docker compose up -d --remove-orphans
