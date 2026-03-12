@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { migrate } from "../src/db/migrate.ts";
+import { migrate } from "../src/db/migrate.js";
 
 migrate(process.argv[2])
   .then(() => {
