@@ -3,3 +3,4 @@
 !.vscode/tasks.json
 .env
 node_modules
+.claude/
