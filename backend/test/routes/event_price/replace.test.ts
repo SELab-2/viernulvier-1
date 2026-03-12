@@ -66,7 +66,7 @@ describe("Event Price Replace Route", () => {
   test("replaces all fields of an event price", async () => {
     const response = await server.inject({
       method: "PUT",
-      url: "/event_price/api/v1/1",
+      url: "/api/v1/event/price/1",
       cookies: { session: sessionCookie },
       payload: {
           event: 25,
@@ -85,7 +85,7 @@ describe("Event Price Replace Route", () => {
   test("returns 404 when event price not found", async () => {
     const response = await server.inject({
       method: "PUT",
-      url: "/event_price/api/v1/999",
+      url: "/api/v1/event/price/999",
       cookies: { session: sessionCookie },
       payload: {
           event: 25,
@@ -100,7 +100,7 @@ describe("Event Price Replace Route", () => {
   test("returns 400 when required fields are missing", async () => {
     const response = await server.inject({
       method: "PUT",
-      url: "/event_price/api/v1/1",
+      url: "/api/v1/event/price/1",
       cookies: { session: sessionCookie },
       payload: {
           amount: 45.50, // missing event
@@ -114,7 +114,7 @@ describe("Event Price Replace Route", () => {
   test("returns 400 when amount is invalid", async () => {
     const response = await server.inject({
       method: "PUT",
-      url: "/event_price/api/v1/1",
+      url: "/api/v1/event/price/1",
       cookies: { session: sessionCookie },
       payload: {
           event: 25,
@@ -129,7 +129,7 @@ describe("Event Price Replace Route", () => {
   test("requires authentication", async () => {
     const response = await server.inject({
       method: "PUT",
-      url: "/event_price/api/v1/1",
+      url: "/api/v1/event/price/1",
       payload: {
           event: 25,
           amount: 45.50,
