@@ -21,7 +21,9 @@ export type TagTypeWithMeta = z.infer<
 export const TagSchema = createSchema({
   id: primaryKey(),
   name: languageMap,
-  type: foreignKey(() => TagTypeSchema),
+  get type(): ForeignKey<typeof TagTypeSchema> {
+    return foreignKey(() => TagTypeSchema);
+  },
   public: z.boolean(),
 
   get productions(): z.ZodArray<ForeignKey<typeof ProductionSchema>> {

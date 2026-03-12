@@ -1,6 +1,6 @@
 import z from "zod";
 import { createSchema } from "./metadata.js";
-import { ImageSchema } from "./index.js";
+import { ImageSchema } from "./image.js";
 import { primaryKey, foreignKey } from "./helpers.js";
 
 export const CropSchema = createSchema({

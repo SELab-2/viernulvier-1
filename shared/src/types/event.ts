@@ -1,7 +1,8 @@
 import z from "zod";
 
 import { createSchema } from "./metadata.js";
-import { HallSchema, ProductionSchema } from "./index.js";
+import { HallSchema } from "./hall.js";
+import { ProductionSchema } from "./production.js";
 import { foreignKey, languageMap, primaryKey, ForeignKey } from "./helpers.js";
 
 export const EventSchema = createSchema({
