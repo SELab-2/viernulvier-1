@@ -179,7 +179,7 @@ Passwords are hashed with **bcrypt** (12 salt rounds). The login handler uses a 
 
 The frontend is a **Vue 3** single-page application (Composition API, `<script setup>`) built with **Vite 7** and TypeScript. It communicates with the backend through a Vite dev proxy (`/api` → backend container), which also handles cookie forwarding for authentication.
 
-UI mockups and domain model documentation are in the `mock/` directory.
+UI mockups and domain model documentation are in the `frontend/mock/` directory.
 
 ---
 
