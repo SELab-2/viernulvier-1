@@ -10,7 +10,7 @@ export const ImageSchema = createSchema({
 
   res: z
     .string()
-    .max(16)
+    .max(16),
 }).refine((img) => {
   // resolution should not be empty or whitespace
   return img.res.trim().length > 0;

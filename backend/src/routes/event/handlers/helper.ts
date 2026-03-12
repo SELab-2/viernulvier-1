@@ -67,15 +67,15 @@ export function normalizePartialEventDates(value: unknown): unknown {
   return {
     ...payload,
     starts_at: payload["starts_at"] === undefined
-        ? undefined
-        : payload["starts_at"] instanceof Date
-            ? payload["starts_at"]
-            : new Date(String(payload["starts_at"])),
+      ? undefined
+      : payload["starts_at"] instanceof Date
+        ? payload["starts_at"]
+        : new Date(String(payload["starts_at"])),
     ends_at: payload["ends_at"] === undefined
-        ? undefined
-        : payload["ends_at"] instanceof Date
-            ? payload["ends_at"]
-            : new Date(String(payload["ends_at"])),
+      ? undefined
+      : payload["ends_at"] instanceof Date
+        ? payload["ends_at"]
+        : new Date(String(payload["ends_at"])),
     doors_at: payload["doors_at"] === undefined
       ? undefined
       : payload["doors_at"] instanceof Date

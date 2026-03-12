@@ -38,10 +38,10 @@ beforeAll(async () => {
       const index = storedEvents.findIndex((event) => Number(event.id) === id);
       if (index === -1) return Promise.resolve({ rows: [] });
 
-  // eslint-disable-next-line security/detect-object-injection
+      // eslint-disable-next-line security/detect-object-injection
       const current = storedEvents[index]!;
       const updated = {
-          ...current,
+        ...current,
         starts_at: (params?.[0] as Date | undefined) ?? current["starts_at"],
         ends_at: (params?.[1] as Date | undefined) ?? current["ends_at"],
         production: (params?.[2] as number | undefined) ?? current["production"],
@@ -53,7 +53,7 @@ beforeAll(async () => {
         updated_by: params?.[8],
       };
 
-  // eslint-disable-next-line security/detect-object-injection
+      // eslint-disable-next-line security/detect-object-injection
       storedEvents[index] = updated;
       const event = { ...updated, price: [] };
       return Promise.resolve({ rows: [event] });
@@ -91,10 +91,10 @@ describe("Event Edit Routes", () => {
       server.pg.query = vi.fn().mockRejectedValue(new Error("Database error"));
 
       const response = await server.inject({
-          method: "PATCH",
-          url: "/api/v1/event/1",
-          payload: { production: 20 },
-          cookies: { session: sessionCookie },
+        method: "PATCH",
+        url: "/api/v1/event/1",
+        payload: { production: 20 },
+        cookies: { session: sessionCookie },
       });
 
       expect(response.statusCode).toBe(500);
@@ -106,7 +106,7 @@ describe("Event Edit Routes", () => {
         method: "PATCH",
         url: "/api/v1/event/1",
         payload: {
-            production: "not a number",
+          production: "not a number",
         },
         cookies: { session: sessionCookie },
       });
