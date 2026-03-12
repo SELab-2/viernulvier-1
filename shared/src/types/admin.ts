@@ -1,7 +1,7 @@
 import z from "zod";
 
 import { primaryKey } from "./helpers.js";
-import { createSchema } from "./metadata.js";
+import { createSchema, _registerAdminSchema } from "./metadata.js";
 
 export const AdminBase = {
   id: primaryKey().describe("Primary key of admin."),
@@ -10,6 +10,7 @@ export const AdminBase = {
 };
 
 export const AdminSchema = createSchema(AdminBase);
+_registerAdminSchema(AdminSchema);
 
 export type Admin = z.infer<typeof AdminSchema>;
 export type AdminWithMeta = z.infer<ReturnType<typeof AdminSchema.withMeta>>;

@@ -1,15 +1,23 @@
 import z from "zod";
 
-import { AdminSchema } from "./admin.js";
-import { ForeignKey, foreignKey } from "./helpers.js";
+import { type ForeignKey, foreignKey } from "./helpers.js";
+
+// Lazy reference to AdminSchema, set by admin.ts at init time.
+// This breaks the circular dependency: metadata.ts <-> admin.ts.
+let _adminSchema: z.ZodObject<z.ZodRawShape>;
+
+/** @internal Called by admin.ts to register the AdminSchema after creation. */
+export function _registerAdminSchema(schema: z.ZodObject<z.ZodRawShape>) {
+  _adminSchema = schema;
+}
 
 export const MetadataShape = {
-  get created_by(): ForeignKey<typeof AdminSchema> {
-    return foreignKey(() => AdminSchema);
+  get created_by(): ForeignKey<z.ZodObject<z.ZodRawShape>> {
+    return foreignKey(() => _adminSchema);
   },
   created_at: z.coerce.date(),
-  get updated_by(): ForeignKey<typeof AdminSchema> {
-    return foreignKey(() => AdminSchema);
+  get updated_by(): ForeignKey<z.ZodObject<z.ZodRawShape>> {
+    return foreignKey(() => _adminSchema);
   },
   updated_at: z.coerce.date(),
 };
