@@ -45,6 +45,6 @@
   },
 
 
-  "include": ["src/**/*", "test/**/*"],
+  "include": ["src/**/*", "scripts/**/*"],
   "exclude": ["node_modules", "dist"],
 }
