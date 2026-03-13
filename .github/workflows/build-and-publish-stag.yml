@@ -29,12 +29,23 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and Push Images
-        run: |
-          docker build -t ghcr.io/selab-2/viernulvier-1-frontend:staging -f ./frontend/Dockerfile .
-          docker build -t ghcr.io/selab-2/viernulvier-1-backend:staging -f ./backend/Dockerfile .
-          docker push ghcr.io/selab-2/viernulvier-1-frontend:staging
-          docker push ghcr.io/selab-2/viernulvier-1-backend:staging
+      - name: Build and Push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./frontend/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/selab-2/viernulvier-1-frontend:staging
+
+      - name: Build and Push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./backend/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/selab-2/viernulvier-1-backend:staging
 
   deploy:
     needs: build-and-push
@@ -48,6 +59,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 2002
           script: |
-            cd ~/viernulvier-staging-server
+            cd ~/viernulvier-server
             docker compose pull
             docker compose up -d --remove-orphans
