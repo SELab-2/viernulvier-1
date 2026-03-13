@@ -24,8 +24,8 @@ jobs:
         working-directory: ${{ matrix.project }}
 
     steps:
-      - name: Clear Docker build cache
-        run: docker builder prune -af
+      # - name: Clear Docker build cache
+      #   run: docker builder prune -af
 
       - name: Checkout Code
         uses: actions/checkout@v4
