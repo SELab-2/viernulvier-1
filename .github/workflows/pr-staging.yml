@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   validate:
-    runs-on: [self-hosted, linux, ARM64]
+    runs-on: [self-hosted, linux]
     strategy:
       matrix:
         project: [frontend, backend, shared]
