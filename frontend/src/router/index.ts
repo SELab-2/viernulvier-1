@@ -21,23 +21,27 @@ export const router = createRouter({
 });
 
 router.beforeEach((to, _, next) => {
+  // check if non existing route would exist with a lang prefix
   if (to.name === RouteNames.NOT_FOUND) {
+    const lang = detectLanguage();
+    const pathWithLang = `/${lang}${to.path}`;
+    const matchedRoute = router.resolve(pathWithLang);
+
+    // if route exists with lang prefix, redirect there (bv. /productions → /nl/productions)
+    if (matchedRoute.name !== RouteNames.NOT_FOUND) {
+      return next(pathWithLang);
+    }
+
+    // else, route truly doesn't exist, proceed to 404
     return next();
   }
-  // redirect to default language if no lang param is present, /productions -> /nl/productions
-  if (!to.params.lang) {
-    const lang = detectLanguage();
-    return next(`/${lang}${to.path}`);
-  }
 
-  const lang = to.params.lang as SupportedLang;
+  // set locale based on route param
+  i18n.global.locale.value = to.params.lang as SupportedLang;
 
-  // set i18n locale
-  i18n.global.locale.value = lang;
-
-  // check admin access for CMS route
+  // check admin access for routes that require it
   if (to.meta.requiresAdmin && !checkUserIsAdmin()) {
-    return next({ name: RouteNames.HOME, params: { lang } });
+    return next(`/${to.params.lang}`); // redirect to home
   }
 
   next();

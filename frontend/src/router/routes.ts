@@ -1,29 +1,7 @@
 import type { RouteRecordRaw } from "vue-router";
 import { RouteNames } from "./routeNames";
-import { detectLanguage } from "./index";
 
 export const routes: RouteRecordRaw[] = [
-  // root redirect
-  {
-    path: "/",
-    redirect: () => `/${detectLanguage()}`,
-  },
-
-  // redirects zonder taalprefix
-  {
-    path: "/productions",
-    redirect: () => `/${detectLanguage()}/productions`,
-  },
-  {
-    path: "/productions/:id",
-    redirect: (to) => `/${detectLanguage()}/productions/${to.params.id}`,
-  },
-//   {
-//     path: "/prints",
-//     redirect: () => `/${detectLanguage()}/prints`,
-//   },
-
-  // routes met taalprefix
   {
     path: "/:lang(nl|fr|en)",
     children: [
