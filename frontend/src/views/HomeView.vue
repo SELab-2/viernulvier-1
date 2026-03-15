@@ -94,13 +94,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRouter, useRoute } from "vue-router";
-import { RouteNames } from "../router/routeNames";
+import { useRoute } from "vue-router";
 import { SUPPORTED_LANGS, type SupportedLang } from "../i18n";
+import { useLocale } from "../composables/useLocale";
 
 const { t } = useI18n();
-const router = useRouter();
 const route = useRoute();
+const { setLocale } = useLocale();
 
 const isDark = ref(false);
 const langMenuOpen = ref(false);
@@ -119,11 +119,7 @@ function toggleLangMenu() {
 
 function setLang(lang: SupportedLang) {
   langMenuOpen.value = false;
-  router.push({
-    name: route.name ?? RouteNames.HOME,
-    params: { ...route.params, lang },
-    query: route.query,
-  });
+  setLocale(lang);
 }
 
 function handleClickOutside(e: MouseEvent) {

@@ -1,19 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { routes } from "./routes";
 import { RouteNames } from "./routeNames";
-import {
-  i18n,
-  SUPPORTED_LANGS,
-  DEFAULT_LANG,
-  type SupportedLang,
-} from "../i18n";
-
-export function detectLanguage(): SupportedLang {
-  const browserLang = navigator.language.split("-")[0]; // "nl-BE" -> "nl"
-  return SUPPORTED_LANGS.includes(browserLang as SupportedLang)
-    ? (browserLang as SupportedLang)
-    : DEFAULT_LANG;
-}
+import { i18n, type SupportedLang, detectLanguage } from "../i18n";
 
 export const router = createRouter({
   history: createWebHistory(),
