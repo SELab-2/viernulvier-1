@@ -6,7 +6,7 @@
         <a href="#" class="nav-link">{{ t("nav.archive") }}</a>
       </div>
       <div class="nav-logo">
-        <img src="./assets/logo.svg" alt="vierNulvier" class="logo-img" />
+        <img src="../assets/logo.svg" alt="vierNulvier" class="logo-img" />
       </div>
 
       <div class="nav-right">

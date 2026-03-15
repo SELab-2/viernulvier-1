@@ -1,5 +1,4 @@
 /**
-/**
  * Centralized route names for type-safe navigation.
  * Always use `router.push({ name: RouteNames.X, params })` instead of hardcoded paths.
  * Advantages:

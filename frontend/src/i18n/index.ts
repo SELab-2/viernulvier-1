@@ -9,6 +9,12 @@ export const DEFAULT_LANG: SupportedLang = "nl";
 
 const STORAGE_KEY = "preferred-lang";
 
+/**
+ * Detects the preferred language in order of priority:
+ * 1. localStorage (previously saved user preference)
+ * 2. Browser language (e.g. "nl-BE" → "nl")
+ * 3. Default language fallback
+ */
 export function detectLanguage(): SupportedLang {
   // 1. localStorage (saved user preference)
   const stored = localStorage.getItem(STORAGE_KEY) as SupportedLang;
@@ -22,10 +28,15 @@ export function detectLanguage(): SupportedLang {
   return DEFAULT_LANG;
 }
 
+/**
+ * Saves the user's language preference to localStorage
+ * so it can be restored on the next visit.
+ */
 export function saveLanguagePreference(lang: SupportedLang): void {
   localStorage.setItem(STORAGE_KEY, lang);
 }
 
+/** The global vue-i18n instance. Import `i18n` to access or change the active locale. */
 export const i18n = createI18n({
   legacy: false,
   locale: DEFAULT_LANG,
