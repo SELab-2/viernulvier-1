@@ -15,7 +15,9 @@
     "check": "pnpm run build && pnpm run test && pnpm run lint"
   },
   "dependencies": {
-    "vue": "^3.5.25"
+    "vue": "^3.5.25",
+    "vue-i18n": "^11.3.0",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@eslint/js": "^9",
