@@ -8,86 +8,86 @@ let storedEvents: Array<{ id: number; [key: string]: unknown }>;
 let sessionCookie: string;
 
 const baseEvent = {
-	id: 1,
-	starts_at: new Date("2026-01-01T18:00:00.000Z"),
-	ends_at: new Date("2026-01-01T20:00:00.000Z"),
-	production: 10,
-	hall: 3,
-	doors_at: new Date("2026-01-01T17:30:00.000Z"),
-	vendor_id: 42,
-	info: { nl: "Info mock 1" },
-    created_by: 1,
-    created_at: new Date("2026-01-01T10:00:00.000Z"),
-    updated_by: null,
-    updated_at: null,
+  id: 1,
+  starts_at: new Date("2026-01-01T18:00:00.000Z"),
+  ends_at: new Date("2026-01-01T20:00:00.000Z"),
+  production: 10,
+  hall: 3,
+  doors_at: new Date("2026-01-01T17:30:00.000Z"),
+  vendor_id: 42,
+  info: { nl: "Info mock 1" },
+  created_by: 1,
+  created_at: new Date("2026-01-01T10:00:00.000Z"),
+  updated_by: null,
+  updated_at: null,
 };
 
 const initialEvents = [
-	baseEvent,
-	{ ...baseEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" } },
-	{ ...baseEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" } },
+  baseEvent,
+  { ...baseEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" } },
+  { ...baseEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" } },
 ];
 
 beforeAll(async () => {
-	server = await buildServer();
-    sessionCookie = server.jwt.sign({ id: 1, username: "TestAdmin" });
+  server = await buildServer();
+  sessionCookie = server.jwt.sign({ id: 1, username: "TestAdmin" });
 
-	server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
-		if (query.includes("UPDATE events")) {
-			const id = Number(params?.[9]);
-			const index = storedEvents.findIndex((event) => Number(event.id) === id);
-			if (index === -1) return Promise.resolve({ rows: [] });
-
-      // eslint-disable-next-line security/detect-object-injection
-			const current = storedEvents[index]!;
-			const updated = {
-				...current,
-				starts_at: (params?.[0] as Date | undefined) ?? current["starts_at"],
-				ends_at: (params?.[1] as Date | undefined) ?? current["ends_at"],
-				production: (params?.[2] as number | undefined) ?? current["production"],
-				hall: (params?.[3] as number | undefined) ?? current["hall"],
-				doors_at: (params?.[4] as Date | undefined) ?? current["doors_at"],
-				vendor_id: (params?.[5] as number | undefined) ?? current["vendor_id"],
-				info: params?.[6] ?? current["info"],
-                updated_at: params?.[7] ? new Date(params?.[7] as string) : new Date(),
-                updated_by: params?.[8],
-			};
+  server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+    if (query.includes("UPDATE events")) {
+      const id = Number(params?.[9]);
+      const index = storedEvents.findIndex((event) => Number(event.id) === id);
+      if (index === -1) return Promise.resolve({ rows: [] });
 
       // eslint-disable-next-line security/detect-object-injection
-			storedEvents[index] = updated;
-			const event = { ...updated, price: [] };
-			return Promise.resolve({ rows: [event] });
-		}
+      const current = storedEvents[index]!;
+      const updated = {
+        ...current,
+        starts_at: (params?.[0] as Date | undefined) ?? current["starts_at"],
+        ends_at: (params?.[1] as Date | undefined) ?? current["ends_at"],
+        production: (params?.[2] as number | undefined) ?? current["production"],
+        hall: (params?.[3] as number | undefined) ?? current["hall"],
+        doors_at: (params?.[4] as Date | undefined) ?? current["doors_at"],
+        vendor_id: (params?.[5] as number | undefined) ?? current["vendor_id"],
+        info: params?.[6] ?? current["info"],
+        updated_at: params?.[7] ? new Date(params?.[7] as string) : new Date(),
+        updated_by: params?.[8],
+      };
 
-		if (query.includes("FROM events WHERE id = $1")) {
-			const id = Number(params?.[0]);
-			const foundEvent = storedEvents.find((row) => Number(row.id) === id);
-			if (!foundEvent) return Promise.resolve({ rows: [] });
-			const event = { ...foundEvent, price: [] };
-			return Promise.resolve({ rows: [event] });
-		}
+      // eslint-disable-next-line security/detect-object-injection
+      storedEvents[index] = updated;
+      const event = { ...updated, price: [] };
+      return Promise.resolve({ rows: [event] });
+    }
 
-		if (query.includes("FROM events")) {
-			const events = storedEvents.map((row) => ({ ...row, price: [] }));
-			return Promise.resolve({ rows: events });
-		}
+    if (query.includes("FROM events WHERE id = $1")) {
+      const id = Number(params?.[0]);
+      const foundEvent = storedEvents.find((row) => Number(row.id) === id);
+      if (!foundEvent) return Promise.resolve({ rows: [] });
+      const event = { ...foundEvent, price: [] };
+      return Promise.resolve({ rows: [event] });
+    }
 
-		console.error("Unhandled query:", query);
-		return Promise.resolve({ rows: [] });
-	});
+    if (query.includes("FROM events")) {
+      const events = storedEvents.map((row) => ({ ...row, price: [] }));
+      return Promise.resolve({ rows: events });
+    }
+
+    console.error("Unhandled query:", query);
+    return Promise.resolve({ rows: [] });
+  });
 });
 
 afterAll(async () => {
-	await server.close();
+  await server.close();
 });
 
 beforeEach(() => {
-	vi.clearAllMocks();
-	storedEvents = structuredClone(initialEvents);
+  vi.clearAllMocks();
+  storedEvents = structuredClone(initialEvents);
 });
 
 describe("Event Replace Routes", () => {
-	describe("error handling", () => {
+  describe("error handling", () => {
     const replacement = {
       starts_at: new Date("2026-03-01T18:00:00.000Z"),
       ends_at: new Date("2026-03-01T21:00:00.000Z"),
@@ -97,20 +97,20 @@ describe("Event Replace Routes", () => {
       vendor_id: 190,
       info: { nl: "Info inserted" },
     };
-		test("returns 500 when database query fails", async () => {
-			const originalMock = server.pg.query;
-			server.pg.query = vi.fn().mockRejectedValue(new Error("Database error"));
+    test("returns 500 when database query fails", async () => {
+      const originalMock = server.pg.query;
+      server.pg.query = vi.fn().mockRejectedValue(new Error("Database error"));
 
-			const response = await server.inject({
-				method: "PUT",
-				url: "/api/v1/event/1",
-				payload: { ...baseEvent, production: 20 },
-                cookies: { session: sessionCookie },
-			});
+      const response = await server.inject({
+        method: "PUT",
+        url: "/api/v1/event/1",
+        payload: { ...baseEvent, production: 20 },
+        cookies: { session: sessionCookie },
+      });
 
-			expect(response.statusCode).toBe(500);
-			server.pg.query = originalMock;
-		});
+      expect(response.statusCode).toBe(500);
+      server.pg.query = originalMock;
+    });
 
     test("returns 400 when request payload is invalid", async () => {
       const response = await server.inject({

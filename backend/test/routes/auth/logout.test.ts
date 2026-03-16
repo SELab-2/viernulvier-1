@@ -27,7 +27,7 @@ describe("Logout on auth route", () => {
     expect(response.cookies).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: "session", value: "" }),
-      ])
+      ]),
     );
   });
 

@@ -49,7 +49,7 @@ beforeAll(async () => {
       const id = Number(params?.[0]);
       const price = storedEventPrices.find((p) => p.id === id);
       return Promise.resolve({ rows: price ? [price] : [] });
-  }
+    }
 
     return Promise.resolve({ rows: [] });
   });
@@ -73,7 +73,7 @@ describe("Event Price Edit Route", () => {
         url: "/event_price/api/v1/1",
         cookies: { session: sessionCookie },
         payload: {
-            amount: 29.99,
+          amount: 29.99,
         },
       });
 
@@ -91,7 +91,7 @@ describe("Event Price Edit Route", () => {
         url: "/event_price/api/v1/1",
         cookies: { session: sessionCookie },
         payload: {
-            event: 20,
+          event: 20,
         },
       });
 
@@ -109,8 +109,8 @@ describe("Event Price Edit Route", () => {
         url: "/event_price/api/v1/1",
         cookies: { session: sessionCookie },
         payload: {
-            event: 20,
-            amount: 40.00,
+          event: 20,
+          amount: 40.00,
         },
       });
 
@@ -130,7 +130,7 @@ describe("Event Price Edit Route", () => {
         url: "/event_price/api/v1/999",
         cookies: { session: sessionCookie },
         payload: {
-            amount: 29.99,
+          amount: 29.99,
         },
       });
 
@@ -144,7 +144,7 @@ describe("Event Price Edit Route", () => {
         url: "/event_price/api/v1/1",
         cookies: { session: sessionCookie },
         payload: {
-            amount: -5, // negative amount
+          amount: -5, // negative amount
         },
       });
 
@@ -154,11 +154,11 @@ describe("Event Price Edit Route", () => {
 
     test("requires authentication", async () => {
       const response = await server.inject({
-          method: "PATCH",
-          url: "/event_price/api/v1/1",
-          payload: {
-              amount: 29.99,
-          },
+        method: "PATCH",
+        url: "/event_price/api/v1/1",
+        payload: {
+          amount: 29.99,
+        },
       });
 
       expect(response.statusCode).toBe(401);
@@ -171,7 +171,7 @@ describe("Event Price Edit Route", () => {
         url: "/event_price/api/v1/1",
         cookies: { session: sessionCookie },
         payload: {
-            amount: 29.99,
+          amount: 29.99,
         },
       });
 

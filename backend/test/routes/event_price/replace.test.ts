@@ -32,10 +32,10 @@ beforeAll(async () => {
       if (index === -1) return Promise.resolve({ rows: [] });
 
       const updated = {
-          //eslint-disable-next-line security/detect-object-injection
-          ...storedEventPrices[index]!,
-          event: params?.[0] as number,
-          amount: params?.[1] as number,
+        //eslint-disable-next-line security/detect-object-injection
+        ...storedEventPrices[index]!,
+        event: params?.[0] as number,
+        amount: params?.[1] as number,
       };
 
       //eslint-disable-next-line security/detect-object-injection
@@ -69,8 +69,8 @@ describe("Event Price Replace Route", () => {
       url: "/event_price/api/v1/1",
       cookies: { session: sessionCookie },
       payload: {
-          event: 25,
-          amount: 45.50,
+        event: 25,
+        amount: 45.50,
       },
     });
 
@@ -88,8 +88,8 @@ describe("Event Price Replace Route", () => {
       url: "/event_price/api/v1/999",
       cookies: { session: sessionCookie },
       payload: {
-          event: 25,
-          amount: 45.50,
+        event: 25,
+        amount: 45.50,
       },
     });
 
@@ -103,7 +103,7 @@ describe("Event Price Replace Route", () => {
       url: "/event_price/api/v1/1",
       cookies: { session: sessionCookie },
       payload: {
-          amount: 45.50, // missing event
+        amount: 45.50, // missing event
       },
     });
 
@@ -117,8 +117,8 @@ describe("Event Price Replace Route", () => {
       url: "/event_price/api/v1/1",
       cookies: { session: sessionCookie },
       payload: {
-          event: 25,
-          amount: -10, // negative amount
+        event: 25,
+        amount: -10, // negative amount
       },
     });
 
@@ -131,8 +131,8 @@ describe("Event Price Replace Route", () => {
       method: "PUT",
       url: "/event_price/api/v1/1",
       payload: {
-          event: 25,
-          amount: 45.50,
+        event: 25,
+        amount: 45.50,
       },
     });
 
