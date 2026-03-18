@@ -1,0 +1,16 @@
+FROM node:24
+
+WORKDIR /app
+
+RUN npm install -g pnpm
+
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc ./
+
+COPY shared/package.json ./shared/
+COPY frontend/package.json ./frontend/
+
+RUN pnpm install
+
+WORKDIR /app/frontend
+
+CMD ["pnpm", "dev"]

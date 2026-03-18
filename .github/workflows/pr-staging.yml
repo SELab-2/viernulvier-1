@@ -1,0 +1,59 @@
+name: Staging Validation
+
+on:
+  pull_request:
+    branches: ["staging"]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+
+jobs:
+  validate:
+    runs-on: [self-hosted, linux] 
+    strategy:
+      matrix:
+        project: [frontend, backend, shared]
+        include:
+          - project: shared
+            skip_tests: true
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
+
+    steps:
+      # - name: Clear Docker build cache
+      #   run: docker builder prune -af
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "pnpm"
+          cache-dependency-path: ./pnpm-lock.yaml
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        working-directory: ${{ matrix.project }}
+        run: pnpm run lint
+
+      - name: Coverage Tests
+        if: ${{ !matrix.skip_tests }}
+        working-directory: ${{ matrix.project }}
+        run: pnpm run coverage
+
+      - name: Build
+        working-directory: ${{ matrix.project }}
+        run: pnpm run build

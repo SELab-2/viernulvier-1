@@ -1,0 +1,53 @@
+name: viernulvier-archief
+services:
+  db:
+    container_name: viernulvier-db
+    image: postgres:18
+    restart: always
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+
+    volumes:
+      - ./database_data:/var/lib/postgresql
+    networks:
+      - viernulvier-network
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    command: -p ${DB_PORT}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 5
+  backend:
+    env_file:
+      - .env
+    container_name: viernulvier-backend
+    restart: always
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    networks:
+      - viernulvier-network
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+    depends_on:
+      db:
+        condition: service_healthy
+  frontend:
+    env_file:
+      - .env
+    restart: always
+    tty: true
+    networks:
+      - viernulvier-network
+    container_name: viernulvier-frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+    depends_on:
+      - backend
+networks:
+  viernulvier-network:
+    driver: bridge

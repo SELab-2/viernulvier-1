@@ -1,0 +1,43 @@
+import { defineConfig } from "vitest/config";
+import vue from "@vitejs/plugin-vue";
+import { fileURLToPath, URL } from "node:url";
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [vue()],
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+    },
+  },
+  server: {
+    host: "0.0.0.0",
+    port: parseInt(process.env["FRONTEND_PORT"] ?? "5173"),
+    fs: {
+      allow: [".."],
+    },
+    proxy: {
+      "/api": {
+        target: `http://backend:${process.env["BACKEND_PORT"] ?? "3000"}`,
+        changeOrigin: true,
+      },
+    },
+  },
+  test: {
+    globals: true,
+    environment: "jsdom",
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx,vue}"],
+      thresholds: {
+        "src/*/**/*.{ts,tsx,vue}": {
+          statements: 80,
+          functions: 80,
+          branches: 80,
+          lines: 80,
+        },
+        perFile: true,
+      },
+    },
+  },
+});

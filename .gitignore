@@ -1,0 +1,7 @@
+.vscode/*
+**/.vscode
+!.vscode/tasks.json
+.env
+node_modules
+.claude/
+database_data
