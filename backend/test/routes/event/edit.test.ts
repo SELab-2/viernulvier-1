@@ -14,7 +14,6 @@ const baseEvent = {
   production: 10,
   hall: 3,
   doors_at: new Date("2026-01-01T17:30:00.000Z"),
-  vendor_id: 42,
   info: { nl: "Info mock 1" },
   created_by: 1,
   created_at: new Date("2026-01-01T10:00:00.000Z"),
@@ -34,7 +33,7 @@ beforeAll(async () => {
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     if (query.includes("UPDATE events")) {
-      const id = Number(params?.[9]);
+      const id = Number(params?.[8]);
       const index = storedEvents.findIndex((event) => Number(event.id) === id);
       if (index === -1) return Promise.resolve({ rows: [] });
 
@@ -47,10 +46,9 @@ beforeAll(async () => {
         production: (params?.[2] as number | undefined) ?? current["production"],
         hall: (params?.[3] as number | undefined) ?? current["hall"],
         doors_at: (params?.[4] as Date | undefined) ?? current["doors_at"],
-        vendor_id: (params?.[5] as number | undefined) ?? current["vendor_id"],
-        info: params?.[6] ?? current["info"],
-        updated_at: params?.[7] ? new Date(params?.[7] as string) : new Date(),
-        updated_by: params?.[8],
+        info: params?.[5] ?? current["info"],
+        updated_at: params?.[6] ? new Date(params?.[6] as string) : new Date(),
+        updated_by: params?.[7],
       };
 
   // eslint-disable-next-line security/detect-object-injection
@@ -179,7 +177,6 @@ describe("Event Edit Routes", () => {
       expect(body.ends_at).toBe(initialEvents[1]!.ends_at.toISOString());
       expect(body.doors_at).toBe(initialEvents[1]!.doors_at.toISOString());
       expect(body.hall).toBe(initialEvents[1]!.hall);
-      expect(body.vendor_id).toBe(initialEvents[1]!.vendor_id);
       expect(body.info).toEqual(initialEvents[1]!.info);
       expect(body.price).toEqual([]);
 
@@ -198,7 +195,6 @@ describe("Event Edit Routes", () => {
       expect(listedEvent.ends_at).toBe(initialEvents[1]!.ends_at.toISOString());
       expect(listedEvent.doors_at).toBe(initialEvents[1]!.doors_at.toISOString());
       expect(listedEvent.hall).toBe(initialEvents[1]!.hall);
-      expect(listedEvent.vendor_id).toBe(initialEvents[1]!.vendor_id);
       expect(listedEvent.info).toEqual(initialEvents[1]!.info);
       expect(listedEvent.price).toEqual([]);
     });
@@ -226,7 +222,6 @@ describe("Event Edit Routes", () => {
       expect(editBody.hall).toBe(9);
       expect(editBody.doors_at).toBe(initialEvents[1]!.doors_at.toISOString());
       expect(editBody.production).toBe(initialEvents[1]!.production);
-      expect(editBody.vendor_id).toBe(initialEvents[1]!.vendor_id);
       expect(editBody.info).toEqual(initialEvents[1]!.info);
       expect(editBody.price).toEqual([]);
 
@@ -250,18 +245,17 @@ describe("Event Edit Routes", () => {
       const editResponse = await server.inject({
         method: "PATCH",
         url: "/api/v1/event/1",
-        payload: { vendor_id: 555 },
+        payload: { production: 555 },
         cookies: { session: sessionCookie },
       });
 
       expect(editResponse.statusCode).toBe(200);
       const editBody = editResponse.json();
       expect(editBody.id).toBe(1);
-      expect(editBody.vendor_id).toBe(555);
+      expect(editBody.production).toBe(555);
       expect(editBody.starts_at).toBe(initialEvents[0]!.starts_at.toISOString());
       expect(editBody.ends_at).toBe(initialEvents[0]!.ends_at.toISOString());
       expect(editBody.doors_at).toBe(initialEvents[0]!.doors_at.toISOString());
-      expect(editBody.production).toBe(initialEvents[0]!.production);
       expect(editBody.hall).toBe(initialEvents[0]!.hall);
       expect(editBody.info).toEqual(initialEvents[0]!.info);
       expect(editBody.price).toEqual([]);
@@ -278,14 +272,14 @@ describe("Event Edit Routes", () => {
       
       // Event 1 should be updated
       expect(events[0]!.id).toBe(1);
-      expect(events[0]!.vendor_id).toBe(555);
+      expect(events[0]!.production).toBe(555);
       expect(events[0]!.starts_at).toBe(initialEvents[0]!.starts_at.toISOString());
       expect(events[0]!.ends_at).toBe(initialEvents[0]!.ends_at.toISOString());
       // Events 2 and 3 should be unchanged
       expect(events[1]!.id).toBe(2);
-      expect(events[1]!.vendor_id).toBe(initialEvents[1]!.vendor_id);
+      expect(events[1]!.production).toBe(initialEvents[1]!.production);
       expect(events[2]!.id).toBe(3);
-      expect(events[2]!.vendor_id).toBe(initialEvents[2]!.vendor_id);
+      expect(events[2]!.production).toBe(initialEvents[2]!.production);
     });
   });
 

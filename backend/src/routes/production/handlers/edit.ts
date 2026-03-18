@@ -8,7 +8,6 @@ import { getFieldValue, getNullableFieldValue, hasOwn } from "./field-utils.js";
 import z from "zod";
 
 const DirectEditColumns = [
-  "vendor_id",
   "title",
   "artist",
   "tagline",

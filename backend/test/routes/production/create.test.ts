@@ -8,7 +8,6 @@ let sessionCookie: string;
 
 const createdProduction: Production = {
   id: 1,
-  vendor_id: 10,
   supertitle: null,
   title: { nl: "Titel" },
   artist: { nl: "Artiest" },
@@ -59,7 +58,6 @@ describe("Create on production route", () => {
       url: "/api/v1/production",
       cookies: { session: sessionCookie },
       payload: {
-        vendor_id: createdProduction["vendor_id"],
         title: createdProduction["title"],
         artist: createdProduction["artist"],
         tagline: createdProduction["tagline"],
@@ -80,7 +78,6 @@ describe("Create on production route", () => {
       url: "/api/v1/production",
       cookies: { session: sessionCookie },
       payload: {
-        vendor_id: createdProduction["vendor_id"],
         title: createdProduction["title"],
         artist: createdProduction["artist"],
         tagline: createdProduction["tagline"],
@@ -92,7 +89,7 @@ describe("Create on production route", () => {
   });
 
   test("POST /api/v1/production -> rejects invalid body", async () => {
-    // No vendor_id / title -> Zod validation should fail.
+    // No title -> Zod validation should fail.
     const response = await server.inject({
       method: "POST",
       url: "/api/v1/production",

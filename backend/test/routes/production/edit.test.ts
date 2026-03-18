@@ -9,7 +9,6 @@ let sessionCookie: string;
 
 const originalProduction: Production = {
   id: 1,
-  vendor_id: 10,
   supertitle: null,
   title: { nl: "Oude titel" },
   artist: { nl: "Oude artiest" },
@@ -46,7 +45,6 @@ const updatedProductionB: Production = {
 
 const updatedProductionC: Production = {
   ...originalProduction,
-  vendor_id: 99,
   supertitle: { nl: "Supertitel C" },
   title: { nl: "Titel C" },
   artist: { nl: "Artiest C" },
@@ -97,7 +95,6 @@ describe("Edit on production route", () => {
       url: `/api/v1/production/${originalProduction['id']}`,
       cookies: { session: sessionCookie },
       payload: {
-        vendor_id: originalProduction["vendor_id"],
         supertitle: null,
         title: updatedProductionA["title"],
         artist: updatedProductionA["artist"],
@@ -195,7 +192,6 @@ describe("Edit on production route", () => {
       url: `/api/v1/production/${originalProduction["id"]}`,
       cookies: { session: sessionCookie },
       payload: {
-        vendor_id: updatedProductionC["vendor_id"],
         supertitle: updatedProductionC["supertitle"],
         title: updatedProductionC["title"],
         artist: updatedProductionC["artist"],
@@ -281,7 +277,7 @@ describe("Edit on production route", () => {
     await expect(editProduction(server, {
       params: { id: String(originalProduction["id"]) },
       user: { id: 1 },
-      body: { vendor_id: undefined },
+      body: { title: undefined },
     } as unknown as FastifyRequest)).rejects.toMatchObject({ status: 400 });
   });
 });

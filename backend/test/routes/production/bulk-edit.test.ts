@@ -9,7 +9,6 @@ let sessionCookie: string;
 
 const baseProduction1: Production = {
   id: 1,
-  vendor_id: 10,
   supertitle: null,
   title: { nl: "Titel 1" },
   artist: { nl: "Artiest 1" },
@@ -58,7 +57,6 @@ const updatedBulkB2: Production = {
 
 const updatedBulkC1: Production = {
   ...baseProduction1,
-  vendor_id: 88,
   supertitle: { nl: "Bulk C supertitle" },
   title: { nl: "Bulk C titel" },
   artist: { nl: "Bulk C artiest" },
@@ -77,7 +75,6 @@ const updatedBulkC1: Production = {
 
 const updatedBulkC2: Production = {
   ...baseProduction2,
-  vendor_id: 88,
   supertitle: { nl: "Bulk C supertitle" },
   title: { nl: "Bulk C titel" },
   artist: { nl: "Bulk C artiest" },
@@ -245,7 +242,6 @@ describe("Bulk edit on production route", () => {
       payload: {
         ids,
         data: {
-          vendor_id: 88,
           supertitle: { nl: "Bulk C supertitle" },
           title: { nl: "Bulk C titel" },
           artist: { nl: "Bulk C artiest" },
@@ -328,7 +324,7 @@ describe("Bulk edit on production route", () => {
         body: {
           ids,
           data: {
-            vendor_id: undefined,
+            title: undefined,
           },
         },
       } as unknown as FastifyRequest),
