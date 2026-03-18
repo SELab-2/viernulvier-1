@@ -15,7 +15,7 @@ import type { EventPrice, EventPriceWithMeta } from "@viernulvier/shared/index.j
  */
 export async function fetchEventPrice(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<EventPrice | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const result = await buildQuery(server,
@@ -38,9 +38,9 @@ export async function fetchEventPrice(
  */
 export async function fetchEventPriceWithMeta(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<EventPriceWithMeta | null> {
-const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
   const result = await buildQuery(
     server,
     `SELECT id, event, amount, created_at, updated_at, created_by, updated_by
@@ -60,13 +60,13 @@ const { id } = parseParams(request, z.object({ id: stringToInt }));
  * @returns An array of parsed event prices.
  */
 export async function fetchEventPrices(
-  server: FastifyInstance
+  server: FastifyInstance,
 ): Promise<EventPrice[]> {
   const result = await buildQuery(
     server,
     `SELECT id, event, amount
     FROM event_price`,
-    EventPriceSchema
+    EventPriceSchema,
   )();
 
   return result;

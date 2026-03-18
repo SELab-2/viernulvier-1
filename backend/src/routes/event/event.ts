@@ -9,8 +9,8 @@ import {
   fetchEventWithMeta, 
   replaceEvent, 
   editEvent,
-  editEvents
- } from "./handlers/index.js";
+  editEvents,
+} from "./handlers/index.js";
 
 export default function eventRoutes(server: FastifyInstance) {
   const protect = { preHandler: [server.authorize] };

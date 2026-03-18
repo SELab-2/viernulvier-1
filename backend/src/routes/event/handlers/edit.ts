@@ -20,7 +20,7 @@ const EventUpdateSchema = EventCreateSchema.partial();
  */
 export async function editEvent(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<Event | null> {
   const normalizedBody = normalizePartialEventDates(request.body);
   const body = parseSchema(server, EventUpdateSchema, normalizedBody, ParseContext.Request);

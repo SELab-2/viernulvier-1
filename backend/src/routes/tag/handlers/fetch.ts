@@ -5,14 +5,14 @@ import { getParam, parseFirstRow } from "@/routes/helpers.js";
 
 async function fetchTag(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<Tag | null> {
 
   const result = await server.pg.query<Tag>(
     `SELECT id, name, type_id, public
      FROM tag
      WHERE id = $1`,
-    [getParam(request, "id")]
+    [getParam(request, "id")],
   );
 
   return parseFirstRow(server, TagSchema, result.rows);
@@ -20,14 +20,14 @@ async function fetchTag(
 
 async function fetchTagVisible(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<Tag | null> {
 
   const result = await server.pg.query<Tag>(
     `SELECT id, name, type_id, public
      FROM tag
      WHERE id = $1 AND public = true`,
-    [getParam(request, "id")]
+    [getParam(request, "id")],
   );
 
   return parseFirstRow(server, TagSchema, result.rows);
@@ -37,7 +37,7 @@ async function fetchTagVisible(
 
 async function fetchTagWithMeta(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<TagWithMeta | null> {
 
   const result = await server.pg.query<TagWithMeta>(
@@ -46,7 +46,7 @@ async function fetchTagWithMeta(
             created_by, updated_by
      FROM tag
      WHERE id = $1`,
-    [getParam(request, "id")]
+    [getParam(request, "id")],
   );
 
   return parseFirstRow(server, TagSchema.withMeta(), result.rows);
@@ -54,7 +54,7 @@ async function fetchTagWithMeta(
 
 async function fetchTags(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<Tag[]> {
 
   const { production } = request.query as { production?: string };
@@ -66,14 +66,14 @@ async function fetchTags(
        FROM tag t
        JOIN production_tag pt ON pt.tag_id = t.id
        WHERE pt.production_id = $1`,
-      [production]
+      [production],
     );
 
     return result.rows;
   }
 
   const result = await server.pg.query<Tag>(
-    `SELECT id, name, type_id, public FROM tag`
+    `SELECT id, name, type_id, public FROM tag`,
   );
 
   return result.rows;
@@ -81,7 +81,7 @@ async function fetchTags(
 
 async function fetchTagsVisible(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<Tag[]> {
 
   const { production } = request.query as { production?: string };
@@ -93,14 +93,14 @@ async function fetchTagsVisible(
        FROM tag t
        JOIN production_tag pt ON pt.tag_id = t.id
        WHERE pt.production_id = $1 AND t.public = true`,
-      [production]
+      [production],
     );
 
     return result.rows;
   }
 
   const result = await server.pg.query<Tag>(
-    `SELECT id, name, type_id, public FROM tag WHERE public = true`
+    `SELECT id, name, type_id, public FROM tag WHERE public = true`,
   );
 
   return result.rows;

@@ -8,7 +8,7 @@ import { EventCreateSchema, normalizePartialEventDates, updateEvent } from "./he
 
 // Define schema with explicit types to avoid ForeignKey issues
 const EventBulkUpdateSchema = EventCreateSchema.partial().extend({
-  ids: z.array(z.number().nonnegative()).nonempty()
+  ids: z.array(z.number().nonnegative()).nonempty(),
 });
 
 /**
@@ -21,15 +21,15 @@ const EventBulkUpdateSchema = EventCreateSchema.partial().extend({
  */
 export async function editEvents(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<Event[] | null> {
   const normalizedBody = normalizePartialEventDates(request.body);
   const body = parseSchema(server, EventBulkUpdateSchema, normalizedBody, ParseContext.Request);
   const selectedEvents = await Promise.all(
     body.ids.map((id: number) => fetchEvent(
       server,
-      { ...request, params: { ...(request.params as Record<string, string>), id: String(id) } }
-    ))
+      { ...request, params: { ...(request.params as Record<string, string>), id: String(id) } },
+    )),
   );
 
   if (!selectedEvents.length || selectedEvents.some((event: Event | null) => !event)) return null;
@@ -58,7 +58,7 @@ export async function editEvents(
       admin,
       // eslint-disable-next-line security/detect-object-injection
       Number(body.ids[index]),
-    ))
+    )),
   );
 
   return results.map(result => result[0]).filter((event): event is Event => !!event)!;

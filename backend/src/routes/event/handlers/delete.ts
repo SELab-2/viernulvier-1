@@ -14,8 +14,8 @@ import type { Event } from "@viernulvier/shared/index.js";
  * @returns The parsed event, or `null` if not found or validation failed.
  */
 export async function deleteEvent(
-    server: FastifyInstance,
-    request: FastifyRequest
+  server: FastifyInstance,
+  request: FastifyRequest,
 ): Promise<Event | null> {  
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const result = await buildQuery(server,

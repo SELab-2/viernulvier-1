@@ -52,43 +52,43 @@ beforeAll(async () => {
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
 
-      // Handle single event with metadata (created_at, updated_at fields)
-      if (query.includes("created_at") && query.includes("updated_at") && query.includes("WHERE id = $1")) {
-          const id: number = params?.[0] as number;
-          if (id === 500) {
-              return Promise.resolve({ rows: [mockInvalidEvent] });
-          }
-          if (id > 0 && id <= mockEvents.length) {
-              const eventWithoutPrice = { ...mockEvents[Number(id) - 1], ...metaData };
-              const event = { ...eventWithoutPrice, price: storedEventPrices.filter(p => p["event"] === id).map(p => p.id) };
+    // Handle single event with metadata (created_at, updated_at fields)
+    if (query.includes("created_at") && query.includes("updated_at") && query.includes("WHERE id = $1")) {
+      const id: number = params?.[0] as number;
+      if (id === 500) {
+        return Promise.resolve({ rows: [mockInvalidEvent] });
+      }
+      if (id > 0 && id <= mockEvents.length) {
+        const eventWithoutPrice = { ...mockEvents[Number(id) - 1], ...metaData };
+        const event = { ...eventWithoutPrice, price: storedEventPrices.filter(p => p["event"] === id).map(p => p.id) };
 
-              return Promise.resolve({ rows: [event] });
-          }
-
-          return Promise.resolve({ rows: [] });
+        return Promise.resolve({ rows: [event] });
       }
 
-      // Handle single event fetch by ID
-      if (query.includes("WHERE id = $1")) {
-          const id: number = params?.[0] as number;
-          if (id === 500) {
-              return Promise.resolve({ rows: [mockInvalidEvent] });
-          }
-          if (id > 0 && id <= mockEvents.length) {
-              const eventWithoutPrice = { ...mockEvents[Number(id) - 1]};
-              const event = { ...eventWithoutPrice, price: storedEventPrices.filter(p => p["event"] === id).map(p => p.id) };
-              return Promise.resolve({ rows: [event] });
-          }
+      return Promise.resolve({ rows: [] });
+    }
 
-          return Promise.resolve({ rows: [] });
+    // Handle single event fetch by ID
+    if (query.includes("WHERE id = $1")) {
+      const id: number = params?.[0] as number;
+      if (id === 500) {
+        return Promise.resolve({ rows: [mockInvalidEvent] });
+      }
+      if (id > 0 && id <= mockEvents.length) {
+        const eventWithoutPrice = { ...mockEvents[Number(id) - 1]};
+        const event = { ...eventWithoutPrice, price: storedEventPrices.filter(p => p["event"] === id).map(p => p.id) };
+        return Promise.resolve({ rows: [event] });
       }
 
-      // Handle fetching all events (no WHERE clause)
-      const allEventsWithPrices = mockEvents.map(event => ({
-          ...event,
-          price: storedEventPrices.filter(p => p["event"] === event.id).map(p => p.id)
-      }));
-      return Promise.resolve({ rows: allEventsWithPrices });
+      return Promise.resolve({ rows: [] });
+    }
+
+    // Handle fetching all events (no WHERE clause)
+    const allEventsWithPrices = mockEvents.map(event => ({
+      ...event,
+      price: storedEventPrices.filter(p => p["event"] === event.id).map(p => p.id),
+    }));
+    return Promise.resolve({ rows: allEventsWithPrices });
   });
 });
 
@@ -147,8 +147,8 @@ describe("Event Fetch Routes", () => {
   describe("multiple events", () => {
     test("GET /api/v1/event", async () => {
       const response = await server.inject({
-          method: "GET",
-          url: "/api/v1/event",
+        method: "GET",
+        url: "/api/v1/event",
       });
 
       expect(response.statusCode).toBe(200);

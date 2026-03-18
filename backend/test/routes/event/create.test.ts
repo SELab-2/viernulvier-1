@@ -138,17 +138,17 @@ describe("Event Create Routes", () => {
   describe("create event", () => {
     test("creates event from JSON payload with ISO date strings", async () => {
       const response = await server.inject({
-          method: "POST",
-          url: "/api/v1/event",
-          payload: buildPayload(),
-          cookies: { session: sessionCookie },
+        method: "POST",
+        url: "/api/v1/event",
+        payload: buildPayload(42),
+        cookies: { session: sessionCookie },
       });
 
       expect(response.statusCode).toBe(200);
       expect(response.json()).toEqual({
-          id: 1,
-          ...basePayload,
-          price: [],
+        id: 1,
+        ...basePayload,
+        price: [],
       });
       expect(queryMock).toHaveBeenCalledOnce();
       const params = queryMock.mock.calls[0]?.[1] as unknown[];
