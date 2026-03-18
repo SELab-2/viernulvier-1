@@ -197,10 +197,10 @@ describe("Event Bulk Edit Routes", () => {
 
     test("bulk edits some events and keeps the others unchanged", async () => {
       const editResponse = await server.inject({
-          method: "PATCH",
-          url: "/api/v1/event",
-          cookies: { session: sessionCookie },
-          payload: { ids: [1, 2], production: 555 },
+        method: "PATCH",
+        url: "/api/v1/event",
+        cookies: { session: sessionCookie },
+        payload: { ids: [1, 2], production: 555 },
       });
 
       expect(editResponse.statusCode).toBe(200);

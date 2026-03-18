@@ -25,31 +25,31 @@ export async function createEvent(
   const { admin, current_time } = getMetadata(request);
 
   const result = await buildQuery(
-      server,
-      `INSERT INTO events (starts_at, ends_at, production, hall, doors_at, info, created_at, updated_at, created_by, updated_by)
+    server,
+    `INSERT INTO events (starts_at, ends_at, production, hall, doors_at, info, created_at, updated_at, created_by, updated_by)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $7, $8, $8)
       RETURNING id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}`,
-      z.tuple([
-        EventCreateSchema.shape.starts_at,
-        EventCreateSchema.shape.ends_at,
-        EventCreateSchema.shape.production,
-        EventCreateSchema.shape.hall,
-        EventCreateSchema.shape.doors_at,
-        EventCreateSchema.shape.info,
-        z.date(),
-        z.number().nonnegative(),
+    z.tuple([
+      EventCreateSchema.shape.starts_at,
+      EventCreateSchema.shape.ends_at,
+      EventCreateSchema.shape.production,
+      EventCreateSchema.shape.hall,
+      EventCreateSchema.shape.doors_at,
+      EventCreateSchema.shape.info,
+      z.date(),
+      z.number().nonnegative(),
 
-      ]),
-      EventSchema,
-    )(
-      body.starts_at,
-      body.ends_at,
-      body.production,
-      body.hall,
-      body.doors_at,
-      body.info,
-      current_time,
-      admin,
+    ]),
+    EventSchema,
+  )(
+    body.starts_at,
+    body.ends_at,
+    body.production,
+    body.hall,
+    body.doors_at,
+    body.info,
+    current_time,
+    admin,
   );
 
   return result[0]!;

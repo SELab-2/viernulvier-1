@@ -8,17 +8,17 @@ let storedEvents: Array<{ id: number; [key: string]: unknown }>;
 let sessionCookie: string;
 
 const baseEvent = {
-	id: 1,
-	starts_at: new Date("2026-01-01T18:00:00.000Z"),
-	ends_at: new Date("2026-01-01T20:00:00.000Z"),
-	production: 10,
-	hall: 3,
-	doors_at: new Date("2026-01-01T17:30:00.000Z"),
-	info: { nl: "Info mock 1" },
-    created_by: 1,
-    created_at: new Date("2026-01-01T10:00:00.000Z"),
-    updated_by: null,
-    updated_at: null,
+  id: 1,
+  starts_at: new Date("2026-01-01T18:00:00.000Z"),
+  ends_at: new Date("2026-01-01T20:00:00.000Z"),
+  production: 10,
+  hall: 3,
+  doors_at: new Date("2026-01-01T17:30:00.000Z"),
+  info: { nl: "Info mock 1" },
+  created_by: 1,
+  created_at: new Date("2026-01-01T10:00:00.000Z"),
+  updated_by: null,
+  updated_at: null,
 };
 
 const initialEvents = [
@@ -31,25 +31,25 @@ beforeAll(async () => {
   server = await buildServer();
   sessionCookie = server.jwt.sign({ id: 1, username: "TestAdmin" });
 
-	server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
-		if (query.includes("UPDATE events")) {
-			const id = Number(params?.[8]);
-			const index = storedEvents.findIndex((event) => Number(event.id) === id);
-			if (index === -1) return Promise.resolve({ rows: [] });
+  server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+    if (query.includes("UPDATE events")) {
+      const id = Number(params?.[8]);
+      const index = storedEvents.findIndex((event) => Number(event.id) === id);
+      if (index === -1) return Promise.resolve({ rows: [] });
 
       // eslint-disable-next-line security/detect-object-injection
-			const current = storedEvents[index]!;
-			const updated = {
-				...current,
-				starts_at: (params?.[0] as Date | undefined) ?? current["starts_at"],
-				ends_at: (params?.[1] as Date | undefined) ?? current["ends_at"],
-				production: (params?.[2] as number | undefined) ?? current["production"],
-				hall: (params?.[3] as number | undefined) ?? current["hall"],
-				doors_at: (params?.[4] as Date | undefined) ?? current["doors_at"],
-				info: params?.[5] ?? current["info"],
-                updated_at: params?.[6] ? new Date(params?.[6] as string) : new Date(),
-                updated_by: params?.[7],
-			};
+      const current = storedEvents[index]!;
+      const updated = {
+        ...current,
+        starts_at: (params?.[0] as Date | undefined) ?? current["starts_at"],
+        ends_at: (params?.[1] as Date | undefined) ?? current["ends_at"],
+        production: (params?.[2] as number | undefined) ?? current["production"],
+        hall: (params?.[3] as number | undefined) ?? current["hall"],
+        doors_at: (params?.[4] as Date | undefined) ?? current["doors_at"],
+        info: params?.[5] ?? current["info"],
+        updated_at: params?.[6] ? new Date(params?.[6] as string) : new Date(),
+        updated_by: params?.[7],
+      };
 
       // eslint-disable-next-line security/detect-object-injection
       storedEvents[index] = updated;

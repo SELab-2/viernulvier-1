@@ -41,7 +41,7 @@ export async function editHall(server: FastifyInstance, request: FastifyRequest)
   const result = await server.pg.query<Hall>(
     `UPDATE hall SET ${fields.join(", ")} WHERE id = $${i}
      RETURNING id, name, address`,
-    values
+    values,
   );
 
   return parseSchema(server, z.array(HallSchema), result.rows, ParseContext.Database)[0] ?? null;
