@@ -32,7 +32,7 @@ beforeAll(async () => {
   sessionCookie = server.jwt.sign({ id: 1, username: "TestAdmin" });
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
-    if (query.includes("UPDATE events")) {
+    if (query.includes("UPDATE event")) {
       const id = Number(params?.[8]);
       const index = storedEvents.findIndex((event) => Number(event.id) === id);
       if (index === -1) return Promise.resolve({ rows: [] });
@@ -57,7 +57,7 @@ beforeAll(async () => {
       return Promise.resolve({ rows: [event] });
     }
 
-    if (query.includes("FROM events WHERE id = $1")) {
+    if (query.includes("FROM event WHERE id = $1")) {
       const id = Number(params?.[0]);
       const foundEvent = storedEvents.find((row) => Number(row.id) === id);
       if (!foundEvent) return Promise.resolve({ rows: [] });
@@ -65,7 +65,7 @@ beforeAll(async () => {
       return Promise.resolve({ rows: [event] });
     }
 
-    if (query.includes("FROM events")) {
+    if (query.includes("FROM event") && !query.includes("WHERE id = $1")) {
       const events = storedEvents.map((row) => ({ ...row, price: [] }));
       return Promise.resolve({ rows: events });
     }

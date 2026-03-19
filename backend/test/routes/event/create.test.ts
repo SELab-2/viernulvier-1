@@ -33,7 +33,7 @@ beforeAll(async () => {
       return Promise.reject(new Error("Database error"));
     }
 
-    if (query.includes("INSERT INTO events")) {
+    if (query.includes("INSERT INTO event")) {
       const createdEvent = {
         id: idCounter++,
         starts_at: params?.[0] as Date,
@@ -49,13 +49,13 @@ beforeAll(async () => {
       return Promise.resolve({ rows: [event] });
     }
 
-    if (query.includes("FROM events WHERE id = $1")) {
+    if (query.includes("FROM event WHERE id = $1")) {
       const id = Number(params?.[0]);
       const event = storedEvents.find((row) => Number(row["id"]) === id);
       return Promise.resolve({ rows: event ? [{ ...event, price: [] }] : [] });
     }
 
-    if (query.includes("FROM events")) {
+    if (query.includes("FROM event") && !query.includes("WHERE id = $1")) {
       const events = storedEvents.map((row) => ({ ...row, price: [] }));
       return Promise.resolve({ rows: events });
     }

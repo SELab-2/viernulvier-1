@@ -21,7 +21,7 @@ export async function fetchEvent(
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const result = await buildQuery(server,
     `SELECT id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}
-    FROM events WHERE id = $1`,
+    FROM event WHERE id = $1`,
     z.tuple([z.int()]),
     EventSchema,
   )(id);
@@ -46,7 +46,7 @@ export async function fetchEventWithMeta(
     server,
     `SELECT id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery},
         created_at, updated_at, created_by, updated_by
-    FROM events WHERE id = $1`,
+    FROM event WHERE id = $1`,
     z.tuple([z.int()]),
     EventSchema.withMeta(),
   )(id);
@@ -67,7 +67,7 @@ export async function fetchEvents(
   const result = await buildQuery(
     server,
     `SELECT id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}
-    FROM events`,
+    FROM event`,
     EventSchema,
   )();
 

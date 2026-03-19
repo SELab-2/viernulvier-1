@@ -88,12 +88,12 @@ export function normalizePartialEventDates(value: unknown): unknown {
 export const EventCreateSchema = EventSchemaWithoutPrice.omit({ id: true });
 export type EventCreate = z.infer<typeof EventCreateSchema>;
 
-export const selectPriceSubquery = `(SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price`;
+export const selectPriceSubquery = `(SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_price ep WHERE ep.event = event.id) AS price`;
 
 export function updateEvent(server: FastifyInstance) {
   return buildQuery(
     server,
-    `UPDATE events
+    `UPDATE event
     SET starts_at = $1, ends_at = $2, production = $3, hall = $4, doors_at = $5, info = $6,
         updated_at = $7, updated_by = $8
     WHERE id = $9
