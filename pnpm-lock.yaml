@@ -109,6 +109,9 @@ importers:
 
   frontend:
     dependencies:
+      '@viernulvier/shared':
+        specifier: workspace:*
+        version: link:../shared
       vue:
         specifier: ^3.5.25
         version: 3.5.28(typescript@5.9.3)
