@@ -8,6 +8,7 @@
     "@fastify/postgres": "^6.0.2",
     "@viernulvier/shared": "workspace:*",
     "bcrypt": "^6.0.0",
+    "csv-parse": "^6.2.0",
     "dotenv": "^17.3.1",
     "fastify": "^5.7.4",
     "fastify-plugin": "^5.1.0",
@@ -29,7 +30,9 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "check": "pnpm run build && pnpm run test && pnpm run lint",
-    "create-admin": "tsx scripts/create-admin.ts"
+    "create-admin": "tsx scripts/create-admin.ts",
+    "import:productions": "tsx scripts/import-productions-legacy.ts",
+    "import:events": "tsx scripts/import-events-legacy.ts"
   },
   "keywords": [],
   "author": "",
