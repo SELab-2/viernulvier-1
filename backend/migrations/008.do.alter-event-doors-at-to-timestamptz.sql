@@ -1,0 +1,9 @@
+-- UNDER NO CIRCUMSTANCES MAY THIS FILE BE EDITED WHEN LIVE
+-- ANY EDITS WILL RESOLVE IN DIFFERENT CHECKSUMS AND THE DB REJECTING THE MIGRATION
+
+-- 008.do.alter-event-doors-at-to-timestamptz.sql
+-- Align event.doors_at with starts_at/ends_at type.
+
+ALTER TABLE event
+  ALTER COLUMN doors_at TYPE TIMESTAMPTZ
+  USING NULLIF(TRIM(doors_at), '')::TIMESTAMPTZ;
