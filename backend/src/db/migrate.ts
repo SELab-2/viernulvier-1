@@ -34,7 +34,7 @@ async function waitForDB() {
  */
 export async function migrate(
   target: string | undefined = undefined,
-  migrationsPath: string | undefined = undefined
+  migrationsPath: string | undefined = undefined,
 ) {
   const client = new pg.Client({
     connectionString: process.env["DATABASE_URL"],

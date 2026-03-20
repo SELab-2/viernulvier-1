@@ -392,10 +392,10 @@ describe(buildQuery, () => {
             .map((obj) =>
               selectedFields
                 ? Object.fromEntries(
-                    Object.entries(obj).filter(([key]) =>
-                      selectedFields.includes(key),
-                    ),
-                  )
+                  Object.entries(obj).filter(([key]) =>
+                    selectedFields.includes(key),
+                  ),
+                )
                 : obj,
             ),
         })),
@@ -1125,10 +1125,10 @@ describe(replyHandler, () => {
             .map((obj) =>
               selectedFields
                 ? Object.fromEntries(
-                    Object.entries(obj).filter(([key]) =>
-                      selectedFields.includes(key),
-                    ),
-                  )
+                  Object.entries(obj).filter(([key]) =>
+                    selectedFields.includes(key),
+                  ),
+                )
                 : obj,
             ),
         })),

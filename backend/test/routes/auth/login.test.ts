@@ -33,7 +33,7 @@ describe("Login on auth route", () => {
     expect(response.cookies).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: "session", httpOnly: true }),
-      ])
+      ]),
     );
   });
 

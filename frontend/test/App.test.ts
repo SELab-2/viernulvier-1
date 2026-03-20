@@ -52,7 +52,7 @@ describe("App.vue", () => {
 
     it("renders the hero title in Dutch by default", () => {
       expect(wrapper.find("h1.hero-title").text()).toBe(
-        "Welkom bij het VierNulVier Archief"
+        "Welkom bij het VierNulVier Archief",
       );
     });
 
@@ -172,16 +172,20 @@ describe("App.vue", () => {
 
     it("updates the hero title", () => {
       expect(wrapper.find("h1.hero-title").text()).toBe(
-        "Bienvenue dans les Archives VierNulVier"
+        "Bienvenue dans les Archives VierNulVier",
       );
     });
 
     it("updates the CTA button", () => {
-      expect(wrapper.find("button.cta-btn").text()).toContain("Voir les Archives");
+      expect(wrapper.find("button.cta-btn").text()).toContain(
+        "Voir les Archives",
+      );
     });
 
     it("updates the info card title", () => {
-      expect(wrapper.find("h2.info-title").text()).toBe("À propos des archives");
+      expect(wrapper.find("h2.info-title").text()).toBe(
+        "À propos des archives",
+      );
     });
 
     it("updates the stat labels", () => {
@@ -214,7 +218,7 @@ describe("App.vue", () => {
 
     it("updates the hero title", () => {
       expect(wrapper.find("h1.hero-title").text()).toBe(
-        "Welcome to the VierNulVier Archive"
+        "Welcome to the VierNulVier Archive",
       );
     });
 
@@ -253,7 +257,7 @@ describe("App.vue", () => {
 
     it("restores Dutch hero title", () => {
       expect(wrapper.find("h1.hero-title").text()).toBe(
-        "Welkom bij het VierNulVier Archief"
+        "Welkom bij het VierNulVier Archief",
       );
     });
 
@@ -274,7 +278,7 @@ describe("App.vue", () => {
         await wrapper.findAll(".lang-option")[idx]!.trigger("click");
         const numbers = wrapper.findAll(".stat-number").map((el) => el.text());
         expect(numbers).toEqual(["1000 +", "50 +", "15 +"]);
-      }
+      },
     );
   });
 });

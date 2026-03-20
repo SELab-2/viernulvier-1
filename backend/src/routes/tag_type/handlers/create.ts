@@ -9,7 +9,7 @@ const CreateTagTypeBodySchema = TagTypeSchema.pick({
 
 export async function createTagType(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<TagType | null> {
 
   // Authentication will be enforced once the auth branch is merged
@@ -20,7 +20,7 @@ export async function createTagType(
     `INSERT INTO tag_type (name, created_by, updated_by, created_at, updated_at)
      VALUES ($1, $2, $2, $3, $3)
      RETURNING id, name`,
-    [body.name, admin, current_time]
+    [body.name, admin, current_time],
   );
 
   return parseFirstRow(server, TagTypeSchema, result.rows);

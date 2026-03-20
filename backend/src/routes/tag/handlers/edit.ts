@@ -11,7 +11,7 @@ const EditTagBodySchema = TagSchema.pick({
 
 export async function editTag(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<Tag | null> {
 
   const id = getParam(request, "id");
@@ -44,7 +44,7 @@ export async function editTag(
   const result = await server.pg.query<Tag>(
     `UPDATE tag SET ${fields.join(", ")} WHERE id = $${i}
      RETURNING id, name, type_id, public`,
-    values
+    values,
   );
 
   return parseFirstRow(server, TagSchema, result.rows);

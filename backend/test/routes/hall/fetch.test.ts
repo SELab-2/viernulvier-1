@@ -115,6 +115,6 @@ describe("Hall fetch routes", () => {
       url: `/api/v1/hall/${hall?.["id"]}/meta`,
     });
   
-      expect(response.statusCode).toBe(HttpClientError.Unauthorized);
+    expect(response.statusCode).toBe(HttpClientError.Unauthorized);
   });
 });
