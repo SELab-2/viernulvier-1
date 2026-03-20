@@ -92,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { i18n, SUPPORTED_LANGS, type SupportedLang } from "../i18n";
 import { useLocale } from "../composables/useLocale";
@@ -102,7 +102,7 @@ const { setLocale } = useLocale();
 
 const isDark = ref(false);
 const langMenuOpen = ref(false);
-const langWrapper = ref<HTMLElement | null>(null);
+const langWrapper = useTemplateRef<HTMLElement>("langWrapper");
 
 const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 

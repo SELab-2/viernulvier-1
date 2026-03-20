@@ -5,6 +5,7 @@ import {
   SUPPORTED_LANGS,
   DEFAULT_LANG,
   i18n,
+  type SupportedLang,
 } from "@/i18n";
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -39,7 +40,7 @@ describe("i18n", () => {
     it("falls back to the browser language when localStorage is empty", () => {
       // jsdom sets navigator.language to "en" by default
       const browserLang = navigator.language.split("-")[0];
-      const expected = SUPPORTED_LANGS.includes(browserLang as any)
+      const expected = SUPPORTED_LANGS.includes(browserLang as SupportedLang)
         ? browserLang
         : DEFAULT_LANG;
       expect(detectLanguage()).toBe(expected);
