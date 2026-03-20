@@ -35,7 +35,7 @@ export function useLocale() {
     );
     const pathWithoutLang = currentLang
       ? route.path.substring(currentLang.length + 1) // "/nl/productions" → "/productions"
-      : route.path;
+      : ""; // only reachable from "/", always results in "/[lang]"
 
     router.push(`/${lang}${pathWithoutLang}`);
   }
