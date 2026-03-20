@@ -30,7 +30,7 @@
               />
             </svg>
           </button>
-          <div class="lang-dropdown" v-if="langMenuOpen">
+          <div v-if="langMenuOpen" class="lang-dropdown">
             <button
               v-for="lang in languages"
               :key="lang.code"
@@ -94,19 +94,17 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute } from "vue-router";
-import { SUPPORTED_LANGS, type SupportedLang } from "../i18n";
+import { i18n, SUPPORTED_LANGS, type SupportedLang } from "../i18n";
 import { useLocale } from "../composables/useLocale";
 
 const { t } = useI18n();
-const route = useRoute();
 const { setLocale } = useLocale();
 
 const isDark = ref(false);
 const langMenuOpen = ref(false);
 const langWrapper = ref<HTMLElement | null>(null);
 
-const currentLang = computed(() => route.params.lang as SupportedLang);
+const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 
 const languages = SUPPORTED_LANGS.map((code) => ({
   code,

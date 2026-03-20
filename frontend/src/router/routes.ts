@@ -21,11 +21,11 @@ export const routes: RouteRecordRaw[] = [
         component: () => import("../views/ProductionDetailView.vue"),
         props: true,
       },
-    //   {
-    //     path: "prints",
-    //     name: RouteNames.PRINTS,
-    //     component: () => import("../views/PrintUploadsView.vue"),
-    //   },
+      //   {
+      //     path: "prints",
+      //     name: RouteNames.PRINTS,
+      //     component: () => import("../views/PrintUploadsView.vue"),
+      //   },
     ],
   },
 
