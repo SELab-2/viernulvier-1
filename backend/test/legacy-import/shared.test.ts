@@ -11,7 +11,7 @@ import {
   LEGACY_IMPORT_PROGRESS_EVERY,
   legacyCsvParseOptions,
   normalizeRow,
-  parseImportArgs,
+  parseLegacyImportCli,
   resolveDefaultLegacyImportFile,
   resolveLegacyImportDatabaseUrl,
   rewriteDockerDbHostInDatabaseUrl,
@@ -123,7 +123,6 @@ describe("resolveDefaultLegacyImportFile", () => {
 describe("assertDatabaseUrl", () => {
   it("throws when DATABASE_URL is missing", () => {
     const prev = process.env["DATABASE_URL"];
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- test env cleanup
     delete process.env["DATABASE_URL"];
     expect(() => assertDatabaseUrl()).toThrow("DATABASE_URL is not set");
     if (prev !== undefined) process.env["DATABASE_URL"] = prev;
@@ -135,9 +134,101 @@ describe("assertDatabaseUrl", () => {
     expect(() => assertDatabaseUrl()).not.toThrow();
     if (prev !== undefined) process.env["DATABASE_URL"] = prev;
     else {
-      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete process.env["DATABASE_URL"];
     }
+  });
+});
+
+describe("parseLegacyImportCli", () => {
+  const baseOptions = {
+    defaultFile: "/default/data.csv",
+    scriptForUsage: "import:test",
+    description: "Test legacy import CLI.",
+  };
+
+  it("returns defaults for empty argv", () => {
+    expect(parseLegacyImportCli(baseOptions, [])).toEqual({
+      filePath: baseOptions.defaultFile,
+      dryRun: false,
+      limit: null,
+    });
+  });
+
+  it("parses positional path", () => {
+    const cwd = process.cwd();
+    expect(parseLegacyImportCli(baseOptions, ["./my.csv"])).toEqual({
+      filePath: path.resolve(cwd, "./my.csv"),
+      dryRun: false,
+      limit: null,
+    });
+  });
+
+  it("uses last positional when multiple are given", () => {
+    const cwd = process.cwd();
+    expect(parseLegacyImportCli(baseOptions, ["a.csv", "b.csv"])).toEqual({
+      filePath: path.resolve(cwd, "b.csv"),
+      dryRun: false,
+      limit: null,
+    });
+  });
+
+  it("lets --file override a positional path", () => {
+    const cwd = process.cwd();
+    expect(parseLegacyImportCli(baseOptions, ["ignore.csv", "--file", "b.csv"])).toEqual({
+      filePath: path.resolve(cwd, "b.csv"),
+      dryRun: false,
+      limit: null,
+    });
+  });
+
+  it("parses --dry-run and --limit", () => {
+    expect(parseLegacyImportCli(baseOptions, ["--dry-run", "--limit", "3"])).toEqual({
+      filePath: baseOptions.defaultFile,
+      dryRun: true,
+      limit: 3,
+    });
+  });
+
+  it("strips pnpm/npm standalone -- so flags are not treated as CSV paths", () => {
+    const cwd = process.cwd();
+    expect(parseLegacyImportCli(baseOptions, ["--", "./after-pnpm-dash.csv"])).toEqual({
+      filePath: path.resolve(cwd, "./after-pnpm-dash.csv"),
+      dryRun: false,
+      limit: null,
+    });
+    expect(parseLegacyImportCli(baseOptions, ["--", "", "--dry-run"])).toEqual({
+      filePath: baseOptions.defaultFile,
+      dryRun: true,
+      limit: null,
+    });
+  });
+
+  it("throws when --file is empty", () => {
+    expect(() => parseLegacyImportCli(baseOptions, ["--file", ""])).toThrow("Missing value for --file");
+  });
+
+  it("throws on invalid --limit", () => {
+    expect(() => parseLegacyImportCli(baseOptions, ["--limit", "0"])).toThrow(
+      "--limit must be a positive integer",
+    );
+    expect(() => parseLegacyImportCli(baseOptions, ["--limit", "nope"])).toThrow(
+      "--limit must be a positive integer",
+    );
+    expect(() => parseLegacyImportCli(baseOptions, ["--limit", "3.5"])).toThrow(
+      "--limit must be a positive integer",
+    );
+  });
+
+  it("throws when --file has no value", () => {
+    expect(() => parseLegacyImportCli(baseOptions, ["--file"])).toThrow(/Not enough arguments following: file/);
+  });
+
+  it("throws when --limit has no value", () => {
+    expect(() => parseLegacyImportCli(baseOptions, ["--limit"])).toThrow(/Not enough arguments following: limit/);
+  });
+
+  it("throws on unknown flag", () => {
+    expect(() => parseLegacyImportCli(baseOptions, ["--nope"])).toThrow(/Unknown argument/);
   });
 });
 
@@ -154,78 +245,6 @@ describe("assertCsvFileExists", () => {
     fs.writeFileSync(filePath, "a", "utf8");
     expect(() => assertCsvFileExists(filePath)).not.toThrow();
     fs.rmSync(dir, { recursive: true });
-  });
-});
-
-describe("parseImportArgs", () => {
-  const defaultFile = "/default/data.csv";
-
-  it("returns defaults for empty argv", () => {
-    expect(parseImportArgs([], { defaultFile })).toEqual({
-      filePath: defaultFile,
-      dryRun: false,
-      limit: null,
-    });
-  });
-
-  it("returns help for --help and -h", () => {
-    expect(parseImportArgs(["--help"], { defaultFile })).toBe("help");
-    expect(parseImportArgs(["-h"], { defaultFile })).toBe("help");
-  });
-
-  it("ignores standalone -- and empty tokens", () => {
-    expect(parseImportArgs(["--", "", "--dry-run"], { defaultFile })).toEqual({
-      filePath: defaultFile,
-      dryRun: true,
-      limit: null,
-    });
-  });
-
-  it("parses positional path", () => {
-    const cwd = process.cwd();
-    expect(parseImportArgs(["./my.csv"], { defaultFile })).toEqual({
-      filePath: path.resolve(cwd, "./my.csv"),
-      dryRun: false,
-      limit: null,
-    });
-  });
-
-  it("parses --file", () => {
-    const cwd = process.cwd();
-    expect(parseImportArgs(["--file", "b.csv"], { defaultFile })).toEqual({
-      filePath: path.resolve(cwd, "b.csv"),
-      dryRun: false,
-      limit: null,
-    });
-  });
-
-  it("parses --dry-run and --limit", () => {
-    expect(parseImportArgs(["--dry-run", "--limit", "3"], { defaultFile })).toEqual({
-      filePath: defaultFile,
-      dryRun: true,
-      limit: 3,
-    });
-  });
-
-  it("throws on missing --file value", () => {
-    expect(() => parseImportArgs(["--file"], { defaultFile })).toThrow("Missing value for --file");
-  });
-
-  it("throws on missing --limit value", () => {
-    expect(() => parseImportArgs(["--limit"], { defaultFile })).toThrow("Missing value for --limit");
-  });
-
-  it("throws on invalid --limit", () => {
-    expect(() => parseImportArgs(["--limit", "0"], { defaultFile })).toThrow(
-      "--limit must be a positive integer",
-    );
-    expect(() => parseImportArgs(["--limit", "nope"], { defaultFile })).toThrow(
-      "--limit must be a positive integer",
-    );
-  });
-
-  it("throws on unknown flag", () => {
-    expect(() => parseImportArgs(["--nope"], { defaultFile })).toThrow("Unknown argument: --nope");
   });
 });
 

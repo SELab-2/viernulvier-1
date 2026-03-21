@@ -7,7 +7,7 @@ import {
   LEGACY_IMPORT_PROGRESS_EVERY,
   legacyCsvParseOptions,
   normalizeRow,
-  parseImportArgs,
+  parseLegacyImportCli,
   resolveDefaultLegacyImportFile,
   toLanguageMap,
   type CsvRecord,
@@ -19,21 +19,6 @@ const DEFAULT_FILE = resolveDefaultLegacyImportFile(import.meta.url, [
   "imports",
   "productions.csv",
 ]);
-
-function printHelp() {
-  console.log("Import legacy productions CSV into Postgres.");
-  console.log("");
-  console.log("Usage:");
-  console.log("  pnpm run import:productions -- [path/to/file.csv] [--dry-run] [--limit 100]");
-  console.log("  pnpm run import:productions -- --file \"path/to/file.csv\" [--dry-run] [--limit 100]");
-  console.log("");
-  console.log("Options:");
-  console.log("  path/to/file.csv Positional file path argument (optional)");
-  console.log("  --file <path>    CSV file path argument (optional)");
-  console.log(`  default path     ${DEFAULT_FILE}`);
-  console.log("  --dry-run       Parse and validate only, no database writes");
-  console.log("  --limit <n>     Stop after reading n rows");
-}
 
 function nullableLanguageMap(value: string): Record<"nl", string> | null {
   return value.length === 0 ? null : { nl: value };
@@ -160,12 +145,11 @@ type ImportStats = {
 };
 
 async function main() {
-  const parsed = parseImportArgs(process.argv.slice(2), { defaultFile: DEFAULT_FILE });
-  if (parsed === "help") {
-    printHelp();
-    process.exit(0);
-  }
-  const args = parsed;
+  const args = parseLegacyImportCli({
+    defaultFile: DEFAULT_FILE,
+    scriptForUsage: "import:productions",
+    description: "Import legacy productions CSV into Postgres.",
+  });
 
   assertDatabaseUrl();
   assertCsvFileExists(args.filePath);

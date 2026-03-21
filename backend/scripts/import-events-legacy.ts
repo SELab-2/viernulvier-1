@@ -9,7 +9,7 @@ import {
   LEGACY_IMPORT_PROGRESS_EVERY,
   legacyCsvParseOptions,
   normalizeRow,
-  parseImportArgs,
+  parseLegacyImportCli,
   resolveDefaultLegacyImportFile,
   toLanguageMap,
   type CsvRecord,
@@ -18,21 +18,6 @@ import {
 const SOURCE_NAME = "events-voorstellingen-csv";
 const PRODUCTION_SOURCE_NAME = "productions-output-csv";
 const DEFAULT_FILE = resolveDefaultLegacyImportFile(import.meta.url, ["data", "imports", "events.csv"]);
-
-function printHelp() {
-  console.log("Import legacy events CSV into Postgres.");
-  console.log("");
-  console.log("Usage:");
-  console.log("  pnpm run import:events -- [path/to/file.csv] [--dry-run] [--limit 100]");
-  console.log("  pnpm run import:events -- --file \"path/to/file.csv\" [--dry-run] [--limit 100]");
-  console.log("");
-  console.log("Options:");
-  console.log("  path/to/file.csv Positional file path argument (optional)");
-  console.log("  --file <path>    CSV file path argument (optional)");
-  console.log(`  default path     ${DEFAULT_FILE}`);
-  console.log("  --dry-run        Parse and validate only, no database writes");
-  console.log("  --limit <n>      Stop after reading n rows");
-}
 
 type ParsedHall = {
   name: string;
@@ -175,12 +160,11 @@ async function getOrCreateHallId(
 }
 
 async function main() {
-  const parsed = parseImportArgs(process.argv.slice(2), { defaultFile: DEFAULT_FILE });
-  if (parsed === "help") {
-    printHelp();
-    process.exit(0);
-  }
-  const args = parsed;
+  const args = parseLegacyImportCli({
+    defaultFile: DEFAULT_FILE,
+    scriptForUsage: "import:events",
+    description: "Import legacy events CSV into Postgres.",
+  });
 
   assertDatabaseUrl();
   assertCsvFileExists(args.filePath);
