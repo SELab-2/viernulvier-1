@@ -29,7 +29,7 @@ describe("Login on auth route", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ success: true });
+    expect(response.json()).toEqual({ token: expect.any(String) });
     expect(response.cookies).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: "session", httpOnly: true }),
