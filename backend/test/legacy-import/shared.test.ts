@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  argvForLegacyImportYargs,
   assertCsvFileExists,
   assertDatabaseUrl,
   cleanValue,
@@ -139,12 +140,54 @@ describe("assertDatabaseUrl", () => {
   });
 });
 
+describe("argvForLegacyImportYargs", () => {
+  it("drops script path and -- when simulating production (not fromTest)", () => {
+    expect(argvForLegacyImportYargs(["scripts/tool.ts", "a.csv"], false)).toEqual(["a.csv"]);
+    expect(argvForLegacyImportYargs(["scripts/tool.ts", "--", "--help"], false)).toEqual(["--help"]);
+  });
+
+  it("does not drop first token when fromTest", () => {
+    expect(argvForLegacyImportYargs(["scripts/tool.ts", "a.csv"], true)).toEqual([
+      "scripts/tool.ts",
+      "a.csv",
+    ]);
+  });
+
+  it("returns empty when hideBin is empty and not fromTest", () => {
+    expect(argvForLegacyImportYargs([], false)).toEqual([]);
+  });
+
+  it("copies hideBin when fromTest and empty", () => {
+    expect(argvForLegacyImportYargs([], true)).toEqual([]);
+  });
+});
+
 describe("parseLegacyImportCli", () => {
   const baseOptions = {
     defaultFile: "/default/data.csv",
     scriptForUsage: "import:test",
     description: "Test legacy import CLI.",
   };
+
+  it("uses hideBin(process.argv) when argv is omitted (production path)", () => {
+    const prev = process.argv;
+    process.argv = ["node", "/virtual/tsx.mjs", "scripts/import-productions-legacy.ts", "--dry-run"];
+    try {
+      expect(
+        parseLegacyImportCli({
+          defaultFile: "/default/data.csv",
+          scriptForUsage: "import:test",
+          description: "Test legacy import CLI.",
+        }),
+      ).toEqual({
+        filePath: "/default/data.csv",
+        dryRun: true,
+        limit: null,
+      });
+    } finally {
+      process.argv = prev;
+    }
+  });
 
   it("returns defaults for empty argv", () => {
     expect(parseLegacyImportCli(baseOptions, [])).toEqual({

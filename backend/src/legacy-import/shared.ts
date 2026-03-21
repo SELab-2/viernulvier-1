@@ -117,7 +117,8 @@ export type LegacyImportCliOptions = {
  * `pnpm run … -- <args>` also inserts a standalone `--` before `<args>`; yargs then treats tokens
  * after that as positionals, so `--help` becomes a fake CSV path. Drop script + `--` sentinels.
  */
-function argvForLegacyImportYargs(hideBinResult: readonly string[], fromTest: boolean): string[] {
+/** Normalizes argv before yargs; exported for unit tests (covers `fromTest` / production branches). */
+export function argvForLegacyImportYargs(hideBinResult: readonly string[], fromTest: boolean): string[] {
   const afterScript =
     !fromTest && hideBinResult.length > 0 ? hideBinResult.slice(1) : [...hideBinResult];
   return afterScript.filter((token) => token !== "--");
