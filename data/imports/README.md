@@ -53,10 +53,13 @@ Events use `legacy_production_import_map` to resolve production foreign keys, so
 - Event import with custom path:
   - `cd backend && DATABASE_URL="postgres://postgres@localhost:5432/postgres" pnpm run import:events -- "../data/imports/Events - voorstellingen.csv"`
 
-Optional flags:
+### Optional flags
 
-- `--dry-run`
-- `--limit <n>`
+Both importers accept these flags (after `--` when using `pnpm run …`):
+
+- **`--dry-run`**: Parse the CSV and run validation / lookups only; **no rows are written** to the database (no `INSERT`/`UPDATE` for productions, events, halls, tags, or idempotency maps). Use this to check that the file path, column layout, and `DATABASE_URL` are correct before a real import.
+
+- **`--limit <n>`**: Stop after processing **the first _n_ data rows** from the CSV (rows are still read in file order). Useful for a quick smoke test on a huge file without importing everything. Omit this flag to import the full file.
 
 ## Verification
 
