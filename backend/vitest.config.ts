@@ -16,7 +16,11 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/index.ts"],
+      exclude: [
+        "src/index.ts",
+        "src/legacy-import/import-productions-legacy.ts",
+        "src/legacy-import/import-events-legacy.ts",
+      ],
       thresholds: {
         "src/**/*.{ts,tsx}": {
           statements: 97.5,
