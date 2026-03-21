@@ -22,6 +22,6 @@ Refer to the **[Contributing Guide](DOCS/CONTRIBUTING.md)** for full setup instr
 
 ## 🔗 Links
 
-- **Live archive:** [https://viernulvier-archive.be](https://viernulvier-archive.be)
+- **Live archive:** https://viernulvier-archive.be
 - **Issues & feedback:** use the GitHub issue tracker
 
