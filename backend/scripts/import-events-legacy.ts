@@ -1,18 +1,39 @@
 import "dotenv/config";
 import crypto from "node:crypto";
 import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { parse } from "csv-parse";
+import {
+  assertCsvFileExists,
+  assertDatabaseUrl,
+  cleanValue,
+  LEGACY_IMPORT_PROGRESS_EVERY,
+  legacyCsvParseOptions,
+  normalizeRow,
+  parseImportArgs,
+  resolveDefaultLegacyImportFile,
+  toLanguageMap,
+  type CsvRecord,
+} from "@/legacy-import/shared.js";
 
-type ImportArgs = {
-  filePath: string;
-  dryRun: boolean;
-  limit: number | null;
-};
+const SOURCE_NAME = "events-voorstellingen-csv";
+const PRODUCTION_SOURCE_NAME = "productions-output-csv";
+const DEFAULT_FILE = resolveDefaultLegacyImportFile(import.meta.url, ["data", "imports", "events.csv"]);
 
-type CsvRecord = Record<string, string | undefined>;
+function printHelp() {
+  console.log("Import legacy events CSV into Postgres.");
+  console.log("");
+  console.log("Usage:");
+  console.log("  pnpm run import:events -- [path/to/file.csv] [--dry-run] [--limit 100]");
+  console.log("  pnpm run import:events -- --file \"path/to/file.csv\" [--dry-run] [--limit 100]");
+  console.log("");
+  console.log("Options:");
+  console.log("  path/to/file.csv Positional file path argument (optional)");
+  console.log("  --file <path>    CSV file path argument (optional)");
+  console.log(`  default path     ${DEFAULT_FILE}`);
+  console.log("  --dry-run        Parse and validate only, no database writes");
+  console.log("  --limit <n>      Stop after reading n rows");
+}
 
 type ParsedHall = {
   name: string;
@@ -31,101 +52,6 @@ type ImportStats = {
   skippedAlreadyImported: number;
   failedRows: number;
 };
-
-const SOURCE_NAME = "events-voorstellingen-csv";
-const PRODUCTION_SOURCE_NAME = "productions-output-csv";
-const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
-const BACKEND_DIR = path.resolve(SCRIPT_DIR, "..");
-const REPO_ROOT = path.resolve(BACKEND_DIR, "..");
-const DEFAULT_FILE = path.resolve(REPO_ROOT, "data", "imports", "events.csv");
-const PROGRESS_EVERY = 500;
-
-function parseArgs(argv: string[]): ImportArgs {
-  let filePath = DEFAULT_FILE;
-  let dryRun = false;
-  let limit: number | null = null;
-
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
-    if (!arg || arg === "--") continue;
-
-    if (arg === "--dry-run") {
-      dryRun = true;
-      continue;
-    }
-
-    if (!arg.startsWith("--")) {
-      filePath = path.resolve(process.cwd(), arg);
-      continue;
-    }
-
-    if (arg === "--file") {
-      const value = argv[i + 1];
-      if (!value) throw new Error("Missing value for --file");
-      filePath = path.resolve(process.cwd(), value);
-      i++;
-      continue;
-    }
-
-    if (arg === "--limit") {
-      const value = argv[i + 1];
-      if (!value) throw new Error("Missing value for --limit");
-      const parsed = Number.parseInt(value, 10);
-      if (!Number.isFinite(parsed) || parsed < 1) {
-        throw new Error("--limit must be a positive integer");
-      }
-      limit = parsed;
-      i++;
-      continue;
-    }
-
-    if (arg === "--help" || arg === "-h") {
-      printHelp();
-      process.exit(0);
-    }
-
-    throw new Error(`Unknown argument: ${arg}`);
-  }
-
-  return { filePath, dryRun, limit };
-}
-
-function printHelp() {
-  console.log("Import legacy events CSV into Postgres.");
-  console.log("");
-  console.log("Usage:");
-  console.log("  pnpm run import:events -- [path/to/file.csv] [--dry-run] [--limit 100]");
-  console.log("  pnpm run import:events -- --file \"path/to/file.csv\" [--dry-run] [--limit 100]");
-  console.log("");
-  console.log("Options:");
-  console.log("  path/to/file.csv Positional file path argument (optional)");
-  console.log("  --file <path>    CSV file path argument (optional)");
-  console.log(`  default path     ${DEFAULT_FILE}`);
-  console.log("  --dry-run        Parse and validate only, no database writes");
-  console.log("  --limit <n>      Stop after reading n rows");
-}
-
-function toLanguageMap(value: string): Record<"nl", string> {
-  return { nl: value };
-}
-
-function cleanValue(value: string | undefined): string {
-  if (!value) return "";
-  const normalized = value.replace(/\r\n/g, "\n").trim();
-  const lowered = normalized.toLowerCase();
-  if (lowered === "\\n" || lowered === "null" || lowered === "\\null") {
-    return "";
-  }
-  return normalized;
-}
-
-function normalizeRow(raw: CsvRecord): Record<string, string> {
-  const normalized: Record<string, string> = {};
-  for (const [key, value] of Object.entries(raw)) {
-    normalized[key.trim().toLowerCase()] = cleanValue(value);
-  }
-  return normalized;
-}
 
 function parseCsvDate(value: string): Date | null {
   const raw = cleanValue(value);
@@ -250,10 +176,15 @@ async function getOrCreateHallId(
 }
 
 async function main() {
-  const args = parseArgs(process.argv.slice(2));
+  const parsed = parseImportArgs(process.argv.slice(2), { defaultFile: DEFAULT_FILE });
+  if (parsed === "help") {
+    printHelp();
+    process.exit(0);
+  }
+  const args = parsed;
 
-  if (!process.env["DATABASE_URL"]) throw new Error("DATABASE_URL is not set");
-  if (!fs.existsSync(args.filePath)) throw new Error(`CSV file not found: ${args.filePath}`);
+  assertDatabaseUrl();
+  assertCsvFileExists(args.filePath);
 
   const client = new pg.Client({ connectionString: process.env["DATABASE_URL"] });
   await client.connect();
@@ -303,13 +234,7 @@ async function main() {
 
     const seenKeysInFile = new Set<string>();
     const stream = fs.createReadStream(args.filePath);
-    const parser = parse({
-      columns: true,
-      bom: true,
-      relax_quotes: true,
-      skip_empty_lines: true,
-      trim: false,
-    });
+    const parser = parse({ ...legacyCsvParseOptions });
     stream.pipe(parser);
 
     for await (const rowRaw of parser as AsyncIterable<CsvRecord>) {
@@ -400,7 +325,7 @@ async function main() {
         console.error(`Failed row #${stats.totalRows}:`, error);
       }
 
-      if (stats.totalRows % PROGRESS_EVERY === 0) {
+      if (stats.totalRows % LEGACY_IMPORT_PROGRESS_EVERY === 0) {
         console.log(
           `Progress ${stats.totalRows} rows | imported=${stats.importedEvents} | failed=${stats.failedRows}`,
         );
@@ -424,7 +349,7 @@ async function main() {
   }
 }
 
-main().catch((error) => {
+void main().catch((error) => {
   console.error(error);
   process.exit(1);
 });

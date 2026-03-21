@@ -1,74 +1,25 @@
 import "dotenv/config";
 import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { parse } from "csv-parse";
-
-type ImportArgs = {
-  filePath: string;
-  dryRun: boolean;
-  limit: number | null;
-};
-
-type CsvRecord = Record<string, string | undefined>;
+import {
+  assertCsvFileExists,
+  assertDatabaseUrl,
+  LEGACY_IMPORT_PROGRESS_EVERY,
+  legacyCsvParseOptions,
+  normalizeRow,
+  parseImportArgs,
+  resolveDefaultLegacyImportFile,
+  toLanguageMap,
+  type CsvRecord,
+} from "@/legacy-import/shared.js";
 
 const SOURCE_NAME = "productions-output-csv";
-const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
-const BACKEND_DIR = path.resolve(SCRIPT_DIR, "..");
-const REPO_ROOT = path.resolve(BACKEND_DIR, "..");
-const DEFAULT_FILE = path.resolve(REPO_ROOT, "data", "imports", "productions.csv");
-const PROGRESS_EVERY = 500;
-
-function parseArgs(argv: string[]): ImportArgs {
-  let filePath = DEFAULT_FILE;
-  let dryRun = false;
-  let limit: number | null = null;
-
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
-    if (!arg || arg === "--") continue;
-
-    if (arg === "--dry-run") {
-      dryRun = true;
-      continue;
-    }
-
-    if (!arg.startsWith("--")) {
-      filePath = path.resolve(process.cwd(), arg);
-      continue;
-    }
-
-    if (arg === "--file") {
-      const value = argv[i + 1];
-      if (!value) throw new Error("Missing value for --file");
-      filePath = path.resolve(process.cwd(), value);
-      i++;
-      continue;
-    }
-
-    if (arg === "--limit") {
-      const value = argv[i + 1];
-      if (!value) throw new Error("Missing value for --limit");
-      const parsed = Number.parseInt(value, 10);
-      if (!Number.isFinite(parsed) || parsed < 1) {
-        throw new Error("--limit must be a positive integer");
-      }
-      limit = parsed;
-      i++;
-      continue;
-    }
-
-    if (arg === "--help" || arg === "-h") {
-      printHelp();
-      process.exit(0);
-    }
-    
-    throw new Error(`Unknown argument: ${arg}`);
-  }
-
-  return { filePath, dryRun, limit };
-}
+const DEFAULT_FILE = resolveDefaultLegacyImportFile(import.meta.url, [
+  "data",
+  "imports",
+  "productions.csv",
+]);
 
 function printHelp() {
   console.log("Import legacy productions CSV into Postgres.");
@@ -85,30 +36,8 @@ function printHelp() {
   console.log("  --limit <n>     Stop after reading n rows");
 }
 
-function toLanguageMap(value: string): Record<"nl", string> {
-  return { nl: value };
-}
-
 function nullableLanguageMap(value: string): Record<"nl", string> | null {
   return value.length === 0 ? null : { nl: value };
-}
-
-function cleanValue(value: string | undefined): string {
-  if (!value) return "";
-  const normalized = value.replace(/\r\n/g, "\n").trim();
-  const lowered = normalized.toLowerCase();
-  if (lowered === "\\n" || lowered === "null" || lowered === "\\null") {
-    return "";
-  }
-  return normalized;
-}
-
-function normalizeRow(raw: CsvRecord): Record<string, string> {
-  const normalized: Record<string, string> = {};
-  for (const [key, value] of Object.entries(raw)) {
-    normalized[key.trim().toLowerCase()] = cleanValue(value);
-  }
-  return normalized;
 }
 
 function splitGenres(value: string): string[] {
@@ -232,14 +161,15 @@ type ImportStats = {
 };
 
 async function main() {
-  const args = parseArgs(process.argv.slice(2));
-  if (!process.env["DATABASE_URL"]) {
-    throw new Error("DATABASE_URL is not set");
+  const parsed = parseImportArgs(process.argv.slice(2), { defaultFile: DEFAULT_FILE });
+  if (parsed === "help") {
+    printHelp();
+    process.exit(0);
   }
+  const args = parsed;
 
-  if (!fs.existsSync(args.filePath)) {
-    throw new Error(`CSV file not found: ${args.filePath}`);
-  }
+  assertDatabaseUrl();
+  assertCsvFileExists(args.filePath);
 
   const client = new pg.Client({ connectionString: process.env["DATABASE_URL"] });
   await client.connect();
@@ -286,13 +216,7 @@ async function main() {
 
     const seenLegacyInCurrentFile = new Set<string>();
     const stream = fs.createReadStream(args.filePath);
-    const parser = parse({
-      columns: true,
-      bom: true,
-      relax_quotes: true,
-      skip_empty_lines: true,
-      trim: false,
-    });
+    const parser = parse({ ...legacyCsvParseOptions });
     stream.pipe(parser);
 
     for await (const rowRaw of parser as AsyncIterable<CsvRecord>) {
@@ -411,7 +335,7 @@ async function main() {
         console.error(`Failed row with legacy ID ${legacyId}:`, error);
       }
 
-      if (stats.totalRows % PROGRESS_EVERY === 0) {
+      if (stats.totalRows % LEGACY_IMPORT_PROGRESS_EVERY === 0) {
         console.log(
           `Progress ${stats.totalRows} rows | imported=${stats.importedProductions} | failed=${stats.failedRows}`,
         );
@@ -434,7 +358,7 @@ async function main() {
   }
 }
 
-main().catch((error) => {
+void main().catch((error) => {
   console.error(error);
   process.exit(1);
 });
