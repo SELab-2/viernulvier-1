@@ -6,12 +6,11 @@ Place legacy CSV files for import scripts in this folder.
 
 1. Start Docker (`db` must be running).
 2. Run migrations.
-3. Run imports from `backend` with a `DATABASE_URL` that points to the same database you query with `docker exec`.
+3. **`DATABASE_URL`** is read from your **`.env`** file (see `.env.example` at the repo root and the [Contributing Guide](../../DOCS/CONTRIBUTING.md)). Import scripts use `dotenv` the same way as `pnpm run migrate` in `backend`.
 
-Example:
+   If you run imports on the **host** against Docker’s published Postgres port, ensure `DATABASE_URL` in `.env` uses a host the machine can resolve (often `localhost`, not the Docker service name `db`). If you run imports **inside** the backend container (like migrations in the contributing guide), the compose-provided `DATABASE_URL` is fine.
 
-- `cd backend`
-- `DATABASE_URL="postgres://postgres@localhost:5432/postgres" pnpm run migrate`
+   For a **one-off** connection string (override `.env` or point at another DB), prefix the command: `DATABASE_URL="postgres://…" pnpm run import:productions` (same pattern as any other script that reads `process.env`).
 
 ## Available Importers
 
@@ -43,23 +42,36 @@ Events use `legacy_production_import_map` to resolve production foreign keys, so
 ## Run Examples
 
 - Production import with default path:
-  - `cd backend && DATABASE_URL="postgres://postgres@localhost:5432/postgres" pnpm run import:productions`
+  - `cd backend && pnpm run import:productions`
 - Production import with positional path:
-  - `cd backend && DATABASE_URL="postgres://postgres@localhost:5432/postgres" pnpm run import:productions -- "../data/imports/Productions - output.csv"`
+  - `cd backend && pnpm run import:productions -- "../data/imports/Productions - output.csv"`
 - Production import with named path:
-  - `cd backend && DATABASE_URL="postgres://postgres@localhost:5432/postgres" pnpm run import:productions -- --file "../data/imports/Productions - output.csv"`
+  - `cd backend && pnpm run import:productions -- --file "../data/imports/Productions - output.csv"`
 - Event import with default path:
-  - `cd backend && DATABASE_URL="postgres://postgres@localhost:5432/postgres" pnpm run import:events`
+  - `cd backend && pnpm run import:events`
 - Event import with custom path:
-  - `cd backend && DATABASE_URL="postgres://postgres@localhost:5432/postgres" pnpm run import:events -- "../data/imports/Events - voorstellingen.csv"`
+  - `cd backend && pnpm run import:events -- "../data/imports/Events - voorstellingen.csv"`
 
 ### Optional flags
 
 Both importers accept these flags (after `--` when using `pnpm run …`):
 
-- **`--dry-run`**: Parse the CSV and run validation / lookups only; **no rows are written** to the database (no `INSERT`/`UPDATE` for productions, events, halls, tags, or idempotency maps). Use this to check that the file path, column layout, and `DATABASE_URL` are correct before a real import.
+- **`--dry-run`**: Parse the CSV and run validation / lookups only; **no rows are written** to the database (no `INSERT`/`UPDATE` for productions, events, halls, tags, or idempotency maps). Use this to check that the file path and column layout are correct before a real import.
 
 - **`--limit <n>`**: Stop after processing **the first _n_ data rows** from the CSV (rows are still read in file order). Useful for a quick smoke test on a huge file without importing everything. Omit this flag to import the full file.
+
+Examples:
+
+```bash
+# Productions: validate only, no DB writes
+cd backend && pnpm run import:productions -- --dry-run
+
+# Productions: import only the first 10 rows (writes to DB unless --dry-run)
+cd backend && pnpm run import:productions -- --limit 10
+
+# Combine: parse and validate 50 rows, but do not write
+cd backend && pnpm run import:events -- "../data/imports/events.csv" --dry-run --limit 50
+```
 
 ## Verification
 
