@@ -1,4 +1,3 @@
-import "dotenv/config";
 import fs from "node:fs";
 import pg from "pg";
 import { parse } from "csv-parse";

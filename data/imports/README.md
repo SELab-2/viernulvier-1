@@ -6,9 +6,9 @@ Place legacy CSV files for import scripts in this folder.
 
 1. Start Docker (`db` must be running).
 2. Run migrations.
-3. **`DATABASE_URL`** is read from your **`.env`** file (see `.env.example` at the repo root and the [Contributing Guide](../../DOCS/CONTRIBUTING.md)). Import scripts use `dotenv` the same way as `pnpm run migrate` in `backend`.
+3. **`DATABASE_URL`** comes from the **repo root** `.env` (see `.env.example` and the [Contributing Guide](../../DOCS/CONTRIBUTING.md)). The import scripts load that file even when you run `cd backend && pnpm run import:*` (unlike plain `dotenv/config`, which only looks in the current working directory).
 
-   If you run imports on the **host** against Docker’s published Postgres port, ensure `DATABASE_URL` in `.env` uses a host the machine can resolve (often `localhost`, not the Docker service name `db`). If you run imports **inside** the backend container (like migrations in the contributing guide), the compose-provided `DATABASE_URL` is fine.
+   The same Compose-style URL as in `.env.example` works for **local** runs: **`${DB_PORT}` is expanded** (plain `dotenv` does not interpolate it), and host **`db` is rewritten to `127.0.0.1`** when the script is not running inside a container. Inside Docker, `db` is left as-is. If you use a non-standard setup, set `DATABASE_URL` to a full URL yourself.
 
    For a **one-off** connection string (override `.env` or point at another DB), prefix the command: `DATABASE_URL="postgres://…" pnpm run import:productions` (same pattern as any other script that reads `process.env`).
 

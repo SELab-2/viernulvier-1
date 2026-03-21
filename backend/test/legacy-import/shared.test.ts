@@ -6,14 +6,101 @@ import {
   assertCsvFileExists,
   assertDatabaseUrl,
   cleanValue,
+  expandLegacyImportDatabaseUrlString,
   getRepoRootFromImportMeta,
   LEGACY_IMPORT_PROGRESS_EVERY,
   legacyCsvParseOptions,
   normalizeRow,
   parseImportArgs,
   resolveDefaultLegacyImportFile,
+  resolveLegacyImportDatabaseUrl,
+  rewriteDockerDbHostInDatabaseUrl,
   toLanguageMap,
 } from "@/legacy-import/shared.js";
+
+describe("expandLegacyImportDatabaseUrlString", () => {
+  it("replaces ${DB_PORT}", () => {
+    expect(expandLegacyImportDatabaseUrlString("postgres://h:${DB_PORT}/x", "5432")).toBe(
+      "postgres://h:5432/x",
+    );
+  });
+
+  it("leaves strings without placeholder unchanged", () => {
+    expect(expandLegacyImportDatabaseUrlString("postgres://localhost:5432/x", "9999")).toBe(
+      "postgres://localhost:5432/x",
+    );
+  });
+});
+
+describe("resolveLegacyImportDatabaseUrl", () => {
+  it("no-ops when DATABASE_URL is missing or empty", () => {
+    const missing = { DB_PORT: "5432" } as NodeJS.ProcessEnv;
+    resolveLegacyImportDatabaseUrl(missing, { runningInDocker: false });
+    expect(missing["DATABASE_URL"]).toBeUndefined();
+
+    const empty = { DATABASE_URL: "" } as NodeJS.ProcessEnv;
+    resolveLegacyImportDatabaseUrl(empty, { runningInDocker: false });
+    expect(empty["DATABASE_URL"]).toBe("");
+  });
+
+  it("does not mutate DATABASE_URL when unknown placeholders remain after DB_PORT expansion", () => {
+    const env: NodeJS.ProcessEnv = {
+      ...process.env,
+      DATABASE_URL: "postgres://postgres@db:${DB_PORT}/${OTHER}",
+      DB_PORT: "5432",
+    };
+    resolveLegacyImportDatabaseUrl(env, { runningInDocker: false });
+    expect(env["DATABASE_URL"]).toBe("postgres://postgres@db:${DB_PORT}/${OTHER}");
+  });
+
+  it("expands ${DB_PORT} with default port then rewrites db host", () => {
+    const env = {
+      DATABASE_URL: "postgres://postgres@db:${DB_PORT}/postgres",
+    } as NodeJS.ProcessEnv;
+    resolveLegacyImportDatabaseUrl(env, { runningInDocker: false });
+    expect(env["DATABASE_URL"]).toBe("postgres://postgres@127.0.0.1:5432/postgres");
+  });
+
+  it("rewrites db host when URL is fully expanded", () => {
+    const env: NodeJS.ProcessEnv = {
+      ...process.env,
+      DATABASE_URL: "postgres://postgres@db:5432/postgres",
+    };
+    resolveLegacyImportDatabaseUrl(env, { runningInDocker: false });
+    expect(env["DATABASE_URL"]).toBe("postgres://postgres@127.0.0.1:5432/postgres");
+  });
+
+  it("does not rewrite db host when runningInDocker is true", () => {
+    const env = { DATABASE_URL: "postgres://postgres@db:5432/postgres" } as NodeJS.ProcessEnv;
+    resolveLegacyImportDatabaseUrl(env, { runningInDocker: true });
+    expect(env["DATABASE_URL"]).toBe("postgres://postgres@db:5432/postgres");
+  });
+});
+
+describe("rewriteDockerDbHostInDatabaseUrl", () => {
+  it("rewrites host db to 127.0.0.1 when not in Docker", () => {
+    expect(
+      rewriteDockerDbHostInDatabaseUrl("postgres://postgres@db:5432/postgres", {
+        runningInDocker: false,
+      }),
+    ).toBe("postgres://postgres@127.0.0.1:5432/postgres");
+  });
+
+  it("does not rewrite when runningInDocker is true", () => {
+    const u = "postgres://postgres@db:5432/postgres";
+    expect(rewriteDockerDbHostInDatabaseUrl(u, { runningInDocker: true })).toBe(u);
+  });
+
+  it("does not rewrite other hostnames", () => {
+    const u = "postgres://postgres@localhost:5432/postgres";
+    expect(rewriteDockerDbHostInDatabaseUrl(u, { runningInDocker: false })).toBe(u);
+  });
+
+  it("returns original on invalid URL", () => {
+    const bad = ":::not-a-url";
+    expect(rewriteDockerDbHostInDatabaseUrl(bad, { runningInDocker: false })).toBe(bad);
+  });
+});
 
 describe("getRepoRootFromImportMeta", () => {
   it("resolves repo root from backend/scripts URL", () => {
