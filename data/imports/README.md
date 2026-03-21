@@ -14,7 +14,7 @@ Place legacy CSV files for import scripts in this folder.
 
 ## Available Importers
 
-- `backend/scripts/import-productions-legacy.ts`
+- **CLI entry:** `backend/scripts/import-productions-legacy.ts` (thin wrapper; calls `importProductionsLegacy` in `src/legacy-import/import-productions-legacy.ts`)
   - Default file: `data/imports/productions.csv`
   - Expected columns:
     - `Titel`
@@ -24,7 +24,7 @@ Place legacy CSV files for import scripts in this folder.
     - `Genre`
     - `ID`
     - `Planning ID`
-- `backend/scripts/import-events-legacy.ts`
+- **CLI entry:** `backend/scripts/import-events-legacy.ts` → `importEventsLegacy` in `src/legacy-import/import-events-legacy.ts`
   - Default file: `data/imports/events.csv`
   - Expected columns:
     - `Starttime`
@@ -67,7 +67,7 @@ Events use `legacy_production_import_map` to resolve production foreign keys, so
 **Legacy id map**
 
 - After a successful insert, the script stores **`(source, legacy_id) → production_id`** in **`legacy_production_import_map`**.
-  - **`source`** for this CSV is the fixed string **`productions-output-csv`** (see script constant `SOURCE_NAME`).
+  - **`source`** for this CSV is the fixed string **`productions-output-csv`** (see `LEGACY_PRODUCTION_IMPORT_SOURCE` in `src/legacy-import/import-productions-legacy.ts`).
 - The events importer **only** reads mappings with this same source when resolving the **`Production`** column.
 
 ### Events import (`import-events-legacy.ts`)
@@ -79,7 +79,7 @@ Events use `legacy_production_import_map` to resolve production foreign keys, so
 
 **Row identity (idempotency)**
 
-- Each CSV row gets a deterministic **`legacy_key`**: a **SHA-1** hash of the concatenation of **`Starttime` | `Endtime` | `Hall` | `Production`** (normalized fields). That key is used with **`source = events-voorstellingen-csv`** in **`legacy_event_import_map`** so re-imports skip already-imported rows.
+- Each CSV row gets a deterministic **`legacy_key`**: a **SHA-1** hash of the concatenation of **`Starttime` | `Endtime` | `Hall` | `Production`** (normalized fields). That key is used with **`source = events-voorstellingen-csv`** (`LEGACY_EVENT_IMPORT_SOURCE`) in **`legacy_event_import_map`** so re-imports skip already-imported rows.
 
 **Halls**
 
