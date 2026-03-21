@@ -10,7 +10,7 @@ const EditTagTypeBodySchema = TagTypeSchema.pick({
 
 export async function editTagType(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<TagType | null> {
 
   const id = getParam(request, "id");
@@ -33,7 +33,7 @@ export async function editTagType(
   const result = await server.pg.query<TagType>(
     `UPDATE tag_type SET ${fields.join(", ")} WHERE id = $${i}
      RETURNING id, name`,
-    values
+    values,
   );
 
   return parseFirstRow(server, TagTypeSchema, result.rows);

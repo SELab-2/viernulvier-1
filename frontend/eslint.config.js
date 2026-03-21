@@ -32,6 +32,7 @@ export default tseslint.config(
         parser: tseslint.parser,
         extraFileExtensions: [".vue"],
         sourceType: "module",
+        tsconfigRootDir: process.cwd(),
       },
     },
   },

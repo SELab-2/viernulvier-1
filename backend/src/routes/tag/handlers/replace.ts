@@ -11,7 +11,7 @@ const ReplaceTagBodySchema = TagSchema.pick({
 
 export async function replaceTag(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<Tag | null> {
 
   const id = getParam(request, "id");
@@ -24,7 +24,7 @@ export async function replaceTag(
      SET name = $1, type_id = $2, public = $3, updated_by = $4, updated_at = $5
      WHERE id = $6
      RETURNING id, name, type_id, public`,
-    [body.name, body.type, body.public, admin, current_time, id]
+    [body.name, body.type, body.public, admin, current_time, id],
   );
 
   return parseFirstRow(server, TagSchema, result.rows);

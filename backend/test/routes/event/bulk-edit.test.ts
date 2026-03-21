@@ -34,7 +34,7 @@ beforeAll(async () => {
       const index = storedEvents.findIndex((event) => Number(event.id) === id);
       if (index === -1) return Promise.resolve({ rows: [] });
 
-  // eslint-disable-next-line security/detect-object-injection
+      // eslint-disable-next-line security/detect-object-injection
       const current = storedEvents[index]!;
       const updated = {
         ...current,
@@ -47,7 +47,7 @@ beforeAll(async () => {
         info: params?.[6] ?? current["info"],
       };
 
-  // eslint-disable-next-line security/detect-object-injection
+      // eslint-disable-next-line security/detect-object-injection
       storedEvents[index] = updated;
       const event = {...updated, price: []};
       return Promise.resolve({ rows: [event] });
@@ -83,10 +83,10 @@ describe("Event Bulk Edit Routes", () => {
   describe("bulk partial updates", () => {
     test("updates single field on multiple events", async () => {
       const editResponse = await server.inject({
-          method: "PATCH",
-          url: "/api/v1/event",
-          cookies: { session: sessionCookie },
-          payload: { ids: [1, 3], production: 99 },
+        method: "PATCH",
+        url: "/api/v1/event",
+        cookies: { session: sessionCookie },
+        payload: { ids: [1, 3], production: 99 },
       });
 
       expect(editResponse.statusCode).toBe(200);
@@ -172,9 +172,9 @@ describe("Event Bulk Edit Routes", () => {
       ]);
 
       const listResponse = await server.inject({
-          method: "GET",
-          url: "/api/v1/event",
-          cookies: { session: sessionCookie },
+        method: "GET",
+        url: "/api/v1/event",
+        cookies: { session: sessionCookie },
       });
 
       expect(listResponse.statusCode).toBe(200);
@@ -199,10 +199,10 @@ describe("Event Bulk Edit Routes", () => {
 
     test("bulk edits some events and keeps the others unchanged", async () => {
       const editResponse = await server.inject({
-          method: "PATCH",
-          url: "/api/v1/event",
-          cookies: { session: sessionCookie },
-          payload: { ids: [1, 2], vendor_id: 555 },
+        method: "PATCH",
+        url: "/api/v1/event",
+        cookies: { session: sessionCookie },
+        payload: { ids: [1, 2], vendor_id: 555 },
       });
 
       expect(editResponse.statusCode).toBe(200);
@@ -226,9 +226,9 @@ describe("Event Bulk Edit Routes", () => {
       ]);
 
       const listResponse = await server.inject({
-          method: "GET",
-          url: "/api/v1/event",
-          cookies: { session: sessionCookie },
+        method: "GET",
+        url: "/api/v1/event",
+        cookies: { session: sessionCookie },
       });
 
       expect(listResponse.statusCode).toBe(200);
@@ -293,8 +293,8 @@ describe("Event Bulk Edit Routes", () => {
         url: "/api/v1/event",
         cookies: { session: sessionCookie },
         payload: {
-            ids: [1, 2],
-            production: "not a number",
+          ids: [1, 2],
+          production: "not a number",
         },
       });
 

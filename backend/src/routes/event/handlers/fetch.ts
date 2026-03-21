@@ -16,7 +16,7 @@ import { selectPriceSubquery } from "./helper.js";
  */
 export async function fetchEvent(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<Event | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const result = await buildQuery(server,
@@ -39,7 +39,7 @@ export async function fetchEvent(
  */
 export async function fetchEventWithMeta(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<EventWithMeta | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const result = await buildQuery(
@@ -62,13 +62,13 @@ export async function fetchEventWithMeta(
  * @returns An array of parsed events.
  */
 export async function fetchEvents(
-  server: FastifyInstance
+  server: FastifyInstance,
 ): Promise<Event[]> {
   const result = await buildQuery(
     server,
     `SELECT id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}
     FROM events`,
-    EventSchema
+    EventSchema,
   )();
 
   return result;

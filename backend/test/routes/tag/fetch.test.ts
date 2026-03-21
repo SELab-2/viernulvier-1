@@ -54,7 +54,7 @@ beforeAll(async () => {
 
     if (query.includes("production_tag")) {
       rows = mockTags.filter((t) =>
-        t.productions.includes(Number(id))
+        t.productions.includes(Number(id)),
       );
     } else if (id) {
       rows = mockTags.filter((t) => t.id === Number(id));
@@ -192,7 +192,7 @@ describe("Fetch visible tags for production", () => {
     const result = TagSchema.array().parse(response.json());
 
     expect(result).toEqual(
-      mockTags.filter((t) => t.public && t.productions.includes(1))
+      mockTags.filter((t) => t.public && t.productions.includes(1)),
     );
   });
 

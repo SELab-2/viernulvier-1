@@ -5,14 +5,14 @@ import { getParam, parseFirstRow } from "@/routes/helpers.js";
 
 async function fetchTagType(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<TagType | null> {
 
   const result = await server.pg.query<TagType>(
     `SELECT id, name
      FROM tag_type
      WHERE id = $1`,
-    [getParam(request, "id")]
+    [getParam(request, "id")],
   );
 
   return parseFirstRow(server, TagTypeSchema, result.rows);
@@ -20,7 +20,7 @@ async function fetchTagType(
 
 async function fetchTagTypeWithMeta(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<TagTypeWithMeta | null> {
 
   const result = await server.pg.query<TagTypeWithMeta>(
@@ -29,7 +29,7 @@ async function fetchTagTypeWithMeta(
             created_by, updated_by
      FROM tag_type
      WHERE id = $1`,
-    [getParam(request, "id")]
+    [getParam(request, "id")],
   );
 
   return parseFirstRow(server, TagTypeSchema.withMeta(), result.rows);
@@ -38,7 +38,7 @@ async function fetchTagTypeWithMeta(
 async function fetchTagTypes(server: FastifyInstance): Promise<TagType[]> {
 
   const result = await server.pg.query<TagType>(
-    `SELECT id, name FROM tag_type`
+    `SELECT id, name FROM tag_type`,
   );
 
   return result.rows;

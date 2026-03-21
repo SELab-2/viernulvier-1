@@ -55,7 +55,7 @@ export const CustomProductionFieldDefinitionSchema = createSchema({
 export const CustomProductionFieldSchema = createSchema({
   get field_definition_id(): ForeignKey<
     typeof CustomProductionFieldDefinitionSchema
-  > {
+    > {
     return foreignKey(() => CustomProductionFieldDefinitionSchema);
   },
   get production_id(): ForeignKey<typeof ProductionSchema> {

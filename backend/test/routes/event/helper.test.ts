@@ -135,8 +135,8 @@ describe("Event Date Normalization Helpers", () => {
   describe("normalizePartialEventDates", () => {
     test("converts only provided date string fields to Date objects", () => {
       const input = {
-          starts_at: "2026-01-01T18:00:00.000Z",
-          production: 20,
+        starts_at: "2026-01-01T18:00:00.000Z",
+        production: 20,
       };
 
       const result = normalizePartialEventDates(input) as Record<string, unknown>;
