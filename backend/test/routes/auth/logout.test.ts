@@ -1,16 +1,16 @@
-import { describe, test, expect, beforeAll, afterAll } from "vitest";
+import { describe, test, expect, beforeEach, afterEach } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 
 let server: FastifyInstance;
 let sessionCookie: string;
 
-beforeAll(async () => {
+beforeEach(async () => {
   server = await buildServer();
   sessionCookie = server.jwt.sign({ id: 404, username: "Karel", jti: server.generateJti() });
 });
 
-afterAll(async () => {
+afterEach(async () => {
   await server.close();
 });
 
@@ -41,14 +41,23 @@ describe("Logout", () => {
   });
 
   test("POST /api/v1/auth/logout — returns 401 when token is revoked", async () => {
-    // sessionCookie was already revoked in the previous test
-    const response = await server.inject({
+    // one logout succeeds and revokes it
+    const successResponse = await server.inject({
+      method: "POST",
+      url: "/api/v1/auth/logout",
+      cookies: { session: sessionCookie },
+    });
+    expect(successResponse.statusCode).toBe(200);
+    expect(successResponse.json()).toEqual({ success: true });
+
+    // the other should fail because it's been revoked already
+    const revokeResponse = await server.inject({
       method: "POST",
       url: "/api/v1/auth/logout",
       cookies: { session: sessionCookie },
     });
 
-    expect(response.statusCode).toBe(401);
+    expect(revokeResponse.statusCode).toBe(401);
   });
 
   test("POST /api/v1/auth/logout — evicts jti from denylist after token expiry", async () => {

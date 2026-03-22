@@ -11,22 +11,17 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
  * @returns An object indicating success.
  */
 export async function logout(server: FastifyInstance, request: FastifyRequest, reply: FastifyReply) {
-  try {
-    const payload = await request.jwtVerify() as { jti?: string; exp?: number };
+  const payload = request.user as { jti?: string; exp?: number };
 
-    if (payload.jti) {
-      server.tokenDenylist.add(payload.jti);
+  if (payload.jti) {
+    server.tokenDenylist.add(payload.jti);
 
-      if (payload.exp) {
-        const msUntilExpiry = payload.exp * 1000 - Date.now();
-        setTimeout(() => server.tokenDenylist.delete(payload.jti!), msUntilExpiry);
-      }
+    if (payload.exp) {
+      const msUntilExpiry = payload.exp * 1000 - Date.now();
+      setTimeout(() => server.tokenDenylist.delete(payload.jti!), msUntilExpiry);
     }
-  } catch {
-    // token is invalid
   }
 
-  // always clear the cookie, even if the token is invalid
   reply.clearCookie("session", { path: "/" });
   return { success: true };
 }

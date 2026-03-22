@@ -40,9 +40,10 @@ export async function login(server: FastifyInstance, request: FastifyRequest, re
 
   const rows = await fetchAdminCredentials(server)(username);
 
+  // always compare hash to prevent a timing attack
   const valid = await comparePassword(password, rows[0]?.password ?? DUMMY_HASH);
 
-  if (!valid || rows.length == 0) throw new HttpError(401, "Invalid credentials");
+  if (rows.length === 0 || !valid) throw new HttpError(401, "Invalid credentials");
 
   const token = server.jwt.sign(
     { id: rows[0]!.id, username, jti: server.generateJti() },
