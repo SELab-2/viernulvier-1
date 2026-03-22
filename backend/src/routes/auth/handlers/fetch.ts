@@ -77,7 +77,6 @@ async function fetchCurrentlyLoggedInAdmin(
   request: FastifyRequest,
 ): Promise<Admin | null> {
   const { id } = parseUser(request);
-  console.log(id);
   const rows = await fetchAdminById(server)(id);
   return rows[0] ?? null;
 }
