@@ -39,7 +39,7 @@ export function saveLanguagePreference(lang: SupportedLang): void {
 /** The global vue-i18n instance. Import `i18n` to access or change the active locale. */
 export const i18n = createI18n({
   legacy: false,
-  locale: DEFAULT_LANG,
+  locale: detectLanguage(),
   fallbackLocale: "nl",
   messages: { nl, fr, en },
 });

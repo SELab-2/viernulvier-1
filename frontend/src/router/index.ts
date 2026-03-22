@@ -33,7 +33,9 @@ router.beforeEach((to, _, next) => {
   }
 
   // set locale based on route param
-  i18n.global.locale.value = to.params.lang as SupportedLang;
+  if (to.params.lang) {
+    i18n.global.locale.value = to.params.lang as SupportedLang;
+  }
 
   // check admin access for routes that require it
   if (to.meta.requiresAdmin && !checkUserIsAdmin()) {

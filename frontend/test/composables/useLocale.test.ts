@@ -97,7 +97,7 @@ describe("useLocale — setLocale()", () => {
   // Verifies that setLocale() replaces the language prefix in the URL
   // while preserving the rest of the path (e.g. /nl/productions → /fr/productions).
 
-  describe("router navigatie", () => {
+  describe("router navigation", () => {
     it("navigates to the new language path from /nl", async () => {
       const wrapper = createWrapper(router);
       wrapper.vm.setLocale("fr");
@@ -144,7 +144,7 @@ describe("useLocale — setLocale()", () => {
   // ── All together ───────────────────────────────────────────────────────────
   // Verifies that all three side effects fire correctly in a single setLocale() call.
 
-  describe("alles synchroon", () => {
+  describe("everything synchronous", () => {
     it("syncs localStorage, i18n and router in a single setLocale() call", async () => {
       const wrapper = createWrapper(router);
       wrapper.vm.setLocale("en");

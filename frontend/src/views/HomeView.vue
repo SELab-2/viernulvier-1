@@ -2,8 +2,12 @@
   <div class="app" :class="{ dark: isDark }">
     <nav class="navbar">
       <div class="nav-left">
-        <a href="#" class="nav-link">{{ t("nav.home") }}</a>
-        <a href="#" class="nav-link">{{ t("nav.archive") }}</a>
+        <RouterLink :to="`/${currentLang}`" class="nav-link">{{
+          t("nav.home")
+        }}</RouterLink>
+        <RouterLink :to="`/${currentLang}/productions`" class="nav-link">{{
+          t("nav.archive")
+        }}</RouterLink>
       </div>
       <div class="nav-logo">
         <img src="../assets/logo.svg" alt="vierNulvier" class="logo-img" />
