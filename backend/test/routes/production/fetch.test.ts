@@ -9,8 +9,6 @@ let sessionCookie: string;
 
 const baseProduction: Production = {
   id: 1,
-  vendor_id: 10,
-  box_office_id: 20,
   supertitle: null,
   title: { nl: "Titel" },
   artist: { nl: "Artiest" },

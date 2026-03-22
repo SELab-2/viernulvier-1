@@ -10,13 +10,12 @@ const CreateHallBodySchema = HallSchema.omit({ id: true });
 const insertHall = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `INSERT INTO hall (name, address, vendor_id, created_by, updated_by, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $4, $5, $5)
-     RETURNING id, name, address, vendor_id`,
+    `INSERT INTO hall (name, address, created_by, updated_by, created_at, updated_at)
+     VALUES ($1, $2, $3, $3, $4, $4)
+     RETURNING id, name, address`,
     z.tuple([
       languageMap,            // name
       z.string(),             // address
-      z.int().nonnegative(),  // vendor_id
       z.int(),       // admin
       z.date(),               // current_time
     ]),
@@ -37,7 +36,6 @@ export async function createHall(server: FastifyInstance, request: FastifyReques
   const rows = await insertHall(server)(
     body["name"],
     body["address"],
-    body["vendor_id"],
     admin,
     current_time,
   );

@@ -8,8 +8,6 @@ import { getFieldValue } from "./field-utils.js";
 import z from "zod";
 
 const ReplaceColumns = [
-  "vendor_id",
-  "box_office_id",
   "supertitle",
   "title",
   "artist",
