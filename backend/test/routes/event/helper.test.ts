@@ -34,7 +34,6 @@ describe("Event Date Normalization Helpers", () => {
         starts_at: startDate,
         ends_at: endDate,
         doors_at: doorDate,
-        vendor_id: 42,
       };
 
       const result = normalizeEventDates(input) as Record<string, unknown>;
@@ -101,7 +100,6 @@ describe("Event Date Normalization Helpers", () => {
         doors_at: "2026-01-01T17:30:00.000Z",
         production: 10,
         hall: 3,
-        vendor_id: 42,
         info: { nl: "Test info" },
         price: [1, 2, 3],
       };
@@ -110,7 +108,6 @@ describe("Event Date Normalization Helpers", () => {
 
       expect(result["production"]).toBe(10);
       expect(result["hall"]).toBe(3);
-      expect(result["vendor_id"]).toBe(42);
       expect(result["info"]).toEqual({ nl: "Test info" });
       expect(result["price"]).toEqual([1, 2, 3]);
     });
@@ -173,7 +170,6 @@ describe("Event Date Normalization Helpers", () => {
         starts_at: startDate,
         ends_at: endDate,
         doors_at: doorDate,
-        vendor_id: 99,
       };
 
       const result = normalizePartialEventDates(input) as Record<string, unknown>;
@@ -184,7 +180,6 @@ describe("Event Date Normalization Helpers", () => {
       expect(result["ends_at"]).toBe(endDate);
       expect(result["doors_at"]).toBeInstanceOf(Date);
       expect(result["doors_at"]).toBe(doorDate);
-      expect(result["vendor_id"]).toBe(99);
     });
 
     test("handles partial updates with mixed date types", () => {
@@ -193,7 +188,6 @@ describe("Event Date Normalization Helpers", () => {
       const input = {
         starts_at: "2026-02-01T18:00:00.000Z",
         doors_at: doorDate,
-        vendor_id: 99,
       };
 
       const result = normalizePartialEventDates(input) as Record<string, unknown>;
@@ -203,7 +197,6 @@ describe("Event Date Normalization Helpers", () => {
       expect(result["doors_at"]).toBeInstanceOf(Date);
       expect(result["doors_at"]).toBe(doorDate);
       expect(result["ends_at"]).toBeUndefined();
-      expect(result["vendor_id"]).toBe(99);
     });
 
     test("handles partial updates with all Date instances and some undefined", () => {

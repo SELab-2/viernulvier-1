@@ -15,7 +15,6 @@ const baseMockEvent: EventWithoutPrice = {
   production: 10,
   hall: 3,
   doors_at: new Date("2026-01-01T17:30:00.000Z"),
-  vendor_id: 42,
   info: { nl: "Info mock 1" },
 };
 

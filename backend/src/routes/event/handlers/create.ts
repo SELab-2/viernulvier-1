@@ -26,16 +26,15 @@ export async function createEvent(
 
   const result = await buildQuery(
     server,
-    `INSERT INTO events (starts_at, ends_at, production, hall, doors_at, vendor_id, info, created_at, updated_at, created_by, updated_by)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8, $9, $9)
-      RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}`,
+    `INSERT INTO event (starts_at, ends_at, production, hall, doors_at, info, created_at, updated_at, created_by, updated_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $7, $8, $8)
+      RETURNING id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}`,
     z.tuple([
       EventCreateSchema.shape.starts_at,
       EventCreateSchema.shape.ends_at,
       EventCreateSchema.shape.production,
       EventCreateSchema.shape.hall,
       EventCreateSchema.shape.doors_at,
-      EventCreateSchema.shape.vendor_id,
       EventCreateSchema.shape.info,
       z.date(),
       z.number().nonnegative(),
@@ -48,7 +47,6 @@ export async function createEvent(
     body.production,
     body.hall,
     body.doors_at,
-    body.vendor_id,
     body.info,
     current_time,
     admin,

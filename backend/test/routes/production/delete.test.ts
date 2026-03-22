@@ -8,8 +8,6 @@ let sessionCookie: string;
 
 const mockProduction: Production = {
   id: 1,
-  vendor_id: 10,
-  box_office_id: 20,
   supertitle: null,
   title: { nl: "Titel" },
   artist: { nl: "Artiest" },

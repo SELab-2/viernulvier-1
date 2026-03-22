@@ -7,7 +7,7 @@ import { HttpSuccess, HttpClientError } from "@/routes/helpers.js";
 let server: FastifyInstance;
 let sessionCookie: string;
 
-const mockHall: Hall = { id: 1, name: { nl: "Grote Zaal" }, address: "Sint-Pietersnieuwstraat 23", vendor_id: 42 };
+const mockHall: Hall = { id: 1, name: { nl: "Grote Zaal" }, address: "Sint-Pietersnieuwstraat 23" };
 
 beforeAll(async () => {
   server = await buildServer();
@@ -33,7 +33,6 @@ describe("Create on hall route", () => {
       payload: {
         name: { nl: "Grote Zaal" },
         address: "Sint-Pietersnieuwstraat 23",
-        vendor_id: 42,
       },
     });
 
@@ -51,7 +50,6 @@ describe("Create on hall route", () => {
       payload: {
         name: { nl: "Grote Zaal" },
         address: "Sint-Pietersnieuwstraat 23",
-        vendor_id: 42,
       },
     });
 
@@ -76,7 +74,6 @@ describe("Create on hall route", () => {
       payload: {
         name: { nl: "Grote Zaal" },
         address: "Sint-Pietersnieuwstraat 23",
-        vendor_id: 42,
       },
     });
 
