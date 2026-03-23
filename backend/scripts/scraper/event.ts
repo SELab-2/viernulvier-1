@@ -57,6 +57,23 @@ async function fetchPageRequest(
   return await response
 }
 
+async function fetchEventRequest(id: number, authToken: string) {
+  const url = `https://www.viernulvier.gent/api/v1/events/${id}`;
+
+  const response = await fetch(url, {
+    headers: {
+      accept: "application/ld+json",
+      "X-AUTH-TOKEN": authToken,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`API returned status ${response.status}`);
+  }
+
+  return await response;
+}
+
 async function fetchEventsPage(
   page: number = 1,
   beforeDate: Date = new Date(),
@@ -102,28 +119,17 @@ async function getOldProduction(oldId: number) {
   }
 }
 
-async function getOldEventPrice(oldId: number) {
-  // To Implement: fetch the old event price ID based on the old API data
-  return Number.MAX_SAFE_INTEGER; // return a dummy value for now, to avoid foreign key constraint errors
-}
-
 async function processEvent(event: EventJSON) {
   const id = parseInt(event["@id"].split("/").pop() as string, 10);
   const hallId = parseInt(event.hall.split("/").pop() as string, 10);
   const productionId = parseInt(event.production["@id"].split("/").pop() as string, 10);
-  const prices = await Promise.all(
-    event.prices.map(async (priceUrl) => {
-      const priceId = parseInt(priceUrl.split("/").pop() as string, 10);
-      return await getOldEventPrice(priceId);
-    })
-  );
+
 
   const body = {
     ...event,
     old_id: id,
     hall: await getOldHall(hallId),
     production: await getOldProduction(productionId),
-    price: prices,
   };
 
   const response = await fetch("http://localhost:5173/api/v1/event", {
@@ -137,6 +143,9 @@ async function processEvent(event: EventJSON) {
   if (!response.ok) {
     throw new Error(`Failed to create event: ${response.status} ${response.statusText}`);
   }
+
+  // Add prices after event is created, to avoid foreign key constraint errors
+  // const prices = event.prices.map((priceUrl) => parseInt(priceUrl.split("/").pop() as string, 10));
 
   return response.json();
 }
