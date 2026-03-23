@@ -16,6 +16,7 @@ const baseEvent = {
   doors_at: new Date("2026-01-01T17:30:00.000Z"),
   vendor_id: 42,
   info: { nl: "Info mock 1" },
+  old_id: 12345,
   created_by: 1,
   created_at: new Date("2026-01-01T10:00:00.000Z"),
   updated_by: null,
@@ -24,8 +25,8 @@ const baseEvent = {
 
 const initialEvents = [
   baseEvent,
-  { ...baseEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" } },
-  { ...baseEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" } },
+  { ...baseEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" }, old_id: 12346 },
+  { ...baseEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" }, old_id: 12347 },
 ];
 
 beforeAll(async () => {
@@ -49,8 +50,9 @@ beforeAll(async () => {
         doors_at: (params?.[4] as Date | undefined) ?? current["doors_at"],
         vendor_id: (params?.[5] as number | undefined) ?? current["vendor_id"],
         info: params?.[6] ?? current["info"],
-        updated_at: params?.[7] ? new Date(params?.[7] as string) : new Date(),
-        updated_by: params?.[8],
+        old_id: params?.[7] ?? current["old_id"],
+        updated_at: params?.[8] ? new Date(params?.[8] as string) : new Date(),
+        updated_by: params?.[9],
       };
 
       // eslint-disable-next-line security/detect-object-injection

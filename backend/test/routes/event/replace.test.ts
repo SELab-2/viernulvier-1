@@ -20,12 +20,13 @@ const baseEvent = {
   created_at: new Date("2026-01-01T10:00:00.000Z"),
   updated_by: null,
   updated_at: null,
+  old_id: 12345,
 };
 
 const initialEvents = [
   baseEvent,
-  { ...baseEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" } },
-  { ...baseEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" } },
+  { ...baseEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" }, old_id: 12346 },
+  { ...baseEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" }, old_id: 12347 },
 ];
 
 beforeAll(async () => {
@@ -49,8 +50,9 @@ beforeAll(async () => {
         doors_at: (params?.[4] as Date | undefined) ?? current["doors_at"],
         vendor_id: (params?.[5] as number | undefined) ?? current["vendor_id"],
         info: params?.[6] ?? current["info"],
-        updated_at: params?.[7] ? new Date(params?.[7] as string) : new Date(),
-        updated_by: params?.[8],
+        old_id: params?.[7] ?? current["old_id"],
+        updated_at: params?.[8] ? new Date(params?.[8] as string) : new Date(),
+        updated_by: params?.[9],
       };
 
       // eslint-disable-next-line security/detect-object-injection
@@ -96,6 +98,7 @@ describe("Event Replace Routes", () => {
       doors_at: new Date("2026-03-01T17:00:00.000Z"),
       vendor_id: 190,
       info: { nl: "Info inserted" },
+      old_id: 12354,
     };
     test("returns 500 when database query fails", async () => {
       const originalMock = server.pg.query;
@@ -119,6 +122,7 @@ describe("Event Replace Routes", () => {
         payload: {
           id: 1,
           production: 20,
+          old_id: 12345,
         },
         cookies: { session: sessionCookie },
       });
@@ -172,6 +176,7 @@ describe("Event Replace Routes", () => {
       doors_at: new Date("2026-03-01T17:00:00.000Z"),
       vendor_id: 190,
       info: { nl: "Info replaced" },
+      old_id: 12354,
     };
 
     

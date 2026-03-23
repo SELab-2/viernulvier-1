@@ -17,6 +17,7 @@ const baseMockEvent: EventWithoutPrice = {
   doors_at: new Date("2026-01-01T17:30:00.000Z"),
   vendor_id: 42,
   info: { nl: "Info mock 1" },
+  old_id: 12345,
 };
 
 const metaData = {
@@ -28,21 +29,22 @@ const metaData = {
 
 const mockEvents: EventWithoutPrice[] = [
   baseMockEvent,
-  { ...baseMockEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" } },
-  { ...baseMockEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" } },
+  { ...baseMockEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" }, old_id: 12346 },
+  { ...baseMockEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" }, old_id: 12347 },
 ];
 
 const mockInvalidEvent: EventWithoutPrice = {
   ...baseMockEvent,
   id: 500,
   hall: "invalid" as unknown as number,
+  old_id: 12348,
 };
 
 const mockEventPrices: EventPrice[] = [
-  { id: 1, event: 1, amount: 25.50 },
-  { id: 2, event: 2, amount: 30.00 },
-  { id: 3, event: 3, amount: 22.75 },
-  { id: 4, event: 1, amount: 15.00 },
+  { id: 1, event: 1, amount: 25.50, old_id: 54321 },
+  { id: 2, event: 2, amount: 30.00, old_id: 54322 },
+  { id: 3, event: 3, amount: 22.75, old_id: 54323 },
+  { id: 4, event: 1, amount: 15.00, old_id: 54324 },
 ];
 
 beforeAll(async () => {

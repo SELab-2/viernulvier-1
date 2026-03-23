@@ -19,6 +19,7 @@ const basePayload = {
   doors_at: "2026-01-01T17:30:00.000Z",
   vendor_id: 42,
   info: { nl: "Info mock create" },
+  old_id: 12345,
 };
 
 function buildPayload(vendorId: number) {
@@ -50,6 +51,7 @@ beforeAll(async () => {
         doors_at: params?.[4] as Date,
         vendor_id: params?.[5] as number,
         info: params?.[6],
+        old_id: params?.[7],
       };
 
       storedEvents.push(createdEvent);

@@ -17,12 +17,13 @@ const baseEvent = {
   vendor_id: 42,
   info: { nl: "Info mock 1" },
   price: [1],
+  old_id: 12345,
 };
 
 const initialEvents = [
   baseEvent,
-  { ...baseEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" }, price: [2] },
-  { ...baseEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" }, price: [3] },
+  { ...baseEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" }, price: [2], old_id: 12346 },
+  { ...baseEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" }, price: [3], old_id: 12347 },
 ];
 
 beforeAll(async () => {
