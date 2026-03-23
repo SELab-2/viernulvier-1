@@ -20,7 +20,6 @@ export const MetadataShape = {
     return foreignKey(() => _adminSchema);
   },
   updated_at: z.coerce.date(),
-  viernulvier_id: z.number().int().positive().nullable(),
 };
 
 /**
