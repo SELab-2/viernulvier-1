@@ -71,5 +71,11 @@ export async function scrapeAllEvents(
 ) {
   const meta = await fetchEventsListMeta(beforeDate, authToken);
   const totalPages = meta.view.last.split("page=")[1] as unknown as number;
-
+  for (let page = 1; page <= totalPages; page++) {
+    const data = await fetchEventsPage(page, beforeDate, authToken);
+    for (const event of data.member) {
+      // Process the event data as needed, e.g., save to database
+      console.log(event);
+    }
+  }
 }
