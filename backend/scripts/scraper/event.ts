@@ -57,23 +57,6 @@ async function fetchPageRequest(
   return await response
 }
 
-async function fetchEventRequest(id: number, authToken: string) {
-  const url = `https://www.viernulvier.gent/api/v1/events/${id}`;
-
-  const response = await fetch(url, {
-    headers: {
-      accept: "application/ld+json",
-      "X-AUTH-TOKEN": authToken,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`API returned status ${response.status}`);
-  }
-
-  return await response;
-}
-
 async function fetchEventsPage(
   page: number = 1,
   beforeDate: Date = new Date(),
@@ -119,30 +102,43 @@ async function getOldProduction(oldId: number) {
   }
 }
 
-const eventPriceMap: Record<number, number> = {};
 async function getOldEventPrice(oldId: number) {
-  if (eventPriceMap[oldId]) {
-    return eventPriceMap[oldId];
-  }
   // To Implement: fetch the old event price ID based on the old API data
   return Number.MAX_SAFE_INTEGER; // return a dummy value for now, to avoid foreign key constraint errors
 }
 
-function processEvent(event: EventJSON) {
+async function processEvent(event: EventJSON) {
   const id = parseInt(event["@id"].split("/").pop() as string, 10);
   const hallId = parseInt(event.hall.split("/").pop() as string, 10);
   const productionId = parseInt(event.production["@id"].split("/").pop() as string, 10);
-  const prices = event.prices.map((priceUrl) => {
-    const priceId = parseInt(priceUrl.split("/").pop() as string, 10); 
-    return getOldEventPrice(priceId); 
-  });
+  const prices = await Promise.all(
+    event.prices.map(async (priceUrl) => {
+      const priceId = parseInt(priceUrl.split("/").pop() as string, 10);
+      return await getOldEventPrice(priceId);
+    })
+  );
 
   const body = {
     ...event,
     old_id: id,
-    hall: getOldHall(hallId),
-    production: getOldProduction(productionId),
+    hall: await getOldHall(hallId),
+    production: await getOldProduction(productionId),
+    price: prices,
   };
+
+  const response = await fetch("http://localhost:5173/api/v1/event", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to create event: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
 }
 
 
@@ -156,8 +152,8 @@ export async function scrapeAllEvents(
     const data = await fetchEventsPage(page, beforeDate, authToken);
     for (const event of data.member) {
       const id = event["@id"].split("/").pop() as unknown as number;
-      console.log(`Processing event ${event["@id"]} (${page}/${totalPages})`);
-      processEvent(event);
+      console.log(`Processing event ${id} (${page}/${totalPages})`);
+      await processEvent(event);
     }
   }
 }
