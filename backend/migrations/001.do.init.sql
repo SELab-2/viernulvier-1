@@ -12,8 +12,7 @@
 CREATE TABLE IF NOT EXISTS metadata (
   -- The other 2 fields are added in a later alter table statement once the admin table exists.
   created_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-  updated_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-  viernulvier_id    INT
+  updated_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
 -- ============================================================
