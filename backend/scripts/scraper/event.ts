@@ -1,5 +1,4 @@
-import type { Event } from "@viernulvier/shared/index.js";
-import { EventSchemaWithoutPrice } from "@viernulvier/shared/index.js";
+
 
 interface EventListMeta {
   totalItems: number;
@@ -98,29 +97,57 @@ async function fetchEventsListMeta(
   return data;
 }
 
-async function processEvent(event: EventJSON) {
-  const eventParse = EventSchemaWithoutPrice.safeParse({
-    id: parseInt(event["@id"].split("/").pop() as string, 10),
-    starts_at: new Date(event.starts_at),
-    ends_at: new Date(event.ends_at),
-    doors_at: new Date(event.doors_at),
-    vendor_id: event.vendor_id,
-    info: event.info,
-    production_id: parseInt(event.production["@id"].split("/").pop() as string, 10),
-    hall_id: parseInt(event.hall.split("/").pop() as string, 10),
+const hallMap: Record<number, number> = {};
+async function getOldHall(id: number) {
+  if (hallMap[id]) {
+    return hallMap[id];
+  }
+  // To Implement: fetch the old hall ID based on the old API data
+  return Number.MAX_SAFE_INTEGER; // return a dummy value for now, to avoid foreign key constraint errors
+}
+
+const productionMap: Record<number, number> = {};
+async function getOldProduction(oldId: number) {
+  if (productionMap[oldId]) {
+    return productionMap[oldId];
+  }
+  // To Implement: fetch the old production ID based on the old API data
+  else {
+    const id = await voorbeeldFunctie(oldId)
+    productionMap[oldId] = id;
+    return id; // return a dummy value for now, to avoid foreign key constraint errors
+  }
+}
+
+const eventPriceMap: Record<number, number> = {};
+async function getOldEventPrice(oldId: number) {
+  if (eventPriceMap[oldId]) {
+    return eventPriceMap[oldId];
+  }
+  // To Implement: fetch the old event price ID based on the old API data
+  return Number.MAX_SAFE_INTEGER; // return a dummy value for now, to avoid foreign key constraint errors
+}
+
+function processEvent(event: EventJSON) {
+  const id = parseInt(event["@id"].split("/").pop() as string, 10);
+  const hallId = parseInt(event.hall.split("/").pop() as string, 10);
+  const productionId = parseInt(event.production["@id"].split("/").pop() as string, 10);
+  const prices = event.prices.map((priceUrl) => {
+    const priceId = parseInt(priceUrl.split("/").pop() as string, 10); 
+    return getOldEventPrice(priceId); 
   });
 
-  if (!eventParse.success) {
-    console.error(`Failed to parse event ${event["@id"]}:`, eventParse.error);
-    return;
-  }
-
-  const parsedEvent = eventParse.data as Event;
+  const body = {
+    ...event,
+    old_id: id,
+    hall: getOldHall(hallId),
+    production: getOldProduction(productionId),
+  };
 }
 
 
 export async function scrapeAllEvents(
-  beforeDate: Date, 
+  beforeDate: Date,     
   authToken: string
 ) {
   const meta = await fetchEventsListMeta(beforeDate, authToken);
@@ -130,7 +157,12 @@ export async function scrapeAllEvents(
     for (const event of data.member) {
       const id = event["@id"].split("/").pop() as unknown as number;
       console.log(`Processing event ${event["@id"]} (${page}/${totalPages})`);
-      await processEvent(event);
+      processEvent(event);
     }
   }
+}
+
+async function voorbeeldFunctie(oldId: number): Promise<number> {
+  // To Implement: fetch the old production ID based on the old API data
+  return Number.MAX_SAFE_INTEGER; // return a dummy value for now, to avoid foreign key constraint errors
 }

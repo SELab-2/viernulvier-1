@@ -3,7 +3,7 @@ import z from "zod";
 import { createSchema } from "./metadata.js";
 import { HallSchema } from "./hall.js";
 import { ProductionSchema } from "./production.js";
-import { foreignKey, languageMap, primaryKey, ForeignKey } from "./helpers.js";
+import { foreignKey, languageMap, primaryKey, ForeignKey, serial } from "./helpers.js";
 
 export const EventSchemaWithoutPrice = createSchema({
   id: primaryKey(),
@@ -12,6 +12,7 @@ export const EventSchemaWithoutPrice = createSchema({
   doors_at: z.date(),
   vendor_id: z.int().nonnegative(),
   info: languageMap,
+  old_id: serial().nullable(),
   get production(): ForeignKey<typeof ProductionSchema> {
     return foreignKey(() => ProductionSchema);
   },
