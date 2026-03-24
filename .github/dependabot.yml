@@ -1,0 +1,19 @@
+version: 2
+
+updates:
+  - &defaults
+    package-ecosystem: "npm"
+    schedule:
+      interval: "weekly"
+    target-branch: "staging"
+    branch-prefix: "enhancement"
+    directory: "/"
+
+  - <<: *defaults
+    directory: "/backend"
+
+  - <<: *defaults
+    directory: "/frontend"
+
+  - <<: *defaults
+    directory: "/shared"
