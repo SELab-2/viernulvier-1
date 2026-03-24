@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9",
-    "@types/node": "^24.10.1",
+    "@types/node": "^25.5.0",
     "@vitejs/plugin-vue": "^6.0.2",
     "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.8.1",
