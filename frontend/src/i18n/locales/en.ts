@@ -2,21 +2,67 @@ export default {
   nav: {
     home: "Home",
     archive: "Archive",
+    productions: "Productions",
+    search: "Search",
+    admin: "Admin",
   },
   hero: {
-    title: "Welcome to the VierNulVier Archive",
+    title: "The memory of De Vooruit",
     subtitle:
-      "On this page you can browse the VierNulVier archive.<br />This archive contains an overview of all past performances, concerts, films and other<br />cultural events organised by VierNulVier.",
-    cta: "Browse Archive",
-  },
-  info: {
-    title: "About the archive",
-    text: "In the VierNulVier archive you can discover thousands of productions and events from the history of De Vooruit. Browse through theatre, dance, film and music, or use the search function to quickly find a production, artist or series.",
+      "Over 12,000 performances, concerts, films and cultural events — documented, searchable and open to everyone.",
+    cta: "Browse the archive",
   },
   stats: {
-    productions: "productions",
-    series: "series",
-    years: "years",
+    totalRecords: "Archive Records",
+    yearsCovered: "Years of Archive",
+    originalSeries: "Original Series",
+    digitizedWorks: "Digitized Works",
+  },
+  bento: {
+    title: "Collection Highlights",
+    featured: {
+      label: "Featured",
+      title: "Theatre, dance & more",
+      description:
+        "Discover hundreds of productions from the rich programming of De Vooruit — from avant-garde dance to political theatre.",
+      cta: "Explore",
+    },
+    music: {
+      label: "Music",
+      title: "Concerts & festivals",
+      description:
+        "From jazz to punk: the complete music history of VierNulVier.",
+    },
+    film: {
+      label: "Film",
+      title: "Cinematheque & screenings",
+      description: "Arthouse, documentaries and special film series.",
+    },
+    series: {
+      label: "Series",
+      title: "Recurring programmes",
+      description:
+        "315 original series that shaped the identity of De Vooruit.",
+    },
+    digitized: {
+      label: "Digitized",
+      title: "Images & documents",
+      description:
+        "Posters, photographs and programme booklets from the archive vault.",
+    },
+  },
+  newsletter: {
+    title: "Stay informed",
+    subtitle:
+      "Receive updates about new additions to the archive and upcoming events.",
+    placeholder: "your@email.com",
+    cta: "Subscribe",
+  },
+  footer: {
+    copyright: "© {year} VierNulVier / De Vooruit. All rights reserved.",
+    privacy: "Privacy Policy",
+    terms: "Terms of Use",
+    contact: "Contact",
   },
   date: {
     doorsOpen: "Doors open at",
