@@ -68,6 +68,7 @@
     <main class="main-content">
       <section class="hero">
         <h1 class="hero-title">{{ t("hero.title") }}</h1>
+        <!-- eslint-disable-next-line vue/no-v-html — content is from hardcoded locale files, no XSS risk -->
         <p class="hero-subtitle" v-html="t('hero.subtitle')"></p>
         <button class="cta-btn">{{ t("hero.cta") }} →</button>
       </section>

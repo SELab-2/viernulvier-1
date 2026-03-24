@@ -18,4 +18,7 @@ export default {
     series: "series",
     years: "years",
   },
+  date: {
+    doorsOpen: "Doors open at",
+  },
 };
