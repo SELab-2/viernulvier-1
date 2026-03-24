@@ -1,1 +1,1 @@
-docker compose exec -t backend pnpm run migrate
+docker compose exec -t backend pnpm run create-admin
