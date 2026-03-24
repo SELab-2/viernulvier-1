@@ -3,28 +3,24 @@ version: 2
 updates:
   - package-ecosystem: "npm"
     target-branch: "staging"
-    branch-prefix: "enhancement"
     schedule:
       interval: "weekly"
     directory: "/"
 
   - package-ecosystem: "npm"
     target-branch: "staging"
-    branch-prefix: "enhancement"
     schedule:
       interval: "weekly"
     directory: "/backend"
 
   - package-ecosystem: "npm"
     target-branch: "staging"
-    branch-prefix: "enhancement"
     schedule:
       interval: "weekly"
     directory: "/frontend"
 
   - package-ecosystem: "npm"
     target-branch: "staging"
-    branch-prefix: "enhancement"
     schedule:
       interval: "weekly"
     directory: "/shared"
