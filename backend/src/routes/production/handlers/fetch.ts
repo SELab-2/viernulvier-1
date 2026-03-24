@@ -7,8 +7,6 @@ import z from "zod";
 const ProductionSelect = `
 SELECT
   p.id,
-  p.vendor_id,
-  p.box_office_id,
   (SELECT COALESCE(ARRAY_AGG(e.id), '{}') FROM event e WHERE e.production = p.id) AS events,
   p.supertitle,
   p.title,
@@ -88,8 +86,6 @@ export async function fetchProductionWithMeta(
   const result = await server.pg.query<ProductionWithMeta>(
     `SELECT
        p.id,
-       p.vendor_id,
-       p.box_office_id,
        p.supertitle,
        p.title,
        p.artist,

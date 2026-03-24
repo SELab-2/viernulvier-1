@@ -6,10 +6,10 @@ import { languageMap, primaryKey } from "./helpers.js";
 export const HallSchema = createSchema({
   id: primaryKey(),
   address: z.string(),
-  vendor_id: z.int().nonnegative(),
   name: languageMap,
 
   // unnecessary
+  // vendor_id: z.int().nonnegative(),
   // box_office_id: z.number().nullable(),
   // seat_selection: z.boolean().nullable(),
   // open_seating: z.boolean().nullable(),

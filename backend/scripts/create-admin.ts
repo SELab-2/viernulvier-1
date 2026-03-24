@@ -27,11 +27,25 @@ await waitForDB();
 await client.connect();
 
 const hash = await hashPassword(`password`);
-console.log(`password hash: ${hash}`);
 
-const res = await client.query(
-  "INSERT INTO admin (username, password) VALUES ($1 , $2);",
-  [`admin`, hash],
+await client.query(
+  `INSERT INTO admin (username, password, created_at, updated_at)
+   VALUES ($1, $2, NOW(), NOW())
+   ON CONFLICT (username) DO UPDATE
+   SET password = EXCLUDED.password,
+       updated_at = NOW();`,
+  ["admin", hash],
 );
-console.log(res);
+
+await client.query(
+  `UPDATE admin SET created_by = id, updated_by = id WHERE username = $1;`,
+  ["admin"],
+);
+
+const { rows } = await client.query(
+  `SELECT * FROM admin WHERE username = $1;`,
+  ["admin"],
+);
+console.table(rows);
+
 await client.end();

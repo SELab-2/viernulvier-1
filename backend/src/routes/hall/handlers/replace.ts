@@ -9,13 +9,12 @@ const ReplaceHallBodySchema = HallSchema.omit({ id: true });
 const replaceHallQuery = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `UPDATE hall SET name = $1, address = $2, vendor_id = $3, updated_by = $4, updated_at = $5
-     WHERE id = $6
-     RETURNING id, name, address, vendor_id`,
+    `UPDATE hall SET name = $1, address = $2, updated_by = $3, updated_at = $4
+     WHERE id = $5
+     RETURNING id, name, address`,
     z.tuple([
       languageMap,           // name
       z.string(),            // address
-      z.int().nonnegative(), // vendor_id
       z.int(),               // admin
       z.date(),              // current_time
       z.int(),               // id
@@ -28,7 +27,7 @@ const replaceHallQuery = (server: FastifyInstance) =>
  * Unlike `editHall`, all fields are required and will be overwritten.
  *
  * @param server - The Fastify instance, used for database access and logging.
- * @param request - The Fastify request, expected to contain `name`, `address` and `vendor_id` in its body.
+ * @param request - The Fastify request, expected to contain `name` and `address` in its body.
  * @returns The updated hall, or `null` if the update failed or parsing failed.
  */
 export async function replaceHall(server: FastifyInstance, request: FastifyRequest): Promise<Hall | null> {
@@ -39,7 +38,6 @@ export async function replaceHall(server: FastifyInstance, request: FastifyReque
   const rows = await replaceHallQuery(server)(
     body["name"],
     body["address"],
-    body["vendor_id"],
     admin,
     current_time,
     id,

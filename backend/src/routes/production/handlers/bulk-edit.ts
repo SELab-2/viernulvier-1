@@ -12,8 +12,6 @@ const BulkEditProductionsBodySchema = z.object({
 });
 
 const DirectBulkEditColumns = [
-  "vendor_id",
-  "box_office_id",
   "title",
   "artist",
   "tagline",
