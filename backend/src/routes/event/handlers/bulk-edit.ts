@@ -43,6 +43,7 @@ export async function editEvents(
     doors_at: body.doors_at ?? selectedEvent.doors_at,
     vendor_id: body.vendor_id ?? selectedEvent.vendor_id,
     info: body.info ?? selectedEvent.info,
+    old_id: body.old_id ?? selectedEvent.old_id,
   }));
 
   const { admin, current_time } = getMetadata(request);
@@ -56,6 +57,7 @@ export async function editEvents(
       updatedEvent.doors_at,
       updatedEvent.vendor_id,
       updatedEvent.info,
+      updatedEvent.old_id,
       current_time,
       admin,
       // eslint-disable-next-line security/detect-object-injection

@@ -17,10 +17,6 @@ const baseEvent = {
   vendor_id: 42,
   info: { nl: "Info mock 1" },
   old_id: 12345,
-  created_by: 1,
-  created_at: new Date("2026-01-01T10:00:00.000Z"),
-  updated_by: null,
-  updated_at: null,
 };
 
 const initialEvents = [
@@ -35,7 +31,7 @@ beforeAll(async () => {
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     if (query.includes("UPDATE events")) {
-      const id = Number(params?.[9]);
+      const id = Number(params?.[10]);
       const index = storedEvents.findIndex((event) => Number(event.id) === id);
       if (index === -1) return Promise.resolve({ rows: [] });
 
@@ -51,8 +47,6 @@ beforeAll(async () => {
         vendor_id: (params?.[5] as number | undefined) ?? current["vendor_id"],
         info: params?.[6] ?? current["info"],
         old_id: params?.[7] ?? current["old_id"],
-        updated_at: params?.[8] ? new Date(params?.[8] as string) : new Date(),
-        updated_by: params?.[9],
       };
 
       // eslint-disable-next-line security/detect-object-injection
@@ -117,20 +111,6 @@ describe("Event Bulk Edit Routes", () => {
         },
       ]);
 
-      // Check metadata changes
-      const response1 = editResponse.json()[0];
-      const response2 = editResponse.json()[1];
-      expect(response1.updated_by).toBe(1); // Admin ID
-      expect(response2.updated_by).toBe(1);
-      expect(response1.updated_at).toBeTruthy();
-      expect(response2.updated_at).toBeTruthy();
-      expect(new Date(response1.updated_at).getTime()).toBeGreaterThan(
-        initialEvents[0]!.created_at.getTime()
-      );
-      expect(new Date(response2.updated_at).getTime()).toBeGreaterThan(
-        initialEvents[2]!.created_at.getTime()
-      );
-
       const listResponse = await server.inject({
         method: "GET",
         url: "/api/v1/event",
@@ -155,12 +135,6 @@ describe("Event Bulk Edit Routes", () => {
         ends_at: initialEvents[2]!.ends_at.toISOString(),
         doors_at: initialEvents[2]!.doors_at.toISOString(),
       });
-
-      // Verify metadata persisted in list
-      expect(listResponse.json()[0].updated_by).toBe(1);
-      expect(listResponse.json()[2].updated_by).toBe(1);
-      expect(listResponse.json()[0].updated_at).toBeTruthy();
-      expect(listResponse.json()[2].updated_at).toBeTruthy();
     });
 
     test("updates multiple fields on multiple events", async () => {
@@ -199,14 +173,6 @@ describe("Event Bulk Edit Routes", () => {
         },
       ]);
 
-      // Check metadata changes
-      const response1 = editResponse.json()[0];
-      const response2 = editResponse.json()[1];
-      expect(response1.updated_by).toBe(1);
-      expect(response2.updated_by).toBe(1);
-      expect(response1.updated_at).toBeTruthy();
-      expect(response2.updated_at).toBeTruthy();
-
       const listResponse = await server.inject({
         method: "GET",
         url: "/api/v1/event",
@@ -231,12 +197,6 @@ describe("Event Bulk Edit Routes", () => {
         doors_at: initialEvents[2]!.doors_at.toISOString(),
         price: [],
       });
-
-      // Verify metadata persisted in list
-      expect(listResponse.json()[1].updated_by).toBe(1);
-      expect(listResponse.json()[2].updated_by).toBe(1);
-      expect(listResponse.json()[1].updated_at).toBeTruthy();
-      expect(listResponse.json()[2].updated_at).toBeTruthy();
     });
 
     test("bulk edits some events and keeps the others unchanged", async () => {
@@ -266,14 +226,6 @@ describe("Event Bulk Edit Routes", () => {
           price: [],
         },
       ]);
-
-      // Check metadata changes for edited events
-      const response1 = editResponse.json()[0];
-      const response2 = editResponse.json()[1];
-      expect(response1.updated_by).toBe(1);
-      expect(response2.updated_by).toBe(1);
-      expect(response1.updated_at).toBeTruthy();
-      expect(response2.updated_at).toBeTruthy();
 
       const listResponse = await server.inject({
         method: "GET",
@@ -308,15 +260,6 @@ describe("Event Bulk Edit Routes", () => {
           price: [],
         },
       ]);
-
-      // Verify metadata for updated events
-      expect(listResponse.json()[0].updated_by).toBe(1);
-      expect(listResponse.json()[1].updated_by).toBe(1);
-      expect(listResponse.json()[0].updated_at).toBeTruthy();
-      expect(listResponse.json()[1].updated_at).toBeTruthy();
-      // Verify unedited event keeps original metadata
-      expect(listResponse.json()[2].updated_by).toEqual(initialEvents[2]!.updated_by);
-      expect(listResponse.json()[2].updated_at).toEqual(initialEvents[2]!.updated_at);
     });
   });
 

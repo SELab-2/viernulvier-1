@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import z from "zod";
 
 import { getMetadata, parseSchema, ParseContext, buildQuery } from "@/routes/helpers.js";
-import { EventSchema } from "@viernulvier/shared/index.js";
+import { EventSchema, serial } from "@viernulvier/shared/index.js";
 import type { Event } from "@viernulvier/shared/index.js";
 import { normalizeEventDates, EventCreateSchema, selectPriceSubquery } from "./helper.js";
 
@@ -26,9 +26,9 @@ export async function createEvent(
 
   const result = await buildQuery(
     server,
-    `INSERT INTO events (starts_at, ends_at, production, hall, doors_at, vendor_id, info, created_at, updated_at, created_by, updated_by)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8, $9, $9)
-      RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}`,
+    `INSERT INTO events (starts_at, ends_at, production, hall, doors_at, vendor_id, info, old_id, created_at, updated_at, created_by, updated_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9, $10, $10)
+      RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}, old_id`,
     z.tuple([
       EventCreateSchema.shape.starts_at,
       EventCreateSchema.shape.ends_at,
@@ -37,9 +37,9 @@ export async function createEvent(
       EventCreateSchema.shape.doors_at,
       EventCreateSchema.shape.vendor_id,
       EventCreateSchema.shape.info,
+      serial().nullable(),
       z.date(),
-      z.number().nonnegative(),
-
+      serial(),
     ]),
     EventSchema,
   )(
@@ -50,6 +50,7 @@ export async function createEvent(
     body.doors_at,
     body.vendor_id,
     body.info,
+    body.old_id,
     current_time,
     admin,
   );

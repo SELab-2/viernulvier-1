@@ -1,6 +1,6 @@
 import z from "zod";
 
-import { EventSchema, EventSchemaWithoutPrice } from "@viernulvier/shared/index.js";
+import { EventSchema, EventSchemaWithoutPrice, serial } from "@viernulvier/shared/index.js";
 import { buildQuery } from "@/routes/helpers.js";
 import type { FastifyInstance } from "fastify";
 
@@ -94,9 +94,9 @@ export function updateEvent(server: FastifyInstance) {
   return buildQuery(
     server,
     `UPDATE events
-    SET starts_at = $1, ends_at = $2, production = $3, hall = $4, doors_at = $5, vendor_id = $6, info = $7,
-        updated_at = $8, updated_by = $9
-    WHERE id = $10
+    SET starts_at = $1, ends_at = $2, production = $3, hall = $4, doors_at = $5, vendor_id = $6, info = $7, old_id = $8,
+        updated_at = $9, updated_by = $10
+    WHERE id = $11
     RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}`,
     z.tuple([
       EventCreateSchema.shape.starts_at,
@@ -106,9 +106,11 @@ export function updateEvent(server: FastifyInstance) {
       EventCreateSchema.shape.doors_at,
       EventCreateSchema.shape.vendor_id,
       EventCreateSchema.shape.info,
+      serial().nullable(),
       z.date(),
-      z.number().nonnegative(),
-      z.number().nonnegative(),
+      serial(),
+      serial(),
+
     ]),
     EventSchema,
   )};

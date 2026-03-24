@@ -35,7 +35,7 @@ beforeAll(async () => {
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     if (query.includes("UPDATE events")) {
-      const id = Number(params?.[9]);
+      const id = Number(params?.[10]);
       const index = storedEvents.findIndex((event) => Number(event.id) === id);
       if (index === -1) return Promise.resolve({ rows: [] });
 

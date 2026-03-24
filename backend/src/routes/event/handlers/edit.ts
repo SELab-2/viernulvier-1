@@ -36,6 +36,7 @@ export async function editEvent(
     doors_at: body.doors_at ?? selectedEvent.doors_at,
     vendor_id: body.vendor_id ?? selectedEvent.vendor_id,
     info: body.info ?? selectedEvent.info,
+    old_id: body.old_id ?? selectedEvent.old_id,
   };
 
   const { id } = parseParams(request, z.object({ id: stringToInt }));
@@ -49,6 +50,7 @@ export async function editEvent(
     updatedEvent.doors_at,
     updatedEvent.vendor_id,
     updatedEvent.info,
+    updatedEvent.old_id,
     current_time,
     admin,
     id,
