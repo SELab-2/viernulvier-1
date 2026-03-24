@@ -18,4 +18,7 @@ export default {
     series: "séries",
     years: "années",
   },
+  date: {
+    doorsOpen: "Portes ouvertes à",
+  },
 };

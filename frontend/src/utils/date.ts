@@ -97,27 +97,22 @@ export function formatTime(date: Date | string | number): string {
 }
 
 /**
- * Formats the doors-open time in a natural sentence.
+ * Formats the doors-open time as a plain time string.
  *
- * @param date   The doors-open date/time.
- * @param locale BCP 47 locale string (defaults to `"nl-BE"`).
- * @returns      E.g. `"Deuren open om 19:30"`.
+ * The translated label (e.g. "Deuren open om") is intentionally not included here —
+ * use `t("date.doorsOpen")` from vue-i18n in the component and concatenate with this value:
+ * ```vue
+ * {{ t("date.doorsOpen") }} {{ formatDoors(event.doors_at) }}
+ * ```
+ *
+ * @param date The doors-open date/time.
+ * @returns    Zero-padded 24-hour time, e.g. `"19:30"`.
  *
  * @example
- * formatDoors(new Date("2025-04-12T19:30:00")); // → "Deuren open om 19:30"
+ * formatDoors(new Date("2025-04-12T19:30:00")); // → "19:30"
  */
-export function formatDoors(
-  date: Date | string | number,
-  locale: string = DEFAULT_LOCALE,
-): string {
-  const labels: Record<string, string> = {
-    "nl-BE": "Deuren open om",
-    nl: "Deuren open om",
-    en: "Doors open at",
-    fr: "Portes ouvertes à",
-  };
-  const label = labels[locale] ?? labels["nl-BE"];
-  return `${label} ${formatTime(date)}`;
+export function formatDoors(date: Date | string | number): string {
+  return formatTime(date);
 }
 
 /**
@@ -177,24 +172,31 @@ export function formatDateRange(
  * Formats a full event block: date, time range, and doors.
  * Useful when you want to show all event timing in one string.
  *
- * @param startsAt The performance start time.
- * @param endsAt   The performance end time.
- * @param doorsAt  The doors-open time.
- * @param locale   BCP 47 locale string (defaults to `"nl-BE"`).
- * @returns        E.g. `"zaterdag 12 april 2025 · 20:00 – 22:00 · Deuren open om 19:30"`.
+ * The translated doors label must be passed in from the component via `t("date.doorsOpen")`:
+ * ```vue
+ * formatEventBlock(event.starts_at, event.ends_at, event.doors_at, t("date.doorsOpen"))
+ * ```
+ *
+ * @param startsAt   The performance start time.
+ * @param endsAt     The performance end time.
+ * @param doorsAt    The doors-open time.
+ * @param doorsLabel The translated label for the doors time, e.g. `"Deuren open om"`.
+ * @param locale     BCP 47 locale string (defaults to `"nl-BE"`).
+ * @returns          E.g. `"zaterdag 12 april 2025 · 20:00 – 22:00 · Deuren open om 19:30"`.
  *
  * @example
- * formatEventBlock(event.starts_at, event.ends_at, event.doors_at);
+ * formatEventBlock(event.starts_at, event.ends_at, event.doors_at, t("date.doorsOpen"));
  */
 export function formatEventBlock(
   startsAt: Date | string | number,
   endsAt: Date | string | number,
   doorsAt: Date | string | number,
+  doorsLabel: string,
   locale: string = DEFAULT_LOCALE,
 ): string {
   const date = formatDate(startsAt, locale);
   const range = formatDateRange(startsAt, endsAt, locale);
-  const doors = formatDoors(doorsAt, locale);
+  const doors = `${doorsLabel} ${formatDoors(doorsAt)}`;
   return `${date} · ${range} · ${doors}`;
 }
 

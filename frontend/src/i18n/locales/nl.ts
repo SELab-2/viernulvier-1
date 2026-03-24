@@ -18,4 +18,7 @@ export default {
     series: "reeksen",
     years: "jaren",
   },
+  date: {
+    doorsOpen: "Deuren open om",
+  },
 };

@@ -108,29 +108,16 @@ describe("formatTime", () => {
 // ---------------------------------------------------------------------------
 
 describe("formatDoors", () => {
-  it("includes the time", () => {
-    const result = formatDoors(SAT_1930);
-    expect(result).toContain("19:30");
+  it("returns the formatted time", () => {
+    expect(formatDoors(SAT_1930)).toBe("19:30");
   });
 
-  it("uses Dutch label by default (nl-BE)", () => {
-    const result = formatDoors(SAT_1930);
-    expect(result).toContain("Deuren open om");
+  it("accepts a Date object", () => {
+    expect(formatDoors(new Date(SAT_1930))).toBe("19:30");
   });
 
-  it("uses English label when locale is 'en'", () => {
-    const result = formatDoors(SAT_1930, "en");
-    expect(result).toContain("Doors open at");
-  });
-
-  it("uses French label when locale is 'fr'", () => {
-    const result = formatDoors(SAT_1930, "fr");
-    expect(result).toContain("Portes ouvertes à");
-  });
-
-  it("falls back to Dutch label for unknown locale", () => {
-    const result = formatDoors(SAT_1930, "de");
-    expect(result).toContain("Deuren open om");
+  it("accepts a numeric timestamp", () => {
+    expect(formatDoors(new Date(SAT_1930).getTime())).toBe("19:30");
   });
 });
 
@@ -168,25 +155,32 @@ describe("formatDateRange", () => {
 // ---------------------------------------------------------------------------
 
 describe("formatEventBlock", () => {
+  const DOORS_LABEL = "Deuren open om";
+
   it("returns a string containing all three parts joined by ·", () => {
-    const result = formatEventBlock(SAT_20, SAT_22, SAT_1930);
+    const result = formatEventBlock(SAT_20, SAT_22, SAT_1930, DOORS_LABEL);
     const parts = result.split(" · ");
     expect(parts).toHaveLength(3);
   });
 
   it("contains the time range in the second part", () => {
-    const result = formatEventBlock(SAT_20, SAT_22, SAT_1930);
+    const result = formatEventBlock(SAT_20, SAT_22, SAT_1930, DOORS_LABEL);
     expect(result).toContain("20:00 – 22:00");
   });
 
-  it("contains the doors time in the third part", () => {
-    const result = formatEventBlock(SAT_20, SAT_22, SAT_1930);
-    expect(result).toContain("19:30");
+  it("contains the doors label and time in the third part", () => {
+    const result = formatEventBlock(SAT_20, SAT_22, SAT_1930, DOORS_LABEL);
+    expect(result).toContain("Deuren open om 19:30");
   });
 
   it("contains the year in the first part", () => {
-    const result = formatEventBlock(SAT_20, SAT_22, SAT_1930);
+    const result = formatEventBlock(SAT_20, SAT_22, SAT_1930, DOORS_LABEL);
     expect(result).toContain("2025");
+  });
+
+  it("uses the provided doors label", () => {
+    const result = formatEventBlock(SAT_20, SAT_22, SAT_1930, "Doors open at");
+    expect(result).toContain("Doors open at 19:30");
   });
 });
 
