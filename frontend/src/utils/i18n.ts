@@ -99,7 +99,7 @@ export function localizeOrEmpty(map: LanguageMap, lang: Language): string {
  * // → { nl: "Nieuwe productie", en: "Nieuwe productie", fr: "Nieuwe productie" }
  */
 export function fillLanguageMap(value: string): LanguageMap {
-  return { nl: value, en: value, fr: value };
+  return Object.fromEntries(ALL_LANGUAGES.map(lang => [lang, value]));
 }
 
 /**
