@@ -41,7 +41,7 @@ export async function editBlog(server: FastifyInstance, request: FastifyRequest)
   const result = await server.pg.query<Blog>(
     `UPDATE blog SET ${fields.join(", ")} WHERE id = $${i}
      RETURNING id, name, description`,
-    values
+    values,
   );
 
   return parseSchema(server, z.array(BlogSchema), result.rows, ParseContext.Database)[0] ?? null;
