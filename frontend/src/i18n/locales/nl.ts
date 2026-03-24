@@ -54,7 +54,7 @@ export default {
     title: "Blijf op de hoogte",
     subtitle:
       "Ontvang updates over nieuwe toevoegingen aan het archief en aankomende evenementen.",
-    placeholder: "jouw@email.be",
+    placeholder: "jouw{'@'}email.be",
     cta: "Inschrijven",
   },
   footer: {
