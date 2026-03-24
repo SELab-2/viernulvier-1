@@ -114,16 +114,7 @@ export function getFieldError(
   errors: ValidationIssue[],
   field: string,
 ): string | null {
-  const segments = field.split(".");
-
-  const match = errors.find((issue) => {
-    if (issue.path.length !== segments.length) return false;
-    return issue.path.every(
-      (segment, i) => String(segment) === segments[i],
-    );
-  });
-
-  return match?.message ?? null;
+return getFieldErrors(errors, field)[0] ?? null;
 }
 
 /**
