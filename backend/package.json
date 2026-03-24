@@ -10,7 +10,7 @@
     "bcrypt": "^6.0.0",
     "csv-parse": "^6.2.0",
     "dotenv": "^17.3.1",
-    "fastify": "^5.7.4",
+    "fastify": "^5.8.4",
     "fastify-plugin": "^5.1.0",
     "pg": "^8.18.0",
     "postgrator": "^8.0.0",
