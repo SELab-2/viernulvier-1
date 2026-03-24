@@ -30,9 +30,7 @@ interface ViernulvierApiResponse {
   member: EventJSON[];
 }
 
-/**
- * Fetches events from the external viernulvier.gent API
- */
+// Fetch singular page and return raw response
 async function fetchPageRequest(
   page: number = 1,
   beforeDate: Date = new Date(),
@@ -57,6 +55,7 @@ async function fetchPageRequest(
   return await response
 }
 
+// Fetch singular event by ID, used for fetching old ID references
 async function fetchEventRequest(id: number, authToken: string) {
   const url = `https://www.viernulvier.gent/api/v1/events/${id}`;
 
@@ -74,6 +73,7 @@ async function fetchEventRequest(id: number, authToken: string) {
   return await response;
 }
 
+// Fetch singular page of events, used for pagination, refine response to return parsed JSON
 async function fetchEventsPage(
   page: number = 1,
   beforeDate: Date = new Date(),
@@ -86,6 +86,7 @@ async function fetchEventsPage(
   return data
 }
 
+// Fetch first page to obtain the view and total items, view will contain the last page number, which we can use to fetch all pages
 async function fetchEventsListMeta(
   beforeDate: Date, 
   authToken: string
@@ -97,6 +98,8 @@ async function fetchEventsListMeta(
   return data;
 }
 
+// Cache for old hall IDs to avoid redundant fetches, if not cached, fetch the old ID.
+// To Do: fetch function that maps old ID to current ID, if not present in db, fetch hall from old API and create it in current API, then return the new ID.
 const hallMap: Record<number, number> = {};
 async function getOldHall(id: number) {
   if (hallMap[id]) {
@@ -106,6 +109,8 @@ async function getOldHall(id: number) {
   return Number.MAX_SAFE_INTEGER; // return a dummy value for now, to avoid foreign key constraint errors
 }
 
+// Cache for old production IDs to avoid redundant fetches, if not cached, fetch the old ID.
+// To Do: fetch function that maps old ID to current ID, if not present in db, fetch production from old API and create it in current API, then return the new ID.
 const productionMap: Record<number, number> = {};
 async function getOldProduction(oldId: number) {
   if (productionMap[oldId]) {
@@ -119,6 +124,7 @@ async function getOldProduction(oldId: number) {
   }
 }
 
+// Process a single event: convert old id references to current db ones, then create the event in the current API
 async function processEvent(event: EventJSON) {
   const id = parseInt(event["@id"].split("/").pop() as string, 10);
   const hallId = parseInt(event.hall.split("/").pop() as string, 10);
@@ -150,7 +156,7 @@ async function processEvent(event: EventJSON) {
   return response.json();
 }
 
-
+// fetch the amount of pages, then fetch each page and process the events
 export async function scrapeAllEvents(
   beforeDate: Date,     
   authToken: string
