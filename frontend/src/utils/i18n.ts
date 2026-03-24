@@ -110,7 +110,7 @@ export function fillLanguageMap(value: string): LanguageMap {
  * emptyLanguageMap(); // → { nl: "", en: "", fr: "" }
  */
 export function emptyLanguageMap(): LanguageMap {
-  return { nl: "", en: "", fr: "" };
+  return Object.fromEntries(ALL_LANGUAGES.map(lang => [lang, ""]));
 }
 
 /**
