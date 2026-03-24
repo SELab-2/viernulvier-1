@@ -129,9 +129,11 @@ describe("hasLanguage", () => {
 
 describe("availableLanguages", () => {
   it("returns all three when all are set", () => {
-    expect(
-      availableLanguages({ nl: "nl", en: "en", fr: "fr" }),
-    ).toEqual(["nl", "en", "fr"]);
+    expect(availableLanguages({ nl: "nl", en: "en", fr: "fr" })).toEqual([
+      "nl",
+      "en",
+      "fr",
+    ]);
   });
 
   it("returns only the languages that have a non-empty value", () => {

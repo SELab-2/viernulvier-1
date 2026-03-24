@@ -25,7 +25,12 @@
  * ```
  */
 
-import type { Tag, TagWithMeta, TagType, TagTypeWithMeta } from "@viernulvier/shared";
+import type {
+  Tag,
+  TagWithMeta,
+  TagType,
+  TagTypeWithMeta,
+} from "@viernulvier/shared";
 import { apiFetch } from "./api";
 import type { LanguageMap } from "../utils/i18n";
 

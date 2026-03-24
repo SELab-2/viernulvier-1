@@ -16,11 +16,11 @@ import {
 // ISO 8601 strings are used so the Date constructor is unambiguous.
 // ---------------------------------------------------------------------------
 
-const SAT_NOON  = "2025-04-12T12:00:00"; // Saturday 12 April 2025 12:00
-const SAT_20    = "2025-04-12T20:00:00"; // Saturday 12 April 2025 20:00
-const SAT_22    = "2025-04-12T22:00:00"; // Saturday 12 April 2025 22:00
-const SAT_1930  = "2025-04-12T19:30:00"; // Saturday 12 April 2025 19:30
-const SUN_0030  = "2025-04-13T00:30:00"; // Sunday  13 April 2025 00:30
+const SAT_NOON = "2025-04-12T12:00:00"; // Saturday 12 April 2025 12:00
+const SAT_20 = "2025-04-12T20:00:00"; // Saturday 12 April 2025 20:00
+const SAT_22 = "2025-04-12T22:00:00"; // Saturday 12 April 2025 22:00
+const SAT_1930 = "2025-04-12T19:30:00"; // Saturday 12 April 2025 19:30
+const SUN_0030 = "2025-04-13T00:30:00"; // Sunday  13 April 2025 00:30
 
 // ---------------------------------------------------------------------------
 // formatDate

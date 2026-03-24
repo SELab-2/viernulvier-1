@@ -187,7 +187,10 @@ describe("apiFetch", () => {
   // ── Error responses ─────────────────────────────────────────────────────────
 
   it("throws ApiError on 401 with message from response body", async () => {
-    vi.stubGlobal("fetch", makeFetchMock({ error: "Unauthorized" }, 401, "Unauthorized"));
+    vi.stubGlobal(
+      "fetch",
+      makeFetchMock({ error: "Unauthorized" }, 401, "Unauthorized"),
+    );
     await expect(apiFetch("/protected")).rejects.toBeInstanceOf(ApiError);
     await expect(apiFetch("/protected")).rejects.toMatchObject({
       status: 401,
@@ -196,7 +199,10 @@ describe("apiFetch", () => {
   });
 
   it("throws ApiError on 404", async () => {
-    vi.stubGlobal("fetch", makeFetchMock({ error: "Not found" }, 404, "Not Found"));
+    vi.stubGlobal(
+      "fetch",
+      makeFetchMock({ error: "Not found" }, 404, "Not Found"),
+    );
     await expect(apiFetch("/production/999")).rejects.toMatchObject({
       status: 404,
       message: "Not found",

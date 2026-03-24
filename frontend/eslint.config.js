@@ -63,8 +63,10 @@ export default tseslint.config(
       eqeqeq: ["error", "always"], // Prevent "==" vs "===" bugs
       "vue/no-v-html": "warn", // XSS safety best practice
 
-      // tsdoc config
-      "tsdoc/syntax": "warn",
+      // tsdoc/syntax is disabled: this is a frontend app, not a TypeScript library.
+      // Our JSDoc-style comments are intentional and don't need to conform to the
+      // stricter TSDoc spec (e.g. mandatory hyphens after @param, no @file tag, etc.)
+      "tsdoc/syntax": "off",
 
       // --- FORMATTING ---
       "prettier/prettier": [

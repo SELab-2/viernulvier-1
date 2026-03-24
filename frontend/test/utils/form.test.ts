@@ -19,7 +19,9 @@ function passingSchema<T>(data: T) {
 }
 
 /** Creates a schema stub that always fails with the given issues. */
-function failingSchema(issues: Array<{ path: (string | number)[]; message: string }>) {
+function failingSchema(
+  issues: Array<{ path: (string | number)[]; message: string }>,
+) {
   return {
     safeParse: (_: unknown) => ({
       success: false as const,
@@ -43,7 +45,9 @@ describe("validateForm", () => {
   });
 
   it("returns { success: false, errors } when validation fails", () => {
-    const schema = failingSchema([{ path: ["username"], message: "Too short" }]);
+    const schema = failingSchema([
+      { path: ["username"], message: "Too short" },
+    ]);
     const result = validateForm(schema, { username: "" });
     expect(result.success).toBe(false);
     if (!result.success) {

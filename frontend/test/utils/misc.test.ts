@@ -29,7 +29,9 @@ describe("buildQueryString", () => {
   });
 
   it("omits keys with undefined values", () => {
-    expect(buildQueryString({ q: "hamlet", tag: undefined })).not.toContain("tag");
+    expect(buildQueryString({ q: "hamlet", tag: undefined })).not.toContain(
+      "tag",
+    );
   });
 
   it("omits keys with empty string values", () => {

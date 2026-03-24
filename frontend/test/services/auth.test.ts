@@ -80,7 +80,9 @@ describe("login", () => {
 
   it("throws ApiError on 401", async () => {
     vi.stubGlobal("fetch", mockError(401, "Unauthorized"));
-    await expect(login({ username: "a", password: "wrong" })).rejects.toBeInstanceOf(ApiError);
+    await expect(
+      login({ username: "a", password: "wrong" }),
+    ).rejects.toBeInstanceOf(ApiError);
   });
 });
 
@@ -110,7 +112,9 @@ describe("withAuth", () => {
 
   it("calls onUnauthorized and re-throws on 401 ApiError", async () => {
     const onUnauthorized = vi.fn();
-    const fn = async () => { throw new ApiError(401, "Unauthorized"); };
+    const fn = async () => {
+      throw new ApiError(401, "Unauthorized");
+    };
 
     await expect(withAuth(fn, onUnauthorized)).rejects.toBeInstanceOf(ApiError);
     expect(onUnauthorized).toHaveBeenCalledOnce();
@@ -118,17 +122,25 @@ describe("withAuth", () => {
 
   it("re-throws non-401 ApiErrors without calling onUnauthorized", async () => {
     const onUnauthorized = vi.fn();
-    const fn = async () => { throw new ApiError(404, "Not found"); };
+    const fn = async () => {
+      throw new ApiError(404, "Not found");
+    };
 
-    await expect(withAuth(fn, onUnauthorized)).rejects.toMatchObject({ status: 404 });
+    await expect(withAuth(fn, onUnauthorized)).rejects.toMatchObject({
+      status: 404,
+    });
     expect(onUnauthorized).not.toHaveBeenCalled();
   });
 
   it("re-throws generic errors without calling onUnauthorized", async () => {
     const onUnauthorized = vi.fn();
-    const fn = async () => { throw new Error("Network failure"); };
+    const fn = async () => {
+      throw new Error("Network failure");
+    };
 
-    await expect(withAuth(fn, onUnauthorized)).rejects.toThrow("Network failure");
+    await expect(withAuth(fn, onUnauthorized)).rejects.toThrow(
+      "Network failure",
+    );
     expect(onUnauthorized).not.toHaveBeenCalled();
   });
 });
@@ -156,7 +168,12 @@ describe("getAdmin", () => {
 });
 
 describe("getAdminWithMeta", () => {
-  beforeEach(() => vi.stubGlobal("fetch", mockOk({ ...adminPayload, created_at: "2024-01-01" })));
+  beforeEach(() =>
+    vi.stubGlobal(
+      "fetch",
+      mockOk({ ...adminPayload, created_at: "2024-01-01" }),
+    ),
+  );
   afterEach(() => vi.unstubAllGlobals());
 
   it("GETs /api/v1/auth/:id/meta", async () => {
@@ -176,7 +193,11 @@ describe("createAdmin", () => {
   });
 
   it("sends the payload as the request body", async () => {
-    const input = { username: "newuser", password: "pass", profile_picture: null };
+    const input = {
+      username: "newuser",
+      password: "pass",
+      profile_picture: null,
+    };
     await createAdmin(input);
     expect(lastFetchOptions().body).toBe(JSON.stringify(input));
   });
@@ -187,7 +208,11 @@ describe("replaceAdmin", () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it("PUTs to /api/v1/auth/:id", async () => {
-    await replaceAdmin(1, { username: "admin", password: "newpass", profile_picture: null });
+    await replaceAdmin(1, {
+      username: "admin",
+      password: "newpass",
+      profile_picture: null,
+    });
     expect(lastFetchUrl()).toBe("/api/v1/auth/1");
     expect(lastFetchOptions().method).toBe("PUT");
   });

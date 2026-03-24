@@ -114,7 +114,7 @@ export function getFieldError(
   errors: ValidationIssue[],
   field: string,
 ): string | null {
-return getFieldErrors(errors, field)[0] ?? null;
+  return getFieldErrors(errors, field)[0] ?? null;
 }
 
 /**
@@ -157,9 +157,7 @@ export function getFieldErrors(
   return errors
     .filter((issue) => {
       if (issue.path.length !== segments.length) return false;
-      return issue.path.every(
-        (segment, i) => String(segment) === segments[i],
-      );
+      return issue.path.every((segment, i) => String(segment) === segments[i]);
     })
     .map((issue) => issue.message);
 }
