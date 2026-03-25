@@ -68,7 +68,7 @@ export default defineConfig([
   // --------------------------------------------------
 
   {
-    ignores: ["dist/**", "node_modules/**", "public/**"],
+    ignores: ["dist/**", "node_modules/**", "public/**", "coverage/**"],
   },
 
   // --------------------------------------------------
@@ -146,6 +146,11 @@ export default defineConfig([
       "vue/prefer-use-template-ref": "warn",
       "vue/block-order": ["warn", { order: ["template", "script", "style"] }],
       "vue/no-v-html": "warn",
+
+      "vue/max-attributes-per-line": "off",
+      "vue/multiline-html-element-content-newline": "off",
+      "vue/singleline-html-element-content-newline": "off",
+      "vue/html-self-closing": "off",
     },
   },
 
