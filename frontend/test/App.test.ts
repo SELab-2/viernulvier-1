@@ -99,6 +99,25 @@ describe("HomeView.vue", () => {
       await darkBtn!.trigger("click");
       expect(document.documentElement.classList.contains("dark")).toBe(false);
     });
+
+    it("persists dark mode preference to localStorage", async () => {
+      const darkBtn = wrapper
+        .findAll("button[aria-label]")
+        .find((b) => b.attributes("aria-label")?.toLowerCase().includes("dark"));
+      await darkBtn!.trigger("click");
+      expect(localStorage.getItem("viernulvier-dark")).toBe("true");
+      await darkBtn!.trigger("click");
+      expect(localStorage.getItem("viernulvier-dark")).toBe("false");
+    });
+
+    it("restores dark mode from localStorage on mount", async () => {
+      wrapper.unmount();
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("viernulvier-dark", "true");
+      const { wrapper: w2 } = await mountHome("nl");
+      expect(document.documentElement.classList.contains("dark")).toBe(true);
+      w2.unmount();
+    });
   });
 
   // ── Content sections ───────────────────────────────────────────────────────
