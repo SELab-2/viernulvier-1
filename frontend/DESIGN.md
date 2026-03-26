@@ -172,10 +172,7 @@ The landing page alternates between standard and inverted surfaces to create vis
   Navbar          bg-surface-inv       (dark)
   Hero            bg-surface-inv       (dark)
   Stats           bg-surface-1         (light)
-  Bento Grid      bg-surface-1         (light)
-    Featured card   bg-surface-inv     (dark)
-    Category cards  bg-surface-2       (light)
-  Newsletter      bg-surface-inv       (dark)
+  Featured card   bg-surface-inv       (dark)
   Footer          bg-surface-1         (light)
 ```
 

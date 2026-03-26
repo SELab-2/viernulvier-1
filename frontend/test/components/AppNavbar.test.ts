@@ -68,12 +68,6 @@ describe("AppNavbar.vue", () => {
       expect(links.length).toBeGreaterThanOrEqual(2);
     });
 
-    it("renders the Admin button", () => {
-      const links = wrapper.findAll("a");
-      const admin = links.find((l) => l.text() === "Admin");
-      expect(admin).toBeDefined();
-    });
-
     it("does not show the language dropdown initially", () => {
       expect(wrapper.find(".lang-dropdown").exists()).toBe(false);
     });

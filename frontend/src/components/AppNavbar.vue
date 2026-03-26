@@ -66,13 +66,6 @@
         }}</span>
       </button>
 
-      <!-- Admin -->
-      <RouterLink
-        :to="{ name: RouteNames.CMS, params: { lang: currentLang } }"
-        class="ml-2 rounded-md bg-ink-on-inv px-3 py-1.5 text-sm font-semibold text-surface-inv transition hover:bg-ink-on-inv-secondary"
-      >
-        {{ t("nav.admin") }}
-      </RouterLink>
     </div>
   </nav>
 </template>
