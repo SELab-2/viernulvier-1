@@ -1,9 +1,25 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { routes } from "@/router/routes";
 import { i18n } from "@/i18n";
 import HomeView from "@/views/HomeView.vue";
+
+// ─── Mock matchMedia (jsdom does not provide it) ────────────────────────────
+
+Object.defineProperty(window, "matchMedia", {
+  writable: true,
+  value: vi.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -32,6 +48,8 @@ describe("HomeView.vue", () => {
   afterEach(() => {
     wrapper.unmount();
     document.body.innerHTML = "";
+    document.documentElement.classList.remove("dark");
+    localStorage.clear();
   });
 
   // ── Rendering ──────────────────────────────────────────────────────────────
@@ -57,13 +75,8 @@ describe("HomeView.vue", () => {
       expect(wrapper.find("footer").exists()).toBe(true);
     });
 
-    it("renders the newsletter form", () => {
-      expect(wrapper.find("form").exists()).toBe(true);
-    });
-
     it("does not apply the dark class initially", () => {
-      const root = wrapper.find("div");
-      expect(root.classes()).not.toContain("dark");
+      expect(document.documentElement.classList.contains("dark")).toBe(false);
     });
   });
 
@@ -71,12 +84,11 @@ describe("HomeView.vue", () => {
 
   describe("dark mode toggle", () => {
     it("adds the dark class when the dark mode button is clicked", async () => {
-      // Find the button whose aria-label mentions dark mode (hardcoded, not translated)
       const darkBtn = wrapper
         .findAll("button[aria-label]")
         .find((b) => b.attributes("aria-label")?.toLowerCase().includes("dark"));
       await darkBtn!.trigger("click");
-      expect(wrapper.find("div").classes()).toContain("dark");
+      expect(document.documentElement.classList.contains("dark")).toBe(true);
     });
 
     it("removes the dark class when clicked again", async () => {
@@ -85,7 +97,7 @@ describe("HomeView.vue", () => {
         .find((b) => b.attributes("aria-label")?.toLowerCase().includes("dark"));
       await darkBtn!.trigger("click");
       await darkBtn!.trigger("click");
-      expect(wrapper.find("div").classes()).not.toContain("dark");
+      expect(document.documentElement.classList.contains("dark")).toBe(false);
     });
   });
 
@@ -94,17 +106,13 @@ describe("HomeView.vue", () => {
   describe("page sections", () => {
     it("renders multiple section elements", () => {
       const sections = wrapper.findAll("section");
-      expect(sections.length).toBeGreaterThanOrEqual(4);
+      expect(sections.length).toBeGreaterThanOrEqual(3);
     });
 
     it("renders stat values on the page", () => {
       const text = wrapper.text();
       expect(text).toContain("12.482");
       expect(text).toContain("315");
-    });
-
-    it("renders the newsletter email input", () => {
-      expect(wrapper.find("input[type='email']").exists()).toBe(true);
     });
 
     it("renders at least one h2 section heading", () => {

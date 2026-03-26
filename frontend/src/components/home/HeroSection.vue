@@ -34,7 +34,7 @@
         class="relative overflow-hidden rounded-2xl bg-surface-inv-raised aspect-[4/3]"
       >
         <img
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/De_Vooruit_Gent.jpg/1280px-De_Vooruit_Gent.jpg"
+          src="../../assets/images/hero.webp"
           alt="De Vooruit"
           class="hero-photo h-full w-full object-cover"
         />
