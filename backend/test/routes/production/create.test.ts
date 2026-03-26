@@ -47,7 +47,10 @@ describe("Create on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [createdProduction], rowCount: 1 });
+        return Promise.resolve({
+          rows: [{ ...createdProduction, tags: [], events: [] }],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in create tests: ${query}`);

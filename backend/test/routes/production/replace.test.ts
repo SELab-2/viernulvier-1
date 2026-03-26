@@ -47,7 +47,10 @@ describe("Replace on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [replacedProduction], rowCount: 1 });
+        return Promise.resolve({
+          rows: [{ ...replacedProduction, tags: [], events: [] }],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in replace tests: ${query}`);

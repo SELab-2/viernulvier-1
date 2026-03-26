@@ -84,7 +84,10 @@ describe("Edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [updatedProductionA], rowCount: 1 });
+        return Promise.resolve({
+          rows: [{ ...updatedProductionA, tags: [], events: [] }],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in edit tests: ${query}`);
@@ -120,7 +123,10 @@ describe("Edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [updatedProductionB], rowCount: 1 });
+        return Promise.resolve({
+          rows: [{ ...updatedProductionB, tags: [], events: [] }],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in edit tests: ${query}`);
@@ -181,7 +187,10 @@ describe("Edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [updatedProductionC], rowCount: 1 });
+        return Promise.resolve({
+          rows: [{ ...updatedProductionC, tags: [], events: [] }],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in edit tests: ${query}`);
@@ -223,7 +232,10 @@ describe("Edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [originalProduction], rowCount: 1 });
+        return Promise.resolve({
+          rows: [{ ...originalProduction, tags: [], events: [] }],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in edit tests: ${query}`);
@@ -268,7 +280,10 @@ describe("Edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [originalProduction], rowCount: 1 });
+        return Promise.resolve({
+          rows: [{ ...originalProduction, tags: [], events: [] }],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in edit tests: ${query}`);

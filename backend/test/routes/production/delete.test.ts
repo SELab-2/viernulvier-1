@@ -43,7 +43,10 @@ describe("Delete on production route", () => {
       const upper = query.trim().toUpperCase();
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [mockProduction], rowCount: 1 });
+        return Promise.resolve({
+          rows: [{ ...mockProduction, tags: [], events: [] }],
+          rowCount: 1,
+        });
       }
 
       if (upper.startsWith("DELETE")) {
