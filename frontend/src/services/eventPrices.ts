@@ -59,7 +59,7 @@ export type UpdateEventPriceInput = Partial<CreateEventPriceInput>;
  * const prices = await getEventPrices();
  */
 export async function getEventPrices(): Promise<EventPrice[]> {
-  return apiFetch<EventPrice[]>("/event_price");
+  return await apiFetch<EventPrice[]>("/event_price");
 }
 
 /**
@@ -69,7 +69,7 @@ export async function getEventPrices(): Promise<EventPrice[]> {
  * @throws {ApiError} 404 — event price not found.
  */
 export async function getEventPrice(id: number): Promise<EventPrice> {
-  return apiFetch<EventPrice>(`/event_price/${id}`);
+  return await apiFetch<EventPrice>(`/event_price/${id}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -86,7 +86,7 @@ export async function getEventPrice(id: number): Promise<EventPrice> {
 export async function getEventPriceWithMeta(
   id: number,
 ): Promise<EventPriceWithMeta> {
-  return apiFetch<EventPriceWithMeta>(`/event_price/${id}/meta`);
+  return await apiFetch<EventPriceWithMeta>(`/event_price/${id}/meta`);
 }
 
 /**
@@ -103,7 +103,7 @@ export async function getEventPriceWithMeta(
 export async function createEventPrice(
   data: CreateEventPriceInput,
 ): Promise<EventPrice> {
-  return apiFetch<EventPrice>("/event_price", { method: "POST", body: data });
+  return await apiFetch<EventPrice>("/event_price", { method: "POST", body: data });
 }
 
 /**
@@ -118,7 +118,7 @@ export async function replaceEventPrice(
   id: number,
   data: ReplaceEventPriceInput,
 ): Promise<EventPrice> {
-  return apiFetch<EventPrice>(`/event_price/${id}`, {
+  return await apiFetch<EventPrice>(`/event_price/${id}`, {
     method: "PUT",
     body: data,
   });
@@ -140,7 +140,7 @@ export async function updateEventPrice(
   id: number,
   data: UpdateEventPriceInput,
 ): Promise<EventPrice> {
-  return apiFetch<EventPrice>(`/event_price/${id}`, {
+  return await apiFetch<EventPrice>(`/event_price/${id}`, {
     method: "PATCH",
     body: data,
   });

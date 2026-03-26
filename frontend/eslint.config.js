@@ -1,81 +1,227 @@
-import js from "@eslint/js";
+import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 import pluginVue from "eslint-plugin-vue";
-import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+import importX from "eslint-plugin-import-x";
+import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
 import globals from "globals";
-import tsdoc from "eslint-plugin-tsdoc";
 
-export default tseslint.config(
+const sharedRules = {
+  // ----------------------------
+  // Async Safety
+  // ----------------------------
+
+  "@typescript-eslint/no-floating-promises": "error",
+  "@typescript-eslint/await-thenable": "error",
+  "@typescript-eslint/no-misused-promises": "error",
+
+  "no-return-await": "off",
+  "@typescript-eslint/return-await": ["error", "always"],
+
+  // ----------------------------
+  // Code Quality
+  // ----------------------------
+
+  "@typescript-eslint/no-explicit-any": "warn",
+
+  "no-unused-vars": "off",
+  "@typescript-eslint/no-unused-vars": [
+    "warn",
+    {
+      args: "after-used",
+      argsIgnorePattern: "^_",
+      varsIgnorePattern: "^_",
+      caughtErrorsIgnorePattern: "^_",
+    },
+  ],
+
+  "no-redeclare": "off",
+  "@typescript-eslint/no-redeclare": "error",
+
+  "no-debugger": "error",
+  "no-console": process.env.NODE_ENV === "production" ? "warn" : "off",
+  "eqeqeq": ["error", "always"],
+
+  // ----------------------------
+  // Import Safety
+  // ----------------------------
+
+  "import-x/no-unresolved": "error",
+
+  // ----------------------------
+  // Code Style
+  // ----------------------------
+
+  "indent": ["error", 2],
+  "comma-dangle": ["error", "always-multiline"],
+};
+
+const sharedSettings = {
+  "import-x/resolver-next": createTypeScriptImportResolver({
+    alwaysTryTypes: true,
+    project: "./tsconfig.app.json",
+  }),
+};
+
+export default defineConfig([
+  // --------------------------------------------------
+  // Global ignores
+  // --------------------------------------------------
+
   {
-    ignores: ["dist/**", "node_modules/**", "public/**"],
+    ignores: ["dist/**", "node_modules/**", "public/**", "coverage/**"],
   },
 
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
-  ...pluginVue.configs["flat/recommended"],
+  // --------------------------------------------------
+  // Vue base rules (scoped to .vue only)
+  // --------------------------------------------------
 
-  eslintPluginPrettierRecommended,
+  ...pluginVue.configs["flat/recommended"].map((config) => ({
+    ...config,
+    files: ["**/*.vue"],
+  })),
+
+  // --------------------------------------------------
+  // Source: TypeScript files
+  // --------------------------------------------------
 
   {
+    files: ["src/**/*.ts"],
+
     languageOptions: {
-      globals: {
-        ...globals.node,
-        ...globals.browser,
+      globals: { ...globals.browser },
+      parser: tseslint.parser,
+      parserOptions: {
+        sourceType: "module",
+        project: "./tsconfig.app.json",
+        tsconfigRootDir: process.cwd(),
       },
+    },
+
+    plugins: {
+      "@typescript-eslint": tseslint.plugin,
+      "import-x": importX,
+    },
+
+    settings: sharedSettings,
+
+    rules: {
+      ...tseslint.configs.recommended.rules,
+      ...sharedRules,
     },
   },
 
+  // --------------------------------------------------
+  // Source: Vue files
+  // --------------------------------------------------
+
   {
-    files: ["**/*.vue"],
+    files: ["src/**/*.vue"],
+
     languageOptions: {
+      globals: { ...globals.browser },
+      parser: pluginVue.parser,
       parserOptions: {
         parser: tseslint.parser,
         extraFileExtensions: [".vue"],
         sourceType: "module",
+        project: "./tsconfig.app.json",
         tsconfigRootDir: process.cwd(),
       },
     },
+
+    plugins: {
+      "@typescript-eslint": tseslint.plugin,
+      "import-x": importX,
+      "vue": pluginVue,
+    },
+
+    settings: sharedSettings,
+
+    rules: {
+      ...tseslint.configs.recommended.rules,
+      ...sharedRules,
+      
+      "vue/multi-word-component-names": "off",
+      "vue/no-ref-object-reactivity-loss": "error",
+      "vue/prefer-use-template-ref": "warn",
+      "vue/block-order": ["warn", { order: ["template", "script", "style"] }],
+      "vue/no-v-html": "warn",
+
+      "vue/max-attributes-per-line": "off",
+      "vue/multiline-html-element-content-newline": "off",
+      "vue/singleline-html-element-content-newline": "off",
+      "vue/html-self-closing": "off",
+    },
   },
 
+  // --------------------------------------------------
+  // Tests (Vitest)
+  // --------------------------------------------------
+
   {
+    files: ["src/**/*.test.ts", "src/**/*.spec.ts", "test/**/*.ts"],
+
+    languageOptions: {
+      globals: { ...globals.browser },
+      parser: tseslint.parser,
+      parserOptions: {
+        sourceType: "module",
+        project: "./tsconfig.app.json",
+        tsconfigRootDir: process.cwd(),
+      },
+    },
+
     plugins: {
-      tsdoc: tsdoc,
+      "@typescript-eslint": tseslint.plugin,
     },
 
     rules: {
-      // --- MEDIUM STRICTNESS / FLEXIBILITY ---
-      "vue/multi-word-component-names": "off", // Flexible: use "Home.vue" or "HomeView.vue"
-      "@typescript-eslint/no-explicit-any": "warn", // Warn: avoid "any" but don"t block build
-      "no-unused-vars": "off", // Handle via TS rule
+      ...tseslint.configs.recommended.rules,
+
+      // Vitest describe/it callbacks are intentionally not awaited
+      "@typescript-eslint/no-floating-promises": "off",
+
+      // Mocks and stubs legitimately need any
+      "@typescript-eslint/no-explicit-any": "off",
+
+      "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": [
         "warn",
-        { argsIgnorePattern: "^_" },
-      ],
-
-      // --- MODERN VUE 3.5+ BEST PRACTICES (WARNS) ---
-      "vue/prefer-use-template-ref": "warn", // Warn: use the new useTemplateRef()
-      "vue/no-ref-object-reactivity-loss": "error", // Error: this catches actual logic bugs
-      "vue/block-order": ["warn", { order: ["template", "script", "style"] }],
-
-      // --- POORLY WRITTEN CODE PREVENTION ---
-      "no-console": process.env.NODE_ENV === "production" ? "warn" : "off",
-      "no-debugger": "error",
-      eqeqeq: ["error", "always"], // Prevent "==" vs "===" bugs
-      "vue/no-v-html": "warn", // XSS safety best practice
-
-      // tsdoc/syntax is disabled: this is a frontend app, not a TypeScript library.
-      // Our JSDoc-style comments are intentional and don't need to conform to the
-      // stricter TSDoc spec (e.g. mandatory hyphens after @param, no @file tag, etc.)
-      "tsdoc/syntax": "off",
-
-      // --- FORMATTING ---
-      "prettier/prettier": [
-        "warn",
         {
-          semi: true,
-          trailingComma: "all",
+          args: "after-used",
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
         },
       ],
+
+      "no-redeclare": "off",
+      "@typescript-eslint/no-redeclare": "error",
+
+      "indent": ["error", 2],
+      "comma-dangle": ["error", "always-multiline"],
     },
   },
-);
+
+  // --------------------------------------------------
+  // Tooling (no type checking)
+  // --------------------------------------------------
+
+  {
+    files: ["*.config.ts", "**/*.config.ts", "*.config.js", "**/*.config.js"],
+
+    languageOptions: {
+      parserOptions: {
+        project: null,
+      },
+    },
+
+    rules: {
+      "@typescript-eslint/no-floating-promises": "off",
+      "@typescript-eslint/await-thenable": "off",
+      "@typescript-eslint/no-misused-promises": "off",
+      "@typescript-eslint/return-await": "off",
+      "@typescript-eslint/no-redeclare": "off",
+    },
+  },
+]);

@@ -58,7 +58,7 @@ export type UpdateHallInput = Partial<CreateHallInput>;
  * const halls = await getHalls();
  */
 export async function getHalls(): Promise<Hall[]> {
-  return apiFetch<Hall[]>("/hall");
+  return await apiFetch<Hall[]>("/hall");
 }
 
 /**
@@ -72,7 +72,7 @@ export async function getHalls(): Promise<Hall[]> {
  * console.log(hall.address);
  */
 export async function getHall(id: number): Promise<Hall> {
-  return apiFetch<Hall>(`/hall/${id}`);
+  return await apiFetch<Hall>(`/hall/${id}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -88,7 +88,7 @@ export async function getHall(id: number): Promise<Hall> {
  * @throws {ApiError} 404 — hall not found.
  */
 export async function getHallWithMeta(id: number): Promise<HallWithMeta> {
-  return apiFetch<HallWithMeta>(`/hall/${id}/meta`);
+  return await apiFetch<HallWithMeta>(`/hall/${id}/meta`);
 }
 
 /**
@@ -107,7 +107,7 @@ export async function getHallWithMeta(id: number): Promise<HallWithMeta> {
  * });
  */
 export async function createHall(data: CreateHallInput): Promise<Hall> {
-  return apiFetch<Hall>("/hall", { method: "POST", body: data });
+  return await apiFetch<Hall>("/hall", { method: "POST", body: data });
 }
 
 /**
@@ -122,7 +122,7 @@ export async function replaceHall(
   id: number,
   data: ReplaceHallInput,
 ): Promise<Hall> {
-  return apiFetch<Hall>(`/hall/${id}`, { method: "PUT", body: data });
+  return await apiFetch<Hall>(`/hall/${id}`, { method: "PUT", body: data });
 }
 
 /**
@@ -140,7 +140,7 @@ export async function updateHall(
   id: number,
   data: UpdateHallInput,
 ): Promise<Hall> {
-  return apiFetch<Hall>(`/hall/${id}`, { method: "PATCH", body: data });
+  return await apiFetch<Hall>(`/hall/${id}`, { method: "PATCH", body: data });
 }
 
 /**

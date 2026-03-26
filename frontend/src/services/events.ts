@@ -72,7 +72,7 @@ export type UpdateEventInput = Partial<CreateEventInput>;
  * const events = await getEvents();
  */
 export async function getEvents(): Promise<Event[]> {
-  return apiFetch<Event[]>("/event");
+  return await apiFetch<Event[]>("/event");
 }
 
 /**
@@ -86,7 +86,7 @@ export async function getEvents(): Promise<Event[]> {
  * console.log(event.starts_at);
  */
 export async function getEvent(id: number): Promise<Event> {
-  return apiFetch<Event>(`/event/${id}`);
+  return await apiFetch<Event>(`/event/${id}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -102,7 +102,7 @@ export async function getEvent(id: number): Promise<Event> {
  * @throws {ApiError} 404 — event not found.
  */
 export async function getEventWithMeta(id: number): Promise<EventWithMeta> {
-  return apiFetch<EventWithMeta>(`/event/${id}/meta`);
+  return await apiFetch<EventWithMeta>(`/event/${id}/meta`);
 }
 
 /**
@@ -125,7 +125,7 @@ export async function getEventWithMeta(id: number): Promise<EventWithMeta> {
  * });
  */
 export async function createEvent(data: CreateEventInput): Promise<Event> {
-  return apiFetch<Event>("/event", { method: "POST", body: data });
+  return await apiFetch<Event>("/event", { method: "POST", body: data });
 }
 
 /**
@@ -140,7 +140,7 @@ export async function replaceEvent(
   id: number,
   data: ReplaceEventInput,
 ): Promise<Event> {
-  return apiFetch<Event>(`/event/${id}`, { method: "PUT", body: data });
+  return await apiFetch<Event>(`/event/${id}`, { method: "PUT", body: data });
 }
 
 /**
@@ -159,7 +159,7 @@ export async function updateEvent(
   id: number,
   data: UpdateEventInput,
 ): Promise<Event> {
-  return apiFetch<Event>(`/event/${id}`, { method: "PATCH", body: data });
+  return await apiFetch<Event>(`/event/${id}`, { method: "PATCH", body: data });
 }
 
 /**
@@ -178,7 +178,7 @@ export async function updateEvent(
 export async function bulkUpdateEvents(
   data: Array<UpdateEventInput & { id: number }>,
 ): Promise<Event[]> {
-  return apiFetch<Event[]>("/event", { method: "PATCH", body: data });
+  return await apiFetch<Event[]>("/event", { method: "PATCH", body: data });
 }
 
 /**
