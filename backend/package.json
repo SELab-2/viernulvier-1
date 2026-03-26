@@ -33,7 +33,8 @@
     "check": "pnpm run build && pnpm run test && pnpm run lint",
     "create-admin": "tsx scripts/create-admin.ts",
     "import:productions": "tsx scripts/import-productions-legacy.ts",
-    "import:events": "tsx scripts/import-events-legacy.ts"
+    "import:events": "tsx scripts/import-events-legacy.ts",
+    "generate-secret": "tsx scripts/generate-secret.ts"
   },
   "keywords": [],
   "author": "",
