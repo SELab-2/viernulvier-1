@@ -82,6 +82,9 @@ export const CustomProductionFieldSchema = createSchema({
 });
 
 export type Production = z.infer<typeof ProductionSchema>;
+export type ProductionWithBackwardsRefs = z.infer<
+  typeof ProductionSchemaWithBackwardsRefs
+>;
 export type ProductionWithMeta = z.infer<
   ReturnType<typeof ProductionSchema.withMeta>
 >;

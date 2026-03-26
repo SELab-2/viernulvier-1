@@ -18,7 +18,7 @@
  * ```
  */
 
-import type { Production, ProductionWithMeta } from "@viernulvier/shared";
+import type {ProductionWithBackwardsRefs, ProductionWithMeta} from "@viernulvier/shared";
 import { apiFetch } from "./api";
 import type { LanguageMap } from "../utils/i18n";
 
@@ -84,13 +84,13 @@ export interface BulkUpdateProductionsInput {
 /**
  * Fetches all productions (public — no session required).
  *
- * @returns Array of productions, possibly including nested tags and events.
+ * @returns Array of productions, each with `tags` and `events` as arrays of linked IDs.
  *
  * @example
  * const productions = await getProductions();
  */
-export async function getProductions(): Promise<Production[]> {
-  return await apiFetch<Production[]>("/production");
+export async function getProductions(): Promise<ProductionWithBackwardsRefs[]> {
+  return await apiFetch<ProductionWithBackwardsRefs[]>("/production");
 }
 
 /**
@@ -103,8 +103,10 @@ export async function getProductions(): Promise<Production[]> {
  * const production = await getProduction(42);
  * console.log(production.title);
  */
-export async function getProduction(id: number): Promise<Production> {
-  return await apiFetch<Production>(`/production/${id}`);
+export async function getProduction(
+  id: number,
+): Promise<ProductionWithBackwardsRefs> {
+  return await apiFetch<ProductionWithBackwardsRefs>(`/production/${id}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -145,8 +147,11 @@ export async function getProductionWithMeta(
  */
 export async function createProduction(
   data: CreateProductionInput,
-): Promise<Production> {
-  return await apiFetch<Production>("/production", { method: "POST", body: data });
+): Promise<ProductionWithBackwardsRefs> {
+  return await apiFetch<ProductionWithBackwardsRefs>("/production", {
+    method: "POST",
+    body: data,
+  });
 }
 
 /**
@@ -160,8 +165,8 @@ export async function createProduction(
 export async function replaceProduction(
   id: number,
   data: ReplaceProductionInput,
-): Promise<Production> {
-  return await apiFetch<Production>(`/production/${id}`, {
+): Promise<ProductionWithBackwardsRefs> {
+  return await apiFetch<ProductionWithBackwardsRefs>(`/production/${id}`, {
     method: "PUT",
     body: data,
   });
@@ -182,8 +187,8 @@ export async function replaceProduction(
 export async function updateProduction(
   id: number,
   data: UpdateProductionInput,
-): Promise<Production> {
-  return await apiFetch<Production>(`/production/${id}`, {
+): Promise<ProductionWithBackwardsRefs> {
+  return await apiFetch<ProductionWithBackwardsRefs>(`/production/${id}`, {
     method: "PATCH",
     body: data,
   });
@@ -204,8 +209,8 @@ export async function updateProduction(
  */
 export async function bulkUpdateProductions(
   input: BulkUpdateProductionsInput,
-): Promise<Production[]> {
-  return await apiFetch<Production[]>("/production/bulk", {
+): Promise<ProductionWithBackwardsRefs[]> {
+  return await apiFetch<ProductionWithBackwardsRefs[]>("/production/bulk", {
     method: "PATCH",
     body: input,
   });
