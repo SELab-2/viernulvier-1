@@ -1,11 +1,9 @@
 <template>
-  <footer
-    class="border-t border-zinc-200 bg-white px-6 py-8 dark:border-zinc-800 dark:bg-zinc-950"
-  >
+  <footer class="border-t border-surface-3 bg-surface-1 px-6 py-8">
     <div
       class="mx-auto flex max-w-6xl flex-col items-center gap-4 sm:flex-row sm:justify-between"
     >
-      <p class="text-sm text-zinc-500">
+      <p class="text-sm text-ink-tertiary">
         {{ t("footer.copyright", { year: currentYear }) }}
       </p>
 
@@ -26,9 +24,9 @@ const currentYear = new Date().getFullYear();
 </script>
 
 <style scoped>
-@reference "tailwindcss";
+@reference "../style.css";
 
 .footer-link {
-  @apply text-sm text-zinc-500 transition hover:text-zinc-900 dark:hover:text-zinc-100;
+  @apply text-sm text-ink-tertiary transition hover:text-ink-primary;
 }
 </style>

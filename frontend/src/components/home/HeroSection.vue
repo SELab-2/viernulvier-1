@@ -1,16 +1,16 @@
 <template>
-  <section class="bg-zinc-950 px-6 py-20 lg:px-10 lg:py-28">
+  <section class="bg-surface-inv px-6 py-20 lg:px-10 lg:py-28">
     <div
       class="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 lg:grid-cols-2"
     >
       <!-- Text -->
       <div class="flex flex-col gap-6">
         <h1
-          class="text-5xl font-black italic uppercase leading-none tracking-tight text-white lg:text-6xl xl:text-7xl"
+          class="text-5xl font-black italic uppercase leading-none tracking-tight text-ink-on-inv lg:text-6xl xl:text-7xl"
         >
           {{ t("hero.title") }}
         </h1>
-        <p class="max-w-md text-base leading-relaxed text-zinc-400">
+        <p class="max-w-md text-base leading-relaxed text-ink-on-inv-secondary">
           {{ t("hero.subtitle") }}
         </p>
         <div class="flex items-center gap-4">
@@ -19,7 +19,7 @@
               name: RouteNames.PRODUCTIONS,
               params: { lang: currentLang },
             }"
-            class="inline-flex items-center gap-2 rounded-md bg-white px-5 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-100"
+            class="inline-flex items-center gap-2 rounded-md bg-ink-on-inv px-5 py-3 text-sm font-semibold text-surface-inv transition hover:bg-ink-on-inv-secondary"
           >
             {{ t("hero.cta") }}
             <span class="material-symbols-outlined text-base"
@@ -31,22 +31,21 @@
 
       <!-- Image card -->
       <div
-        class="relative overflow-hidden rounded-2xl bg-zinc-800 aspect-[4/3]"
+        class="relative overflow-hidden rounded-2xl bg-surface-inv-raised aspect-[4/3]"
       >
         <img
           src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/De_Vooruit_Gent.jpg/1280px-De_Vooruit_Gent.jpg"
           alt="De Vooruit"
-          class="h-full w-full object-cover opacity-70"
+          class="hero-photo h-full w-full object-cover"
         />
-        <div
-          class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-zinc-950/90 to-transparent p-6"
-        >
+        <div class="hero-overlay absolute inset-0" />
+        <div class="absolute bottom-0 left-0 right-0 p-6">
           <p
-            class="text-xs font-semibold uppercase tracking-widest text-zinc-400"
+            class="text-xs font-semibold uppercase tracking-widest text-ink-on-inv-tertiary"
           >
             Gent, België
           </p>
-          <p class="mt-1 text-lg font-bold text-white">
+          <p class="mt-1 text-lg font-bold text-ink-on-inv">
             De Vooruit / VierNulVier
           </p>
         </div>
@@ -63,5 +62,19 @@ import { i18n, type SupportedLang } from "../../i18n";
 import { RouteNames } from "../../router/routeNames";
 
 const { t } = useI18n();
-const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
+const currentLang = computed(
+  () => i18n.global.locale.value as SupportedLang,
+);
+
 </script>
+
+<style scoped>
+.hero-photo {
+  opacity: calc(1 - var(--photo-opacity));
+}
+
+.hero-overlay {
+  background: linear-gradient(to top, var(--photo-overlay) 0%, transparent 60%);
+  opacity: var(--photo-opacity);
+}
+</style>

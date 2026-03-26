@@ -1,24 +1,17 @@
 <template>
   <div
-    :class="[
-      'group relative flex flex-col justify-end overflow-hidden rounded-2xl p-5 min-h-44',
-      bgClass,
-    ]"
+    class="group relative flex flex-col justify-end overflow-hidden rounded-2xl bg-surface-2 p-5 min-h-44"
   >
     <span
-      class="material-symbols-outlined absolute right-5 top-5 text-3xl opacity-20"
-      :class="accentClass"
+      class="material-symbols-outlined absolute right-5 top-5 text-3xl text-ink-tertiary opacity-30"
     >
       {{ icon }}
     </span>
-    <span
-      class="mb-1 text-xs font-semibold uppercase tracking-widest"
-      :class="accentClass"
-    >
+    <span class="mb-1 text-xs font-semibold uppercase tracking-widest text-ink-secondary">
       {{ t(labelKey) }}
     </span>
-    <h3 class="text-base font-bold text-white">{{ t(titleKey) }}</h3>
-    <p class="mt-1 text-xs leading-relaxed text-zinc-400">
+    <h3 class="text-base font-bold text-ink-primary">{{ t(titleKey) }}</h3>
+    <p class="mt-1 text-xs leading-relaxed text-ink-tertiary">
       {{ t(descriptionKey) }}
     </p>
   </div>
@@ -32,8 +25,6 @@ defineProps<{
   titleKey: string;
   descriptionKey: string;
   icon: string;
-  bgClass: string;
-  accentClass: string;
 }>();
 
 const { t } = useI18n();

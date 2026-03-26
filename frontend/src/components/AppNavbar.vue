@@ -1,6 +1,6 @@
 <template>
   <nav
-    class="sticky top-0 z-50 flex h-16 w-full items-center justify-between bg-zinc-900 px-6 lg:px-10"
+    class="sticky top-0 z-50 flex h-16 w-full items-center justify-between bg-surface-inv px-6 lg:px-10"
   >
     <!-- Left: nav links -->
     <div class="flex items-center gap-6">
@@ -69,7 +69,7 @@
       <!-- Admin -->
       <RouterLink
         :to="{ name: RouteNames.CMS, params: { lang: currentLang } }"
-        class="ml-2 rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-100"
+        class="ml-2 rounded-md bg-ink-on-inv px-3 py-1.5 text-sm font-semibold text-surface-inv transition hover:bg-ink-on-inv-secondary"
       >
         {{ t("nav.admin") }}
       </RouterLink>
@@ -121,34 +121,34 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 </script>
 
 <style scoped>
-@reference "tailwindcss";
+@reference "../style.css";
 
 .nav-link {
-  @apply text-sm font-medium text-zinc-400 transition hover:text-white;
+  @apply text-sm font-medium text-ink-on-inv-secondary transition hover:text-ink-on-inv;
 }
 
 .nav-link.router-link-active {
-  @apply text-white;
+  @apply text-ink-on-inv;
 }
 
 .icon-btn {
-  @apply flex cursor-pointer items-center justify-center rounded-md p-1.5 text-zinc-400 transition hover:bg-zinc-800 hover:text-white;
+  @apply flex cursor-pointer items-center justify-center rounded-md p-1.5 text-ink-on-inv-secondary transition hover:bg-surface-inv-raised hover:text-ink-on-inv;
   background: none;
   border: none;
 }
 
 .lang-dropdown {
-  @apply absolute right-0 top-full mt-2 min-w-[60px] overflow-hidden rounded-lg border border-zinc-700 bg-zinc-800 shadow-xl;
+  @apply absolute right-0 top-full mt-2 min-w-[60px] overflow-hidden rounded-lg border border-surface-inv-border bg-surface-inv-raised shadow-xl;
   z-index: 100;
 }
 
 .lang-option {
-  @apply block w-full cursor-pointer px-4 py-2 text-left text-sm text-zinc-300 transition hover:bg-zinc-700 hover:text-white;
+  @apply block w-full cursor-pointer px-4 py-2 text-left text-sm text-ink-on-inv-secondary transition hover:bg-surface-inv-border hover:text-ink-on-inv;
   background: none;
   border: none;
 }
 
 .lang-option.active {
-  @apply bg-zinc-700 font-semibold text-white;
+  @apply bg-surface-inv-border font-semibold text-ink-on-inv;
 }
 </style>

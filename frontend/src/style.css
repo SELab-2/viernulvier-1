@@ -1,4 +1,34 @@
 @import "tailwindcss";
+@import "./assets/design-tokens.css";
+
+/* ---- Map design tokens → Tailwind utility classes ---- */
+@theme {
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+
+  --color-ink-primary: var(--ink-primary);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-tertiary: var(--ink-tertiary);
+
+  --color-accent-dark: var(--accent-dark);
+  --color-accent-dark-hover: var(--accent-dark-hover);
+  --color-accent-outline: var(--accent-outline);
+  --color-accent-highlight: var(--accent-highlight);
+
+  --color-stat-fill: var(--stat-fill);
+  --color-stat-label: var(--stat-label);
+
+  --color-surface-inv: var(--surface-inv);
+  --color-surface-inv-raised: var(--surface-inv-raised);
+  --color-surface-inv-border: var(--surface-inv-border);
+  --color-ink-on-inv: var(--ink-on-inv);
+  --color-ink-on-inv-secondary: var(--ink-on-inv-secondary);
+  --color-ink-on-inv-tertiary: var(--ink-on-inv-tertiary);
+
+  --color-photo-overlay: var(--photo-overlay);
+}
 
 @layer base {
   html,

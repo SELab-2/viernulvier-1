@@ -10,8 +10,6 @@ function mountCard(overrides: Partial<InstanceType<typeof BentoCard>["$props"]> 
       titleKey: "bento.music.title",
       descriptionKey: "bento.music.description",
       icon: "music_note",
-      bgClass: "bg-violet-950",
-      accentClass: "text-violet-300",
       ...overrides,
     },
     global: { plugins: [i18n] },
@@ -26,9 +24,8 @@ describe("BentoCard.vue", () => {
 
   it("renders the translated label (non-empty)", () => {
     const wrapper = mountCard();
-    // The label is in a span with accentClass — just verify it renders text
     const spans = wrapper.findAll("span").filter((s) => !s.classes().includes("material-symbols-outlined"));
-    const labelSpan = spans.find((s) => s.classes().some((c) => c.startsWith("text-")));
+    const labelSpan = spans.find((s) => s.text().length > 0);
     expect(labelSpan?.text().length).toBeGreaterThan(0);
   });
 
@@ -49,18 +46,9 @@ describe("BentoCard.vue", () => {
     expect(icon.text()).toBe("music_note");
   });
 
-  it("applies the bgClass to the root element", () => {
-    const wrapper = mountCard({ bgClass: "bg-amber-950" });
-    expect(wrapper.classes()).toContain("bg-amber-950");
-  });
-
-  it("applies the accentClass to the label span", () => {
-    const wrapper = mountCard({ accentClass: "text-amber-300" });
-    // The icon and label both use accentClass
-    const accentEls = wrapper
-      .findAll("span")
-      .filter((s) => s.classes().includes("text-amber-300"));
-    expect(accentEls.length).toBeGreaterThanOrEqual(1);
+  it("applies design-token background class to root element", () => {
+    const wrapper = mountCard();
+    expect(wrapper.classes()).toContain("bg-surface-2");
   });
 
   it("renders a different icon when prop changes", () => {
@@ -74,8 +62,6 @@ describe("BentoCard.vue", () => {
       titleKey: "bento.film.title",
       descriptionKey: "bento.film.description",
       icon: "movie",
-      bgClass: "bg-amber-950",
-      accentClass: "text-amber-300",
     });
     // "Film" is the same in nl/en/fr
     expect(wrapper.text()).toContain("Film");

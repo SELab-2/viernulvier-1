@@ -1,5 +1,5 @@
 <template>
-  <div :class="['min-h-screen font-[Inter,sans-serif]', isDark ? 'dark' : '']">
+  <div :class="['min-h-screen bg-surface-0 font-[Inter,sans-serif]', isDark ? 'dark' : '']">
     <AppNavbar :is-dark="isDark" @toggle-dark="isDark = !isDark" />
     <main>
       <HeroSection />
