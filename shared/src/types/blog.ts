@@ -6,6 +6,7 @@ import { foreignKey, primaryKey } from "./helpers.js";
 export const BlogSchema = createSchema({
   id: primaryKey(),
   name: z.string(),
+  description: z.string().nullable(),
 });
 
 export type Blog = z.infer<typeof BlogSchema>;
