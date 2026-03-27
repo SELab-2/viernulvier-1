@@ -37,7 +37,7 @@ export function useLocale() {
       ? route.path.substring(currentLang.length + 1) // "/nl/productions" → "/productions"
       : ""; // only reachable from "/", always results in "/[lang]"
 
-    router.push(`/${lang}${pathWithoutLang}`);
+    void router.push(`/${lang}${pathWithoutLang}`);
   }
 
   return { setLocale };

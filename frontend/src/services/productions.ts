@@ -90,7 +90,7 @@ export interface BulkUpdateProductionsInput {
  * const productions = await getProductions();
  */
 export async function getProductions(): Promise<Production[]> {
-  return apiFetch<Production[]>("/production");
+  return await apiFetch<Production[]>("/production");
 }
 
 /**
@@ -104,7 +104,7 @@ export async function getProductions(): Promise<Production[]> {
  * console.log(production.title);
  */
 export async function getProduction(id: number): Promise<Production> {
-  return apiFetch<Production>(`/production/${id}`);
+  return await apiFetch<Production>(`/production/${id}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -122,7 +122,7 @@ export async function getProduction(id: number): Promise<Production> {
 export async function getProductionWithMeta(
   id: number,
 ): Promise<ProductionWithMeta> {
-  return apiFetch<ProductionWithMeta>(`/production/${id}/meta`);
+  return await apiFetch<ProductionWithMeta>(`/production/${id}/meta`);
 }
 
 /**
@@ -146,7 +146,7 @@ export async function getProductionWithMeta(
 export async function createProduction(
   data: CreateProductionInput,
 ): Promise<Production> {
-  return apiFetch<Production>("/production", { method: "POST", body: data });
+  return await apiFetch<Production>("/production", { method: "POST", body: data });
 }
 
 /**
@@ -161,7 +161,7 @@ export async function replaceProduction(
   id: number,
   data: ReplaceProductionInput,
 ): Promise<Production> {
-  return apiFetch<Production>(`/production/${id}`, {
+  return await apiFetch<Production>(`/production/${id}`, {
     method: "PUT",
     body: data,
   });
@@ -183,7 +183,7 @@ export async function updateProduction(
   id: number,
   data: UpdateProductionInput,
 ): Promise<Production> {
-  return apiFetch<Production>(`/production/${id}`, {
+  return await apiFetch<Production>(`/production/${id}`, {
     method: "PATCH",
     body: data,
   });
@@ -205,7 +205,7 @@ export async function updateProduction(
 export async function bulkUpdateProductions(
   input: BulkUpdateProductionsInput,
 ): Promise<Production[]> {
-  return apiFetch<Production[]>("/production/bulk", {
+  return await apiFetch<Production[]>("/production/bulk", {
     method: "PATCH",
     body: input,
   });

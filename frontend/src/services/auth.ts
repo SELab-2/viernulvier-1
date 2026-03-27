@@ -143,7 +143,7 @@ export async function withAuth<T>(
  * console.log(admin.username);
  */
 export async function getAdmin(id: number): Promise<Admin> {
-  return apiFetch<Admin>(`/auth/${id}`);
+  return await apiFetch<Admin>(`/auth/${id}`);
 }
 
 /**
@@ -155,7 +155,7 @@ export async function getAdmin(id: number): Promise<Admin> {
  * @throws {ApiError} 404 — admin not found.
  */
 export async function getAdminWithMeta(id: number): Promise<AdminWithMeta> {
-  return apiFetch<AdminWithMeta>(`/auth/${id}/meta`);
+  return await apiFetch<AdminWithMeta>(`/auth/${id}/meta`);
 }
 
 /**
@@ -174,7 +174,7 @@ export async function getAdminWithMeta(id: number): Promise<AdminWithMeta> {
  * });
  */
 export async function createAdmin(data: CreateAdminInput): Promise<Admin> {
-  return apiFetch<Admin>("/auth", { method: "POST", body: data });
+  return await apiFetch<Admin>("/auth", { method: "POST", body: data });
 }
 
 /**
@@ -189,7 +189,7 @@ export async function replaceAdmin(
   id: number,
   data: ReplaceAdminInput,
 ): Promise<Admin> {
-  return apiFetch<Admin>(`/auth/${id}`, { method: "PUT", body: data });
+  return await apiFetch<Admin>(`/auth/${id}`, { method: "PUT", body: data });
 }
 
 /**
@@ -208,7 +208,7 @@ export async function updateAdmin(
   id: number,
   data: UpdateAdminInput,
 ): Promise<Admin> {
-  return apiFetch<Admin>(`/auth/${id}`, { method: "PATCH", body: data });
+  return await apiFetch<Admin>(`/auth/${id}`, { method: "PATCH", body: data });
 }
 
 /**

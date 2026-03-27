@@ -95,7 +95,7 @@ export type UpdateTagTypeInput = Partial<CreateTagTypeInput>;
  * const tags = await getTags();
  */
 export async function getTags(): Promise<Tag[]> {
-  return apiFetch<Tag[]>("/tags");
+  return await apiFetch<Tag[]>("/tags");
 }
 
 /**
@@ -105,7 +105,7 @@ export async function getTags(): Promise<Tag[]> {
  * @throws {ApiError} 404 — tag not found or not public.
  */
 export async function getTag(id: number): Promise<Tag> {
-  return apiFetch<Tag>(`/tags/${id}`);
+  return await apiFetch<Tag>(`/tags/${id}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -121,7 +121,7 @@ export async function getTag(id: number): Promise<Tag> {
  * const allTags = await getAllTags();
  */
 export async function getAllTags(): Promise<Tag[]> {
-  return apiFetch<Tag[]>("/tags/all");
+  return await apiFetch<Tag[]>("/tags/all");
 }
 
 /**
@@ -132,7 +132,7 @@ export async function getAllTags(): Promise<Tag[]> {
  * @throws {ApiError} 404 — tag not found.
  */
 export async function getTagAdmin(id: number): Promise<Tag> {
-  return apiFetch<Tag>(`/tags/${id}/all`);
+  return await apiFetch<Tag>(`/tags/${id}/all`);
 }
 
 /**
@@ -143,7 +143,7 @@ export async function getTagAdmin(id: number): Promise<Tag> {
  * @throws {ApiError} 404 — tag not found.
  */
 export async function getTagWithMeta(id: number): Promise<TagWithMeta> {
-  return apiFetch<TagWithMeta>(`/tags/${id}/meta`);
+  return await apiFetch<TagWithMeta>(`/tags/${id}/meta`);
 }
 
 /**
@@ -162,7 +162,7 @@ export async function getTagWithMeta(id: number): Promise<TagWithMeta> {
  * });
  */
 export async function createTag(data: CreateTagInput): Promise<Tag> {
-  return apiFetch<Tag>("/tags", { method: "POST", body: data });
+  return await apiFetch<Tag>("/tags", { method: "POST", body: data });
 }
 
 /**
@@ -177,7 +177,7 @@ export async function replaceTag(
   id: number,
   data: ReplaceTagInput,
 ): Promise<Tag> {
-  return apiFetch<Tag>(`/tags/${id}`, { method: "PUT", body: data });
+  return await apiFetch<Tag>(`/tags/${id}`, { method: "PUT", body: data });
 }
 
 /**
@@ -196,7 +196,7 @@ export async function updateTag(
   id: number,
   data: UpdateTagInput,
 ): Promise<Tag> {
-  return apiFetch<Tag>(`/tags/${id}`, { method: "PATCH", body: data });
+  return await apiFetch<Tag>(`/tags/${id}`, { method: "PATCH", body: data });
 }
 
 /**
@@ -207,7 +207,7 @@ export async function updateTag(
  * @throws {ApiError} 404 — tag not found.
  */
 export async function deleteTag(id: number): Promise<void> {
-  await apiFetch<void>(`/tags/${id}`, { method: "DELETE" });
+  await await apiFetch<void>(`/tags/${id}`, { method: "DELETE" });
 }
 
 // ---------------------------------------------------------------------------
@@ -221,7 +221,7 @@ export async function deleteTag(id: number): Promise<void> {
  * const types = await getTagTypes();
  */
 export async function getTagTypes(): Promise<TagType[]> {
-  return apiFetch<TagType[]>("/tags/type");
+  return await apiFetch<TagType[]>("/tags/type");
 }
 
 /**
@@ -231,7 +231,7 @@ export async function getTagTypes(): Promise<TagType[]> {
  * @throws {ApiError} 404 — tag type not found.
  */
 export async function getTagType(id: number): Promise<TagType> {
-  return apiFetch<TagType>(`/tags/type/${id}`);
+  return await apiFetch<TagType>(`/tags/type/${id}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -246,7 +246,7 @@ export async function getTagType(id: number): Promise<TagType> {
  * @throws {ApiError} 404 — tag type not found.
  */
 export async function getTagTypeWithMeta(id: number): Promise<TagTypeWithMeta> {
-  return apiFetch<TagTypeWithMeta>(`/tags/type/${id}/meta`);
+  return await apiFetch<TagTypeWithMeta>(`/tags/type/${id}/meta`);
 }
 
 /**
@@ -263,7 +263,7 @@ export async function getTagTypeWithMeta(id: number): Promise<TagTypeWithMeta> {
 export async function createTagType(
   data: CreateTagTypeInput,
 ): Promise<TagType> {
-  return apiFetch<TagType>("/tags/type", { method: "POST", body: data });
+  return await apiFetch<TagType>("/tags/type", { method: "POST", body: data });
 }
 
 /**
@@ -278,7 +278,7 @@ export async function replaceTagType(
   id: number,
   data: ReplaceTagTypeInput,
 ): Promise<TagType> {
-  return apiFetch<TagType>(`/tags/type/${id}`, { method: "PUT", body: data });
+  return await apiFetch<TagType>(`/tags/type/${id}`, { method: "PUT", body: data });
 }
 
 /**
@@ -293,7 +293,7 @@ export async function updateTagType(
   id: number,
   data: UpdateTagTypeInput,
 ): Promise<TagType> {
-  return apiFetch<TagType>(`/tags/type/${id}`, { method: "PATCH", body: data });
+  return await apiFetch<TagType>(`/tags/type/${id}`, { method: "PATCH", body: data });
 }
 
 /**
