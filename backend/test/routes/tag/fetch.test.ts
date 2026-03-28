@@ -96,6 +96,16 @@ describe("Fetch tag on id", () => {
     expect(TagSchema.parse(response.json())).toEqual(tag1);
   });
 
+  test("GET /api/v1/tags/:id/all returns 404 when tag not found", async () => {
+    const response = await server.inject({
+      method: "GET",
+      cookies: { session: sessionCookie },
+      url: `/api/v1/tags/999/all`,
+    });
+
+    expect(response.statusCode).toBe(404);
+  });
+
   test("GET /api/v1/tags/:id returns 404", async () => {
     const response = await server.inject({
       method: "GET",
