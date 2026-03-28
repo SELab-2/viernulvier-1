@@ -39,6 +39,6 @@ export const CreateProductionBodySchema = ProductionSchema.pick({
 );
 
 export const PartialProductionBodySchema = ProductionBodySchema.partial();
-const ProductionIdObjectSchema = ProductionSchema.pick({ id: true }) as z.ZodObject<{ id: z.ZodTypeAny }>;
+const ProductionIdObjectSchema = ProductionSchema.pick({ id: true }) as z.ZodObject<{ id: z.ZodType }>;
 export const ProductionIdSchema = ProductionIdObjectSchema.shape["id"];
 
