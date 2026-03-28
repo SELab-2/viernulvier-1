@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createMemoryHistory, createRouter, type Router } from "vue-router";
 import { routes } from "@/router/routes";
 import { RouteNames } from "@/router/routeNames";
+import { createPinia, setActivePinia } from "pinia";
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 //
@@ -16,12 +17,25 @@ function createTestRouter(): Router {
   });
 }
 
+// mock the auth service so no real API calls are made
+vi.mock("@/services/auth", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/services/auth")>();
+  return {
+    ...actual,
+    getCurrentlyLoggedInAdmin: vi.fn().mockRejectedValue(
+      new actual.ApiError(401, "Unauthorized"),
+    ),
+  };
+});
+
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe("router/routes.ts", () => {
   let router: Router;
 
   beforeEach(() => {
+    setActivePinia(createPinia());
+    
     router = createTestRouter();
   });
 
@@ -84,6 +98,21 @@ describe("router/routes.ts", () => {
 
   // ── Admin ──────────────────────────────────────────────────────────────────
 
+  describe("admin home route", () => {
+    it.each(["nl", "fr", "en"] as const)(
+      "/%s/admin resolves to ADMIN",
+      async (lang) => {
+        await router.push(`/${lang}/admin`);
+        expect(router.currentRoute.value.name).toBe(RouteNames.ADMIN);
+      },
+    );
+
+    it("has requiresAdmin: true in meta", async () => {
+      await router.push("/nl/admin");
+      expect(router.currentRoute.value.meta.requiresAdmin).toBe(true);
+    });
+  });
+
   describe("admin CMS route", () => {
     it.each(["nl", "fr", "en"] as const)(
       "/%s/admin/cms resolves to CMS",
@@ -96,6 +125,33 @@ describe("router/routes.ts", () => {
     it("has requiresAdmin: true in meta", async () => {
       await router.push("/nl/admin/cms");
       expect(router.currentRoute.value.meta.requiresAdmin).toBe(true);
+    });
+  });
+
+  describe("admin login route", () => {
+    it.each(["nl", "fr", "en"] as const)(
+      "/%s/admin/login resolves to LOGIN",
+      async (lang) => {
+        await router.push(`/${lang}/admin/login`);
+        expect(router.currentRoute.value.name).toBe(RouteNames.LOGIN);
+      },
+    );
+
+    it("does not have requiresAdmin in meta", async () => {
+      await router.push("/nl/admin/login");
+      expect(router.currentRoute.value.meta.requiresAdmin).toBeFalsy();
+    });
+
+    it("redirects to admin when already logged in", async () => {
+      const { getCurrentlyLoggedInAdmin } = await import("@/services/auth");
+      vi.mocked(getCurrentlyLoggedInAdmin).mockResolvedValueOnce({
+        id: 1,
+        username: "admin",
+        profile_picture: null,
+      });
+
+      await router.push("/nl/admin/login");
+      expect(router.currentRoute.value.name).toBe(RouteNames.ADMIN);
     });
   });
 

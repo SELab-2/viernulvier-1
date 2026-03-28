@@ -159,6 +159,30 @@ export async function getAdminWithMeta(id: number): Promise<AdminWithMeta> {
 }
 
 /**
+ * Fetches the currently authenticated admin.
+ * The session cookie is sent automatically.
+ *
+ * @throws {ApiError} 401 — unauthenticated or session expired.
+ *
+ * @example
+ * const admin = await getCurrentlyLoggedInAdmin();
+ * console.log(admin.username);
+ */
+export async function getCurrentlyLoggedInAdmin(): Promise<Admin> {
+  return await apiFetch<Admin>("/auth/me");
+}
+
+/**
+ * Fetches the currently authenticated admin including audit metadata
+ * (`created_at`, `created_by`, `updated_at`, `updated_by`).
+ *
+ * @throws {ApiError} 401 — unauthenticated or session expired.
+ */
+export async function getCurrentlyLoggedInAdminWithMeta(): Promise<AdminWithMeta> {
+  return await apiFetch<AdminWithMeta>("/auth/me/meta");
+}
+
+/**
  * Creates a new admin account.
  *
  * @param data Username, plain-text password, and optional profile picture URL.
