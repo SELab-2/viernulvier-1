@@ -29,7 +29,7 @@ export async function editTag(
   }
 
   if (body.type !== undefined) {
-    fields.push(`type_id = $${i++}`);
+    fields.push(`tag_type = $${i++}`);
     values.push(body.type);
   }
 
@@ -43,7 +43,7 @@ export async function editTag(
 
   const result = await server.pg.query<Tag>(
     `UPDATE tag SET ${fields.join(", ")} WHERE id = $${i}
-     RETURNING id, name, type_id, public`,
+     RETURNING id, name, tag_type, public`,
     values,
   );
 

@@ -21,9 +21,9 @@ export async function replaceTag(
 
   const result = await server.pg.query<Tag>(
     `UPDATE tag
-     SET name = $1, type_id = $2, public = $3, updated_by = $4, updated_at = $5
+     SET name = $1, tag_type = $2, public = $3, updated_by = $4, updated_at = $5
      WHERE id = $6
-     RETURNING id, name, type_id, public`,
+     RETURNING id, name, tag_type, public`,
     [body.name, body.type, body.public, admin, current_time, id],
   );
 

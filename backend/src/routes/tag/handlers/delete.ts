@@ -9,7 +9,7 @@ const deleteTagById = (server: FastifyInstance) =>
     server,
     `DELETE FROM tag
      WHERE id = $1
-     RETURNING id, name, type_id, public`,
+     RETURNING id, name, tag_type, public`,
     z.tuple([z.int()]),
     TagSchema,
   );

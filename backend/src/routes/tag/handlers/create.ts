@@ -15,9 +15,9 @@ const CreateTagBodySchema = TagSchema.pick({
 const insertTag = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `INSERT INTO tag (name, type_id, public, created_by, updated_by, created_at, updated_at)
+    `INSERT INTO tag (name, tag_type, public, created_by, updated_by, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $4, $5, $5)
-     RETURNING id, name, type_id, public`,
+     RETURNING id, name, tag_type, public`,
     z.tuple([languageMap, z.int(), z.boolean(), z.int(), z.date()]),
     TagSchema,
   );

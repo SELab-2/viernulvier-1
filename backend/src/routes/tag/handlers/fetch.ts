@@ -5,7 +5,7 @@ import { parseParams, buildQuery, parseSchema } from "@/routes/helpers.js";
 import { z } from "zod";
 
 const TagSelect = `
-SELECT id, name, type_id, public
+SELECT id, name, tag_type, public
 FROM tag
 `;
 
@@ -32,7 +32,7 @@ const fetchTagVisibleByIdQuery = (server: FastifyInstance) =>
 const fetchTagWithMetaByIdQuery = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `SELECT id, name, type_id, public, created_at, updated_at, created_by, updated_by
+    `SELECT id, name, tag_type, public, created_at, updated_at, created_by, updated_by
      FROM tag WHERE id = $1`,
     z.tuple([z.int()]),
     TagSchema.withMeta(),
@@ -44,10 +44,10 @@ const fetchTagsAllQuery = (server: FastifyInstance) =>
 const fetchTagsByProductionQuery = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `SELECT t.id, t.name, t.type_id, public
+    `SELECT t.id, t.name, t.tag_type, public
      FROM tag t
-     JOIN production_tag pt ON pt.tag_id = t.id
-     WHERE pt.production_id = $1`,
+     JOIN production_tag pt ON pt.tag = t.id
+     WHERE pt.production = $1`,
     z.tuple([z.int()]),
     TagSchema,
   );
@@ -58,10 +58,10 @@ const fetchTagsVisibleAllQuery = (server: FastifyInstance) =>
 const fetchTagsVisibleByProductionQuery = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `SELECT t.id, t.name, t.type_id, public
+    `SELECT t.id, t.name, t.tag_type, public
      FROM tag t
-     JOIN production_tag pt ON pt.tag_id = t.id
-     WHERE pt.production_id = $1 AND t.public = true`,
+     JOIN production_tag pt ON pt.tag = t.id
+     WHERE pt.production = $1 AND t.public = true`,
     z.tuple([z.int()]),
     TagSchema,
   );
