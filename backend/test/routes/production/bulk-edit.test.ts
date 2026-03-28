@@ -3,6 +3,7 @@ import { buildServer } from "@/server.js";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
 import { bulkEditProductions } from "@/routes/production/handlers/bulk-edit.js";
+import { productionRowWithRefs, productionRowWithRefsAlt } from "./fixtures.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
@@ -121,8 +122,8 @@ describe("Bulk edit on production route", () => {
         expect(params?.[0]).toEqual(ids);
         return Promise.resolve({
           rows: [
-            { ...updatedBulkA1, tags: [], events: [] },
-            { ...updatedBulkA2, tags: [], events: [] },
+            productionRowWithRefs(updatedBulkA1),
+            productionRowWithRefsAlt(updatedBulkA2),
           ],
           rowCount: 2,
         });
@@ -167,8 +168,8 @@ describe("Bulk edit on production route", () => {
         expect(params?.[0]).toEqual(ids);
         return Promise.resolve({
           rows: [
-            { ...updatedBulkB1, tags: [], events: [] },
-            { ...updatedBulkB2, tags: [], events: [] },
+            productionRowWithRefs(updatedBulkB1),
+            productionRowWithRefsAlt(updatedBulkB2),
           ],
           rowCount: 2,
         });
@@ -243,8 +244,8 @@ describe("Bulk edit on production route", () => {
         expect(params?.[0]).toEqual(ids);
         return Promise.resolve({
           rows: [
-            { ...updatedBulkC1, tags: [], events: [] },
-            { ...updatedBulkC2, tags: [], events: [] },
+            productionRowWithRefs(updatedBulkC1),
+            productionRowWithRefsAlt(updatedBulkC2),
           ],
           rowCount: 2,
         });
@@ -301,8 +302,8 @@ describe("Bulk edit on production route", () => {
         expect(params?.[0]).toEqual(ids);
         return Promise.resolve({
           rows: [
-            { ...baseProduction1, tags: [], events: [] },
-            { ...baseProduction2, tags: [], events: [] },
+            productionRowWithRefs(baseProduction1),
+            productionRowWithRefsAlt(baseProduction2),
           ],
           rowCount: 2,
         });

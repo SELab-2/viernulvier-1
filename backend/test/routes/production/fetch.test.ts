@@ -7,11 +7,12 @@ import {
   type ProductionWithBackwardsRefs,
 } from "@viernulvier/shared/index.js";
 import { getProductionsByIds } from "@/routes/production/handlers/fetch.js";
+import { productionRowWithRefs, productionRowWithRefsAlt } from "./fixtures.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
 
-const baseProduction: ProductionWithBackwardsRefs = {
+const baseProduction: ProductionWithBackwardsRefs = productionRowWithRefs({
   id: 1,
   supertitle: null,
   title: { nl: "Titel" },
@@ -27,9 +28,7 @@ const baseProduction: ProductionWithBackwardsRefs = {
   quote_source: null,
   programme: null,
   info: null,
-  events: [],
-  tags: [],
-};
+});
 
 const baseProductionWithMeta = {
   ...baseProduction,
@@ -148,11 +147,12 @@ describe("Production fetch helpers", () => {
 
   test("getProductionsByIds -> fetches with ANY(ids) in one query", async () => {
     const ids = [2, 1];
-    const secondProduction: ProductionWithBackwardsRefs = {
-      ...baseProduction,
+    const { tags: _t, events: _e, ...productionCore } = baseProduction;
+    const secondProduction: ProductionWithBackwardsRefs = productionRowWithRefsAlt({
+      ...productionCore,
       id: 2,
       title: { nl: "Tweede titel" },
-    };
+    });
 
     server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
       const upper = query.trim().toUpperCase();

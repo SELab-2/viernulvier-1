@@ -2,6 +2,7 @@ import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vit
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
+import { productionRowWithRefs } from "./fixtures.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
@@ -48,7 +49,7 @@ describe("Replace on production route", () => {
 
       if (upper.startsWith("SELECT")) {
         return Promise.resolve({
-          rows: [{ ...replacedProduction, tags: [], events: [] }],
+          rows: [productionRowWithRefs(replacedProduction)],
           rowCount: 1,
         });
       }
