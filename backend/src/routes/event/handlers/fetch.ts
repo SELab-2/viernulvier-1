@@ -1,10 +1,11 @@
-import z from "zod";
+import z, { string } from "zod";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 
 import { buildQuery, parseParams } from "@/routes/helpers.js";
 import { EventSchema, stringToInt } from "@viernulvier/shared/index.js";
 import type { Event, EventWithMeta } from "@viernulvier/shared/index.js";
 import { selectPriceSubquery } from "./helper.js";
+import { parse } from "node:path";
 
 /**
  * Fetches a single event by ID from the database.
@@ -59,11 +60,27 @@ export async function fetchEventWithMeta(
  * Returns an empty array when parsing fails.
  *
  * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request, can include query parameter `old_id` to filter events.
  * @returns An array of parsed events.
  */
 export async function fetchEvents(
   server: FastifyInstance,
+  request: FastifyRequest,
 ): Promise<Event[]> {
+  const { old_id } = request.query as { old_id?: string };
+
+  if (old_id) {
+    const result = await buildQuery(
+      server,
+      `SELECT id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}, old_id
+      FROM events WHERE old_id = $1`,
+      z.tuple([z.int()]),
+      EventSchema,
+    )(parseInt(old_id, 10));
+
+    return result;
+  }
+
   const result = await buildQuery(
     server,
     `SELECT id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}, old_id

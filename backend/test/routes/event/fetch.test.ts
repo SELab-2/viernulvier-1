@@ -71,6 +71,16 @@ beforeAll(async () => {
       return Promise.resolve({ rows: [] });
     }
 
+    if (query.includes("WHERE old_id = $1")) {
+      const oldId: number = params?.[0] as number;
+      const event = mockEvents.find(e => e.old_id === oldId);
+      if (event) {
+        return Promise.resolve({ rows: [event] });
+      }
+      return Promise.resolve({ rows: [] });
+    }
+
+
     // Handle single event fetch by ID
     if (query.includes("WHERE id = $1")) {
       const id: number = params?.[0] as number;
@@ -179,6 +189,43 @@ describe("Event Fetch Routes", () => {
           doors_at: mockEvents[2]!.doors_at.toISOString(),
         },
       ]);
+    });
+
+    test("GET /api/v1/event with old_id filter", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/event?old_id=12346",
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual(mockEvents[1]);
+    });
+
+    test("returns empty array when no events are found", async () => {
+      const originalQuery = server.pg.query;
+      server.pg.query = vi.fn().mockResolvedValue({ rows: [] });
+
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/event",
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual([]);
+
+      server.pg.query = originalQuery;
+    });
+
+    test("returns 500 when database row is invalid", async () => {
+      const originalQuery = server.pg.query;
+      server.pg.query = vi.fn().mockResolvedValue({ rows: [mockInvalidEvent] });
+
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/event",
+      });
+      expect(response.statusCode).toBe(500);
+
+      server.pg.query = originalQuery;
     });
   });
 
