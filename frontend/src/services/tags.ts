@@ -207,7 +207,7 @@ export async function updateTag(
  * @throws {ApiError} 404 — tag not found.
  */
 export async function deleteTag(id: number): Promise<void> {
-  await await apiFetch<void>(`/tags/${id}`, { method: "DELETE" });
+  await apiFetch<void>(`/tags/${id}`, { method: "DELETE" });
 }
 
 // ---------------------------------------------------------------------------
