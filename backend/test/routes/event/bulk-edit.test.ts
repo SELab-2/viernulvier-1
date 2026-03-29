@@ -9,6 +9,7 @@ let sessionCookie: string;
 
 const baseEvent = {
   id: 1,
+  old_id: 111,
   starts_at: new Date("2026-01-01T18:00:00.000Z"),
   ends_at: new Date("2026-01-01T20:00:00.000Z"),
   production: 10,
@@ -30,7 +31,7 @@ beforeAll(async () => {
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     if (query.includes("UPDATE events")) {
-      const id = Number(params?.[9]);
+      const id = Number(params?.[10]);
       const index = storedEvents.findIndex((event) => Number(event.id) === id);
       if (index === -1) return Promise.resolve({ rows: [] });
 
@@ -38,13 +39,14 @@ beforeAll(async () => {
       const current = storedEvents[index]!;
       const updated = {
         ...current,
-        starts_at: (params?.[0] as Date | undefined) ?? current["starts_at"],
-        ends_at: (params?.[1] as Date | undefined) ?? current["ends_at"],
-        production: (params?.[2] as number | undefined) ?? current["production"],
-        hall: (params?.[3] as number | undefined) ?? current["hall"],
-        doors_at: (params?.[4] as Date | undefined) ?? current["doors_at"],
-        vendor_id: (params?.[5] as number | undefined) ?? current["vendor_id"],
-        info: params?.[6] ?? current["info"],
+        old_id: (params?.[0] as number | undefined) ?? current["old_id"],
+        starts_at: (params?.[1] as Date | undefined) ?? current["starts_at"],
+        ends_at: (params?.[2] as Date | undefined) ?? current["ends_at"],
+        production: (params?.[3] as number | undefined) ?? current["production"],
+        hall: (params?.[4] as number | undefined) ?? current["hall"],
+        doors_at: (params?.[5] as Date | undefined) ?? current["doors_at"],
+        vendor_id: (params?.[6] as number | undefined) ?? current["vendor_id"],
+        info: params?.[7] ?? current["info"],
       };
 
       // eslint-disable-next-line security/detect-object-injection

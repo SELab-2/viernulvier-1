@@ -12,6 +12,7 @@ let shouldRejectQuery = false;
 let sessionCookie: string;
 
 const basePayload = {
+  old_id: 111,
   starts_at: "2026-01-01T18:00:00.000Z",
   ends_at: "2026-01-01T20:00:00.000Z",
   production: 10,
@@ -38,18 +39,19 @@ beforeAll(async () => {
     }
 
     if (query.includes("INSERT INTO events")) {
-      const vendorId = params?.[5] as number;
+      const vendorId = params?.[6] as number;
       if (vendorId === 404) return Promise.resolve({ rows: [] });
 
       const createdEvent = {
         id: idCounter++,
-        starts_at: params?.[0] as Date,
-        ends_at: params?.[1] as Date,
-        production: params?.[2] as number,
-        hall: params?.[3] as number,
-        doors_at: params?.[4] as Date,
-        vendor_id: params?.[5] as number,
-        info: params?.[6],
+        old_id: params?.[0] as number,
+        starts_at: params?.[1] as Date,
+        ends_at: params?.[2] as Date,
+        production: params?.[3] as number,
+        hall: params?.[4] as number,
+        doors_at: params?.[5] as Date,
+        vendor_id: params?.[6] as number,
+        info: params?.[7],
       };
 
       storedEvents.push(createdEvent);
@@ -158,9 +160,9 @@ describe("Event Create Routes", () => {
       });
       expect(queryMock).toHaveBeenCalledOnce();
       const params = queryMock.mock.calls[0]?.[1] as unknown[];
-      expect(params[0]).toBeInstanceOf(Date);
       expect(params[1]).toBeInstanceOf(Date);
-      expect(params[4]).toBeInstanceOf(Date);
+      expect(params[2]).toBeInstanceOf(Date);
+      expect(params[5]).toBeInstanceOf(Date);
     });
   });
 });

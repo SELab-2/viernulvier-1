@@ -9,6 +9,7 @@ let sessionCookie: string;
 
 const baseEvent = {
   id: 1,
+  old_id: 111,
   starts_at: new Date("2026-01-01T18:00:00.000Z"),
   ends_at: new Date("2026-01-01T20:00:00.000Z"),
   production: 10,
@@ -24,8 +25,8 @@ const baseEvent = {
 
 const initialEvents = [
   baseEvent,
-  { ...baseEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" } },
-  { ...baseEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" } },
+  { ...baseEvent, id: 2, old_id: 112, production: 11, hall: 4, info: { nl: "Info mock 2" } },
+  { ...baseEvent, id: 3, old_id: 113, production: 12, hall: 5, info: { nl: "Info mock 3" } },
 ];
 
 beforeAll(async () => {
@@ -34,7 +35,7 @@ beforeAll(async () => {
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     if (query.includes("UPDATE events")) {
-      const id = Number(params?.[9]);
+      const id = Number(params?.[10]);
       const index = storedEvents.findIndex((event) => Number(event.id) === id);
       if (index === -1) return Promise.resolve({ rows: [] });
 
@@ -42,15 +43,16 @@ beforeAll(async () => {
       const current = storedEvents[index]!;
       const updated = {
         ...current,
-        starts_at: (params?.[0] as Date | undefined) ?? current["starts_at"],
-        ends_at: (params?.[1] as Date | undefined) ?? current["ends_at"],
-        production: (params?.[2] as number | undefined) ?? current["production"],
-        hall: (params?.[3] as number | undefined) ?? current["hall"],
-        doors_at: (params?.[4] as Date | undefined) ?? current["doors_at"],
-        vendor_id: (params?.[5] as number | undefined) ?? current["vendor_id"],
-        info: params?.[6] ?? current["info"],
-        updated_at: params?.[7] ? new Date(params?.[7] as string) : new Date(),
-        updated_by: params?.[8],
+        old_id: (params?.[0] as number | undefined) ?? current["old_id"],
+        starts_at: (params?.[1] as Date | undefined) ?? current["starts_at"],
+        ends_at: (params?.[2] as Date | undefined) ?? current["ends_at"],
+        production: (params?.[3] as number | undefined) ?? current["production"],
+        hall: (params?.[4] as number | undefined) ?? current["hall"],
+        doors_at: (params?.[5] as Date | undefined) ?? current["doors_at"],
+        vendor_id: (params?.[6] as number | undefined) ?? current["vendor_id"],
+        info: params?.[7] ?? current["info"],
+        updated_at: params?.[8] ? new Date(params?.[8] as string) : new Date(),
+        updated_by: params?.[9],
       };
 
       // eslint-disable-next-line security/detect-object-injection
@@ -89,6 +91,7 @@ beforeEach(() => {
 describe("Event Replace Routes", () => {
   describe("error handling", () => {
     const replacement = {
+      old_id: 112,
       starts_at: new Date("2026-03-01T18:00:00.000Z"),
       ends_at: new Date("2026-03-01T21:00:00.000Z"),
       production: 19,
@@ -165,6 +168,7 @@ describe("Event Replace Routes", () => {
 
   describe("replacing events", () => {
     const replacement = {
+      old_id: 112,
       starts_at: new Date("2026-03-01T18:00:00.000Z"),
       ends_at: new Date("2026-03-01T21:00:00.000Z"),
       production: 19,
@@ -187,6 +191,7 @@ describe("Event Replace Routes", () => {
       expect(replaceResponse.json()).toEqual({
         ...replacement,
         id: 1,
+        old_id: replacement.old_id,
         price: [],
         starts_at: replacement.starts_at.toISOString(),
         ends_at: replacement.ends_at.toISOString(),
@@ -213,6 +218,7 @@ describe("Event Replace Routes", () => {
       
       // Check first event (the replaced one) has updated data and metadata
       expect(events[0]!.id).toBe(1);
+      expect(events[0]!.old_id).toBe(replacement.old_id);
       expect(events[0]!.starts_at).toBe(replacement.starts_at.toISOString());
       expect(events[0]!.ends_at).toBe(replacement.ends_at.toISOString());
       expect(events[0]!.doors_at).toBe(replacement.doors_at.toISOString());
