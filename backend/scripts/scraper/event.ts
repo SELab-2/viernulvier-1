@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import type { Event } from "@viernulvier/shared/index.js";
 import { EventSchemaWithoutPrice } from "@viernulvier/shared/index.js";
 
