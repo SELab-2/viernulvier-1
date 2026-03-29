@@ -14,6 +14,7 @@ const insertHall = (server: FastifyInstance) =>
      VALUES ($1, $2, $3, $4, $4, $5, $5)
      RETURNING id, name, address, vendor_id`,
     z.tuple([
+      z.int().nonnegative().nullable(), // old_id
       languageMap,            // name
       z.string(),             // address
       z.int().nonnegative(),  // vendor_id
@@ -35,6 +36,7 @@ export async function createHall(server: FastifyInstance, request: FastifyReques
   const { admin, current_time } = getMetadata(request);
 
   const rows = await insertHall(server)(
+    body["old_id"],
     body["name"],
     body["address"],
     body["vendor_id"],
