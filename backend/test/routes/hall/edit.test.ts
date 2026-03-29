@@ -12,7 +12,6 @@ const originalHall: Hall = {
   old_id: 111,
   name: { nl: "Grote Zaal" },
   address: "Sint-Pietersnieuwstraat 23",
-  vendor_id: 42,
 };
 
 const updatedHallA: Hall = {
@@ -23,7 +22,7 @@ const updatedHallA: Hall = {
 
 const updatedHallB: Hall = {
   ...originalHall,
-  vendor_id: 99,
+  name: { nl: "Naam B" },
 };
 
 const updatedHallC: Hall = {
@@ -70,7 +69,7 @@ describe("Edit on hall route", () => {
     expect(HallSchema.parse(response.json())).toEqual(updatedHallA);
   });
 
-  test("PATCH /api/v1/hall/:id — updates vendor_id", async () => {
+  test("PATCH /api/v1/hall/:id — updates name", async () => {
     server.pg.query = vi.fn().mockImplementation((query: string) => {
       const upper = query.trim().toUpperCase();
 
@@ -86,7 +85,7 @@ describe("Edit on hall route", () => {
       url: `/api/v1/hall/${originalHall["id"]}`,
       cookies: { session: sessionCookie },
       payload: {
-        vendor_id: updatedHallB["vendor_id"],
+        name: updatedHallB["name"],
       },
     });
 
@@ -135,7 +134,7 @@ describe("Edit on hall route", () => {
       url: `/api/v1/hall/${originalHall["id"]}`,
       cookies: { session: sessionCookie },
       payload: {
-        vendor_id: "geen nummer",
+        name: "geen object",
       },
     });
 

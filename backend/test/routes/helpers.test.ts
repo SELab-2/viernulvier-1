@@ -2,6 +2,7 @@ import {
   HttpError,
   parseSchema,
   parseParams,
+  parseUser,
   ParseContext,
   HttpClientError,
   HttpServerError,
@@ -195,6 +196,25 @@ describe(parseParams, () => {
       });
       expect(exampleRequest.log.error).not.toBeCalled();
     });
+  });
+});
+
+describe(parseUser, () => {
+  const defaultUser = {id: 404, username: "Karel"};
+
+  const generateExampleRequest = (user?: Record<string, string>) =>
+    ({
+      user: user ?? defaultUser,
+      log: { error: vi.fn() },
+    }) as unknown as FastifyRequest;
+
+  test("Success", () => {
+    const user = parseUser(generateExampleRequest());
+    expect(user).toEqual(defaultUser);
+  });
+
+  test("Error", () => {
+    expect(() => parseUser(generateExampleRequest({ id: "not a number", username: "" }))).toThrowError("Invalid request data");
   });
 });
 

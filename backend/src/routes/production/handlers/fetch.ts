@@ -1,14 +1,12 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import type { Production, ProductionWithMeta } from "@viernulvier/shared/index.js";
-import { ProductionSchema, stringToInt } from "@viernulvier/shared/index.js";
+import type {ProductionWithBackwardsRefs, ProductionWithMeta} from "@viernulvier/shared/index.js";
+import {ProductionSchema, ProductionSchemaWithBackwardsRefs, stringToInt} from "@viernulvier/shared/index.js";
 import { parseParams, parseSchema, ParseContext } from "@/routes/helpers.js";
 import z from "zod";
 
 const ProductionSelect = `
 SELECT
   p.id,
-  p.vendor_id,
-  p.box_office_id,
   (SELECT COALESCE(ARRAY_AGG(e.id), '{}') FROM event e WHERE e.production = p.id) AS events,
   p.supertitle,
   p.title,
@@ -35,10 +33,13 @@ FROM production p
  * @param id - The production ID to fetch.
  * @returns The production, or `null` if not found or parsing failed.
  */
-export async function getProductionById(server: FastifyInstance, id: string | number): Promise<Production | null> {
-  const result = await server.pg.query<Production>(`${ProductionSelect} WHERE p.id = $1`, [id]);
+export async function getProductionById(server: FastifyInstance, id: string | number): Promise<ProductionWithBackwardsRefs | null> {
+  const result = await server.pg.query<ProductionWithBackwardsRefs>(
+    `${ProductionSelect} WHERE p.id = $1`,
+    [id],
+  );
 
-  return parseSchema(server, z.array(ProductionSchema), result.rows, ParseContext.Database)[0] ?? null;
+  return parseSchema(server, z.array(ProductionSchemaWithBackwardsRefs), result.rows, ParseContext.Database)[0] ?? null;
 }
 
 /**
@@ -48,17 +49,17 @@ export async function getProductionById(server: FastifyInstance, id: string | nu
  * @param ids - The production IDs to fetch.
  * @returns The productions that were found, preserving the input ID order.
  */
-export async function getProductionsByIds(server: FastifyInstance, ids: number[]): Promise<Production[]> {
+export async function getProductionsByIds(server: FastifyInstance, ids: number[]): Promise<ProductionWithBackwardsRefs[]> {
   if (ids.length === 0) return [];
 
-  const result = await server.pg.query<Production>(
+  const result = await server.pg.query<ProductionWithBackwardsRefs>(
     `${ProductionSelect}
      WHERE p.id = ANY($1::int[])
      ORDER BY array_position($1::int[], p.id)`,
     [ids],
   );
 
-  return parseSchema(server, z.array(ProductionSchema), result.rows, ParseContext.Database);
+  return parseSchema(server, z.array(ProductionSchemaWithBackwardsRefs), result.rows, ParseContext.Database);
 }
 
 /**
@@ -68,7 +69,7 @@ export async function getProductionsByIds(server: FastifyInstance, ids: number[]
  * @param request - The Fastify request, expected to contain `id` in its params.
  * @returns The production, or `null` if not found or parsing failed.
  */
-export async function fetchProduction(server: FastifyInstance, request: FastifyRequest): Promise<Production | null> {
+export async function fetchProduction(server: FastifyInstance, request: FastifyRequest): Promise<ProductionWithBackwardsRefs | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   return await getProductionById(server, id);
 }
@@ -88,8 +89,6 @@ export async function fetchProductionWithMeta(
   const result = await server.pg.query<ProductionWithMeta>(
     `SELECT
        p.id,
-       p.vendor_id,
-       p.box_office_id,
        p.supertitle,
        p.title,
        p.artist,
@@ -123,9 +122,11 @@ export async function fetchProductionWithMeta(
  * @param _request - The Fastify request (currently unused, reserved for future filters).
  * @returns The list of productions, or `null` if parsing failed.
  */
-export async function fetchProductions(server: FastifyInstance, _request: FastifyRequest): Promise<Production[] | null> {
-  const result = await server.pg.query<Production>(`${ProductionSelect} ORDER BY p.id ASC`);
+export async function fetchProductions(server: FastifyInstance, _request: FastifyRequest): Promise<ProductionWithBackwardsRefs[] | null> {
+  const result = await server.pg.query<ProductionWithBackwardsRefs>(
+    `${ProductionSelect} ORDER BY p.id ASC`,
+  );
 
-  return parseSchema(server, z.array(ProductionSchema), result.rows, ParseContext.Database);
+  return parseSchema(server, z.array(ProductionSchemaWithBackwardsRefs), result.rows, ParseContext.Database);
 }
 

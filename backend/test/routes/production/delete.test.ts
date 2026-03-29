@@ -2,14 +2,13 @@ import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vit
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
+import { productionRowWithRefs } from "./fixtures.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
 
 const mockProduction: Production = {
   id: 1,
-  vendor_id: 10,
-  box_office_id: 20,
   old_id: 1111,
   finalized: true,
   supertitle: null,
@@ -47,7 +46,10 @@ describe("Delete on production route", () => {
       const upper = query.trim().toUpperCase();
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [mockProduction], rowCount: 1 });
+        return Promise.resolve({
+          rows: [productionRowWithRefs(mockProduction)],
+          rowCount: 1,
+        });
       }
 
       if (upper.startsWith("DELETE")) {

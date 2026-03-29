@@ -152,7 +152,7 @@ describe("Auth route integration", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ success: true });
+    expect(response.json()).toEqual({ token: expect.any(String) });
 
     const cookie = response.cookies.find((c) => c.name === "session");
     expect(cookie).toBeDefined();

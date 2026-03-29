@@ -12,7 +12,6 @@ const replacedHall: Hall = {
   old_id: 111,
   name: { nl: "Nieuwe Grote Zaal" },
   address: "Nieuw Adres 1",
-  vendor_id: 99,
 };
 
 beforeAll(async () => {
@@ -48,7 +47,6 @@ describe("Replace on hall route", () => {
         old_id: replacedHall["old_id"],
         name: replacedHall["name"],
         address: replacedHall["address"],
-        vendor_id: replacedHall["vendor_id"],
       },
     });
 
@@ -67,7 +65,6 @@ describe("Replace on hall route", () => {
         old_id: replacedHall["old_id"],
         name: replacedHall["name"],
         address: replacedHall["address"],
-        vendor_id: replacedHall["vendor_id"],
       },
     });
 
@@ -95,7 +92,6 @@ describe("Replace on hall route", () => {
         old_id: replacedHall["old_id"],
         name: replacedHall["name"],
         address: replacedHall["address"],
-        vendor_id: replacedHall["vendor_id"],
       },
     });
 

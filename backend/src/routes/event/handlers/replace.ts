@@ -32,7 +32,6 @@ export async function replaceEvent(
     body.production,
     body.hall,
     body.doors_at,
-    body.vendor_id,
     body.info,
     current_time,
     admin,

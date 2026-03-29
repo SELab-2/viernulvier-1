@@ -3,14 +3,13 @@ import { buildServer } from "@/server.js";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
 import { bulkEditProductions } from "@/routes/production/handlers/bulk-edit.js";
+import { productionRowWithRefs, productionRowWithRefsAlt } from "./fixtures.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
 
 const baseProduction1: Production = {
   id: 1,
-  vendor_id: 10,
-  box_office_id: 20,
   old_id: 1111,
   finalized: true,
   supertitle: null,
@@ -61,8 +60,6 @@ const updatedBulkB2: Production = {
 
 const updatedBulkC1: Production = {
   ...baseProduction1,
-  vendor_id: 88,
-  box_office_id: 66,
   supertitle: { nl: "Bulk C supertitle" },
   title: { nl: "Bulk C titel" },
   artist: { nl: "Bulk C artiest" },
@@ -81,8 +78,6 @@ const updatedBulkC1: Production = {
 
 const updatedBulkC2: Production = {
   ...baseProduction2,
-  vendor_id: 88,
-  box_office_id: 66,
   supertitle: { nl: "Bulk C supertitle" },
   title: { nl: "Bulk C titel" },
   artist: { nl: "Bulk C artiest" },
@@ -127,7 +122,13 @@ describe("Bulk edit on production route", () => {
 
       if (upper.startsWith("SELECT")) {
         expect(params?.[0]).toEqual(ids);
-        return Promise.resolve({ rows: [updatedBulkA1, updatedBulkA2], rowCount: 2 });
+        return Promise.resolve({
+          rows: [
+            productionRowWithRefs(updatedBulkA1),
+            productionRowWithRefsAlt(updatedBulkA2),
+          ],
+          rowCount: 2,
+        });
       }
 
       throw new Error(`Unexpected query in bulk-edit tests A: ${query}`);
@@ -167,7 +168,13 @@ describe("Bulk edit on production route", () => {
 
       if (upper.startsWith("SELECT")) {
         expect(params?.[0]).toEqual(ids);
-        return Promise.resolve({ rows: [updatedBulkB1, updatedBulkB2], rowCount: 2 });
+        return Promise.resolve({
+          rows: [
+            productionRowWithRefs(updatedBulkB1),
+            productionRowWithRefsAlt(updatedBulkB2),
+          ],
+          rowCount: 2,
+        });
       }
 
       throw new Error(`Unexpected query in bulk-edit tests B: ${query}`);
@@ -237,7 +244,13 @@ describe("Bulk edit on production route", () => {
 
       if (upper.startsWith("SELECT")) {
         expect(params?.[0]).toEqual(ids);
-        return Promise.resolve({ rows: [updatedBulkC1, updatedBulkC2], rowCount: 2 });
+        return Promise.resolve({
+          rows: [
+            productionRowWithRefs(updatedBulkC1),
+            productionRowWithRefsAlt(updatedBulkC2),
+          ],
+          rowCount: 2,
+        });
       }
 
       throw new Error(`Unexpected query in bulk-edit tests C: ${query}`);
@@ -250,8 +263,6 @@ describe("Bulk edit on production route", () => {
       payload: {
         ids,
         data: {
-          vendor_id: 88,
-          box_office_id: 66,
           supertitle: { nl: "Bulk C supertitle" },
           title: { nl: "Bulk C titel" },
           artist: { nl: "Bulk C artiest" },
@@ -291,7 +302,13 @@ describe("Bulk edit on production route", () => {
 
       if (upper.startsWith("SELECT")) {
         expect(params?.[0]).toEqual(ids);
-        return Promise.resolve({ rows: [baseProduction1, baseProduction2], rowCount: 2 });
+        return Promise.resolve({
+          rows: [
+            productionRowWithRefs(baseProduction1),
+            productionRowWithRefsAlt(baseProduction2),
+          ],
+          rowCount: 2,
+        });
       }
 
       throw new Error(`Unexpected query in bulk-edit null test: ${query}`);
@@ -334,7 +351,7 @@ describe("Bulk edit on production route", () => {
         body: {
           ids,
           data: {
-            vendor_id: undefined,
+            title: undefined,
           },
         },
       } as unknown as FastifyRequest),

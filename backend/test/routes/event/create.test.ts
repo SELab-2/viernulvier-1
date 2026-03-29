@@ -1,4 +1,4 @@
-﻿import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import type { FastifyInstance } from "fastify";
 
 import { buildServer } from "@/server.js";
@@ -18,15 +18,11 @@ const basePayload = {
   production: 10,
   hall: 3,
   doors_at: "2026-01-01T17:30:00.000Z",
-  vendor_id: 42,
   info: { nl: "Info mock create" },
 };
 
-function buildPayload(vendorId: number) {
-  return {
-    ...basePayload,
-    vendor_id: vendorId,
-  };
+function buildPayload() {
+  return basePayload;
 }
 
 beforeAll(async () => {
@@ -38,10 +34,7 @@ beforeAll(async () => {
       return Promise.reject(new Error("Database error"));
     }
 
-    if (query.includes("INSERT INTO events")) {
-      const vendorId = params?.[6] as number;
-      if (vendorId === 404) return Promise.resolve({ rows: [] });
-
+    if (query.includes("INSERT INTO event")) {
       const createdEvent = {
         id: idCounter++,
         old_id: params?.[0] as number,
@@ -50,8 +43,7 @@ beforeAll(async () => {
         production: params?.[3] as number,
         hall: params?.[4] as number,
         doors_at: params?.[5] as Date,
-        vendor_id: params?.[6] as number,
-        info: params?.[7],
+        info: params?.[6],
       };
 
       storedEvents.push(createdEvent);
@@ -59,13 +51,13 @@ beforeAll(async () => {
       return Promise.resolve({ rows: [event] });
     }
 
-    if (query.includes("FROM events WHERE id = $1")) {
+    if (query.includes("FROM event WHERE id = $1")) {
       const id = Number(params?.[0]);
       const event = storedEvents.find((row) => Number(row["id"]) === id);
       return Promise.resolve({ rows: event ? [{ ...event, price: [] }] : [] });
     }
 
-    if (query.includes("FROM events")) {
+    if (query.includes("FROM event") && !query.includes("WHERE id = $1")) {
       const events = storedEvents.map((row) => ({ ...row, price: [] }));
       return Promise.resolve({ rows: events });
     }
@@ -97,7 +89,7 @@ describe("Event Create Routes", () => {
       const response = await server.inject({
         method: "POST",
         url: "/api/v1/event",
-        payload: buildPayload(42),
+        payload: buildPayload(),
         cookies: { session: sessionCookie },
       });
 
@@ -110,7 +102,6 @@ describe("Event Create Routes", () => {
         url: "/api/v1/event",
         payload: {
           id: 1,
-          vendor_id: 42,
         },
         cookies: { session: sessionCookie },
       });
@@ -121,22 +112,25 @@ describe("Event Create Routes", () => {
     });
 
     test("returns 404 when created row is not returned", async () => {
+      const originalMock = server.pg.query;
+      server.pg.query = vi.fn().mockResolvedValue({ rows: [] }) as unknown as typeof server.pg.query;
       const response = await server.inject({
         method: "POST",
         url: "/api/v1/event",
-        payload: buildPayload(404),
+        payload: buildPayload(),
         cookies: { session: sessionCookie },
       });
 
       expect(response.statusCode).toBe(404);
       expect(response.json()).toEqual({ error: "Not Found" });
+      server.pg.query = originalMock;
     });
 
     test("requires authentication", async () => {
       const response = await server.inject({
         method: "POST",
         url: "/api/v1/event",
-        payload: buildPayload(42),
+        payload: buildPayload(),
       });
 
       expect(response.statusCode).toBe(401);

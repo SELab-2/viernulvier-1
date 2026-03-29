@@ -11,7 +11,6 @@ export const EventSchemaWithoutPrice = createSchema({
   starts_at: z.date(),
   ends_at: z.date(),
   doors_at: z.date(),
-  vendor_id: z.int().nonnegative(),
   info: languageMap,
   get production(): ForeignKey<typeof ProductionSchema> {
     return foreignKey(() => ProductionSchema);
@@ -21,6 +20,7 @@ export const EventSchemaWithoutPrice = createSchema({
   },
 
   // unnecessary
+  // vendor_id: z.int().nonnegative(),
   // box_office_id: z.int().nonnegative(),
   // status: languageMap,
   // intermission_at: z.date().nullable(),

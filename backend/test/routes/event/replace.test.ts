@@ -15,7 +15,6 @@ const baseEvent = {
   production: 10,
   hall: 3,
   doors_at: new Date("2026-01-01T17:30:00.000Z"),
-  vendor_id: 42,
   info: { nl: "Info mock 1" },
   created_by: 1,
   created_at: new Date("2026-01-01T10:00:00.000Z"),
@@ -35,7 +34,7 @@ beforeAll(async () => {
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     if (query.includes("UPDATE events")) {
-      const id = Number(params?.[10]);
+      const id = Number(params?.[9]);
       const index = storedEvents.findIndex((event) => Number(event.id) === id);
       if (index === -1) return Promise.resolve({ rows: [] });
 
@@ -49,10 +48,9 @@ beforeAll(async () => {
         production: (params?.[3] as number | undefined) ?? current["production"],
         hall: (params?.[4] as number | undefined) ?? current["hall"],
         doors_at: (params?.[5] as Date | undefined) ?? current["doors_at"],
-        vendor_id: (params?.[6] as number | undefined) ?? current["vendor_id"],
-        info: params?.[7] ?? current["info"],
-        updated_at: params?.[8] ? new Date(params?.[8] as string) : new Date(),
-        updated_by: params?.[9],
+        info: params?.[6] ?? current["info"],
+        updated_at: params?.[7] ? new Date(params?.[7] as string) : new Date(),
+        updated_by: params?.[8],
       };
 
       // eslint-disable-next-line security/detect-object-injection
@@ -61,7 +59,7 @@ beforeAll(async () => {
       return Promise.resolve({ rows: [event] });
     }
 
-    if (query.includes("FROM events WHERE id = $1")) {
+    if (query.includes("FROM event WHERE id = $1")) {
       const id = Number(params?.[0]);
       const foundEvent = storedEvents.find((row) => Number(row.id) === id);
       if (!foundEvent) return Promise.resolve({ rows: [] });
@@ -69,7 +67,7 @@ beforeAll(async () => {
       return Promise.resolve({ rows: [event] });
     }
 
-    if (query.includes("FROM events")) {
+    if (query.includes("FROM event") && !query.includes("WHERE id = $1")) {
       const events = storedEvents.map((row) => ({ ...row, price: [] }));
       return Promise.resolve({ rows: events });
     }
@@ -97,7 +95,6 @@ describe("Event Replace Routes", () => {
       production: 19,
       hall: 8,
       doors_at: new Date("2026-03-01T17:00:00.000Z"),
-      vendor_id: 190,
       info: { nl: "Info inserted" },
     };
     test("returns 500 when database query fails", async () => {
@@ -174,7 +171,6 @@ describe("Event Replace Routes", () => {
       production: 19,
       hall: 8,
       doors_at: new Date("2026-03-01T17:00:00.000Z"),
-      vendor_id: 190,
       info: { nl: "Info replaced" },
     };
 
@@ -224,7 +220,6 @@ describe("Event Replace Routes", () => {
       expect(events[0]!.doors_at).toBe(replacement.doors_at.toISOString());
       expect(events[0]!.production).toBe(replacement.production);
       expect(events[0]!.hall).toBe(replacement.hall);
-      expect(events[0]!.vendor_id).toBe(replacement.vendor_id);
       expect(events[0]!.info).toEqual(replacement.info);
       
       // Check other events are unchanged

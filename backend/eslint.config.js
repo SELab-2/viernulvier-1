@@ -119,6 +119,14 @@ export default defineConfig([
     }
   },
 
+  // Legacy CSV import modules: fs paths are argv-driven (trusted CLI); rule is noise here.
+  {
+    files: ["src/legacy-import/**/*.ts"],
+    rules: {
+      "security/detect-non-literal-fs-filename": "off",
+    },
+  },
+
   // --------------------------------------------------
   // Tests (Vitest / Jest style)
   // --------------------------------------------------
@@ -137,6 +145,9 @@ export default defineConfig([
     rules: {
       "n/no-unpublished-import": "off",
       "@typescript-eslint/no-floating-promises": "off",
+
+      // Tests use temp paths and fixtures; non-literal fs paths are intentional.
+      "security/detect-non-literal-fs-filename": "off",
 
       "@typescript-eslint/no-unused-vars": [
         "warn",

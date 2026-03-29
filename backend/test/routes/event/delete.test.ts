@@ -15,7 +15,6 @@ const baseEvent = {
   production: 10,
   hall: 3,
   doors_at: new Date("2026-01-01T17:30:00.000Z"),
-  vendor_id: 42,
   info: { nl: "Info mock 1" },
   price: [1],
 };
@@ -31,7 +30,7 @@ beforeAll(async () => {
   sessionCookie = server.jwt.sign({ id: 1, username: "TestAdmin" });
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
-    if (query.includes("DELETE FROM events WHERE id = $1")) {
+    if (query.includes("DELETE FROM event WHERE id = $1")) {
       const id = Number(params?.[0]);
       const index = storedEvents.findIndex((event) => Number(event["id"]) === id);
       if (index === -1) return Promise.resolve({ rows: [] });
@@ -39,13 +38,13 @@ beforeAll(async () => {
       return Promise.resolve({ rows: deleted });
     }
 
-    if (query.includes("FROM events WHERE id = $1")) {
+    if (query.includes("FROM event WHERE id = $1")) {
       const id = Number(params?.[0]);
       const event = storedEvents.find((row) => Number(row["id"]) === id);
       return Promise.resolve({ rows: event ? [event] : [] });
     }
 
-    if (query.includes("FROM events")) {
+    if (query.includes("FROM event") && !query.includes("WHERE id = $1")) {
       return Promise.resolve({ rows: storedEvents });
     }
 

@@ -31,7 +31,6 @@ export async function editHall(server: FastifyInstance, request: FastifyRequest)
   addField("old_id", body["old_id"]);
   addField("name", body["name"]);
   addField("address", body["address"]);
-  addField("vendor_id", body["vendor_id"]);
 
   if (fields.length === 0) {
     throw new HttpError(HttpClientError.BadRequest, "No fields to update");
@@ -42,7 +41,7 @@ export async function editHall(server: FastifyInstance, request: FastifyRequest)
 
   const result = await server.pg.query<Hall>(
     `UPDATE hall SET ${fields.join(", ")} WHERE id = $${i}
-     RETURNING id, old_id, name, address, vendor_id`,
+     RETURNING id, old_id, name, address`,
     values,
   );
 

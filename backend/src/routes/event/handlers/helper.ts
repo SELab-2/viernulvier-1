@@ -88,16 +88,16 @@ export function normalizePartialEventDates(value: unknown): unknown {
 export const EventCreateSchema = EventSchemaWithoutPrice.omit({ id: true });
 export type EventCreate = z.infer<typeof EventCreateSchema>;
 
-export const selectPriceSubquery = `(SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price`;
+export const selectPriceSubquery = `(SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_price ep WHERE ep.event = event.id) AS price`;
 
 export function updateEvent(server: FastifyInstance) {
   return buildQuery(
     server,
-    `UPDATE events
-    SET old_id = $1, starts_at = $2, ends_at = $3, production = $4, hall = $5, doors_at = $6, vendor_id = $7, info = $8,
-        updated_at = $9, updated_by = $10
-    WHERE id = $11
-    RETURNING id, old_id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}`,
+    `UPDATE event
+    SET old_id = $1, starts_at = $2, ends_at = $3, production = $4, hall = $5, doors_at = $6, info = $7,
+        updated_at = $8, updated_by = $9
+    WHERE id = $9
+    RETURNING id, old_id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}`,
     z.tuple([
       EventCreateSchema.shape.old_id,
       EventCreateSchema.shape.starts_at,
@@ -105,7 +105,6 @@ export function updateEvent(server: FastifyInstance) {
       EventCreateSchema.shape.production,
       EventCreateSchema.shape.hall,
       EventCreateSchema.shape.doors_at,
-      EventCreateSchema.shape.vendor_id,
       EventCreateSchema.shape.info,
       z.date(),
       z.number().nonnegative(),
