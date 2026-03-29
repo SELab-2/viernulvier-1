@@ -154,11 +154,11 @@ describe("Event Price Edit Route", () => {
 
     test("requires authentication", async () => {
       const response = await server.inject({
-          method: "PATCH",
-          url: "/api/v1/event/price/1",
-          payload: {
-              amount: 29.99,
-          },
+        method: "PATCH",
+        url: "/api/v1/event/price/1",
+        payload: {
+          amount: 29.99,
+        },
       });
 
       expect(response.statusCode).toBe(401);
