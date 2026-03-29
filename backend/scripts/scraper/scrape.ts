@@ -5,5 +5,5 @@ if (!authToken) {
   console.error("VIERNULVIER_API_TOKEN is not set in the environment variables.");
   process.exit(1);
 }
-
+ 
 scrapeAllEvents(new Date(), authToken);
