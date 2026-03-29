@@ -30,6 +30,15 @@ const privateTag: Tag = {
   public: false,
 };
 
+/** Public tag with no production links — exercises `byTag.get(id) ?? []` when `includeProductions=true`. */
+const tagNoLinks: Tag = {
+  id: 42,
+  name: { en: "Concert", nl: "Concert" },
+  tag_type: 1,
+  productions: [],
+  public: true,
+};
+
 const tag1WithMeta = {
   ...tag1,
   created_at: new Date(),
@@ -38,7 +47,7 @@ const tag1WithMeta = {
   updated_by: 1,
 };
 
-const mockTags: Tag[] = [tag1, tag2, privateTag];
+const mockTags: Tag[] = [tag1, tag2, privateTag, tagNoLinks];
 
 /** List responses omit `productions` unless `includeProductions=true`. */
 const mockTagsListDefault: Tag[] = mockTags.map((t) => {
@@ -263,7 +272,7 @@ describe("Fetch tags for production", () => {
 
     expect(result).toEqual(
       mockTags
-        .filter((t) => t.productions.includes(1))
+        .filter((t) => (t.productions ?? []).includes(1))
         .map((t) => {
           const { productions: _, ...rest } = t;
           return rest;
@@ -280,7 +289,7 @@ describe("Fetch tags for production", () => {
 
     expect(response.statusCode).toBe(200);
     expect(TagSchema.array().parse(response.json())).toEqual(
-      mockTags.filter((t) => t.productions.includes(1)),
+      mockTags.filter((t) => (t.productions ?? []).includes(1)),
     );
   });
 
@@ -300,7 +309,7 @@ describe("Fetch visible tags for production", () => {
 
     expect(result).toEqual(
       mockTags
-        .filter((t) => t.public && t.productions.includes(1))
+        .filter((t) => t.public && (t.productions ?? []).includes(1))
         .map((t) => {
           const { productions: _, ...rest } = t;
           return rest;
@@ -316,7 +325,7 @@ describe("Fetch visible tags for production", () => {
 
     expect(response.statusCode).toBe(200);
     expect(TagSchema.array().parse(response.json())).toEqual(
-      mockTags.filter((t) => t.public && t.productions.includes(1)),
+      mockTags.filter((t) => t.public && (t.productions ?? []).includes(1)),
     );
   });
 
