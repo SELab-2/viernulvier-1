@@ -26,7 +26,7 @@ export async function createEvent(
 
   const result = await buildQuery(
     server,
-    `INSERT INTO events (starts_at, ends_at, production, hall, doors_at, vendor_id, info, created_at, updated_at, created_by, updated_by)
+    `INSERT INTO events (old_id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, created_at, updated_at, created_by, updated_by)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9, $10, $10)
       RETURNING id, old_id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}`,
     z.tuple([
