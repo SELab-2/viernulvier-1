@@ -9,20 +9,9 @@ SELECT id, name, tag_type, public
 FROM tag
 `;
 
-/** Row shape returned by tag SELECTs before `productions` is merged from `production_tag`. */
-const TagDbRowSchema = z.object({
-  id: TagSchema.shape.id,
-  name: TagSchema.shape.name,
-  tag_type: z.int().nonnegative(),
-  public: TagSchema.shape.public,
-});
-
-const TagDbRowWithMetaSchema = TagDbRowSchema.extend({
-  created_at: z.coerce.date(),
-  updated_at: z.coerce.date(),
-  created_by: z.int().nonnegative(),
-  updated_by: z.int().nonnegative(),
-});
+/** Tag row from SQL before `productions` is merged from `production_tag`. */
+const TagDbRowSchema = TagSchema.omit({ productions: true });
+const TagDbRowWithMetaSchema = TagSchema.withMeta().omit({ productions: true });
 
 const TagsListQuerySchema = z.object({
   production: stringToInt.optional(),
@@ -68,10 +57,7 @@ function tagsFromDbRows(
   byTag: Map<number, number[]>,
 ): Tag[] {
   return rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    type: row.tag_type,
-    public: row.public,
+    ...row,
     productions: byTag.get(row.id) ?? [],
   }));
 }
@@ -79,17 +65,10 @@ function tagsFromDbRows(
 function tagsWithMetaFromDbRows(
   rows: z.infer<typeof TagDbRowWithMetaSchema>[],
   byTag: Map<number, number[]>,
-) {
+): TagWithMeta[] {
   return rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    type: row.tag_type,
-    public: row.public,
+    ...row,
     productions: byTag.get(row.id) ?? [],
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-    created_by: row.created_by,
-    updated_by: row.updated_by,
   }));
 }
 
