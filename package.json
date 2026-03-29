@@ -15,7 +15,6 @@
     "lint-all": "pnpm i --frozen-lockfile && pnpm run --filter backend lint && pnpm run --filter frontend lint && pnpm run --filter shared lint",
     "lint:fix-all": "pnpm i --frozen-lockfile && pnpm run --filter backend lint:fix && pnpm run --filter frontend lint:fix && pnpm run --filter shared lint:fix",
     "coverage-all": "pnpm i --frozen-lockfile && pnpm run --filter backend coverage && pnpm run --filter frontend coverage",
-    "build-all": "pnpm i --frozen-lockfile && pnpm run --filter backend build && pnpm run --filter frontend build && pnpm run --filter shared build",
-    "generate-secret": "tsx backend/scripts/generate-secret.ts"
+    "build-all": "pnpm i --frozen-lockfile && pnpm run --filter backend build && pnpm run --filter frontend build && pnpm run --filter shared build"
   }
 }
