@@ -1,4 +1,4 @@
-import type { Event } from "@viernulvier/shared/index.js";
+// import type { Event } from "@viernulvier/shared/index.js";
 import { EventSchemaWithoutPrice } from "@viernulvier/shared/index.js";
 
 interface EventListMeta {
@@ -58,22 +58,22 @@ async function fetchPageRequest(
   return await response
 }
 
-async function fetchEventRequest(id: number, authToken: string) {
-  const url = `https://www.viernulvier.gent/api/v1/events/${id}`;
+// async function fetchEventRequest(id: number, authToken: string) {
+//   const url = `https://www.viernulvier.gent/api/v1/events/${id}`;
 
-  const response = await fetch(url, {
-    headers: {
-      accept: "application/ld+json",
-      "X-AUTH-TOKEN": authToken,
-    },
-  });
+//   const response = await fetch(url, {
+//     headers: {
+//       accept: "application/ld+json",
+//       "X-AUTH-TOKEN": authToken,
+//     },
+//   });
 
-  if (!response.ok) {
-    throw new Error(`API returned status ${response.status}`);
-  }
+//   if (!response.ok) {
+//     throw new Error(`API returned status ${response.status}`);
+//   }
 
-  return await response;
-}
+//   return await response;
+// }
 
 async function fetchEventsPage(
   page: number = 1,
@@ -115,7 +115,7 @@ async function processEvent(event: EventJSON) {
     return;
   }
 
-  const parsedEvent = eventParse.data as Event;
+  // const parsedEvent = eventParse.data as Event;
 }
 
 
@@ -128,7 +128,7 @@ export async function scrapeAllEvents(
   for (let page = 1; page <= totalPages; page++) {
     const data = await fetchEventsPage(page, beforeDate, authToken);
     for (const event of data.member) {
-      const id = event["@id"].split("/").pop() as unknown as number;
+      // const id = event["@id"].split("/").pop() as unknown as number;
       console.log(`Processing event ${event["@id"]} (${page}/${totalPages})`);
       await processEvent(event);
     }

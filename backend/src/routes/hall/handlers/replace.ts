@@ -9,10 +9,11 @@ const ReplaceHallBodySchema = HallSchema.omit({ id: true });
 const replaceHallQuery = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `UPDATE hall SET name = $1, address = $2, vendor_id = $3, updated_by = $4, updated_at = $5
-     WHERE id = $6
-     RETURNING id, name, address, vendor_id`,
+    `UPDATE hall SET old_id = $1, name = $2, address = $3, vendor_id = $4, updated_by = $5, updated_at = $6
+     WHERE id = $7
+     RETURNING id, old_id, name, address, vendor_id`,
     z.tuple([
+      z.int().nonnegative().nullable(), // old_id
       languageMap,           // name
       z.string(),            // address
       z.int().nonnegative(), // vendor_id
@@ -37,6 +38,7 @@ export async function replaceHall(server: FastifyInstance, request: FastifyReque
   const { admin, current_time } = getMetadata(request);
 
   const rows = await replaceHallQuery(server)(
+    body["old_id"],
     body["name"],
     body["address"],
     body["vendor_id"],

@@ -8,6 +8,7 @@ let sessionCookie: string;
 
 const tag1: Tag = {
   id: 5,
+  old_id: 111,
   name: { en: "Music", nl: "Muziek" },
   type: 1,
   productions: [1],
@@ -16,6 +17,7 @@ const tag1: Tag = {
 
 const tag2: Tag = {
   id: 6,
+  old_id: 112,
   name: { en: "Family", nl: "Familie" },
   type: 1,
   productions: [1, 2],
@@ -24,6 +26,7 @@ const tag2: Tag = {
 
 const privateTag: Tag = {
   id: 10,
+  old_id: 113,
   name: { en: "Private", nl: "Privé" },
   type: 1,
   productions: [1], // important for production tests

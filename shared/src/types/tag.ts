@@ -20,6 +20,7 @@ export type TagTypeWithMeta = z.infer<
 
 export const TagSchema = createSchema({
   id: primaryKey(),
+  old_id: z.int().nonnegative().nullable(),
   name: languageMap,
   get type(): ForeignKey<typeof TagTypeSchema> {
     return foreignKey(() => TagTypeSchema);

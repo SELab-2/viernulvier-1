@@ -9,7 +9,7 @@ async function fetchTag(
 ): Promise<Tag | null> {
 
   const result = await server.pg.query<Tag>(
-    `SELECT id, name, type_id, public
+    `SELECT id, old_id, name, type_id, public
      FROM tag
      WHERE id = $1`,
     [getParam(request, "id")],
@@ -24,7 +24,7 @@ async function fetchTagVisible(
 ): Promise<Tag | null> {
 
   const result = await server.pg.query<Tag>(
-    `SELECT id, name, type_id, public
+    `SELECT id, old_id, name, type_id, public
      FROM tag
      WHERE id = $1 AND public = true`,
     [getParam(request, "id")],
@@ -41,7 +41,7 @@ async function fetchTagWithMeta(
 ): Promise<TagWithMeta | null> {
 
   const result = await server.pg.query<TagWithMeta>(
-    `SELECT id, name, type_id, public,
+    `SELECT id, old_id, name, type_id, public,
             created_at, updated_at,
             created_by, updated_by
      FROM tag
@@ -62,7 +62,7 @@ async function fetchTags(
 
   if (production) {
     const result = await server.pg.query<Tag>(
-      `SELECT t.id, t.name, t.type_id, public
+      `SELECT t.id, t.old_id, t.name, t.type_id, t.public
        FROM tag t
        JOIN production_tag pt ON pt.tag_id = t.id
        WHERE pt.production_id = $1`,
@@ -73,7 +73,7 @@ async function fetchTags(
   }
 
   const result = await server.pg.query<Tag>(
-    `SELECT id, name, type_id, public FROM tag`,
+    `SELECT id, old_id, name, type_id, public FROM tag`,
   );
 
   return result.rows;
@@ -89,7 +89,7 @@ async function fetchTagsVisible(
 
   if (production) {
     const result = await server.pg.query<Tag>(
-      `SELECT t.id, t.name, t.type_id, public
+      `SELECT t.id, t.old_id, t.name, t.type_id, public
        FROM tag t
        JOIN production_tag pt ON pt.tag_id = t.id
        WHERE pt.production_id = $1 AND t.public = true`,
@@ -100,7 +100,7 @@ async function fetchTagsVisible(
   }
 
   const result = await server.pg.query<Tag>(
-    `SELECT id, name, type_id, public FROM tag WHERE public = true`,
+    `SELECT id, old_id, name, type_id, public FROM tag WHERE public = true`,
   );
 
   return result.rows;

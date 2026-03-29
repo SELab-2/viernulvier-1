@@ -9,6 +9,7 @@ let sessionCookie: string;
 
 const baseEvent = {
   id: 1,
+  old_id: 111,
   starts_at: new Date("2026-01-01T18:00:00.000Z"),
   ends_at: new Date("2026-01-01T20:00:00.000Z"),
   production: 10,
@@ -21,8 +22,8 @@ const baseEvent = {
 
 const initialEvents = [
   baseEvent,
-  { ...baseEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" }, price: [2] },
-  { ...baseEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" }, price: [3] },
+  { ...baseEvent, id: 2, old_id: 112, production: 11, hall: 4, info: { nl: "Info mock 2" }, price: [2] },
+  { ...baseEvent, id: 3, old_id: 113, production: 12, hall: 5, info: { nl: "Info mock 3" }, price: [3] },
 ];
 
 beforeAll(async () => {

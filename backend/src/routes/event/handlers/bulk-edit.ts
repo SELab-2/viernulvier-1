@@ -36,6 +36,7 @@ export async function editEvents(
   const existingEvents = selectedEvents as Event[];
 
   const updatedEvents = existingEvents.map((selectedEvent: Event) => ({
+    old_id: body.old_id ?? selectedEvent.old_id,
     starts_at: body.starts_at ?? selectedEvent.starts_at,
     ends_at: body.ends_at ?? selectedEvent.ends_at,
     production: body.production ?? selectedEvent.production,
@@ -49,6 +50,7 @@ export async function editEvents(
 
   const results = await Promise.all(
     updatedEvents.map((updatedEvent, index) => updateEvent(server)(
+      updatedEvent.old_id,
       updatedEvent.starts_at,
       updatedEvent.ends_at,
       updatedEvent.production,

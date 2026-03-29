@@ -10,6 +10,8 @@ const replacedProduction: Production = {
   id: 1,
   vendor_id: 111,
   box_office_id: 222,
+  old_id: 1111,
+  finalized: true,
   supertitle: { nl: "Nieuwe supertitel" },
   title: { nl: "Nieuwe titel" },
   artist: { nl: "Nieuwe artiest" },
@@ -62,6 +64,8 @@ describe("Replace on production route", () => {
       payload: {
         vendor_id: replacedProduction["vendor_id"],
         box_office_id: replacedProduction["box_office_id"],
+        old_id: replacedProduction["old_id"],
+        finalized: replacedProduction["finalized"],
         supertitle: replacedProduction["supertitle"],
         title: replacedProduction["title"],
         artist: replacedProduction["artist"],
@@ -106,6 +110,8 @@ describe("Replace on production route", () => {
       payload: {
         vendor_id: replacedProduction["vendor_id"],
         box_office_id: replacedProduction["box_office_id"],
+        old_id: replacedProduction["old_id"],
+        finalized: replacedProduction["finalized"],
         supertitle: replacedProduction["supertitle"],
         title: replacedProduction["title"],
         artist: replacedProduction["artist"],

@@ -9,6 +9,7 @@ let sessionCookie: string;
 
 const replacedHall: Hall = {
   id: 1,
+  old_id: 111,
   name: { nl: "Nieuwe Grote Zaal" },
   address: "Nieuw Adres 1",
   vendor_id: 99,
@@ -44,6 +45,7 @@ describe("Replace on hall route", () => {
       url: `/api/v1/hall/${replacedHall["id"]}`,
       cookies: { session: sessionCookie },
       payload: {
+        old_id: replacedHall["old_id"],
         name: replacedHall["name"],
         address: replacedHall["address"],
         vendor_id: replacedHall["vendor_id"],
@@ -62,6 +64,7 @@ describe("Replace on hall route", () => {
       url: `/api/v1/hall/${replacedHall["id"]}`,
       cookies: { session: sessionCookie },
       payload: {
+        old_id: replacedHall["old_id"],
         name: replacedHall["name"],
         address: replacedHall["address"],
         vendor_id: replacedHall["vendor_id"],
@@ -89,6 +92,7 @@ describe("Replace on hall route", () => {
       method: "PUT",
       url: `/api/v1/hall/${replacedHall["id"]}`,
       payload: {
+        old_id: replacedHall["old_id"],
         name: replacedHall["name"],
         address: replacedHall["address"],
         vendor_id: replacedHall["vendor_id"],

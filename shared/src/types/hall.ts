@@ -5,6 +5,7 @@ import { languageMap, primaryKey } from "./helpers.js";
 
 export const HallSchema = createSchema({
   id: primaryKey(),
+  old_id: z.int().nonnegative().nullable(),
   address: z.string(),
   vendor_id: z.int().nonnegative(),
   name: languageMap,
