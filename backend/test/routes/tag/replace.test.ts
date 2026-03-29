@@ -8,6 +8,7 @@ let sessionCookie: string;
 
 const mockTag: Tag = {
   id: 5,
+  old_id: 111,
   name: { en: "Music", nl: "Muziek" },
   type: 1,
   productions: [],
@@ -42,6 +43,7 @@ describe("Replace tag", () => {
       url: `/api/v1/tags/${mockTag.id}`,
       cookies: { session: sessionCookie },
       payload: {
+        old_id: mockTag.old_id,
         name: mockTag.name,
         type: mockTag.type,
         public: mockTag.public,

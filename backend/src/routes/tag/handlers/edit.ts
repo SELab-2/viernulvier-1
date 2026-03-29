@@ -4,6 +4,7 @@ import { TagSchema } from "@viernulvier/shared/index.js";
 import { getMetadata, getParam, parseFirstRow, parseSchema } from "@/routes/helpers.js";
 
 const EditTagBodySchema = TagSchema.pick({
+  old_id: true,
   name: true,
   type: true,
   public: true,
@@ -23,6 +24,11 @@ export async function editTag(
   const values: unknown[] = [];
   let i = 1;
 
+  if (body.old_id !== undefined) {
+    fields.push(`old_id = $${i++}`);
+    values.push(body.old_id);
+  }
+
   if (body.name !== undefined) {
     fields.push(`name = $${i++}`);
     values.push(body.name);
@@ -37,13 +43,14 @@ export async function editTag(
     fields.push(`public = $${i++}`);
     values.push(body.public);
   }
+  
 
   fields.push(`updated_by = $${i++}`, `updated_at = $${i++}`);
   values.push(admin, current_time, id);
 
   const result = await server.pg.query<Tag>(
     `UPDATE tag SET ${fields.join(", ")} WHERE id = $${i}
-     RETURNING id, name, type_id, public`,
+     RETURNING id, old_id, name, type_id, public`,
     values,
   );
 
