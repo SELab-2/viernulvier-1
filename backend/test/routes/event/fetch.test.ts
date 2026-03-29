@@ -72,8 +72,10 @@ beforeAll(async () => {
 
     if (query.includes("WHERE old_id = $1")) {
       const oldId: number = params?.[0] as number;
-      const event = mockEvents.find(e => e.old_id === oldId);
-      if (event) {
+      const eventWithoutPrice = mockEvents.find(e => e.old_id === oldId);
+
+      if (eventWithoutPrice) {
+        const event = { ...eventWithoutPrice, price: storedEventPrices.filter(p => p["event"] === eventWithoutPrice.id).map(p => p.id) };
         return Promise.resolve({ rows: [event] });
       }
       return Promise.resolve({ rows: [] });
@@ -197,7 +199,13 @@ describe("Event Fetch Routes", () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.json()).toEqual(mockEvents[1]);
+      expect(response.json()).toEqual([{
+        ...mockEvents[1],
+        price: storedEventPrices.filter(p => p["event"] === mockEvents[1]!.id).map(p => p.id),
+        starts_at: mockEvents[1]!.starts_at.toISOString(),
+        ends_at: mockEvents[1]!.ends_at.toISOString(),
+        doors_at: mockEvents[1]!.doors_at.toISOString(),
+      }]);
     });
 
     test("returns empty array when no events are found", async () => {

@@ -72,7 +72,7 @@ export async function fetchEvents(
     const result = await buildQuery(
       server,
       `SELECT id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}, old_id
-      FROM events WHERE old_id = $1`,
+      FROM event WHERE old_id = $1`,
       z.tuple([z.int()]),
       EventSchema,
     )(parseInt(old_id, 10));
