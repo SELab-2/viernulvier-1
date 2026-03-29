@@ -38,12 +38,10 @@ describe("BentoGrid.vue", () => {
     expect(links.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders the arrow_forward icon in the CTA", async () => {
+  it("renders the arrow icon SVG in the CTA", async () => {
     const wrapper = await mountGrid();
-    const icons = wrapper
-      .findAll(".material-symbols-outlined")
-      .map((el) => el.text());
-    expect(icons).toContain("arrow_forward");
+    const svg = wrapper.find("a svg");
+    expect(svg.exists()).toBe(true);
   });
 
   it("renders the featured card background image", async () => {

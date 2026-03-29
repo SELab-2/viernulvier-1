@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { routes } from "./routes";
 import { RouteNames } from "./routeNames";
-import { i18n, type SupportedLang, detectLanguage } from "../i18n";
+import { i18n, type SupportedLang, detectLanguage } from "@/i18n";
 
 export const router = createRouter({
   history: createWebHistory(),

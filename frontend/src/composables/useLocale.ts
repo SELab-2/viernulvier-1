@@ -4,7 +4,7 @@ import {
   saveLanguagePreference,
   SUPPORTED_LANGS,
   type SupportedLang,
-} from "../i18n";
+} from "@/i18n";
 
 /**
  * Composable for switching the application language.

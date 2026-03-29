@@ -169,5 +169,5 @@ export async function apiFetch<T>(
     return undefined as T;
   }
 
-  return await response.json() as Promise<T>;
+  return await (await response.json() as Promise<T>);
 }

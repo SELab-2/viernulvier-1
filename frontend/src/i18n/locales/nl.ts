@@ -13,10 +13,10 @@ export default {
     cta: "Doorzoek het archief",
   },
   stats: {
-    totalRecords: "Archiefrecords",
-    yearsCovered: "Jaar archief",
-    originalSeries: "Originele reeksen",
-    digitizedWorks: "Gedigitaliseerde werken",
+    productions: "Producties",
+    events: "Voorstellingen",
+    yearsOfHistory: "Jaar geschiedenis",
+    genres: "Genres",
   },
   bento: {
     featured: {

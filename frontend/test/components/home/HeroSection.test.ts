@@ -60,11 +60,9 @@ describe("HeroSection.vue", () => {
     expect(wrapper.find("section").exists()).toBe(true);
   });
 
-  it("renders the arrow_forward icon inside the CTA", async () => {
+  it("renders the arrow icon SVG inside the CTA", async () => {
     const wrapper = await mountHero();
-    const icons = wrapper
-      .findAll(".material-symbols-outlined")
-      .map((el) => el.text());
-    expect(icons).toContain("arrow_forward");
+    const svg = wrapper.find("a svg");
+    expect(svg.exists()).toBe(true);
   });
 });

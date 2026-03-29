@@ -22,9 +22,7 @@
             class="inline-flex items-center gap-2 rounded-md bg-ink-on-inv px-5 py-3 text-sm font-semibold text-surface-inv transition hover:bg-ink-on-inv-secondary"
           >
             {{ t("hero.cta") }}
-            <span class="material-symbols-outlined text-base"
-              >arrow_forward</span
-            >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
           </RouterLink>
         </div>
       </div>
@@ -36,6 +34,8 @@
         <img
           src="../../assets/images/hero.webp"
           alt="De Vooruit"
+          width="1200"
+          height="900"
           class="hero-photo h-full w-full object-cover"
         />
         <div class="hero-overlay absolute inset-0" />
@@ -58,8 +58,8 @@
 import { computed } from "vue";
 import { RouterLink } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { i18n, type SupportedLang } from "../../i18n";
-import { RouteNames } from "../../router/routeNames";
+import { i18n, type SupportedLang } from "@/i18n";
+import { RouteNames } from "@/router/routeNames";
 
 const { t } = useI18n();
 const currentLang = computed(

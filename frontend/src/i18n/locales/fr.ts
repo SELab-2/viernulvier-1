@@ -13,10 +13,10 @@ export default {
     cta: "Parcourir les archives",
   },
   stats: {
-    totalRecords: "Enregistrements",
-    yearsCovered: "Ans d'archives",
-    originalSeries: "Séries originales",
-    digitizedWorks: "Œuvres numérisées",
+    productions: "Productions",
+    events: "Représentations",
+    yearsOfHistory: "Ans d'histoire",
+    genres: "Genres",
   },
   bento: {
     featured: {

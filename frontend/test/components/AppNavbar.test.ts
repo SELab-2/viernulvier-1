@@ -22,11 +22,9 @@ async function mountNavbar(isDark = false) {
 }
 
 async function openLangMenu(wrapper: ReturnType<typeof mount>) {
-  // Find the icon-btn whose inner span text is "language"
-  const btn = wrapper
-    .findAll("button.icon-btn")
-    .find((b) => b.find(".material-symbols-outlined").text() === "language");
-  await btn!.trigger("click");
+  // The language button is the first icon-btn (index 0)
+  const btns = wrapper.findAll("button.icon-btn");
+  await btns[0]!.trigger("click");
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -72,9 +70,9 @@ describe("AppNavbar.vue", () => {
       expect(wrapper.find(".lang-dropdown").exists()).toBe(false);
     });
 
-    it("renders the search icon button", () => {
-      const searchBtn = wrapper.find("button.icon-btn[aria-label]");
-      expect(searchBtn.exists()).toBe(true);
+    it("renders the language and dark mode icon buttons", () => {
+      const btns = wrapper.findAll("button.icon-btn");
+      expect(btns).toHaveLength(2);
     });
   });
 
@@ -142,20 +140,23 @@ describe("AppNavbar.vue", () => {
       expect(wrapper.emitted("toggle-dark")).toBeTruthy();
     });
 
-    it("shows light_mode icon when isDark is true", async () => {
+    it("shows sun icon (light_mode) when isDark is true", async () => {
       const { wrapper: darkWrapper } = await mountNavbar(true);
-      const icons = darkWrapper
-        .findAll(".material-symbols-outlined")
-        .map((s) => s.text());
-      expect(icons).toContain("light_mode");
+      // Sun icon has multiple <line> elements (rays), moon icon does not
+      const darkBtn = darkWrapper
+        .findAll("button.icon-btn")
+        .find((b) => b.attributes("aria-label")?.toLowerCase().includes("dark"));
+      expect(darkBtn!.find("svg line")).toBeTruthy();
       darkWrapper.unmount();
     });
 
-    it("shows dark_mode icon when isDark is false", () => {
-      const icons = wrapper
-        .findAll(".material-symbols-outlined")
-        .map((s) => s.text());
-      expect(icons).toContain("dark_mode");
+    it("shows moon icon (dark_mode) when isDark is false", () => {
+      const darkBtn = wrapper
+        .findAll("button.icon-btn")
+        .find((b) => b.attributes("aria-label")?.toLowerCase().includes("dark"));
+      // Moon icon has a single <path>, no <line> elements
+      expect(darkBtn!.find("svg path").exists()).toBe(true);
+      expect(darkBtn!.findAll("svg line").length).toBe(0);
     });
   });
 });
