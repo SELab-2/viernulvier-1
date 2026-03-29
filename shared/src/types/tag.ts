@@ -26,8 +26,10 @@ export const TagSchema = createSchema({
   },
   public: z.boolean(),
 
-  get productions(): z.ZodArray<ForeignKey<typeof ProductionSchema>> {
-    return z.array(foreignKey(() => ProductionSchema));
+  get productions(): z.ZodOptional<
+    z.ZodArray<ForeignKey<typeof ProductionSchema>>
+  > {
+    return z.array(foreignKey(() => ProductionSchema)).optional();
   },
 });
 

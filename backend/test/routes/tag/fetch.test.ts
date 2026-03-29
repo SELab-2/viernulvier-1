@@ -40,11 +40,11 @@ const tag1WithMeta = {
 
 const mockTags: Tag[] = [tag1, tag2, privateTag];
 
-/** List responses omit production ids unless `includeProductions=true`. */
-const mockTagsListDefault: Tag[] = mockTags.map((t) => ({
-  ...t,
-  productions: [],
-}));
+/** List responses omit `productions` unless `includeProductions=true`. */
+const mockTagsListDefault: Tag[] = mockTags.map((t) => {
+  const { productions: _, ...rest } = t;
+  return rest;
+});
 
 function tagToDbRow(t: Tag) {
   return {
@@ -67,7 +67,7 @@ beforeAll(async () => {
       const linkRows: { tag: number; production: number }[] = [];
       for (const t of mockTags) {
         if (ids.includes(t.id)) {
-          for (const pid of t.productions) {
+          for (const pid of t.productions ?? []) {
             linkRows.push({ tag: t.id, production: pid });
           }
         }
@@ -88,7 +88,7 @@ beforeAll(async () => {
 
     if (query.includes("production_tag")) {
       rows = mockTags
-        .filter((t) => t.productions.includes(Number(id)))
+        .filter((t) => (t.productions ?? []).includes(Number(id)))
         .map(tagToDbRow);
     } else if (id != null && !Array.isArray(id)) {
       rows = mockTags.filter((t) => t.id === Number(id)).map(tagToDbRow);
@@ -262,10 +262,12 @@ describe("Fetch tags for production", () => {
     const result = TagSchema.array().parse(response.json());
 
     expect(result).toEqual(
-      mockTags.filter((t) => t.productions.includes(1)).map((t) => ({
-        ...t,
-        productions: [],
-      })),
+      mockTags
+        .filter((t) => t.productions.includes(1))
+        .map((t) => {
+          const { productions: _, ...rest } = t;
+          return rest;
+        }),
     );
   });
 
@@ -299,7 +301,10 @@ describe("Fetch visible tags for production", () => {
     expect(result).toEqual(
       mockTags
         .filter((t) => t.public && t.productions.includes(1))
-        .map((t) => ({ ...t, productions: [] })),
+        .map((t) => {
+          const { productions: _, ...rest } = t;
+          return rest;
+        }),
     );
   });
 

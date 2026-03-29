@@ -15,7 +15,7 @@ const TagDbRowWithMetaSchema = TagSchema.withMeta().omit({ productions: true });
 
 const TagsListQuerySchema = z.object({
   production: stringToInt.optional(),
-  /** When `includeProductions=true`, each tag includes full `productions` id list (default: empty arrays). */
+  /** When `includeProductions=true`, each tag includes a `productions` id list; otherwise the field is omitted. */
   includeProductions: z.literal("true").optional(),
 });
 
@@ -55,11 +55,17 @@ async function fetchProductionIdsByTagIds(
 function tagsFromDbRows(
   rows: z.infer<typeof TagDbRowSchema>[],
   byTag: Map<number, number[]>,
+  includeProductions: boolean,
 ): Tag[] {
-  return rows.map((row) => ({
-    ...row,
-    productions: byTag.get(row.id) ?? [],
-  }));
+  return rows.map((row) => {
+    if (!includeProductions) {
+      return { ...row };
+    }
+    return {
+      ...row,
+      productions: byTag.get(row.id) ?? [],
+    };
+  });
 }
 
 function tagsWithMetaFromDbRows(
@@ -134,7 +140,7 @@ async function fetchTag(
   const row = rows[0];
   if (!row) return null;
   const byTag = await fetchProductionIdsByTagIds(server, [row.id]);
-  const merged = tagsFromDbRows([row], byTag);
+  const merged = tagsFromDbRows([row], byTag, true);
   return parseSchema(server, TagSchema, merged[0], ParseContext.Database);
 }
 
@@ -147,7 +153,7 @@ async function fetchTagVisible(
   const row = rows[0];
   if (!row) return null;
   const byTag = await fetchProductionIdsByTagIds(server, [row.id]);
-  const merged = tagsFromDbRows([row], byTag);
+  const merged = tagsFromDbRows([row], byTag, true);
   return parseSchema(server, TagSchema, merged[0], ParseContext.Database);
 }
 
@@ -184,7 +190,7 @@ async function fetchTags(
         rows.map((r) => r.id),
       )
       : new Map<number, number[]>();
-  const merged = tagsFromDbRows(rows, byTag);
+  const merged = tagsFromDbRows(rows, byTag, includeProductions !== undefined);
   return parseSchema(server, z.array(TagSchema), merged, ParseContext.Database);
 }
 
@@ -208,7 +214,7 @@ async function fetchTagsVisible(
         rows.map((r) => r.id),
       )
       : new Map<number, number[]>();
-  const merged = tagsFromDbRows(rows, byTag);
+  const merged = tagsFromDbRows(rows, byTag, includeProductions !== undefined);
   return parseSchema(server, z.array(TagSchema), merged, ParseContext.Database);
 }
 
