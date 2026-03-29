@@ -6,12 +6,15 @@ VIERNULVIER has been a cornerstone of Ghent's cultural scene for over a century,
 
 ## 📚 Documentation
 
-| Document | Description |
-|---|---|
-| [Contributing Guide](DOCS/CONTRIBUTING.md) | Getting started, running the app, testing, and development workflows |
-| [Architecture Documentation](DOCS/ARCHITECTURE.md) | System design and technical overview |
-| [Database Documentation](DOCS/DATABASE.md) | Database schema (EER) |
-| [Frontend Mock](frontend/mock/README.md) | Design mock-ups and domain model |
+
+| Document                                           | Description                                                          |
+| -------------------------------------------------- | -------------------------------------------------------------------- |
+| [Contributing Guide](DOCS/CONTRIBUTING.md)         | Getting started, running the app, testing, and development workflows |
+| [Architecture Documentation](DOCS/ARCHITECTURE.md) | System design and technical overview                                 |
+| [Database Documentation](DOCS/DATABASE.md)         | Database schema (EER)                                                |
+| [Frontend Mock](frontend/mock/README.md)           | Design mock-ups and domain model                                     |
+| [Legacy data imports](data/imports/README.md)      | CSV import scripts (`import:productions`, `import:events`), formats, and run examples |
+
 
 ## 🚀 Getting Started
 
@@ -21,3 +24,4 @@ Refer to the **[Contributing Guide](DOCS/CONTRIBUTING.md)** for full setup instr
 
 - **Live archive:** https://viernulvier-archive.be
 - **Issues & feedback:** use the GitHub issue tracker
+

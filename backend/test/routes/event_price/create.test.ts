@@ -96,8 +96,8 @@ describe("Event Price Create Route", () => {
         url: "/api/v1/event/price",
         cookies: { session: sessionCookie },
         payload: {
-            event: 15,
-            amount: 35.99,
+          event: 15,
+          amount: 35.99,
         },
       });
 
@@ -115,8 +115,8 @@ describe("Event Price Create Route", () => {
         url: "/api/v1/event/price",
         cookies: { session: sessionCookie },
         payload: {
-            event: 15,
-            amount: -5, // negative amount
+          event: 15,
+          amount: -5, // negative amount
         },
       });
 
@@ -130,7 +130,7 @@ describe("Event Price Create Route", () => {
         url: "/api/v1/event/price",
         cookies: { session: sessionCookie },
         payload: {
-            // missing event and amount
+          // missing event and amount
         },
       });
 
@@ -143,8 +143,8 @@ describe("Event Price Create Route", () => {
         method: "POST",
         url: "/api/v1/event/price",
         payload: {
-            event: 15,
-            amount: 35.99,
+          event: 15,
+          amount: 35.99,
         },
       });
 
@@ -158,8 +158,8 @@ describe("Event Price Create Route", () => {
         url: "/api/v1/event/price",
         cookies: { session: sessionCookie },
         payload: {
-            event: 15,
-            amount: 35.99,
+          event: 15,
+          amount: 35.99,
         },
       });
       expect(response.statusCode).toBe(404);

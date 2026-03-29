@@ -2,14 +2,13 @@ import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vit
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
+import { productionRowWithRefs } from "./fixtures.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
 
 const replacedProduction: Production = {
   id: 1,
-  vendor_id: 111,
-  box_office_id: 222,
   supertitle: { nl: "Nieuwe supertitel" },
   title: { nl: "Nieuwe titel" },
   artist: { nl: "Nieuwe artiest" },
@@ -49,7 +48,10 @@ describe("Replace on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [replacedProduction], rowCount: 1 });
+        return Promise.resolve({
+          rows: [productionRowWithRefs(replacedProduction)],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in replace tests: ${query}`);
@@ -60,8 +62,6 @@ describe("Replace on production route", () => {
       url: `/api/v1/production/${replacedProduction["id"]}`,
       cookies: { session: sessionCookie },
       payload: {
-        vendor_id: replacedProduction["vendor_id"],
-        box_office_id: replacedProduction["box_office_id"],
         supertitle: replacedProduction["supertitle"],
         title: replacedProduction["title"],
         artist: replacedProduction["artist"],
@@ -104,8 +104,6 @@ describe("Replace on production route", () => {
       url: `/api/v1/production/${replacedProduction["id"]}`,
       cookies: { session: sessionCookie },
       payload: {
-        vendor_id: replacedProduction["vendor_id"],
-        box_office_id: replacedProduction["box_office_id"],
         supertitle: replacedProduction["supertitle"],
         title: replacedProduction["title"],
         artist: replacedProduction["artist"],
@@ -132,7 +130,6 @@ describe("Replace on production route", () => {
       url: `/api/v1/production/${replacedProduction["id"]}`,
       cookies: { session: sessionCookie },
       payload: {
-        vendor_id: replacedProduction["vendor_id"],
       },
     });
 

@@ -63,7 +63,7 @@ describe("Auth route integration", () => {
         const row = mockDb.find((a) => a.username === username);
         return Promise.resolve(row
           ? { rows: [{ id: row.id, password: row.password }], rowCount: 1 }
-          : { rows: [], rowCount: 0 }
+          : { rows: [], rowCount: 0 },
         );
       }
 
@@ -152,7 +152,7 @@ describe("Auth route integration", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ success: true });
+    expect(response.json()).toEqual({ token: expect.any(String) });
 
     const cookie = response.cookies.find((c) => c.name === "session");
     expect(cookie).toBeDefined();
@@ -245,7 +245,7 @@ describe("Auth route integration", () => {
     expect(response.cookies).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: "session", value: "" }),
-      ])
+      ]),
     );
   });
 

@@ -5,7 +5,9 @@
     "types": ["vite/client"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@viernulvier/shared": ["../shared/src/index.ts"],
+      "@viernulvier/shared/*": ["../shared/src/*"]
     },
 
     /* Linting */

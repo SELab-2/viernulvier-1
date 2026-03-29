@@ -20,7 +20,7 @@ const EventUpdateSchema = EventCreateSchema.partial();
  */
 export async function editEvent(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<Event | null> {
   const normalizedBody = normalizePartialEventDates(request.body);
   const body = parseSchema(server, EventUpdateSchema, normalizedBody, ParseContext.Request);
@@ -34,7 +34,6 @@ export async function editEvent(
     production: body.production ?? selectedEvent.production,
     hall: body.hall ?? selectedEvent.hall,
     doors_at: body.doors_at ?? selectedEvent.doors_at,
-    vendor_id: body.vendor_id ?? selectedEvent.vendor_id,
     info: body.info ?? selectedEvent.info,
   };
 
@@ -47,7 +46,6 @@ export async function editEvent(
     updatedEvent.production,
     updatedEvent.hall,
     updatedEvent.doors_at,
-    updatedEvent.vendor_id,
     updatedEvent.info,
     current_time,
     admin,

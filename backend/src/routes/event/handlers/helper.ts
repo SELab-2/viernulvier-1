@@ -67,15 +67,15 @@ export function normalizePartialEventDates(value: unknown): unknown {
   return {
     ...payload,
     starts_at: payload["starts_at"] === undefined
-        ? undefined
-        : payload["starts_at"] instanceof Date
-            ? payload["starts_at"]
-            : new Date(String(payload["starts_at"])),
+      ? undefined
+      : payload["starts_at"] instanceof Date
+        ? payload["starts_at"]
+        : new Date(String(payload["starts_at"])),
     ends_at: payload["ends_at"] === undefined
-        ? undefined
-        : payload["ends_at"] instanceof Date
-            ? payload["ends_at"]
-            : new Date(String(payload["ends_at"])),
+      ? undefined
+      : payload["ends_at"] instanceof Date
+        ? payload["ends_at"]
+        : new Date(String(payload["ends_at"])),
     doors_at: payload["doors_at"] === undefined
       ? undefined
       : payload["doors_at"] instanceof Date
@@ -88,23 +88,22 @@ export function normalizePartialEventDates(value: unknown): unknown {
 export const EventCreateSchema = EventSchemaWithoutPrice.omit({ id: true });
 export type EventCreate = z.infer<typeof EventCreateSchema>;
 
-export const selectPriceSubquery = `(SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price`;
+export const selectPriceSubquery = `(SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_price ep WHERE ep.event = event.id) AS price`;
 
 export function updateEvent(server: FastifyInstance) {
   return buildQuery(
     server,
-    `UPDATE events
-    SET starts_at = $1, ends_at = $2, production = $3, hall = $4, doors_at = $5, vendor_id = $6, info = $7,
-        updated_at = $8, updated_by = $9
-    WHERE id = $10
-    RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}`,
+    `UPDATE event
+    SET starts_at = $1, ends_at = $2, production = $3, hall = $4, doors_at = $5, info = $6,
+        updated_at = $7, updated_by = $8
+    WHERE id = $9
+    RETURNING id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}`,
     z.tuple([
       EventCreateSchema.shape.starts_at,
       EventCreateSchema.shape.ends_at,
       EventCreateSchema.shape.production,
       EventCreateSchema.shape.hall,
       EventCreateSchema.shape.doors_at,
-      EventCreateSchema.shape.vendor_id,
       EventCreateSchema.shape.info,
       z.date(),
       z.number().nonnegative(),

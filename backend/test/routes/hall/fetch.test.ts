@@ -8,8 +8,8 @@ let server: FastifyInstance;
 let sessionCookie: string;
 
 const mockHalls: Array<Hall> = [
-  { id: 1, name: { nl: "Grote Zaal" }, address: "Sint-Pietersnieuwstraat 23", vendor_id: 42 },
-  { id: 2, name: { nl: "Kleine Zaal" }, address: "Sint-Pietersnieuwstraat 23", vendor_id: 43 },
+  { id: 1, name: { nl: "Grote Zaal" }, address: "Sint-Pietersnieuwstraat 23" },
+  { id: 2, name: { nl: "Kleine Zaal" }, address: "Sint-Pietersnieuwstraat 23" },
 ];
 
 const mockTime = new Date();
@@ -115,6 +115,6 @@ describe("Hall fetch routes", () => {
       url: `/api/v1/hall/${hall?.["id"]}/meta`,
     });
   
-      expect(response.statusCode).toBe(HttpClientError.Unauthorized);
+    expect(response.statusCode).toBe(HttpClientError.Unauthorized);
   });
 });

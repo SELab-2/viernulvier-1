@@ -16,12 +16,12 @@ import { selectPriceSubquery } from "./helper.js";
  */
 export async function fetchEvent(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<Event | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const result = await buildQuery(server,
-    `SELECT id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}
-    FROM events WHERE id = $1`,
+    `SELECT id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}
+    FROM event WHERE id = $1`,
     z.tuple([z.int()]),
     EventSchema,
   )(id);
@@ -39,14 +39,14 @@ export async function fetchEvent(
  */
 export async function fetchEventWithMeta(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<EventWithMeta | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const result = await buildQuery(
     server,
-    `SELECT id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery},
+    `SELECT id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery},
         created_at, updated_at, created_by, updated_by
-    FROM events WHERE id = $1`,
+    FROM event WHERE id = $1`,
     z.tuple([z.int()]),
     EventSchema.withMeta(),
   )(id);
@@ -62,13 +62,13 @@ export async function fetchEventWithMeta(
  * @returns An array of parsed events.
  */
 export async function fetchEvents(
-  server: FastifyInstance
+  server: FastifyInstance,
 ): Promise<Event[]> {
   const result = await buildQuery(
     server,
-    `SELECT id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}
-    FROM events`,
-    EventSchema
+    `SELECT id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}
+    FROM event`,
+    EventSchema,
   )();
 
   return result;

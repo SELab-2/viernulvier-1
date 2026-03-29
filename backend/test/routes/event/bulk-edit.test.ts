@@ -14,7 +14,6 @@ const baseEvent = {
   production: 10,
   hall: 3,
   doors_at: new Date("2026-01-01T17:30:00.000Z"),
-  vendor_id: 42,
   info: { nl: "Info mock 1" },
 };
 
@@ -29,12 +28,12 @@ beforeAll(async () => {
   sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
-    if (query.includes("UPDATE events")) {
-      const id = Number(params?.[9]);
+    if (query.includes("UPDATE event")) {
+      const id = Number(params?.[8]);
       const index = storedEvents.findIndex((event) => Number(event.id) === id);
       if (index === -1) return Promise.resolve({ rows: [] });
 
-  // eslint-disable-next-line security/detect-object-injection
+      // eslint-disable-next-line security/detect-object-injection
       const current = storedEvents[index]!;
       const updated = {
         ...current,
@@ -43,24 +42,23 @@ beforeAll(async () => {
         production: (params?.[2] as number | undefined) ?? current["production"],
         hall: (params?.[3] as number | undefined) ?? current["hall"],
         doors_at: (params?.[4] as Date | undefined) ?? current["doors_at"],
-        vendor_id: (params?.[5] as number | undefined) ?? current["vendor_id"],
-        info: params?.[6] ?? current["info"],
+        info: params?.[5] ?? current["info"],
       };
 
-  // eslint-disable-next-line security/detect-object-injection
+      // eslint-disable-next-line security/detect-object-injection
       storedEvents[index] = updated;
       const event = {...updated, price: []};
       return Promise.resolve({ rows: [event] });
     }
 
-    if (query.includes("FROM events WHERE id = $1")) {
+    if (query.includes("FROM event WHERE id = $1")) {
       const id = Number(params?.[0]);
       if (id > storedEvents.length) return Promise.resolve({ rows: [] });
       const event = { ...storedEvents.find((row) => Number(row.id) === id), price: [] };
       return Promise.resolve({ rows: event ? [event] : [] });
     }
 
-    if (query.includes("FROM events")) {
+    if (query.includes("FROM event") && !query.includes("WHERE id = $1")) {
       const events = storedEvents.map((row) => ({ ...row, price: [] }));
       return Promise.resolve({ rows: events });
     }
@@ -83,10 +81,10 @@ describe("Event Bulk Edit Routes", () => {
   describe("bulk partial updates", () => {
     test("updates single field on multiple events", async () => {
       const editResponse = await server.inject({
-          method: "PATCH",
-          url: "/api/v1/event",
-          cookies: { session: sessionCookie },
-          payload: { ids: [1, 3], production: 99 },
+        method: "PATCH",
+        url: "/api/v1/event",
+        cookies: { session: sessionCookie },
+        payload: { ids: [1, 3], production: 99 },
       });
 
       expect(editResponse.statusCode).toBe(200);
@@ -172,9 +170,9 @@ describe("Event Bulk Edit Routes", () => {
       ]);
 
       const listResponse = await server.inject({
-          method: "GET",
-          url: "/api/v1/event",
-          cookies: { session: sessionCookie },
+        method: "GET",
+        url: "/api/v1/event",
+        cookies: { session: sessionCookie },
       });
 
       expect(listResponse.statusCode).toBe(200);
@@ -199,17 +197,17 @@ describe("Event Bulk Edit Routes", () => {
 
     test("bulk edits some events and keeps the others unchanged", async () => {
       const editResponse = await server.inject({
-          method: "PATCH",
-          url: "/api/v1/event",
-          cookies: { session: sessionCookie },
-          payload: { ids: [1, 2], vendor_id: 555 },
+        method: "PATCH",
+        url: "/api/v1/event",
+        cookies: { session: sessionCookie },
+        payload: { ids: [1, 2], production: 555 },
       });
 
       expect(editResponse.statusCode).toBe(200);
       expect(editResponse.json()).toEqual([
         {
           ...initialEvents[0],
-          vendor_id: 555,
+          production: 555,
           starts_at: initialEvents[0]!.starts_at.toISOString(),
           ends_at: initialEvents[0]!.ends_at.toISOString(),
           doors_at: initialEvents[0]!.doors_at.toISOString(),
@@ -217,7 +215,7 @@ describe("Event Bulk Edit Routes", () => {
         },
         {
           ...initialEvents[1],
-          vendor_id: 555,
+          production: 555,
           starts_at: initialEvents[1]!.starts_at.toISOString(),
           ends_at: initialEvents[1]!.ends_at.toISOString(),
           doors_at: initialEvents[1]!.doors_at.toISOString(),
@@ -226,9 +224,9 @@ describe("Event Bulk Edit Routes", () => {
       ]);
 
       const listResponse = await server.inject({
-          method: "GET",
-          url: "/api/v1/event",
-          cookies: { session: sessionCookie },
+        method: "GET",
+        url: "/api/v1/event",
+        cookies: { session: sessionCookie },
       });
 
       expect(listResponse.statusCode).toBe(200);
@@ -236,7 +234,7 @@ describe("Event Bulk Edit Routes", () => {
       expect(listResponse.json()).toEqual([
         {
           ...initialEvents[0],
-          vendor_id: 555,
+          production: 555,
           starts_at: initialEvents[0]!.starts_at.toISOString(),
           ends_at: initialEvents[0]!.ends_at.toISOString(),
           doors_at: initialEvents[0]!.doors_at.toISOString(),
@@ -244,7 +242,7 @@ describe("Event Bulk Edit Routes", () => {
         },
         {
           ...initialEvents[1],
-          vendor_id: 555,
+          production: 555,
           starts_at: initialEvents[1]!.starts_at.toISOString(),
           ends_at: initialEvents[1]!.ends_at.toISOString(),
           doors_at: initialEvents[1]!.doors_at.toISOString(),
@@ -293,8 +291,8 @@ describe("Event Bulk Edit Routes", () => {
         url: "/api/v1/event",
         cookies: { session: sessionCookie },
         payload: {
-            ids: [1, 2],
-            production: "not a number",
+          ids: [1, 2],
+          production: "not a number",
         },
       });
 

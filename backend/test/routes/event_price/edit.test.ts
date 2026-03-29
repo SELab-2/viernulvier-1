@@ -49,7 +49,7 @@ beforeAll(async () => {
       const id = Number(params?.[0]);
       const price = storedEventPrices.find((p) => p.id === id);
       return Promise.resolve({ rows: price ? [price] : [] });
-  }
+    }
 
     return Promise.resolve({ rows: [] });
   });
@@ -73,7 +73,7 @@ describe("Event Price Edit Route", () => {
         url: "/api/v1/event/price/1",
         cookies: { session: sessionCookie },
         payload: {
-            amount: 29.99,
+          amount: 29.99,
         },
       });
 
@@ -91,7 +91,7 @@ describe("Event Price Edit Route", () => {
         url: "/api/v1/event/price/1",
         cookies: { session: sessionCookie },
         payload: {
-            event: 20,
+          event: 20,
         },
       });
 
@@ -109,8 +109,8 @@ describe("Event Price Edit Route", () => {
         url: "/api/v1/event/price/1",
         cookies: { session: sessionCookie },
         payload: {
-            event: 20,
-            amount: 40.00,
+          event: 20,
+          amount: 40.00,
         },
       });
 
@@ -130,7 +130,7 @@ describe("Event Price Edit Route", () => {
         url: "/api/v1/event/price/999",
         cookies: { session: sessionCookie },
         payload: {
-            amount: 29.99,
+          amount: 29.99,
         },
       });
 
@@ -144,7 +144,7 @@ describe("Event Price Edit Route", () => {
         url: "/api/v1/event/price/1",
         cookies: { session: sessionCookie },
         payload: {
-            amount: -5, // negative amount
+          amount: -5, // negative amount
         },
       });
 
@@ -171,7 +171,7 @@ describe("Event Price Edit Route", () => {
         url: "/api/v1/event/price/1",
         cookies: { session: sessionCookie },
         payload: {
-            amount: 29.99,
+          amount: 29.99,
         },
       });
 

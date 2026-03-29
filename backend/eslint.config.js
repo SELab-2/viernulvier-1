@@ -2,7 +2,6 @@ import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 import security from "eslint-plugin-security";
 import nodePlugin from "eslint-plugin-n";
-import prettierConfig from "eslint-config-prettier";
 import importX from "eslint-plugin-import-x";
 import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
 import tsdoc from 'eslint-plugin-tsdoc'
@@ -109,8 +108,23 @@ export default defineConfig([
       "import-x/no-unresolved": "error",
 
       // tsdoc config
-      "tsdoc/syntax": "warn"
+      "tsdoc/syntax": "warn",
+
+      // ----------------------------
+      // Code Style
+      // ----------------------------
+
+      "indent": ["error", 2],
+      "comma-dangle": ["error", "always-multiline"],
     }
+  },
+
+  // Legacy CSV import modules: fs paths are argv-driven (trusted CLI); rule is noise here.
+  {
+    files: ["src/legacy-import/**/*.ts"],
+    rules: {
+      "security/detect-non-literal-fs-filename": "off",
+    },
   },
 
   // --------------------------------------------------
@@ -132,6 +146,9 @@ export default defineConfig([
       "n/no-unpublished-import": "off",
       "@typescript-eslint/no-floating-promises": "off",
 
+      // Tests use temp paths and fixtures; non-literal fs paths are intentional.
+      "security/detect-non-literal-fs-filename": "off",
+
       "@typescript-eslint/no-unused-vars": [
         "warn",
         {
@@ -141,6 +158,9 @@ export default defineConfig([
           caughtErrorsIgnorePattern: "^_"
         }
       ],
+
+      "indent": ["error", 2],
+      "comma-dangle": ["error", "always-multiline"],
     }
   },
 
@@ -182,10 +202,4 @@ export default defineConfig([
       "no-undef": "off"
     }
   },
-
-  // --------------------------------------------------
-  // Prettier must always be last
-  // --------------------------------------------------
-
-  prettierConfig
 ]);

@@ -15,7 +15,7 @@ import type { EventPrice } from "@viernulvier/shared/index.js";
  */
 export async function deleteEventPrice(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<EventPrice | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const result = await buildQuery(server,

@@ -17,7 +17,7 @@ import { normalizeEventDates, EventCreateSchema, updateEvent } from "./helper.js
  */
 export async function replaceEvent(
   server: FastifyInstance,
-  request: FastifyRequest
+  request: FastifyRequest,
 ): Promise<Event | null> {
   const normalizedBody = normalizeEventDates(request.body);
   const body = parseSchema(server, EventCreateSchema, normalizedBody, ParseContext.Request);
@@ -31,7 +31,6 @@ export async function replaceEvent(
     body.production,
     body.hall,
     body.doors_at,
-    body.vendor_id,
     body.info,
     current_time,
     admin,
