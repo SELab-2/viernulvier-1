@@ -4,6 +4,8 @@ import z from "zod";
 export const ProductionBodySchema = ProductionSchema.pick({
   vendor_id: true,
   box_office_id: true,
+  old_id: true,
+  finalized: true,
   supertitle: true,
   title: true,
   artist: true,
@@ -29,6 +31,8 @@ export const CreateProductionBodySchema = ProductionSchema.pick({
   teaser: true,
 }).extend(
   ProductionSchema.pick({
+    old_id: true,
+    finalized: true,
     supertitle: true,
     description: true,
     description_extra: true,

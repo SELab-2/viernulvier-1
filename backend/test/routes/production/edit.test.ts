@@ -11,6 +11,8 @@ const originalProduction: Production = {
   id: 1,
   vendor_id: 10,
   box_office_id: 20,
+  old_id: 1111,
+  finalized: true,
   supertitle: null,
   title: { nl: "Oude titel" },
   artist: { nl: "Oude artiest" },

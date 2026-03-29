@@ -8,6 +8,8 @@ export const ProductionSchema = createSchema({
   id: primaryKey(),
   vendor_id: z.int().nonnegative(),
   box_office_id: z.int().nonnegative(),
+  old_id: z.int().nonnegative().nullable(),
+  finalized: z.boolean(),
   supertitle: languageMap.nullable(),
   title: languageMap,
   artist: languageMap,
