@@ -9,7 +9,7 @@ let sessionCookie: string;
 const tag1: Tag = {
   id: 5,
   name: { en: "Music", nl: "Muziek" },
-  type: 1,
+  tag_type: 1,
   productions: [1],
   public: true,
 };
@@ -17,7 +17,7 @@ const tag1: Tag = {
 const tag2: Tag = {
   id: 6,
   name: { en: "Family", nl: "Familie" },
-  type: 1,
+  tag_type: 1,
   productions: [1, 2],
   public: true,
 };
@@ -25,7 +25,7 @@ const tag2: Tag = {
 const privateTag: Tag = {
   id: 10,
   name: { en: "Private", nl: "Privé" },
-  type: 1,
+  tag_type: 1,
   productions: [1], // important for production tests
   public: false,
 };
@@ -50,7 +50,7 @@ function tagToDbRow(t: Tag) {
   return {
     id: t.id,
     name: t.name,
-    tag_type: t.type,
+    tag_type: t.tag_type,
     public: t.public,
   };
 }

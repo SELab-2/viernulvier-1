@@ -43,7 +43,7 @@ export interface CreateTagInput {
   /** Localised display name of the tag. */
   name: LanguageMap;
   /** ID of the tag type this tag belongs to. */
-  type: number;
+  tag_type: number;
   /** Whether this tag is visible to the public. */
   public: boolean;
 }
@@ -157,7 +157,7 @@ export async function getTagWithMeta(id: number): Promise<TagWithMeta> {
  * @example
  * const tag = await createTag({
  *   name: { nl: "Drama", en: "Drama", fr: "Drame" },
- *   type: 1,
+ *   tag_type: 1,
  *   public: true,
  * });
  */

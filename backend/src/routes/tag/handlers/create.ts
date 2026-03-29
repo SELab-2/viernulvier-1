@@ -9,7 +9,7 @@ const CreateTagBodySchema = TagSchema.pick({
   name: true,
   public: true,
 }).extend({
-  type: z.int().nonnegative(),
+  tag_type: z.int().nonnegative(),
 });
 
 const insertTag = (server: FastifyInstance) =>
@@ -31,7 +31,7 @@ export async function createTag(
 
   const rows = await insertTag(server)(
     body.name,
-    body.type,
+    body.tag_type,
     body.public,
     admin,
     current_time,

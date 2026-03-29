@@ -10,7 +10,7 @@ let sessionCookie: string;
 const mockTag: Tag = {
   id: 5,
   name: { en: "Music", nl: "Muziek" },
-  type: 1,
+  tag_type: 1,
   productions: [],
   public: true,
 };
@@ -52,12 +52,12 @@ describe("Edit tag", () => {
     expect(TagSchema.parse(response.json())).toEqual(mockTag);
   });
 
-  test("PATCH /api/v1/tags/:id type only", async () => {
+  test("PATCH /api/v1/tags/:id tag_type only", async () => {
     const response = await server.inject({
       method: "PATCH",
       url: `/api/v1/tags/${mockTag.id}`,
       cookies: { session: sessionCookie },
-      payload: { type: mockTag.type },
+      payload: { tag_type: mockTag.tag_type },
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
@@ -79,7 +79,7 @@ describe("Edit tag", () => {
       method: "PATCH",
       url: `/api/v1/tags/${mockTag.id}`,
       cookies: { session: sessionCookie },
-      payload: { name: mockTag.name, type: mockTag.type, public: mockTag.public },
+      payload: { name: mockTag.name, tag_type: mockTag.tag_type, public: mockTag.public },
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
