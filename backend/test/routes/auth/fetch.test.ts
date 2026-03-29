@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll, vi, afterAll } from "vitest";
+import { describe, test, expect, beforeAll, vi, afterAll, beforeEach } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import { AdminSchema } from "@viernulvier/shared/index.js";
@@ -24,7 +24,9 @@ const mockAdminsWithMeta = mockAdmins.map((admin) => ({
 beforeAll(async () => {
   server = await buildServer();
   sessionCookie = server.jwt.sign({ id: 404, username: "Karel" });
+});
 
+beforeEach(async () => {
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     const isMeta = query.toLowerCase().includes("created_at") || query.toLowerCase().includes("updated_at");
     
@@ -51,9 +53,35 @@ afterAll(async () => {
 });
 
 describe("Fetch on auth route", () => {
-  describe("Without meta", () => {
+  describe("Fetch all admins", () => {
+    test("GET /api/v1/auth", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/auth",
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json().map((a: unknown) => AdminSchema.parse(a))).toEqual(mockAdmins);
+    });
+
+    test("GET /api/v1/auth — returns empty array when no admins found", async () => {
+      server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
+
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/auth",
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual([]);
+    });
+  });
+
+  describe("Fetch by id", () => {
     test("GET /api/v1/auth/:id", async () => {
-      const admin = mockAdmins[0];
+      const admin = mockAdmins[1];
 
       const response = await server.inject({
         method: "GET",
@@ -76,9 +104,7 @@ describe("Fetch on auth route", () => {
 
       expect(response.statusCode).toBe(404);
     });
-  });
 
-  describe("With meta", () => {
     test("GET /api/v1/auth/:id/meta", async () => {
       const admin = mockAdminsWithMeta[1]
 
@@ -93,12 +119,60 @@ describe("Fetch on auth route", () => {
     });
     
     test("GET /api/v1/auth/:id/meta — returns 404 when admin not found", async () => {
-      server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
+      const id = 123456;
 
       const response = await server.inject({
         method: "GET",
-        url: `/api/v1/auth/123456/meta`,
+        url: `/api/v1/auth/${id}/meta`,
         cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
+  describe("Fetch currently logged in admin", () => {
+    test("GET /api/v1/auth/me", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/auth/me",
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(AdminSchema.parse(response.json())).toEqual(mockAdmins[0]);
+    });
+
+    test("GET /api/v1/auth/me — returns 404 when admin not found", async () => {
+      const ghostCookie = server.jwt.sign({ id: 999999, username: "ghost" });
+
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/auth/me",
+        cookies: { session: ghostCookie },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    test("GET /api/v1/auth/me/meta", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/auth/me/meta",
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(AdminSchema.withMeta().parse(response.json())).toEqual(mockAdminsWithMeta[0]);
+    });
+
+    test("GET /api/v1/auth/me/meta — returns 404 when admin not found", async () => {
+      const ghostCookie = server.jwt.sign({ id: 999999, username: "ghost" });
+
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/auth/me/meta",
+        cookies: { session: ghostCookie },
       });
 
       expect(response.statusCode).toBe(404);

@@ -4,6 +4,7 @@ import { TagSchema } from "@viernulvier/shared/index.js";
 import { getMetadata, getParam, parseFirstRow, parseSchema } from "@/routes/helpers.js";
 
 const ReplaceTagBodySchema = TagSchema.pick({
+  old_id: true,
   name: true,
   type: true,
   public: true,
@@ -21,10 +22,10 @@ export async function replaceTag(
 
   const result = await server.pg.query<Tag>(
     `UPDATE tag
-     SET name = $1, type_id = $2, public = $3, updated_by = $4, updated_at = $5
-     WHERE id = $6
-     RETURNING id, name, type_id, public`,
-    [body.name, body.type, body.public, admin, current_time, id],
+     SET old_id = $1, name = $2, type_id = $3, public = $4, updated_by = $5, updated_at = $6
+     WHERE id = $7
+     RETURNING id, old_id, name, type_id, public`,
+    [body.old_id, body.name, body.type, body.public, admin, current_time, id],
   );
 
   return parseFirstRow(server, TagSchema, result.rows);

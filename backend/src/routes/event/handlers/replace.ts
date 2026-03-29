@@ -26,14 +26,13 @@ export async function replaceEvent(
   const { admin, current_time } = getMetadata(request);
 
   const result = await updateEvent(server)(
+    body.old_id,
     body.starts_at,
     body.ends_at,
     body.production,
     body.hall,
     body.doors_at,
-    body.vendor_id,
     body.info,
-    body.old_id,
     current_time,
     admin,
     id,

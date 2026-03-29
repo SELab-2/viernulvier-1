@@ -1,3 +1,4 @@
+import { AdminSchema } from "@viernulvier/shared/index.js";
 import { primaryKey } from "@viernulvier/shared/types/helpers.js";
 import {
   type FastifyInstance,
@@ -157,6 +158,27 @@ export function getParam(request: FastifyRequest, key: string): string {
   return value;
 }
 /* v8 ignore stop */
+
+const UserPayloadSchema = AdminSchema.pick({ id: true, username: true });
+type UserPayload = z.infer<typeof UserPayloadSchema>;
+
+/**
+ * Extracts and validates the JWT payload from the request, returning only `id` and `username`.
+ *
+ * Example: `const { id } = parseUser(request);`
+ *
+ * @param request - The Fastify request to extract the user payload from.
+ * @returns A type-safe object containing only `id` and `username`.
+ * @throws `HttpError` If the payload doesn't match the expected shape.
+ */
+export function parseUser(request: FastifyRequest): UserPayload {
+  const parsed = UserPayloadSchema.safeParse(request.user);
+  if (!parsed.success) {
+    request.log.error(parsed.error);
+    throw parseErrors[ParseContext.Request];
+  }
+  return parsed.data;
+}
 
 /**
  * Parses an unknown value against a Zod schema.

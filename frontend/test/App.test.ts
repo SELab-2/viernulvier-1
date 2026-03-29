@@ -1,12 +1,29 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mount } from "@vue/test-utils";
-import App from "@/App.vue";
+import { createMemoryHistory, createRouter } from "vue-router";
+import { routes } from "@/router/routes";
+import { i18n } from "@/i18n";
+import HomeView from "@/views/HomeView.vue";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+async function mountHome(lang: "nl" | "fr" | "en" = "nl") {
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes,
+  });
 
-/** Returns a freshly mounted App wrapper before each test. */
-function mountApp() {
-  return mount(App, { attachTo: document.body });
+  // Navigeer naar de juiste taal zodat route.params.lang correct is
+  await router.push(`/${lang}`);
+  await router.isReady();
+
+  const wrapper = mount(HomeView, {
+    global: {
+      plugins: [router, i18n],
+    },
+    attachTo: document.body,
+  });
+
+  return { wrapper, router };
 }
 
 /** Click the globe button to open/toggle the language dropdown. */
@@ -23,15 +40,17 @@ async function clickMoon(wrapper: ReturnType<typeof mount>) {
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
-describe("App.vue", () => {
-  let wrapper: ReturnType<typeof mount>;
+describe("HomeView.vue", () => {
+  let wrapper: Awaited<ReturnType<typeof mountHome>>["wrapper"];
 
-  beforeEach(() => {
-    wrapper = mountApp();
+  beforeEach(async () => {
+    const result = await mountHome("nl");
+    wrapper = result.wrapper;
   });
 
   afterEach(() => {
     wrapper.unmount();
+    document.body.innerHTML = "";
   });
 
   // ── Rendering ──────────────────────────────────────────────────────────────

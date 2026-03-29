@@ -55,23 +55,22 @@ async function fetchPageRequest(
   return await response
 }
 
-// Fetch singular event by ID, used for fetching old ID references
-async function fetchEventRequest(id: number, authToken: string) {
-  const url = `https://www.viernulvier.gent/api/v1/events/${id}`;
+// async function fetchEventRequest(id: number, authToken: string) {
+//   const url = `https://www.viernulvier.gent/api/v1/events/${id}`;
 
-  const response = await fetch(url, {
-    headers: {
-      accept: "application/ld+json",
-      "X-AUTH-TOKEN": authToken,
-    },
-  });
+//   const response = await fetch(url, {
+//     headers: {
+//       accept: "application/ld+json",
+//       "X-AUTH-TOKEN": authToken,
+//     },
+//   });
 
-  if (!response.ok) {
-    throw new Error(`API returned status ${response.status}`);
-  }
+//   if (!response.ok) {
+//     throw new Error(`API returned status ${response.status}`);
+//   }
 
-  return await response;
-}
+//   return await response;
+// }
 
 // Fetch singular page of events, used for pagination, refine response to return parsed JSON
 async function fetchEventsPage(
@@ -166,8 +165,8 @@ export async function scrapeAllEvents(
   for (let page = 1; page <= totalPages; page++) {
     const data = await fetchEventsPage(page, beforeDate, authToken);
     for (const event of data.member) {
-      const id = event["@id"].split("/").pop() as unknown as number;
-      console.log(`Processing event ${id} (${page}/${totalPages})`);
+      // const id = event["@id"].split("/").pop() as unknown as number;
+      console.log(`Processing event ${event["@id"]} (${page}/${totalPages})`);
       await processEvent(event);
     }
   }

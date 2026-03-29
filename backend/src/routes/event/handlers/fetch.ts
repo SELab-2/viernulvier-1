@@ -1,11 +1,10 @@
-import z, { string } from "zod";
+import z from "zod";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 
 import { buildQuery, parseParams } from "@/routes/helpers.js";
 import { EventSchema, stringToInt } from "@viernulvier/shared/index.js";
 import type { Event, EventWithMeta } from "@viernulvier/shared/index.js";
 import { selectPriceSubquery } from "./helper.js";
-import { parse } from "node:path";
 
 /**
  * Fetches a single event by ID from the database.
@@ -21,8 +20,8 @@ export async function fetchEvent(
 ): Promise<Event | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const result = await buildQuery(server,
-    `SELECT id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}, old_id
-    FROM events WHERE id = $1`,
+    `SELECT id, old_id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}
+    FROM event WHERE id = $1`,
     z.tuple([z.int()]),
     EventSchema,
   )(id);
@@ -45,9 +44,9 @@ export async function fetchEventWithMeta(
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const result = await buildQuery(
     server,
-    `SELECT id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}, old_id,
+    `SELECT id, old_id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery},
         created_at, updated_at, created_by, updated_by
-    FROM events WHERE id = $1`,
+    FROM event WHERE id = $1`,
     z.tuple([z.int()]),
     EventSchema.withMeta(),
   )(id);
@@ -83,8 +82,8 @@ export async function fetchEvents(
 
   const result = await buildQuery(
     server,
-    `SELECT id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}, old_id
-    FROM events`,
+    `SELECT id, old_id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}
+    FROM event`,
     EventSchema,
   )();
 

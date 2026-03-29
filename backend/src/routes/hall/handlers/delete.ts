@@ -8,7 +8,7 @@ const deleteHallById = (server: FastifyInstance) =>
   buildQuery(
     server,
     `DELETE FROM hall WHERE id = $1
-     RETURNING id, name, address, vendor_id`,
+     RETURNING id, old_id, name, address`,
     z.tuple([z.int()]),
     HallSchema,
   );

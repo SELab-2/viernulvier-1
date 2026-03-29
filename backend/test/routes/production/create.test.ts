@@ -2,14 +2,15 @@ import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vit
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
+import { productionRowWithRefs } from "./fixtures.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
 
 const createdProduction: Production = {
   id: 1,
-  vendor_id: 10,
-  box_office_id: 20,
+  old_id: 1111,
+  finalized: true,
   supertitle: null,
   title: { nl: "Titel" },
   artist: { nl: "Artiest" },
@@ -49,7 +50,10 @@ describe("Create on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [createdProduction], rowCount: 1 });
+        return Promise.resolve({
+          rows: [productionRowWithRefs(createdProduction)],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in create tests: ${query}`);
@@ -60,8 +64,6 @@ describe("Create on production route", () => {
       url: "/api/v1/production",
       cookies: { session: sessionCookie },
       payload: {
-        vendor_id: createdProduction["vendor_id"],
-        box_office_id: createdProduction["box_office_id"],
         title: createdProduction["title"],
         artist: createdProduction["artist"],
         tagline: createdProduction["tagline"],
@@ -82,8 +84,6 @@ describe("Create on production route", () => {
       url: "/api/v1/production",
       cookies: { session: sessionCookie },
       payload: {
-        vendor_id: createdProduction["vendor_id"],
-        box_office_id: createdProduction["box_office_id"],
         title: createdProduction["title"],
         artist: createdProduction["artist"],
         tagline: createdProduction["tagline"],
@@ -95,7 +95,7 @@ describe("Create on production route", () => {
   });
 
   test("POST /api/v1/production -> rejects invalid body", async () => {
-    // No vendor_id / box_office_id / title -> Zod validation should fail.
+    // No title -> Zod validation should fail.
     const response = await server.inject({
       method: "POST",
       url: "/api/v1/production",
