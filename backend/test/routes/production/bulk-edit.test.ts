@@ -3,6 +3,7 @@ import { buildServer } from "@/server.js";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
 import { bulkEditProductions } from "@/routes/production/handlers/bulk-edit.js";
+import { productionRowWithRefs, productionRowWithRefsAlt } from "./fixtures.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
@@ -119,7 +120,13 @@ describe("Bulk edit on production route", () => {
 
       if (upper.startsWith("SELECT")) {
         expect(params?.[0]).toEqual(ids);
-        return Promise.resolve({ rows: [updatedBulkA1, updatedBulkA2], rowCount: 2 });
+        return Promise.resolve({
+          rows: [
+            productionRowWithRefs(updatedBulkA1),
+            productionRowWithRefsAlt(updatedBulkA2),
+          ],
+          rowCount: 2,
+        });
       }
 
       throw new Error(`Unexpected query in bulk-edit tests A: ${query}`);
@@ -159,7 +166,13 @@ describe("Bulk edit on production route", () => {
 
       if (upper.startsWith("SELECT")) {
         expect(params?.[0]).toEqual(ids);
-        return Promise.resolve({ rows: [updatedBulkB1, updatedBulkB2], rowCount: 2 });
+        return Promise.resolve({
+          rows: [
+            productionRowWithRefs(updatedBulkB1),
+            productionRowWithRefsAlt(updatedBulkB2),
+          ],
+          rowCount: 2,
+        });
       }
 
       throw new Error(`Unexpected query in bulk-edit tests B: ${query}`);
@@ -229,7 +242,13 @@ describe("Bulk edit on production route", () => {
 
       if (upper.startsWith("SELECT")) {
         expect(params?.[0]).toEqual(ids);
-        return Promise.resolve({ rows: [updatedBulkC1, updatedBulkC2], rowCount: 2 });
+        return Promise.resolve({
+          rows: [
+            productionRowWithRefs(updatedBulkC1),
+            productionRowWithRefsAlt(updatedBulkC2),
+          ],
+          rowCount: 2,
+        });
       }
 
       throw new Error(`Unexpected query in bulk-edit tests C: ${query}`);
@@ -281,7 +300,13 @@ describe("Bulk edit on production route", () => {
 
       if (upper.startsWith("SELECT")) {
         expect(params?.[0]).toEqual(ids);
-        return Promise.resolve({ rows: [baseProduction1, baseProduction2], rowCount: 2 });
+        return Promise.resolve({
+          rows: [
+            productionRowWithRefs(baseProduction1),
+            productionRowWithRefsAlt(baseProduction2),
+          ],
+          rowCount: 2,
+        });
       }
 
       throw new Error(`Unexpected query in bulk-edit null test: ${query}`);

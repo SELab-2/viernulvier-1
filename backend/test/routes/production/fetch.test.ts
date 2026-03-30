@@ -1,13 +1,18 @@
 import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
+import {
+  ProductionSchema,
+  ProductionSchemaWithBackwardsRefs,
+  type ProductionWithBackwardsRefs,
+} from "@viernulvier/shared/index.js";
 import { getProductionsByIds } from "@/routes/production/handlers/fetch.js";
+import { productionRowWithRefs, productionRowWithRefsAlt } from "./fixtures.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
 
-const baseProduction: Production = {
+const baseProduction: ProductionWithBackwardsRefs = productionRowWithRefs({
   id: 1,
   supertitle: null,
   title: { nl: "Titel" },
@@ -23,7 +28,7 @@ const baseProduction: Production = {
   quote_source: null,
   programme: null,
   info: null,
-};
+});
 
 const baseProductionWithMeta = {
   ...baseProduction,
@@ -79,8 +84,8 @@ describe("Production fetch routes", () => {
     expect(response.statusCode).toBe(200);
 
     const json = response.json();
-    const parsed = ProductionSchema.array().parse(json);
-    expect(parsed).toEqual([ProductionSchema.parse(baseProduction)]);
+    const parsed = ProductionSchemaWithBackwardsRefs.array().parse(json);
+    expect(parsed).toEqual([ProductionSchemaWithBackwardsRefs.parse(baseProduction)]);
   });
 
   test("GET /api/v1/production/:id -> returns a single production", async () => {
@@ -91,8 +96,8 @@ describe("Production fetch routes", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    const parsed = ProductionSchema.parse(response.json());
-    expect(parsed).toEqual(ProductionSchema.parse(baseProduction));
+    const parsed = ProductionSchemaWithBackwardsRefs.parse(response.json());
+    expect(parsed).toEqual(ProductionSchemaWithBackwardsRefs.parse(baseProduction));
   });
 
   test("GET /api/v1/production/:id -> returns 404 for unknown id", async () => {
@@ -142,11 +147,12 @@ describe("Production fetch helpers", () => {
 
   test("getProductionsByIds -> fetches with ANY(ids) in one query", async () => {
     const ids = [2, 1];
-    const secondProduction: Production = {
-      ...baseProduction,
+    const { tags: _t, events: _e, ...productionCore } = baseProduction;
+    const secondProduction: ProductionWithBackwardsRefs = productionRowWithRefsAlt({
+      ...productionCore,
       id: 2,
       title: { nl: "Tweede titel" },
-    };
+    });
 
     server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
       const upper = query.trim().toUpperCase();
@@ -162,8 +168,8 @@ describe("Production fetch helpers", () => {
     const result = await getProductionsByIds(server, ids);
 
     expect(result).toEqual([
-      ProductionSchema.parse(secondProduction),
-      ProductionSchema.parse(baseProduction),
+      ProductionSchemaWithBackwardsRefs.parse(secondProduction),
+      ProductionSchemaWithBackwardsRefs.parse(baseProduction),
     ]);
   });
 });

@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import type { Production } from "@viernulvier/shared/index.js";
+import type { ProductionWithBackwardsRefs } from "@viernulvier/shared/index.js";
 import { getMetadata, parseSchema } from "@/routes/helpers.js";
 import { getProductionById } from "./fetch.js";
 import { CreateProductionBodySchema } from "./body-schema.js";
@@ -31,7 +31,7 @@ const NullableCreateColumns = [
  * @param request - The Fastify request, expected to contain a production body.
  * @returns The created production, or `null` if the insert failed or parsing failed.
  */
-export async function createProduction(server: FastifyInstance, request: FastifyRequest): Promise<Production | null> {
+export async function createProduction(server: FastifyInstance, request: FastifyRequest): Promise<ProductionWithBackwardsRefs | null> {
   const body = parseSchema(server, CreateProductionBodySchema, request.body);
 
   const { admin, current_time } = getMetadata(request);

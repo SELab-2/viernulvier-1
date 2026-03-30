@@ -3,6 +3,7 @@ import { buildServer } from "@/server.js";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
 import { editProduction } from "@/routes/production/handlers/edit.js";
+import { productionRowWithRefs } from "./fixtures.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
@@ -84,7 +85,10 @@ describe("Edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [updatedProductionA], rowCount: 1 });
+        return Promise.resolve({
+          rows: [productionRowWithRefs(updatedProductionA)],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in edit tests: ${query}`);
@@ -120,7 +124,10 @@ describe("Edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [updatedProductionB], rowCount: 1 });
+        return Promise.resolve({
+          rows: [productionRowWithRefs(updatedProductionB)],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in edit tests: ${query}`);
@@ -181,7 +188,10 @@ describe("Edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [updatedProductionC], rowCount: 1 });
+        return Promise.resolve({
+          rows: [productionRowWithRefs(updatedProductionC)],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in edit tests: ${query}`);
@@ -223,7 +233,10 @@ describe("Edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [originalProduction], rowCount: 1 });
+        return Promise.resolve({
+          rows: [productionRowWithRefs(originalProduction)],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in edit tests: ${query}`);
@@ -268,7 +281,10 @@ describe("Edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [originalProduction], rowCount: 1 });
+        return Promise.resolve({
+          rows: [productionRowWithRefs(originalProduction)],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in edit tests: ${query}`);

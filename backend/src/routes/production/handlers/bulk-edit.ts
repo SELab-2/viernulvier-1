@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import type { Production } from "@viernulvier/shared/index.js";
+import type { ProductionWithBackwardsRefs } from "@viernulvier/shared/index.js";
 import { HttpClientError, HttpError, getMetadata, parseSchema } from "@/routes/helpers.js";
 import z from "zod";
 import { getProductionsByIds } from "./fetch.js";
@@ -38,7 +38,7 @@ const NullableBulkEditColumns = [
  * @param request - The Fastify request, expected to contain `ids` and `data` in its body.
  * @returns The updated productions array (can be empty), or `null` if parsing failed.
  */
-export async function bulkEditProductions(server: FastifyInstance, request: FastifyRequest): Promise<Production[] | null> {
+export async function bulkEditProductions(server: FastifyInstance, request: FastifyRequest): Promise<ProductionWithBackwardsRefs[] | null> {
   const body = parseSchema(server, BulkEditProductionsBodySchema, request.body);
   const { ids, data } = body;
 

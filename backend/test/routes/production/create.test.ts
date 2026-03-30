@@ -2,6 +2,7 @@ import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vit
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
+import { productionRowWithRefs } from "./fixtures.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
@@ -47,7 +48,10 @@ describe("Create on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [createdProduction], rowCount: 1 });
+        return Promise.resolve({
+          rows: [productionRowWithRefs(createdProduction)],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in create tests: ${query}`);
