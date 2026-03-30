@@ -10,7 +10,7 @@ let sessionCookie: string;
 const mockTag: Tag = {
   id: 5,
   name: { en: "Music", nl: "Muziek" },
-  type: 1,
+  tag_type: 1,
   productions: [],
   public: true,
 };
@@ -48,7 +48,7 @@ describe("Create tag", () => {
       cookies: { session: sessionCookie },
       payload: {
         name: mockTag.name,
-        type: mockTag.type,
+        tag_type: mockTag.tag_type,
         public: mockTag.public,
       },
     });
@@ -69,7 +69,7 @@ describe("Create tag", () => {
       cookies: { session: sessionCookie },
       payload: {
         name: mockTag.name,
-        type: mockTag.type,
+        tag_type: mockTag.tag_type,
         public: mockTag.public,
       },
     });

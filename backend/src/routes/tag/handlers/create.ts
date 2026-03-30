@@ -1,24 +1,24 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Tag } from "@viernulvier/shared/index.js";
 import { TagSchema } from "@viernulvier/shared/index.js";
-import { languageMap } from "@viernulvier/shared/types/helpers.js";
 import { getMetadata, parseSchema, buildQuery } from "@/routes/helpers.js";
-import { z } from "zod";
+import z from "zod";
 
-const CreateTagBodySchema = TagSchema.pick({
-  name: true,
-  public: true,
-}).extend({
-  type: z.int().nonnegative(),
-});
+const CreateTagBodySchema = TagSchema.omit({ id: true, productions: true });
 
 const insertTag = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `INSERT INTO tag (name, type_id, public, created_by, updated_by, created_at, updated_at)
+    `INSERT INTO tag (name, tag_type, public, created_by, updated_by, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $4, $5, $5)
-     RETURNING id, name, type_id, public`,
-    z.tuple([languageMap, z.int(), z.boolean(), z.int(), z.date()]),
+     RETURNING id, name, tag_type, public`,
+    z.tuple([
+      CreateTagBodySchema.shape.name,
+      CreateTagBodySchema.shape.tag_type,
+      CreateTagBodySchema.shape.public,
+      z.int(),
+      z.date(),
+    ]),
     TagSchema,
   );
 
@@ -31,7 +31,7 @@ export async function createTag(
 
   const rows = await insertTag(server)(
     body.name,
-    body.type,
+    body.tag_type,
     body.public,
     admin,
     current_time,

@@ -134,18 +134,18 @@ Table event_price {
 
 Table production_tag {
   ~metadata
-  tag_id int [ref: > tag.id]
-  production_id int [ref: > production.id]
+  tag int [ref: > tag.id]
+  production int [ref: > production.id]
 }
 
 Table tag {
   ~metadata
   "id" int [PK]
   "name" varchar(32) [not null]
-  "type" int [ref: > tag_type.id, not null]
+  "tag_type" int [ref: > tag_type.id, not null]
 
   indexes {
-    type
+    tag_type
   }
 }
 
@@ -187,7 +187,7 @@ Table custom_production_field_definition {
 Table production_custom_field {
   ~metadata
   "field_defenition_id" int [PK, ref: > custom_production_field_definition.id]
-  "production_id" int [PK, ref: > production.id]
+  "production" int [PK, ref: > production.id]
   "value_bool" bool [null]
   "value_number" numeric [null]
   "value_string" varchar(32) [null]
@@ -211,7 +211,7 @@ Table blog {
 Table blogpost {
   ~metadata
   "id" int [PK]
-  "blog_id" int [ref: > blog.id]
+  "blog" int [ref: > blog.id]
   "content" json
 }
   "event" int [PK, ref: > event.id]
@@ -227,18 +227,18 @@ Table blogpost {
 
 Table production_tag {
   ~metadata
-  tag_id int [ref: > tag.id]
-  production_id int [ref: > production.id]
+  tag int [ref: > tag.id]
+  production int [ref: > production.id]
 }
 
 Table tag {
   ~metadata
   "id" int [PK]
   "name" varchar(32) [not null]
-  "type" int [ref: > tag_type.id, not null]
+  "tag_type" int [ref: > tag_type.id, not null]
 
   indexes {
-    type
+    tag_type
   }
 }
 
@@ -297,7 +297,7 @@ Table blog {
 Table blogpost {
   ~metadata
   "id" int [PK]
-  "blog_id" int [ref: > blog.id]
+  "blog" int [ref: > blog.id]
   "content" json
 }
 ```

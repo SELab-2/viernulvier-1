@@ -22,7 +22,7 @@ SELECT
   p.quote_source,
   p.programme,
   p.info,
-  (SELECT COALESCE(ARRAY_AGG(pt.tag_id), '{}') FROM production_tag pt WHERE pt.production_id = p.id) AS tags
+  (SELECT COALESCE(ARRAY_AGG(pt.tag), '{}') FROM production_tag pt WHERE pt.production = p.id) AS tags
 FROM production p
 `;
 

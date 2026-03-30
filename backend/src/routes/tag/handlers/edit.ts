@@ -6,7 +6,7 @@ import { z } from "zod";
 
 const EditTagBodySchema = TagSchema.pick({
   name: true,
-  type: true,
+  tag_type: true,
   public: true,
 }).partial();
 
@@ -28,9 +28,9 @@ export async function editTag(
     values.push(body.name);
   }
 
-  if (body.type !== undefined) {
-    fields.push(`type_id = $${i++}`);
-    values.push(body.type);
+  if (body.tag_type !== undefined) {
+    fields.push(`tag_type = $${i++}`);
+    values.push(body.tag_type);
   }
 
   if (body.public !== undefined) {
@@ -43,7 +43,7 @@ export async function editTag(
 
   const result = await server.pg.query<Tag>(
     `UPDATE tag SET ${fields.join(", ")} WHERE id = $${i}
-     RETURNING id, name, type_id, public`,
+     RETURNING id, name, tag_type, public`,
     values,
   );
 

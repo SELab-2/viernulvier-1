@@ -59,10 +59,10 @@ Events use `legacy_production_import_map` to resolve production foreign keys, so
 **Genres → `tag` + `production_tag`**
 
 - The **`Genre`** column may list **several genres separated by commas**. Each part is trimmed and deduplicated.
-- For each genre name, the script looks for an existing **`tag`** with that **`name->>'nl'`** (case-insensitive) and **`type_id`** = the Genre tag type.
+- For each genre name, the script looks for an existing **`tag`** with that **`name->>'nl'`** (case-insensitive) and **`tag_type`** = the Genre tag type.
   - If **found**, that tag id is reused.
-  - If **not found**, a new **`tag`** is created (`type_id` = Genre, `public` = true) and cached for the rest of the run.
-- Each production is linked with **`INSERT INTO production_tag (production_id, tag_id) … ON CONFLICT DO NOTHING`** so duplicate links are harmless.
+  - If **not found**, a new **`tag`** is created (`tag_type` = Genre, `public` = true) and cached for the rest of the run.
+- Each production is linked with **`INSERT INTO production_tag (production, tag) … ON CONFLICT DO NOTHING`** so duplicate links are harmless.
 
 **Legacy id map**
 
