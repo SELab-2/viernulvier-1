@@ -6,7 +6,7 @@ import { z } from "zod";
 
 const EditTagBodySchema = TagSchema.pick({
   name: true,
-  type: true,
+  tag_type: true,
   public: true,
 }).partial();
 
@@ -28,9 +28,9 @@ export async function editTag(
     values.push(body.name);
   }
 
-  if (body.type !== undefined) {
+  if (body.tag_type !== undefined) {
     fields.push(`tag_type = $${i++}`);
-    values.push(body.type);
+    values.push(body.tag_type);
   }
 
   if (body.public !== undefined) {

@@ -39,7 +39,7 @@ function lastCall(): [string, RequestInit] {
   return calls[calls.length - 1]!;
 }
 
-const tagPayload = { id: 1, name: { nl: "Drama" }, type: 1, public: true };
+const tagPayload = { id: 1, name: { nl: "Drama" }, tag_type: 1, public: true };
 const tagTypePayload = { id: 1, name: { nl: "Genre" } };
 
 // ---------------------------------------------------------------------------
@@ -88,7 +88,7 @@ describe("getTagWithMeta", () => {
 
 describe("createTag", () => {
   it("POSTs to /api/v1/tags", async () => {
-    const input = { name: { nl: "Drama" }, type: 1, public: true };
+    const input = { name: { nl: "Drama" }, tag_type: 1, public: true };
     await createTag(input);
     expect(lastCall()[0]).toBe("/api/v1/tags");
     expect(lastCall()[1].method).toBe("POST");
@@ -98,7 +98,7 @@ describe("createTag", () => {
 
 describe("replaceTag", () => {
   it("PUTs to /api/v1/tags/:id", async () => {
-    await replaceTag(1, { name: { nl: "Komedie" }, type: 1, public: true });
+    await replaceTag(1, { name: { nl: "Komedie" }, tag_type: 1, public: true });
     expect(lastCall()[0]).toBe("/api/v1/tags/1");
     expect(lastCall()[1].method).toBe("PUT");
   });
