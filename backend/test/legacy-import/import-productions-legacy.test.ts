@@ -89,7 +89,7 @@ describe("importProductionsLegacy", () => {
         if (name === "Genre") return Promise.resolve({ rows: [{ id: 20 }] });
         return Promise.resolve({ rows: [] });
       }
-      if (sql.includes("FROM tag") && sql.includes("type_id = $1") && !sql.includes("lower(name")) {
+      if (sql.includes("FROM tag") && sql.includes("tag_type = $1") && !sql.includes("lower(name")) {
         return Promise.resolve({ rows: [] });
       }
       if (sql.includes("FROM tag") && sql.includes("lower(name->>'nl')")) {
@@ -142,7 +142,7 @@ describe("importProductionsLegacy", () => {
         if (name === "Genre") return Promise.resolve({ rows: [{ id: 20 }] });
         return Promise.resolve({ rows: [] });
       }
-      if (sql.includes("FROM tag") && sql.includes("type_id = $1") && !sql.includes("lower(name")) {
+      if (sql.includes("FROM tag") && sql.includes("tag_type = $1") && !sql.includes("lower(name")) {
         return Promise.resolve({ rows: [] });
       }
       if (sql.trimStart().startsWith("BEGIN")) return Promise.resolve({ rows: [] });
@@ -242,7 +242,7 @@ describe("importProductionsLegacy", () => {
         if (name === "Genre") return Promise.resolve({ rows: [{ id: 20 }] });
         return Promise.resolve({ rows: [] });
       }
-      if (sql.includes("FROM tag") && sql.includes("type_id = $1") && !sql.includes("lower(name")) {
+      if (sql.includes("FROM tag") && sql.includes("tag_type = $1") && !sql.includes("lower(name")) {
         return Promise.resolve({ rows: [] });
       }
       if (sql.trimStart().startsWith("BEGIN")) return Promise.resolve({ rows: [] });
@@ -294,7 +294,7 @@ describe("importProductionsLegacy", () => {
         const id = parsed.nl === "Tag" ? 10 : 20;
         return Promise.resolve({ rows: [{ id }] });
       }
-      if (sql.includes("FROM tag") && sql.includes("type_id = $1") && !sql.includes("lower(name")) {
+      if (sql.includes("FROM tag") && sql.includes("tag_type = $1") && !sql.includes("lower(name")) {
         return Promise.resolve({ rows: [] });
       }
       if (sql.trimStart().startsWith("BEGIN")) return Promise.resolve({ rows: [] });

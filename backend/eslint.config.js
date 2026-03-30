@@ -102,6 +102,7 @@ export default defineConfig([
 
       // Prevent common API logic mistakes
       "@typescript-eslint/no-misused-promises": "error",
+      "@typescript-eslint/no-deprecated": "error",
 
       // Rely on the beter import resolver
       "n/no-missing-import": "off",
@@ -145,6 +146,7 @@ export default defineConfig([
     rules: {
       "n/no-unpublished-import": "off",
       "@typescript-eslint/no-floating-promises": "off",
+      "@typescript-eslint/no-deprecated": "error",
 
       // Tests use temp paths and fixtures; non-literal fs paths are intentional.
       "security/detect-non-literal-fs-filename": "off",
