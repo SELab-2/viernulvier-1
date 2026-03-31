@@ -83,11 +83,7 @@ function importMetaUrlToPath(importMetaUrl: string): string {
   if (!importMetaUrl.startsWith("file://")) {
     return importMetaUrl;
   }
-  try {
-    return fileURLToPath(importMetaUrl);
-  } catch {
-    return new URL(importMetaUrl).pathname;
-  }
+  return new URL(importMetaUrl).pathname;
 }
 
 /**
