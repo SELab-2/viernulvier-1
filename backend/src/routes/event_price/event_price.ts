@@ -13,12 +13,11 @@ import {
 
 export default function eventPriceRoutes(server: FastifyInstance) {
   const protect = { preHandler: [server.authorize] };
-
-  server.get("/event_price/api/v1/:id", replyHandler(server, fetchEventPrice));
-  server.get("/event_price/api/v1/:id/meta", protect, replyHandler(server, fetchEventPriceWithMeta));
-  server.get("/event_price/api/v1", replyHandler(server, fetchEventPrices));
-  server.post("/event_price/api/v1", protect, replyHandler(server, createEventPrice));
-  server.put("/event_price/api/v1/:id", protect, replyHandler(server, replaceEventPrice));
-  server.patch("/event_price/api/v1/:id", protect, replyHandler(server, editEventPrice));
-  server.delete("/event_price/api/v1/:id", protect, replyHandler(server, deleteEventPrice));
+  server.get("/api/v1/event/price/:id", replyHandler(server, fetchEventPrice));
+  server.get("/api/v1/event/price/:id/meta", protect, replyHandler(server, fetchEventPriceWithMeta));
+  server.get("/api/v1/event/price", replyHandler(server, fetchEventPrices));
+  server.post("/api/v1/event/price", protect, replyHandler(server, createEventPrice));
+  server.put("/api/v1/event/price/:id", protect, replyHandler(server, replaceEventPrice));
+  server.patch("/api/v1/event/price/:id", protect, replyHandler(server, editEventPrice));
+  server.delete("/api/v1/event/price/:id", protect, replyHandler(server, deleteEventPrice));
 }

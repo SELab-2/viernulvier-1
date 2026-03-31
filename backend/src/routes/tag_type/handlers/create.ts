@@ -1,27 +1,32 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { TagType } from "@viernulvier/shared/index.js";
 import { TagTypeSchema } from "@viernulvier/shared/index.js";
-import { getMetadata, parseFirstRow, parseSchema } from "@/routes/helpers.js";
+import { languageMap } from "@viernulvier/shared/types/helpers.js";
+import { getMetadata, parseSchema, buildQuery } from "@/routes/helpers.js";
+import { z } from "zod";
 
 const CreateTagTypeBodySchema = TagTypeSchema.pick({
   name: true,
 });
 
+const insertTagType = (server: FastifyInstance) =>
+  buildQuery(
+    server,
+    `INSERT INTO tag_type (name, created_by, updated_by, created_at, updated_at)
+     VALUES ($1, $2, $2, $3, $3)
+     RETURNING id, name`,
+    z.tuple([languageMap, z.int(), z.date()]),
+    TagTypeSchema,
+  );
+
 export async function createTagType(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<TagType | null> {
-
-  // Authentication will be enforced once the auth branch is merged
   const body = parseSchema(server, CreateTagTypeBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
 
-  const result = await server.pg.query<TagType>(
-    `INSERT INTO tag_type (name, created_by, updated_by, created_at, updated_at)
-     VALUES ($1, $2, $2, $3, $3)
-     RETURNING id, name`,
-    [body.name, admin, current_time],
-  );
+  const rows = await insertTagType(server)(body.name, admin, current_time);
 
-  return parseFirstRow(server, TagTypeSchema, result.rows);
+  return rows[0] ?? null;
 }
