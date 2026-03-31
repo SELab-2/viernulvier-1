@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./assets/fonts/inter.css";
 @import "./assets/design-tokens.css";
 
 /* ---- Map design tokens → Tailwind utility classes ---- */
