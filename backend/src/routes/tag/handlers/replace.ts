@@ -10,6 +10,13 @@ const ReplaceTagBodySchema = TagSchema.pick({
   public: true,
 });
 
+/**
+ * Replaces an existing tag's fields and returns the updated record.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request, expected to contain `id` in params and a full tag body (`name`, `tag_type`, `public`).
+ * @returns The updated tag, or `null` if the update failed or parsing failed.
+ */
 export async function replaceTag(
   server: FastifyInstance,
   request: FastifyRequest,

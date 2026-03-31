@@ -22,6 +22,13 @@ const insertTag = (server: FastifyInstance) =>
     TagSchema,
   );
 
+/**
+ * Creates a new tag and returns the created record.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request, expected to contain a tag body (`name`, `tag_type`, `public`).
+ * @returns The created tag, or `null` if the insert failed or parsing failed.
+ */
 export async function createTag(
   server: FastifyInstance,
   request: FastifyRequest,

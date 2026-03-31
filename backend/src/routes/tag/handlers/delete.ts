@@ -14,6 +14,13 @@ const deleteTagById = (server: FastifyInstance) =>
     TagSchema,
   );
 
+/**
+ * Deletes a tag by ID and returns the deleted row.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request, expected to contain `id` in its params.
+ * @returns The deleted tag, or `null` if no row was deleted or parsing failed.
+ */
 export async function deleteTag(
   server: FastifyInstance,
   request: FastifyRequest,

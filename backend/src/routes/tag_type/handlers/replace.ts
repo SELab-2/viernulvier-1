@@ -8,6 +8,13 @@ const ReplaceTagTypeBodySchema = TagTypeSchema.pick({
   name: true,
 });
 
+/**
+ * Replaces an existing tag type's name and returns the updated record.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request, expected to contain `id` in params and a full `name` map in the body.
+ * @returns The updated tag type, or `null` if the update failed or parsing failed.
+ */
 export async function replaceTagType(
   server: FastifyInstance,
   request: FastifyRequest,

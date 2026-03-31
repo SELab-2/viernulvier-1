@@ -131,6 +131,13 @@ const fetchTagsVisibleByProductionQuery = (server: FastifyInstance) =>
     TagDbRowSchema,
   );
 
+/**
+ * Fetches a single tag by ID (including non-public tags), with linked production IDs.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request, expected to contain `id` in its params.
+ * @returns The tag, or `null` if not found or parsing failed.
+ */
 async function fetchTag(
   server: FastifyInstance,
   request: FastifyRequest,
@@ -144,6 +151,13 @@ async function fetchTag(
   return parseSchema(server, TagSchema, merged[0], ParseContext.Database);
 }
 
+/**
+ * Fetches a single public tag by ID, with linked production IDs.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request, expected to contain `id` in its params.
+ * @returns The tag, or `null` if not found, not public, or parsing failed.
+ */
 async function fetchTagVisible(
   server: FastifyInstance,
   request: FastifyRequest,
@@ -157,6 +171,13 @@ async function fetchTagVisible(
   return parseSchema(server, TagSchema, merged[0], ParseContext.Database);
 }
 
+/**
+ * Fetches a single tag by ID including metadata, with linked production IDs.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request, expected to contain `id` in its params.
+ * @returns The tag with metadata, or `null` if not found or parsing failed.
+ */
 async function fetchTagWithMeta(
   server: FastifyInstance,
   request: FastifyRequest,
@@ -170,6 +191,14 @@ async function fetchTagWithMeta(
   return parseSchema(server, TagSchema.withMeta(), merged[0], ParseContext.Database);
 }
 
+/**
+ * Fetches tags (optional `production` filter; optional `includeProductions=true` for production ID lists).
+ * Includes non-public tags.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request; may contain `production` and `includeProductions` in the query string.
+ * @returns The list of tags, or `null` if parsing failed.
+ */
 async function fetchTags(
   server: FastifyInstance,
   request: FastifyRequest,
@@ -194,6 +223,13 @@ async function fetchTags(
   return parseSchema(server, z.array(TagSchema), merged, ParseContext.Database);
 }
 
+/**
+ * Fetches public tags only; supports the same query options as the admin list handler (`production`, `includeProductions`).
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request; may contain `production` and `includeProductions` in the query string.
+ * @returns The list of tags, or `null` if parsing failed.
+ */
 async function fetchTagsVisible(
   server: FastifyInstance,
   request: FastifyRequest,
