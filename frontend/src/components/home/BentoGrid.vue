@@ -9,7 +9,7 @@
         class="group relative flex flex-col justify-end overflow-hidden rounded-2xl bg-surface-inv p-8 min-h-72 lg:min-h-80 transition"
       >
         <img
-          src="../../assets/images/bento.webp"
+          src="@/assets/images/bento.webp"
           alt=""
           width="1200"
           height="800"

@@ -24,7 +24,7 @@
       class="absolute left-1/2 -translate-x-1/2"
     >
       <img
-        src="../assets/logo.svg"
+        src="@/assets/logo.svg"
         alt="VierNulVier"
         width="102"
         height="32"

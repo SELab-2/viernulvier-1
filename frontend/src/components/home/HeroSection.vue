@@ -32,7 +32,7 @@
         class="relative overflow-hidden rounded-2xl bg-surface-inv-raised aspect-[4/3]"
       >
         <img
-          src="../../assets/images/hero.webp"
+          src="@/assets/images/hero.webp"
           alt="De Vooruit"
           width="1200"
           height="900"
