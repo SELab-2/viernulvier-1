@@ -13,6 +13,8 @@ const RequiredCreateColumns = [
 ] as const;
 
 const NullableCreateColumns = [
+  "old_id",
+  "finalized",
   "supertitle",
   "description",
   "description_extra",

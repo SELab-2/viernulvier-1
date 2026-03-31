@@ -8,6 +8,7 @@ let sessionCookie: string;
 
 const tag1: Tag = {
   id: 5,
+  old_id: 111,
   name: { en: "Music", nl: "Muziek" },
   tag_type: 1,
   productions: [1],
@@ -16,6 +17,7 @@ const tag1: Tag = {
 
 const tag2: Tag = {
   id: 6,
+  old_id: 112,
   name: { en: "Family", nl: "Familie" },
   tag_type: 1,
   productions: [1, 2],
@@ -24,6 +26,7 @@ const tag2: Tag = {
 
 const privateTag: Tag = {
   id: 10,
+  old_id: 113,
   name: { en: "Private", nl: "Privé" },
   tag_type: 1,
   productions: [1], // important for production tests
@@ -33,6 +36,7 @@ const privateTag: Tag = {
 /** Public tag with no production links — exercises `byTag.get(id) ?? []` when `includeProductions=true`. */
 const tagNoLinks: Tag = {
   id: 42,
+  old_id: 114,
   name: { en: "Concert", nl: "Concert" },
   tag_type: 1,
   productions: [],
@@ -58,6 +62,7 @@ const mockTagsListDefault: Tag[] = mockTags.map((t) => {
 function tagToDbRow(t: Tag) {
   return {
     id: t.id,
+    old_id: t.old_id,
     name: t.name,
     tag_type: t.tag_type,
     public: t.public,

@@ -9,6 +9,7 @@ let sessionCookie: string;
 
 const mockTag: Tag = {
   id: 5,
+  old_id: 111,
   name: { en: "Music", nl: "Muziek" },
   tag_type: 1,
   productions: [],
@@ -47,6 +48,7 @@ describe("Create tag", () => {
       url: "/api/v1/tags",
       cookies: { session: sessionCookie },
       payload: {
+        old_id: mockTag.old_id,
         name: mockTag.name,
         tag_type: mockTag.tag_type,
         public: mockTag.public,
@@ -68,6 +70,7 @@ describe("Create tag", () => {
       url: "/api/v1/tags",
       cookies: { session: sessionCookie },
       payload: {
+        old_id: mockTag.old_id,
         name: mockTag.name,
         tag_type: mockTag.tag_type,
         public: mockTag.public,

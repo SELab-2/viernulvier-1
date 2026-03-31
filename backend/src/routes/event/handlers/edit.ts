@@ -29,6 +29,7 @@ export async function editEvent(
   if (!selectedEvent) return null;
 
   const updatedEvent: EventCreate = {
+    old_id: body.old_id ?? selectedEvent.old_id,
     starts_at: body.starts_at ?? selectedEvent.starts_at,
     ends_at: body.ends_at ?? selectedEvent.ends_at,
     production: body.production ?? selectedEvent.production,
@@ -41,6 +42,7 @@ export async function editEvent(
   const { current_time, admin } = getMetadata(request);
 
   const result = await updateEvent(server)(
+    updatedEvent.old_id,
     updatedEvent.starts_at,
     updatedEvent.ends_at,
     updatedEvent.production,

@@ -24,6 +24,7 @@ type TagProductionsSchema = z.ZodOptional<
 
 export const TagSchema = createSchema({
   id: primaryKey(),
+  old_id: z.int().nonnegative().nullable(),
   name: languageMap,
   get tag_type(): ForeignKey<typeof TagTypeSchema> {
     return foreignKey(() => TagTypeSchema);

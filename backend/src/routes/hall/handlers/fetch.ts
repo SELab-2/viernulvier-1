@@ -7,6 +7,7 @@ import z from "zod";
 const HallSelect = `
 SELECT
   id,
+  old_id,
   address,
   name
 FROM hall
@@ -30,7 +31,7 @@ const fetchHallByIdQuery = (server: FastifyInstance) =>
 const fetchHallWithMetaByIdQuery = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `SELECT id, address, name, created_at, updated_at, created_by, updated_by
+    `SELECT id, old_id, address, name, created_at, updated_at, created_by, updated_by
      FROM hall WHERE id = $1`,
     z.tuple([z.int()]),
     HallSchema.withMeta(),

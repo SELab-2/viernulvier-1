@@ -10,6 +10,8 @@ let sessionCookie: string;
 
 const originalProduction: Production = {
   id: 1,
+  old_id: 1111,
+  finalized: true,
   supertitle: null,
   title: { nl: "Oude titel" },
   artist: { nl: "Oude artiest" },

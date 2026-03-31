@@ -9,6 +9,7 @@ let sessionCookie: string;
 
 const mockTag: Tag = {
   id: 5,
+  old_id: 111,
   name: { en: "Music", nl: "Muziek" },
   tag_type: 1,
   productions: [],

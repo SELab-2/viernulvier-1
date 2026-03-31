@@ -5,7 +5,7 @@ import { parseParams, buildQuery, parseSchema, ParseContext } from "@/routes/hel
 import { z } from "zod";
 
 const TagSelect = `
-SELECT id, name, tag_type, public
+SELECT id, old_id, name, tag_type, public
 FROM tag
 `;
 
@@ -97,7 +97,7 @@ const fetchTagVisibleByIdQuery = (server: FastifyInstance) =>
 const fetchTagWithMetaByIdQuery = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `SELECT id, name, tag_type, public, created_at, updated_at, created_by, updated_by
+    `SELECT id, old_id, name, tag_type, public, created_at, updated_at, created_by, updated_by
      FROM tag WHERE id = $1`,
     z.tuple([z.int()]),
     TagDbRowWithMetaSchema,
@@ -109,7 +109,7 @@ const fetchTagsAllQuery = (server: FastifyInstance) =>
 const fetchTagsByProductionQuery = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `SELECT DISTINCT t.id, t.name, t.tag_type, public
+    `SELECT DISTINCT t.id, old_id, t.name, t.tag_type, public
      FROM tag t
      JOIN production_tag pt ON pt.tag = t.id
      WHERE pt.production = $1`,
@@ -123,7 +123,7 @@ const fetchTagsVisibleAllQuery = (server: FastifyInstance) =>
 const fetchTagsVisibleByProductionQuery = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `SELECT DISTINCT t.id, t.name, t.tag_type, public
+    `SELECT DISTINCT t.id, t.old_id, t.name, t.tag_type, public
      FROM tag t
      JOIN production_tag pt ON pt.tag = t.id
      WHERE pt.production = $1 AND t.public = true`,

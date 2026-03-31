@@ -9,10 +9,11 @@ const CreateTagBodySchema = TagSchema.omit({ id: true, productions: true });
 const insertTag = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `INSERT INTO tag (name, tag_type, public, created_by, updated_by, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $4, $5, $5)
-     RETURNING id, name, tag_type, public`,
+    `INSERT INTO tag (old_id, name, type_id, public, created_by, updated_by, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $5, $6, $6)
+     RETURNING id, old_id, name, type_id`,
     z.tuple([
+      CreateTagBodySchema.shape.old_id,
       CreateTagBodySchema.shape.name,
       CreateTagBodySchema.shape.tag_type,
       CreateTagBodySchema.shape.public,
@@ -30,6 +31,7 @@ export async function createTag(
   const { admin, current_time } = getMetadata(request);
 
   const rows = await insertTag(server)(
+    body.old_id,
     body.name,
     body.tag_type,
     body.public,

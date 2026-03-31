@@ -9,6 +9,7 @@ let sessionCookie: string;
 
 const mockTag: Tag = {
   id: 5,
+  old_id: 111,
   name: { en: "Music", nl: "Muziek" },
   tag_type: 1,
   productions: [],
@@ -40,6 +41,18 @@ beforeEach(() => {
 });
 
 describe("Edit tag", () => {
+  test("PATCH /api/v1/tags/:id old_id only", async () => {
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/tags/${mockTag.id}`,
+      cookies: { session: sessionCookie },
+      payload: { old_id: mockTag.old_id },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(TagSchema.parse(response.json())).toEqual(mockTag);
+  });
+
   test("PATCH /api/v1/tags/:id name only", async () => {
     const response = await server.inject({
       method: "PATCH",
@@ -79,7 +92,7 @@ describe("Edit tag", () => {
       method: "PATCH",
       url: `/api/v1/tags/${mockTag.id}`,
       cookies: { session: sessionCookie },
-      payload: { name: mockTag.name, tag_type: mockTag.tag_type, public: mockTag.public },
+      payload: {  old_id: mockTag.old_id, name: mockTag.name, tag_type: mockTag.tag_type, public: mockTag.public },
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);

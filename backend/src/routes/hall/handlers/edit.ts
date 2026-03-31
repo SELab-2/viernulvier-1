@@ -28,6 +28,7 @@ export async function editHall(server: FastifyInstance, request: FastifyRequest)
     values.push(value);
   };
 
+  addField("old_id", body["old_id"]);
   addField("name", body["name"]);
   addField("address", body["address"]);
 
@@ -40,7 +41,7 @@ export async function editHall(server: FastifyInstance, request: FastifyRequest)
 
   const result = await server.pg.query<Hall>(
     `UPDATE hall SET ${fields.join(", ")} WHERE id = $${i}
-     RETURNING id, name, address`,
+     RETURNING id, old_id, name, address`,
     values,
   );
 

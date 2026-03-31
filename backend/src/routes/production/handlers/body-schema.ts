@@ -2,6 +2,8 @@ import { ProductionSchema } from "@viernulvier/shared/index.js";
 import z from "zod";
 
 export const ProductionBodySchema = ProductionSchema.pick({
+  old_id: true,
+  finalized: true,
   supertitle: true,
   title: true,
   artist: true,
@@ -25,6 +27,8 @@ export const CreateProductionBodySchema = ProductionSchema.pick({
   teaser: true,
 }).extend(
   ProductionSchema.pick({
+    old_id: true,
+    finalized: true,
     supertitle: true,
     description: true,
     description_extra: true,
