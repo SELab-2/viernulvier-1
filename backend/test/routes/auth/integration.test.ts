@@ -25,6 +25,7 @@ const mockDb: Array<{
   id: number;
   username: string;
   password: string;
+  super: boolean;
   profile_picture: string | null;
   created_by: number;
   created_at: Date;
@@ -40,13 +41,14 @@ describe("Auth route integration", () => {
   beforeAll(async () => {
     server = await buildServer();
 
-    // Seed existing admin
+    // Seed existing admin as super
     const hashed = await hashPassword(existingAdmin.password);
     const seedId = nextId++;
     mockDb.push({
       id: seedId,
       username: existingAdmin.username,
       password: hashed,
+      super: true,
       profile_picture: null,
       created_by: seedId,
       created_at: new Date(),
@@ -57,12 +59,12 @@ describe("Auth route integration", () => {
     server.pg.query = vi.fn().mockImplementation((query: string, params: unknown[] = []) => {
       const q = query.trim().toUpperCase();
 
-      // Login: SELECT id, password WHERE username = $1
+      // Login: SELECT id, password, super WHERE username = $1
       if (q.startsWith("SELECT") && q.includes("PASSWORD")) {
         const username = params[0] as string;
         const row = mockDb.find((a) => a.username === username);
         return Promise.resolve(row
-          ? { rows: [{ id: row.id, password: row.password }], rowCount: 1 }
+          ? { rows: [{ id: row.id, password: row.password, super: row.super }], rowCount: 1 }
           : { rows: [], rowCount: 0 },
         );
       }
@@ -80,7 +82,7 @@ describe("Auth route integration", () => {
       if (q.startsWith("SELECT")) {
         const id = params[0] !== undefined ? Number(params[0]) : undefined;
         const rows = (id !== undefined ? mockDb.filter((a) => a.id === id) : mockDb)
-          .map(({ id, username, profile_picture }) => ({ id, username, profile_picture }));
+          .map(({ id, username, profile_picture, super: superField }) => ({ id, username, profile_picture, super: superField }));
         return Promise.resolve({ rows, rowCount: rows.length });
       }
 
@@ -94,6 +96,7 @@ describe("Auth route integration", () => {
           id: nextId++,
           username,
           password,
+          super: false,
           profile_picture: null,
           created_by: createdBy,
           created_at: now,

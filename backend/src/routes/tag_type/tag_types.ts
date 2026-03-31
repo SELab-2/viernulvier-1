@@ -12,7 +12,7 @@ import {
 } from "./handlers/index.js";
 
 export default function tagTypeRoutes(server: FastifyInstance) {
-  const protect = { preHandler: [server.authorize] };
+  const protect = { preHandler: [server.authorize()] };
 
   server.get("/api/v1/tags/type", replyHandler(server, fetchTagTypes));
   server.get("/api/v1/tags/type/:id", replyHandler(server, fetchTagType));

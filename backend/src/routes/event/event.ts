@@ -13,7 +13,7 @@ import {
 } from "./handlers/index.js";
 
 export default function eventRoutes(server: FastifyInstance) {
-  const protect = { preHandler: [server.authorize] };
+  const protect = { preHandler: [server.authorize()] };
 
   server.get("/api/v1/event/:id", replyHandler(server, fetchEvent));
   server.get("/api/v1/event/:id/meta", protect, replyHandler(server, fetchEventWithMeta));

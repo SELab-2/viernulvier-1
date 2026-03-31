@@ -12,11 +12,12 @@ const mockCreatedAdmin: Admin = {
   id: 404,
   username: mockUsername,
   profile_picture: null,
+  super: true,
 };
 
 beforeAll(async () => {
   server = await buildServer();
-  sessionCookie = server.jwt.sign({ id: 404, username: "Karel" });
+  sessionCookie = server.jwt.sign({ id: 404, username: mockUsername, super: true });
 
   server.pg.query = vi.fn().mockImplementation((query: string) => {
     const isUpdate = query.trim().toUpperCase().startsWith("UPDATE");

@@ -12,7 +12,7 @@ import {
 } from "./handlers/index.js";
 
 export default function eventPriceRoutes(server: FastifyInstance) {
-  const protect = { preHandler: [server.authorize] };
+  const protect = { preHandler: [server.authorize()] };
   server.get("/api/v1/event/price/:id", replyHandler(server, fetchEventPrice));
   server.get("/api/v1/event/price/:id/meta", protect, replyHandler(server, fetchEventPriceWithMeta));
   server.get("/api/v1/event/price", replyHandler(server, fetchEventPrices));
