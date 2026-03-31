@@ -1,4 +1,6 @@
-
+import type { Event } from "@viernulvier/shared/index.js";
+import { EventSchema } from "@viernulvier/shared/index.js";
+import { normalizeEventDates } from "@/routes/event/handlers/helper.js";
 
 interface EventListMeta {
   totalItems: number;
@@ -149,10 +151,11 @@ async function processEvent(event: EventJSON) {
     throw new Error(`Failed to create event: ${response.status} ${response.statusText}`);
   }
 
-  // Add prices after event is created, to avoid foreign key constraint errors
-  // const prices = event.prices.map((priceUrl) => parseInt(priceUrl.split("/").pop() as string, 10));
+  const eventId = (await response.json() as { id: number }).id;
 
-  return response.json();
+  // Add prices after event is created, to avoid foreign key constraint errors
+  const prices = event.prices.map((priceUrl) => parseInt(priceUrl.split("/").pop() as string, 10));
+  await dummyfunction(prices, eventId);
 }
 
 // fetch the amount of pages, then fetch each page and process the events
@@ -175,4 +178,9 @@ export async function scrapeAllEvents(
 async function voorbeeldFunctie(oldId: number): Promise<number> {
   // To Implement: fetch the old production ID based on the old API data
   return Number.MAX_SAFE_INTEGER; // return a dummy value for now, to avoid foreign key constraint errors
+}
+
+async function dummyfunction(prices: number[], eventId: number) {
+  // To Implement: fetch the old production ID based on the old API data
+  return; // return a dummy value for now, to avoid foreign key constraint errors
 }
