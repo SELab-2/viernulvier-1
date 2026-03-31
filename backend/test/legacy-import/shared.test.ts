@@ -117,7 +117,7 @@ describe("resolveDefaultLegacyImportFile", () => {
       "imports",
       "x.csv",
     ]);
-    expect(file).toBe(path.join("/repo", "data", "imports", "x.csv"));
+    expect(file).toBe(path.resolve("/repo", "data", "imports", "x.csv"));
   });
 });
 
