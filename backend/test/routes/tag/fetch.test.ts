@@ -36,6 +36,7 @@ const privateTag: Tag = {
 /** Public tag with no production links — exercises `byTag.get(id) ?? []` when `includeProductions=true`. */
 const tagNoLinks: Tag = {
   id: 42,
+  old_id: 114,
   name: { en: "Concert", nl: "Concert" },
   tag_type: 1,
   productions: [],
@@ -61,6 +62,7 @@ const mockTagsListDefault: Tag[] = mockTags.map((t) => {
 function tagToDbRow(t: Tag) {
   return {
     id: t.id,
+    old_id: t.old_id,
     name: t.name,
     tag_type: t.tag_type,
     public: t.public,

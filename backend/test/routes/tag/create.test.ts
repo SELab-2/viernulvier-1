@@ -70,6 +70,7 @@ describe("Create tag", () => {
       url: "/api/v1/tags",
       cookies: { session: sessionCookie },
       payload: {
+        old_id: mockTag.old_id,
         name: mockTag.name,
         tag_type: mockTag.tag_type,
         public: mockTag.public,
