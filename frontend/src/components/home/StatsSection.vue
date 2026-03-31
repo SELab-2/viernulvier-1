@@ -9,10 +9,7 @@
         <span
           class="text-3xl font-black tracking-tight text-ink-primary lg:text-4xl"
         >
-          <template v-if="stat.value !== null">
-            {{ stat.formatted }}
-          </template>
-          <span v-else class="inline-block h-9 w-16 animate-pulse rounded bg-surface-3" />
+          {{ stat.formatted }}
         </span>
         <span class="text-sm font-medium text-stat-label">
           {{ t(stat.labelKey) }}
@@ -39,23 +36,19 @@ function formatNumber(n: number): string {
 
 const displayStats = computed(() => [
   {
-    value: stats.value.productions,
-    formatted: stats.value.productions !== null ? formatNumber(stats.value.productions) : null,
+    formatted: formatNumber(stats.value.productions),
     labelKey: "stats.productions",
   },
   {
-    value: stats.value.events,
-    formatted: stats.value.events !== null ? formatNumber(stats.value.events) : null,
+    formatted: formatNumber(stats.value.events),
     labelKey: "stats.events",
   },
   {
-    value: stats.value.yearsOfHistory,
-    formatted: stats.value.yearsOfHistory !== null ? formatNumber(stats.value.yearsOfHistory) : null,
+    formatted: formatNumber(stats.value.yearsOfHistory),
     labelKey: "stats.yearsOfHistory",
   },
   {
-    value: stats.value.genres,
-    formatted: stats.value.genres !== null ? formatNumber(stats.value.genres) : null,
+    formatted: formatNumber(stats.value.genres),
     labelKey: "stats.genres",
   },
 ]);
