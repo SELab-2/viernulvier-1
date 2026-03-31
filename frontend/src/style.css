@@ -30,6 +30,21 @@
   --color-photo-overlay: var(--photo-overlay);
 }
 
+@theme {
+  --animate-fade-up: fadeUp 0.8s ease forwards;
+  --animate-fade-in: fadeIn 0.8s ease 0.2s forwards;
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+}
+
 @layer base {
   html,
   body {
