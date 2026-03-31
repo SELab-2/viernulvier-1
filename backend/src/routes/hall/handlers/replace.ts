@@ -30,7 +30,10 @@ const replaceHallQuery = (server: FastifyInstance) =>
  * @param request - The Fastify request, expected to contain `name` and `address` in its body.
  * @returns The updated hall, or `null` if the update failed or parsing failed.
  */
-export async function replaceHall(server: FastifyInstance, request: FastifyRequest): Promise<Hall | null> {
+export async function replaceHall(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<Hall | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const body = parseSchema(server, ReplaceHallBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);

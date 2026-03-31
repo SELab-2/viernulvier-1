@@ -13,7 +13,10 @@ const EditHallBodySchema = HallSchema.omit({ id: true }).partial();
  * @param request - The Fastify request, expected to contain `id` in params and a partial hall body.
  * @returns The updated hall, or `null` if the update failed or parsing failed.
  */
-export async function editHall(server: FastifyInstance, request: FastifyRequest): Promise<Hall | null> {  
+export async function editHall(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<Hall | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const body = parseSchema(server, EditHallBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);

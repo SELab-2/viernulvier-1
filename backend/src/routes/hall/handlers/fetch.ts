@@ -43,7 +43,10 @@ const fetchHallWithMetaByIdQuery = (server: FastifyInstance) =>
  * @param id - The hall ID to fetch.
  * @returns The hall, or `null` if not found or parsing failed.
  */
-export async function getHallById(server: FastifyInstance, id: number): Promise<Hall | null> {
+export async function getHallById(
+  server: FastifyInstance,
+  id: number,
+): Promise<Hall | null> {
   const rows = await fetchHallByIdQuery(server)(id);
   return rows[0] ?? null;
 }
@@ -55,7 +58,10 @@ export async function getHallById(server: FastifyInstance, id: number): Promise<
  * @param request - The Fastify request, expected to contain `id` in its params.
  * @returns The hall, or `null` if not found or parsing failed.
  */
-export async function fetchHall(server: FastifyInstance, request: FastifyRequest): Promise<Hall | null> {
+export async function fetchHall(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<Hall | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   return await getHallById(server, id);
 }
@@ -67,7 +73,10 @@ export async function fetchHall(server: FastifyInstance, request: FastifyRequest
  * @param request - The Fastify request, expected to contain `id` in its params.
  * @returns The hall with metadata, or `null` if not found or parsing failed.
  */
-export async function fetchHallWithMeta(server: FastifyInstance, request: FastifyRequest): Promise<HallWithMeta | null> {
+export async function fetchHallWithMeta(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<HallWithMeta | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const rows = await fetchHallWithMetaByIdQuery(server)(id);
   return rows[0] ?? null;
@@ -80,7 +89,10 @@ export async function fetchHallWithMeta(server: FastifyInstance, request: Fastif
  * @param _request - The Fastify request.
  * @returns The list of halls, or `null` if parsing failed.
  */
-export async function fetchHalls(server: FastifyInstance, _request: FastifyRequest): Promise<Hall[] | null> {
+export async function fetchHalls(
+  server: FastifyInstance,
+  _request: FastifyRequest,
+): Promise<Hall[] | null> {
   const rows = await fetchHallsQuery(server)();
   return rows;
 }

@@ -8,13 +8,11 @@ import { EventPriceCreateSchema, updateEventPrice } from "./helper.js";
 import type { EventPriceCreate } from "./helper.js";
 
 /**
- * Replaces a single event price row in the database.
- * Helpers returns a 400 response when the request body is invalid.
+ * Replaces an existing event price and returns the updated record.
  *
  * @param server - The Fastify instance, used for database access and logging.
- * @param request - The Fastify request containing the event payload.
- * @param reply - The Fastify reply used to send HTTP error responses.
- * @returns The updated event or `null` upon failure.
+ * @param request - The Fastify request, expected to contain `id` in params and `event` and `amount` in the body.
+ * @returns The updated event price, or `null` if the update failed or parsing failed.
  */
 export async function replaceEventPrice(
   server: FastifyInstance,

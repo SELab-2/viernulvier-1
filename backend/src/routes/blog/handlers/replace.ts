@@ -30,7 +30,10 @@ const replaceBlogQuery = (server: FastifyInstance) =>
  * @param request - The Fastify request, expected to contain `name` and `description` in its body.
  * @returns The updated blog, or `null` if the update failed or parsing failed.
  */
-export async function replaceBlog(server: FastifyInstance, request: FastifyRequest): Promise<Blog | null> {
+export async function replaceBlog(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<Blog | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const body = parseSchema(server, ReplaceBlogBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);

@@ -59,10 +59,12 @@ export async function fetchEventWithMeta(
  * Returns an empty array when parsing fails.
  *
  * @param server - The Fastify instance, used for database access and logging.
+ * @param _request - The Fastify request.
  * @returns An array of parsed events.
  */
 export async function fetchEvents(
   server: FastifyInstance,
+  _request: FastifyRequest,
 ): Promise<Event[]> {
   const result = await buildQuery(
     server,
