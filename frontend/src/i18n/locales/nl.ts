@@ -14,7 +14,7 @@ export default {
   },
   stats: {
     productions: "Producties",
-    events: "Voorstellingen",
+    events: "Evenementen",
     yearsOfHistory: "Jaar geschiedenis",
     genres: "Genres",
   },
