@@ -80,16 +80,14 @@ export type ImportArgs = {
  * and from unit tests that pass synthetic file-URL strings.
  */
 function importMetaUrlToPath(importMetaUrl: string): string {
-  if (importMetaUrl.startsWith("file://")) {
-    try {
-      return fileURLToPath(importMetaUrl);
-    } catch {
-      // Fall through: treat as a plain path (e.g. in test environments where
-      // fileURLToPath rejects the URL despite it looking correct).
-      return new URL(importMetaUrl).pathname;
-    }
+  if (!importMetaUrl.startsWith("file://")) {
+    return importMetaUrl;
   }
-  return importMetaUrl;
+  try {
+    return fileURLToPath(importMetaUrl);
+  } catch {
+    return new URL(importMetaUrl).pathname;
+  }
 }
 
 /**
