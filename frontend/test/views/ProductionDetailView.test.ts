@@ -1,30 +1,46 @@
-import { describe, it, expect } from "vitest";
-import { mount } from "@vue/test-utils";
-import { createMemoryHistory, createRouter } from "vue-router";
+import { describe, it, expect, beforeEach } from "vitest";
+import { mount, VueWrapper } from "@vue/test-utils";
+import { createMemoryHistory, createRouter, type Router } from "vue-router";
 import { routes } from "@/router/routes";
+import { i18n } from "@/i18n";
 import ProductionDetailView from "@/views/ProductionDetailView.vue";
 
+let wrapper: VueWrapper;
+let router: Router;
+
 async function createTestRouter(id: string) {
-  const router = createRouter({ history: createMemoryHistory(), routes });
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes,
+  });
+
   await router.push(`/nl/productions/${id}`);
   await router.isReady();
+
   return router;
 }
 
 describe("ProductionDetailView.vue", () => {
-  it("renders without errors", async () => {
-    const router = await createTestRouter("42");
-    const wrapper = mount(ProductionDetailView, {
-      global: { plugins: [router] },
+  beforeEach(async () => {
+    router = await createTestRouter("42");
+
+    wrapper = mount(ProductionDetailView, {
+      global: {
+        plugins: [router, i18n],
+      },
     });
+  });
+
+  it("renders without crashing", () => {
     expect(wrapper.exists()).toBe(true);
   });
 
-  it("renders the production id from the route param", async () => {
-    const router = await createTestRouter("42");
-    const wrapper = mount(ProductionDetailView, {
-      global: { plugins: [router] },
-    });
-    expect(wrapper.text()).toContain("42");
+  it("renders navbar and footer", () => {
+    expect(wrapper.find("nav").exists()).toBe(true);
+    expect(wrapper.find("footer").exists()).toBe(true);
+  });
+
+  it("renders all main sections", () => {
+    expect(wrapper.findAll("section").length).toBeGreaterThanOrEqual(5);
   });
 });
