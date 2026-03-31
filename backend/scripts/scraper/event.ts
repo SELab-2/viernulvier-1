@@ -100,12 +100,14 @@ async function fetchEventsListMeta(
 // Cache for old hall IDs to avoid redundant fetches, if not cached, fetch the old ID.
 // To Do: fetch function that maps old ID to current ID, if not present in db, fetch hall from old API and create it in current API, then return the new ID.
 const hallMap: Record<number, number> = {};
-async function getOldHall(id: number) {
-  if (hallMap[id]) {
-    return hallMap[id];
+async function getOldHall(oldId: number) {
+  if (hallMap[oldId]) {
+    return hallMap[oldId];
   }
   // To Implement: fetch the old hall ID based on the old API data
-  return Number.MAX_SAFE_INTEGER; // return a dummy value for now, to avoid foreign key constraint errors
+  const id = await voorbeeldFunctie(oldId)
+  hallMap[oldId] = id;
+  return id; // return a dummy value for now, to avoid foreign key constraint errors
 }
 
 // Cache for old production IDs to avoid redundant fetches, if not cached, fetch the old ID.
@@ -116,11 +118,9 @@ async function getOldProduction(oldId: number) {
     return productionMap[oldId];
   }
   // To Implement: fetch the old production ID based on the old API data
-  else {
-    const id = await voorbeeldFunctie(oldId)
-    productionMap[oldId] = id;
-    return id; // return a dummy value for now, to avoid foreign key constraint errors
-  }
+  const id = await voorbeeldFunctie(oldId)
+  productionMap[oldId] = id;
+  return id; // return a dummy value for now, to avoid foreign key constraint errors
 }
 
 // Process a single event: convert old id references to current db ones, then create the event in the current API
