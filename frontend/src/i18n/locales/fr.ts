@@ -2,21 +2,36 @@ export default {
   nav: {
     home: "Accueil",
     archive: "Archives",
+    productions: "Productions",
+    search: "Rechercher",
+    admin: "Admin",
   },
   hero: {
-    title: "Bienvenue dans les Archives VierNulVier",
+    title: "Les Archives de Vooruit",
     subtitle:
-      "Sur cette page, vous pouvez consulter les archives de VierNulVier.<br />Ces archives offrent un aperçu de toutes les représentations, concerts, films et autres<br />événements culturels organisés par VierNulVier.",
-    cta: "Voir les Archives",
-  },
-  info: {
-    title: "À propos des archives",
-    text: "Dans les archives VierNulVier, découvrez des milliers de productions et d'événements de l'histoire de De Vooruit. Parcourez le théâtre, la danse, le film et la musique, ou utilisez la fonction de recherche pour trouver rapidement une production, un artiste ou une série.",
+      "Plus de 12 000 spectacles, concerts, films et événements culturels — documentés, consultables et accessibles à tous.",
+    cta: "Parcourir les archives",
   },
   stats: {
-    productions: "productions",
-    series: "séries",
-    years: "années",
+    productions: "Productions",
+    events: "Evenements",
+    yearsOfHistory: "Ans d'histoire",
+    genres: "Genres",
+  },
+  bento: {
+    featured: {
+      label: "À la une",
+      title: "Théâtre, danse & plus",
+      description:
+        "Découvrez des centaines de productions de la riche programmation de De Vooruit — de la danse d'avant-garde au théâtre politique.",
+      cta: "Explorer",
+    },
+  },
+  footer: {
+    copyright: "© {year} VierNulVier / De Vooruit. Tous droits réservés.",
+    privacy: "Politique de confidentialité",
+    terms: "Conditions d'utilisation",
+    contact: "Contact",
   },
   date: {
     doorsOpen: "Portes ouvertes à",
