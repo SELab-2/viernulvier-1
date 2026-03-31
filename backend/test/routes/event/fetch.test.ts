@@ -10,13 +10,13 @@ let sessionCookie: string;
 
 const baseMockEvent: EventWithoutPrice = {
   id: 1,
-  old_id: 111,
   starts_at: new Date("2026-01-01T18:00:00.000Z"),
   ends_at: new Date("2026-01-01T20:00:00.000Z"),
   production: 10,
   hall: 3,
   doors_at: new Date("2026-01-01T17:30:00.000Z"),
   info: { nl: "Info mock 1" },
+  old_id: 12345,
 };
 
 const metaData = {
@@ -28,21 +28,22 @@ const metaData = {
 
 const mockEvents: EventWithoutPrice[] = [
   baseMockEvent,
-  { ...baseMockEvent, id: 2, old_id: 112, production: 11, hall: 4, info: { nl: "Info mock 2" } },
-  { ...baseMockEvent, id: 3, old_id: 113, production: 12, hall: 5, info: { nl: "Info mock 3" } },
+  { ...baseMockEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" }, old_id: 12346 },
+  { ...baseMockEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" }, old_id: 12347 },
 ];
 
 const mockInvalidEvent: EventWithoutPrice = {
   ...baseMockEvent,
   id: 500,
   hall: "invalid" as unknown as number,
+  old_id: 12348,
 };
 
 const mockEventPrices: EventPrice[] = [
-  { id: 1, event: 1, amount: 25.50 },
-  { id: 2, event: 2, amount: 30.00 },
-  { id: 3, event: 3, amount: 22.75 },
-  { id: 4, event: 1, amount: 15.00 },
+  { id: 1, event: 1, amount: 25.50, old_id: 54321 },
+  { id: 2, event: 2, amount: 30.00, old_id: 54322 },
+  { id: 3, event: 3, amount: 22.75, old_id: 54323 },
+  { id: 4, event: 1, amount: 15.00, old_id: 54324 },
 ];
 
 beforeAll(async () => {
@@ -68,6 +69,18 @@ beforeAll(async () => {
 
       return Promise.resolve({ rows: [] });
     }
+
+    if (query.includes("WHERE old_id = $1")) {
+      const oldId: number = params?.[0] as number;
+      const eventWithoutPrice = mockEvents.find(e => e.old_id === oldId);
+
+      if (eventWithoutPrice) {
+        const event = { ...eventWithoutPrice, price: storedEventPrices.filter(p => p["event"] === eventWithoutPrice.id).map(p => p.id) };
+        return Promise.resolve({ rows: [event] });
+      }
+      return Promise.resolve({ rows: [] });
+    }
+
 
     // Handle single event fetch by ID
     if (query.includes("WHERE id = $1")) {
@@ -177,6 +190,49 @@ describe("Event Fetch Routes", () => {
           doors_at: mockEvents[2]!.doors_at.toISOString(),
         },
       ]);
+    });
+
+    test("GET /api/v1/event with old_id filter", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/event?old_id=12346",
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual([{
+        ...mockEvents[1],
+        price: storedEventPrices.filter(p => p["event"] === mockEvents[1]!.id).map(p => p.id),
+        starts_at: mockEvents[1]!.starts_at.toISOString(),
+        ends_at: mockEvents[1]!.ends_at.toISOString(),
+        doors_at: mockEvents[1]!.doors_at.toISOString(),
+      }]);
+    });
+
+    test("returns empty array when no events are found", async () => {
+      const originalQuery = server.pg.query;
+      server.pg.query = vi.fn().mockResolvedValue({ rows: [] });
+
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/event",
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual([]);
+
+      server.pg.query = originalQuery;
+    });
+
+    test("returns 500 when database row is invalid", async () => {
+      const originalQuery = server.pg.query;
+      server.pg.query = vi.fn().mockResolvedValue({ rows: [mockInvalidEvent] });
+
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/event",
+      });
+      expect(response.statusCode).toBe(500);
+
+      server.pg.query = originalQuery;
     });
   });
 

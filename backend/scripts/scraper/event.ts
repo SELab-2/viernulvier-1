@@ -1,5 +1,6 @@
-// import type { Event } from "@viernulvier/shared/index.js";
-import { EventSchemaWithoutPrice } from "@viernulvier/shared/index.js";
+import type { Event } from "@viernulvier/shared/index.js";
+import { EventSchema } from "@viernulvier/shared/index.js";
+import { normalizeEventDates } from "@/routes/event/handlers/helper.js";
 
 interface EventListMeta {
   totalItems: number;
@@ -31,9 +32,7 @@ interface ViernulvierApiResponse {
   member: EventJSON[];
 }
 
-/**
- * Fetches events from the external viernulvier.gent API
- */
+// Fetch singular page and return raw response
 async function fetchPageRequest(
   page: number = 1,
   beforeDate: Date = new Date(),
@@ -75,6 +74,7 @@ async function fetchPageRequest(
 //   return await response;
 // }
 
+// Fetch singular page of events, used for pagination, refine response to return parsed JSON
 async function fetchEventsPage(
   page: number = 1,
   beforeDate: Date = new Date(),
@@ -87,6 +87,7 @@ async function fetchEventsPage(
   return data
 }
 
+// Fetch first page to obtain the view and total items, view will contain the last page number, which we can use to fetch all pages
 async function fetchEventsListMeta(
   beforeDate: Date, 
   authToken: string
@@ -98,29 +99,68 @@ async function fetchEventsListMeta(
   return data;
 }
 
-async function processEvent(event: EventJSON) {
-  const eventParse = EventSchemaWithoutPrice.safeParse({
-    id: parseInt(event["@id"].split("/").pop() as string, 10),
-    starts_at: new Date(event.starts_at),
-    ends_at: new Date(event.ends_at),
-    doors_at: new Date(event.doors_at),
-    vendor_id: event.vendor_id,
-    info: event.info,
-    production_id: parseInt(event.production["@id"].split("/").pop() as string, 10),
-    hall_id: parseInt(event.hall.split("/").pop() as string, 10),
-  });
-
-  if (!eventParse.success) {
-    console.error(`Failed to parse event ${event["@id"]}:`, eventParse.error);
-    return;
+// Cache for old hall IDs to avoid redundant fetches, if not cached, fetch the old ID.
+// To Do: fetch function that maps old ID to current ID, if not present in db, fetch hall from old API and create it in current API, then return the new ID.
+const hallMap: Record<number, number> = {};
+async function getOldHall(oldId: number) {
+  if (hallMap[oldId]) {
+    return hallMap[oldId];
   }
-
-  // const parsedEvent = eventParse.data as Event;
+  // To Implement: fetch the old hall ID based on the old API data
+  const id = await voorbeeldFunctie(oldId)
+  hallMap[oldId] = id;
+  return id; // return a dummy value for now, to avoid foreign key constraint errors
 }
 
+// Cache for old production IDs to avoid redundant fetches, if not cached, fetch the old ID.
+// To Do: fetch function that maps old ID to current ID, if not present in db, fetch production from old API and create it in current API, then return the new ID.
+const productionMap: Record<number, number> = {};
+async function getOldProduction(oldId: number) {
+  if (productionMap[oldId]) {
+    return productionMap[oldId];
+  }
+  // To Implement: fetch the old production ID based on the old API data
+  const id = await voorbeeldFunctie(oldId)
+  productionMap[oldId] = id;
+  return id; // return a dummy value for now, to avoid foreign key constraint errors
+}
 
+// Process a single event: convert old id references to current db ones, then create the event in the current API
+async function processEvent(event: EventJSON) {
+  const id = parseInt(event["@id"].split("/").pop() as string, 10);
+  const hallId = parseInt(event.hall.split("/").pop() as string, 10);
+  const productionId = parseInt(event.production["@id"].split("/").pop() as string, 10);
+
+
+  const body = {
+    ...event,
+    old_id: id,
+    hall: await getOldHall(hallId),
+    production: await getOldProduction(productionId),
+  };
+
+  const response = await fetch("http://localhost:5173/api/v1/event", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to create event: ${response.status} ${response.statusText}`);
+  }
+
+  const eventId = (await response.json() as { id: number }).id;
+
+  // Add prices after event is created, to avoid foreign key constraint errors
+  const prices = event.prices.map((priceUrl) => parseInt(priceUrl.split("/").pop() as string, 10));
+  await dummyfunction(prices, eventId);
+}
+
+// fetch the amount of pages, then fetch each page and process the events
 export async function scrapeAllEvents(
-  beforeDate: Date, 
+  beforeDate: Date,     
   authToken: string
 ) {
   const meta = await fetchEventsListMeta(beforeDate, authToken);
@@ -133,4 +173,14 @@ export async function scrapeAllEvents(
       await processEvent(event);
     }
   }
+}
+
+async function voorbeeldFunctie(oldId: number): Promise<number> {
+  // To Implement: fetch the old production ID based on the old API data
+  return Number.MAX_SAFE_INTEGER; // return a dummy value for now, to avoid foreign key constraint errors
+}
+
+async function dummyfunction(prices: number[], eventId: number) {
+  // To Implement: fetch the old production ID based on the old API data
+  return; // return a dummy value for now, to avoid foreign key constraint errors
 }

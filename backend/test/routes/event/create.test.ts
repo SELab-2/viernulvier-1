@@ -19,6 +19,7 @@ const basePayload = {
   hall: 3,
   doors_at: "2026-01-01T17:30:00.000Z",
   info: { nl: "Info mock create" },
+  old_id: 12345,
 };
 
 function buildPayload() {

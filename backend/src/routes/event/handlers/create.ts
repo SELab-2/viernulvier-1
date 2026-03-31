@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import z from "zod";
 
 import { getMetadata, parseSchema, ParseContext, buildQuery } from "@/routes/helpers.js";
-import { EventSchema } from "@viernulvier/shared/index.js";
+import { EventSchema, serial } from "@viernulvier/shared/index.js";
 import type { Event } from "@viernulvier/shared/index.js";
 import { normalizeEventDates, EventCreateSchema, selectPriceSubquery } from "./helper.js";
 
@@ -38,7 +38,7 @@ export async function createEvent(
       EventCreateSchema.shape.doors_at,
       EventCreateSchema.shape.info,
       z.date(),
-      z.number().nonnegative(),
+      serial(),
     ]),
     EventSchema,
   )(
