@@ -7,6 +7,7 @@ export const AdminBase = {
   id: primaryKey().describe("Primary key of admin."),
   username: z.string().max(32).describe("Username of admin."),
   profile_picture: z.url().max(2048).nullable().describe("Profile picture (url) of admin."),
+  super: z.boolean().describe("Whether admin has super privileges. (Being able to fetch, create, edit or delete other admins"),
 };
 
 export const AdminSchema = createSchema(AdminBase);
