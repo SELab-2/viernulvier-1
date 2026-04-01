@@ -10,7 +10,7 @@ export const ImageSchema = createSchema({
 
   production: foreignKey(() => ProductionSchema),
 
-  res: z 
+  res: z
     .string()
     .max(16),
 }).refine((img) => {
