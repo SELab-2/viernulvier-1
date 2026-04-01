@@ -101,7 +101,7 @@ async function fetchEventsListMeta(
 
 // Login to the new API to obtain an auth token
 async function login(username: string, password: string): Promise<string> {
-  const response = await fetch("http://localhost:3000/auth/login", {
+  const response = await fetch("http://localhost:3000/api/v1/auth/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
