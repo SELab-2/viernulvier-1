@@ -6,6 +6,8 @@ import { primaryKey, foreignKey } from "./helpers.js";
 export const CropSchema = createSchema({
   id: primaryKey(),
 
+  old_id: z.int().nonnegative().nullable(),
+
   image: foreignKey(() => ImageSchema),
 
   url: z.url().min(1).max(2048),

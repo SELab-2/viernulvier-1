@@ -6,6 +6,8 @@ import { primaryKey, foreignKey } from "./helpers.js";
 export const ImageSchema = createSchema({
   id: primaryKey(),
 
+  old_id: z.int().nonnegative().nullable(),
+
   production: foreignKey(() => ProductionSchema),
 
   res: z
