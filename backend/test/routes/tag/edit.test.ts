@@ -41,10 +41,10 @@ beforeEach(() => {
 });
 
 describe("Edit tag", () => {
-  test("PATCH /api/v1/tags/:id old_id only", async () => {
+  test("PATCH /api/v1/tag/:id old_id only", async () => {
     const response = await server.inject({
       method: "PATCH",
-      url: `/api/v1/tags/${mockTag.id}`,
+      url: `/api/v1/tag/${mockTag.id}`,
       cookies: { session: sessionCookie },
       payload: { old_id: mockTag.old_id },
     });
@@ -53,10 +53,10 @@ describe("Edit tag", () => {
     expect(TagSchema.parse(response.json())).toEqual(mockTag);
   });
 
-  test("PATCH /api/v1/tags/:id name only", async () => {
+  test("PATCH /api/v1/tag/:id name only", async () => {
     const response = await server.inject({
       method: "PATCH",
-      url: `/api/v1/tags/${mockTag.id}`,
+      url: `/api/v1/tag/${mockTag.id}`,
       cookies: { session: sessionCookie },
       payload: { name: mockTag.name },
     });
@@ -65,10 +65,10 @@ describe("Edit tag", () => {
     expect(TagSchema.parse(response.json())).toEqual(mockTag);
   });
 
-  test("PATCH /api/v1/tags/:id tag_type only", async () => {
+  test("PATCH /api/v1/tag/:id tag_type only", async () => {
     const response = await server.inject({
       method: "PATCH",
-      url: `/api/v1/tags/${mockTag.id}`,
+      url: `/api/v1/tag/${mockTag.id}`,
       cookies: { session: sessionCookie },
       payload: { tag_type: mockTag.tag_type },
     });
@@ -76,10 +76,10 @@ describe("Edit tag", () => {
     expect(response.statusCode).toBe(HttpSuccess.OK);
   });
 
-  test("PATCH /api/v1/tags/:id public only", async () => {
+  test("PATCH /api/v1/tag/:id public only", async () => {
     const response = await server.inject({
       method: "PATCH",
-      url: `/api/v1/tags/${mockTag.id}`,
+      url: `/api/v1/tag/${mockTag.id}`,
       cookies: { session: sessionCookie },
       payload: { public: mockTag.public },
     });
@@ -87,10 +87,10 @@ describe("Edit tag", () => {
     expect(response.statusCode).toBe(HttpSuccess.OK);
   });
 
-  test("PATCH /api/v1/tags/:id all fields", async () => {
+  test("PATCH /api/v1/tag/:id all fields", async () => {
     const response = await server.inject({
       method: "PATCH",
-      url: `/api/v1/tags/${mockTag.id}`,
+      url: `/api/v1/tag/${mockTag.id}`,
       cookies: { session: sessionCookie },
       payload: {  old_id: mockTag.old_id, name: mockTag.name, tag_type: mockTag.tag_type, public: mockTag.public },
     });
@@ -98,7 +98,7 @@ describe("Edit tag", () => {
     expect(response.statusCode).toBe(HttpSuccess.OK);
   });
 
-  test("PATCH /api/v1/tags/:id — returns 404 when tag not found", async () => {
+  test("PATCH /api/v1/tag/:id — returns 404 when tag not found", async () => {
     server.pg.query = vi.fn().mockResolvedValue({
       rows: [],
       rowCount: 0,
@@ -106,7 +106,7 @@ describe("Edit tag", () => {
 
     const response = await server.inject({
       method: "PATCH",
-      url: `/api/v1/tags/${mockTag.id}`,
+      url: `/api/v1/tag/${mockTag.id}`,
       cookies: { session: sessionCookie },
       payload: { name: mockTag.name },
     });
