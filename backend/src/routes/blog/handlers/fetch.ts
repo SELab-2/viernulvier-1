@@ -43,7 +43,10 @@ const fetchBlogWithMetaByIdQuery = (server: FastifyInstance) =>
  * @param id - The blog ID to fetch.
  * @returns The blog, or `null` if not found or parsing failed.
  */
-export async function getBlogById(server: FastifyInstance, id: number): Promise<Blog | null> {
+export async function getBlogById(
+  server: FastifyInstance,
+  id: number,
+): Promise<Blog | null> {
   const rows = await fetchBlogByIdQuery(server)(id);
   return rows[0] ?? null;
 }
@@ -55,7 +58,10 @@ export async function getBlogById(server: FastifyInstance, id: number): Promise<
  * @param request - The Fastify request, expected to contain `id` in its params.
  * @returns The blog, or `null` if not found or parsing failed.
  */
-export async function fetchBlog(server: FastifyInstance, request: FastifyRequest): Promise<Blog | null> {
+export async function fetchBlog(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<Blog | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   return await getBlogById(server, id);
 }
@@ -67,7 +73,10 @@ export async function fetchBlog(server: FastifyInstance, request: FastifyRequest
  * @param request - The Fastify request, expected to contain `id` in its params.
  * @returns The blog with metadata, or `null` if not found or parsing failed.
  */
-export async function fetchBlogWithMeta(server: FastifyInstance, request: FastifyRequest): Promise<BlogWithMeta | null> {
+export async function fetchBlogWithMeta(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<BlogWithMeta | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const rows = await fetchBlogWithMetaByIdQuery(server)(id);
   return rows[0] ?? null;
@@ -80,7 +89,10 @@ export async function fetchBlogWithMeta(server: FastifyInstance, request: Fastif
  * @param _request - The Fastify request.
  * @returns The list of blogs, or `null` if parsing failed.
  */
-export async function fetchBlogs(server: FastifyInstance, _request: FastifyRequest): Promise<Blog[] | null> {
+export async function fetchBlogs(
+  server: FastifyInstance,
+  _request: FastifyRequest,
+): Promise<Blog[] | null> {
   const rows = await fetchBlogsQuery(server)();
   return rows;
 }

@@ -28,7 +28,10 @@ const insertBlog = (server: FastifyInstance) =>
  * @param request - The Fastify request, expected to contain a blog body.
  * @returns The created blog, or `null` if the insert failed or parsing failed.
  */
-export async function createBlog(server: FastifyInstance, request: FastifyRequest): Promise<Blog | null> {
+export async function createBlog(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<Blog | null> {
   const body = parseSchema(server, CreateBlogBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
 
