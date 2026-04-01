@@ -261,4 +261,47 @@ describe("Auth route integration", () => {
 
     expect(response.statusCode).toBe(401);
   });
+
+  test("9. POST /api/v1/auth/login — logs in as non-super admin", async () => {
+    // set to false
+    mockDb[0].super = false;
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/auth/login",
+      payload: { username: existingAdmin.username, password: existingAdmin.password },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ token: expect.any(String) });
+
+    const cookie = response.cookies.find((c) => c.name === "session");
+    expect(cookie).toBeDefined();
+    expect(cookie?.httpOnly).toBe(true);
+
+    sessionCookie = cookie!.value;
+  });
+
+  test("10. GET /api/v1/auth — fetching admins is forbidden as non-super admin", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/auth`,
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(403);
+  });
+
+  test("10. GET /api/v1/auth/me — fetching yourself is allowed", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/auth/me`,
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+
+    const body = AdminSchema.parse(response.json());
+    expect(body.username).toBe(existingAdmin.username);
+  });
 });
