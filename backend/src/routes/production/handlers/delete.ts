@@ -12,7 +12,10 @@ import z from "zod";
  * @param request - The Fastify request, expected to contain `id` in its params.
  * @returns The deleted production, or `null` if not found.
  */
-export async function deleteProduction(server: FastifyInstance, request: FastifyRequest): Promise<ProductionWithBackwardsRefs | null> {
+export async function deleteProduction(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<ProductionWithBackwardsRefs | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
 
   const existing = await getProductionById(server, id);

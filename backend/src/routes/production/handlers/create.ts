@@ -33,7 +33,10 @@ const NullableCreateColumns = [
  * @param request - The Fastify request, expected to contain a production body.
  * @returns The created production, or `null` if the insert failed or parsing failed.
  */
-export async function createProduction(server: FastifyInstance, request: FastifyRequest): Promise<ProductionWithBackwardsRefs | null> {
+export async function createProduction(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<ProductionWithBackwardsRefs | null> {
   const body = parseSchema(server, CreateProductionBodySchema, request.body);
 
   const { admin, current_time } = getMetadata(request);

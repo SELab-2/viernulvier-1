@@ -16,7 +16,10 @@ const EditAdminBodySchema = AdminSchema.pick({ username: true }).extend({
  * @param request - The Fastify request, expected to contain `username` and/or `password` in its body.
  * @returns The updated admin, or `null` if the update failed or parsing failed.
  */
-export async function editAdmin(server: FastifyInstance, request: FastifyRequest): Promise<Admin | null> {
+export async function editAdmin(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<Admin | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const body = parseSchema(server, EditAdminBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);

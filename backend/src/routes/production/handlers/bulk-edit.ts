@@ -38,7 +38,10 @@ const NullableBulkEditColumns = [
  * @param request - The Fastify request, expected to contain `ids` and `data` in its body.
  * @returns The updated productions array (can be empty), or `null` if parsing failed.
  */
-export async function bulkEditProductions(server: FastifyInstance, request: FastifyRequest): Promise<ProductionWithBackwardsRefs[] | null> {
+export async function bulkEditProductions(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<ProductionWithBackwardsRefs[] | null> {
   const body = parseSchema(server, BulkEditProductionsBodySchema, request.body);
   const { ids, data } = body;
 

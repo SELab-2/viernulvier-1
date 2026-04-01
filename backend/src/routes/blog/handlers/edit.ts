@@ -13,7 +13,10 @@ const EditBlogBodySchema = BlogSchema.omit({ id: true }).partial();
  * @param request - The Fastify request, expected to contain `id` in params and a partial blog body.
  * @returns The updated blog, or `null` if the update failed or parsing failed.
  */
-export async function editBlog(server: FastifyInstance, request: FastifyRequest): Promise<Blog | null> {
+export async function editBlog(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<Blog | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const body = parseSchema(server, EditBlogBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);

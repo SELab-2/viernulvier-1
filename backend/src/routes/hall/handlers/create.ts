@@ -30,7 +30,10 @@ const insertHall = (server: FastifyInstance) =>
  * @param request - The Fastify request, expected to contain a hall body.
  * @returns The created hall, or `null` if the insert failed or parsing failed.
  */
-export async function createHall(server: FastifyInstance, request: FastifyRequest): Promise<Hall | null> {
+export async function createHall(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<Hall | null> {
   const body = parseSchema(server, CreateHallBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
 

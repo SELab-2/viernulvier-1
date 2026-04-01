@@ -18,11 +18,11 @@ import {
  * - `GET /api/v1/production` — fetch a list of productions.
  * - `GET /api/v1/production/:id` — fetch a single production by ID.
  * - `GET /api/v1/production/:id/meta` — fetch a single production with metadata by ID. 🔒
- * - `POST /api/v1/production` — create a new production.
- * - `PUT /api/v1/production/:id` — replace an existing production.
- * - `PATCH /api/v1/production/:id` — partially update an existing production.
- * - `PATCH /api/v1/production/bulk` — bulk update multiple productions.
- * - `DELETE /api/v1/production/:id` — delete a production by ID.
+ * - `POST /api/v1/production` — create a new production. 🔒
+ * - `PUT /api/v1/production/:id` — replace an existing production. 🔒
+ * - `PATCH /api/v1/production/:id` — partially update an existing production. 🔒
+ * - `PATCH /api/v1/production/bulk` — bulk update multiple productions. 🔒
+ * - `DELETE /api/v1/production/:id` — delete a production by ID. 🔒
  *
  * @param server - The Fastify instance to register routes on.
  */
