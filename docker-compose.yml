@@ -21,13 +21,12 @@ services:
   backend:
     env_file:
       - .env
+      - ./garage-credentials/credentials.env
     container_name: viernulvier-backend
     restart: always
     build:
       context: .
       dockerfile: backend/Dockerfile
-    volumes:
-      - ./garage-credentials:/garage-credentials:ro
     networks:
       - viernulvier-network
     ports:

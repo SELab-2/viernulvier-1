@@ -1,72 +1,107 @@
 import fp from "fastify-plugin";
 import type { FastifyInstance } from "fastify";
 import { S3Client } from "@aws-sdk/client-s3";
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
+import { resolve } from "path";
 
 /**
- * Reads Garage S3 credentials from the mounted credentials file and
- * creates an S3Client pointed at the Garage container.
+ * Attempts to parse KEY=VALUE pairs from a file path.
+ * Returns an object with any found keys, or an empty object on failure.
+ */
+function readEnvFile(filePath: string): Record<string, string> {
+  const vars: Record<string, string> = {};
+  if (!existsSync(filePath)) return vars;
+  try {
+    const raw = readFileSync(filePath, "utf-8");
+    for (const line of raw.split("\n")) {
+      const trimmed = line.replace(/\r$/, "").trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eqIdx = trimmed.indexOf("=");
+      if (eqIdx === -1) continue;
+      const key = trimmed.slice(0, eqIdx).trim();
+      const value = trimmed.slice(eqIdx + 1).trim();
+      vars[key] = value;
+    }
+  } catch {
+    // silently ignore
+  }
+  return vars;
+}
+
+/** Paths to try when env vars are missing: Docker mount, then local dev. */
+const CREDENTIAL_PATHS = [
+  "/garage-credentials/credentials.env",
+  resolve(import.meta.dirname ?? process.cwd(), "../../garage-credentials/credentials.env"),
+];
+
+function resolveCredentials(): { accessKeyId: string; secretAccessKey: string } | null {
+  let accessKeyId = process.env["GARAGE_ACCESS_KEY_ID"];
+  let secretAccessKey = process.env["GARAGE_SECRET_ACCESS_KEY"];
+
+  if (accessKeyId && secretAccessKey) {
+    return { accessKeyId, secretAccessKey };
+  }
+
+  for (const credPath of CREDENTIAL_PATHS) {
+    const vars = readEnvFile(credPath);
+    if (vars["GARAGE_ACCESS_KEY_ID"] && vars["GARAGE_SECRET_ACCESS_KEY"]) {
+      return {
+        accessKeyId: vars["GARAGE_ACCESS_KEY_ID"],
+        secretAccessKey: vars["GARAGE_SECRET_ACCESS_KEY"],
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Decorates the Fastify instance with a lazy `server.s3` getter.
  *
- * Decorates the Fastify instance with `server.s3` for use in route handlers.
+ * The S3Client is **not** created at boot time — it is only instantiated
+ * on first access. This means credentials are only required when a route
+ * actually uses S3 (media upload / delete). Tests and CI environments that
+ * don't touch media routes will never trigger the getter and therefore
+ * don't need Garage credentials at all.
  *
  * @param server - The Fastify instance to register the plugin on.
  */
 export default fp(async function s3Plugin(server: FastifyInstance) {
-  server.log.info("Registering S3 (Garage) client...");
+  let client: S3Client | undefined;
 
-  const credentialsPath =
-    process.env["GARAGE_CREDENTIALS_FILE"] ?? "/garage-credentials/credentials.env";
+  server.decorate("s3", {
+    getter() {
+      if (client) return client;
 
-  let accessKeyId: string | undefined = process.env["GARAGE_ACCESS_KEY_ID"];
-  let secretAccessKey: string | undefined = process.env["GARAGE_SECRET_ACCESS_KEY"];
-
-  // If not supplied via env directly, read from the mounted credentials file.
-  if (!accessKeyId || !secretAccessKey) {
-    try {
-      const raw = readFileSync(credentialsPath, "utf-8");
-      for (const line of raw.split("\n")) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith("#")) continue;
-        const eqIdx = trimmed.indexOf("=");
-        if (eqIdx === -1) continue;
-        const key = trimmed.slice(0, eqIdx).trim();
-        const value = trimmed.slice(eqIdx + 1).trim();
-        if (key === "GARAGE_ACCESS_KEY_ID") accessKeyId = value;
-        if (key === "GARAGE_SECRET_ACCESS_KEY") secretAccessKey = value;
+      const creds = resolveCredentials();
+      if (!creds) {
+        throw new Error(
+          "Garage S3 credentials are not available. " +
+            "Set GARAGE_ACCESS_KEY_ID / GARAGE_SECRET_ACCESS_KEY env vars " +
+            "or place garage-credentials/credentials.env in the repo root.",
+        );
       }
-    } catch (err) {
-      server.log.error(err, "Failed to read Garage credentials file");
-      throw new Error(`Cannot read Garage credentials from ${credentialsPath}`);
-    }
-  }
 
-  if (!accessKeyId || !secretAccessKey) {
-    throw new Error(
-      "Garage S3 credentials are not defined. " +
-        "Set GARAGE_ACCESS_KEY_ID / GARAGE_SECRET_ACCESS_KEY env vars or mount the credentials file.",
-    );
-  }
+      const endpoint =
+        process.env["GARAGE_S3_ENDPOINT"] ?? "http://viernulvier-garage:3900";
 
-  const endpoint =
-    process.env["GARAGE_S3_ENDPOINT"] ?? "http://viernulvier-garage:3900";
+      client = new S3Client({
+        region: "garage",
+        endpoint,
+        forcePathStyle: true,
+        credentials: creds,
+      });
 
-  const client = new S3Client({
-    region: "garage",
-    endpoint,
-    forcePathStyle: true,
-    credentials: {
-      accessKeyId,
-      secretAccessKey,
+      server.log.info("S3 (Garage) client initialised (lazy)");
+      return client;
     },
   });
 
-  server.decorate("s3", client);
-
   server.addHook("onClose", () => {
-    client.destroy();
+    if (client) {
+      client.destroy();
+    }
   });
-
-  server.log.info("S3 (Garage) client registered");
 });
 
 declare module "fastify" {
