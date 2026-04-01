@@ -11,6 +11,8 @@ export const CropSchema = createSchema({
   image: foreignKey(() => ImageSchema),
 
   url: z.url().min(1).max(2048),
+
+  type: z.string().max(32),
 });
 
 export type Crop = z.infer<typeof CropSchema>;
