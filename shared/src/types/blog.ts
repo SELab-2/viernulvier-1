@@ -14,8 +14,10 @@ export type BlogWithMeta = z.infer<ReturnType<typeof BlogSchema.withMeta>>;
 
 export const BlogPostSchema = createSchema({
   id: primaryKey(),
-  content: z.string(),
   blog: foreignKey(() => BlogSchema),
+  title: z.string(),
+  content: z.record(z.string(), z.unknown()),
+  published_at: z.coerce.date().nullable(),
 });
 
 export type BlogPost = z.infer<typeof BlogPostSchema>;

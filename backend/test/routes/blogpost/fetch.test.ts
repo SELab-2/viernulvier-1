@@ -1,0 +1,142 @@
+import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
+import { buildServer } from "@/server.js";
+import type { FastifyInstance } from "fastify";
+import { BlogPostSchema, type BlogPost, type BlogPostWithMeta } from "@viernulvier/shared/index.js";
+import { HttpSuccess, HttpClientError } from "@/routes/helpers.js";
+
+let server: FastifyInstance;
+let sessionCookie: string;
+
+const mockTime = new Date();
+
+const mockBlogPosts: Array<BlogPost> = [
+  { id: 1, blog: 1, title: "First Post", content: { body: "Hello world" }, published_at: mockTime },
+  { id: 2, blog: 1, title: "Draft Post", content: { body: "Work in progress" }, published_at: null },
+];
+
+const mockBlogPostsWithMeta: Array<BlogPostWithMeta> = mockBlogPosts.map((post) => ({
+  ...post,
+  created_by: 1,
+  created_at: mockTime,
+  updated_by: 1,
+  updated_at: mockTime,
+}));
+
+beforeAll(async () => {
+  server = await buildServer();
+  sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
+
+  server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+    const upper = query.trim().toUpperCase();
+    const isMeta = upper.includes("CREATED_AT");
+    const id = params?.[0] !== undefined ? Number(params[0]) : undefined;
+
+    if (isMeta) {
+      const rows = id !== undefined
+        ? mockBlogPostsWithMeta.filter((p) => p["id"] === id)
+        : mockBlogPostsWithMeta;
+      return Promise.resolve({ rows, rowCount: rows.length });
+    }
+
+    if (upper.startsWith("SELECT")) {
+      const rows = id !== undefined
+        ? mockBlogPosts.filter((p) => p["id"] === id)
+        : mockBlogPosts;
+      return Promise.resolve({ rows, rowCount: rows.length });
+    }
+
+    throw new Error(`Unexpected query in fetch tests: ${query}`);
+  });
+});
+
+afterAll(async () => {
+  await server.close();
+});
+
+describe("BlogPost fetch routes", () => {
+  test("GET /api/v1/blogpost -> returns all blogposts", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/blogpost",
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(response.json()).toHaveLength(mockBlogPosts.length);
+  });
+
+  test("GET /api/v1/blogpost/:id -> returns a single blogpost", async () => {
+    const post = mockBlogPosts[0];
+
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/blogpost/${post?.["id"]}`,
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(BlogPostSchema.parse(response.json())).toMatchObject({ id: post?.["id"], title: post?.["title"] });
+  });
+
+  test("GET /api/v1/blogpost/:id -> returns a blogpost with null published_at", async () => {
+    const post = mockBlogPosts[1];
+
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/blogpost/${post?.["id"]}`,
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(response.json()["published_at"]).toBeNull();
+  });
+
+  test("GET /api/v1/blogpost/:id/meta — returns a blogpost with metadata", async () => {
+    const post = mockBlogPostsWithMeta[0];
+
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/blogpost/${post?.["id"]}/meta`,
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(BlogPostSchema.withMeta().parse(response.json())).toMatchObject({ id: post?.["id"] });
+  });
+
+  test("GET /api/v1/blogpost/:id — returns 404 when blogpost not found", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/blogpost/99999",
+    });
+
+    expect(response.statusCode).toBe(HttpClientError.NotFound);
+  });
+
+  test("GET /api/v1/blogpost/:id/meta — returns 404 when blogpost not found", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/blogpost/99999/meta",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(HttpClientError.NotFound);
+  });
+
+  test("GET /api/v1/blogpost/:id — returns 400 when id is invalid", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/blogpost/invalid",
+    });
+
+    expect(response.statusCode).toBe(HttpClientError.BadRequest);
+  });
+
+  test("GET /api/v1/blogpost/:id/meta — returns 401 when not logged in", async () => {
+    const post = mockBlogPostsWithMeta[0];
+
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/blogpost/${post?.["id"]}/meta`,
+    });
+
+    expect(response.statusCode).toBe(HttpClientError.Unauthorized);
+  });
+});
