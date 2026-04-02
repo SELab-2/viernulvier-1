@@ -13,7 +13,6 @@ let shouldRejectQuery = false;
 let sessionCookie: string;
 
 const basePayload = {
-  old_id: 111,
   starts_at: "2026-01-01T18:00:00.000Z",
   ends_at: "2026-01-01T20:00:00.000Z",
   production: 10,
