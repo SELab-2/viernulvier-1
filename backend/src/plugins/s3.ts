@@ -35,8 +35,8 @@ const CREDENTIAL_PATHS = [
 ];
 
 function resolveCredentials(): { accessKeyId: string; secretAccessKey: string } | null {
-  let accessKeyId = process.env["GARAGE_ACCESS_KEY_ID"];
-  let secretAccessKey = process.env["GARAGE_SECRET_ACCESS_KEY"];
+  const accessKeyId = process.env["GARAGE_ACCESS_KEY_ID"];
+  const secretAccessKey = process.env["GARAGE_SECRET_ACCESS_KEY"];
 
   if (accessKeyId && secretAccessKey) {
     return { accessKeyId, secretAccessKey };
