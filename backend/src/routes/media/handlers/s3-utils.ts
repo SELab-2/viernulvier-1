@@ -6,32 +6,31 @@ import type { S3Client } from "@aws-sdk/client-s3";
 import { randomUUID } from "crypto";
 
 const BUCKET = "crops";
-const PUBLIC_BASE_URL = "https://viernulvier-archive.be/media/crops";
+const PATH_PREFIX = "/media/crops";
 
 /**
- * Builds the full public URL for a crop stored in Garage.
+ * Builds the path for a crop stored in Garage.
  * Nginx forwards `/media/crops/*` → `http://viernulvier-garage:3900/crops/*`.
  *
  * @param s3Key - The object key inside the crops bucket.
- * @returns Full public URL.
+ * @returns Path string, e.g. `/media/crops/abc-uuid.jpg`
  */
-export function buildCropUrl(s3Key: string): string {
-  return `${PUBLIC_BASE_URL}/${s3Key}`;
+export function buildCropPath(s3Key: string): string {
+  return `${PATH_PREFIX}/${s3Key}`;
 }
 
 /**
- * Extracts the S3 object key from a stored crop URL.
+ * Extracts the S3 object key from a stored crop path.
  *
- * @param url - The full public URL, e.g. `https://viernulvier-archive.be/media/crops/abc.jpg`
+ * @param path - The path, e.g. `/media/crops/abc.jpg`
  * @returns The object key, e.g. `abc.jpg`
  */
-export function extractS3Key(url: string): string {
-  const prefix = `${PUBLIC_BASE_URL}/`;
-  if (url.startsWith(prefix)) {
-    return url.slice(prefix.length);
+export function extractS3Key(path: string): string {
+  const prefix = `${PATH_PREFIX}/`;
+  if (path.startsWith(prefix)) {
+    return path.slice(prefix.length);
   }
-  // Fallback: return last path segment
-  return url.split("/").pop() ?? url;
+  return path.split("/").pop() ?? path;
 }
 
 /**
@@ -93,13 +92,13 @@ export async function deleteFromS3(
  * Deletes multiple objects from the crops bucket in Garage.
  *
  * @param s3 - The S3Client instance.
- * @param urls - Array of full public crop URLs to delete.
+ * @param paths - Array of crop paths to delete (e.g. `/media/crops/abc.jpg`).
  */
 export async function deleteManyFromS3(
   s3: S3Client,
-  urls: string[],
+  paths: string[],
 ): Promise<void> {
   await Promise.all(
-    urls.map((url) => deleteFromS3(s3, extractS3Key(url))),
+    paths.map((path) => deleteFromS3(s3, extractS3Key(path))),
   );
 }

@@ -10,7 +10,7 @@ import {
 } from "@/routes/helpers.js";
 import { getImageById, getCropsByImageId } from "./fetch.js";
 import { CreateImageBodySchema, CreateCropBodySchema } from "./body-schema.js";
-import { uploadToS3, buildCropUrl, generateS3Key } from "./s3-utils.js";
+import { uploadToS3, buildCropPath, generateS3Key } from "./s3-utils.js";
 import z from "zod";
 import "@fastify/multipart";
 
@@ -77,7 +77,7 @@ async function insertCrops(
     const s3Key = generateS3Key(mapping.filename);
     await uploadToS3(server.s3, s3Key, file.buffer, file.mimetype);
 
-    const url = buildCropUrl(s3Key);
+    const url = buildCropPath(s3Key);
     await server.pg.query(
       `INSERT INTO crop (image, url, type, created_by, updated_by, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
