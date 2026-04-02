@@ -15,7 +15,7 @@ export default function cropProxyRoute(server: FastifyInstance) {
     const key = (request.params as { "*": string })["*"];
 
     if (!key) {
-      return reply.status(400).send({ error: "Missing crop key" });
+      return await reply.status(400).send({ error: "Missing crop key" });
     }
 
     try {
@@ -35,14 +35,14 @@ export default function cropProxyRoute(server: FastifyInstance) {
 
       void reply.header("Cache-Control", "public, max-age=86400");
 
-      return reply.send(result.Body as Readable);
+      return await reply.send(result.Body as Readable);
     } catch (err) {
       const error = err as { name?: string };
       if (error.name === "NoSuchKey") {
-        return reply.status(404).send({ error: "Crop not found" });
+        return await reply.status(404).send({ error: "Crop not found" });
       }
       server.log.error(err);
-      return reply.status(502).send({ error: "Failed to fetch crop from storage" });
+      return await reply.status(502).send({ error: "Failed to fetch crop from storage" });
     }
   });
 }
