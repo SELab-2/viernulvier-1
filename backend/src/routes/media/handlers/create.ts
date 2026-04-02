@@ -23,7 +23,7 @@ import "@fastify/multipart";
  * @param request - The Fastify request (must be multipart).
  * @returns Parsed data and file map.
  */
-async function parseMultipart(request: FastifyRequest): Promise<{
+export async function parseMultipart(request: FastifyRequest): Promise<{
   data: Record<string, unknown>;
   files: Map<string, { buffer: Buffer; mimetype: string }>;
 }> {
