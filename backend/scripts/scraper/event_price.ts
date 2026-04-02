@@ -25,6 +25,7 @@ export async function scrapeEventPricesForEvent(
   priceIds: number[],
   eventId: number,
   authToken: string,
+  loginToken: string,
 ) {
   for (const priceId of priceIds) {
     try {
@@ -36,11 +37,11 @@ export async function scrapeEventPricesForEvent(
         amount: priceData.amount,
       }
 
-      const createResponse = await fetch("http://localhost:5173/event_price", {
+      const createResponse = await fetch("http://localhost:3000/event_price", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-AUTH-TOKEN": authToken,
+          "Authorization": `Bearer ${loginToken}`,
         },
         body: JSON.stringify(body),
       });

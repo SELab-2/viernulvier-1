@@ -1,5 +1,6 @@
 import type { Hall } from "@viernulvier/shared/index.js";
 import { HallSchema } from "@viernulvier/shared/index.js";
+import { log } from "console";
 
 interface HallListMeta {
   totalItems: number;
@@ -68,8 +69,26 @@ async function fetchHallsListMeta(
   return data;
 }
 
+async function login(username: string, password: string): Promise<string> {
+  const response = await fetch("http://localhost:3000/auth/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ username, password }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to login: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json() as { token: string };
+  return data.token;
+}
+
+
 // Process a single hall: convert and create the hall in the current API
-async function processHall(hall: HallJSON): Promise<number> {
+async function processHall(hall: HallJSON, loginToken: string): Promise<number> {
   const id = parseInt(hall["@id"].split("/").pop() as string, 10);
 
   const body = {
@@ -77,10 +96,11 @@ async function processHall(hall: HallJSON): Promise<number> {
     old_id: id,
   };
 
-  const response = await fetch("http://localhost:5173/api/v1/hall", {
+  const response = await fetch("http://localhost:3000/api/v1/hall", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${loginToken}`,
     },
     body: JSON.stringify(body),
   });
@@ -97,6 +117,8 @@ async function processHall(hall: HallJSON): Promise<number> {
 export async function scrapeAllHalls(
   authToken: string
 ) {
+  const loginToken = await login("admin", "password");
+
   const meta = await fetchHallsListMeta(authToken);
   const totalPages = meta.view.last.split("page=")[1] as unknown as number;
   
@@ -104,7 +126,7 @@ export async function scrapeAllHalls(
     const data = await fetchHallsPage(page, authToken);
     for (const hall of data.member) {
       console.log(`Processing hall ${hall["@id"]} (${page}/${totalPages})`);
-      await processHall(hall);
+      await processHall(hall, loginToken);
     }
   }
 }
@@ -113,7 +135,7 @@ export async function scrapeHallById(
   id: number,
   authToken: string
 ) {
-  const url = `http://localhost:5173/api/v1/hall?old_id=${id}`;
+  const url = `http://localhost:3000/api/v1/hall?old_id=${id}`;
   const response = await fetch(url, {
     headers: {
       accept: "application/json",
@@ -138,7 +160,8 @@ export async function scrapeHallById(
       throw new Error(`Failed to fetch hall: ${response.status} ${response.statusText}`);
     }
     const hall = await response.json() as HallJSON;
-    return await processHall(hall);
+    const loginToken = await login("admin", "password");
+    return await processHall(hall, loginToken);
   }
   if (hallList.length > 1) {
     throw new Error(`Multiple halls found with old_id ${id}`);
