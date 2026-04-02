@@ -4,7 +4,7 @@ import z from "zod";
 import { getMetadata, parseSchema, ParseContext, buildQuery } from "@/routes/helpers.js";
 import { EventSchema, serial } from "@viernulvier/shared/index.js";
 import type { Event } from "@viernulvier/shared/index.js";
-import { normalizeEventDates, EventCreateSchema, selectPriceSubquery } from "./helper.js";
+import { EventCreateSchema, selectPriceSubquery, normalizePartialEventDates } from "./helper.js";
 
 /**
  * Creates a new event row in the database.
@@ -19,7 +19,7 @@ export async function createEvent(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Event | null> {
-  const normalizedBody = normalizeEventDates(request.body);
+  const normalizedBody = normalizePartialEventDates(request.body);
   const body = parseSchema(server, EventCreateSchema, normalizedBody, ParseContext.Request);
 
   const { admin, current_time } = getMetadata(request);

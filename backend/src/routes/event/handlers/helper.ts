@@ -25,18 +25,33 @@ import type { FastifyInstance } from "fastify";
  * // normalized.starts_at is now a Date object
  */
 
+/**
 export function normalizeEventDates(value: unknown): unknown {
   if (!value || typeof value !== "object") return value;
 
   const payload = value as Record<string, unknown>;
+
+  const parseDate = (dateValue: unknown): Date | undefined => {
+    if (dateValue instanceof Date) {
+      return dateValue;
+    }
+    if (dateValue === undefined || dateValue === null) {
+      return undefined;
+    }
+    const parsed = new Date(String(dateValue));
+    // Return undefined if the date is invalid instead of an Invalid Date object
+    return isNaN(parsed.getTime()) ? undefined : parsed;
+  };
+
   return {
     ...payload,
-    starts_at: payload["starts_at"] instanceof Date ? payload["starts_at"] : new Date(String(payload["starts_at"])),
-    ends_at: payload["ends_at"] === undefined ? undefined : payload["ends_at"] instanceof Date ? payload["ends_at"] : new Date(String(payload["ends_at"])),
-    doors_at: payload["doors_at"] === undefined ? undefined : payload["doors_at"] instanceof Date ? payload["doors_at"] : new Date(String(payload["doors_at"])),
-    info: payload["info"] ?? undefined,
+    starts_at: parseDate(payload["starts_at"]),
+    ends_at: parseDate(payload["ends_at"]),
+    doors_at: parseDate(payload["doors_at"]),
+    info: payload["info"],
   };
 }
+*/
 
 /**
  * Normalizes date fields in a partial event object to Date instances.
@@ -65,23 +80,27 @@ export function normalizePartialEventDates(value: unknown): unknown {
   if (!value || typeof value !== "object") return value;
 
   const payload = value as Record<string, unknown>;
+
+  const parseDate = (dateValue: unknown): Date | undefined | null => {
+    if (dateValue === undefined) {
+      return undefined;
+    }
+    if (dateValue === null) {
+      return null;
+    }
+    if (dateValue instanceof Date) {
+      return dateValue;
+    }
+    const parsed = new Date(String(dateValue));
+    // Return undefined if the date is invalid instead of an Invalid Date object
+    return isNaN(parsed.getTime()) ? undefined : parsed;
+  };
+
   return {
     ...payload,
-    starts_at: payload["starts_at"] === undefined
-      ? undefined
-      : payload["starts_at"] instanceof Date
-        ? payload["starts_at"]
-        : new Date(String(payload["starts_at"])),
-    ends_at: payload["ends_at"] === undefined
-      ? undefined
-      : payload["ends_at"] instanceof Date
-        ? payload["ends_at"]
-        : new Date(String(payload["ends_at"])),
-    doors_at: payload["doors_at"] === undefined
-      ? undefined
-      : payload["doors_at"] instanceof Date
-        ? payload["doors_at"]
-        : new Date(String(payload["doors_at"])),
+    starts_at: parseDate(payload["starts_at"]),
+    ends_at: parseDate(payload["ends_at"]),
+    doors_at: parseDate(payload["doors_at"]),
   };
 }
 

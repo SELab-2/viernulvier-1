@@ -119,14 +119,30 @@ describe("Event Date Normalization Helpers", () => {
       expect(normalizeEventDates(123)).toBe(123);
     });
 
-    test("creates Date objects from undefined fields in empty object", () => {
+    test("creates Date objects from string fields, returns undefined for empty object", () => {
       const input = {};
       const result = normalizeEventDates(input) as Record<string, unknown>;
 
-      expect(result["starts_at"]).toBeInstanceOf(Date);
+      expect(result["starts_at"]).toBeUndefined();
       expect(result["ends_at"]).toBeUndefined();
       expect(result["doors_at"]).toBeUndefined();
       expect(result["info"]).toBeUndefined();
+    });
+
+    test("handles invalid date strings by returning undefined", () => {
+      const input = {
+        starts_at: "not-a-valid-date",
+        ends_at: "also-invalid",
+        doors_at: "still-invalid",
+        production: 10,
+      };
+
+      const result = normalizeEventDates(input) as Record<string, unknown>;
+
+      expect(result["starts_at"]).toBeUndefined();
+      expect(result["ends_at"]).toBeUndefined();
+      expect(result["doors_at"]).toBeUndefined();
+      expect(result["production"]).toBe(10);
     });
   });
 
