@@ -15,6 +15,7 @@ import {
   // replaceCrop,
   // deleteCrop,
 } from "./handlers/index.js";
+import cropProxyRoute from "./proxy.js";
 
 /**
  * Registers media (image + crop) routes on the Fastify instance.
@@ -58,4 +59,6 @@ export default function mediaRoutes(server: FastifyInstance) {
   // server.patch("/api/v1/crop/:id", protect, replyHandler(server, editCrop));
   // server.put("/api/v1/crop/:id", protect, replyHandler(server, replaceCrop));
   // server.delete("/api/v1/crop/:id", protect, replyHandler(server, deleteCrop));
+
+  cropProxyRoute(server);
 }
