@@ -2,6 +2,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi 
 import type { FastifyInstance } from "fastify";
 
 import { buildServer } from "@/server.js";
+import { info } from "node:console";
 
 
 let server: FastifyInstance;
@@ -158,6 +159,32 @@ describe("Event Create Routes", () => {
       expect(params[1]).toBeInstanceOf(Date);
       expect(params[2]).toBeInstanceOf(Date);
       expect(params[5]).toBeInstanceOf(Date);
+    });
+
+    test("creates event with optional date fields as undefined", async () => {
+      const payload = {
+        ...buildPayload(42),
+        ends_at: undefined,
+        doors_at: undefined,
+        info: undefined,
+      };
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/v1/event",
+        payload,
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual({
+        id: 2,
+        ...basePayload,
+        ends_at: undefined,
+        doors_at: undefined,
+        info: undefined,
+        price: [],
+      });
+      expect(queryMock).toHaveBeenCalledOnce();
     });
   });
 });

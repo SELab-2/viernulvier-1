@@ -124,8 +124,9 @@ describe("Event Date Normalization Helpers", () => {
       const result = normalizeEventDates(input) as Record<string, unknown>;
 
       expect(result["starts_at"]).toBeInstanceOf(Date);
-      expect(result["ends_at"]).toBeInstanceOf(Date);
-      expect(result["doors_at"]).toBeInstanceOf(Date);
+      expect(result["ends_at"]).toBeUndefined();
+      expect(result["doors_at"]).toBeUndefined();
+      expect(result["info"]).toBeUndefined();
     });
   });
 
@@ -142,6 +143,7 @@ describe("Event Date Normalization Helpers", () => {
       expect(result["starts_at"]).toEqual(new Date("2026-01-01T18:00:00.000Z"));
       expect(result["ends_at"]).toBeUndefined();
       expect(result["doors_at"]).toBeUndefined();
+      expect(result["info"]).toBeUndefined();
       expect(result["production"]).toBe(20);
     });
 
@@ -197,6 +199,7 @@ describe("Event Date Normalization Helpers", () => {
       expect(result["doors_at"]).toBeInstanceOf(Date);
       expect(result["doors_at"]).toBe(doorDate);
       expect(result["ends_at"]).toBeUndefined();
+      expect(result["info"]).toBeUndefined();
     });
 
     test("handles partial updates with all Date instances and some undefined", () => {
@@ -218,6 +221,7 @@ describe("Event Date Normalization Helpers", () => {
       expect(result["ends_at"]).toBe(endDate);
       expect(result["doors_at"]).toBeUndefined();
       expect(result["production"]).toBe(25);
+      expect(result["info"]).toBeUndefined();
     });
 
     test("handles partial doors_at as Date instance", () => {
@@ -234,6 +238,7 @@ describe("Event Date Normalization Helpers", () => {
       expect(result["starts_at"]).toBeUndefined();
       expect(result["ends_at"]).toBeUndefined();
       expect(result["production"]).toBe(30);
+      expect(result["info"]).toBeUndefined();
     });
 
     test("handles partial doors_at as date string", () => {
@@ -249,6 +254,7 @@ describe("Event Date Normalization Helpers", () => {
       expect(result["starts_at"]).toBeUndefined();
       expect(result["ends_at"]).toBeUndefined();
       expect(result["hall"]).toBe(8);
+      expect(result["info"]).toBeUndefined();
     });
 
     test("preserves all other fields unchanged", () => {

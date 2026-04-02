@@ -1,7 +1,3 @@
-import type { Event } from "@viernulvier/shared/index.js";
-import { EventSchema } from "@viernulvier/shared/index.js";
-import { normalizeEventDates } from "@/routes/event/handlers/helper.js";
-
 interface EventListMeta {
   totalItems: number;
   view: {
@@ -17,7 +13,6 @@ interface EventJSON {
   starts_at: string;
   ends_at: string;
   doors_at: string;
-  vendor_id: number;
   info: Record<string, string>;
   production: {
     "@id": string;
@@ -112,9 +107,8 @@ async function login(username: string, password: string): Promise<string> {
   if (!response.ok) {
     throw new Error(`Login failed: ${response.status} ${response.statusText}`);
   }
-
-  const data = await response.json() as { authToken: string };
-  return data!.authToken;
+  const data = await response.json() as { token: string };
+  return data.token;
 }
 
 // Cache for old hall IDs to avoid redundant fetches, if not cached, fetch the old ID.
@@ -151,10 +145,13 @@ async function processEvent(event: EventJSON, authToken: string, loginToken: str
 
 
   const body = {
-    ...event,
     old_id: id,
-    hall: await getOldHall(hallId),
+    starts_at: event.starts_at,
+    ends_at: event.ends_at,
+    doors_at: event.doors_at,
+    info: event.info,
     production: await getOldProduction(productionId),
+    hall: await getOldHall(hallId),
   };
 
   const response = await fetch("http://localhost:3000/api/v1/event", {
