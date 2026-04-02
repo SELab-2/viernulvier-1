@@ -79,8 +79,8 @@ async function insertCrops(
 
     const url = buildCropUrl(s3Key);
     await server.pg.query(
-      `INSERT INTO crop (image_id, url, type, created_by, updated_by, created_at, updated_at)
-       VALUES (\$1, \$2, \$3, \$4, \$5, \$6, \$7)`,
+      `INSERT INTO crop (image, url, type, created_by, updated_by, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [imageId, url, mapping.type, admin, admin, currentTime, currentTime],
     );
   }
@@ -147,8 +147,8 @@ export async function createImage(
 
   // Insert image row
   const imageResult = await server.pg.query<{ id: number }>(
-    `INSERT INTO image (production_id, res, old_id, created_by, updated_by, created_at, updated_at)
-     VALUES (\$1, \$2, \$3, \$4, \$5, \$6, \$7)
+    `INSERT INTO image (production, res, old_id, created_by, updated_by, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING id`,
     [
       productionId,

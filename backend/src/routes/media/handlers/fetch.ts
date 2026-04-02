@@ -10,7 +10,7 @@ const ImageSelect = `
 SELECT
   i.id,
   i.old_id,
-  i.production_id AS production,
+  i.production,
   i.res
 FROM image i
 `;
@@ -32,7 +32,7 @@ const CropSelect = `
 SELECT
   c.id,
   c.old_id,
-  c.image_id AS image,
+  c.image,
   c.url,
   c.type
 FROM crop c
@@ -42,7 +42,7 @@ const CropSelectWithMeta = `
 SELECT
   c.id,
   c.old_id,
-  c.image_id AS image,
+  c.image,
   c.url,
   c.type,
   c.created_at,
@@ -74,7 +74,7 @@ export async function getImageById(
   if (!image) return null;
 
   const cropsResult = await server.pg.query(
-    `${CropSelect} WHERE c.image_id = \$1 ORDER BY c.id ASC`,
+    `${CropSelect} WHERE c.image = $1 ORDER BY c.id ASC`,
     [image.id],
   );
   const crops = parseSchema(server, z.array(CropSchema), cropsResult.rows, ParseContext.Database);
@@ -94,7 +94,7 @@ export async function getCropsByImageId(
   imageId: number | string,
 ): Promise<Crop[]> {
   const result = await server.pg.query(
-    `${CropSelect} WHERE c.image_id = \$1 ORDER BY c.id ASC`,
+    `${CropSelect} WHERE c.image = $1 ORDER BY c.id ASC`,
     [imageId],
   );
   return parseSchema(server, z.array(CropSchema), result.rows, ParseContext.Database);
@@ -112,7 +112,7 @@ export async function getCropById(
   id: number | string,
 ): Promise<Crop | null> {
   const result = await server.pg.query(
-    `${CropSelect} WHERE c.id = \$1`,
+    `${CropSelect} WHERE c.id = $1`,
     [id],
   );
   const crops = parseSchema(server, z.array(CropSchema), result.rows, ParseContext.Database);
@@ -133,7 +133,7 @@ export async function fetchImagesByProduction(
   const { productionId } = parseParams(request, z.object({ productionId: stringToInt }));
 
   const imgResult = await server.pg.query(
-    `${ImageSelect} WHERE i.production_id = \$1 ORDER BY i.id ASC`,
+    `${ImageSelect} WHERE i.production = $1 ORDER BY i.id ASC`,
     [productionId],
   );
   const images = parseSchema(server, z.array(ImageSchema), imgResult.rows, ParseContext.Database);
@@ -142,7 +142,7 @@ export async function fetchImagesByProduction(
 
   const imageIds = images.map((img) => img.id);
   const cropsResult = await server.pg.query(
-    `${CropSelect} WHERE c.image_id = ANY(\$1::int[]) ORDER BY c.image_id ASC, c.id ASC`,
+    `${CropSelect} WHERE c.image = ANY($1::int[]) ORDER BY c.image ASC, c.id ASC`,
     [imageIds],
   );
   const allCrops = parseSchema(server, z.array(CropSchema), cropsResult.rows, ParseContext.Database);
@@ -186,7 +186,7 @@ export async function fetchImageWithMeta(
   const { id } = parseParams(request, z.object({ id: stringToInt }));
 
   const imgResult = await server.pg.query(
-    `${ImageSelectWithMeta} WHERE i.id = \$1`,
+    `${ImageSelectWithMeta} WHERE i.id = $1`,
     [id],
   );
   const images = parseSchema(
@@ -199,7 +199,7 @@ export async function fetchImageWithMeta(
   if (!image) return null;
 
   const cropsResult = await server.pg.query(
-    `${CropSelectWithMeta} WHERE c.image_id = \$1 ORDER BY c.id ASC`,
+    `${CropSelectWithMeta} WHERE c.image = $1 ORDER BY c.id ASC`,
     [id],
   );
   const crops = parseSchema(
@@ -240,7 +240,7 @@ export async function fetchCropByType(
   );
 
   const result = await server.pg.query(
-    `${CropSelect} WHERE c.image_id = \$1 AND c.type = \$2`,
+    `${CropSelect} WHERE c.image = $1 AND c.type = $2`,
     [imageId, type],
   );
   const crops = parseSchema(server, z.array(CropSchema), result.rows, ParseContext.Database);
