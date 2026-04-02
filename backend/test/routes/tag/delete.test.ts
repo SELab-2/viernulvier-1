@@ -11,7 +11,7 @@ const mockTag: Tag = {
   id: 5,
   old_id: 111,
   name: { en: "Music", nl: "Muziek" },
-  type: 1,
+  tag_type: 1,
   productions: [],
   public: true,
 };

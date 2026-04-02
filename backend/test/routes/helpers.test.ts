@@ -26,7 +26,7 @@ describe(HttpError, () => {
     test("new HttpError(500, 'Example Error')", () => {
       const err = vi.fn(HttpError);
       const errObj = new err(500, "Example Error");
-      expect(err, "should return normally").toReturn();
+      expect(err, "should return normally").toHaveReturned();
 
       expect(errObj.message, "should contain the error message provided").toBe(
         "Example Error",
@@ -55,14 +55,14 @@ describe(parseParams, () => {
       expect(() => parseParams(exampleRequest, z.object())).not.toThrow();
       expect(parseParams(exampleRequest, z.object())).toStrictEqual({});
 
-      expect(exampleRequest.log.error).not.toBeCalled();
+      expect(exampleRequest.log.error).not.toHaveBeenCalled();
     });
 
     test("parseParams(request, z.object({ id: z.int() }))", () => {
       expect(() =>
         parseParams(exampleRequest, z.object({ id: z.int() })),
       ).toThrow(HttpError);
-      expect(exampleRequest.log.error).toBeCalledWith(
+      expect(exampleRequest.log.error).toHaveBeenCalledWith(
         z.object({ id: z.int() }).safeParse({}).error,
       );
     });
@@ -82,14 +82,14 @@ describe(parseParams, () => {
     test("parseParams(request, z.object())", () => {
       expect(() => parseParams(exampleRequest, z.object())).not.toThrow();
       expect(parseParams(exampleRequest, z.object())).toStrictEqual({});
-      expect(exampleRequest.log.error).not.toBeCalled();
+      expect(exampleRequest.log.error).not.toHaveBeenCalled();
     });
 
     test("parseParams(request, z.strictObject({}))", () => {
       expect(() => parseParams(exampleRequest, z.strictObject({}))).toThrow(
         HttpError,
       );
-      expect(exampleRequest.log.error).toBeCalledWith(
+      expect(exampleRequest.log.error).toHaveBeenCalledWith(
         z.strictObject({}).safeParse(params).error,
       );
     });
@@ -98,7 +98,7 @@ describe(parseParams, () => {
       expect(() =>
         parseParams(exampleRequest, z.object({ id: z.int() })),
       ).toThrow(HttpError);
-      expect(exampleRequest.log.error).toBeCalledWith(
+      expect(exampleRequest.log.error).toHaveBeenCalledWith(
         z.object({ id: z.int() }).safeParse(params).error,
       );
     });
@@ -112,7 +112,7 @@ describe(parseParams, () => {
       ).toStrictEqual({
         id: 100,
       });
-      expect(exampleRequest.log.error).not.toBeCalled();
+      expect(exampleRequest.log.error).not.toHaveBeenCalled();
     });
   });
 
@@ -133,13 +133,13 @@ describe(parseParams, () => {
       const schema = z.object();
       expect(() => parseParams(exampleRequest, schema)).not.toThrow();
       expect(parseParams(exampleRequest, schema)).toStrictEqual({});
-      expect(exampleRequest.log.error).not.toBeCalled();
+      expect(exampleRequest.log.error).not.toHaveBeenCalled();
     });
 
     test("parseParams(request, z.strictObject({}))", () => {
       const schema = z.strictObject({});
       expect(() => parseParams(exampleRequest, schema)).toThrow(HttpError);
-      expect(exampleRequest.log.error).toBeCalledWith(
+      expect(exampleRequest.log.error).toHaveBeenCalledWith(
         schema.safeParse(params).error,
       );
     });
@@ -147,7 +147,7 @@ describe(parseParams, () => {
     test("parseParams(request, z.object({ id: z.int() }))", () => {
       const schema = z.object({ id: z.int() });
       expect(() => parseParams(exampleRequest, schema)).toThrow(HttpError);
-      expect(exampleRequest.log.error).toBeCalledWith(
+      expect(exampleRequest.log.error).toHaveBeenCalledWith(
         schema.safeParse(params).error,
       );
     });
@@ -158,13 +158,13 @@ describe(parseParams, () => {
       expect(parseParams(exampleRequest, schema)).toStrictEqual({
         id: 100,
       });
-      expect(exampleRequest.log.error).not.toBeCalled();
+      expect(exampleRequest.log.error).not.toHaveBeenCalled();
     });
 
     test("parseParams(request, z.strictObject({ id: stringToSerial }))", () => {
       const schema = z.strictObject({ id: stringToSerial });
       expect(() => parseParams(exampleRequest, schema)).toThrow();
-      expect(exampleRequest.log.error).toBeCalledWith(
+      expect(exampleRequest.log.error).toHaveBeenCalledWith(
         schema.safeParse(params).error,
       );
     });
@@ -175,7 +175,7 @@ describe(parseParams, () => {
       expect(parseParams(exampleRequest, schema)).toStrictEqual({
         name: "bob",
       });
-      expect(exampleRequest.log.error).not.toBeCalled();
+      expect(exampleRequest.log.error).not.toHaveBeenCalled();
     });
 
     test(`parseParams(request, z.strictObject({
@@ -194,7 +194,7 @@ describe(parseParams, () => {
         name: "bob",
         food: "cake",
       });
-      expect(exampleRequest.log.error).not.toBeCalled();
+      expect(exampleRequest.log.error).not.toHaveBeenCalled();
     });
   });
 });
@@ -214,7 +214,7 @@ describe(parseUser, () => {
   });
 
   test("Error", () => {
-    expect(() => parseUser(generateExampleRequest({ id: "not a number", username: "" }))).toThrowError("Invalid request data");
+    expect(() => parseUser(generateExampleRequest({ id: "not a number", username: "" }))).toThrow("Invalid request data");
   });
 });
 
@@ -253,21 +253,21 @@ describe(parseSchema, () => {
 
         test(`parseSchema(server, schema, {}, ${ctx})`, () => {
           expect(parseSchema(MockServer, schema, {}, idx)).toStrictEqual({});
-          expect(MockServer.log.error).not.toBeCalled();
+          expect(MockServer.log.error).not.toHaveBeenCalled();
         });
 
         test(`parseSchema(server, schema, {id: 100}, ${ctx})`, () => {
           expect(
             parseSchema(MockServer, schema, { id: 100 }, idx),
           ).toStrictEqual({});
-          expect(MockServer.log.error).not.toBeCalled();
+          expect(MockServer.log.error).not.toHaveBeenCalled();
         });
 
         test(`parseSchema(server, schema, {name: 'blah'}, ${ctx})`, () => {
           expect(
             parseSchema(MockServer, schema, { name: "blah" }, idx),
           ).toStrictEqual({});
-          expect(MockServer.log.error).not.toBeCalled();
+          expect(MockServer.log.error).not.toHaveBeenCalled();
         });
       });
 
@@ -278,14 +278,14 @@ describe(parseSchema, () => {
 
         test(`parseSchema(server, schema, {}, ${ctx})`, () => {
           expect(parseSchema(MockServer, schema, {}, idx)).toStrictEqual({});
-          expect(MockServer.log.error).not.toBeCalled();
+          expect(MockServer.log.error).not.toHaveBeenCalled();
         });
 
         test(`parseSchema(server, schema, {id: 100}, ${ctx})`, () => {
           expect(() =>
             parseSchema(MockServer, schema, { id: 100 }, idx),
           ).toThrow(err);
-          expect(MockServer.log.error).toBeCalledWith(
+          expect(MockServer.log.error).toHaveBeenCalledWith(
             expectedParseErrors({ id: 100 }),
           );
         });
@@ -294,7 +294,7 @@ describe(parseSchema, () => {
           expect(() =>
             parseSchema(MockServer, schema, { name: "blah" }, idx),
           ).toThrow(err);
-          expect(MockServer.log.error).toBeCalledWith(
+          expect(MockServer.log.error).toHaveBeenCalledWith(
             expectedParseErrors({ name: "blah" }),
           );
         });
@@ -307,7 +307,7 @@ describe(parseSchema, () => {
 
         test(`parseSchema(server, schema, {}, ${ctx})`, () => {
           expect(() => parseSchema(MockServer, schema, {}, idx)).toThrow(err);
-          expect(MockServer.log.error).toBeCalledWith(expectedParseErrors({}));
+          expect(MockServer.log.error).toHaveBeenCalledWith(expectedParseErrors({}));
         });
 
         test(`parseSchema(server, schema, {id: 100}, ${ctx})`, () => {
@@ -316,14 +316,14 @@ describe(parseSchema, () => {
           ).toStrictEqual({
             id: 100,
           });
-          expect(MockServer.log.error).not.toBeCalled();
+          expect(MockServer.log.error).not.toHaveBeenCalled();
         });
 
         test(`parseSchema(server, schema, {name: 'blah'}, ${ctx})`, () => {
           expect(() =>
             parseSchema(MockServer, schema, { name: "blah" }, idx),
           ).toThrow(err);
-          expect(MockServer.log.error).toBeCalledWith(
+          expect(MockServer.log.error).toHaveBeenCalledWith(
             expectedParseErrors({ name: "blah" }),
           );
         });
@@ -344,14 +344,14 @@ describe(parseSchema, () => {
 
         test(`parseSchema(server, schema, {}, ${ctx})`, () => {
           expect(() => parseSchema(MockServer, schema, {}, idx)).toThrow(err);
-          expect(MockServer.log.error).toBeCalledWith(expectedParseErrors({}));
+          expect(MockServer.log.error).toHaveBeenCalledWith(expectedParseErrors({}));
         });
 
         test(`parseSchema(server, schema, {id: 100}, ${ctx})`, () => {
           expect(() =>
             parseSchema(MockServer, schema, { id: 100 }, idx),
           ).toThrow(err);
-          expect(MockServer.log.error).toBeCalledWith(
+          expect(MockServer.log.error).toHaveBeenCalledWith(
             expectedParseErrors({ id: 100 }),
           );
         });
@@ -360,7 +360,7 @@ describe(parseSchema, () => {
           expect(() =>
             parseSchema(MockServer, schema, { name: "blah" }, idx),
           ).toThrow(err);
-          expect(MockServer.log.error).toBeCalledWith(
+          expect(MockServer.log.error).toHaveBeenCalledWith(
             expectedParseErrors({ name: "blah" }),
           );
         });
@@ -369,7 +369,7 @@ describe(parseSchema, () => {
           expect(() =>
             parseSchema(MockServer, schema, { name: "blah", id: 100 }, idx),
           ).toThrow(err);
-          expect(MockServer.log.error).toBeCalledWith(
+          expect(MockServer.log.error).toHaveBeenCalledWith(
             expectedParseErrors({ name: "blah", id: 100 }),
           );
         });
@@ -383,7 +383,7 @@ describe(parseSchema, () => {
               idx,
             ),
           ).toStrictEqual({ name: "blah", id: 100, friends: [] });
-          expect(MockServer.log.error).not.toBeCalled();
+          expect(MockServer.log.error).not.toHaveBeenCalled();
         });
       });
     });
@@ -435,8 +435,8 @@ describe(buildQuery, () => {
           z.object(),
         );
         expect(await query()).toStrictEqual([]);
-        expect(MockServer.log.error).not.toBeCalled();
-        expect(MockServer.pg.query).toBeCalledWith(
+        expect(MockServer.log.error).not.toHaveBeenCalled();
+        expect(MockServer.pg.query).toHaveBeenCalledWith(
           "SELECT * FROM productions",
           z.tuple([]).parse([]),
         );
@@ -449,8 +449,8 @@ describe(buildQuery, () => {
           z.object({ id: z.int() }),
         );
         expect(await query()).toStrictEqual([]);
-        expect(MockServer.log.error).not.toBeCalled();
-        expect(MockServer.pg.query).toBeCalledWith(
+        expect(MockServer.log.error).not.toHaveBeenCalled();
+        expect(MockServer.pg.query).toHaveBeenCalledWith(
           "SELECT * FROM productions",
           z.tuple([]).parse([]),
         );
@@ -463,8 +463,8 @@ describe(buildQuery, () => {
           z.object({ name: z.string().max(32) }),
         );
         expect(await query()).toStrictEqual([]);
-        expect(MockServer.log.error).not.toBeCalled();
-        expect(MockServer.pg.query).toBeCalledWith(
+        expect(MockServer.log.error).not.toHaveBeenCalled();
+        expect(MockServer.pg.query).toHaveBeenCalledWith(
           "SELECT * FROM productions",
           z.tuple([]).parse([]),
         );
@@ -483,8 +483,8 @@ describe(buildQuery, () => {
           z.object(),
         );
         expect(await query(50)).toStrictEqual([]);
-        expect(MockServer.log.error).not.toBeCalled();
-        expect(MockServer.pg.query).toBeCalledWith(
+        expect(MockServer.log.error).not.toHaveBeenCalled();
+        expect(MockServer.pg.query).toHaveBeenCalledWith(
           "SELECT * FROM productions WHERE id = $1",
           z.tuple([z.int()]).parse([50]),
         );
@@ -498,8 +498,8 @@ describe(buildQuery, () => {
           z.object({ name: z.string().max(32) }),
         );
         expect(await query(50)).toStrictEqual([]);
-        expect(MockServer.log.error).not.toBeCalled();
-        expect(MockServer.pg.query).toBeCalledWith(
+        expect(MockServer.log.error).not.toHaveBeenCalled();
+        expect(MockServer.pg.query).toHaveBeenCalledWith(
           "SELECT * FROM productions WHERE id = $1",
           z.tuple([z.int()]).parse([50]),
         );
@@ -513,8 +513,8 @@ describe(buildQuery, () => {
           z.object({ name: z.int() }),
         );
         expect(await query(50)).toStrictEqual([]);
-        expect(MockServer.log.error).not.toBeCalled();
-        expect(MockServer.pg.query).toBeCalledWith(
+        expect(MockServer.log.error).not.toHaveBeenCalled();
+        expect(MockServer.pg.query).toHaveBeenCalledWith(
           "SELECT * FROM productions WHERE id = $1",
           z.tuple([z.int()]).parse([50]),
         );
@@ -530,8 +530,8 @@ describe(buildQuery, () => {
           z.object(),
         );
         expect(await query(50, "Noah")).toStrictEqual([]);
-        expect(MockServer.log.error).not.toBeCalled();
-        expect(MockServer.pg.query).toBeCalledWith(
+        expect(MockServer.log.error).not.toHaveBeenCalled();
+        expect(MockServer.pg.query).toHaveBeenCalledWith(
           "SELECT * FROM productions WHERE id = $1, name = $2",
           z.tuple([z.int(), z.string()]).parse([50, "Noah"]),
         );
@@ -545,8 +545,8 @@ describe(buildQuery, () => {
           z.object({ name: z.string().max(32) }),
         );
         expect(await query(50, "Simon")).toStrictEqual([]);
-        expect(MockServer.log.error).not.toBeCalled();
-        expect(MockServer.pg.query).toBeCalledWith(
+        expect(MockServer.log.error).not.toHaveBeenCalled();
+        expect(MockServer.pg.query).toHaveBeenCalledWith(
           "SELECT * FROM productions WHERE id = $1, name = $2",
           z.tuple([z.int(), z.string()]).parse([50, "Simon"]),
         );
@@ -560,8 +560,8 @@ describe(buildQuery, () => {
           z.object({ name: z.int() }),
         );
         expect(await query(50, "Lex")).toStrictEqual([]);
-        expect(MockServer.log.error).not.toBeCalled();
-        expect(MockServer.pg.query).toBeCalledWith(
+        expect(MockServer.log.error).not.toHaveBeenCalled();
+        expect(MockServer.pg.query).toHaveBeenCalledWith(
           "SELECT * FROM productions WHERE id = $1, name = $2",
           z.tuple([z.int(), z.string()]).parse([50, "Lex"]),
         );
@@ -611,8 +611,8 @@ describe(buildQuery, () => {
             z.object(),
           );
           expect(await query()).toStrictEqual(DB.map(() => ({})));
-          expect(MockServer.log.error).not.toBeCalled();
-          expect(MockServer.pg.query).toBeCalledWith(
+          expect(MockServer.log.error).not.toHaveBeenCalled();
+          expect(MockServer.pg.query).toHaveBeenCalledWith(
             "SELECT * FROM productions",
             z.tuple([]).parse([]),
           );
@@ -627,8 +627,8 @@ describe(buildQuery, () => {
           expect(await query()).toStrictEqual(
             DB.map((obj) => ({ id: obj["id"] })),
           );
-          expect(MockServer.log.error).not.toBeCalled();
-          expect(MockServer.pg.query).toBeCalledWith(
+          expect(MockServer.log.error).not.toHaveBeenCalled();
+          expect(MockServer.pg.query).toHaveBeenCalledWith(
             "SELECT * FROM productions",
             z.tuple([]).parse([]),
           );
@@ -643,8 +643,8 @@ describe(buildQuery, () => {
           expect(await query()).toStrictEqual(
             DB.map((obj) => ({ name: obj["name"] })),
           );
-          expect(MockServer.log.error).not.toBeCalled();
-          expect(MockServer.pg.query).toBeCalledWith(
+          expect(MockServer.log.error).not.toHaveBeenCalled();
+          expect(MockServer.pg.query).toHaveBeenCalledWith(
             "SELECT * FROM productions",
             z.tuple([]).parse([]),
           );
@@ -665,12 +665,12 @@ describe(buildQuery, () => {
               expect.fail();
             } catch (err) {
               expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
-              expect(MockServer.log.error).toBeCalledWith(
+              expect(MockServer.log.error).toHaveBeenCalledWith(
                 z
                   .array(z.object({ price: z.number().positive() }))
                   .safeParse(DB).error,
               );
-              expect(MockServer.pg.query).toBeCalledWith(
+              expect(MockServer.pg.query).toHaveBeenCalledWith(
                 "SELECT * FROM productions",
                 z.tuple([]).parse([]),
               );
@@ -695,7 +695,7 @@ describe(buildQuery, () => {
             expect.fail();
           } catch (err) {
             expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
-            expect(MockServer.log.error).toBeCalledWith(
+            expect(MockServer.log.error).toHaveBeenCalledWith(
               z
                 .array(
                   z.strictObject({
@@ -705,7 +705,7 @@ describe(buildQuery, () => {
                 )
                 .safeParse(DB).error,
             );
-            expect(MockServer.pg.query).toBeCalledWith(
+            expect(MockServer.pg.query).toHaveBeenCalledWith(
               "SELECT * FROM productions",
               z.tuple([]).parse([]),
             );
@@ -727,8 +727,8 @@ describe(buildQuery, () => {
             }),
           );
           expect(await query()).toStrictEqual(DB);
-          expect(MockServer.log.error).not.toBeCalled();
-          expect(MockServer.pg.query).toBeCalledWith(
+          expect(MockServer.log.error).not.toHaveBeenCalled();
+          expect(MockServer.pg.query).toHaveBeenCalledWith(
             "SELECT * FROM productions",
             z.tuple([]).parse([]),
           );
@@ -747,8 +747,8 @@ describe(buildQuery, () => {
             z.object(),
           );
           expect(await query()).toStrictEqual(DB.map(() => ({})));
-          expect(MockServer.log.error).not.toBeCalled();
-          expect(MockServer.pg.query).toBeCalledWith(
+          expect(MockServer.log.error).not.toHaveBeenCalled();
+          expect(MockServer.pg.query).toHaveBeenCalledWith(
             "SELECT id FROM productions",
             z.tuple([]).parse([]),
           );
@@ -763,8 +763,8 @@ describe(buildQuery, () => {
           expect(await query()).toStrictEqual(
             DB.map((obj) => ({ id: obj["id"] })),
           );
-          expect(MockServer.log.error).not.toBeCalled();
-          expect(MockServer.pg.query).toBeCalledWith(
+          expect(MockServer.log.error).not.toHaveBeenCalled();
+          expect(MockServer.pg.query).toHaveBeenCalledWith(
             "SELECT id FROM productions",
             z.tuple([]).parse([]),
           );
@@ -781,12 +781,12 @@ describe(buildQuery, () => {
             expect.fail();
           } catch (err) {
             expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
-            expect(MockServer.log.error).toBeCalledWith(
+            expect(MockServer.log.error).toHaveBeenCalledWith(
               z
                 .array(z.object({ name: z.string().max(32) }))
                 .safeParse(DBFiltered).error,
             );
-            expect(MockServer.pg.query).toBeCalledWith(
+            expect(MockServer.pg.query).toHaveBeenCalledWith(
               "SELECT id FROM productions",
               z.tuple([]).parse([]),
             );
@@ -810,7 +810,7 @@ describe(buildQuery, () => {
             expect.fail();
           } catch (err) {
             expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
-            expect(MockServer.log.error).toBeCalledWith(
+            expect(MockServer.log.error).toHaveBeenCalledWith(
               z
                 .array(
                   z.strictObject({
@@ -820,7 +820,7 @@ describe(buildQuery, () => {
                 )
                 .safeParse(DBFiltered).error,
             );
-            expect(MockServer.pg.query).toBeCalledWith(
+            expect(MockServer.pg.query).toHaveBeenCalledWith(
               "SELECT id FROM productions",
               z.tuple([]).parse([]),
             );
@@ -847,7 +847,7 @@ describe(buildQuery, () => {
             expect.fail();
           } catch (err) {
             expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
-            expect(MockServer.log.error).toBeCalledWith(
+            expect(MockServer.log.error).toHaveBeenCalledWith(
               z
                 .array(
                   z.strictObject({
@@ -858,7 +858,7 @@ describe(buildQuery, () => {
                 )
                 .safeParse(DBFiltered).error,
             );
-            expect(MockServer.pg.query).toBeCalledWith(
+            expect(MockServer.pg.query).toHaveBeenCalledWith(
               "SELECT id FROM productions",
               z.tuple([]).parse([]),
             );
@@ -894,8 +894,8 @@ describe(buildQuery, () => {
 
           test("await query(1)", async () => {
             expect(await query(1)).toStrictEqual([{ id: 1 }]);
-            expect(MockServer.log.error).not.toBeCalled();
-            expect(MockServer.pg.query).toBeCalledWith(
+            expect(MockServer.log.error).not.toHaveBeenCalled();
+            expect(MockServer.pg.query).toHaveBeenCalledWith(
               "SELECT * FROM productions WHERE id = $1",
               z.tuple([z.int().positive()]).parse([1]),
             );
@@ -903,8 +903,8 @@ describe(buildQuery, () => {
 
           test("await query(2)", async () => {
             expect(await query(2)).toStrictEqual([{ id: 2 }]);
-            expect(MockServer.log.error).not.toBeCalled();
-            expect(MockServer.pg.query).toBeCalledWith(
+            expect(MockServer.log.error).not.toHaveBeenCalled();
+            expect(MockServer.pg.query).toHaveBeenCalledWith(
               "SELECT * FROM productions WHERE id = $1",
               z.tuple([z.int().positive()]).parse([2]),
             );
@@ -912,8 +912,8 @@ describe(buildQuery, () => {
           // Should return an empty row.
           test("await query(10)", async () => {
             expect(await query(10)).toStrictEqual([]);
-            expect(MockServer.log.error).not.toBeCalled();
-            expect(MockServer.pg.query).toBeCalledWith(
+            expect(MockServer.log.error).not.toHaveBeenCalled();
+            expect(MockServer.pg.query).toHaveBeenCalledWith(
               "SELECT * FROM productions WHERE id = $1",
               z.tuple([z.int().positive()]).parse([10]),
             );
@@ -928,10 +928,10 @@ describe(buildQuery, () => {
               expect.fail();
             } catch (err) {
               expect(err).toStrictEqual(expectedErrors[ParseContext.Request]);
-              expect(MockServer.log.error).toBeCalledWith(
+              expect(MockServer.log.error).toHaveBeenCalledWith(
                 z.tuple([z.int().positive()]).safeParse(["1"]).error,
               );
-              expect(MockServer.pg.query).not.toBeCalled();
+              expect(MockServer.pg.query).not.toHaveBeenCalled();
             }
           });
         });
@@ -966,8 +966,8 @@ describe(buildQuery, () => {
 
           test("await query(1)", async () => {
             expect(await query(1)).toStrictEqual([DB[0]]);
-            expect(MockServer.log.error).not.toBeCalled();
-            expect(MockServer.pg.query).toBeCalledWith(
+            expect(MockServer.log.error).not.toHaveBeenCalled();
+            expect(MockServer.pg.query).toHaveBeenCalledWith(
               "SELECT * FROM productions WHERE id = $1",
               z.tuple([z.int().positive()]).parse([1]),
             );
@@ -975,8 +975,8 @@ describe(buildQuery, () => {
 
           test("await query(2)", async () => {
             expect(await query(2)).toStrictEqual([DB[1]]);
-            expect(MockServer.log.error).not.toBeCalled();
-            expect(MockServer.pg.query).toBeCalledWith(
+            expect(MockServer.log.error).not.toHaveBeenCalled();
+            expect(MockServer.pg.query).toHaveBeenCalledWith(
               "SELECT * FROM productions WHERE id = $1",
               z.tuple([z.int().positive()]).parse([2]),
             );
@@ -984,8 +984,8 @@ describe(buildQuery, () => {
           // Should return an empty row.
           test("await query(10)", async () => {
             expect(await query(10)).toStrictEqual([]);
-            expect(MockServer.log.error).not.toBeCalled();
-            expect(MockServer.pg.query).toBeCalledWith(
+            expect(MockServer.log.error).not.toHaveBeenCalled();
+            expect(MockServer.pg.query).toHaveBeenCalledWith(
               "SELECT * FROM productions WHERE id = $1",
               z.tuple([z.int().positive()]).parse([10]),
             );
@@ -1000,10 +1000,10 @@ describe(buildQuery, () => {
               expect.fail();
             } catch (err) {
               expect(err).toStrictEqual(expectedErrors[ParseContext.Request]);
-              expect(MockServer.log.error).toBeCalledWith(
+              expect(MockServer.log.error).toHaveBeenCalledWith(
                 z.tuple([z.int().positive()]).safeParse(["1"]).error,
               );
-              expect(MockServer.pg.query).not.toBeCalled();
+              expect(MockServer.pg.query).not.toHaveBeenCalled();
             }
           });
         });
@@ -1034,13 +1034,13 @@ describe(buildQuery, () => {
               expect.fail();
             } catch (err) {
               expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
-              expect(MockServer.log.error).toBeCalledWith(
+              expect(MockServer.log.error).toHaveBeenCalledWith(
                 z
                   .array(z.object({ price: z.number().positive() }))
                   .safeParse([DB[0]]).error,
               );
               // Note we fail after this query is called.
-              expect(MockServer.pg.query).toBeCalledWith(
+              expect(MockServer.pg.query).toHaveBeenCalledWith(
                 "SELECT * FROM productions WHERE id = $1",
                 z.tuple([z.int().positive()]).parse([1]),
               );
@@ -1052,8 +1052,8 @@ describe(buildQuery, () => {
           // As long as the used schemas are correct it shouldn't matter.
           test("await query(10)", async () => {
             expect(await query(10)).toStrictEqual([]);
-            expect(MockServer.log.error).not.toBeCalled();
-            expect(MockServer.pg.query).toBeCalledWith(
+            expect(MockServer.log.error).not.toHaveBeenCalled();
+            expect(MockServer.pg.query).toHaveBeenCalledWith(
               "SELECT * FROM productions WHERE id = $1",
               z.tuple([z.int().positive()]).parse([10]),
             );
@@ -1067,12 +1067,12 @@ describe(buildQuery, () => {
               expect.fail();
             } catch (err) {
               expect(err).toStrictEqual(expectedErrors[ParseContext.Request]);
-              expect(MockServer.log.error).toBeCalledWith(
+              expect(MockServer.log.error).toHaveBeenCalledWith(
                 z.tuple([z.int().positive()]).safeParse(["Trixie is cool!"])
                   .error,
               );
               // Note we expect this not to be called.
-              expect(MockServer.pg.query).not.toBeCalled();
+              expect(MockServer.pg.query).not.toHaveBeenCalled();
             }
           });
         });
@@ -1101,8 +1101,8 @@ describe(buildQuery, () => {
         expect.fail();
       } catch (err) {
         expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
-        expect(MockServer.log.error).toBeCalledWith(new Error("Connection refused"));
-        expect(MockServer.pg.query).toBeCalled();
+        expect(MockServer.log.error).toHaveBeenCalledWith(new Error("Connection refused"));
+        expect(MockServer.pg.query).toHaveBeenCalled();
       }
     });
 
@@ -1118,8 +1118,8 @@ describe(buildQuery, () => {
         expect.fail();
       } catch (err) {
         expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
-        expect(MockServer.log.error).toBeCalledWith(new Error("Connection refused"));
-        expect(MockServer.pg.query).toBeCalled();
+        expect(MockServer.log.error).toHaveBeenCalledWith(new Error("Connection refused"));
+        expect(MockServer.pg.query).toHaveBeenCalled();
       }
     });
   });
@@ -1185,7 +1185,7 @@ describe(replyHandler, () => {
           status: HttpClientError.NotFound,
           error: "Not Found",
         });
-        expect(mockReply.status).toBeCalledWith(HttpClientError.NotFound);
+        expect(mockReply.status).toHaveBeenCalledWith(HttpClientError.NotFound);
       });
     });
   });
@@ -1203,7 +1203,7 @@ describe(replyHandler, () => {
           status: HttpSuccess.OK,
           id: 1 ,
         });
-        expect(mockReply.status).toBeCalledWith(HttpClientError.NotFound);
+        expect(mockReply.status).toHaveBeenCalledWith(HttpClientError.NotFound);
       });
     });
   });

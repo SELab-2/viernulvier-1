@@ -57,10 +57,12 @@ export async function fetchEventPriceWithMeta(
  * Returns an empty array when parsing fails.
  *
  * @param server - The Fastify instance, used for database access and logging.
+ * @param _request - The Fastify request.
  * @returns An array of parsed event prices.
  */
 export async function fetchEventPrices(
   server: FastifyInstance,
+  _request: FastifyRequest,
 ): Promise<EventPrice[]> {
   const result = await buildQuery(
     server,

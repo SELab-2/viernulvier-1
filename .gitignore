@@ -6,3 +6,4 @@ node_modules
 .claude/
 database_data
 data/imports/*.csv
+.DS_Store

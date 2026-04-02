@@ -20,7 +20,10 @@ const deleteBlogById = (server: FastifyInstance) =>
  * @param request - The Fastify request, expected to contain `id` in its params.
  * @returns The deleted blog, or `null` if not found or parsing failed.
  */
-export async function deleteBlog(server: FastifyInstance, request: FastifyRequest): Promise<Blog | null> {
+export async function deleteBlog(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<Blog | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const rows = await deleteBlogById(server)(id);
   return rows[0] ?? null;

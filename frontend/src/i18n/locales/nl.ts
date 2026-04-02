@@ -2,21 +2,36 @@ export default {
   nav: {
     home: "Home",
     archive: "Archief",
+    productions: "Producties",
+    search: "Zoeken",
+    admin: "Admin",
   },
   hero: {
-    title: "Welkom bij het VierNulVier Archief",
+    title: "Het Archief van De Vooruit",
     subtitle:
-      "Op deze pagina kunt u het archief van VierNulVier bekijken.<br />Dit archief bevat een overzicht van alle verleden voorstellingen, concerten, films en andere<br />culturele evenementen georganiseerd door VierNulVier.",
-    cta: "Bekijk Archief",
-  },
-  info: {
-    title: "Over het archief",
-    text: "In het VierNulVier-archief ontdek je duizenden producties en evenementen uit de geschiedenis van De Vooruit. Blader door theater, dans, film en muziek, of gebruik de zoekfunctie om snel een productie, artiest of reeks te vinden.",
+      "Meer dan 12.000 voorstellingen, concerten, films en culturele evenementen — gedocumenteerd, doorzoekbaar en voor iedereen toegankelijk.",
+    cta: "Doorzoek het archief",
   },
   stats: {
-    productions: "producties",
-    series: "reeksen",
-    years: "jaren",
+    productions: "Producties",
+    events: "Evenementen",
+    yearsOfHistory: "Jaar geschiedenis",
+    genres: "Genres",
+  },
+  bento: {
+    featured: {
+      label: "Uitgelicht",
+      title: "Theater, dans & meer",
+      description:
+        "Ontdek honderden producties uit de rijke programmering van De Vooruit — van avant-garde dans tot politiek theater.",
+      cta: "Verkennen",
+    },
+  },
+  footer: {
+    copyright: "© {year} VierNulVier / De Vooruit. Alle rechten voorbehouden.",
+    privacy: "Privacybeleid",
+    terms: "Gebruiksvoorwaarden",
+    contact: "Contact",
   },
   date: {
     doorsOpen: "Deuren open om",

@@ -76,7 +76,7 @@ async function loadGenreTagCache(client: pg.Client, genreTagTypeId: number): Pro
   const existingTags = await client.query<{ id: number; name: string }>(
     `SELECT id, name->>'nl' AS name
      FROM tag
-     WHERE type_id = $1`,
+     WHERE tag_type = $1`,
     [genreTagTypeId],
   );
 
@@ -100,7 +100,7 @@ async function getOrCreateGenreTagId(
   const existing = await client.query<{ id: number }>(
     `SELECT id
      FROM tag
-     WHERE type_id = $1
+     WHERE tag_type = $1
        AND lower(name->>'nl') = lower($2)
      LIMIT 1`,
     [genreTagTypeId, genreName],
@@ -116,7 +116,7 @@ async function getOrCreateGenreTagId(
   }
 
   const inserted = await client.query<{ id: number }>(
-    `INSERT INTO tag (name, type_id, public)
+    `INSERT INTO tag (name, tag_type, public)
      VALUES ($1::jsonb, $2, true)
      RETURNING id`,
     [JSON.stringify(toLanguageMap(genreName)), genreTagTypeId],
@@ -280,7 +280,7 @@ export async function importProductionsLegacy(client: pg.Client, args: ImportArg
         if (tagResult.created) stats.createdGenreTags++;
 
         const linkResult = await client.query(
-          `INSERT INTO production_tag (production_id, tag_id)
+          `INSERT INTO production_tag (production, tag)
            VALUES ($1, $2)
            ON CONFLICT DO NOTHING`,
           [productionId, tagResult.id],

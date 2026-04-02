@@ -1,0 +1,24 @@
+/* ============================================================
+ * Self-hosted Inter — variable font (wght 100..900)
+ * ============================================================
+ * Bundled by Vite, served from the same origin.
+ * Eliminates the external Google Fonts network request and
+ * the layout shift it causes.
+ * ============================================================ */
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("./Inter-Variable.woff2") format("woff2-variations");
+}
+
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial");
+  size-adjust: 107%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
