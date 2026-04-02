@@ -48,6 +48,8 @@ services:
       - "${FRONTEND_PORT}:${FRONTEND_PORT}"
     depends_on:
       - backend
+    environment:
+      - CHOKIDAR_USEPOLLING=true
 networks:
   viernulvier-network:
     driver: bridge
