@@ -2,21 +2,36 @@ export default {
   nav: {
     home: "Home",
     archive: "Archive",
+    productions: "Productions",
+    search: "Search",
+    admin: "Admin",
   },
   hero: {
-    title: "Welcome to the VierNulVier Archive",
+    title: "The Archive of De Vooruit",
     subtitle:
-      "On this page you can browse the VierNulVier archive.<br />This archive contains an overview of all past performances, concerts, films and other<br />cultural events organised by VierNulVier.",
-    cta: "Browse Archive",
-  },
-  info: {
-    title: "About the archive",
-    text: "In the VierNulVier archive you can discover thousands of productions and events from the history of De Vooruit. Browse through theatre, dance, film and music, or use the search function to quickly find a production, artist or series.",
+      "Over 12,000 performances, concerts, films and cultural events — documented, searchable and open to everyone.",
+    cta: "Browse the archive",
   },
   stats: {
-    productions: "productions",
-    series: "series",
-    years: "years",
+    productions: "Productions",
+    events: "Events",
+    yearsOfHistory: "Years of History",
+    genres: "Genres",
+  },
+  bento: {
+    featured: {
+      label: "Featured",
+      title: "Theatre, dance & more",
+      description:
+        "Discover hundreds of productions from the rich programming of De Vooruit — from avant-garde dance to political theatre.",
+      cta: "Explore",
+    },
+  },
+  footer: {
+    copyright: "© {year} VierNulVier / De Vooruit. All rights reserved.",
+    privacy: "Privacy Policy",
+    terms: "Terms of Use",
+    contact: "Contact",
   },
   date: {
     doorsOpen: "Doors open at",

@@ -20,7 +20,7 @@
 
 import type {ProductionWithBackwardsRefs, ProductionWithMeta} from "@viernulvier/shared";
 import { apiFetch } from "./api";
-import type { LanguageMap } from "../utils/i18n";
+import type { LanguageMap } from "@/utils/i18n";
 
 // ---------------------------------------------------------------------------
 // Input types

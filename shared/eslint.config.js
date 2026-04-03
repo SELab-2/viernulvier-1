@@ -82,6 +82,7 @@ export default defineConfig([
 
       // Prevent common API logic mistakes
       "@typescript-eslint/no-misused-promises": "error",
+      "@typescript-eslint/no-deprecated": "error",
 
       // Rely on the beter import resolver
       "import-x/no-unresolved": "error",

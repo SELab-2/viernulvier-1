@@ -140,24 +140,6 @@ export function parseParams<
   }
   return parsed.data;
 }
-// Coverage ignore as it is being deprecated.
-/* v8 ignore start */
-/**
- * @deprecated Please use `parseParams()` instead.
- *
- * @param request - The Fastify request to extract params from.
- * @param key - The parameter key to extract.
- * @returns The parameter value as a string.
- * @throws `Error` if the parameter is not present in the request.
- */
-export function getParam(request: FastifyRequest, key: string): string {
-  // eslint-disable-next-line security/detect-object-injection
-  const value = (request.params as Record<string, string>)[key];
-  if (value === undefined)
-    throw new HttpError(HttpClientError.BadRequest, `Missing route parameter: "${key}"`);
-  return value;
-}
-/* v8 ignore stop */
 
 const UserPayloadSchema = AdminSchema.pick({ id: true, username: true });
 type UserPayload = z.infer<typeof UserPayloadSchema>;
@@ -207,40 +189,6 @@ export function parseSchema<ResultSchema extends z.ZodType>(
   }
   return parsed.data;
 }
-
-// Coverage ignore as it is being deprecated.
-/* v8 ignore start */
-/**
- *  @deprecated currently just an alias for `parseSchema`, I suggest using that instead.
- */
-export const parse = parseSchema;
-/* v8 ignore stop */
-
-// Coverage ignore as it is being deprecated
-/* v8 ignore start */
-/**
- * @deprecated please use `buildQuery()` instead
- *
- * @param server - The Fastify instance, used for error logging.
- * @param schema - The Zod schema to validate and parse the row against.
- * @param rows - The array of rows returned from a database query.
- * @returns The parsed and typed value, or `null` if not found.
- * @throws `HttpError` If validation failed.
- *
- * @internal
- */
-export function parseFirstRow<
-  ResultType extends z.ZodRawShape,
-  ResultSchema extends z.ZodObject<ResultType>,
->(
-  server: FastifyInstance,
-  schema: ResultSchema,
-  rows: unknown[],
-): z.output<ResultSchema> | null {
-  if (rows.length === 0) return null;
-  return parseSchema(server, schema, rows[0], ParseContext.Database);
-}
-/* v8 ignore stop */
 
 /**
  * Helper function that adds data validation to both the input and output of a db query.

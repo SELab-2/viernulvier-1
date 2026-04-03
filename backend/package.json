@@ -27,13 +27,15 @@
     "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
     "migrate": "tsx scripts/migrate.ts",
     "migrate:undo-all": "tsx scripts/migrate.ts 0",
+    "scrape": "tsx scripts/scraper/scrape.ts",
     "start": "node dist/index.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "check": "pnpm run build && pnpm run coverage && pnpm run lint",
     "create-admin": "tsx scripts/create-admin.ts",
     "import:productions": "tsx scripts/import-productions-legacy.ts",
-    "import:events": "tsx scripts/import-events-legacy.ts"
+    "import:events": "tsx scripts/import-events-legacy.ts",
+    "generate-secret": "tsx scripts/generate-secret.ts"
   },
   "keywords": [],
   "author": "",
@@ -47,7 +49,7 @@
     "@types/yargs": "^17.0.35",
     "@vitest/coverage-v8": "4.1.1",
     "@vitest/ui": "^4.1.1",
-    "eslint": "^9.0.0",
+    "eslint": "^10.1.0",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-import-x": "^4.16.1",
@@ -57,8 +59,8 @@
     "tsc-alias": "^1.8.16",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.0",
-    "vitest": "4.1.1"
+    "typescript-eslint": "^8.58.0",
+    "vitest": "4.1.2"
   },
   "overrides": {
     "minimatch": "^10.2.1"

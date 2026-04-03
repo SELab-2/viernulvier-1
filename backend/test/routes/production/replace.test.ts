@@ -9,6 +9,8 @@ let sessionCookie: string;
 
 const replacedProduction: Production = {
   id: 1,
+  old_id: 1111,
+  finalized: true,
   supertitle: { nl: "Nieuwe supertitel" },
   title: { nl: "Nieuwe titel" },
   artist: { nl: "Nieuwe artiest" },
@@ -62,6 +64,8 @@ describe("Replace on production route", () => {
       url: `/api/v1/production/${replacedProduction["id"]}`,
       cookies: { session: sessionCookie },
       payload: {
+        old_id: replacedProduction["old_id"],
+        finalized: replacedProduction["finalized"],
         supertitle: replacedProduction["supertitle"],
         title: replacedProduction["title"],
         artist: replacedProduction["artist"],
@@ -104,6 +108,8 @@ describe("Replace on production route", () => {
       url: `/api/v1/production/${replacedProduction["id"]}`,
       cookies: { session: sessionCookie },
       payload: {
+        old_id: replacedProduction["old_id"],
+        finalized: replacedProduction["finalized"],
         supertitle: replacedProduction["supertitle"],
         title: replacedProduction["title"],
         artist: replacedProduction["artist"],

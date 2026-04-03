@@ -11,6 +11,13 @@ COPY backend/package.json ./backend/
 
 RUN pnpm install --frozen-lockfile
 
+COPY backend/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 WORKDIR /app/backend
 
-CMD ["pnpm", "dev"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
+# Run pnpm install at container startup so new packages are always available,
+# even if the node_modules volume is stale from a previous container.
+CMD ["sh", "-c", "pnpm install && pnpm dev"]
+

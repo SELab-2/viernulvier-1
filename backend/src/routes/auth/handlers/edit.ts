@@ -5,7 +5,7 @@ import { getMetadata, parseParams, parseSchema, ParseContext } from "@/routes/he
 import z from "zod";
 import { hashPassword } from "./hash.js";
 
-const EditAdminBodySchema = AdminSchema.pick({ username: true }).extend({
+const EditAdminBodySchema = AdminSchema.pick({ username: true, super: true }).extend({
   password: z.string().min(8).max(72),
 }).partial();
 
@@ -13,10 +13,13 @@ const EditAdminBodySchema = AdminSchema.pick({ username: true }).extend({
  * Updates an existing admin and returns the updated record.
  *
  * @param server - The Fastify instance, used for database access and logging.
- * @param request - The Fastify request, expected to contain `username` and/or `password` in its body.
+ * @param request - The Fastify request, expected to contain a partial body with `username`, `password`, and/or `super`.
  * @returns The updated admin, or `null` if the update failed or parsing failed.
  */
-export async function editAdmin(server: FastifyInstance, request: FastifyRequest): Promise<Admin | null> {
+export async function editAdmin(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<Admin | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const body = parseSchema(server, EditAdminBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
@@ -35,12 +38,17 @@ export async function editAdmin(server: FastifyInstance, request: FastifyRequest
     values.push(await hashPassword(body.password));
   }
 
+  if (body.super !== undefined) {
+    fields.push(`super = $${i++}`);
+    values.push(body.super);
+  }
+
   fields.push(`updated_by = $${i++}`, `updated_at = $${i++}`);
   values.push(admin, current_time, id);
 
   const result = await server.pg.query(
     `UPDATE admin SET ${fields.join(", ")} WHERE id = $${i}
-     RETURNING id, username, profile_picture_url AS profile_picture`,
+     RETURNING id, username, super, profile_picture_url AS profile_picture`,
     values,
   );
 

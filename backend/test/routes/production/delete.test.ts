@@ -9,6 +9,8 @@ let sessionCookie: string;
 
 const mockProduction: Production = {
   id: 1,
+  old_id: 1111,
+  finalized: true,
   supertitle: null,
   title: { nl: "Titel" },
   artist: { nl: "Artiest" },

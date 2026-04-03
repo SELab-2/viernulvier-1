@@ -8,15 +8,17 @@ let sessionCookie: string;
 
 const mockUsername = "Karel"
 const mockPassword = "securepassword123";
+const mockSuper = false;
 const mockCreatedAdmin: Admin = {
   id: 404,
   username: mockUsername,
   profile_picture: null,
+  super: mockSuper,
 };
 
 beforeAll(async () => {
   server = await buildServer();
-  sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
+  sessionCookie = server.jwt.sign({ id: 1, username: "Admin1", super: true });
 
   server.pg.query = vi.fn().mockImplementation((query: string) => {
     const isInsert = query.trim().toUpperCase().startsWith("INSERT");
@@ -42,6 +44,7 @@ describe("Create on auth route", () => {
       payload: {
         username: mockUsername,
         password: mockPassword,
+        super: mockSuper,
       },
     });
 
@@ -57,6 +60,7 @@ describe("Create on auth route", () => {
       payload: {
         username: mockUsername,
         password: "short",
+        super: mockSuper,
       },
     });
 
@@ -70,6 +74,7 @@ describe("Create on auth route", () => {
       cookies: { session: sessionCookie },
       payload: {
         password: mockPassword,
+        super: mockSuper,
       },
     });
 
@@ -83,6 +88,7 @@ describe("Create on auth route", () => {
       cookies: { session: sessionCookie },
       payload: {
         username: mockUsername,
+        super: mockSuper,
       },
     });
 
@@ -99,6 +105,7 @@ describe("Create on auth route", () => {
       payload: {
         username: mockUsername,
         password: mockPassword,
+        super: mockSuper,
       },
     });
 

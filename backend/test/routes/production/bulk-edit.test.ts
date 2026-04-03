@@ -10,6 +10,8 @@ let sessionCookie: string;
 
 const baseProduction1: Production = {
   id: 1,
+  old_id: 1111,
+  finalized: true,
   supertitle: null,
   title: { nl: "Titel 1" },
   artist: { nl: "Artiest 1" },
