@@ -11,6 +11,13 @@ const EditTagBodySchema = TagSchema.pick({
   public: true,
 }).partial();
 
+/**
+ * Partially updates an existing tag and returns the updated record.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request, expected to contain `id` in params and a partial tag body.
+ * @returns The updated tag, or `null` if the update failed or parsing failed.
+ */
 export async function editTag(
   server: FastifyInstance,
   request: FastifyRequest,

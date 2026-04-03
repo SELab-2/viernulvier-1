@@ -37,7 +37,7 @@ beforeEach(() => {
 });
 
 describe("Create tag", () => {
-  test("POST /api/v1/tags", async () => {
+  test("POST /api/v1/tag", async () => {
     server.pg.query = vi.fn().mockResolvedValue({
       rows: [mockTag],
       rowCount: 1,
@@ -45,7 +45,7 @@ describe("Create tag", () => {
 
     const response = await server.inject({
       method: "POST",
-      url: "/api/v1/tags",
+      url: "/api/v1/tag",
       cookies: { session: sessionCookie },
       payload: {
         old_id: mockTag.old_id,
@@ -59,7 +59,7 @@ describe("Create tag", () => {
     expect(TagSchema.parse(response.json())).toEqual(mockTag);
   });
 
-  test("POST /api/v1/tags — returns 404 when insert returns no row", async () => {
+  test("POST /api/v1/tag — returns 404 when insert returns no row", async () => {
     server.pg.query = vi.fn().mockResolvedValue({
       rows: [],
       rowCount: 0,
@@ -67,7 +67,7 @@ describe("Create tag", () => {
 
     const response = await server.inject({
       method: "POST",
-      url: "/api/v1/tags",
+      url: "/api/v1/tag",
       cookies: { session: sessionCookie },
       payload: {
         old_id: mockTag.old_id,
@@ -80,11 +80,11 @@ describe("Create tag", () => {
     expect(response.statusCode).toBe(HttpClientError.NotFound);
   });
 
-  test("POST /api/v1/tags invalid body", async () => {
+  test("POST /api/v1/tag invalid body", async () => {
     const response = await server.inject({
       method: "POST",
       cookies: { session: sessionCookie },
-      url: "/api/v1/tags",
+      url: "/api/v1/tag",
       payload: {},
     });
 

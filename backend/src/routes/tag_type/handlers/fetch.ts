@@ -29,6 +29,13 @@ const fetchTagTypeWithMetaByIdQuery = (server: FastifyInstance) =>
 const fetchTagTypesQuery = (server: FastifyInstance) =>
   buildQuery(server, `${TagTypeSelect}`, TagTypeSchema);
 
+/**
+ * Fetches a single tag type by ID.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request, expected to contain `id` in its params.
+ * @returns The tag type, or `null` if not found or parsing failed.
+ */
 async function fetchTagType(
   server: FastifyInstance,
   request: FastifyRequest,
@@ -38,6 +45,13 @@ async function fetchTagType(
   return rows[0] ?? null;
 }
 
+/**
+ * Fetches a single tag type by ID, including metadata.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request, expected to contain `id` in its params.
+ * @returns The tag type with metadata, or `null` if not found or parsing failed.
+ */
 async function fetchTagTypeWithMeta(
   server: FastifyInstance,
   request: FastifyRequest,
@@ -47,6 +61,13 @@ async function fetchTagTypeWithMeta(
   return rows[0] ?? null;
 }
 
+/**
+ * Fetches all tag types.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param _request - The Fastify request.
+ * @returns The list of tag types, or `null` if parsing failed.
+ */
 async function fetchTagTypes(
   server: FastifyInstance,
   _request: FastifyRequest,

@@ -12,6 +12,21 @@ import {
   editEvents,
 } from "./handlers/index.js";
 
+/**
+ * Registers event routes on the Fastify instance.
+ *
+ * @remarks
+ * - `GET /api/v1/event/:id` — fetch a single event by ID.
+ * - `GET /api/v1/event/:id/meta` — fetch a single event with metadata by ID. 🔒
+ * - `GET /api/v1/event` — fetch all events.
+ * - `POST /api/v1/event` — create an event. 🔒
+ * - `DELETE /api/v1/event/:id` — delete an event by ID. 🔒
+ * - `PUT /api/v1/event/:id` — replace an event. 🔒
+ * - `PATCH /api/v1/event/:id` — partially update an event. 🔒
+ * - `PATCH /api/v1/event` — bulk partial update of events. 🔒
+ *
+ * @param server - The Fastify instance to register routes on.
+ */
 export default function eventRoutes(server: FastifyInstance) {
   const protect = { preHandler: [server.authorize()] };
 

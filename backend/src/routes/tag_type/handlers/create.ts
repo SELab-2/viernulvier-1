@@ -19,6 +19,13 @@ const insertTagType = (server: FastifyInstance) =>
     TagTypeSchema,
   );
 
+/**
+ * Creates a new tag type and returns the created record.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request, expected to contain a localized `name` map in the body.
+ * @returns The created tag type, or `null` if the insert failed or parsing failed.
+ */
 export async function createTagType(
   server: FastifyInstance,
   request: FastifyRequest,

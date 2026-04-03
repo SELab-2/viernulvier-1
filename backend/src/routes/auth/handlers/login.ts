@@ -34,7 +34,11 @@ const DUMMY_HASH = "$2b$12$invalidhashvaluethatwillnevermatchangything";
  * @returns The signed JWT token.
  * @throws `HttpError` With status 401 if the username is not found or the password is incorrect.
  */
-export async function login(server: FastifyInstance, request: FastifyRequest, reply: FastifyReply) {
+export async function login(
+  server: FastifyInstance,
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
   const { username, password } = parseSchema(server, LoginBodySchema, request.body);
 
   const rows = await fetchAdminCredentials(server)(username);

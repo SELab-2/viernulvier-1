@@ -33,7 +33,7 @@ beforeEach(() => {
 });
 
 describe("Replace tag_type", () => {
-  test("PUT /api/v1/tags/type/:id", async () => {
+  test("PUT /api/v1/tag/type/:id", async () => {
     server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
       if (query.includes("UPDATE")) {
         const id = Number(params?.[params.length - 1]);
@@ -60,7 +60,7 @@ describe("Replace tag_type", () => {
 
     const response = await server.inject({
       method: "PUT",
-      url: `/api/v1/tags/type/${tagType.id}`,
+      url: `/api/v1/tag/type/${tagType.id}`,
       cookies: { session: sessionCookie },
       payload: {
         name: tagType.name,
@@ -71,7 +71,7 @@ describe("Replace tag_type", () => {
     expect(TagTypeSchema.parse(response.json())).toEqual(tagType);
   });
 
-  test("PUT /api/v1/tags/type/:id — returns 404 when tag_type not found", async () => {
+  test("PUT /api/v1/tag/type/:id — returns 404 when tag_type not found", async () => {
     server.pg.query = vi.fn().mockResolvedValue({
       rows: [],
       rowCount: 0,
@@ -79,7 +79,7 @@ describe("Replace tag_type", () => {
 
     const response = await server.inject({
       method: "PUT",
-      url: `/api/v1/tags/type/${tagType.id}`,
+      url: `/api/v1/tag/type/${tagType.id}`,
       cookies: { session: sessionCookie },
       payload: {
         name: tagType.name,
@@ -89,10 +89,10 @@ describe("Replace tag_type", () => {
     expect(response.statusCode).toBe(HttpClientError.NotFound);
   });
 
-  test("PUT /api/v1/tags/type/:id — rejects invalid body", async () => {
+  test("PUT /api/v1/tag/type/:id — rejects invalid body", async () => {
     const response = await server.inject({
       method: "PUT",
-      url: `/api/v1/tags/type/${tagType.id}`,
+      url: `/api/v1/tag/type/${tagType.id}`,
       cookies: { session: sessionCookie },
       payload: {},
     });

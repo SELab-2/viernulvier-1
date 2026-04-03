@@ -33,7 +33,7 @@ beforeEach(() => {
 });
 
 describe("Create tag_type", () => {
-  test("POST /api/v1/tags/type", async () => {
+  test("POST /api/v1/tag/type", async () => {
     server.pg.query = vi.fn().mockImplementation((query: string) => {
       if (query.includes("INSERT")) {
         return Promise.resolve({
@@ -52,7 +52,7 @@ describe("Create tag_type", () => {
 
     const response = await server.inject({
       method: "POST",
-      url: "/api/v1/tags/type",
+      url: "/api/v1/tag/type",
       cookies: { session: sessionCookie },
       payload: {
         name: tagType.name,
@@ -63,7 +63,7 @@ describe("Create tag_type", () => {
     expect(TagTypeSchema.parse(response.json())).toEqual(tagType);
   });
 
-  test("POST /api/v1/tags/type — returns 404 when insert returns no row", async () => {
+  test("POST /api/v1/tag/type — returns 404 when insert returns no row", async () => {
     server.pg.query = vi.fn().mockResolvedValue({
       rows: [],
       rowCount: 0,
@@ -71,7 +71,7 @@ describe("Create tag_type", () => {
 
     const response = await server.inject({
       method: "POST",
-      url: "/api/v1/tags/type",
+      url: "/api/v1/tag/type",
       cookies: { session: sessionCookie },
       payload: {
         name: tagType.name,
@@ -84,7 +84,7 @@ describe("Create tag_type", () => {
   test("POST invalid body", async () => {
     const response = await server.inject({
       method: "POST",
-      url: "/api/v1/tags/type",
+      url: "/api/v1/tag/type",
       cookies: { session: sessionCookie },
       payload: {},
     });

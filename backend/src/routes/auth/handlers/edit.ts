@@ -17,7 +17,7 @@ const EditAdminBodySchema = AdminSchema.pick({ username: true, super: true }).ex
  * @returns The updated admin, or `null` if the update failed or parsing failed.
  */
 export async function editAdmin(
-  server: FastifyInstance, 
+  server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Admin | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
