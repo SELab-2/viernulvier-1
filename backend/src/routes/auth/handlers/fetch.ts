@@ -106,6 +106,7 @@ async function fetchCurrentlyLoggedInAdminWithMeta(
  */
 async function fetchAdmins(
   server: FastifyInstance,
+  _request: FastifyRequest,
 ): Promise<Admin[]> {
   return await fetchAllAdmins(server)();
 }

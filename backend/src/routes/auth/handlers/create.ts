@@ -23,7 +23,7 @@ const insertAdmin = (server: FastifyInstance) =>
  * Creates a new admin and returns the created record.
  *
  * @param server - The Fastify instance, used for database access and logging.
- * @param request - The Fastify request, expected to contain `username` and `password` in its body.
+ * @param request - The Fastify request, expected to contain `username`, `password` and `super` in its body.
  * @returns The created admin, or `null` if the insert failed or parsing failed.
  */
 export async function createAdmin(

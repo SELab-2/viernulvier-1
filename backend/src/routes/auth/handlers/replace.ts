@@ -14,7 +14,7 @@ const replaceAdminById = (server: FastifyInstance) =>
     server,
     `UPDATE admin SET username = $1, password = $2, super = $3, updated_by = $4, updated_at = $5
      WHERE id = $6
-     RETURNING id, username, profile_picture_url AS profile_picture`,
+     RETURNING id, username, super, profile_picture_url AS profile_picture`,
     z.tuple([z.string(), z.string(), z.boolean(), z.int(), z.date(), z.int()]),
     AdminSchema,
   );
@@ -24,7 +24,7 @@ const replaceAdminById = (server: FastifyInstance) =>
  * Unlike `editAdmin`, all fields are required and will be overwritten.
  *
  * @param server - The Fastify instance, used for database access and logging.
- * @param request - The Fastify request, expected to contain `username` and `password` in its body.
+ * @param request - The Fastify request, expected to contain `username`, `password`, and `super` in its body.
  * @returns The updated admin, or `null` if the update failed or parsing failed.
  */
 export async function replaceAdmin(
