@@ -123,6 +123,7 @@ describe("router/index.ts — navigation guard", () => {
       vi.mocked(getCurrentlyLoggedInAdmin).mockResolvedValueOnce({
         id: 1,
         username: "admin",
+        super: true,
         profile_picture: null,
       });
 

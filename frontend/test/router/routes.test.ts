@@ -147,6 +147,7 @@ describe("router/routes.ts", () => {
       vi.mocked(getCurrentlyLoggedInAdmin).mockResolvedValueOnce({
         id: 1,
         username: "admin",
+        super: true,
         profile_picture: null,
       });
 

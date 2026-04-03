@@ -6,7 +6,12 @@ import { useAuthStore } from "@/stores/auth";
 import { RouteNames } from "@/router/routeNames";
 import AdminView from "@/views/admin/AdminView.vue";
 
-const mockAdmin = { id: 1, username: "admin", profile_picture: null };
+const mockAdmin = {
+  id: 1,
+  username: "admin",
+  super: true,
+  profile_picture: null,
+};
 
 vi.mock("@/services/auth", () => ({
   logout: vi.fn().mockResolvedValue(undefined),

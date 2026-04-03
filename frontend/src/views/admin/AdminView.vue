@@ -2,6 +2,7 @@
   <div>
     <img :src="admin?.profile_picture ?? '/favicon.ico'" alt="Profile picture" />
     <span>{{ admin?.username }}</span>
+    <span>super: {{ admin?.super }}</span>
 
     <RouterLink :to="{ name: RouteNames.CMS }">Go to CMS</RouterLink>
     <button @click="handleLogout">Logout</button>

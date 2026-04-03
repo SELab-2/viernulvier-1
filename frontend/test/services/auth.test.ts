@@ -232,7 +232,7 @@ describe("createAdmin", () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it("POSTs to /api/v1/auth", async () => {
-    await createAdmin({ username: "newuser", password: "pass" });
+    await createAdmin({ username: "newuser", password: "pass", super: true});
     expect(lastFetchUrl()).toBe("/api/v1/auth");
     expect(lastFetchOptions().method).toBe("POST");
   });
@@ -241,7 +241,8 @@ describe("createAdmin", () => {
     const input = {
       username: "newuser",
       password: "pass",
-      profile_picture: null,
+      super: true,
+      //profile_picture: null,
     };
     await createAdmin(input);
     expect(lastFetchOptions().body).toBe(JSON.stringify(input));
@@ -256,7 +257,8 @@ describe("replaceAdmin", () => {
     await replaceAdmin(1, {
       username: "admin",
       password: "newpass",
-      profile_picture: null,
+      super: true,
+      //profile_picture: null,
     });
     expect(lastFetchUrl()).toBe("/api/v1/auth/1");
     expect(lastFetchOptions().method).toBe("PUT");

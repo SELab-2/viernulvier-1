@@ -46,7 +46,9 @@ export interface LoginCredentials {
 export interface CreateAdminInput {
   username: string;
   password: string;
-  profile_picture?: string | null;
+  super: boolean;
+  // back-end isn't expecting a profile picture yet, waiting on the media endpoint
+  //profile_picture?: string | null;
 }
 
 /**
@@ -56,7 +58,9 @@ export interface CreateAdminInput {
 export interface ReplaceAdminInput {
   username: string;
   password: string;
-  profile_picture: string | null;
+  super: boolean;
+  // back-end isn't expecting a profile picture yet, waiting on the media endpoint
+  //profile_picture: string | null;
 }
 
 /**
