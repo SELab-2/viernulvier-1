@@ -2,12 +2,29 @@
   <div class="min-h-screen bg-surface-0">
     <AppNavbar :is-dark="isDark" @toggle-dark="isDark = !isDark" />
     <main>
-      <HeroSection />
-      <DetailsSection />
-      <EventsSection />
-      <GallerySection />
-      <BlogSection />
+      <div v-if="loading">
+        Loading...
+      </div>
+
+      <div v-else-if="notFound">
+        <NotFound message="Deze productie bestaat niet" />
+      </div>
+
+      <div v-else-if="error">
+        <div class="text-red-500">
+          {{ error }}
+        </div>
+      </div>
+
+      <template v-else>
+        <HeroSection />
+        <DetailsSection />
+        <EventsSection />
+        <GallerySection />
+        <BlogSection />
+      </template>
     </main>
+
     <AppFooter />
   </div>
 </template>
@@ -20,30 +37,40 @@ import DetailsSection from "@/components/production/DetailsSection.vue";
 import EventsSection from "@/components/production/EventsSection.vue";
 import GallerySection from "@/components/production/GallerySection.vue";
 import BlogSection from "@/components/production/BlogSection.vue";
-// import { ref, onMounted } from "vue";
-// import { useRoute } from "vue-router";
-// import { getProduction } from "@/services/productions";
-// import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
+import NotFound from "@/components/NotFound.vue";
+import { ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { getProduction } from "@/services/productions";
+import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 
 import { useDarkMode } from "@/composables/useDarkMode";
+import { ApiError } from "@/services/api";
 
 const { isDark } = useDarkMode();
 
-// const route = useRoute();
-// const id = Number(route.params.id);
+const route = useRoute();
+const id = Number(route.params.id);
 
-// const production = ref<ProductionWithBackwardsRefs | null>(null);
-// const loading = ref(true);
-// const error = ref<string | null>(null);
+const production = ref<ProductionWithBackwardsRefs | null>(null);
+const loading = ref(true);
+const error = ref<string | null>(null);
+const notFound = ref(false);
 
-// // data ophalen wanneer page laadt
-// onMounted(async () => {
-//   try {
-//     production.value = await getProduction(id);
-//   } catch (e) {
-//     error.value = e instanceof Error ? e.message : "Fout bij laden";
-//   } finally {
-//     loading.value = false;
-//   }
-// });
+onMounted(async () => {
+  try {
+    production.value = await getProduction(id);
+
+    if (!production.value) {
+      notFound.value = true;
+    }
+  } catch (e: any) {
+    if (e instanceof ApiError && e.status === 404) {
+      notFound.value = true;
+    } else {
+      error.value = e.message ?? "Fout bij laden";
+    }
+  } finally {
+    loading.value = false;
+  }
+});
 </script>
