@@ -102,6 +102,7 @@ async function fetchCurrentlyLoggedInAdminWithMeta(
  * Fetches all admins from the database, without metadata.
  *
  * @param server - The Fastify instance, used for database access and logging.
+ * @param _request - The Fastify request, not used.
  * @returns An array of all admins, or an empty array if none are found.
  */
 async function fetchAdmins(
