@@ -7,7 +7,7 @@ import z from "zod";
 const fetchAdminById = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `SELECT id, username, profile_picture_url AS profile_picture
+    `SELECT id, username, super, profile_picture_url AS profile_picture
      FROM admin WHERE id = $1`,
     z.tuple([z.int()]),
     AdminSchema,
@@ -16,7 +16,7 @@ const fetchAdminById = (server: FastifyInstance) =>
 const fetchAdminWithMetaById = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `SELECT id, username, profile_picture_url AS profile_picture,
+    `SELECT id, username, super, profile_picture_url AS profile_picture,
             created_at, updated_at, created_by, updated_by
      FROM admin WHERE id = $1`,
     z.tuple([z.int()]),
@@ -26,7 +26,7 @@ const fetchAdminWithMetaById = (server: FastifyInstance) =>
 const fetchAllAdmins = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `SELECT id, username, profile_picture_url AS profile_picture
+    `SELECT id, username, super, profile_picture_url AS profile_picture
      FROM admin`,
     z.tuple([]),
     AdminSchema,

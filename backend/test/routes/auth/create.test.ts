@@ -8,11 +8,12 @@ let sessionCookie: string;
 
 const mockUsername = "Karel"
 const mockPassword = "securepassword123";
+const mockSuper = false;
 const mockCreatedAdmin: Admin = {
   id: 404,
   username: mockUsername,
   profile_picture: null,
-  super: false,
+  super: mockSuper,
 };
 
 beforeAll(async () => {
@@ -43,6 +44,7 @@ describe("Create on auth route", () => {
       payload: {
         username: mockUsername,
         password: mockPassword,
+        super: mockSuper,
       },
     });
 
@@ -58,6 +60,7 @@ describe("Create on auth route", () => {
       payload: {
         username: mockUsername,
         password: "short",
+        super: mockSuper,
       },
     });
 
@@ -71,6 +74,7 @@ describe("Create on auth route", () => {
       cookies: { session: sessionCookie },
       payload: {
         password: mockPassword,
+        super: mockSuper,
       },
     });
 
@@ -84,6 +88,7 @@ describe("Create on auth route", () => {
       cookies: { session: sessionCookie },
       payload: {
         username: mockUsername,
+        super: mockSuper,
       },
     });
 
@@ -100,6 +105,7 @@ describe("Create on auth route", () => {
       payload: {
         username: mockUsername,
         password: mockPassword,
+        super: mockSuper,
       },
     });
 

@@ -5,17 +5,17 @@ import { buildQuery, getMetadata, parseParams, parseSchema } from "@/routes/help
 import { z } from "zod";
 import { hashPassword } from "./hash.js";
 
-const ReplaceAdminBodySchema = AdminSchema.pick({ username: true }).extend({
+const ReplaceAdminBodySchema = AdminSchema.pick({ username: true, super: true }).extend({
   password: z.string().min(8).max(72),
 });
 
 const replaceAdminById = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `UPDATE admin SET username = $1, password = $2, updated_by = $3, updated_at = $4
-     WHERE id = $5
+    `UPDATE admin SET username = $1, password = $2, super = $3, updated_by = $4, updated_at = $5
+     WHERE id = $6
      RETURNING id, username, profile_picture_url AS profile_picture`,
-    z.tuple([z.string(), z.string(), z.int(), z.date(), z.int()]),
+    z.tuple([z.string(), z.string(), z.boolean(), z.int(), z.date(), z.int()]),
     AdminSchema,
   );
 
@@ -39,6 +39,7 @@ export async function replaceAdmin(
   const rows = await replaceAdminById(server)(
     body.username,
     hashedPassword,
+    body.super,
     admin,
     current_time,
     id,

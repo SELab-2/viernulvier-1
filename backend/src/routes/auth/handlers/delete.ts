@@ -8,7 +8,7 @@ const deleteAdminById = (server: FastifyInstance) =>
   buildQuery(
     server,
     `DELETE FROM admin WHERE id = $1
-     RETURNING id, username, profile_picture_url AS profile_picture`,
+     RETURNING id, username, super, profile_picture_url AS profile_picture`,
     z.tuple([z.int()]),
     AdminSchema,
   );

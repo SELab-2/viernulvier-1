@@ -11,11 +11,13 @@ let server: FastifyInstance;
 const existingAdmin = {
   username: "Admin1",
   password: "securepassword123",
+  super: true,
 };
 
 const newAdminPayload = {
   username: "Karel",
   password: "securepassword123",
+  super: false,
 };
 
 const editedUsername = "KarelEdited";
@@ -41,14 +43,13 @@ describe("Auth route integration", () => {
   beforeAll(async () => {
     server = await buildServer();
 
-    // Seed existing admin as super
     const hashed = await hashPassword(existingAdmin.password);
     const seedId = nextId++;
     mockDb.push({
       id: seedId,
       username: existingAdmin.username,
       password: hashed,
-      super: true,
+      super: existingAdmin.super,
       profile_picture: null,
       created_by: seedId,
       created_at: new Date(),
@@ -90,13 +91,14 @@ describe("Auth route integration", () => {
       if (q.startsWith("INSERT")) {
         const username = params[0] as string;
         const password = params[1] as string;
-        const createdBy = params[2] as number;
+        const superField = params[2] as boolean;
+        const createdBy = params[3] as number;
         const now = new Date();
         const newAdmin = {
           id: nextId++,
           username,
           password,
-          super: false,
+          super: superField,
           profile_picture: null,
           created_by: createdBy,
           created_at: now,
@@ -114,15 +116,19 @@ describe("Auth route integration", () => {
         const idx = mockDb.findIndex((a) => a.id === id);
         if (idx === -1) return Promise.resolve({ rows: [], rowCount: 0 });
 
-        if (params.length === 2) {
-          // Only one field updated
-          const value = params[0] as string;
-          if (q.includes("USERNAME")) mockDb[idx]!.username = value;
-          if (q.includes("PASSWORD")) mockDb[idx]!.password = value;
-        } else {
-          // Both fields updated
-          mockDb[idx]!.username = params[0] as string;
-          mockDb[idx]!.password = params[1] as string;
+        const setClause = query.match(/SET\s+([\s\S]+?)\s+WHERE/i)?.[1] ?? "";
+        const assignments = setClause.split(",").map(s => s.trim());
+
+        for (const assignment of assignments) {
+          const match = assignment.match(/^(\w+)\s*=\s*\$(\d+)/i);
+          if (!match) continue;
+
+          const [, field, indexStr] = match;
+          const value = params[parseInt(indexStr) - 1];
+
+          if (field === "username") mockDb[idx]!.username = value as string;
+          if (field === "password") mockDb[idx]!.password = value as string;
+          if (field === "super") mockDb[idx]!.super = value as boolean;
         }
 
         const { password: _, ...rest } = mockDb[idx]!;
@@ -176,16 +182,17 @@ describe("Auth route integration", () => {
 
     const body = AdminSchema.parse(response.json());
     expect(body.username).toBe(newAdminPayload.username);
+    expect(body.super).toBe(newAdminPayload.super);
 
     createdAdminId = body.id;
   });
 
-  test("3. PATCH /api/v1/auth/:id — edits the new admin's username", async () => {
+  test("3. PATCH /api/v1/auth/:id — edits the new admin's username and promotes him to super admin", async () => {
     const response = await server.inject({
       method: "PATCH",
       url: `/api/v1/auth/${createdAdminId}`,
       cookies: { session: sessionCookie },
-      payload: { username: editedUsername },
+      payload: { username: editedUsername, super: true },
     });
 
     expect(response.statusCode).toBe(200);
@@ -193,6 +200,7 @@ describe("Auth route integration", () => {
     const body = AdminSchema.parse(response.json());
     expect(body.id).toBe(createdAdminId);
     expect(body.username).toBe(editedUsername);
+    expect(body.super).toBe(true);
   });
 
   test("4. GET /api/v1/auth/:id/meta — fetches the edited admin with metadata", async () => {
@@ -207,6 +215,7 @@ describe("Auth route integration", () => {
     const body = AdminSchema.withMeta().parse(response.json());
     expect(body.id).toBe(createdAdminId);
     expect(body.username).toBe(editedUsername);
+    expect(body.super).toBe(true);
     expect(body.created_at).toBeDefined();
     expect(body.updated_at).toBeDefined();
     expect(body.created_by).toBeDefined();
@@ -263,8 +272,7 @@ describe("Auth route integration", () => {
   });
 
   test("9. POST /api/v1/auth/login — logs in as non-super admin", async () => {
-    // set to false
-    mockDb[0].super = false;
+    mockDb[0]!.super = false;
 
     const response = await server.inject({
       method: "POST",
@@ -292,7 +300,7 @@ describe("Auth route integration", () => {
     expect(response.statusCode).toBe(403);
   });
 
-  test("10. GET /api/v1/auth/me — fetching yourself is allowed", async () => {
+  test("11. GET /api/v1/auth/me — fetching yourself is allowed", async () => {
     const response = await server.inject({
       method: "GET",
       url: `/api/v1/auth/me`,
@@ -303,5 +311,6 @@ describe("Auth route integration", () => {
 
     const body = AdminSchema.parse(response.json());
     expect(body.username).toBe(existingAdmin.username);
+    expect(body.super).toBe(false);
   });
 });

@@ -5,17 +5,17 @@ import { getMetadata, parseSchema, buildQuery } from "@/routes/helpers.js";
 import { z } from "zod";
 import { hashPassword } from "./hash.js";
 
-const CreateAdminBodySchema = AdminSchema.pick({ username: true }).extend({
+const CreateAdminBodySchema = AdminSchema.pick({ username: true, super: true }).extend({
   password: z.string().min(8).max(72),
 });
 
 const insertAdmin = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `INSERT INTO admin (username, password, created_by, updated_by, created_at, updated_at)
-     VALUES ($1, $2, $3, $3, $4, $4)
-     RETURNING id, username, profile_picture_url AS profile_picture`,
-    z.tuple([z.string(), z.string(), z.number().int(), z.date()]),
+    `INSERT INTO admin (username, password, super, created_by, updated_by, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $4, $5, $5)
+     RETURNING id, username, super, profile_picture_url AS profile_picture`,
+    z.tuple([z.string(), z.string(), z.boolean(), z.number().int(), z.date()]),
     AdminSchema,
   );
 
@@ -37,6 +37,7 @@ export async function createAdmin(
   const rows = await insertAdmin(server)(
     body.username,
     hashedPassword,
+    body.super,
     admin,
     current_time,
   );
