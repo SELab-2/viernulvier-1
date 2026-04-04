@@ -88,9 +88,8 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 
 .brand { @apply flex min-w-[140px] items-center gap-3 no-underline absolute left-1/2 -translate-x-1/2; }
 .logo { @apply h-6 w-auto; }
-:global(.dark) .logo { filter: brightness(0) invert(0.88); }
-.brand-divider { @apply block h-4 w-px bg-surface-3; }
-.brand-label { @apply text-xs font-semibold uppercase tracking-widest text-ink-tertiary; }
+.brand-divider { @apply block h-4 w-px bg-surface-inv-border; }
+.brand-label { @apply text-xs font-semibold uppercase tracking-widest text-ink-on-inv-tertiary; }
 
 .nav-right { @apply flex min-w-[140px] items-center justify-end gap-2; }
 

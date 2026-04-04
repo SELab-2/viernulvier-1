@@ -4,13 +4,20 @@
 
     <!-- Top-right controls -->
     <div class="login-controls">
-      <NavControls variant="light" :is-dark="isDark" @toggle-dark="$emit('toggle-dark')" />
+      <NavControls variant="dark" :is-dark="isDark" @toggle-dark="toggleDark" />
     </div>
 
     <div class="login-shell">
       <!-- Header mark -->
       <div class="login-header">
-        <img src="@/assets/logo.svg" alt="VierNulVier" width="120" height="38" class="login-logo" />
+        <img
+          src="@/assets/logo.svg"
+          alt="VierNulVier"
+          width="120"
+          height="38"
+          class="login-logo"
+          :style="isDark ? 'filter: brightness(0) invert(0.88)' : 'filter: brightness(0) invert(0.15)'"
+        />
         <span class="login-scope">Admin</span>
       </div>
 
@@ -80,6 +87,7 @@
 </template>
 
 <script setup lang="ts">
+import { useDarkMode } from "@/composables/useDarkMode";
 import { ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -87,8 +95,7 @@ import { login, ApiError } from "@/services/auth";
 import { RouteNames } from "@/router/routeNames";
 import NavControls from "@/components/NavControls.vue";
 
-defineProps<{ isDark: boolean }>();
-defineEmits<{ "toggle-dark": [] }>();
+const { isDark, toggleDark } = useDarkMode();
 
 const { t } = useI18n();
 const router = useRouter();
@@ -127,48 +134,36 @@ async function handleLogin() {
 <style scoped>
 @reference "@/style.css";
 
-.login-root { @apply relative flex min-h-screen items-center justify-center bg-surface-0 px-4; }
+.login-root { @apply relative flex min-h-screen items-center justify-center px-4 bg-surface-1; }
 
-.bg-grid {
-  position: absolute; inset: 0; pointer-events: none; opacity: 0.5;
-  background-image: radial-gradient(circle, var(--surface-3) 1px, transparent 1px);
-  background-size: 28px 28px;
-}
+.bg-grid { @apply absolute inset-0 pointer-events-none opacity-15; background-image: radial-gradient(circle, var(--surface-3) 1px, transparent 1px); background-size: 28px 28px; }
+
 
 .login-controls { @apply absolute right-6 top-4 z-10; }
-
 .login-shell { @apply relative z-10 flex w-full max-w-sm flex-col items-center gap-6; }
-
 .login-header { @apply flex flex-col items-center gap-2; }
 .login-logo { @apply h-9 w-auto; }
-:global(.dark) .login-logo { filter: brightness(0) invert(0.88); }
-.login-scope { @apply text-xs font-semibold uppercase tracking-[0.2em] text-ink-tertiary; }
+.login-scope { @apply text-xs font-semibold uppercase tracking-[0.2em] text-ink-secondary; }
 
-.login-card { @apply w-full rounded-2xl border border-surface-3 bg-surface-1 p-8 shadow-sm; }
+.login-card { @apply w-full rounded-2xl p-8 bg-surface-1 border border-surface-3 shadow-sm; }
 .card-title { @apply mb-7 text-2xl font-bold text-ink-primary; }
 
 .field-group { @apply flex flex-col gap-4; }
 .field { @apply flex flex-col gap-1.5; }
 .field-label { @apply text-xs font-semibold uppercase tracking-wider text-ink-secondary; }
 .field-input {
-  @apply w-full rounded-lg border border-surface-3 bg-surface-2 px-3.5 py-2.5 text-sm text-ink-primary placeholder-ink-tertiary outline-none transition;
+  @apply w-full rounded-lg px-3.5 py-2.5 text-sm outline-none transition bg-surface-0 border border-surface-3 text-ink-primary placeholder-ink-tertiary;
   &:focus { @apply border-ink-secondary ring-2 ring-accent-highlight; }
 }
 .field-input--error { @apply border-red-400; }
 
 .input-wrapper { @apply relative; }
 .input-wrapper .field-input { @apply pr-10; }
-.password-toggle {
-  @apply absolute right-3 top-1/2 -translate-y-1/2 flex cursor-pointer items-center text-ink-tertiary transition hover:text-ink-secondary;
-  background: none; border: none; padding: 0;
-}
+.password-toggle { @apply absolute right-3 top-1/2 -translate-y-1/2 flex cursor-pointer items-center text-ink-tertiary transition hover:text-ink-secondary; background: none; border: none; padding: 0; }
 
 .error-banner { @apply mt-4 rounded-lg bg-accent-highlight px-3.5 py-2.5 text-sm text-ink-primary; }
 .error-fade-enter-active, .error-fade-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
 .error-fade-enter-from, .error-fade-leave-to { opacity: 0; transform: translateY(-4px); }
 
-.submit-btn {
-  @apply mt-6 w-full cursor-pointer rounded-lg bg-accent-dark py-2.5 text-sm font-semibold text-surface-0 transition hover:bg-accent-dark-hover disabled:cursor-not-allowed disabled:opacity-50;
-  border: none;
-}
+.submit-btn { @apply mt-6 w-full cursor-pointer rounded-lg bg-accent-dark py-2.5 text-sm font-semibold text-surface-0 transition hover:bg-accent-dark-hover disabled:cursor-not-allowed disabled:opacity-50; border: none; }
 </style>

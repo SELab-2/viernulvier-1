@@ -1,6 +1,6 @@
 <template>
   <div class="admin-root">
-    <AdminNavbar :is-dark="isDark" @toggle-dark="$emit('toggle-dark')" />
+    <AdminNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
 
     <main class="admin-main">
 
@@ -44,6 +44,7 @@
 </template>
 
 <script setup lang="ts">
+import { useDarkMode } from "@/composables/useDarkMode";
 import { computed } from "vue";
 import { RouterLink } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -51,8 +52,7 @@ import { useAuthStore } from "@/stores/auth";
 import { RouteNames } from "@/router/routeNames";
 import AdminNavbar from "@/components/admin/AdminNavbar.vue";
 
-defineProps<{ isDark: boolean }>();
-defineEmits<{ "toggle-dark": [] }>();
+const { isDark, toggleDark } = useDarkMode();
 
 const { t } = useI18n();
 const { admin } = useAuthStore();
@@ -63,7 +63,7 @@ const initials = computed(() => admin?.username?.slice(0, 2).toUpperCase() ?? "?
 <style scoped>
 @reference "@/style.css";
 
-.admin-root { @apply min-h-screen bg-surface-0; }
+.admin-root { @apply min-h-screen bg-surface-1; }
 
 .admin-main { @apply mx-auto max-w-3xl px-6 py-10 lg:px-8; }
 
@@ -81,7 +81,7 @@ const initials = computed(() => admin?.username?.slice(0, 2).toUpperCase() ?? "?
 .section-title { @apply text-xs font-semibold uppercase tracking-widest text-ink-tertiary; }
 
 .actions-grid { @apply grid grid-cols-1 gap-3 sm:grid-cols-2; }
-.action-card { @apply flex items-center gap-4 rounded-xl border border-surface-3 bg-surface-1 px-5 py-4 no-underline transition hover:bg-surface-2; }
+.action-card { @apply flex items-center gap-4 rounded-xl border border-surface-3 bg-surface-2 px-5 py-4 no-underline transition hover:bg-surface-3; }
 .action-icon { @apply h-5 w-5 shrink-0 text-ink-secondary; }
 .action-label { @apply flex-1 text-sm font-medium text-ink-primary; }
 .action-arrow { @apply h-4 w-4 shrink-0 text-ink-tertiary; }
