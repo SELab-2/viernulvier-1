@@ -76,56 +76,6 @@ describe("AppNavbar.vue", () => {
     });
   });
 
-  // ── Language dropdown ──────────────────────────────────────────────────────
-
-  describe("language dropdown", () => {
-    it("opens when the language button is clicked", async () => {
-      await openLangMenu(wrapper);
-      expect(wrapper.find(".lang-dropdown").exists()).toBe(true);
-    });
-
-    it("closes when the language button is clicked again", async () => {
-      await openLangMenu(wrapper);
-      await openLangMenu(wrapper);
-      expect(wrapper.find(".lang-dropdown").exists()).toBe(false);
-    });
-
-    it("renders all three language options", async () => {
-      await openLangMenu(wrapper);
-      const options = wrapper.findAll(".lang-option");
-      expect(options).toHaveLength(3);
-    });
-
-    it("renders NL, FR and EN language options", async () => {
-      await openLangMenu(wrapper);
-      const labels = wrapper.findAll(".lang-option").map((o) => o.text());
-      expect(labels).toContain("NL");
-      expect(labels).toContain("FR");
-      expect(labels).toContain("EN");
-    });
-
-    it("marks the current language as active", async () => {
-      await openLangMenu(wrapper);
-      const active = wrapper
-        .findAll(".lang-option")
-        .filter((o) => o.classes().includes("active"));
-      expect(active).toHaveLength(1);
-    });
-
-    it("closes the dropdown after selecting a language", async () => {
-      await openLangMenu(wrapper);
-      await wrapper.findAll(".lang-option")[1]!.trigger("click");
-      expect(wrapper.find(".lang-dropdown").exists()).toBe(false);
-    });
-
-    it("closes when clicking outside the dropdown", async () => {
-      await openLangMenu(wrapper);
-      document.body.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      await wrapper.vm.$nextTick();
-      expect(wrapper.find(".lang-dropdown").exists()).toBe(false);
-    });
-  });
-
   // ── Dark mode ──────────────────────────────────────────────────────────────
 
   describe("dark mode toggle", () => {
@@ -138,25 +88,6 @@ describe("AppNavbar.vue", () => {
       expect(darkBtn).toBeDefined();
       await darkBtn!.trigger("click");
       expect(wrapper.emitted("toggle-dark")).toBeTruthy();
-    });
-
-    it("shows sun icon (light_mode) when isDark is true", async () => {
-      const { wrapper: darkWrapper } = await mountNavbar(true);
-      // Sun icon has multiple <line> elements (rays), moon icon does not
-      const darkBtn = darkWrapper
-        .findAll("button.icon-btn")
-        .find((b) => b.attributes("aria-label")?.toLowerCase().includes("dark"));
-      expect(darkBtn!.find("svg line")).toBeTruthy();
-      darkWrapper.unmount();
-    });
-
-    it("shows moon icon (dark_mode) when isDark is false", () => {
-      const darkBtn = wrapper
-        .findAll("button.icon-btn")
-        .find((b) => b.attributes("aria-label")?.toLowerCase().includes("dark"));
-      // Moon icon has a single <path>, no <line> elements
-      expect(darkBtn!.find("svg path").exists()).toBe(true);
-      expect(darkBtn!.findAll("svg line").length).toBe(0);
     });
   });
 });

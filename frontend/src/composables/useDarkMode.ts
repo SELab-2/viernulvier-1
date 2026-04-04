@@ -83,3 +83,8 @@ export function useDarkMode() {
     toggleDark: () => { isDark.value = !isDark.value; },
   };
 }
+
+/** @internal For testing only — resets singleton state from current localStorage. */
+export function __reset() {
+  isDark.value = getInitialDark();
+}

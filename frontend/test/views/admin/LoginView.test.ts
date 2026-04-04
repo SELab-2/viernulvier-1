@@ -1,19 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { mount } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
 import { RouteNames } from "@/router/routeNames";
 import { ApiError } from "@/services/auth";
+import { i18n } from "@/i18n";
 import LoginView from "@/views/admin/LoginView.vue";
 
 const mockLogin = vi.hoisted(() => vi.fn());
 
 vi.mock("@/services/auth", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/services/auth")>();
-  return {
-    ...actual,
-    login: mockLogin,
-  };
+  return { ...actual, login: mockLogin };
 });
 
 const router = createRouter({
@@ -32,14 +30,17 @@ describe("LoginView", () => {
     pinia = createPinia();
     setActivePinia(pinia);
     mockLogin.mockReset();
-
-    await router.push("/nl/admin/login");
+    i18n.global.locale.value = "en" as any;
+    await router.push("/en/admin/login");
     await router.isReady();
   });
 
   function mountLoginView() {
     return mount(LoginView, {
-      global: { plugins: [pinia, router] },
+      global: {
+        plugins: [pinia, router, i18n],
+        stubs: { NavControls: true },
+      },
     });
   }
 
@@ -57,7 +58,7 @@ describe("LoginView", () => {
 
   it("renders a login button", () => {
     const wrapper = mountLoginView();
-    expect(wrapper.find("button").exists()).toBe(true);
+    expect(wrapper.find(".submit-btn").exists()).toBe(true);
   });
 
   it("does not show an error initially", () => {
@@ -73,8 +74,8 @@ describe("LoginView", () => {
 
     await wrapper.find("input[type='text']").setValue("admin");
     await wrapper.find("input[type='password']").setValue("secret");
-    await wrapper.find("button").trigger("click");
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await wrapper.find(".submit-btn").trigger("click");
+    await flushPromises();
 
     expect(mockLogin).toHaveBeenCalledWith({ username: "admin", password: "secret" });
   });
@@ -83,21 +84,19 @@ describe("LoginView", () => {
     mockLogin.mockResolvedValueOnce(undefined);
     const wrapper = mountLoginView();
 
-    await wrapper.find("button").trigger("click");
-    await new Promise(resolve => setTimeout(resolve, 0));
-    await router.isReady();
+    await wrapper.find(".submit-btn").trigger("click");
+    await flushPromises();
 
     expect(router.currentRoute.value.name).toBe(RouteNames.ADMIN);
   });
 
   it("redirects to the redirect param after successful login", async () => {
     mockLogin.mockResolvedValueOnce(undefined);
-    await router.push("/nl/admin/login?redirect=%2Fnl%2Fadmin%2Fcms");
+    await router.push("/en/admin/login?redirect=%2Fen%2Fadmin%2Fcms");
     const wrapper = mountLoginView();
 
-    await wrapper.find("button").trigger("click");
-    await new Promise(resolve => setTimeout(resolve, 0));
-    await router.isReady();
+    await wrapper.find(".submit-btn").trigger("click");
+    await flushPromises();
 
     expect(router.currentRoute.value.name).toBe(RouteNames.CMS);
   });
@@ -107,7 +106,7 @@ describe("LoginView", () => {
     const wrapper = mountLoginView();
 
     await wrapper.find("input[type='text']").trigger("keyup.enter");
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await flushPromises();
 
     expect(mockLogin).toHaveBeenCalled();
   });
@@ -117,9 +116,30 @@ describe("LoginView", () => {
     const wrapper = mountLoginView();
 
     await wrapper.find("input[type='password']").trigger("keyup.enter");
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await flushPromises();
 
     expect(mockLogin).toHaveBeenCalled();
+  });
+
+  it("disables the submit button while loading", async () => {
+    mockLogin.mockReturnValueOnce(new Promise(() => {})); // never resolves
+    const wrapper = mountLoginView();
+
+    await wrapper.find(".submit-btn").trigger("click");
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.find(".submit-btn").attributes("disabled")).toBeDefined();
+  });
+
+  it("does not call login again while loading", async () => {
+    mockLogin.mockReturnValueOnce(new Promise(() => {}));
+    const wrapper = mountLoginView();
+
+    await wrapper.find(".submit-btn").trigger("click");
+    await wrapper.find(".submit-btn").trigger("click");
+    await flushPromises();
+
+    expect(mockLogin).toHaveBeenCalledTimes(1);
   });
 
   // ── Failed login ───────────────────────────────────────────────────────────
@@ -128,9 +148,10 @@ describe("LoginView", () => {
     mockLogin.mockRejectedValueOnce(new ApiError(401, "Unauthorized"));
     const wrapper = mountLoginView();
 
-    await wrapper.find("button").trigger("click");
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await wrapper.find(".submit-btn").trigger("click");
+    await flushPromises();
 
+    expect(wrapper.find("#error").exists()).toBe(true);
     expect(wrapper.text()).toContain("Invalid username or password.");
   });
 
@@ -138,9 +159,10 @@ describe("LoginView", () => {
     mockLogin.mockRejectedValueOnce(new Error("Network error"));
     const wrapper = mountLoginView();
 
-    await wrapper.find("button").trigger("click");
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await wrapper.find(".submit-btn").trigger("click");
+    await flushPromises();
 
+    expect(wrapper.find("#error").exists()).toBe(true);
     expect(wrapper.text()).toContain("Something went wrong. Please try again.");
   });
 
@@ -149,12 +171,25 @@ describe("LoginView", () => {
     mockLogin.mockResolvedValueOnce(undefined);
     const wrapper = mountLoginView();
 
-    await wrapper.find("button").trigger("click");
-    await new Promise(resolve => setTimeout(resolve, 0));
-    expect(wrapper.text()).toContain("Invalid username or password.");
+    await wrapper.find(".submit-btn").trigger("click");
+    await flushPromises();
+    expect(wrapper.find("#error").exists()).toBe(true);
 
-    await wrapper.find("button").trigger("click");
-    await new Promise(resolve => setTimeout(resolve, 0));
-    expect(wrapper.text()).not.toContain("Invalid username or password.");
+    await wrapper.find(".submit-btn").trigger("click");
+    await flushPromises();
+    expect(wrapper.find("#error").exists()).toBe(false);
+  });
+
+  // ── Password visibility ────────────────────────────────────────────────────
+
+  it("toggles password visibility", async () => {
+    const wrapper = mountLoginView();
+    expect(wrapper.find("input[type='password']").exists()).toBe(true);
+
+    await wrapper.find(".password-toggle").trigger("click");
+    expect(wrapper.find("input[type='text']#password").exists()).toBe(true);
+
+    await wrapper.find(".password-toggle").trigger("click");
+    expect(wrapper.find("input[type='password']").exists()).toBe(true);
   });
 });

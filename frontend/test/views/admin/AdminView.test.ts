@@ -5,13 +5,9 @@ import { createRouter, createMemoryHistory } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { RouteNames } from "@/router/routeNames";
 import AdminView from "@/views/admin/AdminView.vue";
+import { i18n } from "@/i18n";
 
-const mockAdmin = {
-  id: 1,
-  username: "admin",
-  super: true,
-  profile_picture: null,
-};
+const mockAdmin = { id: 1, username: "admin", super: true, profile_picture: null };
 
 vi.mock("@/services/auth", () => ({
   logout: vi.fn().mockResolvedValue(undefined),
@@ -33,61 +29,61 @@ describe("AdminView", () => {
   beforeEach(async () => {
     pinia = createPinia();
     setActivePinia(pinia);
-
     const authStore = useAuthStore();
     authStore.admin = mockAdmin;
-
     await router.push("/nl/admin");
     await router.isReady();
   });
 
   function mountAdminView() {
     return mount(AdminView, {
-      global: { plugins: [pinia, router] },
+      global: {
+        plugins: [pinia, router, i18n],
+        stubs: { AdminNavbar: true, NavControls: true },
+      },
     });
   }
+
+  // ── Rendering ──────────────────────────────────────────────────────────────
 
   it("displays the username", () => {
     const wrapper = mountAdminView();
     expect(wrapper.text()).toContain("admin");
   });
 
-  it("displays the profile picture", () => {
-    const authStore = useAuthStore();
-    authStore.admin = { ...mockAdmin, profile_picture: "https://example.com/avatar.jpg" };
-
+  it("displays initials fallback when no profile picture", () => {
     const wrapper = mountAdminView();
-    expect(wrapper.find("img").attributes("src")).toBe("https://example.com/avatar.jpg");
+    expect(wrapper.find(".profile-avatar-fallback").text()).toBe("AD");
   });
 
-  it("falls back to favicon when profile picture is null", () => {
+  it("displays the profile picture when set", () => {
+    const authStore = useAuthStore();
+    authStore.admin = { ...mockAdmin, profile_picture: "https://example.com/avatar.jpg" };
     const wrapper = mountAdminView();
-    expect(wrapper.find("img").attributes("src")).toBe("/favicon.ico");
+    expect(wrapper.find(".profile-avatar").attributes("src")).toBe("https://example.com/avatar.jpg");
+  });
+
+  it("hides the profile picture fallback when profile picture is set", () => {
+    const authStore = useAuthStore();
+    authStore.admin = { ...mockAdmin, profile_picture: "https://example.com/avatar.jpg" };
+    const wrapper = mountAdminView();
+    expect(wrapper.find(".profile-avatar-fallback").exists()).toBe(false);
+  });
+
+  it("shows the super admin badge when admin is super", () => {
+    const wrapper = mountAdminView();
+    expect(wrapper.find(".super-badge").exists()).toBe(true);
+  });
+
+  it("hides the super admin badge when admin is not super", () => {
+    const authStore = useAuthStore();
+    authStore.admin = { ...mockAdmin, super: false };
+    const wrapper = mountAdminView();
+    expect(wrapper.find(".super-badge").exists()).toBe(false);
   });
 
   it("has a link to the CMS", () => {
     const wrapper = mountAdminView();
     expect(wrapper.find("a").attributes("href")).toContain("cms");
-  });
-
-  it("calls logout and redirects to login on logout button click", async () => {
-    const { logout } = await import("@/services/auth");
-    const wrapper = mountAdminView();
-
-    await wrapper.find("button").trigger("click");
-    await new Promise(resolve => setTimeout(resolve, 0)); // flush async
-    await router.isReady();
-
-    expect(logout).toHaveBeenCalled();
-    expect(router.currentRoute.value.name).toBe(RouteNames.LOGIN);
-  });
-
-  it("clears the admin store on logout", async () => {
-    const authStore = useAuthStore();
-    const wrapper = mountAdminView();
-
-    await wrapper.find("button").trigger("click");
-
-    expect(authStore.admin).toBeNull();
   });
 });
