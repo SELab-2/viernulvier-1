@@ -1,5 +1,5 @@
 <template>
-  <nav class="admin-nav">
+  <nav class="navbar">
     <!-- Left: nav links -->
     <div class="flex items-center gap-6">
       <RouterLink
@@ -52,6 +52,7 @@ import { RouteNames } from "@/router/routeNames";
 import { useAuthStore } from "@/stores/auth";
 import { logout } from "@/services/auth";
 import NavControls from "@/components/NavControls.vue";
+import "@/assets/stylesheets/navbar.css";
 
 defineProps<{ isDark: boolean }>();
 defineEmits<{ "toggle-dark": [] }>();
@@ -85,22 +86,11 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 <style scoped>
 @reference "@/style.css";
 
-.admin-nav {
-  @apply sticky top-0 z-50 flex h-16 w-full items-center justify-between bg-surface-inv px-6 lg:px-10;
-}
-
 .brand { @apply flex min-w-[140px] items-center gap-3 no-underline absolute left-1/2 -translate-x-1/2; }
 .logo { @apply h-6 w-auto; }
 :global(.dark) .logo { filter: brightness(0) invert(0.88); }
 .brand-divider { @apply block h-4 w-px bg-surface-3; }
 .brand-label { @apply text-xs font-semibold uppercase tracking-widest text-ink-tertiary; }
-
-.nav-link {
-  @apply text-sm font-medium text-ink-on-inv-secondary transition hover:text-ink-on-inv;
-}
-.nav-link.router-link-active {
-  @apply text-ink-on-inv;
-}
 
 .nav-right { @apply flex min-w-[140px] items-center justify-end gap-2; }
 
@@ -109,6 +99,7 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
   background: none;
   border: none;
 }
+
 .avatar-img {
   @apply h-7 w-7 rounded-full object-cover ring-1 ring-surface-inv-border;
 }
