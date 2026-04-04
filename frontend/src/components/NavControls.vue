@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, useTemplateRef } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { i18n, SUPPORTED_LANGS, type SupportedLang } from "@/i18n";
 import { useLocale } from "@/composables/useLocale";
 
@@ -43,7 +43,6 @@ defineEmits<{ "toggle-dark": [] }>();
 const { setLocale } = useLocale();
 
 const langMenuOpen = ref(false);
-const langWrapper = useTemplateRef<HTMLElement>("langWrapper");
 
 const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 
@@ -61,10 +60,8 @@ function setLang(lang: SupportedLang) {
   setLocale(lang);
 }
 
-function handleClickOutside(e: MouseEvent) {
-  if (langWrapper.value && !langWrapper.value.contains(e.target as Node)) {
-    langMenuOpen.value = false;
-  }
+function handleClickOutside() {
+  langMenuOpen.value = false;
 }
 
 onMounted(() => document.addEventListener("click", handleClickOutside));

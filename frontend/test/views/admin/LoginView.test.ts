@@ -6,6 +6,8 @@ import { RouteNames } from "@/router/routeNames";
 import { ApiError } from "@/services/auth";
 import { i18n } from "@/i18n";
 import LoginView from "@/views/admin/LoginView.vue";
+import { nextTick } from "vue";
+import { useDarkMode } from "@/composables/useDarkMode";
 
 const mockLogin = vi.hoisted(() => vi.fn());
 
@@ -33,6 +35,9 @@ describe("LoginView", () => {
     i18n.global.locale.value = "en" as any;
     await router.push("/en/admin/login");
     await router.isReady();
+    const { isDark, toggleDark } = useDarkMode();
+    if (isDark.value) toggleDark(); // reset to light mode
+    await nextTick();
   });
 
   function mountLoginView() {
@@ -131,12 +136,13 @@ describe("LoginView", () => {
     expect(wrapper.find(".submit-btn").attributes("disabled")).toBeDefined();
   });
 
-  it("does not call login again while loading", async () => {
-    mockLogin.mockReturnValueOnce(new Promise(() => {}));
+  it("does not call login again while already loading", async () => {
+    mockLogin.mockReturnValueOnce(new Promise(() => {})); // never resolves
     const wrapper = mountLoginView();
 
-    await wrapper.find(".submit-btn").trigger("click");
-    await wrapper.find(".submit-btn").trigger("click");
+    await wrapper.find(".submit-btn").trigger("click"); // starts loading
+    await wrapper.vm.$nextTick();
+    await (wrapper.vm as any).handleLogin(); // call directly, bypasses disabled
     await flushPromises();
 
     expect(mockLogin).toHaveBeenCalledTimes(1);
@@ -191,5 +197,23 @@ describe("LoginView", () => {
 
     await wrapper.find(".password-toggle").trigger("click");
     expect(wrapper.find("input[type='password']").exists()).toBe(true);
+  });
+
+  // ── Logo filter ────────────────────────────────────────────────────────────
+
+  it("applies dark filter to logo in dark mode", async () => {
+    const { isDark, toggleDark } = useDarkMode();
+    if (!isDark.value) toggleDark();
+    await nextTick();
+    const wrapper = mountLoginView();
+    expect(wrapper.find(".login-logo").attributes("style")).toContain("invert(0.88)");
+  });
+
+  it("applies light filter to logo in light mode", async () => {
+    const { isDark, toggleDark } = useDarkMode();
+    if (isDark.value) toggleDark();
+    await nextTick();
+    const wrapper = mountLoginView();
+    expect(wrapper.find(".login-logo").attributes("style")).toContain("invert(0.15)");
   });
 });

@@ -75,6 +75,13 @@ describe("AdminNavbar", () => {
     expect(wrapper.find(".avatar-fallback").exists()).toBe(false);
   });
 
+  it("displays '??' as initials when admin is null", () => {
+    const authStore = useAuthStore();
+    authStore.admin = null;
+    const wrapper = mountNavbar();
+    expect(wrapper.find(".avatar-fallback").text()).toBe("??");
+  });
+
   it("renders dashboard and cms nav links", () => {
     const wrapper = mountNavbar();
     const links = wrapper.findAll("a");
@@ -110,6 +117,14 @@ describe("AdminNavbar", () => {
     document.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await wrapper.vm.$nextTick();
     expect(wrapper.find(".dropdown").exists()).toBe(false);
+  });
+
+  it("removes the click outside listener on unmount", async () => {
+    const removeEventListenerSpy = vi.spyOn(document, "removeEventListener");
+    const wrapper = mountNavbar();
+    wrapper.unmount();
+    expect(removeEventListenerSpy).toHaveBeenCalledWith("click", expect.any(Function));
+    removeEventListenerSpy.mockRestore();
   });
 
   // ── Logout ─────────────────────────────────────────────────────────────────

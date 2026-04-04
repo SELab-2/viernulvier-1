@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, useTemplateRef } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { RouterLink, useRouter, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { i18n, type SupportedLang } from "@/i18n";
@@ -66,11 +66,9 @@ const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 const initials = computed(() => admin?.username?.slice(0, 2).toUpperCase() ?? "??");
 
 const profileOpen = ref(false);
-const profileWrapper = useTemplateRef<HTMLElement>("profileWrapper");
 
-function handleClickOutside(e: MouseEvent) {
-  if (profileWrapper.value && !profileWrapper.value.contains(e.target as Node))
-    profileOpen.value = false;
+function handleClickOutside() {
+  profileOpen.value = false;
 }
 
 async function handleLogout() {

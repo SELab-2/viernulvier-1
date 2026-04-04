@@ -21,12 +21,6 @@ async function mountNavbar(isDark = false) {
   return { wrapper, router };
 }
 
-async function openLangMenu(wrapper: ReturnType<typeof mount>) {
-  // The language button is the first icon-btn (index 0)
-  const btns = wrapper.findAll("button.icon-btn");
-  await btns[0]!.trigger("click");
-}
-
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe("AppNavbar.vue", () => {

@@ -86,4 +86,11 @@ describe("AdminView", () => {
     const wrapper = mountAdminView();
     expect(wrapper.find("a").attributes("href")).toContain("cms");
   });
+
+  it("displays '??' as initials when admin is null", () => {
+    const authStore = useAuthStore();
+    authStore.admin = null;
+    const wrapper = mountAdminView();
+    expect(wrapper.find(".profile-avatar-fallback").text()).toBe("??");
+  });
 });
