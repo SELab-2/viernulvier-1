@@ -20,7 +20,7 @@ export async function fetchEvent(
 ): Promise<Event | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const result = await buildQuery(server,
-    `SELECT id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}
+    `SELECT id, old_id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}
     FROM event WHERE id = $1`,
     z.tuple([z.int()]),
     EventSchema,
@@ -44,7 +44,7 @@ export async function fetchEventWithMeta(
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const result = await buildQuery(
     server,
-    `SELECT id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery},
+    `SELECT id, old_id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery},
         created_at, updated_at, created_by, updated_by
     FROM event WHERE id = $1`,
     z.tuple([z.int()]),
@@ -59,14 +59,16 @@ export async function fetchEventWithMeta(
  * Returns an empty array when parsing fails.
  *
  * @param server - The Fastify instance, used for database access and logging.
+ * @param _request - The Fastify request.
  * @returns An array of parsed events.
  */
 export async function fetchEvents(
   server: FastifyInstance,
+  _request: FastifyRequest,
 ): Promise<Event[]> {
   const result = await buildQuery(
     server,
-    `SELECT id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}
+    `SELECT id, old_id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}
     FROM event`,
     EventSchema,
   )();

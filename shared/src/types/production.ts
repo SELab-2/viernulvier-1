@@ -6,6 +6,8 @@ import { foreignKey, primaryKey, languageMap, ForeignKey } from "./helpers.js";
 
 export const ProductionSchema = createSchema({
   id: primaryKey(),
+  old_id: z.int().nonnegative().nullable(),
+  finalized: z.boolean(),
   supertitle: languageMap.nullable(),
   title: languageMap,
   artist: languageMap,
@@ -58,7 +60,7 @@ export const CustomProductionFieldSchema = createSchema({
     > {
     return foreignKey(() => CustomProductionFieldDefinitionSchema);
   },
-  get production_id(): ForeignKey<typeof ProductionSchema> {
+  get production(): ForeignKey<typeof ProductionSchema> {
     return foreignKey(() => ProductionSchema);
   },
   type: FieldTypeSchema,

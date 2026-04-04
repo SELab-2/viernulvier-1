@@ -13,7 +13,10 @@ const EditHallBodySchema = HallSchema.omit({ id: true }).partial();
  * @param request - The Fastify request, expected to contain `id` in params and a partial hall body.
  * @returns The updated hall, or `null` if the update failed or parsing failed.
  */
-export async function editHall(server: FastifyInstance, request: FastifyRequest): Promise<Hall | null> {  
+export async function editHall(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<Hall | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const body = parseSchema(server, EditHallBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
@@ -28,6 +31,7 @@ export async function editHall(server: FastifyInstance, request: FastifyRequest)
     values.push(value);
   };
 
+  addField("old_id", body["old_id"]);
   addField("name", body["name"]);
   addField("address", body["address"]);
 
@@ -40,7 +44,7 @@ export async function editHall(server: FastifyInstance, request: FastifyRequest)
 
   const result = await server.pg.query<Hall>(
     `UPDATE hall SET ${fields.join(", ")} WHERE id = $${i}
-     RETURNING id, name, address`,
+     RETURNING id, old_id, name, address`,
     values,
   );
 

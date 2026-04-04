@@ -1,0 +1,8 @@
+-- UNDER NO CIRCUMSTANCES MAY THIS FILE BE EDITED WHEN LIVE
+-- ANY EDITS WILL RESOLVE IN DIFFERENT CHECKSUMS AND THE DB REJECTING THE MIGRATION
+
+-- 012.do.add-super-field-to-admin-table.sql
+-- Adds a boolean "super" field to the admin table.
+
+ALTER TABLE admin
+  ADD COLUMN super BOOLEAN NOT NULL DEFAULT FALSE;

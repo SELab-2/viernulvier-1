@@ -108,6 +108,12 @@ describe("getRepoRootFromImportMeta", () => {
     const root = getRepoRootFromImportMeta("file:///repo/backend/scripts/tool.ts");
     expect(root).toBe(path.resolve("/repo"));
   });
+
+  it("resolves repo root when given a plain path instead of a file URL", () => {
+    const scriptPath = path.resolve("/repo/backend/scripts/tool.ts");
+    const root = getRepoRootFromImportMeta(scriptPath);
+    expect(root).toBe(path.resolve("/repo"));
+  });
 });
 
 describe("resolveDefaultLegacyImportFile", () => {
@@ -117,7 +123,7 @@ describe("resolveDefaultLegacyImportFile", () => {
       "imports",
       "x.csv",
     ]);
-    expect(file).toBe(path.join("/repo", "data", "imports", "x.csv"));
+    expect(file).toBe(path.resolve("/repo", "data", "imports", "x.csv"));
   });
 });
 

@@ -59,11 +59,11 @@ afterAll(async () => {
 
 describe("Fetch tag_type", () => {
 
-  test("GET /api/v1/tags/type/:id", async () => {
+  test("GET /api/v1/tag/type/:id", async () => {
 
     const response = await server.inject({
       method: "GET",
-      url: `/api/v1/tags/type/${tagType.id}`,
+      url: `/api/v1/tag/type/${tagType.id}`,
     });
 
     expect(response.statusCode).toBe(200);
@@ -74,7 +74,7 @@ describe("Fetch tag_type", () => {
 
     const response = await server.inject({
       method: "GET",
-      url: `/api/v1/tags/type/999`,
+      url: `/api/v1/tag/type/999`,
     });
 
     expect(response.statusCode).toBe(404);
@@ -82,11 +82,11 @@ describe("Fetch tag_type", () => {
 
 });
 
-test("GET /api/v1/tags/type", async () => {
+test("GET /api/v1/tag/type", async () => {
 
   const response = await server.inject({
     method: "GET",
-    url: `/api/v1/tags/type`,
+    url: `/api/v1/tag/type`,
   });
 
   expect(response.statusCode).toBe(200);
@@ -95,12 +95,12 @@ test("GET /api/v1/tags/type", async () => {
 
 describe("Fetch tag_type with metadata", () => {
 
-  test("GET /api/v1/tags/type/:id/meta", async () => {
+  test("GET /api/v1/tag/type/:id/meta", async () => {
 
     const response = await server.inject({
       method: "GET",
       cookies: { session: sessionCookie },
-      url: `/api/v1/tags/type/${tagTypeWithMeta.id}/meta`,
+      url: `/api/v1/tag/type/${tagTypeWithMeta.id}/meta`,
     });
 
     expect(response.statusCode).toBe(200);
@@ -112,7 +112,7 @@ describe("Fetch tag_type with metadata", () => {
     const response = await server.inject({
       method: "GET",
       cookies: { session: sessionCookie },
-      url: `/api/v1/tags/type/999/meta`,
+      url: `/api/v1/tag/type/999/meta`,
     });
 
     expect(response.statusCode).toBe(404);

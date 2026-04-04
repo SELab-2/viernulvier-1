@@ -11,11 +11,12 @@ const mockCreatedAdmin: Admin = {
   id: 404,
   username: mockUsername,
   profile_picture: null,
+  super: true,
 };
 
 beforeAll(async () => {
   server = await buildServer();
-  sessionCookie = server.jwt.sign({ id: 404, username: "Karel" });
+  sessionCookie = server.jwt.sign({ id: 404, username: mockCreatedAdmin, super: true });
 });
 
 afterAll(async () => {

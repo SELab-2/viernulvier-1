@@ -7,6 +7,7 @@ import { foreignKey, languageMap, primaryKey, ForeignKey } from "./helpers.js";
 
 export const EventSchemaWithoutPrice = createSchema({
   id: primaryKey(),
+  old_id: z.int().nonnegative().nullable(),
   starts_at: z.date(),
   ends_at: z.date(),
   doors_at: z.date(),

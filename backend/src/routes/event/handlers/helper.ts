@@ -94,11 +94,12 @@ export function updateEvent(server: FastifyInstance) {
   return buildQuery(
     server,
     `UPDATE event
-    SET starts_at = $1, ends_at = $2, production = $3, hall = $4, doors_at = $5, info = $6,
-        updated_at = $7, updated_by = $8
+    SET old_id = $1, starts_at = $2, ends_at = $3, production = $4, hall = $5, doors_at = $6, info = $7,
+        updated_at = $8, updated_by = $9
     WHERE id = $9
-    RETURNING id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}`,
+    RETURNING id, old_id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}`,
     z.tuple([
+      EventCreateSchema.shape.old_id,
       EventCreateSchema.shape.starts_at,
       EventCreateSchema.shape.ends_at,
       EventCreateSchema.shape.production,

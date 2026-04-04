@@ -9,6 +9,7 @@ let sessionCookie: string;
 
 const originalHall: Hall = {
   id: 1,
+  old_id: 111,
   name: { nl: "Grote Zaal" },
   address: "Sint-Pietersnieuwstraat 23",
 };
@@ -22,6 +23,11 @@ const updatedHallA: Hall = {
 const updatedHallB: Hall = {
   ...originalHall,
   name: { nl: "Naam B" },
+};
+
+const updatedHallC: Hall = {
+  ...originalHall,
+  old_id: 999,
 };
 
 beforeAll(async () => {
@@ -144,5 +150,29 @@ describe("Edit on hall route", () => {
     });
 
     expect(response.statusCode).toBe(HttpClientError.BadRequest);
+  });
+
+  test("PATCH /api/v1/hall/:id — updates old_id", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+
+      if (upper.startsWith("UPDATE")) {
+        return Promise.resolve({ rows: [updatedHallC], rowCount: 1 });
+      }
+
+      throw new Error(`Unexpected query in edit tests: ${query}`);
+    });
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/hall/${originalHall["id"]}`,
+      cookies: { session: sessionCookie },
+      payload: {
+        old_id: 999,
+      },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(HallSchema.parse(response.json())).toEqual(updatedHallC);
   });
 });

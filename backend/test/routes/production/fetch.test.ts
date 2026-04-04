@@ -14,6 +14,8 @@ let sessionCookie: string;
 
 const baseProduction: ProductionWithBackwardsRefs = productionRowWithRefs({
   id: 1,
+  old_id: 1111,
+  finalized: true,
   supertitle: null,
   title: { nl: "Titel" },
   artist: { nl: "Artiest" },
