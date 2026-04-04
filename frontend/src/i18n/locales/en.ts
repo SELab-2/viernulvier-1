@@ -42,8 +42,7 @@ export default {
   },
   admin: {
     login: {
-      eyebrow: "Sign in to continue",
-      title: "Welcome back",
+      title: "Sign in to continue",
       username: "Username",
       password: "Password",
       showPassword: "Show password",

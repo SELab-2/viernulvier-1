@@ -42,8 +42,7 @@ export default {
   },
   admin: {
     login: {
-      eyebrow: "Meld u aan om verder te gaan",
-      title: "Welkom terug",
+      title: "Meld u aan om verder te gaan",
       username: "Gebruikersnaam",
       password: "Wachtwoord",
       showPassword: "Wachtwoord tonen",

@@ -85,9 +85,4 @@ const initials = computed(() => admin?.username?.slice(0, 2).toUpperCase() ?? "?
 .action-icon { @apply h-5 w-5 shrink-0 text-ink-secondary; }
 .action-label { @apply flex-1 text-sm font-medium text-ink-primary; }
 .action-arrow { @apply h-4 w-4 shrink-0 text-ink-tertiary; }
-
-.logout-btn {
-  @apply cursor-pointer rounded-lg border border-surface-3 px-4 py-2 text-sm font-medium text-ink-secondary transition hover:bg-surface-2 hover:text-ink-primary;
-  background: none;
-}
 </style>
