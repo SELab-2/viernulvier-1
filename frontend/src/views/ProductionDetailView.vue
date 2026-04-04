@@ -16,8 +16,8 @@
         </div>
       </div>
 
-      <template v-else>
-        <HeroSection />
+      <template v-else-if="production">
+        <HeroSection :production="production" />
         <DetailsSection />
         <EventsSection />
         <GallerySection />
@@ -59,10 +59,6 @@ const notFound = ref(false);
 onMounted(async () => {
   try {
     production.value = await getProduction(id);
-
-    if (!production.value) {
-      notFound.value = true;
-    }
   } catch (e: any) {
     if (e instanceof ApiError && e.status === 404) {
       notFound.value = true;
@@ -73,4 +69,5 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
 </script>

@@ -17,13 +17,13 @@
             10x10
           </span>
           <span class="italic text-3xl font-bold tracking-tighter text-ink-on-inv md:text-4xl">
-            Ellipsis
+            {{ artist }}
           </span>
         </div>
         
         <div class="space-y-4">
           <h1 class="text-[clamp(2.5rem,8vw,8rem)] font-black uppercase leading-[0.9] tracking-tighter text-ink-on-inv wrap-break-word">
-            Kevin Trappeniers
+            {{ title }}
           </h1>
           <p class="italic text-xl font-light leading-tight text-ink-on-inv opacity-90 md:text-2xl">
             Een woordeloos onderzoek naar mens en technologie
@@ -62,3 +62,25 @@
     </div>
   </section>
 </template>
+
+<script setup lang="ts">
+import { i18n, type SupportedLang } from "@/i18n";
+import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
+import { computed } from "vue";
+import { localizeOrEmpty } from "@/utils/i18n";
+
+const currentLang = computed(
+  () => i18n.global.locale.value as SupportedLang,
+);
+
+const { production } = defineProps<{
+  production: ProductionWithBackwardsRefs;
+}>();
+
+const tProd = (map: any) =>
+  localizeOrEmpty(map, currentLang.value);
+
+const artist = computed(() => tProd(production.artist));
+const title = computed(() => tProd(production.title));
+
+</script>
