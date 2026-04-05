@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-import { HallSchema, AdminSchema, BlogSchema, ProductionSchema, ProductionSchemaWithBackwardsRefs } from "@viernulvier/shared/index.js";
+import { HallSchema, AdminSchema, BlogSchema, ProductionSchema, ProductionSchemaWithBackwardsRefs, EventSchema, EventPriceSchema } from "@viernulvier/shared/index.js";
 import { HttpSuccess } from "@/routes/helpers.js";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { migrate } from "@/db/migrate.js";
@@ -11,12 +11,9 @@ let server: FastifyInstance;
 let sessionCookie: string;
 let container: StartedPostgreSqlContainer;
 
-let adminId: number;
-let hallId: number;
-
 beforeAll(async () => {
   container = await new PostgreSqlContainer("postgres:16-alpine").start();
-  process.env["DEBUG"] = "true";
+  //process.env["DEBUG"] = "true";
   process.env["DATABASE_URL"] = container.getConnectionUri();
   process.env["JWT_SECRET"] ??= "test-secret";
 
@@ -51,6 +48,8 @@ afterAll(async () => {
 });
 
 describe("Auth routes — SQL integration", { sequential: true }, () => {
+  let adminId: number;
+
   test("POST /api/v1/auth — creates a new admin", async () => {
     const response = await server.inject({
       method: "POST",
@@ -170,6 +169,8 @@ describe("Auth routes — SQL integration", { sequential: true }, () => {
 });
 
 describe("Hall routes — SQL integration", { sequential: true }, () => {
+  let hallId: number;
+
   test("POST /api/v1/hall — inserts and returns a new hall", async () => {
     const response = await server.inject({
       method: "POST",
@@ -465,5 +466,256 @@ describe("Production routes — SQL integration", { sequential: true }, () => {
 
     const fetchResponse = await server.inject({ method: "GET", url: `/api/v1/production/${productionId}` });
     expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
+  });
+});
+
+describe("Event & event price routes — SQL integration", () => {
+  let hallId: number;
+  let productionId: number;
+
+  beforeAll(async () => {
+    const hallSeed = await server.inject({
+      method: "POST",
+      url: "/api/v1/hall",
+      cookies: { session: sessionCookie },
+      payload: { old_id: null, name: { nl: "Event Test Zaal" }, address: "Teststraat 1" },
+    });
+    hallId = hallSeed.json().id;
+
+    const productionSeed = await server.inject({
+      method: "POST",
+      url: "/api/v1/production",
+      cookies: { session: sessionCookie },
+      payload: {
+        title: { nl: "Event Test Productie" },
+        artist: { nl: "Test Artiest" },
+        tagline: { nl: "Test tagline" },
+        teaser: { nl: "Test teaser" },
+        finalized: false,
+      },
+    });
+    productionId = productionSeed.json().id;
+  });
+
+  describe("Event routes — SQL integration", { sequential: true }, () => {
+    let eventId: number;
+
+    const baseEventPayload = () => ({
+      old_id: null,
+      starts_at: "2026-06-01T19:00:00.000Z",
+      ends_at: "2026-06-01T21:00:00.000Z",
+      doors_at: "2026-06-01T18:30:00.000Z",
+      info: { nl: "Test info" },
+      production: productionId,
+      hall: hallId,
+    });
+
+    test("POST /api/v1/event — inserts and returns a new event", async () => {
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/v1/event",
+        cookies: { session: sessionCookie },
+        payload: baseEventPayload(),
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const event = EventSchema.parse(response.json());
+      expect(event).toMatchObject({ info: { nl: "Test info" }, price: [] });
+
+      eventId = event.id;
+    });
+
+    test("GET /api/v1/event — returns a list containing the created event", async () => {
+      const response = await server.inject({ method: "GET", url: "/api/v1/event" });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const events = response.json<unknown[]>();
+      expect(events.some((e) => EventSchema.parse(e).id === eventId)).toBe(true);
+    });
+
+    test("GET /api/v1/event/:id — returns the created event", async () => {
+      const response = await server.inject({ method: "GET", url: `/api/v1/event/${eventId}` });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(EventSchema.parse(response.json())).toMatchObject({ id: eventId });
+    });
+
+    test("GET /api/v1/event/:id/meta — returns the event with metadata", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/event/${eventId}/meta`,
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(EventSchema.withMeta().parse(response.json())).toMatchObject({ id: eventId });
+    });
+
+    test("PATCH /api/v1/event/:id — updates only the supplied fields", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/event/${eventId}`,
+        cookies: { session: sessionCookie },
+        payload: { info: { nl: "Aangepaste info" } },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const event = EventSchema.parse(response.json());
+      expect(event.info).toEqual({ nl: "Aangepaste info" });
+      expect(event.production).toBe(productionId); // unchanged
+    });
+
+    test("PATCH /api/v1/event — bulk updates multiple events", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: "/api/v1/event",
+        cookies: { session: sessionCookie },
+        payload: {
+          ids: [eventId],
+          data: { info: { nl: "Bulk aangepaste info" } },
+        },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const events = response.json<unknown[]>();
+      expect(events.some((e) => EventSchema.parse(e).id === eventId)).toBe(true);
+    });
+
+    test("PUT /api/v1/event/:id — replaces all fields of the event", async () => {
+      const response = await server.inject({
+        method: "PUT",
+        url: `/api/v1/event/${eventId}`,
+        cookies: { session: sessionCookie },
+        payload: {
+          ...baseEventPayload(),
+          info: { nl: "Vervangen info" },
+        },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(EventSchema.parse(response.json())).toMatchObject({
+        id: eventId,
+        info: { nl: "Vervangen info" },
+      });
+    });
+
+    test("DELETE /api/v1/event/:id — removes the event from the database", async () => {
+      const deleteResponse = await server.inject({
+        method: "DELETE",
+        url: `/api/v1/event/${eventId}`,
+        cookies: { session: sessionCookie },
+      });
+      expect(deleteResponse.statusCode).toBe(HttpSuccess.OK);
+
+      const fetchResponse = await server.inject({ method: "GET", url: `/api/v1/event/${eventId}` });
+      expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
+    });
+  });
+
+  describe("Event price routes — SQL integration", { sequential: true }, () => {
+    let eventPriceId: number;
+    let eventIdForPrice: number;
+
+    test("POST /api/v1/event — inserts a fresh event to attach prices to", async () => {
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/v1/event",
+        cookies: { session: sessionCookie },
+        payload: {
+          old_id: null,
+          starts_at: "2026-07-01T19:00:00.000Z",
+          ends_at: "2026-07-01T21:00:00.000Z",
+          doors_at: "2026-07-01T18:30:00.000Z",
+          info: { nl: "Prijs test event" },
+          production: productionId,
+          hall: hallId,
+        },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      eventIdForPrice = EventSchema.parse(response.json()).id;
+    });
+
+    test("POST /api/v1/event/price — inserts and returns a new event price", async () => {
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/v1/event/price",
+        cookies: { session: sessionCookie },
+        payload: { event: eventIdForPrice, amount: 15.5 },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const price = EventPriceSchema.parse(response.json());
+      expect(price).toMatchObject({ event: eventIdForPrice, amount: 15.5 });
+
+      eventPriceId = price.id;
+    });
+
+    test("GET /api/v1/event/price — returns a list containing the created price", async () => {
+      const response = await server.inject({ method: "GET", url: "/api/v1/event/price" });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const prices = response.json<unknown[]>();
+      expect(prices.some((p) => EventPriceSchema.parse(p).id === eventPriceId)).toBe(true);
+    });
+
+    test("GET /api/v1/event/price/:id — returns the created price", async () => {
+      const response = await server.inject({ method: "GET", url: `/api/v1/event/price/${eventPriceId}` });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(EventPriceSchema.parse(response.json())).toMatchObject({ id: eventPriceId, amount: 15.5 });
+    });
+
+    test("GET /api/v1/event/price/:id/meta — returns the price with metadata", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/event/price/${eventPriceId}/meta`,
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(EventPriceSchema.withMeta().parse(response.json())).toMatchObject({ id: eventPriceId });
+    });
+
+    test("PATCH /api/v1/event/price/:id — updates only the supplied fields", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/event/price/${eventPriceId}`,
+        cookies: { session: sessionCookie },
+        payload: { amount: 20 },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const price = EventPriceSchema.parse(response.json());
+      expect(price.amount).toBe(20);
+      expect(price.event).toBe(eventIdForPrice); // unchanged
+    });
+
+    test("PUT /api/v1/event/price/:id — replaces all fields of the price", async () => {
+      const response = await server.inject({
+        method: "PUT",
+        url: `/api/v1/event/price/${eventPriceId}`,
+        cookies: { session: sessionCookie },
+        payload: { event: eventIdForPrice, amount: 25 },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(EventPriceSchema.parse(response.json())).toMatchObject({
+        id: eventPriceId,
+        amount: 25,
+      });
+    });
+
+    test("DELETE /api/v1/event/price/:id — removes the price from the database", async () => {
+      const deleteResponse = await server.inject({
+        method: "DELETE",
+        url: `/api/v1/event/price/${eventPriceId}`,
+        cookies: { session: sessionCookie },
+      });
+      expect(deleteResponse.statusCode).toBe(HttpSuccess.OK);
+
+      const fetchResponse = await server.inject({ method: "GET", url: `/api/v1/event/price/${eventPriceId}` });
+      expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
+    });
   });
 });

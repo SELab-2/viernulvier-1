@@ -96,7 +96,7 @@ export function updateEvent(server: FastifyInstance) {
     `UPDATE event
     SET old_id = $1, starts_at = $2, ends_at = $3, production = $4, hall = $5, doors_at = $6, info = $7,
         updated_at = $8, updated_by = $9
-    WHERE id = $9
+    WHERE id = $10
     RETURNING id, old_id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}`,
     z.tuple([
       EventCreateSchema.shape.old_id,
