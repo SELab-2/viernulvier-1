@@ -43,6 +43,7 @@
   "description": "",
   "devDependencies": {
     "@eslint/js": "^10",
+    "@testcontainers/postgresql": "^11.13.0",
     "@types/bcrypt": "^6.0.0",
     "@types/node": "^25.5.0",
     "@types/pg": "^8.20.0",

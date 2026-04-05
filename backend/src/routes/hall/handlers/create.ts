@@ -10,15 +10,15 @@ const CreateHallBodySchema = HallSchema.omit({ id: true });
 const insertHall = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `INSERT INTO hall (name, address, created_by, updated_by, created_at, updated_at)
-     VALUES ($1, $2, $3, $3, $4, $4)
-     RETURNING id, name, address`,
+    `INSERT INTO hall (old_id, name, address, created_by, updated_by, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $4, $5, $5)
+     RETURNING id, old_id, name, address`,
     z.tuple([
       z.int().nonnegative().nullable(), // old_id
-      languageMap,            // name
-      z.string(),             // address
-      z.int(),       // admin
-      z.date(),               // current_time
+      languageMap,                      // name
+      z.string(),                       // address
+      z.int(),                          // admin
+      z.date(),                         // current_time
     ]),
     HallSchema,
   );
