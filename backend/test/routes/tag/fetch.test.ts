@@ -82,7 +82,7 @@ beforeAll(async () => {
       for (const t of mockTags) {
         if (ids.includes(t.id)) {
           for (const pid of t.productions ?? []) {
-            linkRows.push({ tag: t.id, production: pid });
+            linkRows.push({ tag: t.id, production: pid as number });
           }
         }
       }
