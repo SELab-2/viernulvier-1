@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-import { HallSchema } from "@viernulvier/shared/index.js";
+import { HallSchema, AdminSchema } from "@viernulvier/shared/index.js";
 import { HttpSuccess } from "@/routes/helpers.js";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { migrate } from "@/db/migrate.js";
@@ -10,6 +10,8 @@ import { hashPassword } from "@/routes/auth/handlers/hash.js";
 let server: FastifyInstance;
 let sessionCookie: string;
 let container: StartedPostgreSqlContainer;
+
+let adminId: number;
 let hallId: number;
 
 beforeAll(async () => {
@@ -21,7 +23,7 @@ beforeAll(async () => {
 
   server = await buildServer();
 
-  // Seed a superadmin
+  // Seed superadmin
   const hash = await hashPassword("password");
   await server.pg.query(
     `INSERT INTO admin (username, password, super, created_at, updated_at)
@@ -33,7 +35,7 @@ beforeAll(async () => {
     ["superadmin"],
   );
 
-  // Log in to get a real session cookie
+  // Log in to get a real session cookie (and also test the login SQL at the same time)
   const loginResponse = await server.inject({
     method: "POST",
     url: "/api/v1/auth/login",
@@ -45,6 +47,125 @@ beforeAll(async () => {
 afterAll(async () => {
   await server.close();
   await container.stop();
+});
+
+describe("Auth routes — SQL integration", { sequential: true }, () => {
+  test("POST /api/v1/auth — creates a new admin", async () => {
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/auth",
+      cookies: { session: sessionCookie },
+      payload: { username: "testadmin", password: "password123", super: false },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const admin = AdminSchema.parse(response.json());
+    expect(admin).toMatchObject({ username: "testadmin", super: false });
+
+    adminId = admin.id;
+  });
+
+  test("GET /api/v1/auth — returns a list containing the created admin", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/auth",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const admins = response.json<unknown[]>();
+    expect(admins.some((a) => AdminSchema.parse(a).id === adminId)).toBe(true);
+  });
+
+  test("GET /api/v1/auth/:id — returns the created admin", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/auth/${adminId}`,
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(AdminSchema.parse(response.json())).toMatchObject({ id: adminId, username: "testadmin" });
+  });
+
+  test("GET /api/v1/auth/:id/meta — returns the admin with metadata", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/auth/${adminId}/meta`,
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(AdminSchema.withMeta().parse(response.json())).toMatchObject({ id: adminId });
+  });
+
+  test("GET /api/v1/auth/me — returns the currently logged in admin", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/auth/me",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(AdminSchema.parse(response.json())).toMatchObject({ username: "superadmin" });
+  });
+
+  test("GET /api/v1/auth/me/meta — returns the currently logged in admin with metadata", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/auth/me/meta",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(AdminSchema.withMeta().parse(response.json())).toMatchObject({ username: "superadmin" });
+  });
+
+  test("PATCH /api/v1/auth/:id — updates only the supplied fields", async () => {
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/auth/${adminId}`,
+      cookies: { session: sessionCookie },
+      payload: { username: "patchedadmin" },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const admin = AdminSchema.parse(response.json());
+    expect(admin.username).toBe("patchedadmin");
+    expect(admin.super).toBe(false); // unchanged
+  });
+
+  test("PUT /api/v1/auth/:id — replaces all fields of the admin", async () => {
+    const response = await server.inject({
+      method: "PUT",
+      url: `/api/v1/auth/${adminId}`,
+      cookies: { session: sessionCookie },
+      payload: { username: "replacedadmin", password: "newpassword123", super: true },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(AdminSchema.parse(response.json())).toMatchObject({
+      id: adminId,
+      username: "replacedadmin",
+      super: true,
+    });
+  });
+
+  test("DELETE /api/v1/auth/:id — removes the admin from the database", async () => {
+    const deleteResponse = await server.inject({
+      method: "DELETE",
+      url: `/api/v1/auth/${adminId}`,
+      cookies: { session: sessionCookie },
+    });
+    expect(deleteResponse.statusCode).toBe(HttpSuccess.OK);
+
+    const fetchResponse = await server.inject({
+      method: "GET",
+      url: `/api/v1/auth/${adminId}`,
+      cookies: { session: sessionCookie },
+    });
+    expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
+  });
 });
 
 describe("Hall routes — SQL integration", { sequential: true }, () => {
@@ -63,7 +184,7 @@ describe("Hall routes — SQL integration", { sequential: true }, () => {
     hallId = hall.id;
   });
 
-  test("GET /api/v1/hall — returns a list containing the seeded hall", async () => {
+  test("GET /api/v1/hall — returns a list containing the created hall", async () => {
     const response = await server.inject({ method: "GET", url: "/api/v1/hall" });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
@@ -71,7 +192,7 @@ describe("Hall routes — SQL integration", { sequential: true }, () => {
     expect(halls.some((h) => HallSchema.parse(h).id === hallId)).toBe(true);
   });
 
-  test("GET /api/v1/hall/:id — returns the seeded hall", async () => {
+  test("GET /api/v1/hall/:id — returns the created hall", async () => {
     const response = await server.inject({ method: "GET", url: `/api/v1/hall/${hallId}` });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
