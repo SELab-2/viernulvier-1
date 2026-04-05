@@ -13,12 +13,12 @@ const insertBlogPost = (server: FastifyInstance) =>
      VALUES ($1, $2, $3, $4, $5, $5, $6, $6)
      RETURNING id, blog, title, content, published_at`,
     z.tuple([
-      CreateBlogPostBodySchema.shape.blog,    // blog (FK)
-      CreateBlogPostBodySchema.shape.title,   // title
-      CreateBlogPostBodySchema.shape.content, // content (JSONB)
-      CreateBlogPostBodySchema.shape.published_at, // published_at
-      z.int(),                                // admin
-      z.date(),                               // current_time
+      CreateBlogPostBodySchema.shape.blog,
+      CreateBlogPostBodySchema.shape.title,
+      CreateBlogPostBodySchema.shape.content,
+      CreateBlogPostBodySchema.shape.published_at,
+      z.int(),
+      z.date(),
     ]),
     BlogPostSchema,
   );

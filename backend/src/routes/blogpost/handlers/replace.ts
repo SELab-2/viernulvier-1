@@ -14,13 +14,13 @@ const replaceBlogPostQuery = (server: FastifyInstance) =>
      WHERE id = $7
      RETURNING id, blog, title, content, published_at`,
     z.tuple([
-      ReplaceBlogPostBodySchema.shape.blog,    // blog (FK)
-      ReplaceBlogPostBodySchema.shape.title,   // title
-      ReplaceBlogPostBodySchema.shape.content, // content (JSONB)
-      ReplaceBlogPostBodySchema.shape.published_at, // published_at
-      z.int(),                                 // admin
-      z.date(),                                // current_time
-      z.int(),                                 // id
+      ReplaceBlogPostBodySchema.shape.blog,
+      ReplaceBlogPostBodySchema.shape.title,
+      ReplaceBlogPostBodySchema.shape.content,
+      ReplaceBlogPostBodySchema.shape.published_at,
+      z.int(),
+      z.date(),
+      z.int(),
     ]),
     BlogPostSchema,
   );

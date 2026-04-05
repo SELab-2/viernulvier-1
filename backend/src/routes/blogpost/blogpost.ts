@@ -17,7 +17,7 @@ import { fetchBlogPosts, fetchBlogPost, fetchBlogPostWithMeta, createBlogPost, r
  * @param server - The Fastify instance to register routes on.
  */
 export default function blogPostRoutes(server: FastifyInstance) {
-  const protect = { preHandler: [server.authorize] };
+  const protect = { preHandler: [server.authorize()] };
 
   server.get("/api/v1/blogpost", replyHandler(server, fetchBlogPosts));
   server.get("/api/v1/blogpost/:id", replyHandler(server, fetchBlogPost));

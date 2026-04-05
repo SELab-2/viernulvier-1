@@ -17,14 +17,14 @@ FROM blogpost
 const fetchBlogPostsQuery = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `${BlogPostSelect} ORDER BY id ASC`,
+    `${BlogPostSelect} WHERE published_at IS NOT NULL ORDER BY id ASC`,
     BlogPostSchema,
   );
 
 const fetchBlogPostByIdQuery = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `${BlogPostSelect} WHERE id = $1`,
+    `${BlogPostSelect} WHERE id = $1 AND published_at IS NOT NULL`,
     z.tuple([z.int()]),
     BlogPostSchema,
   );
