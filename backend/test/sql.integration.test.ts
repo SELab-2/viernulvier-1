@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-import { HallSchema, AdminSchema, BlogSchema, ProductionSchema, ProductionSchemaWithBackwardsRefs, EventSchema, EventPriceSchema } from "@viernulvier/shared/index.js";
+import { HallSchema, AdminSchema, BlogSchema, ProductionSchema, ProductionSchemaWithBackwardsRefs, EventSchema, EventPriceSchema, TagSchema, TagTypeSchema } from "@viernulvier/shared/index.js";
 import { HttpSuccess } from "@/routes/helpers.js";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { migrate } from "@/db/migrate.js";
@@ -13,7 +13,6 @@ let container: StartedPostgreSqlContainer;
 
 beforeAll(async () => {
   container = await new PostgreSqlContainer("postgres:16-alpine").start();
-  //process.env["DEBUG"] = "true";
   process.env["DATABASE_URL"] = container.getConnectionUri();
   process.env["JWT_SECRET"] ??= "test-secret";
 
@@ -715,6 +714,222 @@ describe("Event & event price routes — SQL integration", () => {
       expect(deleteResponse.statusCode).toBe(HttpSuccess.OK);
 
       const fetchResponse = await server.inject({ method: "GET", url: `/api/v1/event/price/${eventPriceId}` });
+      expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
+    });
+  });
+});
+
+describe("Tag & tag type routes — SQL integration", { sequential: true }, () => {
+  let tagTypeId: number;
+
+  beforeAll(async () => {
+    // Seed a tag type for the tag tests to reference
+    const tagTypeSeed = await server.inject({
+      method: "POST",
+      url: "/api/v1/tag/type",
+      cookies: { session: sessionCookie },
+      payload: { name: { nl: "Test Type" } },
+    });
+    tagTypeId = tagTypeSeed.json().id;
+  });
+
+  describe("Tag routes — SQL integration", { sequential: true }, () => {
+    let tagId: number;
+
+    const baseTagPayload = () => ({
+      old_id: null,
+      name: { nl: "Test Tag" },
+      tag_type: tagTypeId,
+      public: true,
+    });
+
+    test("POST /api/v1/tag — inserts and returns a new tag", async () => {
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/v1/tag",
+        cookies: { session: sessionCookie },
+        payload: baseTagPayload(),
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const tag = TagSchema.parse(response.json());
+      expect(tag).toMatchObject({ name: { nl: "Test Tag" }, public: true });
+
+      tagId = tag.id;
+    });
+
+    test("GET /api/v1/tag/all — returns a list containing the created tag", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/tag/all",
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const tags = response.json<unknown[]>();
+      expect(tags.some((t) => TagSchema.parse(t).id === tagId)).toBe(true);
+    });
+
+    test("GET /api/v1/tag — returns public tags containing the created tag", async () => {
+      const response = await server.inject({ method: "GET", url: "/api/v1/tag" });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const tags = response.json<unknown[]>();
+      expect(tags.some((t) => TagSchema.parse(t).id === tagId)).toBe(true);
+    });
+
+    test("GET /api/v1/tag/:id/all — returns the created tag", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/tag/${tagId}/all`,
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(TagSchema.parse(response.json())).toMatchObject({ id: tagId, name: { nl: "Test Tag" } });
+    });
+
+    test("GET /api/v1/tag/:id — returns the public tag", async () => {
+      const response = await server.inject({ method: "GET", url: `/api/v1/tag/${tagId}` });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(TagSchema.parse(response.json())).toMatchObject({ id: tagId });
+    });
+
+    test("GET /api/v1/tag/:id/meta — returns the tag with metadata", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/tag/${tagId}/meta`,
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(TagSchema.withMeta().parse(response.json())).toMatchObject({ id: tagId });
+    });
+
+    test("PATCH /api/v1/tag/:id — updates only the supplied fields", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/tag/${tagId}`,
+        cookies: { session: sessionCookie },
+        payload: { name: { nl: "Aangepaste Tag" } },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const tag = TagSchema.parse(response.json());
+      expect(tag.name).toEqual({ nl: "Aangepaste Tag" });
+      expect(tag.public).toBe(true); // unchanged
+    });
+
+    test("PUT /api/v1/tag/:id — replaces all fields of the tag", async () => {
+      const response = await server.inject({
+        method: "PUT",
+        url: `/api/v1/tag/${tagId}`,
+        cookies: { session: sessionCookie },
+        payload: { ...baseTagPayload(), name: { nl: "Vervangen Tag" }, public: false },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(TagSchema.parse(response.json())).toMatchObject({
+        id: tagId,
+        name: { nl: "Vervangen Tag" },
+        public: false,
+      });
+    });
+
+    test("DELETE /api/v1/tag/:id — removes the tag from the database", async () => {
+      const deleteResponse = await server.inject({
+        method: "DELETE",
+        url: `/api/v1/tag/${tagId}`,
+        cookies: { session: sessionCookie },
+      });
+      expect(deleteResponse.statusCode).toBe(HttpSuccess.OK);
+
+      const fetchResponse = await server.inject({ method: "GET", url: `/api/v1/tag/${tagId}` });
+      expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
+    });
+  });
+
+  describe("Tag type routes — SQL integration", { sequential: true }, () => {
+    let tagTypeIdLocal: number;
+
+    test("POST /api/v1/tag/type — inserts and returns a new tag type", async () => {
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/v1/tag/type",
+        cookies: { session: sessionCookie },
+        payload: { name: { nl: "Categorie" } },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const tagType = TagTypeSchema.parse(response.json());
+      expect(tagType).toMatchObject({ name: { nl: "Categorie" } });
+
+      tagTypeIdLocal = tagType.id;
+    });
+
+    test("GET /api/v1/tag/type — returns a list containing the created tag type", async () => {
+      const response = await server.inject({ method: "GET", url: "/api/v1/tag/type" });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const tagTypes = response.json<unknown[]>();
+      expect(tagTypes.some((t) => TagTypeSchema.parse(t).id === tagTypeIdLocal)).toBe(true);
+    });
+
+    test("GET /api/v1/tag/type/:id — returns the created tag type", async () => {
+      const response = await server.inject({ method: "GET", url: `/api/v1/tag/type/${tagTypeIdLocal}` });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(TagTypeSchema.parse(response.json())).toMatchObject({ id: tagTypeIdLocal, name: { nl: "Categorie" } });
+    });
+
+    test("GET /api/v1/tag/type/:id/meta — returns the tag type with metadata", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/tag/type/${tagTypeIdLocal}/meta`,
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(TagTypeSchema.withMeta().parse(response.json())).toMatchObject({ id: tagTypeIdLocal });
+    });
+
+    test("PATCH /api/v1/tag/type/:id — updates only the supplied fields", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/tag/type/${tagTypeIdLocal}`,
+        cookies: { session: sessionCookie },
+        payload: { name: { nl: "Aangepaste Categorie" } },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(TagTypeSchema.parse(response.json())).toMatchObject({ name: { nl: "Aangepaste Categorie" } });
+    });
+
+    test("PUT /api/v1/tag/type/:id — replaces all fields of the tag type", async () => {
+      const response = await server.inject({
+        method: "PUT",
+        url: `/api/v1/tag/type/${tagTypeIdLocal}`,
+        cookies: { session: sessionCookie },
+        payload: { name: { nl: "Vervangen Categorie", fr: "Catégorie Remplacée" } },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(TagTypeSchema.parse(response.json())).toMatchObject({
+        id: tagTypeIdLocal,
+        name: { nl: "Vervangen Categorie", fr: "Catégorie Remplacée" },
+      });
+    });
+
+    test("DELETE /api/v1/tag/type/:id — removes the tag type from the database", async () => {
+      const deleteResponse = await server.inject({
+        method: "DELETE",
+        url: `/api/v1/tag/type/${tagTypeIdLocal}`,
+        cookies: { session: sessionCookie },
+      });
+      expect(deleteResponse.statusCode).toBe(HttpSuccess.OK);
+
+      const fetchResponse = await server.inject({ method: "GET", url: `/api/v1/tag/type/${tagTypeIdLocal}` });
       expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
     });
   });
