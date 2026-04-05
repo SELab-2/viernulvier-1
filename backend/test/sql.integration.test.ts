@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-import { HallSchema, AdminSchema, BlogSchema } from "@viernulvier/shared/index.js";
+import { HallSchema, AdminSchema, BlogSchema, ProductionSchema, ProductionSchemaWithBackwardsRefs } from "@viernulvier/shared/index.js";
 import { HttpSuccess } from "@/routes/helpers.js";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { migrate } from "@/db/migrate.js";
@@ -16,6 +16,7 @@ let hallId: number;
 
 beforeAll(async () => {
   container = await new PostgreSqlContainer("postgres:16-alpine").start();
+  process.env["DEBUG"] = "true";
   process.env["DATABASE_URL"] = container.getConnectionUri();
   process.env["JWT_SECRET"] ??= "test-secret";
 
@@ -337,6 +338,132 @@ describe("Blog routes — SQL integration", { sequential: true }, () => {
     expect(deleteResponse.statusCode).toBe(HttpSuccess.OK);
 
     const fetchResponse = await server.inject({ method: "GET", url: `/api/v1/blog/${blogId}` });
+    expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
+  });
+});
+
+describe("Production routes — SQL integration", { sequential: true }, () => {
+  let productionId: number;
+
+  const basePayload = {
+    title: { nl: "Test Productie" },
+    artist: { nl: "Test Artiest" },
+    tagline: { nl: "Test tagline" },
+    teaser: { nl: "Test teaser" },
+    finalized: true,
+  };
+
+  test("POST /api/v1/production — inserts and returns a new production", async () => {
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/production",
+      cookies: { session: sessionCookie },
+      payload: { ...basePayload, old_id: 999, description: { nl: "Een beschrijving" } },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const production = ProductionSchemaWithBackwardsRefs.parse(response.json());
+    expect(production).toMatchObject({ title: { nl: "Test Productie" }, tags: [], events: [] });
+
+    productionId = production.id;
+  });
+
+  test("GET /api/v1/production — returns a list containing the created production", async () => {
+    const response = await server.inject({ method: "GET", url: "/api/v1/production" });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const productions = response.json<unknown[]>();
+    expect(productions.some((p) => ProductionSchemaWithBackwardsRefs.parse(p).id === productionId)).toBe(true);
+  });
+
+  test("GET /api/v1/production/:id — returns the created production", async () => {
+    const response = await server.inject({ method: "GET", url: `/api/v1/production/${productionId}` });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(ProductionSchemaWithBackwardsRefs.parse(response.json())).toMatchObject({ id: productionId });
+  });
+
+  test("GET /api/v1/production/:id/meta — returns the production with metadata", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/production/${productionId}/meta`,
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(ProductionSchema.withMeta().parse(response.json())).toMatchObject({ id: productionId });
+  });
+
+  test("PATCH /api/v1/production/:id — updates only the supplied fields", async () => {
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/production/${productionId}`,
+      cookies: { session: sessionCookie },
+      payload: { description: { nl: "Aangepaste beschrijving" } },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const production = ProductionSchemaWithBackwardsRefs.parse(response.json());
+    expect(production.description).toEqual({ nl: "Aangepaste beschrijving" });
+    expect(production.title).toEqual({ nl: "Test Productie" }); // unchanged
+  });
+
+  test("PATCH /api/v1/production/bulk — updates multiple productions", async () => {
+    const response = await server.inject({
+      method: "PATCH",
+      url: "/api/v1/production/bulk",
+      cookies: { session: sessionCookie },
+      payload: {
+        ids: [productionId],
+        data: { tagline: { nl: "Nieuwe tagline" } },
+      },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const productions = response.json<unknown[]>();
+    expect(productions.some((p) => ProductionSchemaWithBackwardsRefs.parse(p).id === productionId)).toBe(true);
+  });
+
+  test("PUT /api/v1/production/:id — replaces all fields of the production", async () => {
+    const response = await server.inject({
+      method: "PUT",
+      url: `/api/v1/production/${productionId}`,
+      cookies: { session: sessionCookie },
+      payload: {
+        ...basePayload,
+        title: { nl: "Vervangen Productie" },
+        old_id: null,
+        finalized: false,
+        supertitle: null,
+        description: null,
+        description_extra: null,
+        description_2: null,
+        video_1: null,
+        video_2: null,
+        quote: null,
+        quote_source: null,
+        programme: null,
+        info: null,
+      },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(ProductionSchemaWithBackwardsRefs.parse(response.json())).toMatchObject({
+      id: productionId,
+      title: { nl: "Vervangen Productie" },
+      old_id: null,
+    });
+  });
+
+  test("DELETE /api/v1/production/:id — removes the production from the database", async () => {
+    const deleteResponse = await server.inject({
+      method: "DELETE",
+      url: `/api/v1/production/${productionId}`,
+      cookies: { session: sessionCookie },
+    });
+    expect(deleteResponse.statusCode).toBe(HttpSuccess.OK);
+
+    const fetchResponse = await server.inject({ method: "GET", url: `/api/v1/production/${productionId}` });
     expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
   });
 });
