@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-import { HallSchema, AdminSchema } from "@viernulvier/shared/index.js";
+import { HallSchema, AdminSchema, BlogSchema } from "@viernulvier/shared/index.js";
 import { HttpSuccess } from "@/routes/helpers.js";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { migrate } from "@/db/migrate.js";
@@ -250,6 +250,93 @@ describe("Hall routes — SQL integration", { sequential: true }, () => {
     expect(deleteResponse.statusCode).toBe(HttpSuccess.OK);
 
     const fetchResponse = await server.inject({ method: "GET", url: `/api/v1/hall/${hallId}` });
+    expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
+  });
+});
+
+describe("Blog routes — SQL integration", { sequential: true }, () => {
+  let blogId: number;
+
+  test("POST /api/v1/blog — inserts and returns a new blog", async () => {
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/blog",
+      cookies: { session: sessionCookie },
+      payload: { name: "Test Blog", description: "A test description" },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const blog = BlogSchema.parse(response.json());
+    expect(blog).toMatchObject({ name: "Test Blog", description: "A test description" });
+
+    blogId = blog.id;
+  });
+
+  test("GET /api/v1/blog — returns a list containing the created blog", async () => {
+    const response = await server.inject({ method: "GET", url: "/api/v1/blog" });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const blogs = response.json<unknown[]>();
+    expect(blogs.some((b) => BlogSchema.parse(b).id === blogId)).toBe(true);
+  });
+
+  test("GET /api/v1/blog/:id — returns the created blog", async () => {
+    const response = await server.inject({ method: "GET", url: `/api/v1/blog/${blogId}` });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(BlogSchema.parse(response.json())).toMatchObject({ id: blogId, name: "Test Blog" });
+  });
+
+  test("GET /api/v1/blog/:id/meta — returns the blog with metadata", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/blog/${blogId}/meta`,
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(BlogSchema.withMeta().parse(response.json())).toMatchObject({ id: blogId });
+  });
+
+  test("PATCH /api/v1/blog/:id — updates only the supplied fields", async () => {
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/blog/${blogId}`,
+      cookies: { session: sessionCookie },
+      payload: { description: "Updated description" },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const blog = BlogSchema.parse(response.json());
+    expect(blog.description).toBe("Updated description");
+    expect(blog.name).toBe("Test Blog"); // unchanged
+  });
+
+  test("PUT /api/v1/blog/:id — replaces all fields of the blog", async () => {
+    const response = await server.inject({
+      method: "PUT",
+      url: `/api/v1/blog/${blogId}`,
+      cookies: { session: sessionCookie },
+      payload: { name: "Replaced Blog", description: null },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(BlogSchema.parse(response.json())).toMatchObject({
+      id: blogId,
+      name: "Replaced Blog",
+      description: null,
+    });
+  });
+
+  test("DELETE /api/v1/blog/:id — removes the blog from the database", async () => {
+    const deleteResponse = await server.inject({
+      method: "DELETE",
+      url: `/api/v1/blog/${blogId}`,
+      cookies: { session: sessionCookie },
+    });
+    expect(deleteResponse.statusCode).toBe(HttpSuccess.OK);
+
+    const fetchResponse = await server.inject({ method: "GET", url: `/api/v1/blog/${blogId}` });
     expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
   });
 });
