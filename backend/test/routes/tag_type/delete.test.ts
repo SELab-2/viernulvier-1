@@ -41,12 +41,12 @@ afterAll(async () => {
 
 describe("Delete tag_type", () => {
 
-  test("DELETE /api/v1/tags/type/:id", async () => {
+  test("DELETE /api/v1/tag/type/:id", async () => {
 
     const response = await server.inject({
       method: "DELETE",
       cookies: { session: sessionCookie },
-      url: `/api/v1/tags/type/${tagType.id}`,
+      url: `/api/v1/tag/type/${tagType.id}`,
     });
 
     expect(response.statusCode).toBe(200);
@@ -58,7 +58,7 @@ describe("Delete tag_type", () => {
     const response = await server.inject({
       method: "DELETE",
       cookies: { session: sessionCookie },
-      url: `/api/v1/tags/type/999`,
+      url: `/api/v1/tag/type/999`,
     });
 
     expect(response.statusCode).toBe(404);

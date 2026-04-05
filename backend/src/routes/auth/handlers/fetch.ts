@@ -7,7 +7,7 @@ import z from "zod";
 const fetchAdminById = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `SELECT id, username, profile_picture_url AS profile_picture
+    `SELECT id, username, super, profile_picture_url AS profile_picture
      FROM admin WHERE id = $1`,
     z.tuple([z.int()]),
     AdminSchema,
@@ -16,7 +16,7 @@ const fetchAdminById = (server: FastifyInstance) =>
 const fetchAdminWithMetaById = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `SELECT id, username, profile_picture_url AS profile_picture,
+    `SELECT id, username, super, profile_picture_url AS profile_picture,
             created_at, updated_at, created_by, updated_by
      FROM admin WHERE id = $1`,
     z.tuple([z.int()]),
@@ -26,7 +26,7 @@ const fetchAdminWithMetaById = (server: FastifyInstance) =>
 const fetchAllAdmins = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `SELECT id, username, profile_picture_url AS profile_picture
+    `SELECT id, username, super, profile_picture_url AS profile_picture
      FROM admin`,
     z.tuple([]),
     AdminSchema,
@@ -102,10 +102,12 @@ async function fetchCurrentlyLoggedInAdminWithMeta(
  * Fetches all admins from the database, without metadata.
  *
  * @param server - The Fastify instance, used for database access and logging.
+ * @param _request - The Fastify request, not used.
  * @returns An array of all admins, or an empty array if none are found.
  */
 async function fetchAdmins(
   server: FastifyInstance,
+  _request: FastifyRequest,
 ): Promise<Admin[]> {
   return await fetchAllAdmins(server)();
 }
