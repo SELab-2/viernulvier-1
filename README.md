@@ -25,4 +25,3 @@ Refer to the **[Contributing Guide](DOCS/CONTRIBUTING.md)** for full setup instr
 
 - **Live archive:** https://viernulvier-archive.be
 - **Issues & feedback:** use the GitHub issue tracker
-
