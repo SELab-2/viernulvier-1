@@ -4,9 +4,8 @@
     // File Layout
     "rootDir": "..",
     "outDir": "./dist",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
+      "@/*": ["./src/*"],
       "@viernulvier/shared/*": ["../shared/src/*"]
     },
 
@@ -36,7 +35,6 @@
     "noPropertyAccessFromIndexSignature": true,
 
     // Recommended Options
-    "ignoreDeprecations": "6.0",
     "strict": true,
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
