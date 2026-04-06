@@ -14,7 +14,7 @@
       <div ref="heroContent" class="opacity-0 animate-fade-up max-w-4xl">
         <div class="mb-4 flex flex-col gap-2">
           <span class="text-sm font-bold uppercase tracking-[0.3em] text-ink-on-inv opacity-70">
-            10x10
+            {{ supertitle }}
           </span>
           <span class="italic text-3xl font-bold tracking-tighter text-ink-on-inv md:text-4xl">
             {{ artist }}
@@ -35,7 +35,7 @@
         <div class="flex flex-col gap-1 items-start md:items-end">
   
           <span class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">
-            Date Range
+            {{ t("production.hero.dateRange") }}
           </span>
   
           <div class="flex flex-col items-start md:items-end text-xl font-bold tracking-tight leading-tight">
@@ -48,7 +48,7 @@
         
         <div class="flex flex-col gap-1 md:items-end">
           <span class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">
-            Speelduur
+            {{ t("production.hero.runningTime") }}
           </span>
           <span class="text-xl font-bold tracking-tight">75m</span>
         </div>
@@ -67,8 +67,10 @@
 import { i18n, type SupportedLang } from "@/i18n";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { computed } from "vue";
-import { localizeOrEmpty } from "@/utils/i18n";
+import { localizeOrEmpty, type LanguageMap } from "@/utils/i18n";
+import { useI18n } from "vue-i18n";
 
+const { t } = useI18n();
 const currentLang = computed(
   () => i18n.global.locale.value as SupportedLang,
 );
@@ -77,10 +79,12 @@ const { production } = defineProps<{
   production: ProductionWithBackwardsRefs;
 }>();
 
-const tProd = (map: any) =>
-  localizeOrEmpty(map, currentLang.value);
+const tProd = (map: LanguageMap | null | undefined) =>
+  localizeOrEmpty(map ?? {}, currentLang.value);
 
 const artist = computed(() => tProd(production.artist));
 const title = computed(() => tProd(production.title));
+const supertitle = computed(() => tProd(production.supertitle)); //nullable
+const tagline = computed(() => tProd(production.tagline));
 
 </script>

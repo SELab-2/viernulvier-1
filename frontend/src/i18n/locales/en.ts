@@ -36,4 +36,10 @@ export default {
   date: {
     doorsOpen: "Doors open at",
   },
+  production: {
+    hero: {
+      dateRange: "Run",
+      runningTime: "Running Time",
+    },
+  },
 };

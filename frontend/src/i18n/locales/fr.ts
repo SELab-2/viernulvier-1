@@ -36,4 +36,10 @@ export default {
   date: {
     doorsOpen: "Portes ouvertes à",
   },
+  production: {
+    hero: {
+      dateRange: "Période",
+      runningTime: "Durée",
+    },
+  },
 };

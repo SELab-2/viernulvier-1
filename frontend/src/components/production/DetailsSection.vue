@@ -1,86 +1,154 @@
 <template>
-  <div class="bg-surface-1">
-    <section class="mx-auto grid max-w-7xl grid-cols-1 gap-16 px-6 py-24 md:px-12 lg:grid-cols-12">
-      <div class="space-y-12 lg:col-span-8">
-        <div class="space-y-8">
-          <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-ink-tertiary">
-            Production Concept
-          </h2>
-          <p class="italic text-3xl font-black leading-[1.1] tracking-tighter text-ink-primary md:text-5xl">
-            Working with architectural lighting designer Elena Vance, the
-            production utilizes harsh shadows to "build" temporary walls on
-            stage.
-          </p>
-        </div>
+  <div class="bg-surface-1 text-ink-primary">
+    <div class="mx-auto max-w-7xl px-6 py-24 md:px-12">
+      <section class="flex flex-col gap-16 lg:grid lg:grid-cols-12 lg:gap-x-16 lg:gap-y-24">
         
-        <div class="grid grid-cols-1 gap-12 border-t border-surface-3 pt-12 md:grid-cols-2">
-          <div class="text-lg font-light leading-relaxed text-ink-secondary">
-            <p>
-              <span class="font-bold text-ink-primary">The Silent Architecture</span> is a contemporary dance piece that challenges
-              the perception of physical boundaries. Kostova investigates the
-              tension between the skeletal frame and negative space.
-            </p>
-          </div>
-          <div class="text-lg font-light leading-relaxed text-ink-secondary">
-            <p>
-              Marking a new chapter in VierNulVier's archive, it is a work of
-              profound restraint and explosive athleticism, exploring how
-              silence can be as loud as movement.
-            </p>
-          </div>
-        </div>
-
-        <div class="border-t border-surface-3 pt-12 space-y-3">
-          <div
-            v-for="group in tagGroups"
-            :key="group.label"
-            class="flex flex-wrap items-center gap-2"
-          >
-            <span class="mr-2 text-[10px] font-bold uppercase tracking-widest text-ink-tertiary">
-              {{ group.label }}:
-            </span>
-            <span
-              v-for="tag in group.tags"
-              :key="tag"
-              class="border border-surface-3 bg-surface-0 px-3 py-1 text-[10px] font-bold uppercase text-ink-secondary"
-            >
-              {{ tag }}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div class="lg:col-span-4">
-        <div class="sticky top-32 space-y-8">
-          <div class="border border-surface-3 bg-surface-0 p-8">
-            <h3 class="mb-6 border-b border-surface-3 pb-4 text-xs font-black uppercase tracking-[0.2em] text-ink-primary">
-              Archival Status
-            </h3>
-            <p class="mb-4 text-sm leading-relaxed text-ink-secondary">
-              This production record includes high-fidelity video recordings,
-              technical floorplans, and original soundscapes from the October
-              2024 premiere.
-            </p>
-          </div>
+        <div class="lg:col-start-9 lg:col-span-4">
+          <div class="sticky top-32 h-fit space-y-6">
             
-          <div class="border border-surface-3 bg-surface-1 p-6">
-            <span class="mb-2 block text-[10px] font-bold tracking-widest uppercase text-ink-tertiary">
-              Internal Note
-            </span>
-            <p class="italic text-xs text-ink-secondary">
-              Physical archive holds original costume swatches and lighting gel
-              samples.
+            <div v-if="teaser || description_extra" class="bg-surface-inv p-8 shadow-xl text-ink-on-inv border border-surface-3">
+              <h2 v-if="teaser" class="text-[10px] font-black uppercase tracking-[0.3em] text-ink-on-inv-tertiary" :class="{ 'mb-4': description_extra }">
+                {{ teaser }}
+              </h2>
+              
+              <div v-if="teaser && description_extra" class="mb-6 h-px w-12 bg-ink-on-inv-tertiary opacity-30"></div>
+              
+              <p v-if="description_extra" class="text-sm leading-relaxed whitespace-pre-line">
+                {{ description_extra }}
+              </p>
+            </div>
+              
+            <div v-if="tagGroups && tagGroups.some(g => g.tags.length > 0)" class="border border-surface-3 bg-surface-0 transition-all duration-300">
+              <button 
+                class="group flex w-full items-center justify-between px-6 py-6 outline-none transition-colors hover:bg-surface-1"
+                @click="tagsExpanded = !tagsExpanded"
+              >
+                <div class="flex items-center gap-3">
+                  <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-ink-primary">
+                    Tags
+                  </h3>
+                  <span class="text-[9px] font-bold text-ink-tertiary">
+                    ({{ tagGroups.reduce((acc, g) => acc + g.tags.length, 0) }})
+                  </span>
+                </div>
+
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke-width="2.5" 
+                  stroke="currentColor" 
+                  class="h-3 w-3 transition-all duration-300 text-ink-tertiary group-hover:text-ink-primary"
+                  :class="{ 'rotate-180': tagsExpanded, 'translate-y-0.5': !tagsExpanded }"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+
+              <div v-if="tagsExpanded" class="space-y-6 border-t border-surface-3 p-6 pt-5 bg-surface-0">
+                <template v-for="group in tagGroups" :key="group.label">
+                  <div v-if="group.tags.length > 0" class="flex flex-col gap-2">
+                    <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-ink-tertiary">
+                      {{ group.label }}
+                    </span>
+                    <div class="flex flex-wrap gap-2">
+                      <span 
+                        v-for="tag in group.tags" 
+                        :key="tag" 
+                        class="border border-surface-3 bg-surface-1 px-2.5 py-1 text-[9px] font-bold uppercase text-ink-secondary hover:border-ink-tertiary transition-colors cursor-default"
+                      >
+                        {{ tag }}
+                      </span>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-16 lg:col-start-1 lg:col-span-8 lg:row-start-1">
+          
+          <div v-if="quote" class="space-y-8 pb-12 border-b border-surface-3">
+            <div class="space-y-4">
+              <p class="italic text-4xl font-black leading-[1.1] tracking-tighter text-ink-primary md:text-6xl">
+                “{{ quote }}”
+              </p>
+              <p v-if="quote_source" class="pl-8 text-sm font-bold uppercase tracking-widest text-ink-secondary md:pl-16">
+                — {{ quote_source }}
+              </p>
+            </div>
+          </div>
+          
+          <div v-if="description || description_2" class="space-y-10">
+            <p v-if="description" class="text-lg font-light leading-relaxed text-ink-primary md:text-xl whitespace-pre-line">
+              {{ description }}
+            </p>
+            <p v-if="description_2" class="text-base font-light leading-relaxed text-ink-secondary whitespace-pre-line">
+              {{ description_2 }}
             </p>
           </div>
         </div>
-      </div>
-    </section>
+
+        <div v-if="info || programme" class="border-t border-surface-3 pt-12 lg:col-span-12">
+          <div class="grid grid-cols-1 gap-12 lg:grid-cols-12">
+            
+            <div v-if="info" class="lg:col-span-8 space-y-6">
+              <h3 class="text-xs font-black uppercase tracking-[0.2em] text-ink-primary">
+                Extra Informatie
+              </h3>
+              <p class="max-w-2xl text-sm italic text-ink-secondary leading-relaxed whitespace-pre-line">
+                {{ info }}
+              </p>
+            </div>
+
+            <div v-if="programme" class="lg:col-span-4" :class="{ 'lg:col-start-9': !info }">
+              <div class="sticky top-32 h-fit border border-surface-3 bg-surface-0 p-6 shadow-sm">
+                <p class="text-xs font-medium leading-relaxed text-ink-primary whitespace-pre-line">
+                  {{ programme }}
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </section>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 // import { Plus } from "lucide-vue-next";
+import { i18n, type SupportedLang } from "@/i18n";
+import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
+import { computed, ref } from "vue";
+import { localizeOrEmpty, type LanguageMap } from "@/utils/i18n";
+import { useI18n } from "vue-i18n";
 
+const { t } = useI18n();
+const currentLang = computed(
+  () => i18n.global.locale.value as SupportedLang,
+);
+
+const { production } = defineProps<{
+  production: ProductionWithBackwardsRefs;
+}>();
+
+const tProd = (map: LanguageMap | null | undefined) =>
+  localizeOrEmpty(map ?? {}, currentLang.value);
+
+const teaser = computed(() => tProd(production.teaser));
+const description = computed(() => tProd(production.description));
+const description_extra = computed(() => tProd(production.description_extra));
+const description_2 = computed(() => tProd(production.description_2));
+const quote = computed(() => tProd(production.quote));
+const quote_source = computed(() => tProd(production.quote_source));
+const programme = computed(() => tProd(production.programme));
+const info = computed(() => tProd(production.info));
+
+console.log(description);
+const tagsExpanded = ref(true);
 const tagGroups = [
   { label: "Type",    tags: ["Dance"] },
   { label: "Genre",   tags: ["Contemporary", "Minimalism"] },

@@ -18,7 +18,7 @@
 
       <template v-else-if="production">
         <HeroSection :production="production" />
-        <DetailsSection />
+        <DetailsSection :production="production" />
         <EventsSection />
         <GallerySection />
         <BlogSection />

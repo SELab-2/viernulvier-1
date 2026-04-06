@@ -36,4 +36,10 @@ export default {
   date: {
     doorsOpen: "Deuren open om",
   },
+  production: {
+    hero: {
+      dateRange: "Speelperiode",
+      runningTime: "Speelduur",
+    },
+  },
 };
