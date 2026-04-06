@@ -41,5 +41,9 @@ export default {
       dateRange: "Période",
       runningTime: "Durée",
     },
+    details: {
+      tags: "Étiquettes",
+      extraInfo: "Infos complémentaires",
+    },
   },
 };

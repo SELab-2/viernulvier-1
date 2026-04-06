@@ -41,5 +41,9 @@ export default {
       dateRange: "Run",
       runningTime: "Running Time",
     },
+    details: {
+      tags: "Tags",
+      extraInfo: "Extra Info",
+    },
   },
 };

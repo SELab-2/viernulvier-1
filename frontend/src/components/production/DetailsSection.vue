@@ -25,7 +25,7 @@
               >
                 <div class="flex items-center gap-3">
                   <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-ink-primary">
-                    Tags
+                    {{ t("production.details.tags") }}
                   </h3>
                   <span class="text-[9px] font-bold text-ink-tertiary">
                     ({{ tagGroups.reduce((acc, g) => acc + g.tags.length, 0) }})
@@ -95,7 +95,7 @@
             
             <div v-if="info" class="lg:col-span-8 space-y-6">
               <h3 class="text-xs font-black uppercase tracking-[0.2em] text-ink-primary">
-                Extra Informatie
+                {{ t("production.details.extraInfo") }}
               </h3>
               <p class="max-w-2xl text-sm italic text-ink-secondary leading-relaxed whitespace-pre-line">
                 {{ info }}
@@ -145,7 +145,7 @@ const description_2 = computed(() => tProd(production.description_2));
 const quote = computed(() => tProd(production.quote));
 const quote_source = computed(() => tProd(production.quote_source));
 const programme = computed(() => tProd(production.programme));
-const info = computed(() => tProd(production.info));
+const info = "computed(() => tProd(production.info))";
 
 console.log(description);
 const tagsExpanded = ref(true);

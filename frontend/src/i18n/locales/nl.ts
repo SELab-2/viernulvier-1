@@ -41,5 +41,9 @@ export default {
       dateRange: "Speelperiode",
       runningTime: "Speelduur",
     },
+    details: {
+      tags: "Labels",
+      extraInfo: "Extra info",
+    },
   },
 };
