@@ -145,7 +145,7 @@ const description_2 = computed(() => tProd(production.description_2));
 const quote = computed(() => tProd(production.quote));
 const quote_source = computed(() => tProd(production.quote_source));
 const programme = computed(() => tProd(production.programme));
-const info = "computed(() => tProd(production.info))";
+const info = computed(() => tProd(production.info));
 
 console.log(description);
 const tagsExpanded = ref(true);
