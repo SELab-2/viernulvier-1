@@ -147,7 +147,6 @@ const quote_source = computed(() => tProd(production.quote_source));
 const programme = computed(() => tProd(production.programme));
 const info = computed(() => tProd(production.info));
 
-console.log(description);
 const tagsExpanded = ref(true);
 const tagGroups = [
   { label: "Type",    tags: ["Dance"] },
