@@ -153,6 +153,7 @@ export function parseLegacyImportCli(
     : argvForLegacyImportYargs(hideBin(process.argv), false);
 
   const parsed = yargs(input)
+    .locale("en")
     .exitProcess(!fromTest)
     .scriptName(`pnpm run ${options.scriptForUsage}`)
     .usage(
