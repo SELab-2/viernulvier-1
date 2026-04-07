@@ -1,0 +1,76 @@
+import { ref, computed, onMounted } from "vue";
+import type { Tag, TagType } from "@viernulvier/shared";
+import { getTags, getTagTypes } from "@/services/tags";
+import { localizeOrEmpty, type LanguageMap } from "@/utils/i18n";
+import { i18n, type SupportedLang } from "@/i18n";
+
+export function useTagGroups(productionId: number) {
+  const fetchedTags = ref<Tag[]>([]);
+  const fetchedTypes = ref<TagType[]>([]);
+  const loading = ref(false);
+  const error = ref<unknown>(null);
+
+  const currentLang = computed(
+    () => i18n.global.locale.value as SupportedLang,
+  );
+
+  const tProd = (map: LanguageMap | null | undefined) =>
+    localizeOrEmpty(map ?? {}, currentLang.value);
+
+  const fetchData = async () => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const [tags, types] = await Promise.all([
+        getTags(productionId),
+        getTagTypes(),
+      ]);
+
+      fetchedTags.value = tags;
+      fetchedTypes.value = types;
+    } catch (err) {
+      error.value = err;
+      console.error("Failed to fetch tag data:", err);
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  onMounted(fetchData);
+
+  const tagGroups = computed(() => {
+    if (!fetchedTags.value.length || !fetchedTypes.value.length) return [];
+
+    const grouped = new Map<number, string[]>();
+
+    for (const tag of fetchedTags.value) {
+      const typeId = tag.tag_type as number;
+
+      if (!grouped.has(typeId)) {
+        grouped.set(typeId, []);
+      }
+
+      grouped.get(typeId)!.push(tProd(tag.name));
+    }
+
+    return fetchedTypes.value
+      .map((type) => ({
+        label: tProd(type.name),
+        tags: grouped.get(type.id) ?? [],
+      }))
+      .filter((g) => g.tags.length > 0);
+  });
+
+  const totalTags = computed(() =>
+    tagGroups.value.reduce((acc, g) => acc + g.tags.length, 0),
+  );
+
+  return {
+    tagGroups,
+    totalTags,
+    loading,
+    error,
+    refetch: fetchData,
+  };
+}

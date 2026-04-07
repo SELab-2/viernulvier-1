@@ -28,7 +28,7 @@
                     {{ t("production.details.tags") }}
                   </h3>
                   <span class="text-[9px] font-bold text-ink-tertiary">
-                    ({{ tagGroups.reduce((acc, g) => acc + g.tags.length, 0) }})
+                    ({{ totalTags }})
                   </span>
                 </div>
 
@@ -125,6 +125,7 @@ import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { computed, ref } from "vue";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/i18n";
 import { useI18n } from "vue-i18n";
+import { useTagGroups } from "@/composables/useTagGroups";
 
 const { t } = useI18n();
 const currentLang = computed(
@@ -148,9 +149,7 @@ const programme = computed(() => tProd(production.programme));
 const info = computed(() => tProd(production.info));
 
 const tagsExpanded = ref(true);
-const tagGroups = [
-  { label: "Type",    tags: ["Dance"] },
-  { label: "Genre",   tags: ["Contemporary", "Minimalism"] },
-  { label: "Festival", tags: ["Gentse Feesten"] },
-];
+
+const { tagGroups, totalTags, loading } = useTagGroups(production.id);
+
 </script>
