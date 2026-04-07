@@ -132,13 +132,9 @@ describe("router/index.ts — navigation guard", () => {
     });
 
     it("rethrows non-authorization errors", async () => {
-      const originalWarn = console.warn;
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation((msg, ...args: unknown[]) => {
-        const text = typeof msg === "string" ? msg : String(msg);
-        if (text.includes("uncaught error during route navigation")) return;
-        originalWarn.apply(console, [msg, ...args] as Parameters<typeof console.warn>);
-      });
-
+      // Without an onError handler, vue-router logs warn + console.error in dev;
+      // that pollutes test output. Subscribing silences those while push() still rejects.
+      const removeErrorHandler = router.onError(() => {});
       try {
         const { getCurrentlyLoggedInAdmin } = await import("@/services/auth");
         vi.mocked(getCurrentlyLoggedInAdmin).mockRejectedValueOnce(
@@ -147,7 +143,7 @@ describe("router/index.ts — navigation guard", () => {
 
         await expect(navigate(router, "/nl/admin")).rejects.toThrow("Network error");
       } finally {
-        warnSpy.mockRestore();
+        removeErrorHandler();
       }
     });
   });
