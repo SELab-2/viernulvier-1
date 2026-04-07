@@ -49,6 +49,12 @@ export default {
       "Impossible de charger les productions. Veuillez réessayer plus tard.",
     empty: "Aucune production dans les archives pour l’instant.",
     morePerformances: "{n} de plus",
+    showingRange: "{from}–{to} sur {total}",
+    prevPage: "Précédent",
+    nextPage: "Suivant",
+    pageWord: "Page",
+    pageOfTotal: "sur {total}",
+    goToPage: "Aller à la page",
   },
   admin: {
     login: {

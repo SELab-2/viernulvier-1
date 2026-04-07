@@ -3,7 +3,8 @@
     <AppNavbar :is-dark="isDark" @toggle-dark="isDark = !isDark" />
     <main>
       <section
-        class="border-b border-surface-3 bg-surface-1 py-12 md:py-16"
+        ref="pageTopAnchor"
+        class="scroll-mt-16 border-b border-surface-3 bg-surface-1 py-12 md:py-16"
       >
         <div class="mx-auto max-w-3xl px-6 text-center lg:px-10">
           <h1
@@ -36,7 +37,7 @@
         </p>
 
         <p
-          v-else-if="!productions.length"
+          v-else-if="totalCount === 0"
           class="py-16 text-center text-sm text-ink-secondary"
         >
           {{ t("productionsPage.empty") }}
@@ -51,6 +52,67 @@
             :tag-chips="tagChipsFor(p)"
             :halls-text="hallsTextFor(p.id)"
           />
+
+          <nav
+            v-if="totalPages > 1"
+            class="mt-10 grid grid-cols-1 justify-items-center gap-y-6 border-t border-surface-3 pt-8 sm:grid-cols-[1fr_auto] sm:items-center sm:justify-items-start sm:gap-x-12 sm:gap-y-0"
+            aria-label="Pagination"
+          >
+            <p class="text-center text-sm text-ink-secondary sm:text-left">
+              {{
+                t("productionsPage.showingRange", {
+                  from: rangeFrom,
+                  to: rangeTo,
+                  total: totalCount,
+                })
+              }}
+            </p>
+            <div
+              class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:justify-self-end"
+              role="group"
+              :aria-label="t('productionsPage.goToPage')"
+            >
+              <button
+                type="button"
+                class="cursor-pointer rounded-md border border-accent-outline bg-surface-0 px-3 py-1.5 text-sm font-medium text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="currentPage <= 0 || listLoading"
+                @click="goToPage(currentPage - 1)"
+              >
+                {{ t("productionsPage.prevPage") }}
+              </button>
+              <div
+                class="flex items-center gap-2 text-sm tabular-nums text-ink-secondary"
+              >
+                <span class="whitespace-nowrap">{{
+                  t("productionsPage.pageWord")
+                }}</span>
+                <input
+                  :value="pageNumberInput"
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  maxlength="6"
+                  :disabled="listLoading"
+                  :aria-label="t('productionsPage.goToPage')"
+                  class="min-w-6 max-w-8 shrink-0 border-0 border-b border-surface-3 bg-transparent px-0 pb-px text-center text-sm tabular-nums text-ink-secondary focus:border-ink-primary focus:text-ink-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                  @input="onPageNumberInput"
+                  @keydown.enter.prevent="commitPageNumberInput"
+                  @blur="commitPageNumberInput"
+                />
+                <span class="whitespace-nowrap">{{
+                  t("productionsPage.pageOfTotal", { total: totalPages })
+                }}</span>
+              </div>
+              <button
+                type="button"
+                class="cursor-pointer rounded-md border border-accent-outline bg-surface-0 px-3 py-1.5 text-sm font-medium text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="currentPage >= totalPages - 1 || listLoading"
+                @click="goToPage(currentPage + 1)"
+              >
+                {{ t("productionsPage.nextPage") }}
+              </button>
+            </div>
+          </nav>
         </div>
       </section>
     </main>
@@ -59,10 +121,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watchEffect } from "vue";
+import {
+  computed,
+  nextTick,
+  onMounted,
+  ref,
+  useTemplateRef,
+  watch,
+  watchEffect,
+} from "vue";
 import { useI18n } from "vue-i18n";
 import type {
-  Event,
+  Event as ProductionEvent,
   Hall,
   ProductionWithBackwardsRefs,
   Tag,
@@ -86,7 +156,31 @@ import {
   tagMapById,
 } from "@/utils/productionsOverview";
 
+const PAGE_SIZE = 20;
+
 const { t } = useI18n();
+
+const pageTopAnchor = useTemplateRef<HTMLElement>("pageTopAnchor");
+
+function scrollProductionsPageToTop() {
+  const el = pageTopAnchor.value;
+  if (el && typeof el.scrollIntoView === "function") {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  const doc = document.documentElement;
+  const body = document.body;
+  if (typeof doc.scrollTo === "function") {
+    doc.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  } else {
+    doc.scrollTop = 0;
+  }
+  if (typeof body.scrollTo === "function") {
+    body.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  } else {
+    body.scrollTop = 0;
+  }
+}
 
 function getInitialDark(): boolean {
   const stored = localStorage.getItem("viernulvier-dark");
@@ -104,9 +198,65 @@ watchEffect(() => {
 });
 
 const loading = ref(true);
+const listLoading = ref(false);
 const loadError = ref(false);
 const productions = ref<ProductionWithBackwardsRefs[]>([]);
-const eventsByProduction = ref(new Map<number, Event[]>());
+const totalCount = ref(0);
+const currentPage = ref(0);
+
+const totalPages = computed(() =>
+  totalCount.value === 0 ? 0 : Math.ceil(totalCount.value / PAGE_SIZE),
+);
+
+/** 1-based page shown in the pagination field (digits only while editing). */
+const pageNumberInput = ref("1");
+
+watch(currentPage, (p) => {
+  if (totalPages.value > 0) {
+    pageNumberInput.value = String(p + 1);
+  }
+});
+
+function onPageNumberInput(e: Event) {
+  pageNumberInput.value = (e.target as HTMLInputElement).value.replace(
+    /\D/g,
+    "",
+  );
+}
+
+async function commitPageNumberInput() {
+  if (totalPages.value <= 0) return;
+
+  const raw = pageNumberInput.value.replace(/\D/g, "").trim();
+  if (raw === "") {
+    pageNumberInput.value = String(currentPage.value + 1);
+    return;
+  }
+
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n)) {
+    pageNumberInput.value = String(currentPage.value + 1);
+    return;
+  }
+
+  const pageOneBased = Math.min(Math.max(1, n), totalPages.value);
+  if (pageOneBased === currentPage.value + 1) {
+    pageNumberInput.value = String(pageOneBased);
+    return;
+  }
+
+  await goToPage(pageOneBased - 1);
+  pageNumberInput.value = String(currentPage.value + 1);
+}
+
+const rangeFrom = computed(() =>
+  totalCount.value === 0 ? 0 : currentPage.value * PAGE_SIZE + 1,
+);
+
+const rangeTo = computed(() =>
+  Math.min((currentPage.value + 1) * PAGE_SIZE, totalCount.value),
+);
+const eventsByProduction = ref(new Map<number, ProductionEvent[]>());
 const tagsById = ref(new Map<number, Tag>());
 const tagTypesById = ref(new Map<number, TagType>());
 const hallsById = ref(new Map<number, Hall>());
@@ -117,14 +267,16 @@ onMounted(async () => {
   loading.value = true;
   loadError.value = false;
   try {
-    const [prods, tags, events, halls, tagTypes] = await Promise.all([
-      getProductions(),
+    const [page, tags, events, halls, tagTypes] = await Promise.all([
+      getProductions({ limit: PAGE_SIZE, offset: 0 }),
       getTags(),
       getEvents(),
       getHalls(),
       getTagTypes(),
     ]);
-    productions.value = prods;
+    productions.value = page.items;
+    totalCount.value = page.total;
+    currentPage.value = 0;
     tagsById.value = tagMapById(tags);
     tagTypesById.value = new Map(tagTypes.map((tt) => [tt.id, tt]));
     hallsById.value = hallMapById(halls);
@@ -135,6 +287,29 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+async function goToPage(page: number) {
+  if (page < 0 || page >= totalPages.value) return;
+  listLoading.value = true;
+  loadError.value = false;
+  try {
+    const { items, total } = await getProductions({
+      limit: PAGE_SIZE,
+      offset: page * PAGE_SIZE,
+    });
+    productions.value = items;
+    totalCount.value = total;
+    currentPage.value = page;
+    await nextTick();
+    requestAnimationFrame(() => {
+      scrollProductionsPageToTop();
+    });
+  } catch {
+    loadError.value = true;
+  } finally {
+    listLoading.value = false;
+  }
+}
 
 function dateSummaryFor(productionId: number) {
   const evs = eventsByProduction.value.get(productionId);

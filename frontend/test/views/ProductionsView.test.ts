@@ -12,6 +12,7 @@ import { routes } from "@/router/routes";
 import { i18n } from "@/i18n";
 import ProductionsView from "@/views/ProductionsView.vue";
 import * as productionsService from "@/services/productions";
+import type { ProductionListPage } from "@/services/productions";
 import * as tagsService from "@/services/tags";
 import type { TagType } from "@viernulvier/shared";
 import * as eventsService from "@/services/events";
@@ -87,9 +88,10 @@ const mockTagTypeGenre = {
 
 describe("ProductionsView.vue", () => {
   beforeEach(() => {
-    vi.spyOn(productionsService, "getProductions").mockResolvedValue([
-      mockProduction,
-    ]);
+    vi.spyOn(productionsService, "getProductions").mockResolvedValue({
+      items: [mockProduction],
+      total: 1,
+    });
     vi.spyOn(tagsService, "getTags").mockResolvedValue([mockTag]);
     vi.spyOn(tagsService, "getTagTypes").mockResolvedValue([mockTagTypeGenre]);
     vi.spyOn(eventsService, "getEvents").mockResolvedValue([mockEvent]);
@@ -118,7 +120,10 @@ describe("ProductionsView.vue", () => {
   it("renders the page heading after data loads", async () => {
     const { wrapper } = await mountView();
     expect(wrapper.text()).toContain("Producties");
-    expect(productionsService.getProductions).toHaveBeenCalledOnce();
+    expect(productionsService.getProductions).toHaveBeenCalledWith({
+      limit: 20,
+      offset: 0,
+    });
     wrapper.unmount();
   });
 
@@ -139,8 +144,8 @@ describe("ProductionsView.vue", () => {
   });
 
   it("shows loading then empty state when the API returns no productions", async () => {
-    let finishFetch!: (value: ProductionWithBackwardsRefs[]) => void;
-    const deferred = new Promise<ProductionWithBackwardsRefs[]>((resolve) => {
+    let finishFetch!: (value: ProductionListPage) => void;
+    const deferred = new Promise<ProductionListPage>((resolve) => {
       finishFetch = resolve;
     });
     vi.spyOn(productionsService, "getProductions").mockReturnValue(deferred);
@@ -157,7 +162,7 @@ describe("ProductionsView.vue", () => {
     await nextTick();
     expect(wrapper.text()).toContain("laden");
 
-    finishFetch([]);
+    finishFetch({ items: [], total: 0 });
     await flushPromises();
 
     expect(wrapper.text()).toContain("nog geen producties");
@@ -172,13 +177,114 @@ describe("ProductionsView.vue", () => {
     wrapper.unmount();
   });
 
+  it("fetches the requested page when the page field is committed", async () => {
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy.mockResolvedValue({
+      items: [mockProduction],
+      total: 45,
+    });
+
+    const { wrapper } = await mountView();
+    const field = wrapper.find('input[inputmode="numeric"]');
+    expect(field.exists()).toBe(true);
+
+    await field.setValue("3");
+    await field.trigger("blur");
+    await flushPromises();
+
+    expect(getProductionsSpy).toHaveBeenLastCalledWith({
+      limit: 20,
+      offset: 40,
+    });
+
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => resolve());
+    });
+    wrapper.unmount();
+  });
+
+  it("does not refetch when committing the current page number", async () => {
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy.mockResolvedValue({
+      items: [mockProduction],
+      total: 45,
+    });
+
+    const { wrapper } = await mountView();
+    expect(getProductionsSpy).toHaveBeenCalledTimes(1);
+
+    const field = wrapper.find('input[inputmode="numeric"]');
+    await field.setValue("1");
+    await field.trigger("blur");
+    await flushPromises();
+
+    expect(getProductionsSpy).toHaveBeenCalledTimes(1);
+
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => resolve());
+    });
+    wrapper.unmount();
+  });
+
+  it("jumps to page 2 when Enter is pressed in the page field", async () => {
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy.mockResolvedValue({
+      items: [mockProduction],
+      total: 45,
+    });
+
+    const { wrapper } = await mountView();
+    const field = wrapper.find('input[inputmode="numeric"]');
+    await field.setValue("2");
+    await field.trigger("keydown.enter");
+    await flushPromises();
+
+    expect(getProductionsSpy).toHaveBeenLastCalledWith({
+      limit: 20,
+      offset: 20,
+    });
+
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => resolve());
+    });
+    wrapper.unmount();
+  });
+
+  it("clamps the page field to the last page when the value is too large", async () => {
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy.mockResolvedValue({
+      items: [mockProduction],
+      total: 45,
+    });
+
+    const { wrapper } = await mountView();
+    const field = wrapper.find('input[inputmode="numeric"]');
+    await field.setValue("999");
+    await field.trigger("blur");
+    await flushPromises();
+
+    expect(getProductionsSpy).toHaveBeenLastCalledWith({
+      limit: 20,
+      offset: 40,
+    });
+    expect((field.element as HTMLInputElement).value).toBe("3");
+
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => resolve());
+    });
+    wrapper.unmount();
+  });
+
   it("skips unknown tags and tags with empty localized names", async () => {
-    vi.spyOn(productionsService, "getProductions").mockResolvedValue([
-      {
-        ...mockProduction,
-        tags: [7, 99, 8] as unknown as ProductionWithBackwardsRefs["tags"],
-      } as ProductionWithBackwardsRefs,
-    ]);
+    vi.spyOn(productionsService, "getProductions").mockResolvedValue({
+      items: [
+        {
+          ...mockProduction,
+          tags: [7, 99, 8] as unknown as ProductionWithBackwardsRefs["tags"],
+        } as ProductionWithBackwardsRefs,
+      ],
+      total: 1,
+    });
     vi.spyOn(tagsService, "getTags").mockResolvedValue([
       mockTag,
       {

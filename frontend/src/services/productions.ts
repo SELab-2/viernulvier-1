@@ -2,7 +2,7 @@
  * @file Production API — CRUD for productions.
  *
  * Public endpoints (no session required):
- *   - {@link getProductions} — list all productions
+ *   - {@link getProductions} — list productions (optional pagination)
  *   - {@link getProduction}  — fetch one production by ID
  *
  * Protected endpoints (active session required):
@@ -81,16 +81,35 @@ export interface BulkUpdateProductionsInput {
 // Public endpoints
 // ---------------------------------------------------------------------------
 
+/** Paginated public list response from {@link getProductions}. */
+export type ProductionListPage = {
+  items: ProductionWithBackwardsRefs[];
+  /** Total number of productions (all pages), not just `items.length`. */
+  total: number;
+};
+
 /**
- * Fetches all productions (public — no session required).
+ * Fetches productions (public — no session required).
  *
- * @returns Array of productions, each with `tags` and `events` as arrays of linked IDs.
+ * - With `{ limit, offset }`: returns one page plus the full `total` count.
+ * - With no options: returns every production as `items` and `total === items.length`.
  *
  * @example
- * const productions = await getProductions();
+ * const { items, total } = await getProductions({ limit: 20, offset: 0 });
  */
-export async function getProductions(): Promise<ProductionWithBackwardsRefs[]> {
-  return await apiFetch<ProductionWithBackwardsRefs[]>("/production");
+export async function getProductions(options?: {
+  limit?: number;
+  offset?: number;
+}): Promise<ProductionListPage> {
+  const params = new URLSearchParams();
+  if (options?.limit !== undefined) {
+    params.set("limit", String(options.limit));
+    params.set("offset", String(options.offset ?? 0));
+  }
+  const qs = params.toString();
+  return await apiFetch<ProductionListPage>(
+    qs ? `/production?${qs}` : "/production",
+  );
 }
 
 /**
