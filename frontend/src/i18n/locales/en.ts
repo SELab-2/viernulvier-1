@@ -36,4 +36,13 @@ export default {
   date: {
     doorsOpen: "Doors open at",
   },
+  productionsPage: {
+    heading: "Productions",
+    intro:
+      "Every show in the archive at a glance.",
+    loading: "Loading productions…",
+    error: "Could not load productions. Please try again later.",
+    empty: "No productions in the archive yet.",
+    morePerformances: "& {n} more",
+  },
 };

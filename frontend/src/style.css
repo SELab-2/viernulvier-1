@@ -29,6 +29,9 @@
   --color-ink-on-inv-tertiary: var(--ink-on-inv-tertiary);
 
   --color-photo-overlay: var(--photo-overlay);
+
+  --color-tag-genre-bg: var(--tag-genre-bg);
+  --color-tag-genre-text: var(--tag-genre-text);
 }
 
 @layer base {

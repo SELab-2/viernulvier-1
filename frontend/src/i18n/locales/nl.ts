@@ -36,4 +36,14 @@ export default {
   date: {
     doorsOpen: "Deuren open om",
   },
+  productionsPage: {
+    heading: "Producties",
+    intro:
+      "Alle voorstellingen uit het archief op een rij.",
+    loading: "Producties laden…",
+    error:
+      "De producties konden niet worden geladen. Probeer het later opnieuw.",
+    empty: "Er staan nog geen producties in het archief.",
+    morePerformances: "nog {n}",
+  },
 };
