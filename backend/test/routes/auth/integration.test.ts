@@ -124,7 +124,7 @@ describe("Auth route integration", () => {
           if (!match) continue;
 
           const [, field, indexStr] = match;
-          const value = params[parseInt(indexStr) - 1];
+          const value = params[parseInt(indexStr!) - 1];
 
           if (field === "username") mockDb[idx]!.username = value as string;
           if (field === "password") mockDb[idx]!.password = value as string;
