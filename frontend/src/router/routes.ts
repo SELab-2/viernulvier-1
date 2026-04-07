@@ -34,7 +34,6 @@ export const routes: RouteRecordRaw[] = [
     path: "/:lang(nl|fr|en)/admin/cms",
     name: RouteNames.CMS,
     component: () => import("../views/admin/CMSView.vue"),
-    meta: { requiresAdmin: true },
   },
 
   // 404

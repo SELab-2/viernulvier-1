@@ -14,6 +14,20 @@
 
 /** Root path prepended to every {@link apiFetch} call. */
 const API_BASE = "/api/v1";
+const AUTH_TOKEN_STORAGE_KEY = "viernulvier-auth-token";
+
+export function getStoredAuthToken(): string | null {
+  return localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+}
+
+export function setStoredAuthToken(token: string | null): void {
+  if (token) {
+    localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+    return;
+  }
+
+  localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+}
 
 // ---------------------------------------------------------------------------
 // ApiError
@@ -105,7 +119,7 @@ type ApiFetchOptions = Omit<RequestInit, "body"> & {
 /**
  * Fetch wrapper for all `/api/v1/*` calls.
  *
- * - Sends cookies with every request (`credentials: "same-origin"`).
+ * - Sends cookies with every request (`credentials: "include"`).
  * - Sets `Content-Type: application/json` automatically.
  * - Serialises `options.body` with `JSON.stringify`.
  * - On non-ok responses, parses the error body and throws an {@link ApiError}.
@@ -134,11 +148,13 @@ export async function apiFetch<T>(
   options: ApiFetchOptions = {},
 ): Promise<T> {
   const { body, headers, ...rest } = options;
+  const token = getStoredAuthToken();
 
   const response = await fetch(`${API_BASE}${path}`, {
-    credentials: "same-origin",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(headers as Record<string, string>),
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,

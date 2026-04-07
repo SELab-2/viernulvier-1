@@ -34,6 +34,7 @@ import type { LanguageMap } from "@/utils/i18n";
 export interface CreateProductionInput {
   vendor_id: number;
   box_office_id: number;
+  finalized?: boolean;
   /** Main title of the production (at least one language required). */
   title: LanguageMap;
   /** Performing artist or company. */
