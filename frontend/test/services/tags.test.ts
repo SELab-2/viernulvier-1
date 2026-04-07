@@ -55,6 +55,12 @@ describe("getTags", () => {
     await getTags();
     expect(lastCall()[0]).toBe("/api/v1/tag");
   });
+
+  it("GETs /api/v1/tag?production=:id when filtered", async () => {
+    vi.stubGlobal("fetch", mockOk([tagPayload]));
+    await getTags(42);
+    expect(lastCall()[0]).toBe("/api/v1/tag?production=42");
+  });
 });
 
 describe("getTag", () => {
@@ -69,6 +75,12 @@ describe("getAllTags", () => {
     vi.stubGlobal("fetch", mockOk([tagPayload]));
     await getAllTags();
     expect(lastCall()[0]).toBe("/api/v1/tag/all");
+  });
+
+  it("GETs /api/v1/tag/all?production=:id when filtered", async () => {
+    vi.stubGlobal("fetch", mockOk([tagPayload]));
+    await getAllTags(42);
+    expect(lastCall()[0]).toBe("/api/v1/tag/all?production=42");
   });
 });
 
