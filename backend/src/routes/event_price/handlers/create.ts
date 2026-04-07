@@ -26,7 +26,7 @@ export async function createEventPrice(
     server,
     `INSERT INTO event_price (event, amount, created_at, updated_at, created_by, updated_by)
       VALUES ($1, $2, $3, $3, $4, $4)
-      RETURNING id, event, amount`,
+      RETURNING id, event, amount::float`,
     z.tuple([
       EventPriceCreateSchema.shape.event,
       EventPriceCreateSchema.shape.amount,
