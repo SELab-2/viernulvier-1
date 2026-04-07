@@ -677,6 +677,78 @@ describe("Event & event price routes — SQL integration", () => {
       expect(events.some((e) => EventSchema.parse(e).id === eventId)).toBe(true);
     });
 
+    test("GET /api/v1/event?production=:id — returns only events for that production", async () => {
+      // Create another production with its own event
+      const otherProdResponse = await server.inject({
+        method: "POST",
+        url: "/api/v1/production",
+        cookies: { session: sessionCookie },
+        payload: {
+          title: { nl: "Andere Productie" },
+          artist: { nl: "Ander Artist" },
+          tagline: { nl: "Test tagline" },
+          teaser: { nl: "Test teaser" },
+          finalized: false,
+        },
+      });
+      const otherProdId = otherProdResponse.json().id;
+
+      // Create an event for the other production
+      await server.inject({
+        method: "POST",
+        url: "/api/v1/event",
+        cookies: { session: sessionCookie },
+        payload: {
+          old_id: null,
+          starts_at: "2026-08-01T19:00:00.000Z",
+          ends_at: "2026-08-01T21:00:00.000Z",
+          doors_at: "2026-08-01T18:30:00.000Z",
+          info: { nl: "Ander event" },
+          production: otherProdId,
+          hall: hallId,
+        },
+      });
+
+      // Query with production filter
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/event?production=${productionId}`,
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const events = response.json<unknown[]>();
+      
+      // Should return our event
+      expect(events.some((e) => EventSchema.parse(e).id === eventId)).toBe(true);
+      
+      // Should NOT return the other production's event
+      expect(events.every((e) => EventSchema.parse(e).production === productionId)).toBe(true);
+    });
+
+    test("GET /api/v1/event?production=:id — returns empty array when no events match", async () => {
+      const emptyProdResponse = await server.inject({
+        method: "POST",
+        url: "/api/v1/production",
+        cookies: { session: sessionCookie },
+        payload: {
+          title: { nl: "Production Zonder Events" },
+          artist: { nl: "Test Artist" },
+          tagline: { nl: "Test tagline" },
+          teaser: { nl: "Test teaser" },
+          finalized: false,
+        },
+      });
+      const emptyProdId = emptyProdResponse.json().id;
+
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/event?production=${emptyProdId}`,
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(response.json<unknown[]>()).toEqual([]);
+    });
+
     test("GET /api/v1/event/:id — returns the created event", async () => {
       const response = await server.inject({ method: "GET", url: `/api/v1/event/${eventId}` });
 

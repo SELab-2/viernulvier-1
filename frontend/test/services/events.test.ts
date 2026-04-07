@@ -57,6 +57,13 @@ describe("getEvents", () => {
     expect(lastCall()[0]).toBe("/api/v1/event");
     expect(lastCall()[1].method).toBeUndefined();
   });
+
+  it("GETs /api/v1/event with production query parameter", async () => {
+    vi.stubGlobal("fetch", mockOk([eventPayload]));
+    await getEvents(42);
+    expect(lastCall()[0]).toBe("/api/v1/event?production=42");
+    expect(lastCall()[1].method).toBeUndefined();
+  });
 });
 
 describe("getEvent", () => {
