@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-import { HallSchema, AdminSchema, BlogSchema, ProductionSchema, ProductionSchemaWithBackwardsRefs, EventSchema, EventPriceSchema, TagSchema, TagTypeSchema } from "@viernulvier/shared/index.js";
+import { HallSchema, AdminSchema, BlogSchema, BlogPostSchema, ProductionSchema, ProductionSchemaWithBackwardsRefs, EventSchema, EventPriceSchema, TagSchema, TagTypeSchema } from "@viernulvier/shared/index.js";
 import { HttpSuccess } from "@/routes/helpers.js";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { migrate } from "@/db/migrate.js";
@@ -339,6 +339,151 @@ describe("Blog routes — SQL integration", { sequential: true }, () => {
 
     const fetchResponse = await server.inject({ method: "GET", url: `/api/v1/blog/${blogId}` });
     expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
+  });
+});
+
+describe("BlogPost routes — SQL integration", { sequential: true }, () => {
+  let blogId: number;
+  let blogPostId: number;
+
+  test("POST /api/v1/blog — creates a blog for blogpost tests", async () => {
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/blog",
+      cookies: { session: sessionCookie },
+      payload: { name: "BlogPost Test Blog", description: null },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    blogId = BlogSchema.parse(response.json()).id;
+  });
+
+  test("POST /api/v1/blogpost — inserts and returns a new blogpost", async () => {
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/blogpost",
+      cookies: { session: sessionCookie },
+      payload: {
+        blog: blogId,
+        title: "Test Post",
+        content: { body: "Hello world" },
+        published_at: new Date().toISOString(),
+      },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const post = BlogPostSchema.parse(response.json());
+    expect(post).toMatchObject({ blog: blogId, title: "Test Post" });
+    blogPostId = post.id;
+  });
+
+  test("GET /api/v1/blogpost — returns a list containing the created blogpost", async () => {
+    const response = await server.inject({ method: "GET", url: "/api/v1/blogpost" });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const posts = response.json<unknown[]>();
+    expect(posts.some((p) => BlogPostSchema.parse(p).id === blogPostId)).toBe(true);
+  });
+
+  test("GET /api/v1/blogpost — does not return draft posts (published_at IS NULL)", async () => {
+    const draftResponse = await server.inject({
+      method: "POST",
+      url: "/api/v1/blogpost",
+      cookies: { session: sessionCookie },
+      payload: {
+        blog: blogId,
+        title: "Draft Post",
+        content: { body: "Not yet published" },
+        published_at: null,
+      },
+    });
+    expect(draftResponse.statusCode).toBe(HttpSuccess.OK);
+    const draftId = BlogPostSchema.parse(draftResponse.json()).id;
+
+    const listResponse = await server.inject({ method: "GET", url: "/api/v1/blogpost" });
+    expect(listResponse.statusCode).toBe(HttpSuccess.OK);
+    const posts = listResponse.json<unknown[]>();
+    expect(posts.some((p) => BlogPostSchema.parse(p).id === draftId)).toBe(false);
+
+    await server.inject({
+      method: "DELETE",
+      url: `/api/v1/blogpost/${draftId}`,
+      cookies: { session: sessionCookie },
+    });
+  });
+
+  test("GET /api/v1/blogpost/:id — returns the created blogpost", async () => {
+    const response = await server.inject({ method: "GET", url: `/api/v1/blogpost/${blogPostId}` });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(BlogPostSchema.parse(response.json())).toMatchObject({ id: blogPostId, title: "Test Post" });
+  });
+
+  test("GET /api/v1/blogpost/:id/meta — returns the blogpost with metadata", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/blogpost/${blogPostId}/meta`,
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(BlogPostSchema.withMeta().parse(response.json())).toMatchObject({ id: blogPostId });
+  });
+
+  test("PATCH /api/v1/blogpost/:id — updates only the supplied fields", async () => {
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/blogpost/${blogPostId}`,
+      cookies: { session: sessionCookie },
+      payload: { title: "Updated Title" },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const post = BlogPostSchema.parse(response.json());
+    expect(post.title).toBe("Updated Title");
+    expect(post.content).toEqual({ body: "Hello world" }); // unchanged
+  });
+
+  test("PUT /api/v1/blogpost/:id — replaces all fields of the blogpost", async () => {
+    const response = await server.inject({
+      method: "PUT",
+      url: `/api/v1/blogpost/${blogPostId}`,
+      cookies: { session: sessionCookie },
+      payload: {
+        blog: blogId,
+        title: "Replaced Title",
+        content: { body: "Replaced content" },
+        published_at: null,
+      },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(BlogPostSchema.parse(response.json())).toMatchObject({
+      id: blogPostId,
+      title: "Replaced Title",
+      published_at: null,
+    });
+  });
+
+  test("DELETE /api/v1/blogpost/:id — removes the blogpost from the database", async () => {
+    const deleteResponse = await server.inject({
+      method: "DELETE",
+      url: `/api/v1/blogpost/${blogPostId}`,
+      cookies: { session: sessionCookie },
+    });
+    expect(deleteResponse.statusCode).toBe(HttpSuccess.OK);
+
+    const fetchResponse = await server.inject({ method: "GET", url: `/api/v1/blogpost/${blogPostId}` });
+    expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
+  });
+
+  test("DELETE /api/v1/blog/:id — cleans up the blog used for blogpost tests", async () => {
+    const response = await server.inject({
+      method: "DELETE",
+      url: `/api/v1/blog/${blogId}`,
+      cookies: { session: sessionCookie },
+    });
+    expect(response.statusCode).toBe(HttpSuccess.OK);
   });
 });
 
