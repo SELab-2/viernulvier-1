@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
+import { nextTick } from "vue";
 import { createMemoryHistory, createRouter } from "vue-router";
 import type {
   Event,
@@ -134,6 +135,64 @@ describe("ProductionsView.vue", () => {
     );
     const { wrapper } = await mountView();
     expect(wrapper.text()).toContain("niet worden geladen");
+    wrapper.unmount();
+  });
+
+  it("shows loading then empty state when the API returns no productions", async () => {
+    let finishFetch!: (value: ProductionWithBackwardsRefs[]) => void;
+    const deferred = new Promise<ProductionWithBackwardsRefs[]>((resolve) => {
+      finishFetch = resolve;
+    });
+    vi.spyOn(productionsService, "getProductions").mockReturnValue(deferred);
+
+    const router = createRouter({ history: createMemoryHistory(), routes });
+    await router.push("/nl/productions");
+    await router.isReady();
+
+    const wrapper = mount(ProductionsView, {
+      global: { plugins: [router, i18n] },
+      attachTo: document.body,
+    });
+
+    await nextTick();
+    expect(wrapper.text()).toContain("laden");
+
+    finishFetch([]);
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("nog geen producties");
+    wrapper.unmount();
+    document.body.innerHTML = "";
+  });
+
+  it("uses saved dark-mode preference from localStorage", async () => {
+    localStorage.setItem("viernulvier-dark", "true");
+    const { wrapper } = await mountView();
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+    wrapper.unmount();
+  });
+
+  it("skips unknown tags and tags with empty localized names", async () => {
+    vi.spyOn(productionsService, "getProductions").mockResolvedValue([
+      {
+        ...mockProduction,
+        tags: [7, 99, 8] as unknown as ProductionWithBackwardsRefs["tags"],
+      } as ProductionWithBackwardsRefs,
+    ]);
+    vi.spyOn(tagsService, "getTags").mockResolvedValue([
+      mockTag,
+      {
+        id: 8,
+        old_id: null,
+        name: {},
+        tag_type: 1 as unknown as Tag["tag_type"],
+        public: true,
+      } as Tag,
+    ]);
+
+    const { wrapper } = await mountView();
+    expect(wrapper.text()).toContain("Theater");
+    expect(wrapper.text()).not.toContain("99");
     wrapper.unmount();
   });
 });

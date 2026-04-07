@@ -14,5 +14,6 @@ describe("tagDisplay", () => {
       false,
     );
     expect(tagTypeIsGenre(undefined)).toBe(false);
+    expect(tagTypeIsGenre({ id: 1, name: {} } as TagType)).toBe(false);
   });
 });

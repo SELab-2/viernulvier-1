@@ -28,6 +28,15 @@ describe("productionsOverview", () => {
   });
 
   it("summarizes dates and more count", () => {
+    expect(summarizeProductionDates(undefined, "nl")).toEqual({
+      line: null,
+      moreCount: 0,
+    });
+    expect(summarizeProductionDates([], "nl")).toEqual({
+      line: null,
+      moreCount: 0,
+    });
+
     const one = summarizeProductionDates(
       [
         {
@@ -38,6 +47,18 @@ describe("productionsOverview", () => {
     );
     expect(one.line).toMatch(/2006/);
     expect(one.moreCount).toBe(0);
+
+    const en = summarizeProductionDates(
+      [{ starts_at: new Date("2006-06-01") } as Event],
+      "en",
+    );
+    expect(en.line).toMatch(/2006/);
+
+    const fr = summarizeProductionDates(
+      [{ starts_at: new Date("2006-06-01") } as Event],
+      "fr",
+    );
+    expect(fr.line).toMatch(/2006/);
 
     const many = summarizeProductionDates(
       [
@@ -70,5 +91,30 @@ describe("productionsOverview", () => {
       "nl",
     );
     expect(names).toEqual(["Zaal B", "Zaal A"]);
+  });
+
+  it("distinctHallNames handles empty input, unknown halls, and name fallbacks", () => {
+    expect(distinctHallNames(undefined, new Map(), "nl")).toEqual([]);
+    expect(distinctHallNames([], new Map(), "nl")).toEqual([]);
+
+    const halls = new Map<number, Hall>([
+      [
+        1,
+        {
+          id: 1,
+          name: { en: "Only English" },
+        } as Hall,
+      ],
+    ]);
+    expect(
+      distinctHallNames([{ hall: 99 } as Event, { hall: 1 } as Event], halls, "fr"),
+    ).toEqual(["Only English"]);
+
+    const emptyNameHall = new Map<number, Hall>([
+      [2, { id: 2, name: {} } as Hall],
+    ]);
+    expect(distinctHallNames([{ hall: 2 } as Event], emptyNameHall, "nl")).toEqual(
+      [],
+    );
   });
 });
