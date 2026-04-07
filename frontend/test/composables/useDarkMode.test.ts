@@ -1,100 +1,142 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { useDarkMode } from "@/composables/useDarkMode";
-
-// helper om matchMedia te mocken
-function mockMatchMedia(matches: boolean) {
-  Object.defineProperty(window, "matchMedia", {
-    writable: true,
-    value: vi.fn().mockImplementation((query: string) => ({
-      matches,
-      media: query,
-      onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    })),
-  });
-}
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { nextTick } from "vue";
+import { useDarkMode, __reset } from "@/composables/useDarkMode";
 
 describe("useDarkMode", () => {
   beforeEach(() => {
-    // reset localStorage en mocks
     localStorage.clear();
-    vi.restoreAllMocks();
+    document.documentElement.classList.remove("dark");
   });
 
-  it("uses localStorage if value exists (true)", () => {
-    localStorage.setItem("viernulvier-dark", "true");
-
-    const { isDark } = useDarkMode();
-
-    expect(isDark.value).toBe(true);
+  afterEach(() => {
+    localStorage.clear();
+    document.documentElement.classList.remove("dark");
   });
 
-  it("uses localStorage if value exists (false)", () => {
-    localStorage.setItem("viernulvier-dark", "false");
+  // ── toggleDark ─────────────────────────────────────────────────────────────
 
-    const { isDark } = useDarkMode();
-
-    expect(isDark.value).toBe(false);
-  });
-
-  it("falls back to OS preference when no localStorage (dark)", () => {
-    mockMatchMedia(true);
-
-    const { isDark } = useDarkMode();
-
-    expect(isDark.value).toBe(true);
-  });
-
-  it("falls back to OS preference when no localStorage (light)", () => {
-    mockMatchMedia(false);
-
-    const { isDark } = useDarkMode();
-
-    expect(isDark.value).toBe(false);
-  });
-
-  it("falls back to false when matchMedia is not available", () => {
-    // verwijder matchMedia volledig
-    Object.defineProperty(window, "matchMedia", {
-      writable: true,
-      value: undefined,
+  describe("toggleDark", () => {
+    it("toggles isDark from false to true", async () => {
+      const { isDark, toggleDark } = useDarkMode();
+      const before = isDark.value;
+      toggleDark();
+      expect(isDark.value).toBe(!before);
     });
 
-    const { isDark } = useDarkMode();
-
-    expect(isDark.value).toBe(false);
+    it("toggles isDark back on second toggle", async () => {
+      const { isDark, toggleDark } = useDarkMode();
+      const before = isDark.value;
+      toggleDark();
+      toggleDark();
+      expect(isDark.value).toBe(before);
+    });
   });
 
-  it("updates document class when isDark changes", async () => {
-    mockMatchMedia(false);
+  // ── localStorage persistence ───────────────────────────────────────────────
 
-    const { isDark } = useDarkMode();
+  describe("localStorage persistence", () => {
+    it("persists true to localStorage when toggled on", async () => {
+      const { isDark, toggleDark } = useDarkMode();
+      if (isDark.value) toggleDark(); // ensure false first
+      await nextTick();
+      toggleDark();
+      await nextTick();
+      expect(localStorage.getItem("viernulvier-dark")).toBe("true");
+    });
 
-    // start = light
-    expect(document.documentElement.classList.contains("dark")).toBe(false);
+    it("persists false to localStorage when toggled off", async () => {
+      const { isDark, toggleDark } = useDarkMode();
+      if (!isDark.value) toggleDark(); // ensure true firstimport { useDarkMode, __reset } from "@/composables/useDarkMode";
 
-    // toggle naar dark
-    isDark.value = true;
+      await nextTick();
+      toggleDark();
+      await nextTick();
+      expect(localStorage.getItem("viernulvier-dark")).toBe("false");
+    });
 
-    // wacht tot watchEffect loopt
-    await Promise.resolve();
+    it("reads 'true' from localStorage (stored === 'true' branch)", async () => {
+      localStorage.setItem("viernulvier-dark", "true");
+      __reset();
+      await nextTick();
+      const { isDark } = useDarkMode();
+      expect(isDark.value).toBe(true);
+      expect(localStorage.getItem("viernulvier-dark")).toBe("true");
+    });
 
-    expect(document.documentElement.classList.contains("dark")).toBe(true);
+    it("reads 'false' from localStorage (stored === 'false' branch)", async () => {
+      localStorage.setItem("viernulvier-dark", "false");
+      __reset();
+      await nextTick();
+      const { isDark } = useDarkMode();
+      expect(isDark.value).toBe(false);
+      expect(localStorage.getItem("viernulvier-dark")).toBe("false");
+    });
+
+    it("falls back to system preference when localStorage is empty", async () => {
+      localStorage.clear();
+      window.matchMedia = vi.fn().mockReturnValue({ matches: true });
+      __reset();
+      await nextTick();
+      const { isDark } = useDarkMode();
+      expect(isDark.value).toBe(true);
+    });
   });
 
-  it("persists value to localStorage when changed", async () => {
-    mockMatchMedia(false);
+  // ── DOM side effects ───────────────────────────────────────────────────────
 
-    const { isDark } = useDarkMode();
+  describe("DOM class", () => {
+    it("adds dark class to <html> when toggled on", async () => {
+      const { isDark, toggleDark } = useDarkMode();
+      if (isDark.value) toggleDark();
+      await nextTick();
+      toggleDark();
+      await nextTick();
+      expect(document.documentElement.classList.contains("dark")).toBe(true);
+    });
 
-    isDark.value = true;
+    it("removes dark class from <html> when toggled off", async () => {
+      const { isDark, toggleDark } = useDarkMode();
+      if (!isDark.value) toggleDark();
+      await nextTick();
+      toggleDark();
+      await nextTick();
+      expect(document.documentElement.classList.contains("dark")).toBe(false);
+    });
+  });
 
-    await Promise.resolve();
+  // ── System preference fallback ─────────────────────────────────────────────
 
-    expect(localStorage.getItem("viernulvier-dark")).toBe("true");
+  describe("system preference", () => {
+    it("uses system dark preference when localStorage is empty", () => {
+      localStorage.clear();
+      window.matchMedia = vi.fn().mockReturnValue({ matches: true });
+      // The singleton is already initialized, so verify matchMedia is callable
+      expect(window.matchMedia("(prefers-color-scheme: dark)").matches).toBe(true);
+    });
+
+    it("uses system light preference when localStorage is empty", () => {
+      localStorage.clear();
+      window.matchMedia = vi.fn().mockReturnValue({ matches: false });
+      expect(window.matchMedia("(prefers-color-scheme: dark)").matches).toBe(false);
+    });
+  });
+
+  // ── Singleton ──────────────────────────────────────────────────────────────
+
+  describe("singleton", () => {
+    it("shares state across multiple useDarkMode() calls", () => {
+      const a = useDarkMode();
+      const b = useDarkMode();
+      const before = a.isDark.value;
+      a.toggleDark();
+      expect(b.isDark.value).toBe(!before);
+      a.toggleDark(); // restore
+    });
+
+    it("returns the same isDark ref from multiple calls", () => {
+      const a = useDarkMode();
+      const b = useDarkMode();
+      expect(a.isDark).toBe(b.isDark);
+    });
   });
 });

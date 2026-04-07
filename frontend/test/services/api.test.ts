@@ -106,12 +106,24 @@ describe("apiFetch", () => {
     );
   });
 
-  it("sets Content-Type: application/json by default", async () => {
-    await apiFetch("/production");
+  it("sets Content-Type: application/json when body is provided", async () => {
+    await apiFetch("/production", { method: "POST", body: {} });
     expect(fetch).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
         headers: expect.objectContaining({
+          "Content-Type": "application/json",
+        }),
+      }),
+    );
+  });
+
+  it("omits Content-Type header when no body is provided", async () => {
+    await apiFetch("/production");
+    expect(fetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: expect.not.objectContaining({
           "Content-Type": "application/json",
         }),
       }),
@@ -143,8 +155,10 @@ describe("apiFetch", () => {
     expect(call[1].body).toBeUndefined();
   });
 
-  it("merges extra headers with defaults", async () => {
+  it("merges extra headers with defaults when body is provided", async () => {
     await apiFetch("/production", {
+      method: "POST",
+      body: {},
       headers: { "X-Custom": "value" },
     });
     expect(fetch).toHaveBeenCalledWith(
