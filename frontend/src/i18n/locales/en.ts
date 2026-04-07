@@ -47,7 +47,7 @@ export default {
     loading: "Loading productions…",
     error: "Could not load productions. Please try again later.",
     empty: "No productions in the archive yet.",
-    morePerformances: "& {n} more",
+    morePerformances: "{n} more",
   },
   admin: {
     login: {
