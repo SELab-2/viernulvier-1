@@ -39,6 +39,17 @@
           </div>
         </div>
 
+        <div class="cms-grid-actions">
+          <button type="button" class="cms-mini-btn" @click="fitGridColumns">Fit columns</button>
+          <button type="button" class="cms-mini-btn" @click="autoSizeGridColumns">Auto-size</button>
+          <button type="button" class="cms-mini-btn" @click="resetGridFilters">Reset filters</button>
+          <button type="button" class="cms-mini-btn" @click="exportGridCsv">Export CSV</button>
+          <button type="button" class="cms-mini-btn" @click="resetGridState">Reset state</button>
+          <button type="button" class="cms-mini-btn" @click="columnChooserOpen = !columnChooserOpen">
+            Columns
+          </button>
+        </div>
+
         <div
           v-if="loadError"
           class="rounded-lg border border-red-400/40 bg-red-400/10 p-4 text-sm text-red-700"
@@ -48,17 +59,26 @@
 
         <div v-else class="cms-grid-shell">
           <AgGridVue
-            :class="['ag-theme-quartz', 'cms-grid', isDark ? 'cms-grid-dark' : 'cms-grid-light']"
+            :class="['ag-theme-alpine', 'cms-grid']"
             :style="agThemeVars"
             :column-defs="columnDefs"
             :default-col-def="defaultColDef"
             :row-data="rowData"
             :animate-rows="true"
             :pagination="false"
+            :header-height="44"
+            :row-height="42"
             :loading="isLoading"
             :row-selection="rowSelection"
             :suppress-row-click-selection="false"
+            :column-hover-highlight="true"
+            :enable-cell-text-selection="true"
+            :ensure-dom-order="true"
+            :undo-redo-cell-editing="true"
+            :undo-redo-cell-editing-limit="25"
+            :value-cache="true"
             :cache-quick-filter="true"
+            :get-row-style="getProductionRowStyle"
             @grid-ready="onGridReady"
             @selection-changed="onSelectionChanged"
             @cell-editing-started="onProductionCellEditingStarted"
@@ -67,6 +87,24 @@
             @cell-clicked="onCellClicked"
           />
         </div>
+
+        <aside v-if="columnChooserOpen && !loadError" class="cms-column-side-popup">
+          <div class="cms-column-popover-header">
+            <span class="text-sm font-semibold text-ink-primary">Visible columns</span>
+            <button type="button" class="cms-mini-btn" @click="columnChooserOpen = false">Close</button>
+          </div>
+
+          <div class="cms-column-chooser">
+            <label v-for="column in gridColumnOptions" :key="column.colId" class="cms-column-chooser-item">
+              <input
+                :checked="columnVisibility[column.colId] !== false"
+                type="checkbox"
+                @change="setGridColumnVisibility(column.colId, ($event.target as HTMLInputElement).checked)"
+              />
+              <span>{{ column.label }}</span>
+            </label>
+          </div>
+        </aside>
 
         <aside v-if="selectedEventsProduction" class="cms-events-drawer">
           <div class="cms-events-panel-header">
@@ -393,17 +431,13 @@ import type {
   CellClickedEvent,
   CellEditingStartedEvent,
   CellEditingStoppedEvent,
-  ColDef,
   CellKeyDownEvent,
-  GridApi,
-  GridReadyEvent,
-  SelectionChangedEvent,
 } from "ag-grid-community";
-import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 import { useI18n } from "vue-i18n";
 import type { Event as ArchiveEvent, Hall, ProductionWithBackwardsRefs, Tag } from "@viernulvier/shared";
 import AppNavbar from "@/components/AppNavbar.vue";
 import AppFooter from "@/components/AppFooter.vue";
+import { useCmsProductionGrid } from "@/composables/useCmsProductionGrid";
 import { i18n, SUPPORTED_LANGS, type SupportedLang } from "@/i18n";
 import {
   createProduction,
@@ -431,7 +465,7 @@ type EventGridRow = CmsEventGridRow;
 type ProductionGridRow = CmsProductionGridRow;
 
 type InlineEditableField = "performer" | "title" | "producer" | "teaser";
-type LongField = "description" | "description_2" | "video_1";
+type LongField = "teaser"|"description" | "description_2" | "video_1";
 
 interface EditorPanelState {
   rowId: number;
@@ -464,9 +498,35 @@ interface CreateFormState {
   video_2: Record<SupportedLang, string>;
 }
 
-ModuleRegistry.registerModules([AllCommunityModule]);
-
 const { t } = useI18n();
+const isDark = ref(getInitialDark());
+
+const {
+  agThemeVars,
+  autoSizeGridColumns,
+  columnChooserOpen,
+  columnDefs,
+  columnVisibility,
+  defaultColDef,
+  exportGridCsv,
+  fitGridColumns,
+  getProductionRowStyle,
+  gridColumnOptions,
+  gridApi,
+  onGridReady,
+  onSelectionChanged,
+  quickFilterText,
+  resetGridFilters,
+  resetGridState,
+  rowSelection,
+  selectedCount,
+  setGridColumnVisibility,
+  applyQuickFilter,
+  persistGridState,
+} = useCmsProductionGrid({
+  isDark,
+  t,
+});
 
 const isLoading = ref(false);
 const isSaving = ref(false);
@@ -474,13 +534,10 @@ const isCreating = ref(false);
 const loadError = ref<string | null>(null);
 const saveError = ref<string | null>(null);
 const createError = ref<string | null>(null);
-const quickFilterText = ref("");
-const selectedCount = ref(0);
 const rowData = ref<CmsProductionGridRow[]>([]);
 const editorPanel = ref<EditorPanelState | null>(null);
 const createModalOpen = ref(false);
 const createEventModalOpen = ref(false);
-const gridApi = ref<GridApi<CmsProductionGridRow> | null>(null);
 const languages = SUPPORTED_LANGS as ReadonlyArray<SupportedLang>;
 const createExtraLangs = ref({ en: false, fr: false });
 const visibleCreateLangs = computed<SupportedLang[]>(() => {
@@ -517,8 +574,8 @@ const createLinkedEventForm = ref<CmsCreateLinkedEventForm>({
   hallId: 0,
   infoNl: "",
 });
-const pendingProductionEnterCommits = ref(new Set<string>());
 const eventRowSnapshots = ref(new Map<number, CmsEventGridRow>());
+const pendingProductionEnterCommits = ref(new Set<string>());
 const activeProductionEditKey = ref<string | null>(null);
 
 const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
@@ -536,13 +593,6 @@ const selectedEventsProduction = computed(() => {
   }
   return rowData.value.find((row) => row.id === selectedEventsProductionId.value) ?? null;
 });
-
-const rowSelection = {
-  mode: "multiRow" as const,
-  checkboxes: true,
-  headerCheckbox: true,
-  enableClickSelection: true,
-};
 
 const createFields: Array<{
   key: CreateFieldKey;
@@ -572,14 +622,6 @@ const createForm = ref<CreateFormState>({
   video_2: emptyLangRecord(),
 });
 
-const defaultColDef: ColDef<CmsProductionGridRow> = {
-  editable: false,
-  sortable: true,
-  filter: true,
-  resizable: true,
-  minWidth: 120,
-};
-
 const inlineFieldToApi: Record<InlineEditableField, keyof ProductionWithBackwardsRefs> = {
   performer: "artist",
   title: "title",
@@ -593,93 +635,11 @@ const longGridFieldToApi: Record<"descriptionOne" | "descriptionTwo" | "media", 
   media: "video_1",
 };
 
-const columnDefs = computed<ColDef<CmsProductionGridRow>[]>(() => [
-  {
-    headerName: "Events",
-    colId: "eventsAction",
-    minWidth: 96,
-    maxWidth: 112,
-    resizable: false,
-    sortable: false,
-    filter: false,
-    editable: false,
-    valueGetter: () => "View",
-    cellClass: "cms-events-action-cell",
-  },
-  {
-    headerName: t("cms.columns.performer"),
-    field: "performer",
-    editable: true,
-    minWidth: 180,
-  },
-  {
-    headerName: t("cms.columns.title"),
-    field: "title",
-    editable: true,
-    minWidth: 170,
-  },
-  {
-    headerName: t("cms.columns.producer"),
-    field: "producer",
-    editable: true,
-    minWidth: 170,
-  },
-  {
-    headerName: t("cms.columns.teaser"),
-    field: "teaser",
-    editable: true,
-    minWidth: 200,
-    cellClass: "cms-truncate-cell",
-    valueFormatter: ({ value }) => truncateValue(String(value ?? "")),
-  },
-  {
-    headerName: t("cms.columns.genres"),
-    field: "genres",
-    minWidth: 120,
-  },
-  {
-    headerName: t("cms.columns.tags"),
-    field: "tags",
-    minWidth: 120,
-  },
-  {
-    headerName: t("cms.columns.descriptionOne"),
-    field: "descriptionOne",
-    editable: false,
-    minWidth: 220,
-    cellClass: "cms-truncate-cell",
-    valueFormatter: ({ value }) => truncateValue(String(value ?? "")),
-  },
-  {
-    headerName: t("cms.columns.descriptionTwo"),
-    field: "descriptionTwo",
-    editable: false,
-    minWidth: 220,
-    cellClass: "cms-truncate-cell",
-    valueFormatter: ({ value }) => truncateValue(String(value ?? "")),
-  },
-  {
-    headerName: t("cms.columns.media"),
-    field: "media",
-    editable: false,
-    minWidth: 220,
-    cellClass: "cms-truncate-cell",
-    valueFormatter: ({ value }) => truncateValue(String(value ?? "")),
-  },
-]);
-
 function localizeValue(map: LanguageMap | null | undefined): string {
   if (!map) {
     return "";
   }
   return localizeOrEmpty(map, currentLang.value);
-}
-
-function truncateValue(value: string, maxLength = 48): string {
-  if (value.length <= maxLength) {
-    return value;
-  }
-  return `${value.slice(0, maxLength - 1)}...`;
 }
 
 function setCurrentLanguageValue(
@@ -957,17 +917,6 @@ async function persistProductionPatch(
   }
 }
 
-function getBulkTargetRows(primaryRow: ProductionGridRow): ProductionGridRow[] {
-  const selectedRows = gridApi.value?.getSelectedRows() ?? [];
-  if (
-    selectedRows.length > 1
-    && selectedRows.some((row) => row.id === primaryRow.id)
-  ) {
-    return selectedRows;
-  }
-  return [primaryRow];
-}
-
 async function saveInlineBulkUpdate(
   primaryRow: ProductionGridRow,
   apiField: keyof ProductionWithBackwardsRefs,
@@ -987,6 +936,17 @@ async function saveInlineBulkUpdate(
   } finally {
     isSaving.value = false;
   }
+}
+
+function getBulkTargetRows(primaryRow: ProductionGridRow): ProductionGridRow[] {
+  const selectedRows = gridApi.value?.getSelectedRows() ?? [];
+  if (
+    selectedRows.length > 1
+    && selectedRows.some((row) => row.id === primaryRow.id)
+  ) {
+    return selectedRows;
+  }
+  return [primaryRow];
 }
 
 async function onCellEditingStopped(
@@ -1022,13 +982,14 @@ async function onCellEditingStopped(
 
   try {
     await saveInlineBulkUpdate(event.data, apiField, newValue);
-    gridApi.value?.refreshCells({ force: true });
   } catch {
     event.node.setDataValue(field, oldValue);
+  } finally {
+    persistGridState();
   }
 }
 
-function onProductionCellKeyDown(event: CellKeyDownEvent<CmsProductionGridRow>): void {
+function onProductionCellKeyDown(event: CellKeyDownEvent<ProductionGridRow>): void {
   const domEvent = event.event as KeyboardEvent | null | undefined;
   if (!event.data || !event.colDef.field || domEvent?.key !== "Enter") {
     return;
@@ -1037,7 +998,7 @@ function onProductionCellKeyDown(event: CellKeyDownEvent<CmsProductionGridRow>):
   pendingProductionEnterCommits.value.add(getProductionEditKey(event.data.id, event.colDef.field));
 }
 
-function onProductionCellEditingStarted(event: CellEditingStartedEvent<CmsProductionGridRow>): void {
+function onProductionCellEditingStarted(event: CellEditingStartedEvent<ProductionGridRow>): void {
   if (!event.data || !event.colDef.field) {
     return;
   }
@@ -1119,19 +1080,6 @@ function rebuildRows(): void {
     productionsData.value,
     tagsData.value,
   );
-}
-
-function onGridReady(event: GridReadyEvent<ProductionGridRow>): void {
-  gridApi.value = event.api;
-  applyQuickFilter();
-}
-
-function applyQuickFilter(): void {
-  gridApi.value?.setGridOption("quickFilterText", quickFilterText.value);
-}
-
-function onSelectionChanged(event: SelectionChangedEvent<ProductionGridRow>): void {
-  selectedCount.value = event.api.getSelectedRows().length;
 }
 
 async function showEventsForProduction(row: ProductionGridRow): Promise<void> {
@@ -1293,48 +1241,6 @@ async function submitCreateEvent(): Promise<void> {
   }
 }
 
-const agThemeVars = computed<Record<string, string>>(() => {
-  if (isDark.value) {
-    return {
-      "--ag-background-color": "var(--surface-0)",
-      "--ag-foreground-color": "var(--ink-primary)",
-      "--ag-header-background-color": "var(--surface-inv-raised)",
-      "--ag-header-foreground-color": "var(--ink-on-inv)",
-      "--ag-odd-row-background-color": "color-mix(in srgb, var(--surface-inv-raised) 55%, transparent)",
-      "--ag-row-hover-color": "color-mix(in srgb, var(--surface-inv-border) 65%, transparent)",
-      "--ag-border-color": "var(--surface-inv-border)",
-      "--ag-selected-row-background-color": "transparent",
-      "--ag-range-selection-background-color": "transparent",
-      "--ag-header-column-separator-color": "var(--surface-inv-border)",
-      "--ag-input-focus-border-color": "var(--surface-inv)",
-      "--ag-font-family": '"Inter Variable", sans-serif',
-      "--ag-font-size": "13px",
-      "--cms-selected-row-bg": "color-mix(in srgb, var(--surface-inv-raised) 42%, transparent)",
-      "--cms-header-fg": "var(--ink-on-inv)",
-      "--cms-checkbox-color": "var(--ink-on-inv)",
-    };
-  }
-
-  return {
-    "--ag-background-color": "var(--surface-0)",
-    "--ag-foreground-color": "var(--ink-primary)",
-    "--ag-header-background-color": "var(--surface-1)",
-    "--ag-header-foreground-color": "var(--ink-primary)",
-    "--ag-odd-row-background-color": "var(--surface-1)",
-    "--ag-row-hover-color": "color-mix(in srgb, var(--surface-2) 70%, transparent)",
-    "--ag-border-color": "var(--surface-3)",
-    "--ag-selected-row-background-color": "transparent",
-    "--ag-range-selection-background-color": "transparent",
-    "--ag-header-column-separator-color": "var(--surface-3)",
-    "--ag-input-focus-border-color": "var(--surface-inv)",
-    "--ag-font-family": '"Inter Variable", sans-serif',
-    "--ag-font-size": "13px",
-    "--cms-selected-row-bg": "color-mix(in srgb, var(--surface-2) 55%, transparent)",
-    "--cms-header-fg": "var(--ink-primary)",
-    "--cms-checkbox-color": "var(--ink-primary)",
-  };
-});
-
 async function loadCmsData(): Promise<void> {
   isLoading.value = true;
   loadError.value = null;
@@ -1372,8 +1278,6 @@ function getInitialDark(): boolean {
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
 
-const isDark = ref(getInitialDark());
-
 watchEffect(() => {
   const htmlEl = document.documentElement;
   if (isDark.value) {
@@ -1396,6 +1300,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", onWindowKeyDown, true);
+  persistGridState();
 });
 </script>
 
@@ -1410,6 +1315,10 @@ onBeforeUnmount(() => {
   @apply flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between;
 }
 
+.cms-grid-actions {
+  @apply flex flex-wrap items-center gap-2;
+}
+
 .cms-search-input {
   @apply w-full rounded-md border border-surface-3 bg-surface-0 px-4 py-2 text-sm text-ink-primary placeholder:text-ink-tertiary sm:max-w-md;
 }
@@ -1420,15 +1329,6 @@ onBeforeUnmount(() => {
 
 .cms-mini-btn {
   @apply rounded-md border border-surface-3 bg-surface-0 px-3 py-1 text-xs font-semibold text-ink-secondary transition hover:bg-surface-1;
-}
-
-.cms-grid-shell {
-  @apply overflow-hidden rounded-[1.5rem] border border-surface-3 bg-surface-0 shadow-sm;
-}
-
-.cms-grid {
-  height: min(72vh, 820px);
-  width: 100%;
 }
 
 .cms-events-drawer {
