@@ -17,8 +17,12 @@
       </div>
 
       <template v-else-if="production">
-        <HeroSection :production="production" />
-        <DetailsSection :production="production" />
+        <HeroSection :production="production" :tag-groups="tagGroups" />
+        <DetailsSection 
+          :production="production" 
+          :tag-groups="tagGroups" 
+          :total-tags="totalTags" 
+        />
         <EventsSection />
         <GallerySection />
         <BlogSection />
@@ -45,6 +49,7 @@ import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 
 import { useDarkMode } from "@/composables/useDarkMode";
 import { ApiError } from "@/services/api";
+import { useTagGroups } from "@/composables/useTagGroups";
 
 const { isDark } = useDarkMode();
 
@@ -69,5 +74,7 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+const { tagGroups, totalTags, loading: tagsLoading } = useTagGroups(id);
 
 </script>

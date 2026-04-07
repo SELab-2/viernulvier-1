@@ -53,10 +53,16 @@
           <span class="text-xl font-bold tracking-tight">75m</span>
         </div>
         
-        <div class="flex gap-3 pt-4">
-          <span class="border border-surface-0 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-ink-on-inv">
-            Dance
-          </span>
+        <div class="flex flex-wrap gap-3 pt-4 md:justify-end">
+          <template v-if="genreTags.length > 0">
+            <span 
+              v-for="tag in genreTags" 
+              :key="tag"
+              class="border border-surface-0 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-ink-on-inv"
+            >
+              {{ tag }}
+            </span>
+          </template>
         </div>
       </div>
     </div>
@@ -75,16 +81,25 @@ const currentLang = computed(
   () => i18n.global.locale.value as SupportedLang,
 );
 
-const { production } = defineProps<{
+const props = defineProps<{
   production: ProductionWithBackwardsRefs;
+  tagGroups: { label: string; tags: string[] }[];
 }>();
+
+const genreTags = computed(() => {
+  const genreGroup = props.tagGroups.find(group => {
+    return group.label.toLowerCase().includes('genre'); 
+  });
+  
+  return genreGroup ? genreGroup.tags : [];
+});
 
 const tProd = (map: LanguageMap | null | undefined) =>
   localizeOrEmpty(map ?? {}, currentLang.value);
 
-const artist = computed(() => tProd(production.artist));
-const title = computed(() => tProd(production.title));
-const supertitle = computed(() => tProd(production.supertitle)); //nullable
-const tagline = computed(() => tProd(production.tagline));
+const artist = computed(() => tProd(props.production.artist));
+const title = computed(() => tProd(props.production.title));
+const supertitle = computed(() => tProd(props.production.supertitle)); //nullable
+const tagline = computed(() => tProd(props.production.tagline));
 
 </script>

@@ -3,7 +3,7 @@
     <div class="mx-auto max-w-7xl px-6 py-24 md:px-12">
       <section class="flex flex-col gap-16 lg:grid lg:grid-cols-12 lg:gap-x-16 lg:gap-y-24">
         
-        <div class="lg:col-start-9 lg:col-span-4">
+        <div v-if="hasSidebarContent" class="lg:col-start-9 lg:col-span-4">
           <div class="sticky top-32 h-fit space-y-6">
             
             <div v-if="teaser || description_extra" class="bg-surface-inv p-8 shadow-xl text-ink-on-inv border border-surface-3">
@@ -18,7 +18,7 @@
               </p>
             </div>
               
-            <div v-if="tagGroups && tagGroups.some(g => g.tags.length > 0)" class="border border-surface-3 bg-surface-0 transition-all duration-300">
+            <div v-if="tagGroups && tagGroups.length > 0" class="border border-surface-3 bg-surface-0 transition-all duration-300">
               <button 
                 class="group flex w-full items-center justify-between px-6 py-6 outline-none transition-colors hover:bg-surface-1"
                 @click="tagsExpanded = !tagsExpanded"
@@ -67,7 +67,7 @@
           </div>
         </div>
 
-        <div class="space-y-16 lg:col-start-1 lg:col-span-8 lg:row-start-1">
+        <div :class="['space-y-16 lg:row-start-1', mainContentClass]">
           
           <div v-if="quote" class="space-y-8 pb-12 border-b border-surface-3">
             <div class="space-y-4">
@@ -92,7 +92,6 @@
 
         <div v-if="info || programme" class="border-t border-surface-3 pt-12 lg:col-span-12">
           <div class="grid grid-cols-1 gap-12 lg:grid-cols-12">
-            
             <div v-if="info" class="lg:col-span-8 space-y-6">
               <h3 class="text-xs font-black uppercase tracking-[0.2em] text-ink-primary">
                 {{ t("production.details.extraInfo") }}
@@ -109,7 +108,6 @@
                 </p>
               </div>
             </div>
-
           </div>
         </div>
 
@@ -119,37 +117,48 @@
 </template>
 
 <script setup lang="ts">
-// import { Plus } from "lucide-vue-next";
 import { i18n, type SupportedLang } from "@/i18n";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { computed, ref } from "vue";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/i18n";
 import { useI18n } from "vue-i18n";
-import { useTagGroups } from "@/composables/useTagGroups";
 
 const { t } = useI18n();
 const currentLang = computed(
   () => i18n.global.locale.value as SupportedLang,
 );
 
-const { production } = defineProps<{
+const props = defineProps<{
   production: ProductionWithBackwardsRefs;
+  tagGroups: { label: string; tags: string[] }[];
+  totalTags: number;
 }>();
 
 const tProd = (map: LanguageMap | null | undefined) =>
   localizeOrEmpty(map ?? {}, currentLang.value);
 
-const teaser = computed(() => tProd(production.teaser));
-const description = computed(() => tProd(production.description));
-const description_extra = computed(() => tProd(production.description_extra));
-const description_2 = computed(() => tProd(production.description_2));
-const quote = computed(() => tProd(production.quote));
-const quote_source = computed(() => tProd(production.quote_source));
-const programme = computed(() => tProd(production.programme));
-const info = computed(() => tProd(production.info));
+const teaser = computed(() => tProd(props.production.teaser));
+const description = computed(() => tProd(props.production.description));
+const description_extra = computed(() => tProd(props.production.description_extra));
+const description_2 = computed(() => tProd(props.production.description_2));
+const quote = computed(() => tProd(props.production.quote));
+const quote_source = computed(() => tProd(props.production.quote_source));
+const programme = computed(() => tProd(props.production.programme));
+const info = computed(() => tProd(props.production.info));
 
 const tagsExpanded = ref(true);
 
-const { tagGroups, totalTags, loading } = useTagGroups(production.id);
+const hasSidebarContent = computed(() => {
+  const hasTags = props.tagGroups && props.tagGroups.length > 0;
+  const hasTeaserText = !!teaser.value && teaser.value.trim().length > 0;
+  const hasExtraText = !!description_extra.value && description_extra.value.trim().length > 0;
+  
+  return hasTags || hasTeaserText || hasExtraText;
+});
 
+const mainContentClass = computed(() => {
+  return hasSidebarContent.value 
+    ? "lg:col-start-1 lg:col-span-8"
+    : "lg:col-span-12";
+});
 </script>
