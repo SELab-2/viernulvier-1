@@ -4,7 +4,11 @@ export default {
     archive: "Archive",
     productions: "Productions",
     search: "Search",
-    admin: "Admin",
+    admin: {
+      dashboard: "Dashboard",
+      cms: "CMS",
+      signOut: "Sign out",
+    },
   },
   hero: {
     title: "The Archive of De Vooruit",
@@ -35,5 +39,25 @@ export default {
   },
   date: {
     doorsOpen: "Doors open at",
+  },
+  admin: {
+    login: {
+      title: "Sign in to continue",
+      username: "Username",
+      password: "Password",
+      showPassword: "Show password",
+      hidePassword: "Hide password",
+      submit: "Sign in",
+      submitting: "Signing in…",
+      errorUnauthorized: "Invalid username or password.",
+      errorGeneric: "Something went wrong. Please try again.",
+    },
+    dashboard: {
+      signedInAs: "Signed in as",
+      superAdmin: "Super admin",
+      quickActions: "Quick actions",
+      openCms: "Open CMS",
+      logout: "Logout",
+    },
   },
 };

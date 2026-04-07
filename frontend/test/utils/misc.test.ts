@@ -248,6 +248,11 @@ describe("sortBy", () => {
   it("handles an empty array", () => {
     expect(sortBy([], "id" as never)).toEqual([]);
   });
+
+  it("handles an array with equal objects", () => {
+    const items = [{ n: 2 }, { n: 3 }, { n: 2 }, { n: 1 }];
+    expect(sortBy(items, "n").map((x) => x.n)).toEqual([1, 2, 2, 3]);
+  });
 });
 
 // ---------------------------------------------------------------------------

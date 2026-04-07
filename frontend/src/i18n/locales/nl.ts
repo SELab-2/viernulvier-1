@@ -4,7 +4,11 @@ export default {
     archive: "Archief",
     productions: "Producties",
     search: "Zoeken",
-    admin: "Admin",
+    admin: {
+      dashboard: "Dashboard",
+      cms: "CMS",
+      signOut: "Uitloggen",
+    },
   },
   hero: {
     title: "Het Archief van De Vooruit",
@@ -35,5 +39,25 @@ export default {
   },
   date: {
     doorsOpen: "Deuren open om",
+  },
+  admin: {
+    login: {
+      title: "Meld u aan om verder te gaan",
+      username: "Gebruikersnaam",
+      password: "Wachtwoord",
+      showPassword: "Wachtwoord tonen",
+      hidePassword: "Wachtwoord verbergen",
+      submit: "Aanmelden",
+      submitting: "Aanmelden…",
+      errorUnauthorized: "Ongeldige gebruikersnaam of wachtwoord.",
+      errorGeneric: "Er is iets misgegaan. Probeer het opnieuw.",
+    },
+    dashboard: {
+      signedInAs: "Aangemeld als",
+      superAdmin: "Super admin",
+      quickActions: "Snelle acties",
+      openCms: "CMS openen",
+      logout: "Uitloggen",
+    },
   },
 };

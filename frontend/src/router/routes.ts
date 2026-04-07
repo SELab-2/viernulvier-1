@@ -1,5 +1,6 @@
 import type { RouteRecordRaw } from "vue-router";
 import { RouteNames } from "./routeNames";
+import { useAuthStore } from "@/stores/auth";
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -26,15 +27,42 @@ export const routes: RouteRecordRaw[] = [
       //     name: RouteNames.PRINTS,
       //     component: () => import("../views/PrintUploadsView.vue"),
       //   },
-    ],
-  },
 
-  // admin
-  {
-    path: "/:lang(nl|fr|en)/admin/cms",
-    name: RouteNames.CMS,
-    component: () => import("../views/admin/CMSView.vue"),
-    meta: { requiresAdmin: true },
+      // ADMIN
+      {
+        path: "admin",
+        children: [
+          {
+            path: "",
+            name: RouteNames.ADMIN, // home screen for admins, shows currently logged in admin, with button to go to CMS
+            component: () => import("../views/admin/AdminView.vue"),
+            meta: { requiresAdmin: true },
+          },
+          {
+            path: "cms",
+            name: RouteNames.CMS,
+            component: () => import("../views/admin/CMSView.vue"),
+            meta: { requiresAdmin: true },
+          },
+          {
+            path: "login",
+            name: RouteNames.LOGIN,
+            component: () => import("../views/admin/LoginView.vue"),
+            beforeEnter: async (to, _, next) => {
+              const authStore = useAuthStore();
+              try {
+                await authStore.fetchAdmin();
+                // already logged in, redirect to admin
+                return next({ name: RouteNames.ADMIN, params: { lang: to.params.lang } });
+              } catch {
+                // not logged in, proceed to login page
+                return next();
+              }
+            },
+          },
+        ],
+      },
+    ],
   },
 
   // 404

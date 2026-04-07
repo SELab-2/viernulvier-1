@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from "vue-router";
 import { routes } from "./routes";
 import { RouteNames } from "./routeNames";
 import { i18n, type SupportedLang, detectLanguage } from "@/i18n";
+import { ApiError } from "@/services/auth";
+import { useAuthStore } from "@/stores/auth";
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -16,7 +18,7 @@ export const router = createRouter({
  * 2. Syncs the vue-i18n locale with the language in the URL
  * 3. Blocks access to admin routes for non-admin users
  */
-router.beforeEach((to, _, next) => {
+router.beforeEach(async (to, _, next) => {
   // check if non existing route would exist with a lang prefix
   if (to.name === RouteNames.NOT_FOUND) {
     const lang = detectLanguage();
@@ -36,8 +38,8 @@ router.beforeEach((to, _, next) => {
   i18n.global.locale.value = to.params.lang as SupportedLang;
 
   // check admin access for routes that require it
-  if (to.meta.requiresAdmin && !checkUserIsAdmin()) {
-    return next(`/${to.params.lang}`); // redirect to home
+  if (to.meta.requiresAdmin && !(await checkUserIsAdmin())) {
+    return next(`/${to.params.lang}/admin/login?redirect=${encodeURIComponent(to.fullPath)}`); // redirect to login
   }
 
   next();
@@ -46,11 +48,16 @@ router.beforeEach((to, _, next) => {
 /**
  * Checks whether the current user has admin privileges.
  * @returns `true` if the user is an admin, `false` otherwise.
- * TODO: replace with real auth logic
  */
-function checkUserIsAdmin(): boolean {
-  // auth logic
-  return false; // currently hardcoded to false
+async function checkUserIsAdmin(): Promise<boolean> {
+  try {
+    const authStore = useAuthStore();
+    await authStore.fetchAdmin();
+    return true;
+  } catch (err) {
+    if (err instanceof ApiError && err.isUnauthorized) return false;
+    throw err;
+  }
 }
 
 export default router;
