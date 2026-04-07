@@ -2,15 +2,17 @@
   <div class="min-h-screen bg-surface-0">
     <AppNavbar :is-dark="isDark" @toggle-dark="isDark = !isDark" />
     <main>
-      <section class="border-b border-surface-3 bg-surface-inv py-12 md:py-16">
+      <section
+        class="border-b border-surface-3 bg-surface-1 py-12 md:py-16"
+      >
         <div class="mx-auto max-w-3xl px-6 text-center lg:px-10">
           <h1
-            class="text-2xl font-bold tracking-tight text-ink-on-inv md:text-3xl"
+            class="text-2xl font-bold tracking-tight text-ink-primary md:text-3xl"
           >
             {{ t("productionsPage.heading") }}
           </h1>
           <p
-            class="mt-4 text-sm leading-relaxed text-ink-on-inv-secondary md:text-base"
+            class="mt-4 text-sm leading-relaxed text-ink-secondary md:text-base"
           >
             {{ t("productionsPage.intro") }}
           </p>
