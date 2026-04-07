@@ -132,10 +132,23 @@ describe("router/index.ts — navigation guard", () => {
     });
 
     it("rethrows non-authorization errors", async () => {
-      const { getCurrentlyLoggedInAdmin } = await import("@/services/auth");
-      vi.mocked(getCurrentlyLoggedInAdmin).mockRejectedValueOnce(new Error("Network error"));
+      const originalWarn = console.warn;
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation((msg, ...args: unknown[]) => {
+        const text = typeof msg === "string" ? msg : String(msg);
+        if (text.includes("uncaught error during route navigation")) return;
+        originalWarn.apply(console, [msg, ...args] as Parameters<typeof console.warn>);
+      });
 
-      await expect(navigate(router, "/nl/admin")).rejects.toThrow("Network error");
+      try {
+        const { getCurrentlyLoggedInAdmin } = await import("@/services/auth");
+        vi.mocked(getCurrentlyLoggedInAdmin).mockRejectedValueOnce(
+          new Error("Network error"),
+        );
+
+        await expect(navigate(router, "/nl/admin")).rejects.toThrow("Network error");
+      } finally {
+        warnSpy.mockRestore();
+      }
     });
   });
 });
