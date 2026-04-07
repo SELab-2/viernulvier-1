@@ -9,9 +9,9 @@ const CreateTagBodySchema = TagSchema.omit({ id: true, productions: true });
 const insertTag = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `INSERT INTO tag (old_id, name, type_id, public, created_by, updated_by, created_at, updated_at)
+    `INSERT INTO tag (old_id, name, tag_type, public, created_by, updated_by, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $5, $5, $6, $6)
-     RETURNING id, old_id, name, type_id`,
+     RETURNING id, old_id, name, tag_type, public`,
     z.tuple([
       CreateTagBodySchema.shape.old_id,
       CreateTagBodySchema.shape.name,

@@ -36,7 +36,7 @@ beforeAll(async () => {
         if (!match) continue;
 
         const [, field, indexStr] = match;
-        const value = values[parseInt(indexStr) - 1];
+        const value = values[parseInt(indexStr!) - 1];
 
         if (field === "username") row.username = value as string;
         if (field === "super") row.super = value as boolean;
