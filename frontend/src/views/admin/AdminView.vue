@@ -28,7 +28,7 @@
       <section class="section">
         <h2 class="section-title">{{ t("admin.dashboard.quickActions") }}</h2>
         <div class="actions-grid">
-          <RouterLink :to="{ name: RouteNames.CMS }" class="action-card">
+          <RouterLink :to="{ name: RouteNames.CMS, params: { lang: currentLang } }" class="action-card">
             <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
             </svg>
@@ -51,12 +51,14 @@ import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/stores/auth";
 import { RouteNames } from "@/router/routeNames";
 import AdminNavbar from "@/components/admin/AdminNavbar.vue";
+import { i18n, type SupportedLang } from "@/i18n";
 
 const { isDark, toggleDark } = useDarkMode();
 
 const { t } = useI18n();
 const { admin } = useAuthStore();
 
+const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 const initials = computed(() => admin?.username?.slice(0, 2).toUpperCase() ?? "??");
 </script>
 

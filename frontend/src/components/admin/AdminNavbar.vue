@@ -25,14 +25,14 @@
 
     <!-- Right: controls + profile -->
     <div class="nav-right">
-      <NavControls variant="dark" :is-dark="isDark" @toggle-dark="$emit('toggle-dark')" />
+      <NavControls :is-dark="isDark" @toggle-dark="$emit('toggle-dark')" />
 
       <div ref="profileWrapper" class="relative">
         <button class="profile-btn" @click="profileOpen = !profileOpen">
           <img v-if="admin?.profile_picture" :src="admin.profile_picture" class="avatar-img" alt="" />
           <span v-else class="avatar-fallback">{{ initials }}</span>
           <span class="profile-name hidden sm:inline">{{ admin?.username }}</span>
-          <svg class="h-3.5 w-3.5 transition-transform" :class="{ 'rotate-180': profileOpen }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          <svg class="h-3.5 w-3.5 transition-transform" :class="{ 'rotate-180': profileOpen }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
         </button>
 
         <div v-if="profileOpen" class="dropdown">
@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, useTemplateRef } from "vue";
 import { RouterLink, useRouter, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { i18n, type SupportedLang } from "@/i18n";
@@ -66,9 +66,11 @@ const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 const initials = computed(() => admin?.username?.slice(0, 2).toUpperCase() ?? "??");
 
 const profileOpen = ref(false);
+const profileWrapper = useTemplateRef<HTMLElement>("profileWrapper");
 
-function handleClickOutside() {
-  profileOpen.value = false;
+function handleClickOutside(e: MouseEvent) {
+  if (profileWrapper.value && !profileWrapper.value.contains(e.target as Node))
+    profileOpen.value = false;
 }
 
 async function handleLogout() {

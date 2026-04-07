@@ -31,18 +31,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, useTemplateRef } from "vue";
 import { i18n, SUPPORTED_LANGS, type SupportedLang } from "@/i18n";
 import { useLocale } from "@/composables/useLocale";
 
-withDefaults(defineProps<{ isDark: boolean; variant?: "light" | "dark" }>(), {
-  variant: "light",
-});
+withDefaults(defineProps<{ isDark: boolean }>(), {});
 defineEmits<{ "toggle-dark": [] }>();
 
 const { setLocale } = useLocale();
 
 const langMenuOpen = ref(false);
+const langWrapper = useTemplateRef<HTMLElement>("langWrapper");
 
 const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 
@@ -60,8 +59,10 @@ function setLang(lang: SupportedLang) {
   setLocale(lang);
 }
 
-function handleClickOutside() {
-  langMenuOpen.value = false;
+function handleClickOutside(e: MouseEvent) {
+  if (langWrapper.value && !langWrapper.value.contains(e.target as Node)) {
+    langMenuOpen.value = false;
+  }
 }
 
 onMounted(() => document.addEventListener("click", handleClickOutside));

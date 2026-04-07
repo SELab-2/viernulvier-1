@@ -4,7 +4,7 @@
 
     <!-- Top-right controls -->
     <div class="login-controls">
-      <NavControls variant="dark" :is-dark="isDark" @toggle-dark="toggleDark" />
+      <NavControls :is-dark="isDark" @toggle-dark="toggleDark" />
     </div>
 
     <div class="login-shell">

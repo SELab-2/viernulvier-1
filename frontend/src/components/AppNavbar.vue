@@ -31,7 +31,7 @@
     </RouterLink>
 
     <!-- Right: controls -->
-    <NavControls variant="dark" :is-dark="isDark" @toggle-dark="$emit('toggle-dark')" />
+    <NavControls :is-dark="isDark" @toggle-dark="$emit('toggle-dark')" />
   </nav>
 </template>
 
