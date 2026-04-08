@@ -130,6 +130,8 @@ import {
   watch,
 } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRoute, useRouter } from "vue-router";
+import type { LocationQueryRaw } from "vue-router";
 import type {
   Event as ProductionEvent,
   Hall,
@@ -158,9 +160,49 @@ import {
 
 const PAGE_SIZE = 20;
 
+/** 1-based page index in the URL (`?page=1` is normalized away). */
+const PAGE_QUERY_KEY = "page";
+
+const route = useRoute();
+const router = useRouter();
 const { t } = useI18n();
 
 const pageTopAnchor = useTemplateRef<HTMLElement>("pageTopAnchor");
+
+/**
+ * Reads a positive 1-based page from the route query; invalid or missing -> 1.
+ */
+function readPageOneBasedFromRoute(): number {
+  const raw = route.query[PAGE_QUERY_KEY];
+  const s = Array.isArray(raw) ? raw[0] : raw;
+  if (s === undefined || s === null || s === "") return 1;
+  const n = Number.parseInt(String(s), 10);
+  if (!Number.isFinite(n) || n < 1) return 1;
+  return n;
+}
+
+function queryForPage0(page0: number): LocationQueryRaw {
+  const q: LocationQueryRaw = { ...route.query };
+  if (page0 <= 0) {
+    delete q[PAGE_QUERY_KEY];
+  } else {
+    q[PAGE_QUERY_KEY] = String(page0 + 1);
+  }
+  return q;
+}
+
+function urlNeedsSyncForPage0(page0: number): boolean {
+  const raw = route.query[PAGE_QUERY_KEY];
+  const cur =
+    raw === undefined || raw === null || raw === ""
+      ? undefined
+      : String(Array.isArray(raw) ? raw[0] : raw);
+  const want = page0 <= 0 ? undefined : String(page0 + 1);
+  if (want === undefined) {
+    return cur !== undefined && cur !== "";
+  }
+  return cur !== want;
+}
 
 function scrollProductionsPageToTop() {
   const el = pageTopAnchor.value;
@@ -249,24 +291,77 @@ const hallsById = ref(new Map<number, Hall>());
 
 const locale = computed(() => i18n.global.locale.value as SupportedLang);
 
+async function fetchProductionsPageData(page0: number) {
+  const { items, total } = await getProductions({
+    limit: PAGE_SIZE,
+    offset: page0 * PAGE_SIZE,
+  });
+  productions.value = items;
+  totalCount.value = total;
+  currentPage.value = page0;
+}
+
+function scrollAfterPageChange() {
+  void nextTick();
+  requestAnimationFrame(() => {
+    scrollProductionsPageToTop();
+  });
+}
+
+async function replaceRouteForPage0(page0: number) {
+  await router.replace({
+    path: route.path,
+    query: queryForPage0(page0),
+    hash: route.hash,
+  });
+}
+
 onMounted(async () => {
   loading.value = true;
   loadError.value = false;
+  const requestedOneBased = readPageOneBasedFromRoute();
+  let page0 = Math.max(0, requestedOneBased - 1);
   try {
     const [page, tags, events, halls, tagTypes] = await Promise.all([
-      getProductions({ limit: PAGE_SIZE, offset: 0 }),
+      getProductions({ limit: PAGE_SIZE, offset: page0 * PAGE_SIZE }),
       getTags(),
       getEvents(),
       getHalls(),
       getTagTypes(),
     ]);
-    productions.value = page.items;
     totalCount.value = page.total;
-    currentPage.value = 0;
+    const tp =
+      totalCount.value === 0
+        ? 0
+        : Math.ceil(totalCount.value / PAGE_SIZE);
+
+    if (tp > 0) {
+      const clamped0 = Math.min(Math.max(0, page0), tp - 1);
+      if (clamped0 !== page0) {
+        page0 = clamped0;
+        const again = await getProductions({
+          limit: PAGE_SIZE,
+          offset: page0 * PAGE_SIZE,
+        });
+        productions.value = again.items;
+        totalCount.value = again.total;
+      } else {
+        productions.value = page.items;
+      }
+    } else {
+      productions.value = page.items;
+      page0 = 0;
+    }
+
+    currentPage.value = page0;
     tagsById.value = tagMapById(tags);
     tagTypesById.value = new Map(tagTypes.map((tt) => [tt.id, tt]));
     hallsById.value = hallMapById(halls);
     eventsByProduction.value = groupEventsByProductionId(events);
+
+    if (urlNeedsSyncForPage0(page0)) {
+      await replaceRouteForPage0(page0);
+    }
   } catch {
     loadError.value = true;
   } finally {
@@ -274,22 +369,44 @@ onMounted(async () => {
   }
 });
 
+watch(
+  () => readPageOneBasedFromRoute(),
+  async (oneBased) => {
+    if (loading.value) return;
+    if (totalPages.value <= 0) return;
+
+    let page0 = oneBased - 1;
+    const max0 = totalPages.value - 1;
+    const clamped0 = Math.min(Math.max(0, page0), max0);
+    if (page0 !== clamped0) {
+      await replaceRouteForPage0(clamped0);
+      return;
+    }
+    page0 = clamped0;
+
+    if (page0 === currentPage.value) return;
+
+    listLoading.value = true;
+    loadError.value = false;
+    try {
+      await fetchProductionsPageData(page0);
+      scrollAfterPageChange();
+    } catch {
+      loadError.value = true;
+    } finally {
+      listLoading.value = false;
+    }
+  },
+);
+
 async function goToPage(page: number) {
   if (page < 0 || page >= totalPages.value) return;
   listLoading.value = true;
   loadError.value = false;
   try {
-    const { items, total } = await getProductions({
-      limit: PAGE_SIZE,
-      offset: page * PAGE_SIZE,
-    });
-    productions.value = items;
-    totalCount.value = total;
-    currentPage.value = page;
-    await nextTick();
-    requestAnimationFrame(() => {
-      scrollProductionsPageToTop();
-    });
+    await fetchProductionsPageData(page);
+    await replaceRouteForPage0(page);
+    scrollAfterPageChange();
   } catch {
     loadError.value = true;
   } finally {
