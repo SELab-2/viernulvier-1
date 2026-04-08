@@ -278,6 +278,108 @@ describe("ProductionsView.vue", () => {
     wrapper.unmount();
   });
 
+  it("shows an error when pagination request fails", async () => {
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy
+      .mockResolvedValueOnce({
+        items: [mockProduction],
+        total: 45,
+      })
+      .mockRejectedValueOnce(new Error("network"));
+
+    const { wrapper } = await mountView();
+    expect(wrapper.text()).not.toContain("niet worden geladen");
+
+    const nextBtn = wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Volgende");
+    expect(nextBtn).toBeDefined();
+    await nextBtn!.trigger("click");
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("niet worden geladen");
+    wrapper.unmount();
+  });
+
+  it("resets the page field when the committed value is not finite", async () => {
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy.mockResolvedValue({
+      items: [mockProduction],
+      total: 45,
+    });
+
+    const { wrapper } = await mountView();
+    const field = wrapper.find('input[inputmode="numeric"]');
+
+    await field.setValue("9".repeat(400));
+    await field.trigger("blur");
+    await flushPromises();
+
+    expect(getProductionsSpy).toHaveBeenCalledTimes(1);
+    expect((field.element as HTMLInputElement).value).toBe("1");
+
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => resolve());
+    });
+    wrapper.unmount();
+  });
+
+  it("resets the page field when the committed value is empty", async () => {
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy.mockResolvedValue({
+      items: [mockProduction],
+      total: 45,
+    });
+
+    const { wrapper } = await mountView();
+    const field = wrapper.find('input[inputmode="numeric"]');
+
+    await field.setValue("");
+    await field.trigger("blur");
+    await flushPromises();
+
+    expect(getProductionsSpy).toHaveBeenCalledTimes(1);
+    expect((field.element as HTMLInputElement).value).toBe("1");
+
+    wrapper.unmount();
+  });
+
+  it("scrolls via fallback when the page anchor has no scrollIntoView", async () => {
+    const orig = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "scrollIntoView",
+    );
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: undefined,
+    });
+
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy.mockResolvedValue({
+      items: [mockProduction],
+      total: 45,
+    });
+
+    try {
+      const { wrapper } = await mountView();
+      const field = wrapper.find('input[inputmode="numeric"]');
+      await field.setValue("2");
+      await field.trigger("blur");
+      await flushPromises();
+
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => resolve());
+      });
+
+      expect(wrapper.text()).toContain("De voorstelling");
+      wrapper.unmount();
+    } finally {
+      if (orig) {
+        Object.defineProperty(HTMLElement.prototype, "scrollIntoView", orig);
+      }
+    }
+  });
+
   it("skips unknown tags and tags with empty localized names", async () => {
     vi.spyOn(productionsService, "getProductions").mockResolvedValue({
       items: [
