@@ -89,7 +89,7 @@ export type UpdateTagTypeInput = Partial<CreateTagTypeInput>;
 /**
  * Fetches publicly visible tags. 
  * Can be filtered by production ID.
- * * @param productionId - Optional ID to get tags for a specific production.
+ * @param productionId - Optional ID to get tags for a specific production.
  * @example
  * const tags = await getTags(45); // Get public tags for production 45
  */
@@ -115,7 +115,8 @@ export async function getTag(id: number): Promise<Tag> {
 /**
  * Fetches all tags (including hidden ones).
  * Can be filtered by production ID.
- * * @param productionId - Optional ID to get all tags for a specific production.
+ * @param productionId - Optional ID to get all tags for a specific production.
+ * @throws {ApiError} 401 — unauthenticated.
  */
 export async function getAllTags(productionId?: number): Promise<Tag[]> {
   const url = productionId ? `/tag/all?production=${productionId}` : "/tag/all";
