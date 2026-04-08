@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { QueryResult } from "pg";
 import type {ProductionWithBackwardsRefs, ProductionWithMeta} from "@viernulvier/shared/index.js";
 import {ProductionSchema, ProductionSchemaWithBackwardsRefs, stringToInt} from "@viernulvier/shared/index.js";
 import { parseParams, parseSchema, ParseContext } from "@/routes/helpers.js";
@@ -187,6 +188,7 @@ export type PaginatedProductions = {
  *
  * @param server - The Fastify instance, used for database access and logging.
  * @param request - The Fastify request; optional `limit`, `offset`, and `search` query params.
+ * @returns The list of productions as `{ items, total }`; throws if parsing failed.
  */
 export async function fetchProductions(
   server: FastifyInstance,
@@ -204,33 +206,31 @@ export async function fetchProductions(
   const normalizedSearch = trimmed && trimmed.length > 0 ? trimmed : undefined;
   const { sql: whereSql, params: searchParams } = productionListSearchClause(normalizedSearch);
 
+  let result: QueryResult<ProductionWithBackwardsRefs>;
+  let total: number;
+
   if (limit === undefined) {
-    const result = await server.pg.query<ProductionWithBackwardsRefs>(
+    result = await server.pg.query<ProductionWithBackwardsRefs>(
       `${ProductionSelect}${whereSql} ORDER BY p.id ASC`,
       searchParams,
     );
-    const items = parseSchema(
-      server,
-      z.array(ProductionSchemaWithBackwardsRefs),
-      result.rows,
-      ParseContext.Database,
+    total = result.rows.length;
+  } else {
+    const countResult = await server.pg.query<{ count: number }>(
+      `SELECT COUNT(*)::int AS count FROM production p${whereSql}`,
+      searchParams,
     );
-    return { items, total: items.length };
+    total = countResult.rows[0]?.count ?? 0;
+
+    const listParams = [...searchParams, limit, offset];
+    const limitIdx = searchParams.length + 1;
+    const offsetIdx = searchParams.length + 2;
+    result = await server.pg.query<ProductionWithBackwardsRefs>(
+      `${ProductionSelect}${whereSql} ORDER BY p.id ASC LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+      listParams,
+    );
   }
 
-  const countResult = await server.pg.query<{ count: number }>(
-    `SELECT COUNT(*)::int AS count FROM production p${whereSql}`,
-    searchParams,
-  );
-  const total = countResult.rows[0]?.count ?? 0;
-
-  const listParams = [...searchParams, limit, offset];
-  const limitIdx = searchParams.length + 1;
-  const offsetIdx = searchParams.length + 2;
-  const result = await server.pg.query<ProductionWithBackwardsRefs>(
-    `${ProductionSelect}${whereSql} ORDER BY p.id ASC LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
-    listParams,
-  );
   const items = parseSchema(
     server,
     z.array(ProductionSchemaWithBackwardsRefs),

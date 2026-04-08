@@ -95,6 +95,8 @@ export type ProductionListPage = {
  * - With `search`, results are filtered (title, artist, tagline, teaser, description, hall names).
  * - With no options: returns every production as `items` and `total === items.length`.
  *
+ * @returns Array of productions, each with `tags` and `events` as arrays of linked IDs.
+ *
  * @example
  * const { items, total } = await getProductions({ limit: 20, offset: 0 });
  */

@@ -10,6 +10,7 @@ import type {
 } from "@viernulvier/shared";
 import { routes } from "@/router/routes";
 import { i18n } from "@/i18n";
+import { __reset as resetDarkMode } from "@/composables/useDarkMode";
 import ProductionsView from "@/views/ProductionsView.vue";
 import * as productionsService from "@/services/productions";
 import type { ProductionListPage } from "@/services/productions";
@@ -100,13 +101,14 @@ describe("ProductionsView.vue", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-    document.documentElement.classList.remove("dark");
     localStorage.clear();
+    resetDarkMode();
+    document.documentElement.classList.remove("dark");
   });
 
-  async function mountView() {
+  async function mountView(initialPath = "/nl/productions") {
     const router = createRouter({ history: createMemoryHistory(), routes });
-    await router.push("/nl/productions");
+    await router.push(initialPath);
     await router.isReady();
 
     const wrapper = mount(ProductionsView, {
@@ -172,6 +174,7 @@ describe("ProductionsView.vue", () => {
 
   it("uses saved dark-mode preference from localStorage", async () => {
     localStorage.setItem("viernulvier-dark", "true");
+    resetDarkMode();
     const { wrapper } = await mountView();
     expect(document.documentElement.classList.contains("dark")).toBe(true);
     wrapper.unmount();
@@ -296,6 +299,242 @@ describe("ProductionsView.vue", () => {
     await new Promise<void>((resolve) => {
       requestAnimationFrame(() => resolve());
     });
+    wrapper.unmount();
+  });
+
+  it("shows an error when pagination request fails", async () => {
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy
+      .mockResolvedValueOnce({
+        items: [mockProduction],
+        total: 45,
+      })
+      .mockRejectedValueOnce(new Error("network"));
+
+    const { wrapper } = await mountView();
+    expect(wrapper.text()).not.toContain("niet worden geladen");
+
+    const nextBtn = wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Volgende");
+    expect(nextBtn).toBeDefined();
+    await nextBtn!.trigger("click");
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("niet worden geladen");
+    wrapper.unmount();
+  });
+
+  it("resets the page field when the committed value is not finite", async () => {
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy.mockResolvedValue({
+      items: [mockProduction],
+      total: 45,
+    });
+
+    const { wrapper } = await mountView();
+    const field = wrapper.find('input[inputmode="numeric"]');
+
+    await field.setValue("9".repeat(400));
+    await field.trigger("blur");
+    await flushPromises();
+
+    expect(getProductionsSpy).toHaveBeenCalledTimes(1);
+    expect((field.element as HTMLInputElement).value).toBe("1");
+
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => resolve());
+    });
+    wrapper.unmount();
+  });
+
+  it("resets the page field when the committed value is empty", async () => {
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy.mockResolvedValue({
+      items: [mockProduction],
+      total: 45,
+    });
+
+    const { wrapper } = await mountView();
+    const field = wrapper.find('input[inputmode="numeric"]');
+
+    await field.setValue("");
+    await field.trigger("blur");
+    await flushPromises();
+
+    expect(getProductionsSpy).toHaveBeenCalledTimes(1);
+    expect((field.element as HTMLInputElement).value).toBe("1");
+
+    wrapper.unmount();
+  });
+
+  it("scrolls via fallback when the page anchor has no scrollIntoView", async () => {
+    const orig = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "scrollIntoView",
+    );
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: undefined,
+    });
+
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy.mockResolvedValue({
+      items: [mockProduction],
+      total: 45,
+    });
+
+    try {
+      const { wrapper } = await mountView();
+      const field = wrapper.find('input[inputmode="numeric"]');
+      await field.setValue("2");
+      await field.trigger("blur");
+      await flushPromises();
+
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => resolve());
+      });
+
+      expect(wrapper.text()).toContain("De voorstelling");
+      wrapper.unmount();
+    } finally {
+      if (orig) {
+        Object.defineProperty(HTMLElement.prototype, "scrollIntoView", orig);
+      }
+    }
+  });
+
+  it("uses the page query for the initial list fetch", async () => {
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy.mockResolvedValue({
+      items: [mockProduction],
+      total: 45,
+    });
+
+    const { wrapper, router } = await mountView("/nl/productions?page=3");
+    expect(getProductionsSpy).toHaveBeenCalledWith({
+      limit: 20,
+      offset: 40,
+    });
+    expect(router.currentRoute.value.query.page).toBe("3");
+    wrapper.unmount();
+  });
+
+  it("drops page=1 from the URL after load", async () => {
+    const router = createRouter({ history: createMemoryHistory(), routes });
+    await router.push({ path: "/nl/productions", query: { page: "1" } });
+    await router.isReady();
+
+    const wrapper = mount(ProductionsView, {
+      global: { plugins: [router, i18n] },
+      attachTo: document.body,
+    });
+    await flushPromises();
+
+    expect(router.currentRoute.value.query.page).toBeUndefined();
+    wrapper.unmount();
+  });
+
+  it("normalizes an out-of-range page query after load", async () => {
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy.mockResolvedValue({
+      items: [mockProduction],
+      total: 45,
+    });
+
+    const { wrapper, router } = await mountView("/nl/productions?page=99");
+    expect(router.currentRoute.value.query.page).toBe("3");
+    expect(getProductionsSpy).toHaveBeenLastCalledWith({
+      limit: 20,
+      offset: 40,
+    });
+    wrapper.unmount();
+  });
+
+  it("refetches when the page query changes after load", async () => {
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy.mockResolvedValue({
+      items: [mockProduction],
+      total: 45,
+    });
+
+    const { wrapper, router } = await mountView("/nl/productions?page=2");
+    expect(getProductionsSpy).toHaveBeenLastCalledWith({
+      limit: 20,
+      offset: 20,
+    });
+
+    await router.replace({
+      path: "/nl/productions",
+      query: {},
+    });
+    await flushPromises();
+
+    expect(getProductionsSpy).toHaveBeenLastCalledWith({
+      limit: 20,
+      offset: 0,
+    });
+    wrapper.unmount();
+  });
+
+  it("clamps the page query via navigation after load", async () => {
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy.mockResolvedValue({
+      items: [mockProduction],
+      total: 45,
+    });
+
+    const { wrapper, router } = await mountView("/nl/productions?page=2");
+    await flushPromises();
+
+    await router.replace({
+      path: "/nl/productions",
+      query: { page: "99" },
+    });
+    await flushPromises();
+
+    expect(router.currentRoute.value.query.page).toBe("3");
+    wrapper.unmount();
+  });
+
+  it("shows an error when a route-driven page fetch fails", async () => {
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy
+      .mockResolvedValueOnce({
+        items: [mockProduction],
+        total: 45,
+      })
+      .mockRejectedValueOnce(new Error("network"));
+
+    const { wrapper, router } = await mountView("/nl/productions");
+    expect(wrapper.text()).not.toContain("niet worden geladen");
+
+    await router.replace({
+      path: "/nl/productions",
+      query: { page: "2" },
+    });
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("niet worden geladen");
+    wrapper.unmount();
+  });
+
+  it("updates the page query when using pagination controls", async () => {
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy.mockResolvedValue({
+      items: [mockProduction],
+      total: 45,
+    });
+
+    const { wrapper, router } = await mountView();
+    const nextBtn = wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Volgende");
+    expect(nextBtn).toBeDefined();
+    await nextBtn!.trigger("click");
+    await flushPromises();
+
+    expect(router.currentRoute.value.query.page).toBe("2");
     wrapper.unmount();
   });
 
