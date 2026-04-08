@@ -60,7 +60,7 @@ export default {
     },
     events: {
       title: "Performance History",
-      body: "Where and when did this production take place? Below you’ll find an overview of all the performance dates and locations. You might recognize a date or place that stayed with you.",
+      body: "Where and when did this production take place? Here you'll find an overview of all the performance dates and locations. You might recognize a date or place that stayed with you.",
     },
   },
   admin: {
