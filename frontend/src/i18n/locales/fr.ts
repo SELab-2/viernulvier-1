@@ -40,6 +40,16 @@ export default {
   date: {
     doorsOpen: "Portes ouvertes à",
   },
+  productionsPage: {
+    heading: "Productions",
+    intro:
+      "Tous les spectacles de l’archive en un coup d’œil.",
+    loading: "Chargement des productions…",
+    error:
+      "Impossible de charger les productions. Veuillez réessayer plus tard.",
+    empty: "Aucune production dans les archives pour l’instant.",
+    morePerformances: "{n} de plus",
+  },
   production: {
     hero: {
       dateRange: "Période",

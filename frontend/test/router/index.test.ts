@@ -132,10 +132,19 @@ describe("router/index.ts — navigation guard", () => {
     });
 
     it("rethrows non-authorization errors", async () => {
-      const { getCurrentlyLoggedInAdmin } = await import("@/services/auth");
-      vi.mocked(getCurrentlyLoggedInAdmin).mockRejectedValueOnce(new Error("Network error"));
+      // Without an onError handler, vue-router logs warn + console.error in dev;
+      // that pollutes test output. Subscribing silences those while push() still rejects.
+      const removeErrorHandler = router.onError(() => {});
+      try {
+        const { getCurrentlyLoggedInAdmin } = await import("@/services/auth");
+        vi.mocked(getCurrentlyLoggedInAdmin).mockRejectedValueOnce(
+          new Error("Network error"),
+        );
 
-      await expect(navigate(router, "/nl/admin")).rejects.toThrow("Network error");
+        await expect(navigate(router, "/nl/admin")).rejects.toThrow("Network error");
+      } finally {
+        removeErrorHandler();
+      }
     });
   });
 });
