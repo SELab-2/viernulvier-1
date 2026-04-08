@@ -129,16 +129,48 @@ export async function fetchProductionWithMeta(
 }
 
 const MAX_PAGE_SIZE = 100;
+const MAX_SEARCH_LENGTH = 200;
 
 const ProductionListQuerySchema = z
   .object({
     limit: z.coerce.number().int().positive().max(MAX_PAGE_SIZE).optional(),
     offset: z.coerce.number().int().min(0).optional(),
+    search: z.string().max(MAX_SEARCH_LENGTH).optional(),
   })
   .refine(
     (q) => q.limit !== undefined || q.offset === undefined || q.offset === 0,
     { message: "`offset` requires `limit`" },
   );
+
+/** Escape `%`, `_`, and `\` for use in `ILIKE ... ESCAPE '\\'`. */
+function escapeIlikePattern(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
+
+type ListSearchClause = { sql: string; params: string[] };
+
+/**
+ * WHERE clause for public list search: title, artist, tagline, teaser,
+ * description (all locales in JSON text), and hall names via events.
+ */
+function productionListSearchClause(normalizedSearch: string | undefined): ListSearchClause {
+  if (normalizedSearch === undefined) {
+    return { sql: "", params: [] };
+  }
+  const pattern = `%${escapeIlikePattern(normalizedSearch)}%`;
+  const cond = `(p.title::text ILIKE $1 ESCAPE '\\'
+    OR p.artist::text ILIKE $1 ESCAPE '\\'
+    OR p.tagline::text ILIKE $1 ESCAPE '\\'
+    OR p.teaser::text ILIKE $1 ESCAPE '\\'
+    OR COALESCE(p.description::text, '') ILIKE $1 ESCAPE '\\'
+    OR EXISTS (
+      SELECT 1 FROM event e
+      INNER JOIN hall h ON e.hall = h.id
+      WHERE e.production = p.id
+        AND h.name::text ILIKE $1 ESCAPE '\\'
+    ))`;
+  return { sql: ` WHERE ${cond}`, params: [pattern] };
+}
 
 export type PaginatedProductions = {
   items: ProductionWithBackwardsRefs[];
@@ -149,10 +181,12 @@ export type PaginatedProductions = {
  * Fetches a list of productions.
  *
  * - Without `limit`: returns every production (same ordering as before), as `{ items, total }`.
- * - With `limit`: returns a page `{ items, total }` where `total` is the full row count.
+ * - With `limit`: returns a page `{ items, total }` where `total` is the matching row count.
+ * - Optional `search`: case-insensitive substring on title, artist, tagline, teaser,
+ *   description, and related hall names.
  *
  * @param server - The Fastify instance, used for database access and logging.
- * @param request - The Fastify request; optional `limit` and `offset` query params.
+ * @param request - The Fastify request; optional `limit`, `offset`, and `search` query params.
  */
 export async function fetchProductions(
   server: FastifyInstance,
@@ -166,10 +200,14 @@ export async function fetchProductions(
   );
   const limit = query.limit;
   const offset = query.offset ?? 0;
+  const trimmed = typeof query.search === "string" ? query.search.trim() : undefined;
+  const normalizedSearch = trimmed && trimmed.length > 0 ? trimmed : undefined;
+  const { sql: whereSql, params: searchParams } = productionListSearchClause(normalizedSearch);
 
   if (limit === undefined) {
     const result = await server.pg.query<ProductionWithBackwardsRefs>(
-      `${ProductionSelect} ORDER BY p.id ASC`,
+      `${ProductionSelect}${whereSql} ORDER BY p.id ASC`,
+      searchParams,
     );
     const items = parseSchema(
       server,
@@ -181,13 +219,17 @@ export async function fetchProductions(
   }
 
   const countResult = await server.pg.query<{ count: number }>(
-    `SELECT COUNT(*)::int AS count FROM production`,
+    `SELECT COUNT(*)::int AS count FROM production p${whereSql}`,
+    searchParams,
   );
   const total = countResult.rows[0]?.count ?? 0;
 
+  const listParams = [...searchParams, limit, offset];
+  const limitIdx = searchParams.length + 1;
+  const offsetIdx = searchParams.length + 2;
   const result = await server.pg.query<ProductionWithBackwardsRefs>(
-    `${ProductionSelect} ORDER BY p.id ASC LIMIT $1 OFFSET $2`,
-    [limit, offset],
+    `${ProductionSelect}${whereSql} ORDER BY p.id ASC LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+    listParams,
   );
   const items = parseSchema(
     server,

@@ -92,6 +92,7 @@ export type ProductionListPage = {
  * Fetches productions (public — no session required).
  *
  * - With `{ limit, offset }`: returns one page plus the full `total` count.
+ * - With `search`, results are filtered (title, artist, tagline, teaser, description, hall names).
  * - With no options: returns every production as `items` and `total === items.length`.
  *
  * @example
@@ -100,11 +101,15 @@ export type ProductionListPage = {
 export async function getProductions(options?: {
   limit?: number;
   offset?: number;
+  search?: string;
 }): Promise<ProductionListPage> {
   const params = new URLSearchParams();
   if (options?.limit !== undefined) {
     params.set("limit", String(options.limit));
     params.set("offset", String(options.offset ?? 0));
+  }
+  if (options?.search !== undefined && options.search.trim() !== "") {
+    params.set("search", options.search.trim());
   }
   const qs = params.toString();
   return await apiFetch<ProductionListPage>(
