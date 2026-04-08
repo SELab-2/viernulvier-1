@@ -55,6 +55,14 @@ export default {
     pageWord: "Pagina",
     pageOfTotal: "van {total}",
     goToPage: "Ga naar pagina",
+    searchLabel: "Producties doorzoeken",
+    searchPlaceholder: "Titel, artiest, zaal, beschrijving…",
+    searchButton: "Zoeken",
+    activeSearchLabel: "Zoekterm:",
+    removeSearchFilter: "Zoekfilter verwijderen",
+    noSearchResults: "Geen producties gevonden voor deze zoekterm.",
+    filterResultsSingle: "1 resultaat",
+    filterResultsPlural: "{count} resultaten",
   },
   admin: {
     login: {
