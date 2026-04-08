@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { QueryResult } from "pg";
 import type {ProductionWithBackwardsRefs, ProductionWithMeta} from "@viernulvier/shared/index.js";
 import {ProductionSchema, ProductionSchemaWithBackwardsRefs, stringToInt} from "@viernulvier/shared/index.js";
 import { parseParams, parseSchema, ParseContext } from "@/routes/helpers.js";
@@ -153,6 +154,7 @@ export type PaginatedProductions = {
  *
  * @param server - The Fastify instance, used for database access and logging.
  * @param request - The Fastify request; optional `limit` and `offset` query params.
+ * @returns The list of productions as `{ items, total }`; throws if parsing failed.
  */
 export async function fetchProductions(
   server: FastifyInstance,
@@ -167,28 +169,25 @@ export async function fetchProductions(
   const limit = query.limit;
   const offset = query.offset ?? 0;
 
+  let result: QueryResult<ProductionWithBackwardsRefs>;
+  let total: number;
+
   if (limit === undefined) {
-    const result = await server.pg.query<ProductionWithBackwardsRefs>(
+    result = await server.pg.query<ProductionWithBackwardsRefs>(
       `${ProductionSelect} ORDER BY p.id ASC`,
     );
-    const items = parseSchema(
-      server,
-      z.array(ProductionSchemaWithBackwardsRefs),
-      result.rows,
-      ParseContext.Database,
+    total = result.rows.length;
+  } else {
+    const countResult = await server.pg.query<{ count: number }>(
+      `SELECT COUNT(*)::int AS count FROM production`,
     );
-    return { items, total: items.length };
+    total = countResult.rows[0]?.count ?? 0;
+    result = await server.pg.query<ProductionWithBackwardsRefs>(
+      `${ProductionSelect} ORDER BY p.id ASC LIMIT $1 OFFSET $2`,
+      [limit, offset],
+    );
   }
 
-  const countResult = await server.pg.query<{ count: number }>(
-    `SELECT COUNT(*)::int AS count FROM production`,
-  );
-  const total = countResult.rows[0]?.count ?? 0;
-
-  const result = await server.pg.query<ProductionWithBackwardsRefs>(
-    `${ProductionSelect} ORDER BY p.id ASC LIMIT $1 OFFSET $2`,
-    [limit, offset],
-  );
   const items = parseSchema(
     server,
     z.array(ProductionSchemaWithBackwardsRefs),

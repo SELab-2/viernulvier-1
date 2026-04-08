@@ -10,6 +10,7 @@ import type {
 } from "@viernulvier/shared";
 import { routes } from "@/router/routes";
 import { i18n } from "@/i18n";
+import { __reset as resetDarkMode } from "@/composables/useDarkMode";
 import ProductionsView from "@/views/ProductionsView.vue";
 import * as productionsService from "@/services/productions";
 import type { ProductionListPage } from "@/services/productions";
@@ -100,8 +101,9 @@ describe("ProductionsView.vue", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-    document.documentElement.classList.remove("dark");
     localStorage.clear();
+    resetDarkMode();
+    document.documentElement.classList.remove("dark");
   });
 
   async function mountView() {
@@ -172,6 +174,7 @@ describe("ProductionsView.vue", () => {
 
   it("uses saved dark-mode preference from localStorage", async () => {
     localStorage.setItem("viernulvier-dark", "true");
+    resetDarkMode();
     const { wrapper } = await mountView();
     expect(document.documentElement.classList.contains("dark")).toBe(true);
     wrapper.unmount();

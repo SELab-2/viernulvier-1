@@ -94,6 +94,8 @@ export type ProductionListPage = {
  * - With `{ limit, offset }`: returns one page plus the full `total` count.
  * - With no options: returns every production as `items` and `total === items.length`.
  *
+ * @returns Array of productions, each with `tags` and `events` as arrays of linked IDs.
+ *
  * @example
  * const { items, total } = await getProductions({ limit: 20, offset: 0 });
  */
