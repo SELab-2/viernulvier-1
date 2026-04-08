@@ -59,6 +59,10 @@ export default {
       tags: "Étiquettes",
       extraInfo: "Infos complémentaires",
     },
+    events: {
+      title: "Historique des représentations",
+      body: "Où et quand cette production a-t-elle eu lieu ? Vous trouverez ci-dessous un aperçu de toutes les dates et des lieux de représentation. Peut-être reconnaîtrez-vous une date ou un endroit qui vous est resté en mémoire.",
+    },
   },
   admin: {
     login: {

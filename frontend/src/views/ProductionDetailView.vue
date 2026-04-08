@@ -23,7 +23,7 @@
           :tag-groups="tagGroups" 
           :total-tags="totalTags" 
         />
-        <EventsSection />
+        <EventsSection :events="events" />
         <GallerySection />
         <BlogSection />
       </template>
@@ -50,6 +50,7 @@ import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { ApiError } from "@/services/api";
 import { useTagGroups } from "@/composables/useTagGroups";
+import { useProductionEvents } from "@/composables/useProductionEvents";
 
 const { isDark } = useDarkMode();
 
@@ -76,5 +77,6 @@ onMounted(async () => {
 });
 
 const { tagGroups, totalTags, loading: tagsLoading } = useTagGroups(id);
+const { events, loading: eventsLoading } = useProductionEvents(id);
 
 </script>

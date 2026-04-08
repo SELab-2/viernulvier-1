@@ -3,41 +3,53 @@
     <div class="mx-auto max-w-7xl px-6 md:px-12">
       <div class="grid grid-cols-1 gap-16 lg:grid-cols-12">
         <div class="lg:col-span-4">
-          <h2 class="mb-6 text-4xl font-black uppercase leading-none tracking-tighter text-ink-primary">
-            Production<br />History
-          </h2>
+          <h2 
+            class="mb-6 text-4xl font-black uppercase leading-[0.9] tracking-tighter text-ink-primary wrap-break-word hyphens-auto "
+            v-html="t('production.events.title')"
+          ></h2>
           <p class="text-sm leading-relaxed text-ink-secondary">
-            Comprehensive log of past stagings and archival milestones. Every
-            event is preserved with high-fidelity records.
+            {{ t("production.events.body") }}
           </p>
         </div>
         
-        <div class="divide-y divide-surface-3 lg:col-span-8">
-          <div
-            v-for="(event, index) in events"
-            :key="index"
-            class="group -mx-4 flex flex-col justify-between px-4 py-8 transition-colors duration-300 hover:bg-surface-1 md:flex-row md:items-center"
-          >
-            <div class="flex items-center gap-8">
-              <div class="flex min-w-12 flex-col items-center">
-                <span class="text-[10px] font-bold uppercase text-ink-secondary">
-                  {{ event.date }}
-                </span>
-                <span class="text-lg font-black text-ink-primary">{{ event.time }}</span>
+        <div class="lg:col-span-8">
+          <div class="divide-y divide-surface-3 border-t border-surface-3">
+            <div
+              v-for="event in events"
+              :key="event.id"
+              class="group -mx-4 grid grid-cols-1 gap-y-6 px-4 py-10 transition-colors duration-300 hover:bg-surface-1 md:grid-cols-12 md:items-center md:gap-x-8"
+            >
+              <div class="md:col-span-3">
+                <div class="text-2xl font-black tracking-tighter text-ink-primary leading-none mb-2">
+                  {{ formatNumericDate(event.starts_at, currentLang) }}
+                </div>
+                <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-secondary flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-surface-3"></span>
+                  {{ formatTime(event.starts_at) }}
+  
+                  <span 
+                    v-if="event.ends_at && formatTime(event.ends_at) !== formatTime(event.starts_at)" 
+                    class="opacity-80"
+                  >
+                    — {{ formatTime(event.ends_at) }}
+                  </span>
+                </div>
               </div>
-              <div>
-                <h4 class="text-lg font-bold text-ink-primary">
-                  {{ event.title }}
+
+              <div class="md:col-span-6">
+                <h4 class="text-xl font-bold leading-tight text-ink-primary">
+                  {{ tProd(event.hall?.name) || 'Unnamed Venue' }}
                 </h4>
-                <p class="text-xs uppercase tracking-wide text-ink-secondary">
-                  {{ event.subtitle }}
+                <p v-if="event.hall?.address" class="mt-1 text-sm text-ink-secondary leading-relaxed">
+                  {{ event.hall.address }}
                 </p>
               </div>
-            </div>
-            <div class="mt-4 flex items-center gap-6 md:mt-0">
-              <span class="text-lg font-black uppercase text-ink-primary">
-                € 15,00
-              </span>
+
+              <div class="flex md:col-span-3 md:justify-end">
+                <span class="font-mono text-xl font-black text-ink-primary tabular-nums tracking-tight">
+                  € {{ event.displayPrice ?? '—' }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -47,31 +59,24 @@
 </template>
 
 <script setup lang="ts">
-interface Event {
-  date: string;
-  time: string;
-  title: string;
-  subtitle: string;
-}
+import type { EnrichedEvent } from '@/composables/useProductionEvents';
+import { i18n, type SupportedLang } from '@/i18n';
+import { formatNumericDate, formatTime } from '@/utils/date';
+import { localizeOrEmpty, type LanguageMap } from '@/utils/i18n';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
-const events: Event[] = [
-  {
-    date: "Oct 14",
-    time: "20:00",
-    title: "Ghent: De Vooruit",
-    subtitle: "Theaterzaal — 20:00 - 21:15",
-  },
-  {
-    date: "Nov 02",
-    time: "19:30",
-    title: "Brussels: Théâtre National",
-    subtitle: "Studio 1 — 19:30 - 20:45",
-  },
-  {
-    date: "Jan 12",
-    time: "14:00",
-    title: "Digital Hall: Archive Seminar",
-    subtitle: "Online Lecture — 14:00 - 15:30",
-  },
-];
+const props = defineProps<{
+  events: EnrichedEvent[];
+}>();
+
+const { t } = useI18n();
+const currentLang = computed(
+  () => i18n.global.locale.value as SupportedLang,
+);
+
+const tProd = (map: LanguageMap | null | undefined) =>
+  localizeOrEmpty(map ?? {}, currentLang.value);
+
+
 </script>

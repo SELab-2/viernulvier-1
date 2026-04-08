@@ -59,6 +59,10 @@ export default {
       tags: "Labels",
       extraInfo: "Extra info",
     },
+    events: {
+      title: "Voorstellings&shy;geschiedenis",
+      body: "Waar en wanneer vond deze productie plaats? Hieronder vind je een overzicht van alle speelmomenten en locaties. Misschien herken je wel een datum of plek die je is bijgebleven.",
+    },
   },
   admin: {
     login: {

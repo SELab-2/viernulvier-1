@@ -80,6 +80,35 @@ export function formatShortDate(
 }
 
 /**
+ * Formats a date numerically without leading zeros, using dots as separators.
+ * Respects the locale's date order (e.g., DMY vs. MDY).
+ *
+ * @param date - The date to format.
+ * @param locale - BCP 47 locale string (defaults to "nl-BE").
+ * @returns Formatted date string, e.g., "8.4.2026".
+ *
+ * @example
+ * formatNumericDate(new Date("2026-04-08"), "nl-BE"); // "8.4.2026"
+ * formatNumericDate(new Date("2026-04-08"), "en-US"); // "4.8.2026"
+ */
+export function formatNumericDate(
+  date: Date | string | number,
+  locale: string = "nl-BE",
+): string {
+  const options: Intl.DateTimeFormatOptions = {
+    day: "numeric",
+    month: "numeric",
+    year: "numeric",
+  };
+
+  return new Intl.DateTimeFormat(locale, options)
+    .format(new Date(date))
+    .replace(/[- /]/g, ".")
+    .replace(/\.+/g, ".")
+    .replace(/\.$/, "");
+}
+
+/**
  * Formats only the time portion of a date.
  *
  * @param date The date/time to format.
