@@ -142,6 +142,30 @@ describe("Production fetch routes", () => {
     expect(response.statusCode).toBe(400);
   });
 
+  test("GET /api/v1/production?search=…&limit=10 -> returns a filtered page", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?search=Artiest&limit=10&offset=0",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { items: unknown[]; total: number };
+    expect(json.total).toBe(1);
+    const parsed = ProductionSchemaWithBackwardsRefs.array().parse(json.items);
+    expect(parsed).toEqual([ProductionSchemaWithBackwardsRefs.parse(baseProduction)]);
+  });
+
+  test("GET /api/v1/production?search=… -> 400 when search exceeds max length", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/production?search=${"x".repeat(201)}`,
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
   test("GET /api/v1/production?limit=5 -> total 0 when COUNT returns no row", async () => {
     server.pg.query = vi.fn().mockImplementation((query: string) => {
       const upper = query.trim().toUpperCase();

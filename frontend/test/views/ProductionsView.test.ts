@@ -177,6 +177,30 @@ describe("ProductionsView.vue", () => {
     wrapper.unmount();
   });
 
+  it("applies search and refetches with the search query", async () => {
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy.mockResolvedValue({
+      items: [mockProduction],
+      total: 1,
+    });
+
+    const { wrapper } = await mountView();
+    expect(getProductionsSpy).toHaveBeenCalledTimes(1);
+
+    const searchInput = wrapper.find("#productions-search");
+    expect(searchInput.exists()).toBe(true);
+    await searchInput.setValue("voorstelling");
+    await searchInput.trigger("keydown.enter");
+    await flushPromises();
+
+    expect(getProductionsSpy).toHaveBeenLastCalledWith({
+      limit: 20,
+      offset: 0,
+      search: "voorstelling",
+    });
+    wrapper.unmount();
+  });
+
   it("fetches the requested page when the page field is committed", async () => {
     const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
     getProductionsSpy.mockResolvedValue({
