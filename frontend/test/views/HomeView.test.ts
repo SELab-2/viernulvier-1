@@ -5,6 +5,7 @@ import { routes } from "@/router/routes";
 import { i18n } from "@/i18n";
 import HomeView from "@/views/HomeView.vue";
 import MarkdownEditor from "@/components/MarkdownEditor.vue";
+import { __reset as resetDarkMode } from "@/composables/useDarkMode";
 
 vi.mock("easymde", () => ({
   default: vi.fn().mockImplementation(function () {
@@ -62,6 +63,7 @@ describe("HomeView.vue", () => {
     document.body.innerHTML = "";
     document.documentElement.classList.remove("dark");
     localStorage.clear();
+    resetDarkMode();
   });
 
   // ── Composition — does HomeView assemble all child components? ───────────
@@ -133,6 +135,7 @@ describe("HomeView.vue", () => {
       wrapper.unmount();
       document.documentElement.classList.remove("dark");
       localStorage.setItem("viernulvier-dark", "true");
+      resetDarkMode();
       const { wrapper: w2 } = await mountHome("nl");
       expect(document.documentElement.classList.contains("dark")).toBe(true);
       w2.unmount();
