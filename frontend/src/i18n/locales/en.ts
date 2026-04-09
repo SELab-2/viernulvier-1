@@ -61,6 +61,9 @@ export default {
     events: {
       title: "Performance History",
       body: "Where and when did this production take place? Here you'll find an overview of all the performance dates and locations. You might recognize a date or place that stayed with you.",
+      show_all: "Show All Events",
+      show_less: "Show Less",
+      remaining_more: "(+ {count} more)",
     },
   },
   admin: {

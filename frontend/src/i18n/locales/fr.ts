@@ -62,6 +62,9 @@ export default {
     events: {
       title: "Historique des représentations",
       body: "Où et quand cette production a-t-elle eu lieu ? Vous trouverez ici un aperçu de toutes les dates et des lieux de représentation. Peut-être reconnaîtrez-vous une date ou un endroit qui vous est resté en mémoire.",
+      show_all: "Afficher tous les événements",
+      show_less: "Afficher moins",
+      remaining_more: "(+ {count} de plus)",
     },
   },
   admin: {

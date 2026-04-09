@@ -60,8 +60,11 @@ export default {
       extraInfo: "Extra info",
     },
     events: {
-      title: "Voorstellings&shy;geschiedenis",
+      title: "Voorstellings\u00adgeschiedenis",
       body: "Waar en wanneer vond deze productie plaats? Hier vind je een overzicht van alle speelmomenten en locaties. Misschien herken je wel een datum of plek die je is bijgebleven.",
+      show_all: "Toon alle evenementen",
+      show_less: "Toon minder",
+      remaining_more: "(+ {count} meer)",
     },
   },
   admin: {
