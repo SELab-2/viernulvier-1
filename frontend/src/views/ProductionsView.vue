@@ -223,6 +223,9 @@ const PAGE_SIZE = 20;
 /** 1-based page index in the URL (`?page=1` is normalized away). */
 const PAGE_QUERY_KEY = "page";
 
+/** Same name as the list API query param; survives refresh and shareable URLs. */
+const SEARCH_QUERY_KEY = "search";
+
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
@@ -241,12 +244,26 @@ function readPageOneBasedFromRoute(): number {
   return n;
 }
 
+function readSearchFromRoute(): string | null {
+  const raw = route.query[SEARCH_QUERY_KEY];
+  const s = Array.isArray(raw) ? raw[0] : raw;
+  if (s === undefined || s === null || s === "") return null;
+  const t = String(s).trim();
+  return t.length > 0 ? t : null;
+}
+
 function queryForPage0(page0: number): LocationQueryRaw {
   const q: LocationQueryRaw = { ...route.query };
   if (page0 <= 0) {
     delete q[PAGE_QUERY_KEY];
   } else {
     q[PAGE_QUERY_KEY] = String(page0 + 1);
+  }
+  const term = appliedSearchTerm.value?.trim();
+  if (term) {
+    q[SEARCH_QUERY_KEY] = term;
+  } else {
+    delete q[SEARCH_QUERY_KEY];
   }
   return q;
 }
@@ -451,6 +468,11 @@ const locale = computed(() => i18n.global.locale.value as SupportedLang);
 onMounted(async () => {
   loading.value = true;
   loadError.value = false;
+  const initialSearch = readSearchFromRoute();
+  if (initialSearch) {
+    appliedSearchTerm.value = initialSearch;
+    searchDraft.value = initialSearch;
+  }
   const requestedOneBased = readPageOneBasedFromRoute();
   let page0 = Math.max(0, requestedOneBased - 1);
   try {

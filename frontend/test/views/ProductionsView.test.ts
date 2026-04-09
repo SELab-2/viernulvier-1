@@ -187,7 +187,7 @@ describe("ProductionsView.vue", () => {
       total: 1,
     });
 
-    const { wrapper } = await mountView();
+    const { wrapper, router } = await mountView();
     expect(getProductionsSpy).toHaveBeenCalledTimes(1);
 
     const searchInput = wrapper.find("#productions-search");
@@ -200,6 +200,23 @@ describe("ProductionsView.vue", () => {
       limit: 20,
       offset: 0,
       search: "voorstelling",
+    });
+    expect(router.currentRoute.value.query.search).toBe("voorstelling");
+    wrapper.unmount();
+  });
+
+  it("uses the search query from the URL on initial load", async () => {
+    const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
+    getProductionsSpy.mockResolvedValue({
+      items: [mockProduction],
+      total: 1,
+    });
+
+    const { wrapper } = await mountView("/nl/productions?search=gezelschap");
+    expect(getProductionsSpy).toHaveBeenCalledWith({
+      limit: 20,
+      offset: 0,
+      search: "gezelschap",
     });
     wrapper.unmount();
   });
