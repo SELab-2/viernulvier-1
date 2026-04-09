@@ -8,7 +8,7 @@ import {
   parseParams,
   parseSchema,
 } from "@/routes/helpers.js";
-import { getImageById, getCropById, /*getCropsByImageId*/ } from "./fetch.js";
+import { getImageById, getCropById } from "./fetch.js";
 import { ReplaceImageBodySchema, ReplaceCropBodySchema } from "./body-schema.js";
 import { parseMultipart } from "./create.js";
 import {
