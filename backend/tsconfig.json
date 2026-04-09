@@ -2,11 +2,10 @@
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
-    // "rootDir": "./src",
+    "rootDir": "..",
     "outDir": "./dist",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
+      "@/*": ["./src/*"],
       "@viernulvier/shared/*": ["../shared/src/*"]
     },
 
@@ -45,6 +44,6 @@
   },
 
 
-  "include": ["src/**/*", "scripts/**/*"],
+  "include": ["src/**/*", "scripts/**/*", "test/**/*"],
   "exclude": ["node_modules", "dist"],
 }

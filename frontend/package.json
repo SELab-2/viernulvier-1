@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@viernulvier/shared": "workspace:*",
+    "pinia": "^3.0.4",
     "vue": "^3.5.30",
     "vue-i18n": "^11.3.0",
     "vue-router": "^4.6.4"
@@ -27,18 +28,18 @@
     "@vitejs/plugin-vue": "^6.0.5",
     "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.9.1",
-    "eslint": "^9",
+    "eslint": "^10",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-tsdoc": "^0.5.2",
     "eslint-plugin-vue": "^10.8.0",
     "globals": "^17.3.0",
-    "jsdom": "^28.1.0",
+    "jsdom": "^29.0.1",
     "tailwindcss": "^4.2.2",
-    "typescript": "~5.9.3",
-    "typescript-eslint": "^8.56.0",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.58.0",
     "vite": "^8.0.3",
-    "vitest": "4.1.1",
+    "vitest": "4.1.2",
     "vue-tsc": "^3.2.6"
   },
   "overrides": {

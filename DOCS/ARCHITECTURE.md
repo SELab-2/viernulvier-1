@@ -150,8 +150,8 @@ Routes are organized by domain. Each domain has its own directory under `routes/
 | **Production** | `/api/v1/production` | Fetch all/one | CRUD, bulk edit |
 | **Event** | `/api/v1/event` | Fetch all/one | CRUD, bulk edit |
 | **Auth** | `/api/v1/auth` | Login, logout | Admin CRUD |
-| **Tags** | `/api/v1/tags` | Fetch public tags | Full CRUD, fetch all |
-| **Tag Types** | `/api/v1/tags/type` | Fetch all/one | CRUD |
+| **Tags** | `/api/v1/tag` | Fetch public tags | Full CRUD, fetch all |
+| **Tag Types** | `/api/v1/tag/type` | Fetch all/one | CRUD |
 | **Halls** | `/api/v1/hall` | Fetch all/one | CRUD |
 
 Every domain follows a consistent REST pattern: public GET endpoints for reading, and authenticated POST/PUT/PATCH/DELETE for writing. Most entities also expose a `/meta` variant that includes audit fields.

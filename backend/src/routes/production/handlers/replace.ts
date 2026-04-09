@@ -12,6 +12,8 @@ const ReplaceColumns = [
   "title",
   "artist",
   "tagline",
+  "finalized",
+  "old_id",
   "teaser",
   "description",
   "description_extra",

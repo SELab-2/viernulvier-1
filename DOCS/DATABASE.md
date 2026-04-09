@@ -32,7 +32,7 @@ Media storage is split into two tables. `Image` is the original image linked to 
 A system for dynamic extra fields on productions. Each custom field has a type (`bool`, `number`, `string`, `json`) and its corresponding value. This provides flexibility to add new fields later without modifying the schema.
 
 #### Admin
-A table for CMS users with login credentials. The password is stored hashed. The `created_by` reference in the metadata partial links every change in the database to the admin who made it.
+A table for CMS users with login credentials. The password is stored hashed. The `super` field is used for a super admin, which is capable of fetching, creating, editting and deleting other admins. The `created_by` and `updated_by` references in the metadata partial links every change in the database to the admin who made it.
 
 #### Blog and Blogpost
 The blog functionality (nice to have) consists of a blog as a container and individual blogposts with JSON content, linkable to productions and events from the archive.
@@ -199,93 +199,8 @@ Table admin {
   "id" int [PK]
   "username" varchar(32)
   "password" varchar(64)
-  "profile_picture" varchar(128) 
-}
-
-Table blog {
-  ~metadata
-  "id" int [PK]
-  "name" varchar(32)
-}
-
-Table blogpost {
-  ~metadata
-  "id" int [PK]
-  "blog" int [ref: > blog.id]
-  "content" json
-}
-  "event" int [PK, ref: > event.id]
-  "amount" varchar(32)
-  "box_office_id" int [null]
-  "available" int
-  "contingent_id" int
-  "expires_at" timestamp
-  "price" json
-  "rank" json
-}
-
-
-Table production_tag {
-  ~metadata
-  tag int [ref: > tag.id]
-  production int [ref: > production.id]
-}
-
-Table tag {
-  ~metadata
-  "id" int [PK]
-  "name" varchar(32) [not null]
-  "tag_type" int [ref: > tag_type.id, not null]
-
-  indexes {
-    tag_type
-  }
-}
-
-Table tag_type {
-  ~metadata
-  "id" int [PK]
-  "name" varchar(32)
-}
-
-Enum field_types {
-  "number"
-  "string"
-  "bool"
-  "json"
-}
-
-Table image {
-  ~metadata
-  "id" int [PK]
-  "prod_id" int [ref: > production.id]
-  "res" varchar(16)
-}
-
-Table crop {
-  ~metadata
-  "id" int [PK]
-  "image_id" int [ref: > image.id]
-  "url" varchar(128)
-}
-
-Table custom_production_field {
-  ~metadata
-  "id" int [PK]
-  "production_id" int [ref: > production.id]
-  "field_type" field_types
-  "value_bool" bool [null]
-  "value_number" numeric [null]
-  "value_string" varchar(32) [null]
-  "value_json" json [null]
-}
-
-Table admin {
-  ~metadata
-  "id" int [PK]
-  "username" varchar(32)
-  "password" varchar(64)
-  "profile_picture" varchar(128) 
+  "profile_picture" varchar(128)
+  "super" bool
 }
 
 Table blog {

@@ -10,6 +10,8 @@ import {
   updateAdmin,
   deleteAdmin,
   ApiError,
+  getCurrentlyLoggedInAdmin,
+  getCurrentlyLoggedInAdminWithMeta,
 } from "@/services/auth";
 
 // ---------------------------------------------------------------------------
@@ -182,12 +184,55 @@ describe("getAdminWithMeta", () => {
   });
 });
 
+describe("getCurrentlyLoggedInAdmin", () => {
+  beforeEach(() => vi.stubGlobal("fetch", mockOk(adminPayload)));
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("GETs /api/v1/auth/me", async () => {
+    await getCurrentlyLoggedInAdmin();
+    expect(lastFetchUrl()).toBe("/api/v1/auth/me");
+    expect(lastFetchOptions().method).toBeUndefined();
+  });
+
+  it("returns the current admin", async () => {
+    const result = await getCurrentlyLoggedInAdmin();
+    expect(result).toEqual(adminPayload);
+  });
+
+  it("throws ApiError on 401", async () => {
+    vi.stubGlobal("fetch", mockError(401, "Unauthorized"));
+    await expect(getCurrentlyLoggedInAdmin()).rejects.toBeInstanceOf(ApiError);
+  });
+});
+
+describe("getCurrentlyLoggedInAdminWithMeta", () => {
+  beforeEach(() =>
+    vi.stubGlobal("fetch", mockOk({ ...adminPayload, created_at: "2024-01-01" })),
+  );
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("GETs /api/v1/auth/me/meta", async () => {
+    await getCurrentlyLoggedInAdminWithMeta();
+    expect(lastFetchUrl()).toBe("/api/v1/auth/me/meta");
+  });
+
+  it("returns the current admin with metadata", async () => {
+    const result = await getCurrentlyLoggedInAdminWithMeta();
+    expect(result).toEqual({ ...adminPayload, created_at: "2024-01-01" });
+  });
+
+  it("throws ApiError on 401", async () => {
+    vi.stubGlobal("fetch", mockError(401, "Unauthorized"));
+    await expect(getCurrentlyLoggedInAdminWithMeta()).rejects.toBeInstanceOf(ApiError);
+  });
+});
+
 describe("createAdmin", () => {
   beforeEach(() => vi.stubGlobal("fetch", mockOk(adminPayload, 201)));
   afterEach(() => vi.unstubAllGlobals());
 
   it("POSTs to /api/v1/auth", async () => {
-    await createAdmin({ username: "newuser", password: "pass" });
+    await createAdmin({ username: "newuser", password: "pass", super: true});
     expect(lastFetchUrl()).toBe("/api/v1/auth");
     expect(lastFetchOptions().method).toBe("POST");
   });
@@ -196,7 +241,8 @@ describe("createAdmin", () => {
     const input = {
       username: "newuser",
       password: "pass",
-      profile_picture: null,
+      super: true,
+      //profile_picture: null,
     };
     await createAdmin(input);
     expect(lastFetchOptions().body).toBe(JSON.stringify(input));
@@ -211,7 +257,8 @@ describe("replaceAdmin", () => {
     await replaceAdmin(1, {
       username: "admin",
       password: "newpass",
-      profile_picture: null,
+      super: true,
+      //profile_picture: null,
     });
     expect(lastFetchUrl()).toBe("/api/v1/auth/1");
     expect(lastFetchOptions().method).toBe("PUT");

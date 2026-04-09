@@ -29,7 +29,7 @@
 
       <!-- Image card -->
       <div
-        class="relative overflow-hidden rounded-2xl bg-surface-inv-raised aspect-[4/3]"
+        class="relative overflow-hidden rounded-2xl bg-surface-inv-raised aspect-4/3"
       >
         <img
           src="@/assets/images/hero.webp"

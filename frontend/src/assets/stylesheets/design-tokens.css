@@ -39,6 +39,10 @@
   /* ---- Photographic overlay ---- */
   --photo-overlay: #2B2826;
   --photo-opacity: 0.55;
+
+  /* ---- Tag chips (archive list — genre vs outline, Vooruit-style) ---- */
+  --tag-genre-bg: #8224e3;
+  --tag-genre-text: #f5f0e8;
 }
 
 /* ---- Dark mode ---- */
@@ -69,4 +73,7 @@
 
   --photo-overlay: #1C1A17;
   --photo-opacity: 0.65;
+
+  --tag-genre-bg: #8224e3;
+  --tag-genre-text: #f5f0e8;
 }

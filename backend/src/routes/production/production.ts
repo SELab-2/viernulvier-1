@@ -27,7 +27,7 @@ import {
  * @param server - The Fastify instance to register routes on.
  */
 export default function productionRoutes(server: FastifyInstance) {
-  const protect = { preHandler: [server.authorize] };
+  const protect = { preHandler: [server.authorize()] };
 
   server.get("/api/v1/production", replyHandler(server, fetchProductions));
   server.get("/api/v1/production/:id", replyHandler(server, fetchProduction));

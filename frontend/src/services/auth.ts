@@ -46,7 +46,9 @@ export interface LoginCredentials {
 export interface CreateAdminInput {
   username: string;
   password: string;
-  profile_picture?: string | null;
+  super: boolean;
+  // back-end isn't expecting a profile picture yet, waiting on the media endpoint
+  //profile_picture?: string | null;
 }
 
 /**
@@ -56,7 +58,9 @@ export interface CreateAdminInput {
 export interface ReplaceAdminInput {
   username: string;
   password: string;
-  profile_picture: string | null;
+  super: boolean;
+  // back-end isn't expecting a profile picture yet, waiting on the media endpoint
+  //profile_picture: string | null;
 }
 
 /**
@@ -156,6 +160,30 @@ export async function getAdmin(id: number): Promise<Admin> {
  */
 export async function getAdminWithMeta(id: number): Promise<AdminWithMeta> {
   return await apiFetch<AdminWithMeta>(`/auth/${id}/meta`);
+}
+
+/**
+ * Fetches the currently authenticated admin.
+ * The session cookie is sent automatically.
+ *
+ * @throws {ApiError} 401 — unauthenticated or session expired.
+ *
+ * @example
+ * const admin = await getCurrentlyLoggedInAdmin();
+ * console.log(admin.username);
+ */
+export async function getCurrentlyLoggedInAdmin(): Promise<Admin> {
+  return await apiFetch<Admin>("/auth/me");
+}
+
+/**
+ * Fetches the currently authenticated admin including audit metadata
+ * (`created_at`, `created_by`, `updated_at`, `updated_by`).
+ *
+ * @throws {ApiError} 401 — unauthenticated or session expired.
+ */
+export async function getCurrentlyLoggedInAdminWithMeta(): Promise<AdminWithMeta> {
+  return await apiFetch<AdminWithMeta>("/auth/me/meta");
 }
 
 /**
