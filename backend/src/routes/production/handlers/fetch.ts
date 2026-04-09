@@ -3,6 +3,8 @@ import type { QueryResult } from "pg";
 import type {ProductionWithBackwardsRefs, ProductionWithMeta} from "@viernulvier/shared/index.js";
 import {ProductionSchema, ProductionSchemaWithBackwardsRefs, stringToInt} from "@viernulvier/shared/index.js";
 import { parseParams, parseSchema, ParseContext } from "@/routes/helpers.js";
+import { ProductionListQuerySchema } from "../helpers/pagination.js";
+import { productionListSearchClause } from "../helpers/search.js";
 import z from "zod";
 
 const ProductionSelect = `
@@ -129,81 +131,6 @@ export async function fetchProductionWithMeta(
   return parseSchema(server, z.array(ProductionSchema.withMeta()), result.rows, ParseContext.Database)[0] ?? null;
 }
 
-const MAX_PAGE_SIZE = 100;
-const MAX_SEARCH_LENGTH = 200;
-const MAX_SEARCH_TERMS = 20;
-
-const SearchParamSchema = z
-  .preprocess((val: unknown): string[] | undefined => {
-    if (val === undefined || val === null) return undefined;
-    const raw = Array.isArray(val) ? val : [val];
-    const trimmed = raw
-      .filter((x): x is string => typeof x === "string")
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0);
-    return trimmed.length === 0 ? undefined : trimmed;
-  }, z.array(z.string().max(MAX_SEARCH_LENGTH)).max(MAX_SEARCH_TERMS).optional())
-  .transform((arr): string[] | undefined => {
-    if (!arr || arr.length === 0) return undefined;
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const s of arr) {
-      const k = s.toLowerCase();
-      if (seen.has(k)) continue;
-      seen.add(k);
-      out.push(s);
-    }
-    return out;
-  });
-
-const ProductionListQuerySchema = z
-  .object({
-    limit: z.coerce.number().int().positive().max(MAX_PAGE_SIZE).optional(),
-    offset: z.coerce.number().int().min(0).optional(),
-    search: SearchParamSchema,
-  })
-  .refine(
-    (q) => q.limit !== undefined || q.offset === undefined || q.offset === 0,
-    { message: "`offset` requires `limit`" },
-  );
-
-/** Escape `%`, `_`, and `\` for use in `ILIKE ... ESCAPE '\\'`. */
-function escapeIlikePattern(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
-}
-
-type ListSearchClause = { sql: string; params: string[] };
-
-/**
- * WHERE clause for public list search: title, artist, tagline, teaser,
- * description (all locales in JSON text), and hall names via events.
- * Multiple terms are combined with AND (each term must match somewhere).
- */
-function productionListSearchClause(searchTerms: string[]): ListSearchClause {
-  if (searchTerms.length === 0) {
-    return { sql: "", params: [] };
-  }
-  const conds: string[] = [];
-  const params: string[] = [];
-  for (const term of searchTerms) {
-    const pattern = `%${escapeIlikePattern(term)}%`;
-    const idx = params.length + 1;
-    conds.push(`(p.title::text ILIKE $${idx} ESCAPE '\\'
-    OR p.artist::text ILIKE $${idx} ESCAPE '\\'
-    OR p.tagline::text ILIKE $${idx} ESCAPE '\\'
-    OR p.teaser::text ILIKE $${idx} ESCAPE '\\'
-    OR COALESCE(p.description::text, '') ILIKE $${idx} ESCAPE '\\'
-    OR EXISTS (
-      SELECT 1 FROM event e
-      INNER JOIN hall h ON e.hall = h.id
-      WHERE e.production = p.id
-        AND h.name::text ILIKE $${idx} ESCAPE '\\'
-    ))`);
-    params.push(pattern);
-  }
-  return { sql: ` WHERE ${conds.join(" AND ")}`, params };
-}
-
 export type PaginatedProductions = {
   items: ProductionWithBackwardsRefs[];
   total: number;
@@ -270,4 +197,3 @@ export async function fetchProductions(
   );
   return { items, total };
 }
-
