@@ -10,11 +10,11 @@ const RequiredCreateColumns = [
   "artist",
   "tagline",
   "teaser",
+  "finalized",
 ] as const;
 
 const NullableCreateColumns = [
   "old_id",
-  "finalized",
   "supertitle",
   "description",
   "description_extra",

@@ -83,7 +83,7 @@ function importMetaUrlToPath(importMetaUrl: string): string {
   if (!importMetaUrl.startsWith("file://")) {
     return importMetaUrl;
   }
-  return new URL(importMetaUrl).pathname;
+  return fileURLToPath(importMetaUrl);
 }
 
 /**
@@ -153,6 +153,7 @@ export function parseLegacyImportCli(
     : argvForLegacyImportYargs(hideBin(process.argv), false);
 
   const parsed = yargs(input)
+    .locale("en")
     .exitProcess(!fromTest)
     .scriptName(`pnpm run ${options.scriptForUsage}`)
     .usage(
