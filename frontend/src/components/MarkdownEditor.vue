@@ -22,6 +22,7 @@ const textarea = ref<HTMLTextAreaElement | null>(null);
 let editor: EasyMDE | null = null;
 
 onMounted(() => {
+  /* v8 ignore next -- Vue guarantees the ref is populated before onMounted */
   if (!textarea.value) return;
 
   editor = new EasyMDE({
@@ -38,6 +39,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  /* v8 ignore next -- editor is always set when onUnmounted runs after a successful mount */
   editor?.toTextArea();
   editor = null;
 });

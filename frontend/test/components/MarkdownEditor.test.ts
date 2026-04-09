@@ -149,5 +149,13 @@ describe("MarkdownEditor.vue", () => {
       wrapper.unmount();
       expect(mockToTextArea).toHaveBeenCalledOnce();
     });
+
+    it("change callback is a no-op after the editor is disposed", async () => {
+      const wrapper = mount(MarkdownEditor, { props: { modelValue: "" } });
+      const savedCallback = changeCallback;
+      wrapper.unmount(); // sets editor = null inside the component
+      expect(() => savedCallback?.()).not.toThrow();
+      expect(wrapper.emitted("update:modelValue")).toBeFalsy();
+    });
   });
 });
