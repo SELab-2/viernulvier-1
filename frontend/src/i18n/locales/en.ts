@@ -48,6 +48,12 @@ export default {
     error: "Could not load productions. Please try again later.",
     empty: "No productions in the archive yet.",
     morePerformances: "{n} more",
+    showingRange: "{from}–{to} of {total}",
+    prevPage: "Previous",
+    nextPage: "Next",
+    pageWord: "Page",
+    pageOfTotal: "of {total}",
+    goToPage: "Go to page",
   },
   admin: {
     login: {

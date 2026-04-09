@@ -49,6 +49,12 @@ export default {
       "De producties konden niet worden geladen. Probeer het later opnieuw.",
     empty: "Er staan nog geen producties in het archief.",
     morePerformances: "nog {n}",
+    showingRange: "{from}–{to} van {total}",
+    prevPage: "Vorige",
+    nextPage: "Volgende",
+    pageWord: "Pagina",
+    pageOfTotal: "van {total}",
+    goToPage: "Ga naar pagina",
   },
   admin: {
     login: {

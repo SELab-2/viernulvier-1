@@ -1,9 +1,10 @@
 <template>
   <div class="min-h-screen bg-surface-0">
-    <AppNavbar :is-dark="isDark" @toggle-dark="isDark = !isDark" />
+    <AppNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
     <main>
       <section
-        class="border-b border-surface-3 bg-surface-1 py-12 md:py-16"
+        ref="pageTopAnchor"
+        class="scroll-mt-16 border-b border-surface-3 bg-surface-1 py-12 md:py-16"
       >
         <div class="mx-auto max-w-3xl px-6 text-center lg:px-10">
           <h1
@@ -36,7 +37,7 @@
         </p>
 
         <p
-          v-else-if="!productions.length"
+          v-else-if="totalCount === 0"
           class="py-16 text-center text-sm text-ink-secondary"
         >
           {{ t("productionsPage.empty") }}
@@ -51,6 +52,67 @@
             :tag-chips="tagChipsFor(p)"
             :halls-text="hallsTextFor(p.id)"
           />
+
+          <nav
+            v-if="totalPages > 1"
+            class="mt-10 grid grid-cols-1 justify-items-center gap-y-6 border-t border-surface-3 pt-8 sm:grid-cols-[1fr_auto] sm:items-center sm:justify-items-start sm:gap-x-12 sm:gap-y-0"
+            aria-label="Pagination"
+          >
+            <p class="text-center text-sm text-ink-secondary sm:text-left">
+              {{
+                t("productionsPage.showingRange", {
+                  from: rangeFrom,
+                  to: rangeTo,
+                  total: totalCount,
+                })
+              }}
+            </p>
+            <div
+              class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:justify-self-end"
+              role="group"
+              :aria-label="t('productionsPage.goToPage')"
+            >
+              <button
+                type="button"
+                class="cursor-pointer rounded-md border border-accent-outline bg-surface-0 px-3 py-1.5 text-sm font-medium text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="currentPage <= 0 || listLoading"
+                @click="goToPage(currentPage - 1)"
+              >
+                {{ t("productionsPage.prevPage") }}
+              </button>
+              <div
+                class="flex items-center gap-2 text-sm tabular-nums text-ink-secondary"
+              >
+                <span class="whitespace-nowrap">{{
+                  t("productionsPage.pageWord")
+                }}</span>
+                <input
+                  :value="pageNumberInput"
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  maxlength="6"
+                  :disabled="listLoading"
+                  :aria-label="t('productionsPage.goToPage')"
+                  class="min-w-6 max-w-8 shrink-0 border-0 border-b border-surface-3 bg-transparent px-0 pb-px text-center text-sm tabular-nums text-ink-secondary focus:border-ink-primary focus:text-ink-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                  @input="onPageNumberInput"
+                  @keydown.enter.prevent="commitPageNumberInput"
+                  @blur="commitPageNumberInput"
+                />
+                <span class="whitespace-nowrap">{{
+                  t("productionsPage.pageOfTotal", { total: totalPages })
+                }}</span>
+              </div>
+              <button
+                type="button"
+                class="cursor-pointer rounded-md border border-accent-outline bg-surface-0 px-3 py-1.5 text-sm font-medium text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="currentPage >= totalPages - 1 || listLoading"
+                @click="goToPage(currentPage + 1)"
+              >
+                {{ t("productionsPage.nextPage") }}
+              </button>
+            </div>
+          </nav>
         </div>
       </section>
     </main>
@@ -59,10 +121,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watchEffect } from "vue";
+import {
+  computed,
+  nextTick,
+  onMounted,
+  ref,
+  useTemplateRef,
+  watch,
+} from "vue";
 import { useI18n } from "vue-i18n";
+import { useRoute, useRouter } from "vue-router";
+import type { LocationQueryRaw } from "vue-router";
 import type {
-  Event,
+  Event as ProductionEvent,
   Hall,
   ProductionWithBackwardsRefs,
   Tag,
@@ -71,6 +142,7 @@ import type {
 import AppFooter from "@/components/AppFooter.vue";
 import AppNavbar from "@/components/AppNavbar.vue";
 import ProductionListCard from "@/components/productions/ProductionListCard.vue";
+import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
 import { getEvents } from "@/services/events";
 import { getHalls } from "@/services/halls";
@@ -86,55 +158,261 @@ import {
   tagMapById,
 } from "@/utils/productionsOverview";
 
+const PAGE_SIZE = 20;
+
+/** 1-based page index in the URL (`?page=1` is normalized away). */
+const PAGE_QUERY_KEY = "page";
+
+const route = useRoute();
+const router = useRouter();
 const { t } = useI18n();
 
-function getInitialDark(): boolean {
-  const stored = localStorage.getItem("viernulvier-dark");
-  if (stored !== null) return stored === "true";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+const pageTopAnchor = useTemplateRef<HTMLElement>("pageTopAnchor");
+
+/**
+ * Reads a positive 1-based page from the route query; invalid or missing -> 1.
+ */
+function readPageOneBasedFromRoute(): number {
+  const raw = route.query[PAGE_QUERY_KEY];
+  const s = Array.isArray(raw) ? raw[0] : raw;
+  if (s === undefined || s === null || s === "") return 1;
+  const n = Number.parseInt(String(s), 10);
+  if (!Number.isFinite(n) || n < 1) return 1;
+  return n;
 }
 
-const isDark = ref(getInitialDark());
+function queryForPage0(page0: number): LocationQueryRaw {
+  const q: LocationQueryRaw = { ...route.query };
+  if (page0 <= 0) {
+    delete q[PAGE_QUERY_KEY];
+  } else {
+    q[PAGE_QUERY_KEY] = String(page0 + 1);
+  }
+  return q;
+}
 
-watchEffect(() => {
-  const htmlEl = document.documentElement;
-  if (isDark.value) htmlEl.classList.add("dark");
-  else htmlEl.classList.remove("dark");
-  localStorage.setItem("viernulvier-dark", String(isDark.value));
-});
+function urlNeedsSyncForPage0(page0: number): boolean {
+  const raw = route.query[PAGE_QUERY_KEY];
+  const cur =
+    raw === undefined || raw === null || raw === ""
+      ? undefined
+      : String(Array.isArray(raw) ? raw[0] : raw);
+  const want = page0 <= 0 ? undefined : String(page0 + 1);
+  if (want === undefined) {
+    return cur !== undefined && cur !== "";
+  }
+  return cur !== want;
+}
 
+function scrollProductionsPageToTop() {
+  const el = pageTopAnchor.value;
+  if (el && typeof el.scrollIntoView === "function") {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  const doc = document.documentElement;
+  const body = document.body;
+  if (typeof doc.scrollTo === "function") {
+    doc.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  } else {
+    doc.scrollTop = 0;
+  }
+  if (typeof body.scrollTo === "function") {
+    body.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  } else {
+    body.scrollTop = 0;
+  }
+}
+
+const { isDark, toggleDark } = useDarkMode();
 const loading = ref(true);
+const listLoading = ref(false);
 const loadError = ref(false);
 const productions = ref<ProductionWithBackwardsRefs[]>([]);
-const eventsByProduction = ref(new Map<number, Event[]>());
+const totalCount = ref(0);
+const currentPage = ref(0);
+
+const totalPages = computed(() =>
+  totalCount.value === 0 ? 0 : Math.ceil(totalCount.value / PAGE_SIZE),
+);
+
+/** 1-based page shown in the pagination field (digits only while editing). */
+const pageNumberInput = ref("1");
+
+watch(currentPage, (p) => {
+  if (totalPages.value > 0) {
+    pageNumberInput.value = String(p + 1);
+  }
+});
+
+function onPageNumberInput(e: Event) {
+  pageNumberInput.value = (e.target as HTMLInputElement).value.replace(
+    /\D/g,
+    "",
+  );
+}
+
+async function commitPageNumberInput() {
+  if (totalPages.value <= 0) return;
+
+  const raw = pageNumberInput.value.replace(/\D/g, "").trim();
+  if (raw === "") {
+    pageNumberInput.value = String(currentPage.value + 1);
+    return;
+  }
+
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n)) {
+    pageNumberInput.value = String(currentPage.value + 1);
+    return;
+  }
+
+  const pageOneBased = Math.min(Math.max(1, n), totalPages.value);
+  if (pageOneBased === currentPage.value + 1) {
+    pageNumberInput.value = String(pageOneBased);
+    return;
+  }
+
+  await goToPage(pageOneBased - 1);
+  pageNumberInput.value = String(currentPage.value + 1);
+}
+
+const rangeFrom = computed(() =>
+  totalCount.value === 0 ? 0 : currentPage.value * PAGE_SIZE + 1,
+);
+
+const rangeTo = computed(() =>
+  Math.min((currentPage.value + 1) * PAGE_SIZE, totalCount.value),
+);
+const eventsByProduction = ref(new Map<number, ProductionEvent[]>());
 const tagsById = ref(new Map<number, Tag>());
 const tagTypesById = ref(new Map<number, TagType>());
 const hallsById = ref(new Map<number, Hall>());
 
 const locale = computed(() => i18n.global.locale.value as SupportedLang);
 
+async function fetchProductionsPageData(page0: number) {
+  const { items, total } = await getProductions({
+    limit: PAGE_SIZE,
+    offset: page0 * PAGE_SIZE,
+  });
+  productions.value = items;
+  totalCount.value = total;
+  currentPage.value = page0;
+}
+
+function scrollAfterPageChange() {
+  void nextTick();
+  requestAnimationFrame(() => {
+    scrollProductionsPageToTop();
+  });
+}
+
+async function replaceRouteForPage0(page0: number) {
+  await router.replace({
+    path: route.path,
+    query: queryForPage0(page0),
+    hash: route.hash,
+  });
+}
+
 onMounted(async () => {
   loading.value = true;
   loadError.value = false;
+  const requestedOneBased = readPageOneBasedFromRoute();
+  let page0 = Math.max(0, requestedOneBased - 1);
   try {
-    const [prods, tags, events, halls, tagTypes] = await Promise.all([
-      getProductions(),
+    const [page, tags, events, halls, tagTypes] = await Promise.all([
+      getProductions({ limit: PAGE_SIZE, offset: page0 * PAGE_SIZE }),
       getTags(),
       getEvents(),
       getHalls(),
       getTagTypes(),
     ]);
-    productions.value = prods;
+    totalCount.value = page.total;
+    const tp =
+      totalCount.value === 0
+        ? 0
+        : Math.ceil(totalCount.value / PAGE_SIZE);
+
+    if (tp > 0) {
+      const clamped0 = Math.min(Math.max(0, page0), tp - 1);
+      if (clamped0 !== page0) {
+        page0 = clamped0;
+        const again = await getProductions({
+          limit: PAGE_SIZE,
+          offset: page0 * PAGE_SIZE,
+        });
+        productions.value = again.items;
+        totalCount.value = again.total;
+      } else {
+        productions.value = page.items;
+      }
+    } else {
+      productions.value = page.items;
+      page0 = 0;
+    }
+
+    currentPage.value = page0;
     tagsById.value = tagMapById(tags);
     tagTypesById.value = new Map(tagTypes.map((tt) => [tt.id, tt]));
     hallsById.value = hallMapById(halls);
     eventsByProduction.value = groupEventsByProductionId(events);
+
+    if (urlNeedsSyncForPage0(page0)) {
+      await replaceRouteForPage0(page0);
+    }
   } catch {
     loadError.value = true;
   } finally {
     loading.value = false;
   }
 });
+
+watch(
+  () => readPageOneBasedFromRoute(),
+  async (oneBased) => {
+    if (loading.value) return;
+    if (totalPages.value <= 0) return;
+
+    let page0 = oneBased - 1;
+    const max0 = totalPages.value - 1;
+    const clamped0 = Math.min(Math.max(0, page0), max0);
+    if (page0 !== clamped0) {
+      await replaceRouteForPage0(clamped0);
+      return;
+    }
+    page0 = clamped0;
+
+    if (page0 === currentPage.value) return;
+
+    listLoading.value = true;
+    loadError.value = false;
+    try {
+      await fetchProductionsPageData(page0);
+      scrollAfterPageChange();
+    } catch {
+      loadError.value = true;
+    } finally {
+      listLoading.value = false;
+    }
+  },
+);
+
+async function goToPage(page: number) {
+  if (page < 0 || page >= totalPages.value) return;
+  listLoading.value = true;
+  loadError.value = false;
+  try {
+    await fetchProductionsPageData(page);
+    await replaceRouteForPage0(page);
+    scrollAfterPageChange();
+  } catch {
+    loadError.value = true;
+  } finally {
+    listLoading.value = false;
+  }
+}
 
 function dateSummaryFor(productionId: number) {
   const evs = eventsByProduction.value.get(productionId);
