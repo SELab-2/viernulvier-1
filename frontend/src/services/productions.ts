@@ -92,7 +92,8 @@ export type ProductionListPage = {
  * Fetches productions (public — no session required).
  *
  * - With `{ limit, offset }`: returns one page plus the full `total` count.
- * - With `search`, results are filtered (title, artist, tagline, teaser, description, hall names).
+ * - With `search` (string or array of strings), results must match every term
+ *   (title, artist, tagline, teaser, description, hall names).
  * - With no options: returns every production as `items` and `total === items.length`.
  *
  * @returns Array of productions, each with `tags` and `events` as arrays of linked IDs.
@@ -103,15 +104,20 @@ export type ProductionListPage = {
 export async function getProductions(options?: {
   limit?: number;
   offset?: number;
-  search?: string;
+  search?: string | string[];
 }): Promise<ProductionListPage> {
   const params = new URLSearchParams();
   if (options?.limit !== undefined) {
     params.set("limit", String(options.limit));
     params.set("offset", String(options.offset ?? 0));
   }
-  if (options?.search !== undefined && options.search.trim() !== "") {
-    params.set("search", options.search.trim());
+  if (options?.search !== undefined) {
+    const raw = options.search;
+    const terms = Array.isArray(raw) ? raw : [raw];
+    for (const t of terms) {
+      const q = t.trim();
+      if (q) params.append("search", q);
+    }
   }
   const qs = params.toString();
   return await apiFetch<ProductionListPage>(

@@ -48,20 +48,24 @@
             </button>
           </div>
           <div
-            v-if="appliedSearchTerm"
+            v-if="appliedSearchTerms.length > 0"
             class="flex flex-wrap items-center gap-2"
           >
             <span class="text-sm text-ink-secondary">{{
               t("productionsPage.activeSearchLabel")
             }}</span>
             <button
+              v-for="(term, idx) in appliedSearchTerms"
+              :key="`${idx}-${term}`"
               type="button"
               class="inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-full border border-accent-outline bg-surface-1 py-1 pl-3 pr-2 text-sm text-ink-primary transition hover:bg-surface-2"
               :disabled="listLoading"
-              :aria-label="t('productionsPage.removeSearchFilter')"
-              @click="clearSearchFilter"
+              :aria-label="
+                t('productionsPage.removeSearchTerm', { term })
+              "
+              @click="removeSearchTermAt(idx)"
             >
-              <span class="min-w-0 truncate">{{ appliedSearchTerm }}</span>
+              <span class="min-w-0 truncate">{{ term }}</span>
               <span class="text-lg leading-none text-ink-secondary" aria-hidden="true">×</span>
             </button>
           </div>
@@ -86,7 +90,7 @@
 
         <div v-else>
           <p
-            v-if="appliedSearchTerm !== null"
+            v-if="appliedSearchTerms.length > 0"
             class="mb-2 min-h-5 text-sm leading-normal text-ink-secondary tabular-nums"
             aria-live="polite"
           >
@@ -220,6 +224,9 @@ import {
 
 const PAGE_SIZE = 20;
 
+/** Same cap as the list API, extra terms are ignored client-side. */
+const MAX_SEARCH_TERMS = 20;
+
 /** 1-based page index in the URL (`?page=1` is normalized away). */
 const PAGE_QUERY_KEY = "page";
 
@@ -244,12 +251,29 @@ function readPageOneBasedFromRoute(): number {
   return n;
 }
 
-function readSearchFromRoute(): string | null {
+function dedupeSearchTermsPreserveOrder(terms: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const t of terms) {
+    const k = t.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(t);
+  }
+  return out;
+}
+
+function readSearchFromRoute(): string[] {
   const raw = route.query[SEARCH_QUERY_KEY];
-  const s = Array.isArray(raw) ? raw[0] : raw;
-  if (s === undefined || s === null || s === "") return null;
-  const t = String(s).trim();
-  return t.length > 0 ? t : null;
+  if (raw === undefined || raw === null || raw === "") return [];
+  const parts = (Array.isArray(raw) ? raw : [raw])
+    .map((s) => String(s).trim())
+    .filter((s) => s.length > 0);
+  return dedupePreserveSearchCap(parts);
+}
+
+function dedupePreserveSearchCap(parts: string[]): string[] {
+  return dedupeSearchTermsPreserveOrder(parts).slice(0, MAX_SEARCH_TERMS);
 }
 
 function queryForPage0(page0: number): LocationQueryRaw {
@@ -259,9 +283,10 @@ function queryForPage0(page0: number): LocationQueryRaw {
   } else {
     q[PAGE_QUERY_KEY] = String(page0 + 1);
   }
-  const term = appliedSearchTerm.value?.trim();
-  if (term) {
-    q[SEARCH_QUERY_KEY] = term;
+  const terms = appliedSearchTerms.value;
+  if (terms.length > 0) {
+    q[SEARCH_QUERY_KEY] =
+      terms.length === 1 ? terms[0]! : [...terms];
   } else {
     delete q[SEARCH_QUERY_KEY];
   }
@@ -308,8 +333,8 @@ const loadError = ref(false);
 const productions = ref<ProductionWithBackwardsRefs[]>([]);
 const totalCount = ref(0);
 const currentPage = ref(0);
-/** Applied full-text filter (single chip; a new search replaces it). */
-const appliedSearchTerm = ref<string | null>(null);
+/** Applied search terms (AND); each term has its own chip. */
+const appliedSearchTerms = ref<string[]>([]);
 const searchDraft = ref("");
 /**
  * Total matching the active search, shown only after a successful list fetch
@@ -318,7 +343,7 @@ const searchDraft = ref("");
 const displayedFilteredTotal = ref<number | null>(null);
 
 const emptyStateMessage = computed(() =>
-  appliedSearchTerm.value
+  appliedSearchTerms.value.length > 0
     ? t("productionsPage.noSearchResults")
     : t("productionsPage.empty"),
 );
@@ -335,8 +360,8 @@ function productionsListArgs(page: number) {
   return {
     limit: PAGE_SIZE,
     offset: page * PAGE_SIZE,
-    ...(appliedSearchTerm.value
-      ? { search: appliedSearchTerm.value }
+    ...(appliedSearchTerms.value.length > 0
+      ? { search: appliedSearchTerms.value }
       : {}),
   };
 }
@@ -346,7 +371,7 @@ async function fetchProductionsPageData(page0: number) {
   productions.value = items;
   totalCount.value = total;
   currentPage.value = page0;
-  if (appliedSearchTerm.value !== null) {
+  if (appliedSearchTerms.value.length > 0) {
     displayedFilteredTotal.value = total;
   } else {
     displayedFilteredTotal.value = null;
@@ -374,8 +399,39 @@ async function submitSearch() {
     await clearSearchFilter();
     return;
   }
+  const lower = q.toLowerCase();
+  if (appliedSearchTerms.value.some((t) => t.toLowerCase() === lower)) {
+    searchDraft.value = "";
+    return;
+  }
+  if (appliedSearchTerms.value.length >= MAX_SEARCH_TERMS) {
+    searchDraft.value = "";
+    return;
+  }
   displayedFilteredTotal.value = null;
-  appliedSearchTerm.value = q;
+  appliedSearchTerms.value = dedupePreserveSearchCap([
+    ...appliedSearchTerms.value,
+    q,
+  ]);
+  searchDraft.value = "";
+  listLoading.value = true;
+  loadError.value = false;
+  try {
+    await fetchProductionsPageData(0);
+    await replaceRouteForPage0(0);
+    scrollAfterPageChange();
+  } catch {
+    loadError.value = true;
+  } finally {
+    listLoading.value = false;
+  }
+}
+
+async function removeSearchTermAt(index: number) {
+  const next = appliedSearchTerms.value.filter((_, i) => i !== index);
+  if (next.length === appliedSearchTerms.value.length) return;
+  displayedFilteredTotal.value = null;
+  appliedSearchTerms.value = next;
   listLoading.value = true;
   loadError.value = false;
   try {
@@ -391,7 +447,7 @@ async function submitSearch() {
 
 async function clearSearchFilter() {
   displayedFilteredTotal.value = null;
-  appliedSearchTerm.value = null;
+  appliedSearchTerms.value = [];
   searchDraft.value = "";
   listLoading.value = true;
   loadError.value = false;
@@ -469,9 +525,8 @@ onMounted(async () => {
   loading.value = true;
   loadError.value = false;
   const initialSearch = readSearchFromRoute();
-  if (initialSearch) {
-    appliedSearchTerm.value = initialSearch;
-    searchDraft.value = initialSearch;
+  if (initialSearch.length > 0) {
+    appliedSearchTerms.value = initialSearch;
   }
   const requestedOneBased = readPageOneBasedFromRoute();
   let page0 = Math.max(0, requestedOneBased - 1);
@@ -505,7 +560,7 @@ onMounted(async () => {
     }
 
     currentPage.value = page0;
-    if (appliedSearchTerm.value !== null) {
+    if (appliedSearchTerms.value.length > 0) {
       displayedFilteredTotal.value = totalCount.value;
     } else {
       displayedFilteredTotal.value = null;

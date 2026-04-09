@@ -131,12 +131,36 @@ export async function fetchProductionWithMeta(
 
 const MAX_PAGE_SIZE = 100;
 const MAX_SEARCH_LENGTH = 200;
+const MAX_SEARCH_TERMS = 20;
+
+const SearchParamSchema = z
+  .preprocess((val: unknown): string[] | undefined => {
+    if (val === undefined || val === null) return undefined;
+    const raw = Array.isArray(val) ? val : [val];
+    const trimmed = raw
+      .filter((x): x is string => typeof x === "string")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    return trimmed.length === 0 ? undefined : trimmed;
+  }, z.array(z.string().max(MAX_SEARCH_LENGTH)).max(MAX_SEARCH_TERMS).optional())
+  .transform((arr): string[] | undefined => {
+    if (!arr || arr.length === 0) return undefined;
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const s of arr) {
+      const k = s.toLowerCase();
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push(s);
+    }
+    return out.length > 0 ? out : undefined;
+  });
 
 const ProductionListQuerySchema = z
   .object({
     limit: z.coerce.number().int().positive().max(MAX_PAGE_SIZE).optional(),
     offset: z.coerce.number().int().min(0).optional(),
-    search: z.string().max(MAX_SEARCH_LENGTH).optional(),
+    search: SearchParamSchema,
   })
   .refine(
     (q) => q.limit !== undefined || q.offset === undefined || q.offset === 0,
@@ -153,24 +177,31 @@ type ListSearchClause = { sql: string; params: string[] };
 /**
  * WHERE clause for public list search: title, artist, tagline, teaser,
  * description (all locales in JSON text), and hall names via events.
+ * Multiple terms are combined with AND (each term must match somewhere).
  */
-function productionListSearchClause(normalizedSearch: string | undefined): ListSearchClause {
-  if (normalizedSearch === undefined) {
+function productionListSearchClause(searchTerms: string[]): ListSearchClause {
+  if (searchTerms.length === 0) {
     return { sql: "", params: [] };
   }
-  const pattern = `%${escapeIlikePattern(normalizedSearch)}%`;
-  const cond = `(p.title::text ILIKE $1 ESCAPE '\\'
-    OR p.artist::text ILIKE $1 ESCAPE '\\'
-    OR p.tagline::text ILIKE $1 ESCAPE '\\'
-    OR p.teaser::text ILIKE $1 ESCAPE '\\'
-    OR COALESCE(p.description::text, '') ILIKE $1 ESCAPE '\\'
+  const conds: string[] = [];
+  const params: string[] = [];
+  for (const term of searchTerms) {
+    const pattern = `%${escapeIlikePattern(term)}%`;
+    const idx = params.length + 1;
+    conds.push(`(p.title::text ILIKE $${idx} ESCAPE '\\'
+    OR p.artist::text ILIKE $${idx} ESCAPE '\\'
+    OR p.tagline::text ILIKE $${idx} ESCAPE '\\'
+    OR p.teaser::text ILIKE $${idx} ESCAPE '\\'
+    OR COALESCE(p.description::text, '') ILIKE $${idx} ESCAPE '\\'
     OR EXISTS (
       SELECT 1 FROM event e
       INNER JOIN hall h ON e.hall = h.id
       WHERE e.production = p.id
-        AND h.name::text ILIKE $1 ESCAPE '\\'
-    ))`;
-  return { sql: ` WHERE ${cond}`, params: [pattern] };
+        AND h.name::text ILIKE $${idx} ESCAPE '\\'
+    ))`);
+    params.push(pattern);
+  }
+  return { sql: ` WHERE ${conds.join(" AND ")}`, params };
 }
 
 export type PaginatedProductions = {
@@ -183,8 +214,9 @@ export type PaginatedProductions = {
  *
  * - Without `limit`: returns every production (same ordering as before), as `{ items, total }`.
  * - With `limit`: returns a page `{ items, total }` where `total` is the matching row count.
- * - Optional `search`: case-insensitive substring on title, artist, tagline, teaser,
- *   description, and related hall names.
+ * - Optional `search`: repeat the parameter for multiple terms, production must match
+ *   every term (case-insensitive substring on title, artist, tagline, teaser,
+ *   description, and related hall names). A single `search` behaves as before.
  *
  * @param server - The Fastify instance, used for database access and logging.
  * @param request - The Fastify request; optional `limit`, `offset`, and `search` query params.
@@ -202,9 +234,8 @@ export async function fetchProductions(
   );
   const limit = query.limit;
   const offset = query.offset ?? 0;
-  const trimmed = typeof query.search === "string" ? query.search.trim() : undefined;
-  const normalizedSearch = trimmed && trimmed.length > 0 ? trimmed : undefined;
-  const { sql: whereSql, params: searchParams } = productionListSearchClause(normalizedSearch);
+  const searchTerms = query.search ?? [];
+  const { sql: whereSql, params: searchParams } = productionListSearchClause(searchTerms);
 
   let result: QueryResult<ProductionWithBackwardsRefs>;
   let total: number;

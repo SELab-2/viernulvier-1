@@ -59,6 +59,7 @@ export default {
     searchButton: "Search",
     activeSearchLabel: "Search:",
     removeSearchFilter: "Remove search filter",
+    removeSearchTerm: "Remove search term: {term}",
     noSearchResults: "No productions match your search.",
     filterResultsSingle: "1 result",
     filterResultsPlural: "{count} results",

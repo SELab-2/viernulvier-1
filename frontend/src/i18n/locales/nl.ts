@@ -60,6 +60,7 @@ export default {
     searchButton: "Zoeken",
     activeSearchLabel: "Zoekterm:",
     removeSearchFilter: "Zoekfilter verwijderen",
+    removeSearchTerm: "Zoekterm verwijderen: {term}",
     noSearchResults: "Geen producties gevonden voor deze zoekterm.",
     filterResultsSingle: "1 resultaat",
     filterResultsPlural: "{count} resultaten",
