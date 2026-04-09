@@ -153,7 +153,7 @@ const SearchParamSchema = z
       seen.add(k);
       out.push(s);
     }
-    return out.length > 0 ? out : undefined;
+    return out;
   });
 
 const ProductionListQuerySchema = z
