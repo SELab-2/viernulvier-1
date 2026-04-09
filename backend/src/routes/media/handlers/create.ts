@@ -75,7 +75,7 @@ async function insertCrops(
     if (!file) continue; // already validated by caller
 
     const s3Key = generateS3Key(mapping.filename);
-    await uploadToS3(server.s3, s3Key, file.buffer, file.mimetype);
+    await uploadToS3(server.s3.client, s3Key, file.buffer, file.mimetype);
 
     const url = buildCropPath(s3Key);
     await server.pg.query(

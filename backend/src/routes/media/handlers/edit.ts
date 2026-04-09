@@ -132,9 +132,8 @@ export async function editCrop(
   if (newFile) {
     const oldS3Key = extractS3Key(existing.url);
     const newS3Key = generateS3Key("crop" + oldS3Key.slice(oldS3Key.lastIndexOf(".")));
-
-    await uploadToS3(server.s3, newS3Key, newFile.buffer, newFile.mimetype);
-    await deleteFromS3(server.s3, oldS3Key);
+    await uploadToS3(server.s3.client, newS3Key, newFile.buffer, newFile.mimetype);
+    await deleteFromS3(server.s3.client, oldS3Key);
 
     const newPath = buildCropPath(newS3Key);
     fields.push(`url = $${i++}`);

@@ -19,7 +19,7 @@ export default function cropProxyRoute(server: FastifyInstance) {
     }
 
     try {
-      const result = await server.s3.send(
+      const result = await server.s3.client.send(
         new GetObjectCommand({
           Bucket: "crops",
           Key: key,

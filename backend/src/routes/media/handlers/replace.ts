@@ -85,7 +85,7 @@ export async function replaceImage(
     // Delete old crops from S3
     const oldCropUrls = existing.crops.map((c) => c.url);
     if (oldCropUrls.length > 0) {
-      await deleteManyFromS3(server.s3, oldCropUrls);
+      await deleteManyFromS3(server.s3.client, oldCropUrls);
     }
 
     // Delete old crop rows
@@ -97,7 +97,7 @@ export async function replaceImage(
       if (!file) continue;
 
       const s3Key = generateS3Key(mapping.filename);
-      await uploadToS3(server.s3, s3Key, file.buffer, file.mimetype);
+      await uploadToS3(server.s3.client, s3Key, file.buffer, file.mimetype);
 
       const url = buildCropPath(s3Key);
       await server.pg.query(
@@ -158,10 +158,10 @@ export async function replaceCrop(
 
   // Upload new file
   const newS3Key = generateS3Key(filename);
-  await uploadToS3(server.s3, newS3Key, file.buffer, file.mimetype);
+  await uploadToS3(server.s3.client, newS3Key, file.buffer, file.mimetype);
 
   // Delete old file
-  await deleteFromS3(server.s3, extractS3Key(existing.url));
+  await deleteFromS3(server.s3.client, extractS3Key(existing.url));
 
   // Update row
   const newPath = buildCropPath(newS3Key);
