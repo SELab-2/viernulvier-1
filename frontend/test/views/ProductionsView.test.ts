@@ -199,7 +199,7 @@ describe("ProductionsView.vue", () => {
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
       limit: 20,
       offset: 0,
-      search: "voorstelling",
+      search: ["voorstelling"],
     });
     expect(router.currentRoute.value.query.search).toBe("voorstelling");
     wrapper.unmount();
@@ -216,7 +216,7 @@ describe("ProductionsView.vue", () => {
     expect(getProductionsSpy).toHaveBeenCalledWith({
       limit: 20,
       offset: 0,
-      search: "gezelschap",
+      search: ["gezelschap"],
     });
     wrapper.unmount();
   });
