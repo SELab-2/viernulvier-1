@@ -5,15 +5,15 @@ import {
   fetchImage,
   fetchImageWithMeta,
   createImage,
-  // replaceImage,
-  // editImage,
-  // deleteImage,
+  replaceImage,
+  editImage,
+  deleteImage,
   fetchCropsByImage,
   fetchCropByType,
   createCrops,
-  // editCrop,
-  // replaceCrop,
-  // deleteCrop,
+  editCrop,
+  replaceCrop,
+  deleteCrop,
 } from "./handlers/index.js";
 import cropProxyRoute from "./proxy.js";
 
@@ -48,17 +48,17 @@ export default function mediaRoutes(server: FastifyInstance) {
   server.get("/api/v1/image/:id", replyHandler(server, fetchImage));
   server.get("/api/v1/image/:id/meta", protect, replyHandler(server, fetchImageWithMeta));
   server.post("/api/v1/production/:productionId/image", protect, replyHandler(server, createImage));
-  // server.patch("/api/v1/image/:id", protect, replyHandler(server, editImage));
-  // server.put("/api/v1/image/:id", protect, replyHandler(server, replaceImage));
-  // server.delete("/api/v1/image/:id", protect, replyHandler(server, deleteImage));
+  server.patch("/api/v1/image/:id", protect, replyHandler(server, editImage));
+  server.put("/api/v1/image/:id", protect, replyHandler(server, replaceImage));
+  server.delete("/api/v1/image/:id", protect, replyHandler(server, deleteImage));
 
   // ── Crops ──
   server.get("/api/v1/image/:imageId/crop", replyHandler(server, fetchCropsByImage));
   server.get("/api/v1/image/:imageId/crop/:type", replyHandler(server, fetchCropByType));
   server.post("/api/v1/image/:imageId/crop", protect, replyHandler(server, createCrops));
-  // server.patch("/api/v1/crop/:id", protect, replyHandler(server, editCrop));
-  // server.put("/api/v1/crop/:id", protect, replyHandler(server, replaceCrop));
-  // server.delete("/api/v1/crop/:id", protect, replyHandler(server, deleteCrop));
+  server.patch("/api/v1/crop/:id", protect, replyHandler(server, editCrop));
+  server.put("/api/v1/crop/:id", protect, replyHandler(server, replaceCrop));
+  server.delete("/api/v1/crop/:id", protect, replyHandler(server, deleteCrop));
 
   cropProxyRoute(server);
 }
