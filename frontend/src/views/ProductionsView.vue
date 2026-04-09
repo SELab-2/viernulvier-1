@@ -48,14 +48,14 @@
             </button>
           </div>
           <div
-            v-if="appliedSearchTerms.length > 0"
+            v-if="searchBannerTerms.length > 0"
             class="flex flex-wrap items-center gap-2"
           >
             <span class="text-sm text-ink-secondary">{{
               t("productionsPage.activeSearchLabel")
             }}</span>
             <button
-              v-for="(term, idx) in appliedSearchTerms"
+              v-for="(term, idx) in searchBannerTerms"
               :key="`${idx}-${term}`"
               type="button"
               class="inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-full border border-accent-outline bg-surface-1 py-1 pl-3 pr-2 text-sm text-ink-primary transition hover:bg-surface-2"
@@ -90,7 +90,7 @@
 
         <div v-else>
           <p
-            v-if="appliedSearchTerms.length > 0"
+            v-if="searchBannerTerms.length > 0"
             class="mb-2 min-h-5 text-sm leading-normal text-ink-secondary tabular-nums"
             aria-live="polite"
           >
@@ -333,8 +333,13 @@ const loadError = ref(false);
 const productions = ref<ProductionWithBackwardsRefs[]>([]);
 const totalCount = ref(0);
 const currentPage = ref(0);
-/** Applied search terms (AND); each term has its own chip. */
 const appliedSearchTerms = ref<string[]>([]);
+/**
+ * Terms shown in the "Search:" chip row (and whether the result count line appears).
+ * When clearing all terms, this stays populated until the unfiltered list has loaded,
+ * so layout does not jump while stale filtered cards are still on screen.
+ */
+const searchBannerTerms = ref<string[]>([]);
 const searchDraft = ref("");
 /**
  * Total matching the active search, shown only after a successful list fetch
@@ -376,6 +381,7 @@ async function fetchProductionsPageData(page0: number) {
   } else {
     displayedFilteredTotal.value = null;
   }
+  searchBannerTerms.value = [...appliedSearchTerms.value];
 }
 
 function scrollAfterPageChange() {
@@ -413,6 +419,7 @@ async function submitSearch() {
     ...appliedSearchTerms.value,
     q,
   ]);
+  searchBannerTerms.value = [...appliedSearchTerms.value];
   searchDraft.value = "";
   listLoading.value = true;
   loadError.value = false;
@@ -422,6 +429,7 @@ async function submitSearch() {
     scrollAfterPageChange();
   } catch {
     loadError.value = true;
+    searchBannerTerms.value = [...appliedSearchTerms.value];
   } finally {
     listLoading.value = false;
   }
@@ -430,7 +438,10 @@ async function submitSearch() {
 async function removeSearchTermAt(index: number) {
   const next = appliedSearchTerms.value.filter((_, i) => i !== index);
   if (next.length === appliedSearchTerms.value.length) return;
-  displayedFilteredTotal.value = null;
+  if (next.length > 0) {
+    displayedFilteredTotal.value = null;
+    searchBannerTerms.value = [...next];
+  }
   appliedSearchTerms.value = next;
   listLoading.value = true;
   loadError.value = false;
@@ -440,13 +451,13 @@ async function removeSearchTermAt(index: number) {
     scrollAfterPageChange();
   } catch {
     loadError.value = true;
+    searchBannerTerms.value = [...appliedSearchTerms.value];
   } finally {
     listLoading.value = false;
   }
 }
 
 async function clearSearchFilter() {
-  displayedFilteredTotal.value = null;
   appliedSearchTerms.value = [];
   searchDraft.value = "";
   listLoading.value = true;
@@ -457,6 +468,7 @@ async function clearSearchFilter() {
     scrollAfterPageChange();
   } catch {
     loadError.value = true;
+    searchBannerTerms.value = [...appliedSearchTerms.value];
   } finally {
     listLoading.value = false;
   }
@@ -565,6 +577,7 @@ onMounted(async () => {
     } else {
       displayedFilteredTotal.value = null;
     }
+    searchBannerTerms.value = [...appliedSearchTerms.value];
     tagsById.value = tagMapById(tags);
     tagTypesById.value = new Map(tagTypes.map((tt) => [tt.id, tt]));
     hallsById.value = hallMapById(halls);
