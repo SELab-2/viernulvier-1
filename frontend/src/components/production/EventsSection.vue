@@ -43,8 +43,20 @@
               </div>
 
               <div class="flex md:col-span-3 md:justify-end">
-                <span class="font-mono text-xl font-black text-ink-primary tabular-nums tracking-tight">
-                  € {{ event.displayPrice ?? '—' }}
+                <span class="font-mono text-xl font-black text-ink-primary tabular-nums tracking-tight text-right">
+                  <template v-if="event.minPrice === null">
+                    € —
+                  </template>
+
+                  <div v-else-if="event.minPrice !== event.maxPrice" class="flex flex-col items-end leading-none">
+                    <span>€{{ formatCurrency(event.minPrice) }}</span>
+                    <span class="my-1">—</span>
+                    <span>€{{ formatCurrency(event.maxPrice) }}</span>
+                  </div>
+
+                  <template v-else>
+                    €{{ formatCurrency(event.minPrice) }}
+                  </template>
                 </span>
               </div>
             </div>
@@ -111,4 +123,13 @@ const displayedEvents = computed(() => {
 });
 
 const remainingCount = computed(() => props.events.length - SHOW_LIMIT);
+
+const formatCurrency = (value: number | null) => {
+  if (value === null) return '';
+  return new Intl.NumberFormat('nl-BE', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
+
 </script>

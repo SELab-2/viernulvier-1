@@ -5,7 +5,8 @@ import type { Event, Hall } from "@viernulvier/shared";
 
 export interface EnrichedEvent extends Omit<Event, 'hall'> {
   hall: Hall | null;
-  displayPrice: number | null;
+  minPrice: number | null;
+  maxPrice: number | null;
 }
 
 export function useProductionEvents(productionId: number) {
@@ -31,11 +32,19 @@ export function useProductionEvents(productionId: number) {
       const hallMatch = halls.value.find((h) => h.id === event.hall);
       
       const prices = event.price as { amount: number }[] | undefined;
+      const { minPrice, maxPrice } = (prices ?? []).reduce(
+        (acc, { amount }) => ({
+          minPrice: acc.minPrice === null ? amount : Math.min(acc.minPrice, amount),
+          maxPrice: acc.maxPrice === null ? amount : Math.max(acc.maxPrice, amount),
+        }),
+        { minPrice: null as number | null, maxPrice: null as number | null },
+      );
 
       return {
         ...event,
         hall: hallMatch ?? null,
-        displayPrice: prices?.[0]?.amount ?? null,
+        minPrice,
+        maxPrice,
       };
     });
   });
