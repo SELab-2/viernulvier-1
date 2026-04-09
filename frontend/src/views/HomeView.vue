@@ -23,6 +23,8 @@ import HeroSection from "@/components/home/HeroSection.vue";
 import StatsSection from "@/components/home/StatsSection.vue";
 import BentoGrid from "@/components/home/BentoGrid.vue";
 import MarkdownEditor from "@/components/MarkdownEditor.vue";
+import { ref } from "vue";
 
 const { isDark, toggleDark } = useDarkMode();
+const previewContent = ref("");
 </script>
