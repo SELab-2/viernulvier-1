@@ -13,10 +13,10 @@ export const ImageSchema = createSchema({
   res: z
     .string()
     .max(16)
+    .refine((val) => val.trim().length > 0, {
+      message: "Resolution must not be empty or whitespace",
+    })
     .nullable(),
-}).refine((img) => {
-  // resolution should not be empty or whitespace
-  return img.res === null || img.res.trim().length > 0;
 });
 
 export type Image = z.infer<typeof ImageSchema>;
