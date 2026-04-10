@@ -214,7 +214,13 @@
           </p>
 
           <p
-            v-if="totalCount === 0"
+            v-if="totalCount === 0 && listLoading"
+            class="py-16 text-center text-sm text-ink-secondary"
+          >
+            {{ t("productionsPage.loading") }}
+          </p>
+          <p
+            v-else-if="totalCount === 0"
             class="py-16 text-center text-sm text-ink-secondary"
           >
             {{ emptyStateMessage }}
@@ -779,12 +785,12 @@ async function submitSearch() {
 async function removeSearchTermAt(index: number) {
   const next = appliedSearchTerms.value.filter((_, i) => i !== index);
   if (next.length === appliedSearchTerms.value.length) return;
+  listLoading.value = true;
+  beginListAttempt();
   if (next.length > 0) {
     searchBannerTerms.value = [...next];
   }
   appliedSearchTerms.value = next;
-  listLoading.value = true;
-  beginListAttempt();
   try {
     await fetchProductionsPageData(0);
     await replaceRouteForPage0(0);
@@ -798,10 +804,10 @@ async function removeSearchTermAt(index: number) {
 }
 
 async function clearSearchFilter() {
-  appliedSearchTerms.value = [];
-  searchDraft.value = "";
   listLoading.value = true;
   beginListAttempt();
+  appliedSearchTerms.value = [];
+  searchDraft.value = "";
   try {
     await fetchProductionsPageData(0);
     await replaceRouteForPage0(0);
