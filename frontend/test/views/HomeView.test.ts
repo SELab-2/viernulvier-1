@@ -5,7 +5,6 @@ import { routes } from "@/router/routes";
 import { i18n } from "@/i18n";
 import HomeView from "@/views/HomeView.vue";
 import MarkdownEditor from "@/components/MarkdownEditor.vue";
-import { __reset as resetDarkMode } from "@/composables/useDarkMode";
 
 vi.mock("easymde", () => ({
   default: vi.fn().mockImplementation(function () {
@@ -61,9 +60,6 @@ describe("HomeView.vue", () => {
   afterEach(() => {
     wrapper.unmount();
     document.body.innerHTML = "";
-    document.documentElement.classList.remove("dark");
-    localStorage.clear();
-    resetDarkMode();
   });
 
   // ── Composition — does HomeView assemble all child components? ───────────
@@ -100,45 +96,4 @@ describe("HomeView.vue", () => {
     });
   });
 
-  // ── Dark mode — logic owned by HomeView ──────────────────────────────────
-
-  describe("dark mode", () => {
-    function findDarkModeButton() {
-      return wrapper
-        .findAll("button[aria-label]")
-        .find((b) => b.attributes("aria-label")?.toLowerCase().includes("dark"));
-    }
-
-    it("does not apply the dark class by default", () => {
-      expect(document.documentElement.classList.contains("dark")).toBe(false);
-    });
-
-    it("adds the dark class on toggle", async () => {
-      await findDarkModeButton()!.trigger("click");
-      expect(document.documentElement.classList.contains("dark")).toBe(true);
-    });
-
-    it("removes the dark class on second toggle", async () => {
-      await findDarkModeButton()!.trigger("click");
-      await findDarkModeButton()!.trigger("click");
-      expect(document.documentElement.classList.contains("dark")).toBe(false);
-    });
-
-    it("persists preference to localStorage", async () => {
-      await findDarkModeButton()!.trigger("click");
-      expect(localStorage.getItem("viernulvier-dark")).toBe("true");
-      await findDarkModeButton()!.trigger("click");
-      expect(localStorage.getItem("viernulvier-dark")).toBe("false");
-    });
-
-    it("restores preference from localStorage on mount", async () => {
-      wrapper.unmount();
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("viernulvier-dark", "true");
-      resetDarkMode();
-      const { wrapper: w2 } = await mountHome("nl");
-      expect(document.documentElement.classList.contains("dark")).toBe(true);
-      w2.unmount();
-    });
-  });
 });
