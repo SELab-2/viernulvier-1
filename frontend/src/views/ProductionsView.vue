@@ -186,13 +186,11 @@
 
         <div v-else>
           <p
-            v-if="showFilteredResultsCountLine"
-            class="mb-2 min-h-5 text-sm leading-normal text-ink-secondary tabular-nums"
+            v-if="displayedFilteredTotal !== null"
+            class="mb-2 text-sm leading-normal text-ink-secondary tabular-nums"
             aria-live="polite"
           >
-            <template v-if="displayedFilteredTotal !== null">
-              {{ filteredResultsCountLabel }}
-            </template>
+            {{ filteredResultsCountLabel }}
           </p>
 
           <p
@@ -585,15 +583,6 @@ const hasActiveListFilters = computed(() => {
   if (filterDateFrom.value && filterDateTo.value) return true;
   return false;
 });
-
-const showFilteredResultsCountLine = computed(
-  () =>
-    hasActiveListFilters.value ||
-    searchBannerTerms.value.length > 0 ||
-    filterBannerTagIds.value.length > 0 ||
-    filterBannerYearRange.value !== null ||
-    !!(filterBannerDateFrom.value && filterBannerDateTo.value),
-);
 
 const emptyStateMessage = computed(() => {
   const hasSearch = appliedSearchTerms.value.length > 0;
