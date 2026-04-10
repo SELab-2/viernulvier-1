@@ -40,6 +40,22 @@ export default {
   date: {
     doorsOpen: "Portes ouvertes à",
   },
+  productionsPage: {
+    heading: "Productions",
+    intro:
+      "Tous les spectacles de l’archive en un coup d’œil.",
+    loading: "Chargement des productions…",
+    error:
+      "Impossible de charger les productions. Veuillez réessayer plus tard.",
+    empty: "Aucune production dans les archives pour l’instant.",
+    morePerformances: "{n} de plus",
+    showingRange: "{from}–{to} sur {total}",
+    prevPage: "Précédent",
+    nextPage: "Suivant",
+    pageWord: "Page",
+    pageOfTotal: "sur {total}",
+    goToPage: "Aller à la page",
+  },
   blogpost: {
     loading: "Chargement de l'article…",
     notFound: "Article introuvable",

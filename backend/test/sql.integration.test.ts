@@ -517,8 +517,9 @@ describe("Production routes — SQL integration", { sequential: true }, () => {
     const response = await server.inject({ method: "GET", url: "/api/v1/production" });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    const productions = response.json<unknown[]>();
-    expect(productions.some((p) => ProductionSchemaWithBackwardsRefs.parse(p).id === productionId)).toBe(true);
+    const body = response.json<{ items: unknown[]; total: number }>();
+    expect(body.items.some((p) => ProductionSchemaWithBackwardsRefs.parse(p).id === productionId)).toBe(true);
+    expect(body.total).toBe(body.items.length);
   });
 
   test("GET /api/v1/production/:id — returns the created production", async () => {

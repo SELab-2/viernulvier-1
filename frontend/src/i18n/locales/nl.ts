@@ -40,6 +40,22 @@ export default {
   date: {
     doorsOpen: "Deuren open om",
   },
+  productionsPage: {
+    heading: "Producties",
+    intro:
+      "Alle voorstellingen uit het archief op een rij.",
+    loading: "Producties laden…",
+    error:
+      "De producties konden niet worden geladen. Probeer het later opnieuw.",
+    empty: "Er staan nog geen producties in het archief.",
+    morePerformances: "nog {n}",
+    showingRange: "{from}–{to} van {total}",
+    prevPage: "Vorige",
+    nextPage: "Volgende",
+    pageWord: "Pagina",
+    pageOfTotal: "van {total}",
+    goToPage: "Ga naar pagina",
+  },
   blogpost: {
     loading: "Blogpost laden…",
     notFound: "Blogpost niet gevonden",

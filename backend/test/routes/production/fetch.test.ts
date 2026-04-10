@@ -40,35 +40,49 @@ const baseProductionWithMeta = {
   updated_by: 1,
 };
 
+function mockProductionFetchPgQuery(query: string, params?: unknown[]) {
+  const upper = query.trim().toUpperCase();
+
+  if (upper.startsWith("SELECT") && upper.includes("WHERE P.ID = $1") && upper.includes("CREATED_AT")) {
+    const id = Number(params?.[0]);
+    if (id === baseProduction["id"]) {
+      return Promise.resolve({ rows: [baseProductionWithMeta], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
+  if (
+    upper.startsWith("SELECT") &&
+    upper.includes("WHERE P.ID = $1") &&
+    !upper.includes("ANY($1::INT[])")
+  ) {
+    const id = Number(params?.[0]);
+    if (id === baseProduction["id"]) {
+      return Promise.resolve({ rows: [baseProduction], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
+  if (upper.includes("COUNT(*)") && upper.includes("FROM PRODUCTION")) {
+    return Promise.resolve({ rows: [{ count: 1 }], rowCount: 1 });
+  }
+
+  if (upper.includes("LIMIT") && upper.includes("OFFSET")) {
+    return Promise.resolve({ rows: [baseProduction], rowCount: 1 });
+  }
+
+  if (upper.startsWith("SELECT") && upper.includes("ORDER BY P.ID ASC") && !upper.includes("LIMIT")) {
+    return Promise.resolve({ rows: [baseProduction], rowCount: 1 });
+  }
+
+  throw new Error(`Unexpected query in fetch tests: ${query}`);
+}
+
 beforeAll(async () => {
   server = await buildServer();
   sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
 
-  server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
-    const upper = query.trim().toUpperCase();
-
-    if (upper.startsWith("SELECT") && upper.includes("WHERE P.ID = $1") && upper.includes("CREATED_AT")) {
-      const id = Number(params?.[0]);
-      if (id === baseProduction["id"]) {
-        return Promise.resolve({ rows: [baseProductionWithMeta], rowCount: 1 });
-      }
-      return Promise.resolve({ rows: [], rowCount: 0 });
-    }
-
-    if (upper.startsWith("SELECT") && upper.includes("WHERE P.ID = $1")) {
-      const id = Number(params?.[0]);
-      if (id === baseProduction["id"]) {
-        return Promise.resolve({ rows: [baseProduction], rowCount: 1 });
-      }
-      return Promise.resolve({ rows: [], rowCount: 0 });
-    }
-
-    if (upper.startsWith("SELECT")) {
-      return Promise.resolve({ rows: [baseProduction], rowCount: 1 });
-    }
-
-    throw new Error(`Unexpected query in fetch tests: ${query}`);
-  });
+  server.pg.query = vi.fn().mockImplementation(mockProductionFetchPgQuery);
 });
 
 afterAll(async () => {
@@ -76,7 +90,7 @@ afterAll(async () => {
 });
 
 describe("Production fetch routes", () => {
-  test("GET /api/v1/production -> returns a list of productions", async () => {
+  test("GET /api/v1/production -> returns items and total", async () => {
     const response = await server.inject({
       method: "GET",
       url: "/api/v1/production",
@@ -85,9 +99,75 @@ describe("Production fetch routes", () => {
 
     expect(response.statusCode).toBe(200);
 
-    const json = response.json();
-    const parsed = ProductionSchemaWithBackwardsRefs.array().parse(json);
+    const json = response.json() as { items: unknown[]; total: number };
+    expect(json.total).toBe(1);
+    const parsed = ProductionSchemaWithBackwardsRefs.array().parse(json.items);
     expect(parsed).toEqual([ProductionSchemaWithBackwardsRefs.parse(baseProduction)]);
+  });
+
+  test("GET /api/v1/production?limit=10&offset=0 -> returns a page with full total", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?limit=10&offset=0",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { items: unknown[]; total: number };
+    expect(json.total).toBe(1);
+    const parsed = ProductionSchemaWithBackwardsRefs.array().parse(json.items);
+    expect(parsed).toEqual([ProductionSchemaWithBackwardsRefs.parse(baseProduction)]);
+  });
+
+  test("GET /api/v1/production?offset=0 without limit -> lists all productions (offset zero allowed)", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?offset=0",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { items: unknown[]; total: number };
+    expect(json.total).toBe(1);
+    expect(json.items).toHaveLength(1);
+  });
+
+  test("GET /api/v1/production?offset=n without limit -> 400 (offset requires limit)", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?offset=20",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  test("GET /api/v1/production?limit=5 -> total 0 when COUNT returns no row", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+      if (upper.includes("COUNT(*)") && upper.includes("FROM PRODUCTION")) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+      if (upper.includes("LIMIT") && upper.includes("OFFSET")) {
+        return Promise.resolve({ rows: [baseProduction], rowCount: 1 });
+      }
+      throw new Error(`Unexpected query in COUNT-empty test: ${query}`);
+    });
+
+    try {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/production?limit=5&offset=0",
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const json = response.json() as { items: unknown[]; total: number };
+      expect(json.total).toBe(0);
+      expect(json.items).toHaveLength(1);
+    } finally {
+      server.pg.query = vi.fn().mockImplementation(mockProductionFetchPgQuery);
+    }
   });
 
   test("GET /api/v1/production/:id -> returns a single production", async () => {

@@ -40,6 +40,21 @@ export default {
   date: {
     doorsOpen: "Doors open at",
   },
+  productionsPage: {
+    heading: "Productions",
+    intro:
+      "Every show in the archive at a glance.",
+    loading: "Loading productions…",
+    error: "Could not load productions. Please try again later.",
+    empty: "No productions in the archive yet.",
+    morePerformances: "{n} more",
+    showingRange: "{from}–{to} of {total}",
+    prevPage: "Previous",
+    nextPage: "Next",
+    pageWord: "Page",
+    pageOfTotal: "of {total}",
+    goToPage: "Go to page",
+  },
   blogpost: {
     loading: "Loading blogpost…",
     notFound: "Blogpost not found",
