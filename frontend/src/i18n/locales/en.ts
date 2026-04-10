@@ -48,6 +48,8 @@ export default {
     error: "Could not load productions. Please try again later.",
     invalidListDateRange:
       "The start date must be on or before the end date. Adjust the range or fix the link and try again.",
+    invalidListYearRange:
+      "The first year must be on or before the last year. Adjust the range or fix the link and try again.",
     empty: "No productions in the archive yet.",
     morePerformances: "{n} more",
     showingRange: "{from}–{to} of {total}",
@@ -68,9 +70,12 @@ export default {
     noFilterResults: "No productions match these filters.",
     genreFiltersHeading: "Genre",
     selectDates: "Select dates",
-    filterByYear: "Filter by year",
-    allYearsSelected: "All years selected",
-    selectAllYears: "Select all years",
+    filterByYearRange: "Filter by years",
+    yearRangeIntro:
+      "Limit productions to show years in this range (based on performance dates).",
+    yearRangeFrom: "Earliest year",
+    yearRangeTo: "Latest year",
+    yearRangeChip: "{from}–{to}",
     filterByDateRange: "Filter by day / period",
     dateFrom: "From",
     dateTo: "To",
@@ -78,7 +83,7 @@ export default {
       "Pick a start date then an end date (or set both fields).",
     clearDateRange: "Clear dates",
     removeGenreFilter: "Remove genre filter",
-    removeYearFilterChip: "Remove year filter",
+    removeYearRangeFilter: "Remove year range filter",
     removeDateRangeFilter: "Remove date range filter",
     activeFiltersLabel: "Active filters:",
     dateRangeChip: "{from} – {to}",

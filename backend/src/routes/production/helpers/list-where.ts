@@ -47,6 +47,7 @@ export function buildProductionListWhere(
   searchTerms: string[],
   tagIds: number[],
   years: number[],
+  yearRange: { from: number; to: number } | undefined,
   dateFrom: string | undefined,
   dateTo: string | undefined,
 ): { whereSql: string; params: unknown[] } {
@@ -78,7 +79,15 @@ export function buildProductionListWhere(
     params.push(id);
   }
 
-  if (years.length > 0) {
+  if (yearRange !== undefined) {
+    const i1 = params.length + 1;
+    const i2 = params.length + 2;
+    parts.push(
+      `EXISTS (SELECT 1 FROM event e WHERE e.production = p.id AND e.starts_at IS NOT NULL`
+        + ` AND (EXTRACT(YEAR FROM (e.starts_at AT TIME ZONE '${EVENT_TZ}')))::int BETWEEN $${i1}::int AND $${i2}::int)`,
+    );
+    params.push(yearRange.from, yearRange.to);
+  } else if (years.length > 0) {
     const idx = params.length + 1;
     parts.push(
       `EXISTS (SELECT 1 FROM event e WHERE e.production = p.id AND e.starts_at IS NOT NULL AND (EXTRACT(YEAR FROM (e.starts_at AT TIME ZONE '${EVENT_TZ}')))::int = ANY($${idx}::int[]))`,

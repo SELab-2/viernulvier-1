@@ -49,6 +49,8 @@ export default {
       "De producties konden niet worden geladen. Probeer het later opnieuw.",
     invalidListDateRange:
       "De begindatum moet op of voor de einddatum liggen. Pas het bereik aan of corrigeer de link en probeer opnieuw.",
+    invalidListYearRange:
+      "Het eerste jaar moet op of vóór het laatste jaar liggen. Pas het bereik aan of corrigeer de link en probeer opnieuw.",
     empty: "Er staan nog geen producties in het archief.",
     morePerformances: "nog {n}",
     showingRange: "{from}–{to} van {total}",
@@ -69,9 +71,12 @@ export default {
     noFilterResults: "Geen producties gevonden met deze filters.",
     genreFiltersHeading: "Genre",
     selectDates: "Selecteer datums",
-    filterByYear: "Filter op jaar",
-    allYearsSelected: "Alle jaren geselecteerd",
-    selectAllYears: "Alle jaren selecteren",
+    filterByYearRange: "Filter op jaren",
+    yearRangeIntro:
+      "Beperk producties tot voorstellingsjaren binnen dit bereik.",
+    yearRangeFrom: "Vroegste jaar",
+    yearRangeTo: "Laatste jaar",
+    yearRangeChip: "{from}–{to}",
     filterByDateRange: "Filter op dag / periode",
     dateFrom: "Van",
     dateTo: "Tot",
@@ -79,7 +84,7 @@ export default {
       "Kies een start- en einddatum (of vul beide velden in).",
     clearDateRange: "Datums wissen",
     removeGenreFilter: "Genrefilter verwijderen",
-    removeYearFilterChip: "Jaarfilter verwijderen",
+    removeYearRangeFilter: "Jaarbereik verwijderen",
     removeDateRangeFilter: "Datumbereik verwijderen",
     activeFiltersLabel: "Actieve filters:",
     dateRangeChip: "{from} – {to}",

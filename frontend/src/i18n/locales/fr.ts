@@ -49,6 +49,8 @@ export default {
       "Impossible de charger les productions. Veuillez réessayer plus tard.",
     invalidListDateRange:
       "La date de début doit être antérieure ou égale à la date de fin. Ajustez la plage ou le lien et réessayez.",
+    invalidListYearRange:
+      "La première année doit être antérieure ou égale à la dernière. Ajustez la plage ou le lien et réessayez.",
     empty: "Aucune production dans les archives pour l’instant.",
     morePerformances: "{n} de plus",
     showingRange: "{from}–{to} sur {total}",
@@ -69,9 +71,12 @@ export default {
     noFilterResults: "Aucune production ne correspond à ces filtres.",
     genreFiltersHeading: "Genre",
     selectDates: "Sélectionner des dates",
-    filterByYear: "Filtrer par année",
-    allYearsSelected: "Toutes les années sélectionnées",
-    selectAllYears: "Sélectionner toutes les années",
+    filterByYearRange: "Filtrer par années",
+    yearRangeIntro:
+      "Limitez les productions aux années de représentation dans cet intervalle.",
+    yearRangeFrom: "Année la plus ancienne",
+    yearRangeTo: "Année la plus récente",
+    yearRangeChip: "{from}–{to}",
     filterByDateRange: "Filtrer par jour / période",
     dateFrom: "Du",
     dateTo: "Au",
@@ -79,7 +84,7 @@ export default {
       "Choisissez une date de début et de fin (ou remplissez les deux champs).",
     clearDateRange: "Effacer les dates",
     removeGenreFilter: "Retirer le filtre genre",
-    removeYearFilterChip: "Retirer le filtre année",
+    removeYearRangeFilter: "Retirer le filtre par années",
     removeDateRangeFilter: "Retirer la plage de dates",
     activeFiltersLabel: "Filtres actifs :",
     dateRangeChip: "{from} – {to}",

@@ -7,8 +7,12 @@ export const MAX_PAGE_SIZE = 100;
 export const PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE =
   "`from` must be on or before `to`";
 
+/** Year-span filter must use min ≤ max (calendar years). */
+export const PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE =
+  "`yearMin` must be on or before `yearMax`";
+
 /**
- * Parsed query for `GET /production`: pagination, optional `search`, `tags`, `years`, `from`/`to`.
+ * Parsed query for `GET /production`: pagination, optional `search`, `tags`, `years` or `yearMin`/`yearMax`, `from`/`to`.
  */
 export const ProductionListQuerySchema = z
   .object({
@@ -17,6 +21,8 @@ export const ProductionListQuerySchema = z
     search: SearchParamSchema,
     tags: z.string().max(400).optional(),
     years: z.string().max(400).optional(),
+    yearMin: z.coerce.number().int().min(1900).max(2100).optional(),
+    yearMax: z.coerce.number().int().min(1900).max(2100).optional(),
     from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   })
@@ -32,4 +38,13 @@ export const ProductionListQuerySchema = z
   )
   .refine((q) => (q.from && q.to ? q.from <= q.to : true), {
     message: PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE,
+  })
+  .refine(
+    (q) =>
+      (q.yearMin === undefined && q.yearMax === undefined) ||
+      (q.yearMin !== undefined && q.yearMax !== undefined),
+    { message: "`yearMin` and `yearMax` must both be provided" },
+  )
+  .refine((q) => (q.yearMin !== undefined && q.yearMax !== undefined ? q.yearMin <= q.yearMax : true), {
+    message: PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE,
   });

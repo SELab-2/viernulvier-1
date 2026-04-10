@@ -154,7 +154,9 @@ export type PaginatedProductions = {
  * - Optional `search`: comma-separated terms (`search=a,b`), AND semantics (same encoding style
  *   as `tags`). Repeating the `search` key is still accepted for older clients.
  * - Optional `tags`: comma-separated tag IDs — production must include **every** tag.
- * - Optional `years`: comma-separated years — production must have an event in one of those years.
+ * - Optional `years`: comma-separated years — production must have an event in one of those years (OR).
+ * - Optional `yearMin` / `yearMax` (inclusive) — event year must fall in that span. When both are set,
+ *   `years` is ignored.
  * - Optional `from` / `to` (`YYYY-MM-DD`) — production must have an event in that range (venue TZ).
  *
  * @param server - The Fastify instance, used for database access and logging.
@@ -178,12 +180,17 @@ export async function fetchProductions(
   const searchTerms = query.search ?? [];
   const tagIds = parsePositiveIdList(query.tags);
   const yearIds = parseYearList(query.years);
+  const yearRange =
+    query.yearMin !== undefined && query.yearMax !== undefined
+      ? { from: query.yearMin, to: query.yearMax }
+      : undefined;
   const dateFrom = query.from;
   const dateTo = query.to;
   const { whereSql, params: filterParams } = buildProductionListWhere(
     searchTerms,
     tagIds,
-    yearIds,
+    yearRange !== undefined ? [] : yearIds,
+    yearRange,
     dateFrom,
     dateTo,
   );

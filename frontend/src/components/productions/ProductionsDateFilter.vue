@@ -30,49 +30,76 @@
       @click.stop
     >
       <section class="space-y-3">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <h3 class="text-sm font-semibold text-ink-primary">
-            {{ t("productionsPage.filterByYear") }}
-          </h3>
-          <button
-            type="button"
-            class="text-sm font-medium disabled:cursor-not-allowed disabled:opacity-100"
-            :class="
-              yearsMode === null
-                ? 'text-ink-secondary'
-                : 'cursor-pointer text-accent-outline hover:underline'
-            "
-            :disabled="disabled || yearsMode === null"
-            :aria-label="
-              yearsMode === null
-                ? t('productionsPage.allYearsSelected')
-                : t('productionsPage.selectAllYears')
-            "
-            @click="selectAllYears"
+        <h3 class="text-sm font-semibold text-ink-primary">
+          {{ t("productionsPage.filterByYearRange") }}
+        </h3>
+        <p class="text-xs leading-snug text-ink-secondary">
+          {{ t("productionsPage.yearRangeIntro") }}
+        </p>
+
+        <div class="year-range-control px-0.5 pt-1">
+          <div
+            ref="yearTrackRef"
+            class="relative mx-auto h-10 w-full max-w-md"
+            :aria-label="t('productionsPage.filterByYearRange')"
           >
-            {{
-              yearsMode === null
-                ? t("productionsPage.allYearsSelected")
-                : t("productionsPage.selectAllYears")
-            }}
-          </button>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <button
-            v-for="y in yearNumbers"
-            :key="y"
-            type="button"
-            class="rounded-full border px-3 py-1 text-sm transition disabled:opacity-100"
-            :class="
-              isYearSelected(y)
-                ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
-                : 'border-surface-3 bg-surface-0 text-ink-primary hover:bg-surface-2 dark:bg-surface-0'
-            "
-            :disabled="disabled"
-            @click="toggleYear(y)"
+            <div
+              class="pointer-events-none absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-surface-3"
+              aria-hidden="true"
+            />
+            <div
+              class="pointer-events-none absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-accent-outline"
+              :style="filledBarStyle"
+              aria-hidden="true"
+            />
+            <input
+              type="range"
+              class="year-range-thumb year-range-thumb-low"
+              :min="minYear"
+              :max="maxYear"
+              :step="1"
+              :value="localFrom"
+              :disabled="disabled || minYear === maxYear"
+              :aria-valuemin="minYear"
+              :aria-valuemax="maxYear"
+              :aria-valuenow="localFrom"
+              :aria-label="t('productionsPage.yearRangeFrom')"
+              @input="onFromInput"
+              @change="commitYearRange"
+            />
+            <input
+              type="range"
+              class="year-range-thumb year-range-thumb-high"
+              :min="minYear"
+              :max="maxYear"
+              :step="1"
+              :value="localTo"
+              :disabled="disabled || minYear === maxYear"
+              :aria-valuemin="minYear"
+              :aria-valuemax="maxYear"
+              :aria-valuenow="localTo"
+              :aria-label="t('productionsPage.yearRangeTo')"
+              @input="onToInput"
+              @change="commitYearRange"
+            />
+            <!-- When both thumbs coincide, native hit-testing can't pick a side; drag X decides min vs max. -->
+            <div
+              v-show="collapsedOverlayVisible"
+              class="absolute inset-0 z-10 cursor-grab touch-none active:cursor-grabbing"
+              aria-hidden="true"
+              @pointerdown="onCollapsedOverlayPointerDown"
+              @pointermove="onCollapsedOverlayPointerMove"
+              @pointerup="onCollapsedOverlayPointerUp"
+              @pointercancel="onCollapsedOverlayPointerUp"
+              @lostpointercapture="onCollapsedOverlayLostPointerCapture"
+            />
+          </div>
+          <p
+            class="mt-2 text-center text-sm font-medium tabular-nums text-ink-primary"
+            aria-live="polite"
           >
-            {{ y }}
-          </button>
+            {{ localFrom }} – {{ localTo }}
+          </p>
         </div>
       </section>
 
@@ -122,8 +149,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+
+type YearSpan = { from: number; to: number };
 
 const props = withDefaults(
   defineProps<{
@@ -134,39 +163,160 @@ const props = withDefaults(
   { disabled: false },
 );
 
-const yearsMode = defineModel<number[] | null>("yearsMode", { required: true });
+const yearRange = defineModel<YearSpan | null>("yearRange", { required: true });
 const dateFrom = defineModel<string | null>("dateFrom", { required: true });
 const dateTo = defineModel<string | null>("dateTo", { required: true });
 
 const { t } = useI18n();
 const dateFilterRoot = ref<HTMLElement | null>(null);
+const yearTrackRef = ref<HTMLElement | null>(null);
 const panelOpen = ref(false);
 
-const yearNumbers = computed(() => {
-  const a: number[] = [];
-  for (let y = props.minYear; y <= props.maxYear; y++) a.push(y);
-  return a;
+const localFrom = ref(props.minYear);
+const localTo = ref(props.maxYear);
+
+const yearThumbsCoincide = computed(
+  () =>
+    props.minYear < props.maxYear && localFrom.value === localTo.value,
+);
+
+const collapsedDragActive = ref(false);
+let collapsedDragPointerId: number | null = null;
+let collapsedDragStartX = 0;
+let collapsedDragStartFrom = 0;
+let collapsedDragStartTo = 0;
+
+const collapsedOverlayVisible = computed(() => {
+  if (props.disabled || props.minYear >= props.maxYear) return false;
+  return yearThumbsCoincide.value || collapsedDragActive.value;
 });
 
-function isYearSelected(y: number): boolean {
-  if (yearsMode.value === null) return true;
-  return yearsMode.value.includes(y);
+function pxPerYearOnTrack(): number {
+  const el = yearTrackRef.value;
+  if (!el) return 48;
+  const w = el.getBoundingClientRect().width;
+  const span = Math.max(1, props.maxYear - props.minYear);
+  return w / span;
 }
 
-function toggleYear(y: number): void {
-  if (yearsMode.value === null) {
-    yearsMode.value = [y];
+function onCollapsedOverlayPointerDown(e: PointerEvent): void {
+  if (props.disabled || e.button !== 0) return;
+  if (!yearThumbsCoincide.value) return;
+  const el = e.currentTarget as HTMLElement;
+  el.setPointerCapture(e.pointerId);
+  collapsedDragPointerId = e.pointerId;
+  collapsedDragActive.value = true;
+  collapsedDragStartX = e.clientX;
+  collapsedDragStartFrom = localFrom.value;
+  collapsedDragStartTo = localTo.value;
+  e.preventDefault();
+}
+
+function onCollapsedOverlayPointerMove(e: PointerEvent): void {
+  if (
+    !collapsedDragActive.value ||
+    collapsedDragPointerId !== e.pointerId
+  ) {
     return;
   }
-  const set = new Set(yearsMode.value);
-  if (set.has(y)) set.delete(y);
-  else set.add(y);
-  const arr = [...set].sort((a, b) => a - b);
-  yearsMode.value = arr.length === 0 ? null : arr;
+  const ppy = pxPerYearOnTrack();
+  const dyears = Math.round(
+    (e.clientX - collapsedDragStartX) / Math.max(1e-6, ppy),
+  );
+  const minY = props.minYear;
+  const maxY = props.maxYear;
+  let from = collapsedDragStartFrom + Math.min(0, dyears);
+  let to = collapsedDragStartTo + Math.max(0, dyears);
+  from = Math.min(maxY, Math.max(minY, from));
+  to = Math.min(maxY, Math.max(minY, to));
+  localFrom.value = from;
+  localTo.value = to;
 }
 
-function selectAllYears(): void {
-  yearsMode.value = null;
+function finishCollapsedOverlayDrag(e: PointerEvent): void {
+  if (!collapsedDragActive.value || collapsedDragPointerId !== e.pointerId) {
+    return;
+  }
+  const el = e.currentTarget as HTMLElement;
+  const pid = collapsedDragPointerId;
+  collapsedDragPointerId = null;
+  collapsedDragActive.value = false;
+  commitYearRange();
+  try {
+    el.releasePointerCapture(pid);
+  } catch {
+    /* already released */
+  }
+}
+
+function onCollapsedOverlayPointerUp(e: PointerEvent): void {
+  finishCollapsedOverlayDrag(e);
+}
+
+function onCollapsedOverlayLostPointerCapture(e: PointerEvent): void {
+  if (
+    !collapsedDragActive.value ||
+    collapsedDragPointerId !== e.pointerId
+  ) {
+    return;
+  }
+  collapsedDragPointerId = null;
+  collapsedDragActive.value = false;
+  commitYearRange();
+}
+
+function syncLocalsFromModel(): void {
+  if (yearRange.value === null) {
+    localFrom.value = props.minYear;
+    localTo.value = props.maxYear;
+    return;
+  }
+  localFrom.value = yearRange.value.from;
+  localTo.value = yearRange.value.to;
+}
+
+watch(
+  () => [yearRange.value, props.minYear, props.maxYear] as const,
+  () => syncLocalsFromModel(),
+  { immediate: true },
+);
+
+const filledBarStyle = computed(() => {
+  const lo = props.minYear;
+  const hi = props.maxYear;
+  const span = Math.max(1, hi - lo);
+  const p1 = ((localFrom.value - lo) / span) * 100;
+  const p2 = ((localTo.value - lo) / span) * 100;
+  return {
+    left: `${p1}%`,
+    width: `${Math.max(0, p2 - p1)}%`,
+  };
+});
+
+function onFromInput(e: Event): void {
+  const raw = Number((e.target as HTMLInputElement).value);
+  if (!Number.isFinite(raw)) return;
+  let v = Math.round(raw);
+  v = Math.min(props.maxYear, Math.max(props.minYear, v));
+  if (v > localTo.value) v = localTo.value;
+  localFrom.value = v;
+}
+
+function onToInput(e: Event): void {
+  const raw = Number((e.target as HTMLInputElement).value);
+  if (!Number.isFinite(raw)) return;
+  let v = Math.round(raw);
+  v = Math.min(props.maxYear, Math.max(props.minYear, v));
+  if (v < localFrom.value) v = localFrom.value;
+  localTo.value = v;
+}
+
+function commitYearRange(): void {
+  if (localFrom.value === props.minYear && localTo.value === props.maxYear) {
+    yearRange.value = null;
+  } else {
+    yearRange.value = { from: localFrom.value, to: localTo.value };
+  }
 }
 
 function clearDates(): void {
@@ -196,3 +346,78 @@ onUnmounted(() => {
   document.removeEventListener("click", onDocClick);
 });
 </script>
+
+<style scoped>
+.year-range-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  width: 100%;
+  height: 2.5rem;
+  transform: translateY(-50%);
+  margin: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+.year-range-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 9999px;
+  border: 2px solid var(--color-accent-outline, #2563eb);
+  background: var(--color-surface-0, #fff);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+  cursor: grab;
+}
+
+.year-range-thumb::-moz-range-thumb {
+  pointer-events: auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 9999px;
+  border: 2px solid var(--color-accent-outline, #2563eb);
+  background: var(--color-surface-0, #fff);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+  cursor: grab;
+}
+
+.year-range-thumb:active::-webkit-slider-thumb {
+  cursor: grabbing;
+}
+
+.year-range-thumb:active::-moz-range-thumb {
+  cursor: grabbing;
+}
+
+.year-range-thumb::-webkit-slider-runnable-track {
+  background: transparent;
+  height: 0.375rem;
+}
+
+.year-range-thumb::-moz-range-track {
+  background: transparent;
+  height: 0.375rem;
+}
+
+.year-range-thumb-low {
+  z-index: 2;
+}
+
+.year-range-thumb-high {
+  z-index: 3;
+}
+
+:global(.dark) .year-range-thumb::-webkit-slider-thumb {
+  background: var(--color-surface-1, #1e293b);
+}
+
+:global(.dark) .year-range-thumb::-moz-range-thumb {
+  background: var(--color-surface-1, #1e293b);
+}
+</style>
