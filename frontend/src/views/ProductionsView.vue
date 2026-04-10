@@ -541,7 +541,8 @@ const totalCount = ref(0);
 const currentPage = ref(0);
 const appliedSearchTerms = ref<string[]>([]);
 /**
- * Terms shown in the "Search:" chip row (and whether the result count line appears).
+ * Terms shown in the "Search:" chip row. The results count line also keys off
+ * `hasActiveListFilters` so it can show while the first term’s fetch runs.
  * When clearing all terms, this stays populated until the unfiltered list has loaded,
  * so layout does not jump while stale filtered cards are still on screen.
  * When adding the first term, same as non-search filters: row appears only after fetch.
@@ -549,8 +550,9 @@ const appliedSearchTerms = ref<string[]>([]);
 const searchBannerTerms = ref<string[]>([]);
 const searchDraft = ref("");
 /**
- * Total matching the active search, shown only after a successful list fetch
- * for that search (avoids flashing the unfiltered total while loading).
+ * Total matching the current list query; updated on each successful fetch.
+ * While search/filter list loads we keep the previous value so the results line
+ * does not blank out (same idea as filter-only fetches).
  */
 const displayedFilteredTotal = ref<number | null>(null);
 /**
@@ -721,7 +723,6 @@ async function submitSearch() {
     searchDraft.value = "";
     return;
   }
-  displayedFilteredTotal.value = null;
   const hadVisibleSearchPillRow = searchBannerTerms.value.length > 0;
   appliedSearchTerms.value = dedupePreserveSearchCap([
     ...appliedSearchTerms.value,
@@ -751,7 +752,6 @@ async function removeSearchTermAt(index: number) {
   const next = appliedSearchTerms.value.filter((_, i) => i !== index);
   if (next.length === appliedSearchTerms.value.length) return;
   if (next.length > 0) {
-    displayedFilteredTotal.value = null;
     searchBannerTerms.value = [...next];
   }
   appliedSearchTerms.value = next;
