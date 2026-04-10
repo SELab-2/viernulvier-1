@@ -39,12 +39,12 @@ beforeEach(() => {
 });
 
 describe("Create on blogpost route", () => {
-  test("POST /api/v1/blogpost — creates a blogpost and returns it", async () => {
+  test("POST /api/v1/blog/post — creates a blogpost and returns it", async () => {
     server.pg.query = vi.fn().mockResolvedValue({ rows: [mockBlogPost], rowCount: 1 });
 
     const response = await server.inject({
       method: "POST",
-      url: "/api/v1/blogpost",
+      url: "/api/v1/blog/post",
       cookies: { session: sessionCookie },
       payload: {
         blog: mockBlogPost["blog"],
@@ -58,12 +58,12 @@ describe("Create on blogpost route", () => {
     expect(BlogPostSchema.parse(response.json())).toMatchObject({ id: mockBlogPost["id"], title: mockBlogPost["title"] });
   });
 
-  test("POST /api/v1/blogpost — creates a draft blogpost (null published_at)", async () => {
+  test("POST /api/v1/blog/post — creates a draft blogpost (null published_at)", async () => {
     server.pg.query = vi.fn().mockResolvedValue({ rows: [mockDraftBlogPost], rowCount: 1 });
 
     const response = await server.inject({
       method: "POST",
-      url: "/api/v1/blogpost",
+      url: "/api/v1/blog/post",
       cookies: { session: sessionCookie },
       payload: {
         blog: mockDraftBlogPost["blog"],
@@ -77,12 +77,12 @@ describe("Create on blogpost route", () => {
     expect(response.json()["published_at"]).toBeNull();
   });
 
-  test("POST /api/v1/blogpost — returns 404 when insert returns no row", async () => {
+  test("POST /api/v1/blog/post — returns 404 when insert returns no row", async () => {
     server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
 
     const response = await server.inject({
       method: "POST",
-      url: "/api/v1/blogpost",
+      url: "/api/v1/blog/post",
       cookies: { session: sessionCookie },
       payload: {
         blog: mockBlogPost["blog"],
@@ -95,10 +95,10 @@ describe("Create on blogpost route", () => {
     expect(response.statusCode).toBe(HttpClientError.NotFound);
   });
 
-  test("POST /api/v1/blogpost — rejects invalid body (missing title)", async () => {
+  test("POST /api/v1/blog/post — rejects invalid body (missing title)", async () => {
     const response = await server.inject({
       method: "POST",
-      url: "/api/v1/blogpost",
+      url: "/api/v1/blog/post",
       cookies: { session: sessionCookie },
       payload: {
         blog: 1,
@@ -110,10 +110,10 @@ describe("Create on blogpost route", () => {
     expect(response.statusCode).toBe(HttpClientError.BadRequest);
   });
 
-  test("POST /api/v1/blogpost — rejects invalid body (missing blog)", async () => {
+  test("POST /api/v1/blog/post — rejects invalid body (missing blog)", async () => {
     const response = await server.inject({
       method: "POST",
-      url: "/api/v1/blogpost",
+      url: "/api/v1/blog/post",
       cookies: { session: sessionCookie },
       payload: {
         title: "No blog FK",
@@ -125,10 +125,10 @@ describe("Create on blogpost route", () => {
     expect(response.statusCode).toBe(HttpClientError.BadRequest);
   });
 
-  test("POST /api/v1/blogpost — rejects empty body", async () => {
+  test("POST /api/v1/blog/post — rejects empty body", async () => {
     const response = await server.inject({
       method: "POST",
-      url: "/api/v1/blogpost",
+      url: "/api/v1/blog/post",
       cookies: { session: sessionCookie },
       payload: {},
     });
@@ -136,10 +136,10 @@ describe("Create on blogpost route", () => {
     expect(response.statusCode).toBe(HttpClientError.BadRequest);
   });
 
-  test("POST /api/v1/blogpost — returns 401 when not logged in", async () => {
+  test("POST /api/v1/blog/post — returns 401 when not logged in", async () => {
     const response = await server.inject({
       method: "POST",
-      url: "/api/v1/blogpost",
+      url: "/api/v1/blog/post",
       payload: {
         blog: mockBlogPost["blog"],
         title: mockBlogPost["title"],

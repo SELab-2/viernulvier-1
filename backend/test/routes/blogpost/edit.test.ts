@@ -36,7 +36,7 @@ beforeEach(() => {
 });
 
 describe("Edit on blogpost route", () => {
-  test("PATCH /api/v1/blogpost/:id — updates title", async () => {
+  test("PATCH /api/v1/blog/post/:id — updates title", async () => {
     server.pg.query = vi.fn().mockImplementation((query: string) => {
       const upper = query.trim().toUpperCase();
 
@@ -49,7 +49,7 @@ describe("Edit on blogpost route", () => {
 
     const response = await server.inject({
       method: "PATCH",
-      url: `/api/v1/blogpost/${originalBlogPost["id"]}`,
+      url: `/api/v1/blog/post/${originalBlogPost["id"]}`,
       cookies: { session: sessionCookie },
       payload: { title: updatedTitle["title"] },
     });
@@ -58,7 +58,7 @@ describe("Edit on blogpost route", () => {
     expect(BlogPostSchema.parse(response.json())).toMatchObject({ title: updatedTitle["title"] });
   });
 
-  test("PATCH /api/v1/blogpost/:id — updates content", async () => {
+  test("PATCH /api/v1/blog/post/:id — updates content", async () => {
     server.pg.query = vi.fn().mockImplementation((query: string) => {
       const upper = query.trim().toUpperCase();
 
@@ -71,7 +71,7 @@ describe("Edit on blogpost route", () => {
 
     const response = await server.inject({
       method: "PATCH",
-      url: `/api/v1/blogpost/${originalBlogPost["id"]}`,
+      url: `/api/v1/blog/post/${originalBlogPost["id"]}`,
       cookies: { session: sessionCookie },
       payload: { content: updatedContent["content"] },
     });
@@ -80,7 +80,7 @@ describe("Edit on blogpost route", () => {
     expect(response.json()["content"]).toEqual(updatedContent["content"]);
   });
 
-  test("PATCH /api/v1/blogpost/:id — publishes a draft (sets published_at)", async () => {
+  test("PATCH /api/v1/blog/post/:id — publishes a draft (sets published_at)", async () => {
     server.pg.query = vi.fn().mockImplementation((query: string) => {
       const upper = query.trim().toUpperCase();
 
@@ -93,7 +93,7 @@ describe("Edit on blogpost route", () => {
 
     const response = await server.inject({
       method: "PATCH",
-      url: `/api/v1/blogpost/${originalBlogPost["id"]}`,
+      url: `/api/v1/blog/post/${originalBlogPost["id"]}`,
       cookies: { session: sessionCookie },
       payload: { published_at: mockTime },
     });
@@ -102,7 +102,7 @@ describe("Edit on blogpost route", () => {
     expect(response.json()["published_at"]).not.toBeNull();
   });
 
-  test("PATCH /api/v1/blogpost/:id — reverts to draft (clears published_at)", async () => {
+  test("PATCH /api/v1/blog/post/:id — reverts to draft (clears published_at)", async () => {
     server.pg.query = vi.fn().mockImplementation((query: string) => {
       const upper = query.trim().toUpperCase();
 
@@ -115,7 +115,7 @@ describe("Edit on blogpost route", () => {
 
     const response = await server.inject({
       method: "PATCH",
-      url: `/api/v1/blogpost/${originalBlogPost["id"]}`,
+      url: `/api/v1/blog/post/${originalBlogPost["id"]}`,
       cookies: { session: sessionCookie },
       payload: { published_at: null },
     });
@@ -124,7 +124,7 @@ describe("Edit on blogpost route", () => {
     expect(response.json()["published_at"]).toBeNull();
   });
 
-  test("PATCH /api/v1/blogpost/:id — returns 404 when blogpost not found", async () => {
+  test("PATCH /api/v1/blog/post/:id — returns 404 when blogpost not found", async () => {
     server.pg.query = vi.fn().mockImplementation((query: string) => {
       const upper = query.trim().toUpperCase();
 
@@ -137,7 +137,7 @@ describe("Edit on blogpost route", () => {
 
     const response = await server.inject({
       method: "PATCH",
-      url: `/api/v1/blogpost/${originalBlogPost["id"]}`,
+      url: `/api/v1/blog/post/${originalBlogPost["id"]}`,
       cookies: { session: sessionCookie },
       payload: { title: "Nonexistent post" },
     });
@@ -145,10 +145,10 @@ describe("Edit on blogpost route", () => {
     expect(response.statusCode).toBe(HttpClientError.NotFound);
   });
 
-  test("PATCH /api/v1/blogpost/:id — rejects invalid body (wrong type)", async () => {
+  test("PATCH /api/v1/blog/post/:id — rejects invalid body (wrong type)", async () => {
     const response = await server.inject({
       method: "PATCH",
-      url: `/api/v1/blogpost/${originalBlogPost["id"]}`,
+      url: `/api/v1/blog/post/${originalBlogPost["id"]}`,
       cookies: { session: sessionCookie },
       payload: { title: 12345 },
     });
@@ -156,10 +156,10 @@ describe("Edit on blogpost route", () => {
     expect(response.statusCode).toBe(HttpClientError.BadRequest);
   });
 
-  test("PATCH /api/v1/blogpost/:id — rejects empty body", async () => {
+  test("PATCH /api/v1/blog/post/:id — rejects empty body", async () => {
     const response = await server.inject({
       method: "PATCH",
-      url: `/api/v1/blogpost/${originalBlogPost["id"]}`,
+      url: `/api/v1/blog/post/${originalBlogPost["id"]}`,
       cookies: { session: sessionCookie },
       payload: {},
     });
@@ -167,10 +167,10 @@ describe("Edit on blogpost route", () => {
     expect(response.statusCode).toBe(HttpClientError.BadRequest);
   });
 
-  test("PATCH /api/v1/blogpost/:id — returns 401 when not logged in", async () => {
+  test("PATCH /api/v1/blog/post/:id — returns 401 when not logged in", async () => {
     const response = await server.inject({
       method: "PATCH",
-      url: `/api/v1/blogpost/${originalBlogPost["id"]}`,
+      url: `/api/v1/blog/post/${originalBlogPost["id"]}`,
       payload: { title: "Unauthorized update" },
     });
 

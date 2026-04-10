@@ -31,12 +31,12 @@ beforeEach(() => {
 });
 
 describe("Delete on blogpost route", () => {
-  test("DELETE /api/v1/blogpost/:id — deletes a blogpost and returns it", async () => {
+  test("DELETE /api/v1/blog/post/:id — deletes a blogpost and returns it", async () => {
     server.pg.query = vi.fn().mockResolvedValue({ rows: [mockBlogPost], rowCount: 1 });
 
     const response = await server.inject({
       method: "DELETE",
-      url: `/api/v1/blogpost/${mockBlogPost["id"]}`,
+      url: `/api/v1/blog/post/${mockBlogPost["id"]}`,
       cookies: { session: sessionCookie },
     });
 
@@ -44,32 +44,32 @@ describe("Delete on blogpost route", () => {
     expect(BlogPostSchema.parse(response.json())).toMatchObject({ id: mockBlogPost["id"], title: mockBlogPost["title"] });
   });
 
-  test("DELETE /api/v1/blogpost/:id — returns 404 when blogpost not found", async () => {
+  test("DELETE /api/v1/blog/post/:id — returns 404 when blogpost not found", async () => {
     server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
 
     const response = await server.inject({
       method: "DELETE",
-      url: `/api/v1/blogpost/${mockBlogPost["id"]}`,
+      url: `/api/v1/blog/post/${mockBlogPost["id"]}`,
       cookies: { session: sessionCookie },
     });
 
     expect(response.statusCode).toBe(HttpClientError.NotFound);
   });
 
-  test("DELETE /api/v1/blogpost/:id — returns 400 when id is invalid", async () => {
+  test("DELETE /api/v1/blog/post/:id — returns 400 when id is invalid", async () => {
     const response = await server.inject({
       method: "DELETE",
-      url: "/api/v1/blogpost/invalid",
+      url: "/api/v1/blog/post/invalid",
       cookies: { session: sessionCookie },
     });
 
     expect(response.statusCode).toBe(HttpClientError.BadRequest);
   });
 
-  test("DELETE /api/v1/blogpost/:id — returns 401 when not logged in", async () => {
+  test("DELETE /api/v1/blog/post/:id — returns 401 when not logged in", async () => {
     const response = await server.inject({
       method: "DELETE",
-      url: `/api/v1/blogpost/${mockBlogPost["id"]}`,
+      url: `/api/v1/blog/post/${mockBlogPost["id"]}`,
     });
 
     expect(response.statusCode).toBe(HttpClientError.Unauthorized);

@@ -54,46 +54,46 @@ afterAll(async () => {
 });
 
 describe("BlogPost fetch routes", () => {
-  test("GET /api/v1/blogpost -> returns all blogposts", async () => {
+  test("GET /api/v1/blog/post -> returns all blogposts", async () => {
     const response = await server.inject({
       method: "GET",
-      url: "/api/v1/blogpost",
+      url: "/api/v1/blog/post",
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
     expect(response.json()).toHaveLength(mockBlogPosts.length);
   });
 
-  test("GET /api/v1/blogpost/:id -> returns a single blogpost", async () => {
+  test("GET /api/v1/blog/post/:id -> returns a single blogpost", async () => {
     const post = mockBlogPosts[0];
 
     const response = await server.inject({
       method: "GET",
-      url: `/api/v1/blogpost/${post?.["id"]}`,
+      url: `/api/v1/blog/post/${post?.["id"]}`,
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
     expect(BlogPostSchema.parse(response.json())).toMatchObject({ id: post?.["id"], title: post?.["title"] });
   });
 
-  test("GET /api/v1/blogpost/:id -> returns a blogpost with null published_at", async () => {
+  test("GET /api/v1/blog/post/:id -> returns a blogpost with null published_at", async () => {
     const post = mockBlogPosts[1];
 
     const response = await server.inject({
       method: "GET",
-      url: `/api/v1/blogpost/${post?.["id"]}`,
+      url: `/api/v1/blog/post/${post?.["id"]}`,
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
     expect(response.json()["published_at"]).toBeNull();
   });
 
-  test("GET /api/v1/blogpost/:id/meta — returns a blogpost with metadata", async () => {
+  test("GET /api/v1/blog/post/:id/meta — returns a blogpost with metadata", async () => {
     const post = mockBlogPostsWithMeta[0];
 
     const response = await server.inject({
       method: "GET",
-      url: `/api/v1/blogpost/${post?.["id"]}/meta`,
+      url: `/api/v1/blog/post/${post?.["id"]}/meta`,
       cookies: { session: sessionCookie },
     });
 
@@ -101,40 +101,40 @@ describe("BlogPost fetch routes", () => {
     expect(BlogPostSchema.withMeta().parse(response.json())).toMatchObject({ id: post?.["id"] });
   });
 
-  test("GET /api/v1/blogpost/:id — returns 404 when blogpost not found", async () => {
+  test("GET /api/v1/blog/post/:id — returns 404 when blogpost not found", async () => {
     const response = await server.inject({
       method: "GET",
-      url: "/api/v1/blogpost/99999",
+      url: "/api/v1/blog/post/99999",
     });
 
     expect(response.statusCode).toBe(HttpClientError.NotFound);
   });
 
-  test("GET /api/v1/blogpost/:id/meta — returns 404 when blogpost not found", async () => {
+  test("GET /api/v1/blog/post/:id/meta — returns 404 when blogpost not found", async () => {
     const response = await server.inject({
       method: "GET",
-      url: "/api/v1/blogpost/99999/meta",
+      url: "/api/v1/blog/post/99999/meta",
       cookies: { session: sessionCookie },
     });
 
     expect(response.statusCode).toBe(HttpClientError.NotFound);
   });
 
-  test("GET /api/v1/blogpost/:id — returns 400 when id is invalid", async () => {
+  test("GET /api/v1/blog/post/:id — returns 400 when id is invalid", async () => {
     const response = await server.inject({
       method: "GET",
-      url: "/api/v1/blogpost/invalid",
+      url: "/api/v1/blog/post/invalid",
     });
 
     expect(response.statusCode).toBe(HttpClientError.BadRequest);
   });
 
-  test("GET /api/v1/blogpost/:id/meta — returns 401 when not logged in", async () => {
+  test("GET /api/v1/blog/post/:id/meta — returns 401 when not logged in", async () => {
     const post = mockBlogPostsWithMeta[0];
 
     const response = await server.inject({
       method: "GET",
-      url: `/api/v1/blogpost/${post?.["id"]}/meta`,
+      url: `/api/v1/blog/post/${post?.["id"]}/meta`,
     });
 
     expect(response.statusCode).toBe(HttpClientError.Unauthorized);

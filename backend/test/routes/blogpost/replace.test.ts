@@ -31,7 +31,7 @@ beforeEach(() => {
 });
 
 describe("Replace on blogpost route", () => {
-  test("PUT /api/v1/blogpost/:id — replaces a blogpost and returns it", async () => {
+  test("PUT /api/v1/blog/post/:id — replaces a blogpost and returns it", async () => {
     server.pg.query = vi.fn().mockImplementation((query: string) => {
       const upper = query.trim().toUpperCase();
 
@@ -44,7 +44,7 @@ describe("Replace on blogpost route", () => {
 
     const response = await server.inject({
       method: "PUT",
-      url: `/api/v1/blogpost/${replacedBlogPost["id"]}`,
+      url: `/api/v1/blog/post/${replacedBlogPost["id"]}`,
       cookies: { session: sessionCookie },
       payload: {
         blog: replacedBlogPost["blog"],
@@ -58,13 +58,13 @@ describe("Replace on blogpost route", () => {
     expect(BlogPostSchema.parse(response.json())).toMatchObject({ id: replacedBlogPost["id"], title: replacedBlogPost["title"] });
   });
 
-  test("PUT /api/v1/blogpost/:id — replaces a blogpost with null published_at (draft)", async () => {
+  test("PUT /api/v1/blog/post/:id — replaces a blogpost with null published_at (draft)", async () => {
     const draft: BlogPost = { ...replacedBlogPost, published_at: null };
     server.pg.query = vi.fn().mockResolvedValue({ rows: [draft], rowCount: 1 });
 
     const response = await server.inject({
       method: "PUT",
-      url: `/api/v1/blogpost/${replacedBlogPost["id"]}`,
+      url: `/api/v1/blog/post/${replacedBlogPost["id"]}`,
       cookies: { session: sessionCookie },
       payload: {
         blog: draft["blog"],
@@ -78,12 +78,12 @@ describe("Replace on blogpost route", () => {
     expect(response.json()["published_at"]).toBeNull();
   });
 
-  test("PUT /api/v1/blogpost/:id — returns 404 when blogpost not found", async () => {
+  test("PUT /api/v1/blog/post/:id — returns 404 when blogpost not found", async () => {
     server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
 
     const response = await server.inject({
       method: "PUT",
-      url: `/api/v1/blogpost/${replacedBlogPost["id"]}`,
+      url: `/api/v1/blog/post/${replacedBlogPost["id"]}`,
       cookies: { session: sessionCookie },
       payload: {
         blog: replacedBlogPost["blog"],
@@ -96,10 +96,10 @@ describe("Replace on blogpost route", () => {
     expect(response.statusCode).toBe(HttpClientError.NotFound);
   });
 
-  test("PUT /api/v1/blogpost/:id — rejects invalid body (missing title)", async () => {
+  test("PUT /api/v1/blog/post/:id — rejects invalid body (missing title)", async () => {
     const response = await server.inject({
       method: "PUT",
-      url: `/api/v1/blogpost/${replacedBlogPost["id"]}`,
+      url: `/api/v1/blog/post/${replacedBlogPost["id"]}`,
       cookies: { session: sessionCookie },
       payload: {
         blog: 1,
@@ -111,10 +111,10 @@ describe("Replace on blogpost route", () => {
     expect(response.statusCode).toBe(HttpClientError.BadRequest);
   });
 
-  test("PUT /api/v1/blogpost/:id — returns 401 when not logged in", async () => {
+  test("PUT /api/v1/blog/post/:id — returns 401 when not logged in", async () => {
     const response = await server.inject({
       method: "PUT",
-      url: `/api/v1/blogpost/${replacedBlogPost["id"]}`,
+      url: `/api/v1/blog/post/${replacedBlogPost["id"]}`,
       payload: {
         blog: replacedBlogPost["blog"],
         title: replacedBlogPost["title"],
