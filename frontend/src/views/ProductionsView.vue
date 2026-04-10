@@ -69,16 +69,103 @@
               <span class="text-lg leading-none text-ink-secondary" aria-hidden="true">×</span>
             </button>
           </div>
-        </div>
 
-        <!-- Tag/date/… filters: add between search and the result count (inside content after load). -->
+          <div
+            v-if="genreTagsForFilter.length > 0"
+            class="mt-4 space-y-3 border-t border-surface-3 pt-4"
+          >
+            <p
+              class="text-xs font-medium uppercase tracking-wide text-ink-secondary"
+            >
+              {{ t("productionsPage.genreFiltersHeading") }}
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="g in genreTagsForFilter"
+                :key="g.id"
+                type="button"
+                class="rounded-full border px-3 py-1 text-sm transition disabled:cursor-not-allowed disabled:opacity-40"
+                :class="
+                  selectedGenreTagIds.includes(g.id)
+                    ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
+                    : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
+                "
+                :disabled="listLoading || loadError"
+                @click="toggleGenreTag(g.id)"
+              >
+                {{ g.label }}
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="mt-4 flex flex-wrap items-center gap-2 border-t border-surface-3 pt-4"
+          >
+            <ProductionsDateFilter
+              v-model:years-mode="explicitYears"
+              v-model:date-from="filterDateFrom"
+              v-model:date-to="filterDateTo"
+              :disabled="listLoading || loadError"
+              :min-year="filterYearBounds.minYear"
+              :max-year="filterYearBounds.maxYear"
+            />
+          </div>
+
+          <div
+            v-if="
+              filterBannerTagIds.length > 0 ||
+              (filterBannerYears !== null && filterBannerYears.length > 0) ||
+              (filterBannerDateFrom && filterBannerDateTo)
+            "
+            class="mb-4 flex flex-wrap items-center gap-2 border-t border-surface-3 pt-4"
+          >
+            <span class="text-sm text-ink-secondary">{{
+              t("productionsPage.activeFiltersLabel")
+            }}</span>
+            <button
+              v-for="tid in filterBannerTagIds"
+              :key="'tag-' + tid"
+              type="button"
+              class="inline-flex max-w-full cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary hover:bg-surface-2 disabled:opacity-40"
+              :disabled="listLoading"
+              :aria-label="t('productionsPage.removeGenreFilter')"
+              @click="removeGenreTag(tid)"
+            >
+              <span class="min-w-0 truncate">{{ tagLabel(tid) }}</span>
+              <span class="text-lg leading-none text-ink-secondary" aria-hidden="true">×</span>
+            </button>
+            <button
+              v-for="yy in filterBannerYears ?? []"
+              :key="'y-' + yy"
+              type="button"
+              class="inline-flex cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm tabular-nums text-ink-primary hover:bg-surface-2"
+              :disabled="listLoading"
+              :aria-label="t('productionsPage.removeYearFilterChip')"
+              @click="removeYearFilter(yy)"
+            >
+              {{ yy }}
+              <span class="text-lg leading-none text-ink-secondary" aria-hidden="true">×</span>
+            </button>
+            <button
+              v-if="filterBannerDateFrom && filterBannerDateTo"
+              type="button"
+              class="inline-flex max-w-full cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary hover:bg-surface-2"
+              :disabled="listLoading"
+              :aria-label="t('productionsPage.removeDateRangeFilter')"
+              @click="clearDateRange"
+            >
+              <span class="min-w-0 truncate">{{ dateRangeSummary }}</span>
+              <span class="text-lg leading-none text-ink-secondary" aria-hidden="true">×</span>
+            </button>
+          </div>
+        </div>
 
         <p
           v-if="loadError"
           class="rounded-md border border-surface-3 bg-surface-1 px-4 py-3 text-sm text-ink-secondary"
           role="alert"
         >
-          {{ t("productionsPage.error") }}
+          {{ loadErrorDetail ?? t("productionsPage.error") }}
         </p>
 
         <p
@@ -90,7 +177,7 @@
 
         <div v-else>
           <p
-            v-if="searchBannerTerms.length > 0"
+            v-if="showFilteredResultsCountLine"
             class="mb-2 min-h-5 text-sm leading-normal text-ink-secondary tabular-nums"
             aria-live="polite"
           >
@@ -206,10 +293,12 @@ import type {
 import AppFooter from "@/components/AppFooter.vue";
 import AppNavbar from "@/components/AppNavbar.vue";
 import ProductionListCard from "@/components/productions/ProductionListCard.vue";
+import ProductionsDateFilter from "@/components/productions/ProductionsDateFilter.vue";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
 import { getEvents } from "@/services/events";
 import { getHalls } from "@/services/halls";
+import { ApiError } from "@/services/api";
 import { getProductions } from "@/services/productions";
 import { getTags, getTagTypes } from "@/services/tags";
 import { localizeOrEmpty } from "@/utils/i18n";
@@ -227,17 +316,65 @@ const PAGE_SIZE = 20;
 /** Same cap as the list API, extra terms are ignored client-side. */
 const MAX_SEARCH_TERMS = 20;
 
+/** Keep in sync with `PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE` in backend `pagination.ts`. */
+const PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE =
+  "`from` must be on or before `to`" as const;
+
 /** 1-based page index in the URL (`?page=1` is normalized away). */
 const PAGE_QUERY_KEY = "page";
 
 /** Same name as the list API query param; survives refresh and shareable URLs. */
 const SEARCH_QUERY_KEY = "search";
+const TAGS_QUERY_KEY = "tags";
+const YEARS_QUERY_KEY = "years";
+const FROM_QUERY_KEY = "from";
+const TO_QUERY_KEY = "to";
 
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 
 const pageTopAnchor = useTemplateRef<HTMLElement>("pageTopAnchor");
+
+/** Genre tags toggled for list filtering (AND). */
+const selectedGenreTagIds = ref<number[]>([]);
+/** `null` = all years; otherwise restrict to these calendar years. */
+const explicitYears = ref<number[] | null>(null);
+const filterDateFrom = ref<string | null>(null);
+const filterDateTo = ref<string | null>(null);
+/**
+ * Tag/year/date chips in the "Active filters" row. Row appears/updates after fetch
+ * when adding the first non-search filter, and may stay visible (stale chips) until
+ * fetch when removing the last non-search filter -> same idea as searchBannerTerms.
+ */
+const filterBannerTagIds = ref<number[]>([]);
+const filterBannerYears = ref<number[] | null>(null);
+const filterBannerDateFrom = ref<string | null>(null);
+const filterBannerDateTo = ref<string | null>(null);
+
+function syncFilterBannerFromApplied() {
+  filterBannerTagIds.value = [...selectedGenreTagIds.value];
+  filterBannerYears.value =
+    explicitYears.value === null ? null : [...explicitYears.value];
+  filterBannerDateFrom.value = filterDateFrom.value;
+  filterBannerDateTo.value = filterDateTo.value;
+}
+
+function hasAppliedNonSearchFilters(): boolean {
+  return (
+    selectedGenreTagIds.value.length > 0 ||
+    (explicitYears.value !== null && explicitYears.value.length > 0) ||
+    !!(filterDateFrom.value && filterDateTo.value)
+  );
+}
+
+function filterBannerHasNonSearchChips(): boolean {
+  return (
+    filterBannerTagIds.value.length > 0 ||
+    (filterBannerYears.value !== null && filterBannerYears.value.length > 0) ||
+    !!(filterBannerDateFrom.value && filterBannerDateTo.value)
+  );
+}
 
 /**
  * Reads a positive 1-based page from the route query; invalid or missing -> 1.
@@ -277,6 +414,44 @@ function dedupePreserveSearchCap(parts: string[]): string[] {
   return dedupeSearchTermsPreserveOrder(parts).slice(0, MAX_SEARCH_TERMS);
 }
 
+function readTagsFromRoute(): number[] {
+  const raw = route.query[TAGS_QUERY_KEY];
+  const joined = Array.isArray(raw) ? raw.join(",") : raw;
+  if (joined === undefined || joined === null || joined === "") return [];
+  const out: number[] = [];
+  for (const part of String(joined).split(",")) {
+    const n = Number.parseInt(part.trim(), 10);
+    if (Number.isFinite(n) && n > 0) out.push(n);
+  }
+  return [...new Set(out)].sort((a, b) => a - b);
+}
+
+function readYearsFromRoute(): number[] | null {
+  const raw = route.query[YEARS_QUERY_KEY];
+  const s = Array.isArray(raw) ? raw[0] : raw;
+  if (s === undefined || s === null || s === "") return null;
+  const out: number[] = [];
+  for (const part of String(s).split(",")) {
+    const n = Number.parseInt(part.trim(), 10);
+    if (Number.isFinite(n) && n >= 1900 && n <= 2100) out.push(n);
+  }
+  const u = [...new Set(out)].sort((a, b) => a - b);
+  return u.length > 0 ? u : null;
+}
+
+function readDateRangeFromRoute(): { from: string; to: string } | null {
+  const rawF = route.query[FROM_QUERY_KEY];
+  const rawT = route.query[TO_QUERY_KEY];
+  const f = Array.isArray(rawF) ? rawF[0] : rawF;
+  const rawTo = Array.isArray(rawT) ? rawT[0] : rawT;
+  if (!f || !rawTo) return null;
+  const from = String(f);
+  const toStr = String(rawTo);
+  const re = /^\d{4}-\d{2}-\d{2}$/;
+  if (!re.test(from) || !re.test(toStr) || from > toStr) return null;
+  return { from, to: toStr };
+}
+
 function queryForPage0(page0: number): LocationQueryRaw {
   const q: LocationQueryRaw = { ...route.query };
   if (page0 <= 0) {
@@ -289,6 +464,26 @@ function queryForPage0(page0: number): LocationQueryRaw {
     q[SEARCH_QUERY_KEY] = terms.join(",");
   } else {
     delete q[SEARCH_QUERY_KEY];
+  }
+  const tagIds = selectedGenreTagIds.value;
+  if (tagIds.length > 0) {
+    q[TAGS_QUERY_KEY] = [...tagIds].sort((a, b) => a - b).join(",");
+  } else {
+    delete q[TAGS_QUERY_KEY];
+  }
+  if (explicitYears.value !== null && explicitYears.value.length > 0) {
+    q[YEARS_QUERY_KEY] = [...explicitYears.value]
+      .sort((a, b) => a - b)
+      .join(",");
+  } else {
+    delete q[YEARS_QUERY_KEY];
+  }
+  if (filterDateFrom.value && filterDateTo.value) {
+    q[FROM_QUERY_KEY] = filterDateFrom.value;
+    q[TO_QUERY_KEY] = filterDateTo.value;
+  } else {
+    delete q[FROM_QUERY_KEY];
+    delete q[TO_QUERY_KEY];
   }
   return q;
 }
@@ -330,6 +525,7 @@ const { isDark, toggleDark } = useDarkMode();
 const loading = ref(true);
 const listLoading = ref(false);
 const loadError = ref(false);
+const loadErrorDetail = ref<string | null>(null);
 const productions = ref<ProductionWithBackwardsRefs[]>([]);
 const totalCount = ref(0);
 const currentPage = ref(0);
@@ -347,11 +543,32 @@ const searchDraft = ref("");
  */
 const displayedFilteredTotal = ref<number | null>(null);
 
-const emptyStateMessage = computed(() =>
-  appliedSearchTerms.value.length > 0
-    ? t("productionsPage.noSearchResults")
-    : t("productionsPage.empty"),
+const hasActiveListFilters = computed(() => {
+  if (appliedSearchTerms.value.length > 0) return true;
+  if (selectedGenreTagIds.value.length > 0) return true;
+  if (explicitYears.value !== null && explicitYears.value.length > 0) return true;
+  if (filterDateFrom.value && filterDateTo.value) return true;
+  return false;
+});
+
+const showFilteredResultsCountLine = computed(
+  () =>
+    searchBannerTerms.value.length > 0 ||
+    filterBannerTagIds.value.length > 0 ||
+    (filterBannerYears.value !== null && filterBannerYears.value.length > 0) ||
+    !!(filterBannerDateFrom.value && filterBannerDateTo.value),
 );
+
+const emptyStateMessage = computed(() => {
+  const hasSearch = appliedSearchTerms.value.length > 0;
+  const hasOther =
+    selectedGenreTagIds.value.length > 0 ||
+    (explicitYears.value !== null && explicitYears.value.length > 0) ||
+    !!(filterDateFrom.value && filterDateTo.value);
+  if (!hasSearch && !hasOther) return t("productionsPage.empty");
+  if (hasSearch && !hasOther) return t("productionsPage.noSearchResults");
+  return t("productionsPage.noFilterResults");
+});
 
 const filteredResultsCountLabel = computed(() => {
   const n = displayedFilteredTotal.value;
@@ -362,13 +579,26 @@ const filteredResultsCountLabel = computed(() => {
 });
 
 function productionsListArgs(page: number) {
-  return {
+  const args: Parameters<typeof getProductions>[0] = {
     limit: PAGE_SIZE,
     offset: page * PAGE_SIZE,
-    ...(appliedSearchTerms.value.length > 0
-      ? { search: appliedSearchTerms.value }
-      : {}),
   };
+  if (appliedSearchTerms.value.length > 0) {
+    args.search = appliedSearchTerms.value;
+  }
+  if (selectedGenreTagIds.value.length > 0) {
+    args.tagIds = [...selectedGenreTagIds.value].sort((a, b) => a - b);
+  }
+  if (explicitYears.value !== null && explicitYears.value.length > 0) {
+    args.years = [...explicitYears.value].sort((a, b) => a - b);
+  }
+  const df = filterDateFrom.value;
+  const dt = filterDateTo.value;
+  if (df && dt) {
+    args.dateFrom = df;
+    args.dateTo = dt;
+  }
+  return args;
 }
 
 async function fetchProductionsPageData(page0: number) {
@@ -376,12 +606,31 @@ async function fetchProductionsPageData(page0: number) {
   productions.value = items;
   totalCount.value = total;
   currentPage.value = page0;
-  if (appliedSearchTerms.value.length > 0) {
-    displayedFilteredTotal.value = total;
-  } else {
-    displayedFilteredTotal.value = null;
-  }
+  displayedFilteredTotal.value = hasActiveListFilters.value ? total : null;
   searchBannerTerms.value = [...appliedSearchTerms.value];
+  syncFilterBannerFromApplied();
+}
+
+function toggleGenreTag(id: number) {
+  const set = new Set(selectedGenreTagIds.value);
+  if (set.has(id)) set.delete(id);
+  else set.add(id);
+  selectedGenreTagIds.value = [...set].sort((a, b) => a - b);
+}
+
+function removeGenreTag(id: number) {
+  selectedGenreTagIds.value = selectedGenreTagIds.value.filter((x) => x !== id);
+}
+
+function removeYearFilter(y: number) {
+  if (explicitYears.value === null) return;
+  const next = explicitYears.value.filter((x) => x !== y);
+  explicitYears.value = next.length === 0 ? null : next;
+}
+
+function clearDateRange() {
+  filterDateFrom.value = null;
+  filterDateTo.value = null;
 }
 
 function scrollAfterPageChange() {
@@ -397,6 +646,48 @@ async function replaceRouteForPage0(page0: number) {
     query: queryForPage0(page0),
     hash: route.hash,
   });
+}
+
+function beginListAttempt() {
+  loadError.value = false;
+  loadErrorDetail.value = null;
+}
+
+function failListAttempt(err: unknown) {
+  loadError.value = true;
+  if (err instanceof ApiError && err.status === 400) {
+    loadErrorDetail.value =
+      err.message === PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE
+        ? t("productionsPage.invalidListDateRange")
+        : err.message;
+    return;
+  }
+  loadErrorDetail.value = null;
+}
+
+async function applyFilterChange() {
+  listLoading.value = true;
+  beginListAttempt();
+  // Like search chips: show the filter row after fetch when adding the *first*
+  // non-search filter; when clearing the last non-search filter while search stays on,
+  // keep the row until fetch. Only sync early when updating an already-visible row.
+  if (
+    hasActiveListFilters.value &&
+    filterBannerHasNonSearchChips() &&
+    hasAppliedNonSearchFilters()
+  ) {
+    syncFilterBannerFromApplied();
+  }
+  try {
+    await fetchProductionsPageData(0);
+    await replaceRouteForPage0(0);
+    scrollAfterPageChange();
+  } catch (err) {
+    failListAttempt(err);
+    syncFilterBannerFromApplied();
+  } finally {
+    listLoading.value = false;
+  }
 }
 
 async function submitSearch() {
@@ -422,13 +713,13 @@ async function submitSearch() {
   searchBannerTerms.value = [...appliedSearchTerms.value];
   searchDraft.value = "";
   listLoading.value = true;
-  loadError.value = false;
+  beginListAttempt();
   try {
     await fetchProductionsPageData(0);
     await replaceRouteForPage0(0);
     scrollAfterPageChange();
-  } catch {
-    loadError.value = true;
+  } catch (err) {
+    failListAttempt(err);
     searchBannerTerms.value = [...appliedSearchTerms.value];
   } finally {
     listLoading.value = false;
@@ -444,13 +735,13 @@ async function removeSearchTermAt(index: number) {
   }
   appliedSearchTerms.value = next;
   listLoading.value = true;
-  loadError.value = false;
+  beginListAttempt();
   try {
     await fetchProductionsPageData(0);
     await replaceRouteForPage0(0);
     scrollAfterPageChange();
-  } catch {
-    loadError.value = true;
+  } catch (err) {
+    failListAttempt(err);
     searchBannerTerms.value = [...appliedSearchTerms.value];
   } finally {
     listLoading.value = false;
@@ -461,13 +752,13 @@ async function clearSearchFilter() {
   appliedSearchTerms.value = [];
   searchDraft.value = "";
   listLoading.value = true;
-  loadError.value = false;
+  beginListAttempt();
   try {
     await fetchProductionsPageData(0);
     await replaceRouteForPage0(0);
     scrollAfterPageChange();
-  } catch {
-    loadError.value = true;
+  } catch (err) {
+    failListAttempt(err);
     searchBannerTerms.value = [...appliedSearchTerms.value];
   } finally {
     listLoading.value = false;
@@ -533,12 +824,87 @@ const hallsById = ref(new Map<number, Hall>());
 
 const locale = computed(() => i18n.global.locale.value as SupportedLang);
 
+const genreTagsForFilter = computed(() => {
+  const lang = locale.value;
+  const items: { id: number; label: string }[] = [];
+  for (const tag of tagsById.value.values()) {
+    const tt = tagTypesById.value.get(tag.tag_type as number);
+    if (!tagTypeIsGenre(tt)) continue;
+    const label = localizeOrEmpty(tag.name, lang);
+    if (!label) continue;
+    items.push({ id: tag.id, label });
+  }
+  items.sort((a, b) => a.label.localeCompare(b.label, lang));
+  return items;
+});
+
+const filterYearBounds = computed(() => {
+  const current = new Date().getFullYear();
+  let minY = Number.POSITIVE_INFINITY;
+  let any = false;
+  for (const evs of eventsByProduction.value.values()) {
+    for (const ev of evs) {
+      if (!ev.starts_at) continue;
+      any = true;
+      const sy = new Date(ev.starts_at).getFullYear();
+      minY = Math.min(minY, sy);
+    }
+  }
+  if (!any) {
+    return { minYear: current, maxYear: current };
+  }
+  return {
+    minYear: minY,
+    maxYear: current,
+  };
+});
+
+/** `YYYY-MM-DD` → `dd/mm/yyyy` for filter chips (fixed order for every locale). */
+function formatIsoDateAsDdMmYyyy(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return iso;
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
+const dateRangeSummary = computed(() => {
+  const from = filterBannerDateFrom.value;
+  const to = filterBannerDateTo.value;
+  if (!from || !to) return "";
+  return t("productionsPage.dateRangeChip", {
+    from: formatIsoDateAsDdMmYyyy(from),
+    to: formatIsoDateAsDdMmYyyy(to),
+  });
+});
+
+function tagLabel(id: number): string {
+  const tag = tagsById.value.get(id);
+  if (!tag) return String(id);
+  return localizeOrEmpty(tag.name, locale.value) || String(id);
+}
+
+watch(
+  [selectedGenreTagIds, explicitYears, filterDateFrom, filterDateTo],
+  async () => {
+    if (loading.value) return;
+    await applyFilterChange();
+  },
+  { deep: true },
+);
+
 onMounted(async () => {
   loading.value = true;
-  loadError.value = false;
+  beginListAttempt();
   const initialSearch = readSearchFromRoute();
   if (initialSearch.length > 0) {
     appliedSearchTerms.value = initialSearch;
+  }
+  const initialTags = readTagsFromRoute();
+  if (initialTags.length > 0) selectedGenreTagIds.value = initialTags;
+  explicitYears.value = readYearsFromRoute();
+  const initialRange = readDateRangeFromRoute();
+  if (initialRange) {
+    filterDateFrom.value = initialRange.from;
+    filterDateTo.value = initialRange.to;
   }
   const requestedOneBased = readPageOneBasedFromRoute();
   let page0 = Math.max(0, requestedOneBased - 1);
@@ -572,12 +938,11 @@ onMounted(async () => {
     }
 
     currentPage.value = page0;
-    if (appliedSearchTerms.value.length > 0) {
-      displayedFilteredTotal.value = totalCount.value;
-    } else {
-      displayedFilteredTotal.value = null;
-    }
+    displayedFilteredTotal.value = hasActiveListFilters.value
+      ? totalCount.value
+      : null;
     searchBannerTerms.value = [...appliedSearchTerms.value];
+    syncFilterBannerFromApplied();
     tagsById.value = tagMapById(tags);
     tagTypesById.value = new Map(tagTypes.map((tt) => [tt.id, tt]));
     hallsById.value = hallMapById(halls);
@@ -586,8 +951,8 @@ onMounted(async () => {
     if (urlNeedsSyncForPage0(page0)) {
       await replaceRouteForPage0(page0);
     }
-  } catch {
-    loadError.value = true;
+  } catch (err) {
+    failListAttempt(err);
   } finally {
     loading.value = false;
   }
@@ -611,12 +976,12 @@ watch(
     if (page0 === currentPage.value) return;
 
     listLoading.value = true;
-    loadError.value = false;
+    beginListAttempt();
     try {
       await fetchProductionsPageData(page0);
       scrollAfterPageChange();
-    } catch {
-      loadError.value = true;
+    } catch (err) {
+      failListAttempt(err);
     } finally {
       listLoading.value = false;
     }
@@ -626,13 +991,13 @@ watch(
 async function goToPage(page: number) {
   if (page < 0 || page >= totalPages.value) return;
   listLoading.value = true;
-  loadError.value = false;
+  beginListAttempt();
   try {
     await fetchProductionsPageData(page);
     await replaceRouteForPage0(page);
     scrollAfterPageChange();
-  } catch {
-    loadError.value = true;
+  } catch (err) {
+    failListAttempt(err);
   } finally {
     listLoading.value = false;
   }

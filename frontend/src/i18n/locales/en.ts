@@ -46,6 +46,8 @@ export default {
       "Every show in the archive at a glance.",
     loading: "Loading productions…",
     error: "Could not load productions. Please try again later.",
+    invalidListDateRange:
+      "The start date must be on or before the end date. Adjust the range or fix the link and try again.",
     empty: "No productions in the archive yet.",
     morePerformances: "{n} more",
     showingRange: "{from}–{to} of {total}",
@@ -63,6 +65,23 @@ export default {
     noSearchResults: "No productions match your search.",
     filterResultsSingle: "1 result",
     filterResultsPlural: "{count} results",
+    noFilterResults: "No productions match these filters.",
+    genreFiltersHeading: "Genre",
+    selectDates: "Select dates",
+    filterByYear: "Filter by year",
+    allYearsSelected: "All years selected",
+    selectAllYears: "Select all years",
+    filterByDateRange: "Filter by day / period",
+    dateFrom: "From",
+    dateTo: "To",
+    dateRangeHint:
+      "Pick a start date then an end date (or set both fields).",
+    clearDateRange: "Clear dates",
+    removeGenreFilter: "Remove genre filter",
+    removeYearFilterChip: "Remove year filter",
+    removeDateRangeFilter: "Remove date range filter",
+    activeFiltersLabel: "Active filters:",
+    dateRangeChip: "{from} – {to}",
   },
   admin: {
     login: {
