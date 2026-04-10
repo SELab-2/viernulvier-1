@@ -92,8 +92,8 @@ export type ProductionListPage = {
  * Fetches productions (public — no session required).
  *
  * - With `{ limit, offset }`: returns one page plus the full `total` count.
- * - With `search` (string or array of strings), results must match every term
- *   (title, artist, tagline, teaser, description, hall names).
+ * - With `search` (string or string[]; sent as comma-separated query value), AND terms on text fields.
+ * - With `tagIds`, `years`, `dateFrom` / `dateTo`, the API applies the same filters as the public list.
  * - With no options: returns every production as `items` and `total === items.length`.
  *
  * @returns Array of productions, each with `tags` and `events` as arrays of linked IDs.
@@ -105,6 +105,10 @@ export async function getProductions(options?: {
   limit?: number;
   offset?: number;
   search?: string | string[];
+  tagIds?: number[];
+  years?: number[];
+  dateFrom?: string;
+  dateTo?: string;
 }): Promise<ProductionListPage> {
   const params = new URLSearchParams();
   if (options?.limit !== undefined) {
@@ -119,6 +123,22 @@ export async function getProductions(options?: {
     if (terms.length > 0) {
       params.set("search", terms.join(","));
     }
+  }
+  if (options?.tagIds !== undefined && options.tagIds.length > 0) {
+    params.set(
+      "tags",
+      [...options.tagIds].sort((a, b) => a - b).join(","),
+    );
+  }
+  if (options?.years !== undefined && options.years.length > 0) {
+    params.set(
+      "years",
+      [...options.years].sort((a, b) => a - b).join(","),
+    );
+  }
+  if (options?.dateFrom !== undefined && options?.dateTo !== undefined) {
+    params.set("from", options.dateFrom);
+    params.set("to", options.dateTo);
   }
   const qs = params.toString();
   return await apiFetch<ProductionListPage>(

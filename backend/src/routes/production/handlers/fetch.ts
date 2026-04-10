@@ -2,9 +2,19 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { QueryResult } from "pg";
 import type {ProductionWithBackwardsRefs, ProductionWithMeta} from "@viernulvier/shared/index.js";
 import {ProductionSchema, ProductionSchemaWithBackwardsRefs, stringToInt} from "@viernulvier/shared/index.js";
-import { parseParams, parseSchema, ParseContext } from "@/routes/helpers.js";
+import {
+  HttpClientError,
+  HttpError,
+  parseParams,
+  parseSchema,
+  ParseContext,
+} from "@/routes/helpers.js";
+import {
+  buildProductionListWhere,
+  parsePositiveIdList,
+  parseYearList,
+} from "../helpers/list-where.js";
 import { ProductionListQuerySchema } from "../helpers/pagination.js";
-import { productionListSearchClause } from "../helpers/search.js";
 import z from "zod";
 
 const ProductionSelect = `
@@ -141,28 +151,42 @@ export type PaginatedProductions = {
  *
  * - Without `limit`: returns every production (same ordering as before), as `{ items, total }`.
  * - With `limit`: returns a page `{ items, total }` where `total` is the matching row count.
- * - Optional `search`: comma-separated terms (`search=a,b`), AND semantics; each term is a
- *   case-insensitive substring on title, artist, tagline, teaser, description, and hall names.
- *   Repeating the `search` key is still accepted for older clients.
+ * - Optional `search`: comma-separated terms (`search=a,b`), AND semantics (same encoding style
+ *   as `tags`). Repeating the `search` key is still accepted for older clients.
+ * - Optional `tags`: comma-separated tag IDs — production must include **every** tag.
+ * - Optional `years`: comma-separated years — production must have an event in one of those years.
+ * - Optional `from` / `to` (`YYYY-MM-DD`) — production must have an event in that range (venue TZ).
  *
  * @param server - The Fastify instance, used for database access and logging.
- * @param request - The Fastify request; optional `limit`, `offset`, and `search` query params.
+ * @param request - The Fastify request; optional list query params as documented above.
  * @returns The list of productions as `{ items, total }`; throws if parsing failed.
  */
 export async function fetchProductions(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<PaginatedProductions> {
-  const query = parseSchema(
-    server,
-    ProductionListQuerySchema,
-    request.query,
-    ParseContext.Request,
-  );
+  const parsedQuery = ProductionListQuerySchema.safeParse(request.query);
+  if (!parsedQuery.success) {
+    server.log.error(parsedQuery.error);
+    const msg =
+      parsedQuery.error.issues[0]?.message ?? "Invalid request data";
+    throw new HttpError(HttpClientError.BadRequest, msg);
+  }
+  const query = parsedQuery.data;
   const limit = query.limit;
   const offset = query.offset ?? 0;
   const searchTerms = query.search ?? [];
-  const { sql: whereSql, params: searchParams } = productionListSearchClause(searchTerms);
+  const tagIds = parsePositiveIdList(query.tags);
+  const yearIds = parseYearList(query.years);
+  const dateFrom = query.from;
+  const dateTo = query.to;
+  const { whereSql, params: filterParams } = buildProductionListWhere(
+    searchTerms,
+    tagIds,
+    yearIds,
+    dateFrom,
+    dateTo,
+  );
 
   let result: QueryResult<ProductionWithBackwardsRefs>;
   let total: number;
@@ -170,19 +194,19 @@ export async function fetchProductions(
   if (limit === undefined) {
     result = await server.pg.query<ProductionWithBackwardsRefs>(
       `${ProductionSelect}${whereSql} ORDER BY p.id ASC`,
-      searchParams,
+      filterParams,
     );
     total = result.rows.length;
   } else {
     const countResult = await server.pg.query<{ count: number }>(
       `SELECT COUNT(*)::int AS count FROM production p${whereSql}`,
-      searchParams,
+      filterParams,
     );
     total = countResult.rows[0]?.count ?? 0;
 
-    const listParams = [...searchParams, limit, offset];
-    const limitIdx = searchParams.length + 1;
-    const offsetIdx = searchParams.length + 2;
+    const listParams = [...filterParams, limit, offset];
+    const limitIdx = filterParams.length + 1;
+    const offsetIdx = filterParams.length + 2;
     result = await server.pg.query<ProductionWithBackwardsRefs>(
       `${ProductionSelect}${whereSql} ORDER BY p.id ASC LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
       listParams,
