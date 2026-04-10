@@ -59,24 +59,34 @@
           </div>
           <div
             v-if="searchBannerTerms.length > 0"
-            class="flex flex-wrap items-center gap-2"
+            class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-2"
           >
-            <span class="text-sm text-ink-secondary">{{
-              t("productionsPage.activeSearchLabel")
-            }}</span>
+            <div class="flex min-w-0 flex-wrap items-center gap-2">
+              <span class="text-sm text-ink-secondary">{{
+                t("productionsPage.activeSearchLabel")
+              }}</span>
+              <button
+                v-for="(term, idx) in searchBannerTerms"
+                :key="`${idx}-${term}`"
+                type="button"
+                class="inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-full border border-accent-outline bg-surface-1 py-1 pl-3 pr-2 text-sm text-ink-primary transition hover:bg-surface-2 disabled:opacity-100"
+                :disabled="listLoading"
+                :aria-label="
+                  t('productionsPage.removeSearchTerm', { term })
+                "
+                @click="removeSearchTermAt(idx)"
+              >
+                <span class="min-w-0 truncate">{{ term }}</span>
+                <span class="text-lg leading-none text-ink-secondary" aria-hidden="true">×</span>
+              </button>
+            </div>
             <button
-              v-for="(term, idx) in searchBannerTerms"
-              :key="`${idx}-${term}`"
               type="button"
-              class="inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-full border border-accent-outline bg-surface-1 py-1 pl-3 pr-2 text-sm text-ink-primary transition hover:bg-surface-2 disabled:opacity-100"
-              :disabled="listLoading"
-              :aria-label="
-                t('productionsPage.removeSearchTerm', { term })
-              "
-              @click="removeSearchTermAt(idx)"
+              class="col-start-2 row-start-1 justify-self-end self-start pt-0.5 shrink-0 cursor-pointer text-sm font-medium text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100"
+              :disabled="listLoading || loadError"
+              @click="void clearSearchFilter()"
             >
-              <span class="min-w-0 truncate">{{ term }}</span>
-              <span class="text-lg leading-none text-ink-secondary" aria-hidden="true">×</span>
+              {{ t("productionsPage.clearAllSearches") }}
             </button>
           </div>
 
@@ -127,44 +137,54 @@
               filterBannerYearRange !== null ||
               (filterBannerDateFrom && filterBannerDateTo)
             "
-            class="mb-4 flex flex-wrap items-center gap-2 border-t border-surface-3 pt-4"
+            class="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-2 border-t border-surface-3 pt-4"
           >
-            <span class="text-sm text-ink-secondary">{{
-              t("productionsPage.activeFiltersLabel")
-            }}</span>
+            <div class="flex min-w-0 flex-wrap items-center gap-2">
+              <span class="text-sm text-ink-secondary">{{
+                t("productionsPage.activeFiltersLabel")
+              }}</span>
+              <button
+                v-for="tid in filterBannerTagIds"
+                :key="'tag-' + tid"
+                type="button"
+                class="inline-flex max-w-full cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary hover:bg-surface-2 disabled:opacity-100"
+                :disabled="listLoading"
+                :aria-label="t('productionsPage.removeGenreFilter')"
+                @click="removeGenreTag(tid)"
+              >
+                <span class="min-w-0 truncate">{{ tagLabel(tid) }}</span>
+                <span class="text-lg leading-none text-ink-secondary" aria-hidden="true">×</span>
+              </button>
+              <button
+                v-if="filterBannerYearRange"
+                type="button"
+                class="inline-flex cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm tabular-nums text-ink-primary hover:bg-surface-2 disabled:opacity-100"
+                :disabled="listLoading"
+                :aria-label="t('productionsPage.removeYearRangeFilter')"
+                @click="clearYearRangeFilter"
+              >
+                {{ yearRangeChipSummary }}
+                <span class="text-lg leading-none text-ink-secondary" aria-hidden="true">×</span>
+              </button>
+              <button
+                v-if="filterBannerDateFrom && filterBannerDateTo"
+                type="button"
+                class="inline-flex max-w-full cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary hover:bg-surface-2 disabled:opacity-100"
+                :disabled="listLoading"
+                :aria-label="t('productionsPage.removeDateRangeFilter')"
+                @click="clearDateRange"
+              >
+                <span class="min-w-0 truncate">{{ dateRangeSummary }}</span>
+                <span class="text-lg leading-none text-ink-secondary" aria-hidden="true">×</span>
+              </button>
+            </div>
             <button
-              v-for="tid in filterBannerTagIds"
-              :key="'tag-' + tid"
               type="button"
-              class="inline-flex max-w-full cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary hover:bg-surface-2 disabled:opacity-100"
-              :disabled="listLoading"
-              :aria-label="t('productionsPage.removeGenreFilter')"
-              @click="removeGenreTag(tid)"
+              class="col-start-2 row-start-1 justify-self-end self-start pt-0.5 shrink-0 cursor-pointer text-sm font-medium text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100"
+              :disabled="listLoading || loadError"
+              @click="void clearAllNonSearchFilters()"
             >
-              <span class="min-w-0 truncate">{{ tagLabel(tid) }}</span>
-              <span class="text-lg leading-none text-ink-secondary" aria-hidden="true">×</span>
-            </button>
-            <button
-              v-if="filterBannerYearRange"
-              type="button"
-              class="inline-flex cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm tabular-nums text-ink-primary hover:bg-surface-2 disabled:opacity-100"
-              :disabled="listLoading"
-              :aria-label="t('productionsPage.removeYearRangeFilter')"
-              @click="clearYearRangeFilter"
-            >
-              {{ yearRangeChipSummary }}
-              <span class="text-lg leading-none text-ink-secondary" aria-hidden="true">×</span>
-            </button>
-            <button
-              v-if="filterBannerDateFrom && filterBannerDateTo"
-              type="button"
-              class="inline-flex max-w-full cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary hover:bg-surface-2 disabled:opacity-100"
-              :disabled="listLoading"
-              :aria-label="t('productionsPage.removeDateRangeFilter')"
-              @click="clearDateRange"
-            >
-              <span class="min-w-0 truncate">{{ dateRangeSummary }}</span>
-              <span class="text-lg leading-none text-ink-secondary" aria-hidden="true">×</span>
+              {{ t("productionsPage.clearAllFilters") }}
             </button>
           </div>
         </div>
@@ -917,14 +937,38 @@ function tagLabel(id: number): string {
   return localizeOrEmpty(tag.name, locale.value) || String(id);
 }
 
+/** Skip automatic refetch when clearing every non-search filter in one go (single `applyFilterChange` instead). */
+let suppressNonSearchFilterWatch = false;
+
 watch(
   [selectedGenreTagIds, explicitYearRange, filterDateFrom, filterDateTo],
   async () => {
-    if (loading.value) return;
+    if (loading.value || suppressNonSearchFilterWatch) return;
     await applyFilterChange();
   },
   { deep: true },
 );
+
+async function clearAllNonSearchFilters(): Promise<void> {
+  if (
+    !hasAppliedNonSearchFilters() ||
+    listLoading.value ||
+    loadError.value
+  ) {
+    return;
+  }
+  suppressNonSearchFilterWatch = true;
+  try {
+    selectedGenreTagIds.value = [];
+    explicitYearRange.value = null;
+    filterDateFrom.value = null;
+    filterDateTo.value = null;
+    await nextTick();
+  } finally {
+    suppressNonSearchFilterWatch = false;
+  }
+  await applyFilterChange();
+}
 
 onMounted(async () => {
   loading.value = true;
