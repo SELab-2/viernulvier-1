@@ -267,7 +267,8 @@ function readSearchFromRoute(): string[] {
   const raw = route.query[SEARCH_QUERY_KEY];
   if (raw === undefined || raw === null || raw === "") return [];
   const parts = (Array.isArray(raw) ? raw : [raw])
-    .map((s) => String(s).trim())
+    .flatMap((s) => String(s).split(","))
+    .map((s) => s.trim())
     .filter((s) => s.length > 0);
   return dedupePreserveSearchCap(parts);
 }
@@ -285,8 +286,7 @@ function queryForPage0(page0: number): LocationQueryRaw {
   }
   const terms = appliedSearchTerms.value;
   if (terms.length > 0) {
-    q[SEARCH_QUERY_KEY] =
-      terms.length === 1 ? terms[0]! : [...terms];
+    q[SEARCH_QUERY_KEY] = terms.join(",");
   } else {
     delete q[SEARCH_QUERY_KEY];
   }

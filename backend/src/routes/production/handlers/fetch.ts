@@ -141,9 +141,9 @@ export type PaginatedProductions = {
  *
  * - Without `limit`: returns every production (same ordering as before), as `{ items, total }`.
  * - With `limit`: returns a page `{ items, total }` where `total` is the matching row count.
- * - Optional `search`: repeat the parameter for multiple terms, production must match
- *   every term (case-insensitive substring on title, artist, tagline, teaser,
- *   description, and related hall names). A single `search` behaves as before.
+ * - Optional `search`: comma-separated terms (`search=a,b`), AND semantics; each term is a
+ *   case-insensitive substring on title, artist, tagline, teaser, description, and hall names.
+ *   Repeating the `search` key is still accepted for older clients.
  *
  * @param server - The Fastify instance, used for database access and logging.
  * @param request - The Fastify request; optional `limit`, `offset`, and `search` query params.

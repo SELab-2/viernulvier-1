@@ -90,7 +90,7 @@ describe("getProductions", () => {
       search: ["  foo ", "bar"],
     });
     expect(lastCall()[0]).toBe(
-      "/api/v1/production?limit=10&offset=0&search=foo&search=bar",
+      "/api/v1/production?limit=10&offset=0&search=foo%2Cbar",
     );
   });
 });

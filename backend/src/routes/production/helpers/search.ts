@@ -9,6 +9,7 @@ export const SearchParamSchema = z
     const raw = Array.isArray(val) ? val : [val];
     const trimmed = raw
       .filter((x): x is string => typeof x === "string")
+      .flatMap((s) => s.split(","))
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
     return trimmed.length === 0 ? undefined : trimmed;

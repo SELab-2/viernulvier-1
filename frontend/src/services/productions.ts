@@ -113,10 +113,11 @@ export async function getProductions(options?: {
   }
   if (options?.search !== undefined) {
     const raw = options.search;
-    const terms = Array.isArray(raw) ? raw : [raw];
-    for (const t of terms) {
-      const q = t.trim();
-      if (q) params.append("search", q);
+    const terms = (Array.isArray(raw) ? raw : [raw])
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+    if (terms.length > 0) {
+      params.set("search", terms.join(","));
     }
   }
   const qs = params.toString();
