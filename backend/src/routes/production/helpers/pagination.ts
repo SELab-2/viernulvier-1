@@ -12,7 +12,7 @@ export const PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE =
   "`yearMin` must be on or before `yearMax`";
 
 /**
- * Parsed query for `GET /production`: pagination, optional `search`, `tags`, `years` or `yearMin`/`yearMax`, `from`/`to`.
+ * Parsed query for `GET /production`: pagination, optional `search`, `tags`, `yearMin`/`yearMax`, `from`/`to`.
  */
 export const ProductionListQuerySchema = z
   .object({
@@ -20,7 +20,6 @@ export const ProductionListQuerySchema = z
     offset: z.coerce.number().int().min(0).optional(),
     search: SearchParamSchema,
     tags: z.string().max(400).optional(),
-    years: z.string().max(400).optional(),
     yearMin: z.coerce.number().int().min(1900).max(2100).optional(),
     yearMax: z.coerce.number().int().min(1900).max(2100).optional(),
     from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),

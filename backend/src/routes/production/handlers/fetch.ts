@@ -12,7 +12,6 @@ import {
 import {
   buildProductionListWhere,
   parsePositiveIdList,
-  parseYearList,
 } from "../helpers/list-where.js";
 import { ProductionListQuerySchema } from "../helpers/pagination.js";
 import z from "zod";
@@ -154,9 +153,7 @@ export type PaginatedProductions = {
  * - Optional `search`: comma-separated terms (`search=a,b`), AND semantics (same encoding style
  *   as `tags`). Repeating the `search` key is still accepted for older clients.
  * - Optional `tags`: comma-separated tag IDs — production must include **every** tag.
- * - Optional `years`: comma-separated years — production must have an event in one of those years (OR).
- * - Optional `yearMin` / `yearMax` (inclusive) — event year must fall in that span. When both are set,
- *   `years` is ignored.
+ * - Optional `yearMin` / `yearMax` (inclusive) — event year must fall in that span.
  * - Optional `from` / `to` (`YYYY-MM-DD`) — production must have an event in that range (venue TZ).
  *
  * @param server - The Fastify instance, used for database access and logging.
@@ -179,7 +176,6 @@ export async function fetchProductions(
   const offset = query.offset ?? 0;
   const searchTerms = query.search ?? [];
   const tagIds = parsePositiveIdList(query.tags);
-  const yearIds = parseYearList(query.years);
   const yearRange =
     query.yearMin !== undefined && query.yearMax !== undefined
       ? { from: query.yearMin, to: query.yearMax }
@@ -189,7 +185,6 @@ export async function fetchProductions(
   const { whereSql, params: filterParams } = buildProductionListWhere(
     searchTerms,
     tagIds,
-    yearRange !== undefined ? [] : yearIds,
     yearRange,
     dateFrom,
     dateTo,

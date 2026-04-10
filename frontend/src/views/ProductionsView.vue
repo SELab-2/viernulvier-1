@@ -338,7 +338,6 @@ const PAGE_QUERY_KEY = "page";
 /** Same name as the list API query param; survives refresh and shareable URLs. */
 const SEARCH_QUERY_KEY = "search";
 const TAGS_QUERY_KEY = "tags";
-const YEARS_QUERY_KEY = "years";
 const YEAR_MIN_QUERY_KEY = "yearMin";
 const YEAR_MAX_QUERY_KEY = "yearMax";
 const FROM_QUERY_KEY = "from";
@@ -440,20 +439,7 @@ function readTagsFromRoute(): number[] {
   return [...new Set(out)].sort((a, b) => a - b);
 }
 
-function readLegacyYearsListFromRoute(): number[] | null {
-  const raw = route.query[YEARS_QUERY_KEY];
-  const s = Array.isArray(raw) ? raw[0] : raw;
-  if (s === undefined || s === null || s === "") return null;
-  const out: number[] = [];
-  for (const part of String(s).split(",")) {
-    const n = Number.parseInt(part.trim(), 10);
-    if (Number.isFinite(n) && n >= 1900 && n <= 2100) out.push(n);
-  }
-  const u = [...new Set(out)].sort((a, b) => a - b);
-  return u.length > 0 ? u : null;
-}
-
-/** Prefer `yearMin`/`yearMax`; legacy `years=` is folded to an inclusive span (min–max). */
+/** Reads inclusive calendar-year span from `yearMin` / `yearMax`. */
 function readYearRangeFromRoute(): { from: number; to: number } | null {
   const rawMin = route.query[YEAR_MIN_QUERY_KEY];
   const rawMax = route.query[YEAR_MAX_QUERY_KEY];
@@ -476,10 +462,6 @@ function readYearRangeFromRoute(): { from: number; to: number } | null {
     ) {
       return { from, to };
     }
-  }
-  const legacy = readLegacyYearsListFromRoute();
-  if (legacy !== null && legacy.length > 0) {
-    return { from: legacy[0], to: legacy[legacy.length - 1] };
   }
   return null;
 }
@@ -523,7 +505,6 @@ function queryForPage0(page0: number): LocationQueryRaw {
     delete q[YEAR_MIN_QUERY_KEY];
     delete q[YEAR_MAX_QUERY_KEY];
   }
-  delete q[YEARS_QUERY_KEY];
   if (filterDateFrom.value && filterDateTo.value) {
     q[FROM_QUERY_KEY] = filterDateFrom.value;
     q[TO_QUERY_KEY] = filterDateTo.value;

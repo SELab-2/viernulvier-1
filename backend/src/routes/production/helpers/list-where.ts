@@ -1,5 +1,4 @@
 const MAX_TAG_FILTER_IDS = 30;
-const MAX_YEAR_FILTER_VALUES = 80;
 const TAG_ID_MAX = 2_147_483_647;
 
 /** Event timestamps are interpreted in this zone for year/day filters (venue locale). */
@@ -22,18 +21,6 @@ export function parsePositiveIdList(raw: string | undefined): number[] {
   return [...new Set(out)].slice(0, MAX_TAG_FILTER_IDS);
 }
 
-export function parseYearList(raw: string | undefined): number[] {
-  if (raw === undefined || raw.trim() === "") return [];
-  const out: number[] = [];
-  for (const part of raw.split(",")) {
-    const n = Number.parseInt(part.trim(), 10);
-    if (Number.isFinite(n) && n >= 1900 && n <= 2100 && Number.isInteger(n)) {
-      out.push(n);
-    }
-  }
-  return [...new Set(out)].slice(0, MAX_YEAR_FILTER_VALUES);
-}
-
 /** Escape `%`, `_`, and `\` for use in `ILIKE ... ESCAPE '\\'`. */
 function escapeIlikePattern(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
@@ -41,12 +28,11 @@ function escapeIlikePattern(value: string): string {
 
 /**
  * Combined WHERE for public list: text search (AND across terms), tag IDs (AND),
- * event years (OR within list), and/or event date range on `starts_at`.
+ * optional inclusive calendar-year span on events, and/or event date range on `starts_at`.
  */
 export function buildProductionListWhere(
   searchTerms: string[],
   tagIds: number[],
-  years: number[],
   yearRange: { from: number; to: number } | undefined,
   dateFrom: string | undefined,
   dateTo: string | undefined,
@@ -87,12 +73,6 @@ export function buildProductionListWhere(
         + ` AND (EXTRACT(YEAR FROM (e.starts_at AT TIME ZONE '${EVENT_TZ}')))::int BETWEEN $${i1}::int AND $${i2}::int)`,
     );
     params.push(yearRange.from, yearRange.to);
-  } else if (years.length > 0) {
-    const idx = params.length + 1;
-    parts.push(
-      `EXISTS (SELECT 1 FROM event e WHERE e.production = p.id AND e.starts_at IS NOT NULL AND (EXTRACT(YEAR FROM (e.starts_at AT TIME ZONE '${EVENT_TZ}')))::int = ANY($${idx}::int[]))`,
-    );
-    params.push(years);
   }
 
   if (dateFrom !== undefined && dateTo !== undefined) {

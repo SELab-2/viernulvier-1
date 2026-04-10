@@ -93,7 +93,7 @@ export type ProductionListPage = {
  *
  * - With `{ limit, offset }`: returns one page plus the full `total` count.
  * - With `search` (string or string[]; sent as comma-separated query value), AND terms on text fields.
- * - With `tagIds`, `years` or `yearMin`/`yearMax`, `dateFrom` / `dateTo`, the API applies the same filters as the public list.
+ * - With `tagIds`, `yearMin`/`yearMax`, `dateFrom` / `dateTo`, the API applies the same filters as the public list.
  * - With no options: returns every production as `items` and `total === items.length`.
  *
  * @returns Array of productions, each with `tags` and `events` as arrays of linked IDs.
@@ -106,8 +106,6 @@ export async function getProductions(options?: {
   offset?: number;
   search?: string | string[];
   tagIds?: number[];
-  /** Comma years in URL; ignored by the API when `yearMin` and `yearMax` are both set. */
-  years?: number[];
   yearMin?: number;
   yearMax?: number;
   dateFrom?: string;
@@ -139,11 +137,6 @@ export async function getProductions(options?: {
   ) {
     params.set("yearMin", String(options.yearMin));
     params.set("yearMax", String(options.yearMax));
-  } else if (options?.years !== undefined && options.years.length > 0) {
-    params.set(
-      "years",
-      [...options.years].sort((a, b) => a - b).join(","),
-    );
   }
   if (options?.dateFrom !== undefined && options?.dateTo !== undefined) {
     params.set("from", options.dateFrom);
