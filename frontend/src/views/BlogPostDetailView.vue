@@ -92,7 +92,7 @@ const bodyText = computed<string>(() => {
 const formattedPublishedAt = computed<string>(() => {
   const publishedAt = post.value?.published_at;
   if (!publishedAt) return "";
-  return publishedAt.toLocaleDateString(currentLang.value, {
+  return new Date(publishedAt).toLocaleDateString(currentLang.value, {
     year: "numeric",
     month: "long",
     day: "numeric",
