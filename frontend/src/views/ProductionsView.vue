@@ -35,12 +35,22 @@
               autocomplete="off"
               :disabled="listLoading || loadError"
               :placeholder="t('productionsPage.searchPlaceholder')"
-              class="min-w-0 grow rounded-md border border-surface-3 bg-surface-0 px-3 py-2 text-base text-ink-primary placeholder:text-ink-secondary focus:border-accent-outline focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-surface-1"
+              class="min-w-0 grow rounded-md border border-surface-3 bg-surface-0 px-3 py-2 text-base text-ink-primary placeholder:text-ink-secondary focus:border-accent-outline focus:outline-none dark:bg-surface-1"
+              :class="
+                searchAwaitingList
+                  ? 'disabled:cursor-not-allowed disabled:opacity-50'
+                  : 'disabled:opacity-100'
+              "
               @keydown.enter.prevent="submitSearch"
             />
             <button
               type="button"
-              class="shrink-0 cursor-pointer rounded-md border border-accent-outline bg-surface-0 px-4 py-2 text-base font-medium text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
+              class="shrink-0 cursor-pointer rounded-md border border-accent-outline bg-surface-0 px-4 py-2 text-base font-medium text-ink-primary transition hover:bg-surface-2"
+              :class="
+                searchAwaitingList
+                  ? 'disabled:cursor-not-allowed disabled:opacity-40'
+                  : 'disabled:opacity-100'
+              "
               :disabled="listLoading || loadError"
               @click="submitSearch"
             >
@@ -58,7 +68,7 @@
               v-for="(term, idx) in searchBannerTerms"
               :key="`${idx}-${term}`"
               type="button"
-              class="inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-full border border-accent-outline bg-surface-1 py-1 pl-3 pr-2 text-sm text-ink-primary transition hover:bg-surface-2"
+              class="inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-full border border-accent-outline bg-surface-1 py-1 pl-3 pr-2 text-sm text-ink-primary transition hover:bg-surface-2 disabled:opacity-100"
               :disabled="listLoading"
               :aria-label="
                 t('productionsPage.removeSearchTerm', { term })
@@ -84,7 +94,7 @@
                 v-for="g in genreTagsForFilter"
                 :key="g.id"
                 type="button"
-                class="rounded-full border px-3 py-1 text-sm transition disabled:cursor-not-allowed disabled:opacity-40"
+                class="rounded-full border px-3 py-1 text-sm transition disabled:opacity-100"
                 :class="
                   selectedGenreTagIds.includes(g.id)
                     ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
@@ -126,7 +136,7 @@
               v-for="tid in filterBannerTagIds"
               :key="'tag-' + tid"
               type="button"
-              class="inline-flex max-w-full cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary hover:bg-surface-2 disabled:opacity-40"
+              class="inline-flex max-w-full cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary hover:bg-surface-2 disabled:opacity-100"
               :disabled="listLoading"
               :aria-label="t('productionsPage.removeGenreFilter')"
               @click="removeGenreTag(tid)"
@@ -138,7 +148,7 @@
               v-for="yy in filterBannerYears ?? []"
               :key="'y-' + yy"
               type="button"
-              class="inline-flex cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm tabular-nums text-ink-primary hover:bg-surface-2"
+              class="inline-flex cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm tabular-nums text-ink-primary hover:bg-surface-2 disabled:opacity-100"
               :disabled="listLoading"
               :aria-label="t('productionsPage.removeYearFilterChip')"
               @click="removeYearFilter(yy)"
@@ -149,7 +159,7 @@
             <button
               v-if="filterBannerDateFrom && filterBannerDateTo"
               type="button"
-              class="inline-flex max-w-full cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary hover:bg-surface-2"
+              class="inline-flex max-w-full cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary hover:bg-surface-2 disabled:opacity-100"
               :disabled="listLoading"
               :aria-label="t('productionsPage.removeDateRangeFilter')"
               @click="clearDateRange"
@@ -534,6 +544,7 @@ const appliedSearchTerms = ref<string[]>([]);
  * Terms shown in the "Search:" chip row (and whether the result count line appears).
  * When clearing all terms, this stays populated until the unfiltered list has loaded,
  * so layout does not jump while stale filtered cards are still on screen.
+ * When adding the first term, same as non-search filters: row appears only after fetch.
  */
 const searchBannerTerms = ref<string[]>([]);
 const searchDraft = ref("");
@@ -542,6 +553,11 @@ const searchDraft = ref("");
  * for that search (avoids flashing the unfiltered total while loading).
  */
 const displayedFilteredTotal = ref<number | null>(null);
+/**
+ * True only while a list fetch was triggered by submitting a new search term.
+ * Dims the search field + button; removing pills, clearing all search, and filter fetches do not.
+ */
+const searchAwaitingList = ref(false);
 
 const hasActiveListFilters = computed(() => {
   if (appliedSearchTerms.value.length > 0) return true;
@@ -706,23 +722,28 @@ async function submitSearch() {
     return;
   }
   displayedFilteredTotal.value = null;
+  const hadVisibleSearchPillRow = searchBannerTerms.value.length > 0;
   appliedSearchTerms.value = dedupePreserveSearchCap([
     ...appliedSearchTerms.value,
     q,
   ]);
-  searchBannerTerms.value = [...appliedSearchTerms.value];
-  searchDraft.value = "";
+  if (hadVisibleSearchPillRow) {
+    searchBannerTerms.value = [...appliedSearchTerms.value];
+  }
   listLoading.value = true;
+  searchAwaitingList.value = true;
   beginListAttempt();
   try {
     await fetchProductionsPageData(0);
     await replaceRouteForPage0(0);
     scrollAfterPageChange();
+    searchDraft.value = "";
   } catch (err) {
     failListAttempt(err);
     searchBannerTerms.value = [...appliedSearchTerms.value];
   } finally {
     listLoading.value = false;
+    searchAwaitingList.value = false;
   }
 }
 

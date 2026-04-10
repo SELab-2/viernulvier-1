@@ -2,7 +2,7 @@
   <div ref="dateFilterRoot" class="relative inline-block">
     <button
       type="button"
-      class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-surface-3 bg-surface-0 px-4 py-2 text-sm font-medium text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-surface-1"
+      class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-surface-3 bg-surface-0 px-4 py-2 text-sm font-medium text-ink-primary transition hover:bg-surface-2 disabled:opacity-100 dark:bg-surface-1"
       :disabled="disabled"
       :aria-expanded="panelOpen"
       aria-haspopup="dialog"
@@ -62,7 +62,7 @@
             v-for="y in yearNumbers"
             :key="y"
             type="button"
-            class="rounded-full border px-3 py-1 text-sm transition disabled:opacity-40"
+            class="rounded-full border px-3 py-1 text-sm transition disabled:opacity-100"
             :class="
               isYearSelected(y)
                 ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
@@ -89,7 +89,7 @@
               v-model="dateFrom"
               type="date"
               :disabled="disabled"
-              class="rounded-md border border-surface-3 bg-surface-0 px-2 py-1.5 text-sm text-ink-primary dark:bg-surface-0"
+              class="rounded-md border border-surface-3 bg-surface-0 px-2 py-1.5 text-sm text-ink-primary disabled:opacity-100 dark:bg-surface-0"
               @change="onDateInputsChange"
             />
           </label>
@@ -99,14 +99,14 @@
               v-model="dateTo"
               type="date"
               :disabled="disabled"
-              class="rounded-md border border-surface-3 bg-surface-0 px-2 py-1.5 text-sm text-ink-primary dark:bg-surface-0"
+              class="rounded-md border border-surface-3 bg-surface-0 px-2 py-1.5 text-sm text-ink-primary disabled:opacity-100 dark:bg-surface-0"
               @change="onDateInputsChange"
             />
           </label>
           <button
             v-if="dateFrom || dateTo"
             type="button"
-            class="cursor-pointer rounded-md border border-surface-3 px-3 py-1.5 text-sm text-ink-secondary hover:bg-surface-2"
+            class="cursor-pointer rounded-md border border-surface-3 px-3 py-1.5 text-sm text-ink-secondary hover:bg-surface-2 disabled:opacity-100"
             :disabled="disabled"
             @click="clearDates"
           >
