@@ -6,6 +6,7 @@ describe("useDarkMode", () => {
   beforeEach(() => {
     localStorage.clear();
     document.documentElement.classList.remove("dark");
+    __reset();
   });
 
   afterEach(() => {
