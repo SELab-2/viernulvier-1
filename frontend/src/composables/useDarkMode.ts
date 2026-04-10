@@ -28,8 +28,11 @@ const STORAGE_KEY = "viernulvier-dark";
  */
 function getInitialDark(): boolean {
   const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored !== null) return stored === "true";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  if (stored !== null) {
+    return stored === "true";
+  } else {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
 }
 
 /**
