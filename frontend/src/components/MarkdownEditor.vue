@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from "vue";
+import { useTemplateRef, onMounted, onUnmounted, watch } from "vue";
 import EasyMDE from "easymde";
 import "easymde/dist/easymde.min.css";
 
@@ -18,12 +18,12 @@ const emit = defineEmits<{
   "update:modelValue": [value: string];
 }>();
 
-const textarea = ref<HTMLTextAreaElement>(null!);
+const textarea = useTemplateRef<HTMLTextAreaElement>("textarea");
 let editor: EasyMDE | null = null;
 
 onMounted(() => {
   editor = new EasyMDE({
-    element: textarea.value,
+    element: textarea.value!,
     initialValue: props.modelValue,
     placeholder: props.placeholder,
     spellChecker: false,
