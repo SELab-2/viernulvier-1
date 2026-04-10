@@ -69,6 +69,30 @@ describe("getProductions", () => {
     await getProductions({ limit: 20, offset: 40 });
     expect(lastCall()[0]).toBe("/api/v1/production?limit=20&offset=40");
   });
+
+  it("GETs /api/v1/production with search and pagination", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockOk({ items: [productionPayload], total: 3 }),
+    );
+    await getProductions({ limit: 20, offset: 0, search: "  Hamlet  " });
+    expect(lastCall()[0]).toBe("/api/v1/production?limit=20&offset=0&search=Hamlet");
+  });
+
+  it("GETs /api/v1/production with multiple search terms", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockOk({ items: [productionPayload], total: 1 }),
+    );
+    await getProductions({
+      limit: 10,
+      offset: 0,
+      search: ["  foo ", "bar"],
+    });
+    expect(lastCall()[0]).toBe(
+      "/api/v1/production?limit=10&offset=0&search=foo%2Cbar",
+    );
+  });
 });
 
 describe("getProduction", () => {

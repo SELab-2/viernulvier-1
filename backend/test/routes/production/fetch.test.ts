@@ -142,6 +142,108 @@ describe("Production fetch routes", () => {
     expect(response.statusCode).toBe(400);
   });
 
+  test("GET /api/v1/production?search=…&limit=10 -> returns a filtered page", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?search=Artiest&limit=10&offset=0",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { items: unknown[]; total: number };
+    expect(json.total).toBe(1);
+    const parsed = ProductionSchemaWithBackwardsRefs.array().parse(json.items);
+    expect(parsed).toEqual([ProductionSchemaWithBackwardsRefs.parse(baseProduction)]);
+  });
+
+  test("GET /api/v1/production?search=… -> 400 when search exceeds max length", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/production?search=${"x".repeat(201)}`,
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  test("GET /api/v1/production?search=a,b&limit=10 -> AND of comma-separated terms (filtered page)", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?search=Artiest,Titel&limit=10&offset=0",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { items: unknown[]; total: number };
+    expect(json.total).toBe(1);
+    const parsed = ProductionSchemaWithBackwardsRefs.array().parse(json.items);
+    expect(parsed).toEqual([ProductionSchemaWithBackwardsRefs.parse(baseProduction)]);
+  });
+
+  test("GET /api/v1/production?search=…&search=… -> AND still works (legacy repeated key)", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?search=Artiest&search=Titel&limit=10&offset=0",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { items: unknown[]; total: number };
+    expect(json.total).toBe(1);
+    const parsed = ProductionSchemaWithBackwardsRefs.array().parse(json.items);
+    expect(parsed).toEqual([ProductionSchemaWithBackwardsRefs.parse(baseProduction)]);
+  });
+
+  test("GET /api/v1/production?search=… only whitespace -> no filter (same as omitting search)", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?search=%20%2C%09",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { items: unknown[]; total: number };
+    expect(json.total).toBe(1);
+    expect(json.items).toHaveLength(1);
+  });
+
+  test("GET /api/v1/production?search=… duplicate case-insensitive -> deduped to one term", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?search=Artiest,ARTIEST&limit=10&offset=0",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { items: unknown[]; total: number };
+    expect(json.total).toBe(1);
+    const parsed = ProductionSchemaWithBackwardsRefs.array().parse(json.items);
+    expect(parsed).toEqual([ProductionSchemaWithBackwardsRefs.parse(baseProduction)]);
+  });
+
+  test("GET /api/v1/production?search=… with ILIKE wildcards -> 200 (pattern escaped server-side)", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?search=100%25&limit=10&offset=0",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { items: unknown[]; total: number };
+    expect(json.total).toBe(1);
+  });
+
+  test("GET /api/v1/production -> 400 when more than 20 comma-separated search terms", async () => {
+    const search = Array.from({ length: 21 }, (_, i) => String(i)).join(",");
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/production?search=${encodeURIComponent(search)}`,
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
   test("GET /api/v1/production?limit=5 -> total 0 when COUNT returns no row", async () => {
     server.pg.query = vi.fn().mockImplementation((query: string) => {
       const upper = query.trim().toUpperCase();

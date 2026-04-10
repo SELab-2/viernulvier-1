@@ -54,6 +54,15 @@ export default {
     pageWord: "Page",
     pageOfTotal: "of {total}",
     goToPage: "Go to page",
+    searchLabel: "Search productions",
+    searchPlaceholder: "Title, artist, venue, description…",
+    searchButton: "Search",
+    activeSearchLabel: "Search:",
+    removeSearchFilter: "Remove search filter",
+    removeSearchTerm: "Remove search term: {term}",
+    noSearchResults: "No productions match your search.",
+    filterResultsSingle: "1 result",
+    filterResultsPlural: "{count} results",
   },
   admin: {
     login: {
