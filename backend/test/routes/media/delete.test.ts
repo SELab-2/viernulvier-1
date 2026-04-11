@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
 import { buildServer } from "@/server.js";
+import type { S3Client } from "@aws-sdk/client-s3";
 import type { FastifyInstance } from "fastify";
 import {
   MOCK_IMAGE_1,
@@ -20,8 +21,9 @@ beforeAll(async () => {
   // which then call s3.send(). So we need send on BOTH the container AND the client.
   s3SendMock = vi.fn().mockResolvedValue({});
   const mockClient = { send: s3SendMock, destroy: vi.fn() };
-  server.s3.client = mockClient as any;
+  server.s3.client = mockClient as unknown as S3Client;;
   // Also add send to the container itself for delete handlers that pass server.s3 directly
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (server.s3 as any).send = s3SendMock;
 });
 
@@ -32,8 +34,9 @@ afterAll(async () => {
 beforeEach(() => {
   vi.restoreAllMocks();
   s3SendMock = vi.fn().mockResolvedValue({});
-  server.s3.client = { send: s3SendMock, destroy: vi.fn() } as any;
-  (server.s3 as any).send = s3SendMock;
+  server.s3.client = { send: s3SendMock, destroy: vi.fn() } as unknown as S3Client;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (server.s3 as any).send = s3SendMock; 
 });
 
 function mockPgQuery(options?: { imageNotFound?: boolean; cropNotFound?: boolean }) {

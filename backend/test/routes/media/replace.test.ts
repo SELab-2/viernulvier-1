@@ -27,6 +27,7 @@ beforeAll(async () => {
   sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
 
   s3SendMock = vi.fn().mockResolvedValue({});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   server.s3.client = { send: s3SendMock, destroy: vi.fn() } as any;
 });
 
@@ -37,6 +38,7 @@ afterAll(async () => {
 beforeEach(() => {
   vi.restoreAllMocks();
   s3SendMock = vi.fn().mockResolvedValue({});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   server.s3.client = { send: s3SendMock, destroy: vi.fn() } as any;
 });
 
