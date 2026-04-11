@@ -8,6 +8,7 @@ import tagTypeRoutes from "./tag_type/tag_types.js";
 import hallRoutes from "./hall/hall.js";
 import blogRoutes from "./blog/blog.js";
 import mediaRoutes from "./media/media.js";
+import blogPostRoutes from "./blogpost/blogpost.js";
 
 /**
  * Registers all application routes on the Fastify instance.
@@ -24,4 +25,5 @@ export default async function registerRoutes(server: FastifyInstance) {
   await server.register(hallRoutes);
   await server.register(blogRoutes);
   await server.register(mediaRoutes);
+  await server.register(blogPostRoutes);
 }
