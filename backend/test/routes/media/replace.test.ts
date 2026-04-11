@@ -197,7 +197,7 @@ describe("Replace on image route", () => {
     expect(response.statusCode).toBe(401);
   });
 
-    test("PUT /api/v1/image/:id -> replaces image with crops via multipart (old crops exist)", async () => {
+  test("PUT /api/v1/image/:id -> replaces image with crops via multipart (old crops exist)", async () => {
     mockPgQuery();
 
     const form = new FormData();
@@ -368,7 +368,7 @@ describe("Replace on crop route", () => {
     expect(response.statusCode).toBe(401);
   });
 
-    test("PUT /api/v1/image/:id -> replaces image with crops via multipart (old crops exist)", async () => {
+  test("PUT /api/v1/image/:id -> replaces image with crops via multipart (old crops exist)", async () => {
     mockPgQuery();
 
     const form = new FormData();

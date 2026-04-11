@@ -67,6 +67,7 @@ describe("generateS3Key", () => {
 describe("uploadToS3", () => {
   test("sends a PutObjectCommand with correct params", async () => {
     const s3Send = vi.fn().mockResolvedValue({});
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const s3 = { send: s3Send } as any;
 
     const buffer = Buffer.from("fake-image");
@@ -86,6 +87,7 @@ describe("uploadToS3", () => {
 describe("deleteFromS3", () => {
   test("sends a DeleteObjectCommand with correct params", async () => {
     const s3Send = vi.fn().mockResolvedValue({});
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const s3 = { send: s3Send } as any;
 
     await deleteFromS3(s3, "test-key.jpg");
@@ -102,6 +104,7 @@ describe("deleteFromS3", () => {
 describe("deleteManyFromS3", () => {
   test("deletes multiple objects by extracting keys from paths", async () => {
     const s3Send = vi.fn().mockResolvedValue({});
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const s3 = { send: s3Send } as any;
 
     await deleteManyFromS3(s3, [
@@ -120,6 +123,7 @@ describe("deleteManyFromS3", () => {
 
   test("handles empty array without calling S3", async () => {
     const s3Send = vi.fn().mockResolvedValue({});
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const s3 = { send: s3Send } as any;
 
     await deleteManyFromS3(s3, []);
@@ -129,6 +133,7 @@ describe("deleteManyFromS3", () => {
 
   test("handles paths without the standard prefix", async () => {
     const s3Send = vi.fn().mockResolvedValue({});
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const s3 = { send: s3Send } as any;
 
     await deleteManyFromS3(s3, ["/other/path/file.jpg"]);

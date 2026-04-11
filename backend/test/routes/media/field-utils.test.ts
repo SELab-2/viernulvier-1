@@ -11,6 +11,7 @@ describe("hasOwn", () => {
   });
 
   test("returns false for non-existent properties", () => {
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(hasOwn({ a: 1 }, "b" as any)).toBe(false);
   });
 

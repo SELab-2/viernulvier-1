@@ -233,6 +233,7 @@ describe("S3 Plugin", () => {
     await server.ready();
 
     const mockClient = { send: vi.fn(), destroy: vi.fn() };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     server.s3.client = mockClient as any;
 
     expect(server.s3.client).toBe(mockClient);
