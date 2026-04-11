@@ -178,6 +178,38 @@ describe("Image fetch routes", () => {
 
     expect(response.statusCode).toBe(401);
   });
+
+  test("GET /api/v1/production/:productionId/image -> returns image with empty crops array when image has no crops", async () => {
+    const IMAGE_NO_CROPS = { id: 50, old_id: null, production: 7, res: "800x600" };
+
+    const originalQuery = server.pg.query;
+    server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+      const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
+
+      if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.PRODUCTION = $1")) {
+        return Promise.resolve({ rows: [IMAGE_NO_CROPS], rowCount: 1 });
+      }
+
+      if (upper.includes("FROM CROP C") && upper.includes("ANY(\\$1::INT[])")) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production/7/image",
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json();
+    expect(json).toEqual([
+      { ...IMAGE_NO_CROPS, crops: [] },
+    ]);
+
+    server.pg.query = originalQuery;
+  });
 });
 
 describe("Crop fetch routes", () => {

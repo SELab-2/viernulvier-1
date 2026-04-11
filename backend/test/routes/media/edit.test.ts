@@ -16,7 +16,7 @@ const editedImage = {
   res: "3840x2160",
 };
 
-const editedCrop = {
+const editedCrop = { 
   ...MOCK_CROP_1,
   type: "updated_type",
 };
@@ -141,6 +141,41 @@ describe("Edit on image route", () => {
 
     expect(response.statusCode).toBe(401);
   });
+
+  test("PATCH /api/v1/image/:id -> updates old_id field", async () => {
+    mockPgQuery();
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/image/${MOCK_IMAGE_1.id}`,
+      cookies: { session: sessionCookie },
+      payload: {
+        old_id: 42,
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json();
+    expect(json).toMatchObject({ id: MOCK_IMAGE_1.id });
+  });
+
+  test("PATCH /api/v1/image/:id -> updates both res and old_id at once", async () => {
+    mockPgQuery();
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/image/${MOCK_IMAGE_1.id}`,
+      cookies: { session: sessionCookie },
+      payload: {
+        res: "3840x2160",
+        old_id: null,
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json();
+    expect(json).toMatchObject({ id: MOCK_IMAGE_1.id, res: "3840x2160" });
+  });
 });
 
 describe("Edit on crop route", () => {
@@ -225,5 +260,63 @@ describe("Edit on crop route", () => {
     });
 
     expect(response.statusCode).toBe(401);
+  });
+  
+  test("PATCH /api/v1/crop/:id -> multipart with type only (no file uploaded)", async () => {
+    mockPgQuery();
+
+    const form = new FormData();
+    form.append("data", JSON.stringify({ type: "updated_type" }));
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/crop/${MOCK_CROP_1.id}`,
+      cookies: { session: sessionCookie },
+      payload: form,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json();
+    expect(json).toMatchObject({
+      id: MOCK_CROP_1.id,
+      type: "updated_type",
+    });
+    expect(s3SendMock).not.toHaveBeenCalled();
+  });
+
+  test("PATCH /api/v1/crop/:id -> multipart with file only (no type change)", async () => {
+    mockPgQuery();
+
+    const form = new FormData();
+    form.append("data", JSON.stringify({}));
+    form.append("file", new Blob(["fake-image-data"], { type: "image/jpeg" }), "new-crop.jpg");
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/crop/${MOCK_CROP_1.id}`,
+      cookies: { session: sessionCookie },
+      payload: form,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json();
+    expect(json).toMatchObject({ id: MOCK_CROP_1.id });
+    expect(s3SendMock).toHaveBeenCalled();
+  });
+
+  test("PATCH /api/v1/crop/:id -> multipart with no type and no file returns 400", async () => {
+    mockPgQuery();
+
+    const form = new FormData();
+    form.append("data", JSON.stringify({}));
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/crop/${MOCK_CROP_1.id}`,
+      cookies: { session: sessionCookie },
+      payload: form,
+    });
+
+    expect(response.statusCode).toBe(400);
   });
 });

@@ -148,4 +148,35 @@ describe("Delete on crop route", () => {
 
     expect(response.statusCode).toBe(401);
   });
+
+  test("DELETE /api/v1/image/:id -> deletes image with no crops (skips S3 delete)", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
+
+      if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.ID = $1")) {
+        return Promise.resolve({ rows: [MOCK_IMAGE_1], rowCount: 1 });
+      }
+
+      if (upper.includes("FROM CROP C") && upper.includes("WHERE C.IMAGE = $1")) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+
+      if (upper.startsWith("DELETE FROM IMAGE")) {
+        return Promise.resolve({ rows: [], rowCount: 1 });
+      }
+
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const response = await server.inject({
+      method: "DELETE",
+      url: `/api/v1/image/${MOCK_IMAGE_1.id}`,
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json();
+    expect(json).toEqual(imageWithCrops(MOCK_IMAGE_1, []));
+    expect(s3SendMock).not.toHaveBeenCalled();
+  });
 });
