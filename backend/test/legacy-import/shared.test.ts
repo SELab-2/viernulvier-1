@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   argvForLegacyImportYargs,
@@ -105,7 +106,9 @@ describe("rewriteDockerDbHostInDatabaseUrl", () => {
 
 describe("getRepoRootFromImportMeta", () => {
   it("resolves repo root from backend/scripts URL", () => {
-    const root = getRepoRootFromImportMeta("file:///repo/backend/scripts/tool.ts");
+    const scriptPath = path.resolve("/repo/backend/scripts/tool.ts");
+    const scriptUrl = pathToFileURL(scriptPath).href;          // ← platform-safe
+    const root = getRepoRootFromImportMeta(scriptUrl);
     expect(root).toBe(path.resolve("/repo"));
   });
 
@@ -118,7 +121,9 @@ describe("getRepoRootFromImportMeta", () => {
 
 describe("resolveDefaultLegacyImportFile", () => {
   it("joins segments under repo root", () => {
-    const file = resolveDefaultLegacyImportFile("file:///repo/backend/scripts/x.ts", [
+    const scriptPath = path.resolve("/repo/backend/scripts/x.ts");
+    const scriptUrl = pathToFileURL(scriptPath).href;          // ← platform-safe
+    const file = resolveDefaultLegacyImportFile(scriptUrl, [
       "data",
       "imports",
       "x.csv",
