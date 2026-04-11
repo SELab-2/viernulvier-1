@@ -54,8 +54,7 @@ export async function migrate(
       throw Error("Database client wasn't properly instantiated.");
     }
     const postgrator = new Postgrator({
-      migrationPattern: path.join(resolvedMigrationsPath, "*")
-      .replace(/\\/g, "/"),
+      migrationPattern: path.join(resolvedMigrationsPath, "*").replace(/\\/g, "/"),
       driver: "pg",
       database: client.database,
       schemaTable: "migrations",

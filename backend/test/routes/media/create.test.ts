@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
+import type { S3Client } from "@aws-sdk/client-s3";
 import {
   MOCK_IMAGE_1,
   MOCK_CROP_1,
@@ -36,7 +37,7 @@ beforeAll(async () => {
   sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
 
   s3SendMock = vi.fn().mockResolvedValue({});
-  server.s3.client = { send: s3SendMock, destroy: vi.fn() } as any;
+  server.s3.client = { send: s3SendMock, destroy: vi.fn() } as unknown as S3Client;
 });
 
 afterAll(async () => {
@@ -46,7 +47,7 @@ afterAll(async () => {
 beforeEach(() => {
   vi.restoreAllMocks();
   s3SendMock = vi.fn().mockResolvedValue({});
-  server.s3.client = { send: s3SendMock, destroy: vi.fn() } as any;
+  server.s3.client = { send: s3SendMock, destroy: vi.fn() } as unknown as S3Client;
 });
 
 function mockPgQuery(options?: { insertReturnsEmpty?: boolean; imageNotFound?: boolean }) {
