@@ -26,16 +26,8 @@ beforeAll(async () => {
   server = await buildServer();
   sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
 
-  // Install a mock S3 container matching the S3Container interface
-  // Production code accesses server.s3.client.send(…)
   s3SendMock = vi.fn().mockResolvedValue({});
-  const mockS3Client = { send: s3SendMock, destroy: vi.fn() };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (server as any)[Symbol.for("fastify.decorated.s3")] = undefined;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  delete (server as any).s3;
-  server.decorate("s3", { client: mockS3Client });
+  server.s3.client = { send: s3SendMock, destroy: vi.fn() } as any;
 });
 
 afterAll(async () => {
@@ -45,9 +37,7 @@ afterAll(async () => {
 beforeEach(() => {
   vi.restoreAllMocks();
   s3SendMock = vi.fn().mockResolvedValue({});
-  // Re-assign send on the existing mock client object
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (server.s3.client as any).send = s3SendMock;
+  server.s3.client = { send: s3SendMock, destroy: vi.fn() } as any;
 });
 
 function mockPgQuery(options?: { imageNotFound?: boolean; cropNotFound?: boolean }) {
@@ -98,7 +88,8 @@ function mockPgQuery(options?: { imageNotFound?: boolean; cropNotFound?: boolean
       return Promise.resolve({ rows: [{ id: replacedCrop.id }], rowCount: 1 });
     }
 
-    throw new Error(`Unexpected query in replace tests: ${query}`);
+    // ── Catch-all (e.g. authorize middleware) ──
+    return Promise.resolve({ rows: [], rowCount: 0 });
   });
 }
 

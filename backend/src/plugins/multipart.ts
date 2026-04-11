@@ -9,7 +9,6 @@ import multipart from "@fastify/multipart";
  * @param server - The Fastify instance to register the plugin on.
  */
 export default fp(async function multipartPlugin(server: FastifyInstance) {
-  server.log.info("Registering multipart plugin...");
 
   await server.register(multipart, {
     limits: {
@@ -18,6 +17,4 @@ export default fp(async function multipartPlugin(server: FastifyInstance) {
       fields: 10, // max non-file fields per request
     },
   });
-
-  server.log.info("Multipart plugin registered");
 });

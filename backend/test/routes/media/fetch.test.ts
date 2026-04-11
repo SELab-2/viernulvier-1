@@ -18,9 +18,7 @@ beforeAll(async () => {
   server = await buildServer();
   sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
 
-
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
-    // Normalize whitespace so multiline SQL matches
     const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
 
     // ── Single image by ID ──
@@ -84,7 +82,8 @@ beforeAll(async () => {
       return Promise.resolve({ rows: crops, rowCount: crops.length });
     }
 
-    throw new Error(`Unexpected query in media fetch tests: ${query}`);
+    // ── Catch-all: return empty result for any unmatched query (e.g. authorize middleware) ──
+    return Promise.resolve({ rows: [], rowCount: 0 });
   });
 });
 

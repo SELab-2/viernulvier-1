@@ -65,7 +65,7 @@ export async function deleteCrop(
   }
 
   // Delete file from S3
-  await deleteFromS3(server.s3, extractS3Key(crop.url));
+  await deleteFromS3(server.s3.client, extractS3Key(crop.url));
 
   // Delete row
   await server.pg.query("DELETE FROM crop WHERE id = $1", [id]);
