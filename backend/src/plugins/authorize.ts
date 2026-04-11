@@ -29,7 +29,7 @@ export default fp(function authorizePlugin(server: FastifyInstance) {
           return await reply.status(403).send({ error: "Forbidden" });
         }
       } catch {
-        reply.status(401).send({ error: "Unauthorized" });
+        return await reply.status(401).send({ error: "Unauthorized" });
       }
     };
   });
