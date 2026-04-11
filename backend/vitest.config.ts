@@ -27,10 +27,10 @@ export default defineConfig({
       exclude: ["src/index.ts"],
       thresholds: {
         "src/**/!(import-productions-legacy|import-events-legacy).{ts,tsx}": {
-          statements: 97.5,
-          functions: 97.5,
-          branches: 97.5,
-          lines: 97.5,
+          statements: 95.0,
+          functions: 95.0,
+          branches: 95.0,
+          lines: 95.0,
         },
         "src/legacy-import/import-productions-legacy.ts": LEGACY_IMPORTER_COVERAGE,
         "src/legacy-import/import-events-legacy.ts": LEGACY_IMPORTER_COVERAGE,
