@@ -26,6 +26,7 @@ function readEnvFile(filePath: string): Record<string, string> {
 
 const CREDENTIAL_PATHS = [
   "/garage-credentials/credentials.env",
+  // istanbul ignore next -- import.meta.dirname is always defined at runtime; fallback is for type safety only
   resolve(import.meta.dirname ?? process.cwd(), "../../garage-credentials/credentials.env"),
 ];
 
