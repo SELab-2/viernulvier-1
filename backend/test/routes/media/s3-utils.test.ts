@@ -115,6 +115,7 @@ describe("deleteManyFromS3", () => {
 
     expect(s3Send).toHaveBeenCalledTimes(3);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const keys = s3Send.mock.calls.map((call: any) => call[0].input.Key);
     expect(keys).toContain("first.jpg");
     expect(keys).toContain("second.png");
