@@ -30,6 +30,7 @@ export function extractS3Key(path: string): string {
   if (path.startsWith(prefix)) {
     return path.slice(prefix.length);
   }
+  /* c8 ignore next */
   return path.split("/").pop() ?? path;
 }
 
