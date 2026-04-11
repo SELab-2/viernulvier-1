@@ -74,7 +74,7 @@ describe("uploadToS3", () => {
     await uploadToS3(s3, "test-key.jpg", buffer, "image/jpeg");
 
     expect(s3Send).toHaveBeenCalledOnce();
-    const command = s3Send.mock.calls[0][0];
+    const command = s3Send.mock.calls[0]![0];
     expect(command.input).toEqual({
       Bucket: "crops",
       Key: "test-key.jpg",
@@ -93,7 +93,7 @@ describe("deleteFromS3", () => {
     await deleteFromS3(s3, "test-key.jpg");
 
     expect(s3Send).toHaveBeenCalledOnce();
-    const command = s3Send.mock.calls[0][0];
+    const command = s3Send.mock.calls[0]![0];
     expect(command.input).toEqual({
       Bucket: "crops",
       Key: "test-key.jpg",
@@ -140,7 +140,7 @@ describe("deleteManyFromS3", () => {
     await deleteManyFromS3(s3, ["/other/path/file.jpg"]);
 
     expect(s3Send).toHaveBeenCalledOnce();
-    const command = s3Send.mock.calls[0][0];
+    const command = s3Send.mock.calls[0]![0];
     expect(command.input.Key).toBe("file.jpg");
   });
 });

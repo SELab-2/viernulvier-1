@@ -45,7 +45,7 @@ describe("GET /media/crops/* (crop proxy)", () => {
     expect(response.body).toBe("fake-image-bytes");
 
     expect(s3SendMock).toHaveBeenCalledOnce();
-    const command = s3SendMock.mock.calls[0][0];
+    const command = s3SendMock.mock.calls[0]![0];
     expect(command.input).toEqual({
       Bucket: "crops",
       Key: "some-folder/photo.jpg",

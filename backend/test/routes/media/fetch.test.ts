@@ -183,7 +183,7 @@ describe("Image fetch routes", () => {
     const IMAGE_NO_CROPS = { id: 50, old_id: null, production: 7, res: "800x600" };
 
     const originalQuery = server.pg.query;
-    server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+    server.pg.query = vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
       const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
 
       if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.PRODUCTION = $1")) {

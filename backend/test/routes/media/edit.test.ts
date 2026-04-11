@@ -42,7 +42,7 @@ beforeEach(() => {
 });
 
 function mockPgQuery(options?: { imageNotFound?: boolean; cropNotFound?: boolean }) {
-  server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+  server.pg.query = vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
     const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
 
     if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.ID = \$1")) {

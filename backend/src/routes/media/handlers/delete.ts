@@ -35,7 +35,7 @@ export async function deleteImage(
   // Delete all crop files from S3
   const cropUrls = image.crops.map((c) => c.url);
   if (cropUrls.length > 0) {
-    await deleteManyFromS3(server.s3, cropUrls);
+    await deleteManyFromS3(server.s3.client, cropUrls);
   }
 
   // Delete image row (cascades to crop rows)
