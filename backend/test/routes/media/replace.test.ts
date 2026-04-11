@@ -47,7 +47,7 @@ function mockPgQuery(options?: { imageNotFound?: boolean; cropNotFound?: boolean
     const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
 
     // ── Single image by ID (fetch) ──
-    if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.ID = \$1")) {
+    if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.ID = $1")) {
       if (options?.imageNotFound) {
         return Promise.resolve({ rows: [], rowCount: 0 });
       }
@@ -55,7 +55,7 @@ function mockPgQuery(options?: { imageNotFound?: boolean; cropNotFound?: boolean
     }
 
     // ── Crops by image ──
-    if (upper.includes("FROM CROP C") && upper.includes("WHERE C.IMAGE = \$1")) {
+    if (upper.includes("FROM CROP C") && upper.includes("WHERE C.IMAGE = $1")) {
       if (options?.imageNotFound) {
         return Promise.resolve({ rows: [], rowCount: 0 });
       }
@@ -63,7 +63,7 @@ function mockPgQuery(options?: { imageNotFound?: boolean; cropNotFound?: boolean
     }
 
     // ── Single crop by ID (fetch) ──
-    if (upper.includes("FROM CROP C") && upper.includes("WHERE C.ID = \$1")) {
+    if (upper.includes("FROM CROP C") && upper.includes("WHERE C.ID = $1")) {
       if (options?.cropNotFound) {
         return Promise.resolve({ rows: [], rowCount: 0 });
       }
@@ -91,6 +91,42 @@ function mockPgQuery(options?: { imageNotFound?: boolean; cropNotFound?: boolean
     }
 
     // ── Catch-all (e.g. authorize middleware) ──
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+}
+
+function mockPgQueryNoExistingCrops() {
+  server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+    const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
+
+    if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.ID = $1")) {
+      return Promise.resolve({ rows: [replacedImage], rowCount: 1 });
+    }
+
+    if (upper.includes("FROM CROP C") && upper.includes("WHERE C.IMAGE = $1")) {
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    }
+
+    if (upper.includes("FROM CROP C") && upper.includes("WHERE C.ID = $1")) {
+      return Promise.resolve({ rows: [replacedCrop], rowCount: 1 });
+    }
+
+    if (upper.startsWith("UPDATE IMAGE")) {
+      return Promise.resolve({ rows: [], rowCount: 1 });
+    }
+
+    if (upper.startsWith("UPDATE CROP")) {
+      return Promise.resolve({ rows: [], rowCount: 1 });
+    }
+
+    if (upper.startsWith("DELETE FROM CROP")) {
+      return Promise.resolve({ rows: [], rowCount: 1 });
+    }
+
+    if (upper.startsWith("INSERT INTO CROP")) {
+      return Promise.resolve({ rows: [{ id: replacedCrop.id }], rowCount: 1 });
+    }
+
     return Promise.resolve({ rows: [], rowCount: 0 });
   });
 }
@@ -159,6 +195,108 @@ describe("Replace on image route", () => {
     });
 
     expect(response.statusCode).toBe(401);
+  });
+
+    test("PUT /api/v1/image/:id -> replaces image with crops via multipart (old crops exist)", async () => {
+    mockPgQuery();
+
+    const form = new FormData();
+    form.append(
+      "data",
+      JSON.stringify({
+        res: "4096x2160",
+        old_id: null,
+        crops: [{ filename: "new-crop.jpg", type: "general" }],
+      }),
+    );
+    form.append("file", new Blob(["fake-image-data"], { type: "image/jpeg" }), "new-crop.jpg");
+
+    const response = await server.inject({
+      method: "PUT",
+      url: `/api/v1/image/${MOCK_IMAGE_1.id}`,
+      cookies: { session: sessionCookie },
+      payload: form,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json();
+    expect(json).toMatchObject({ id: MOCK_IMAGE_1.id, res: "4096x2160" });
+    expect(json.crops).toBeDefined();
+    expect(s3SendMock).toHaveBeenCalled();
+  });
+
+  test("PUT /api/v1/image/:id -> replaces image with crops via multipart (no old crops to delete)", async () => {
+    mockPgQueryNoExistingCrops();
+
+    const form = new FormData();
+    form.append(
+      "data",
+      JSON.stringify({
+        res: "4096x2160",
+        old_id: null,
+        crops: [{ filename: "brand-new.jpg", type: "thumbnail" }],
+      }),
+    );
+    form.append("file", new Blob(["fake-data"], { type: "image/jpeg" }), "brand-new.jpg");
+
+    const response = await server.inject({
+      method: "PUT",
+      url: `/api/v1/image/${MOCK_IMAGE_1.id}`,
+      cookies: { session: sessionCookie },
+      payload: form,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json();
+    expect(json).toMatchObject({ id: MOCK_IMAGE_1.id });
+  });
+
+  test("PUT /api/v1/image/:id -> rejects multipart when crop mapping references missing file", async () => {
+    mockPgQuery();
+
+    const form = new FormData();
+    form.append(
+      "data",
+      JSON.stringify({
+        res: "4096x2160",
+        old_id: null,
+        crops: [{ filename: "nonexistent.jpg", type: "general" }],
+      }),
+    );
+
+    const response = await server.inject({
+      method: "PUT",
+      url: `/api/v1/image/${MOCK_IMAGE_1.id}`,
+      cookies: { session: sessionCookie },
+      payload: form,
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  test("PUT /api/v1/image/:id -> multipart without crops only replaces image fields", async () => {
+    mockPgQuery();
+
+    const form = new FormData();
+    form.append(
+      "data",
+      JSON.stringify({
+        res: "4096x2160",
+        old_id: null,
+      }),
+    );
+
+    const response = await server.inject({
+      method: "PUT",
+      url: `/api/v1/image/${MOCK_IMAGE_1.id}`,
+      cookies: { session: sessionCookie },
+      payload: form,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json();
+    expect(json).toMatchObject({ id: MOCK_IMAGE_1.id, res: "4096x2160" });
+    expect(s3SendMock).not.toHaveBeenCalled();
   });
 });
 
@@ -229,4 +367,107 @@ describe("Replace on crop route", () => {
 
     expect(response.statusCode).toBe(401);
   });
+
+    test("PUT /api/v1/image/:id -> replaces image with crops via multipart (old crops exist)", async () => {
+    mockPgQuery();
+
+    const form = new FormData();
+    form.append(
+      "data",
+      JSON.stringify({
+        res: "4096x2160",
+        old_id: null,
+        crops: [{ filename: "new-crop.jpg", type: "general" }],
+      }),
+    );
+    form.append("file", new Blob(["fake-image-data"], { type: "image/jpeg" }), "new-crop.jpg");
+
+    const response = await server.inject({
+      method: "PUT",
+      url: `/api/v1/image/${MOCK_IMAGE_1.id}`,
+      cookies: { session: sessionCookie },
+      payload: form,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json();
+    expect(json).toMatchObject({ id: MOCK_IMAGE_1.id, res: "4096x2160" });
+    expect(json.crops).toBeDefined();
+    expect(s3SendMock).toHaveBeenCalled();
+  });
+
+  test("PUT /api/v1/image/:id -> replaces image with crops via multipart (no old crops to delete)", async () => {
+    mockPgQueryNoExistingCrops();
+
+    const form = new FormData();
+    form.append(
+      "data",
+      JSON.stringify({
+        res: "4096x2160",
+        old_id: null,
+        crops: [{ filename: "brand-new.jpg", type: "thumbnail" }],
+      }),
+    );
+    form.append("file", new Blob(["fake-data"], { type: "image/jpeg" }), "brand-new.jpg");
+
+    const response = await server.inject({
+      method: "PUT",
+      url: `/api/v1/image/${MOCK_IMAGE_1.id}`,
+      cookies: { session: sessionCookie },
+      payload: form,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json();
+    expect(json).toMatchObject({ id: MOCK_IMAGE_1.id });
+  });
+
+  test("PUT /api/v1/image/:id -> rejects multipart when crop mapping references missing file", async () => {
+    mockPgQuery();
+
+    const form = new FormData();
+    form.append(
+      "data",
+      JSON.stringify({
+        res: "4096x2160",
+        old_id: null,
+        crops: [{ filename: "nonexistent.jpg", type: "general" }],
+      }),
+    );
+
+    const response = await server.inject({
+      method: "PUT",
+      url: `/api/v1/image/${MOCK_IMAGE_1.id}`,
+      cookies: { session: sessionCookie },
+      payload: form,
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  test("PUT /api/v1/image/:id -> multipart without crops only replaces image fields", async () => {
+    mockPgQuery();
+
+    const form = new FormData();
+    form.append(
+      "data",
+      JSON.stringify({
+        res: "4096x2160",
+        old_id: null,
+      }),
+    );
+
+    const response = await server.inject({
+      method: "PUT",
+      url: `/api/v1/image/${MOCK_IMAGE_1.id}`,
+      cookies: { session: sessionCookie },
+      payload: form,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json();
+    expect(json).toMatchObject({ id: MOCK_IMAGE_1.id, res: "4096x2160" });
+    expect(s3SendMock).not.toHaveBeenCalled();
+  });
+  
 });
