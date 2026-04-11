@@ -1,5 +1,6 @@
 import {
   HttpError,
+  ValidationError,
   parseSchema,
   parseParams,
   parseUser,
@@ -231,7 +232,7 @@ describe(parseSchema, () => {
   const errorContexts = {
     "ParseContext.Request": {
       idx: ParseContext.Request,
-      err: new HttpError(HttpClientError.BadRequest, "Invalid request data"),
+      err: ValidationError,
     },
     "ParseContext.Database": {
       idx: ParseContext.Database,
@@ -569,10 +570,11 @@ describe(buildQuery, () => {
     });
   });
   const expectedErrors = {
-    [ParseContext.Request]: new HttpError(
-      HttpClientError.BadRequest,
-      "Invalid request data",
-    ),
+    [ParseContext.Request]: expect.objectContaining({
+      message: "Invalid request data",
+      status: 400,
+      name: "ValidationError",
+    }),
     [ParseContext.Database]: new HttpError(
       HttpServerError.InternalServerError,
       "Internal server error",
