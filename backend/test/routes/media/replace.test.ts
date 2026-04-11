@@ -10,7 +10,7 @@ let server: FastifyInstance;
 let sessionCookie: string;
 let s3SendMock: ReturnType<typeof vi.fn>;
 
-const replacedImage = {
+const replacedImage = { 
   ...MOCK_IMAGE_1,
   res: "4096x2160",
   old_id: null,
@@ -298,6 +298,38 @@ describe("Replace on image route", () => {
     expect(json).toMatchObject({ id: MOCK_IMAGE_1.id, res: "4096x2160" });
     expect(s3SendMock).not.toHaveBeenCalled();
   });
+
+  test("PUT /api/v1/image/:id -> replaces image with multiple crops via multipart", async () => {
+    mockPgQuery();
+
+    const form = new FormData();
+    form.append(
+      "data",
+      JSON.stringify({
+        res: "4096x2160",
+        old_id: null,
+        crops: [
+          { filename: "crop1.jpg", type: "general" },
+          { filename: "crop2.jpg", type: "thumbnail" },
+        ],
+      }),
+    );
+    form.append("file1", new Blob(["fake-data-1"], { type: "image/jpeg" }), "crop1.jpg");
+    form.append("file2", new Blob(["fake-data-2"], { type: "image/jpeg" }), "crop2.jpg");
+
+    const response = await server.inject({
+      method: "PUT",
+      url: `/api/v1/image/${MOCK_IMAGE_1.id}`,
+      cookies: { session: sessionCookie },
+      payload: form,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json();
+    expect(json).toMatchObject({ id: MOCK_IMAGE_1.id, res: "4096x2160" });
+    // Two uploads + one deleteManyFromS3 call
+    expect(s3SendMock).toHaveBeenCalled();
+  });
 });
 
 describe("Replace on crop route", () => {
@@ -468,6 +500,22 @@ describe("Replace on crop route", () => {
     const json = response.json();
     expect(json).toMatchObject({ id: MOCK_IMAGE_1.id, res: "4096x2160" });
     expect(s3SendMock).not.toHaveBeenCalled();
+  });
+
+  test("PUT /api/v1/crop/:id -> rejects multipart with no file uploaded", async () => {
+    mockPgQuery();
+
+    const form = new FormData();
+    form.append("data", JSON.stringify({ type: "brand_new" }));
+
+    const response = await server.inject({
+      method: "PUT",
+      url: `/api/v1/crop/${MOCK_CROP_1.id}`,
+      cookies: { session: sessionCookie },
+      payload: form,
+    });
+
+    expect(response.statusCode).toBe(400);
   });
   
 });

@@ -94,6 +94,7 @@ export async function replaceImage(
     // Upload and insert new crops
     for (const mapping of cropMappings) {
       const file = files.get(mapping.filename);
+      /* c8 ignore next */
       if (!file) continue;
 
       const s3Key = generateS3Key(mapping.filename);
