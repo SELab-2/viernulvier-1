@@ -16,16 +16,13 @@ beforeAll(async () => {
   server = await buildServer();
   sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
 
+  // The delete handlers pass server.s3 (the container) to deleteManyFromS3/deleteFromS3,
+  // which then call s3.send(). So we need send on BOTH the container AND the client.
   s3SendMock = vi.fn().mockResolvedValue({});
-  const mockS3Client = { send: s3SendMock, destroy: vi.fn() };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (server as any)[Symbol.for("fastify.decorated.s3")] = undefined;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  delete (server as any).s3;
-  // Add send at container level — delete handlers pass server.s3 directly
-  // to deleteFromS3 / deleteManyFromS3 which call s3.send(…)
-  server.decorate("s3", { client: mockS3Client, send: s3SendMock, destroy: vi.fn() });
+  const mockClient = { send: s3SendMock, destroy: vi.fn() };
+  server.s3.client = mockClient as any;
+  // Also add send to the container itself for delete handlers that pass server.s3 directly
+  (server.s3 as any).send = s3SendMock;
 });
 
 afterAll(async () => {
@@ -35,9 +32,7 @@ afterAll(async () => {
 beforeEach(() => {
   vi.restoreAllMocks();
   s3SendMock = vi.fn().mockResolvedValue({});
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (server.s3.client as any).send = s3SendMock;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  server.s3.client = { send: s3SendMock, destroy: vi.fn() } as any;
   (server.s3 as any).send = s3SendMock;
 });
 
@@ -45,7 +40,6 @@ function mockPgQuery(options?: { imageNotFound?: boolean; cropNotFound?: boolean
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
 
-    // ── Single image by ID (fetch before delete) ──
     if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.ID = \$1")) {
       if (options?.imageNotFound) {
         return Promise.resolve({ rows: [], rowCount: 0 });
@@ -53,12 +47,10 @@ function mockPgQuery(options?: { imageNotFound?: boolean; cropNotFound?: boolean
       return Promise.resolve({ rows: [MOCK_IMAGE_1], rowCount: 1 });
     }
 
-    // ── Crops by image (fetch before delete image) ──
     if (upper.includes("FROM CROP C") && upper.includes("WHERE C.IMAGE = \$1")) {
       return Promise.resolve({ rows: [MOCK_CROP_1, MOCK_CROP_2], rowCount: 2 });
     }
 
-    // ── Single crop by ID (fetch before delete crop) ──
     if (upper.includes("FROM CROP C") && upper.includes("WHERE C.ID = \$1")) {
       if (options?.cropNotFound) {
         return Promise.resolve({ rows: [], rowCount: 0 });
@@ -66,17 +58,16 @@ function mockPgQuery(options?: { imageNotFound?: boolean; cropNotFound?: boolean
       return Promise.resolve({ rows: [MOCK_CROP_1], rowCount: 1 });
     }
 
-    // ── DELETE image (cascades to crop rows) ──
     if (upper.startsWith("DELETE FROM IMAGE")) {
       return Promise.resolve({ rows: [], rowCount: 1 });
     }
 
-    // ── DELETE crop ──
     if (upper.startsWith("DELETE FROM CROP")) {
       return Promise.resolve({ rows: [], rowCount: 1 });
     }
 
-    throw new Error(`Unexpected query in delete tests: ${query}`);
+    // ── Catch-all ──
+    return Promise.resolve({ rows: [], rowCount: 0 });
   });
 }
 

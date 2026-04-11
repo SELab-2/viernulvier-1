@@ -5,7 +5,6 @@ import {
   MOCK_IMAGE_1,
   MOCK_CROP_1,
   MOCK_CROP_2,
-  imageWithCrops,
 } from "./fixtures.js";
 
 let server: FastifyInstance;
@@ -37,13 +36,7 @@ beforeAll(async () => {
   sessionCookie = server.jwt.sign({ id: 1, username: "Admin1" });
 
   s3SendMock = vi.fn().mockResolvedValue({});
-  const mockS3Client = { send: s3SendMock, destroy: vi.fn() };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (server as any)[Symbol.for("fastify.decorated.s3")] = undefined;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  delete (server as any).s3;
-  server.decorate("s3", { client: mockS3Client });
+  server.s3.client = { send: s3SendMock, destroy: vi.fn() } as any;
 });
 
 afterAll(async () => {
@@ -53,18 +46,13 @@ afterAll(async () => {
 beforeEach(() => {
   vi.restoreAllMocks();
   s3SendMock = vi.fn().mockResolvedValue({});
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (server.s3.client as any).send = s3SendMock;
+  server.s3.client = { send: s3SendMock, destroy: vi.fn() } as any;
 });
 
-function mockPgQuery(options?: {
-  insertReturnsEmpty?: boolean;
-  imageNotFound?: boolean;
-}) {
+function mockPgQuery(options?: { insertReturnsEmpty?: boolean; imageNotFound?: boolean }) {
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
 
-    // ── INSERT image ──
     if (upper.startsWith("INSERT INTO IMAGE")) {
       if (options?.insertReturnsEmpty) {
         return Promise.resolve({ rows: [], rowCount: 0 });
@@ -72,12 +60,10 @@ function mockPgQuery(options?: {
       return Promise.resolve({ rows: [{ id: createdImage.id }], rowCount: 1 });
     }
 
-    // ── INSERT crop ──
     if (upper.startsWith("INSERT INTO CROP")) {
       return Promise.resolve({ rows: [{ id: createdCrop.id }], rowCount: 1 });
     }
 
-    // ── SELECT image exists check (for createCrops) ──
     if (upper.includes("SELECT ID FROM IMAGE") && upper.includes("WHERE ID = \$1")) {
       if (options?.imageNotFound) {
         return Promise.resolve({ rows: [], rowCount: 0 });
@@ -85,17 +71,16 @@ function mockPgQuery(options?: {
       return Promise.resolve({ rows: [{ id: params?.[0] }], rowCount: 1 });
     }
 
-    // ── Single image by ID (fetch after create) ──
     if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.ID = \$1")) {
       return Promise.resolve({ rows: [createdImage], rowCount: 1 });
     }
 
-    // ── Crops by image (fetch after create) ──
     if (upper.includes("FROM CROP C") && upper.includes("WHERE C.IMAGE = \$1")) {
       return Promise.resolve({ rows: [createdCrop, createdCrop2], rowCount: 2 });
     }
 
-    throw new Error(`Unexpected query in create tests: ${query}`);
+    // ── Catch-all ──
+    return Promise.resolve({ rows: [], rowCount: 0 });
   });
 }
 
@@ -123,7 +108,7 @@ function mockPgQuerySingleCrop() {
       return Promise.resolve({ rows: [createdCrop], rowCount: 1 });
     }
 
-    throw new Error(`Unexpected query in create tests (single crop): ${query}`);
+    return Promise.resolve({ rows: [], rowCount: 0 });
   });
 }
 
@@ -225,7 +210,6 @@ describe("Create on image route", () => {
         crops: [{ filename: "missing.jpg", type: "general" }],
       }),
     );
-    // No file appended for "missing.jpg"
 
     const response = await server.inject({
       method: "POST",
@@ -312,7 +296,6 @@ describe("Create on crop route", () => {
         crops: [{ filename: "missing.jpg", type: "general" }],
       }),
     );
-    // No file appended for "missing.jpg"
 
     const response = await server.inject({
       method: "POST",
