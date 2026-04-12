@@ -1,5 +1,6 @@
 import { scrapeHallById } from "./hall.js";
 import { scrapeEventPricesForEvent } from "./event_price.js";
+import { scrapeProductionById } from "./production.js";
 
 interface EventListMeta {
   totalItems: number;
@@ -135,7 +136,7 @@ async function getOldProduction(oldId: number, authToken: string) {
     return productionMap[oldId];
   }
   // To Implement: fetch the old production ID based on the old API data
-  const id = await voorbeeldFunctie(oldId, authToken);
+  const id = await scrapeProductionById(oldId, authToken);
   productionMap[oldId] = id;
   return id; // return a dummy value for now, to avoid foreign key constraint errors
 }
@@ -195,9 +196,4 @@ export async function scrapeAllEvents(
       await processEvent(event, authToken, loginToken);
     }
   }
-}
-
-async function voorbeeldFunctie(_oldId: number, _authToken: string): Promise<number> {
-  // To Implement: fetch the old production ID based on the old API data
-  return 1; // return a dummy value for now, to avoid foreign key constraint errors
 }

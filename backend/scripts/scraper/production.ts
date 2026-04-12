@@ -17,8 +17,8 @@ interface ProductionJSON {
   supertitle?: Record<string, string>;
   title: Record<string, string>;
   artist: Record<string, string>;
-  tagline: Record<string, string>;
-  teaser: Record<string, string>;
+  tagline?: Record<string, string>;
+  teaser?: Record<string, string>;
   description?: Record<string, string>;
   description_extra?: Record<string, string>;
   description_2?: Record<string, string>;
@@ -82,7 +82,7 @@ async function fetchProductionsListMeta(
 }
 
 async function login(username: string, password: string): Promise<string> {
-  const response = await fetch("http://localhost:3000/auth/login", {
+  const response = await fetch("http://localhost:3000/api/v1/auth/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -106,6 +106,7 @@ async function processProduction(production: ProductionJSON, loginToken: string)
   const payload = {
     ...production,
     old_id: id,
+    finalized: false,
   };
 
   const response = await fetch("http://localhost:3000/api/v1/production", {
@@ -159,8 +160,8 @@ export async function scrapeProductionById(
     throw new Error(`Failed to fetch production from own api: ${response.status} ${response.statusText}`);
   }
 
-  const productionList = await response.json() as Production[];
-  if (productionList.length === 0) {
+  const productionList = await response.json() as { items: Production[], total: number };
+  if (productionList.total === 0) {
     const url = `https://www.viernulvier.gent/api/v1/productions/${id}`;
     const response = await fetch(url, {
       headers: {
@@ -175,8 +176,9 @@ export async function scrapeProductionById(
     const loginToken = await login("admin", "password");
     return await processProduction(production, loginToken);
   }
-  if (productionList.length > 1) {
+  if (productionList.total > 1) {
     throw new Error(`Multiple productions found with old_id ${id}`);
   }
-  return productionList[0]!.id;
+
+  return productionList.items[0]!.id;
 }

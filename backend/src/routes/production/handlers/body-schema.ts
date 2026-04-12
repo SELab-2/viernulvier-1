@@ -25,6 +25,10 @@ export const CreateProductionBodySchema = ProductionSchema.pick({
   artist: true,
   tagline: true,
   teaser: true,
+}).partial({
+  artist: true,
+  tagline: true,
+  teaser: true,
 }).extend(
   ProductionSchema.pick({
     old_id: true,
