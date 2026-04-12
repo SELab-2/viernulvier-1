@@ -223,18 +223,19 @@ export async function scrapeHallById(
   }
 
   const hallList = await response.json() as Hall[];
+  
   if (hallList.length === 0) {
-    const url = `https://www.viernulvier.gent/api/v1/halls/${id}`;
-    const response = await fetch(url, {
+    const viernulvierUrl = `https://www.viernulvier.gent/api/v1/halls/${id}`;
+    const viernulvierResponse = await fetch(viernulvierUrl, {
       headers: {
         accept: "application/ld+json",
         "X-AUTH-TOKEN": authToken,
       },
     });
-    if (!response.ok) {
-      throw new Error(`Failed to fetch hall: ${response.status} ${response.statusText}`);
+    if (!viernulvierResponse.ok) {
+      throw new Error(`Failed to fetch hall from Viernulvier API: ${viernulvierResponse.status} ${viernulvierResponse.statusText}`);
     }
-    const hall = await response.json() as HallJSON;
+    const hall = await viernulvierResponse.json() as HallJSON;
     const loginToken = await login("admin", "password");
     return await processHall(hall, loginToken, authToken);
   }

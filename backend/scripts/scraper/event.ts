@@ -188,10 +188,9 @@ export async function scrapeAllEvents(
   const meta = await fetchEventsListMeta(beforeDate, authToken);
   const totalPages = meta.view.last.split("page=")[1] as unknown as number;
   
-  for (let page = 1; page <= totalPages; page++) {
+  for (let page = 135; page <= totalPages; page++) {
     const data = await fetchEventsPage(page, beforeDate, authToken);
     for (const event of data.member) {
-      // const id = event["@id"].split("/").pop() as unknown as number;
       console.log(`Processing event ${event["@id"]} (${page}/${totalPages})`);
       await processEvent(event, authToken, loginToken);
     }
