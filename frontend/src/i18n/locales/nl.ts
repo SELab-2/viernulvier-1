@@ -4,7 +4,11 @@ export default {
     archive: "Archief",
     productions: "Producties",
     search: "Zoeken",
-    admin: "Admin",
+    admin: {
+      dashboard: "Dashboard",
+      cms: "CMS",
+      signOut: "Uitloggen",
+    },
   },
   hero: {
     title: "Het Archief van De Vooruit",
@@ -35,5 +39,50 @@ export default {
   },
   date: {
     doorsOpen: "Deuren open om",
+  },
+  productionsPage: {
+    heading: "Producties",
+    intro:
+      "Alle voorstellingen uit het archief op een rij.",
+    loading: "Producties laden…",
+    error:
+      "De producties konden niet worden geladen. Probeer het later opnieuw.",
+    empty: "Er staan nog geen producties in het archief.",
+    morePerformances: "nog {n}",
+    showingRange: "{from}–{to} van {total}",
+    prevPage: "Vorige",
+    nextPage: "Volgende",
+    pageWord: "Pagina",
+    pageOfTotal: "van {total}",
+    goToPage: "Ga naar pagina",
+    searchLabel: "Producties doorzoeken",
+    searchPlaceholder: "Titel, artiest, zaal, beschrijving…",
+    searchButton: "Zoeken",
+    activeSearchLabel: "Zoekterm:",
+    removeSearchFilter: "Zoekfilter verwijderen",
+    removeSearchTerm: "Zoekterm verwijderen: {term}",
+    noSearchResults: "Geen producties gevonden voor deze zoekterm.",
+    filterResultsSingle: "1 resultaat",
+    filterResultsPlural: "{count} resultaten",
+  },
+  admin: {
+    login: {
+      title: "Meld u aan om verder te gaan",
+      username: "Gebruikersnaam",
+      password: "Wachtwoord",
+      showPassword: "Wachtwoord tonen",
+      hidePassword: "Wachtwoord verbergen",
+      submit: "Aanmelden",
+      submitting: "Aanmelden…",
+      errorUnauthorized: "Ongeldige gebruikersnaam of wachtwoord.",
+      errorGeneric: "Er is iets misgegaan. Probeer het opnieuw.",
+    },
+    dashboard: {
+      signedInAs: "Aangemeld als",
+      superAdmin: "Super admin",
+      quickActions: "Snelle acties",
+      openCms: "CMS openen",
+      logout: "Uitloggen",
+    },
   },
 };

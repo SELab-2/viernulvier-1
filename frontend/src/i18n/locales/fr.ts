@@ -4,7 +4,11 @@ export default {
     archive: "Archives",
     productions: "Productions",
     search: "Rechercher",
-    admin: "Admin",
+    admin: {
+      dashboard: "Tableau de bord",
+      cms: "CMS",
+      signOut: "Se déconnecter",
+    },
   },
   hero: {
     title: "Les Archives de Vooruit",
@@ -35,5 +39,50 @@ export default {
   },
   date: {
     doorsOpen: "Portes ouvertes à",
+  },
+  productionsPage: {
+    heading: "Productions",
+    intro:
+      "Tous les spectacles de l’archive en un coup d’œil.",
+    loading: "Chargement des productions…",
+    error:
+      "Impossible de charger les productions. Veuillez réessayer plus tard.",
+    empty: "Aucune production dans les archives pour l’instant.",
+    morePerformances: "{n} de plus",
+    showingRange: "{from}–{to} sur {total}",
+    prevPage: "Précédent",
+    nextPage: "Suivant",
+    pageWord: "Page",
+    pageOfTotal: "sur {total}",
+    goToPage: "Aller à la page",
+    searchLabel: "Rechercher des productions",
+    searchPlaceholder: "Titre, artiste, lieu, description…",
+    searchButton: "Rechercher",
+    activeSearchLabel: "Recherche :",
+    removeSearchFilter: "Supprimer le filtre de recherche",
+    removeSearchTerm: "Supprimer le terme de recherche : {term}",
+    noSearchResults: "Aucune production ne correspond à votre recherche.",
+    filterResultsSingle: "1 résultat",
+    filterResultsPlural: "{count} résultats",
+  },
+  admin: {
+    login: {
+      title: "Connectez-vous pour continuer",
+      username: "Nom d'utilisateur",
+      password: "Mot de passe",
+      showPassword: "Afficher le mot de passe",
+      hidePassword: "Masquer le mot de passe",
+      submit: "Se connecter",
+      submitting: "Connexion…",
+      errorUnauthorized: "Nom d'utilisateur ou mot de passe invalide.",
+      errorGeneric: "Une erreur s'est produite. Veuillez réessayer.",
+    },
+    dashboard: {
+      signedInAs: "Connecté en tant que",
+      superAdmin: "Super admin",
+      quickActions: "Actions rapides",
+      openCms: "Ouvrir le CMS",
+      logout: "Se déconnecter",
+    },
   },
 };

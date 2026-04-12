@@ -87,15 +87,15 @@ export type UpdateTagTypeInput = Partial<CreateTagTypeInput>;
 // ---------------------------------------------------------------------------
 
 /**
- * Fetches all publicly visible tags (public — no session required).
- *
- * Only tags with `public: true` are returned.
- *
+ * Fetches publicly visible tags. 
+ * Can be filtered by production ID.
+ * @param productionId - Optional ID to get tags for a specific production.
  * @example
- * const tags = await getTags();
+ * const tags = await getTags(45); // Get public tags for production 45
  */
-export async function getTags(): Promise<Tag[]> {
-  return await apiFetch<Tag[]>("/tags");
+export async function getTags(productionId?: number): Promise<Tag[]> {
+  const url = productionId ? `/tag?production=${productionId}` : "/tag";
+  return await apiFetch<Tag[]>(url);
 }
 
 /**
@@ -105,7 +105,7 @@ export async function getTags(): Promise<Tag[]> {
  * @throws {ApiError} 404 — tag not found or not public.
  */
 export async function getTag(id: number): Promise<Tag> {
-  return await apiFetch<Tag>(`/tags/${id}`);
+  return await apiFetch<Tag>(`/tag/${id}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -113,15 +113,14 @@ export async function getTag(id: number): Promise<Tag> {
 // ---------------------------------------------------------------------------
 
 /**
- * Fetches all tags, including hidden ones (public: false).
- *
+ * Fetches all tags (including hidden ones).
+ * Can be filtered by production ID.
+ * @param productionId - Optional ID to get all tags for a specific production.
  * @throws {ApiError} 401 — unauthenticated.
- *
- * @example
- * const allTags = await getAllTags();
  */
-export async function getAllTags(): Promise<Tag[]> {
-  return await apiFetch<Tag[]>("/tags/all");
+export async function getAllTags(productionId?: number): Promise<Tag[]> {
+  const url = productionId ? `/tag/all?production=${productionId}` : "/tag/all";
+  return await apiFetch<Tag[]>(url);
 }
 
 /**
@@ -132,7 +131,7 @@ export async function getAllTags(): Promise<Tag[]> {
  * @throws {ApiError} 404 — tag not found.
  */
 export async function getTagAdmin(id: number): Promise<Tag> {
-  return await apiFetch<Tag>(`/tags/${id}/all`);
+  return await apiFetch<Tag>(`/tag/${id}/all`);
 }
 
 /**
@@ -143,7 +142,7 @@ export async function getTagAdmin(id: number): Promise<Tag> {
  * @throws {ApiError} 404 — tag not found.
  */
 export async function getTagWithMeta(id: number): Promise<TagWithMeta> {
-  return await apiFetch<TagWithMeta>(`/tags/${id}/meta`);
+  return await apiFetch<TagWithMeta>(`/tag/${id}/meta`);
 }
 
 /**
@@ -162,7 +161,7 @@ export async function getTagWithMeta(id: number): Promise<TagWithMeta> {
  * });
  */
 export async function createTag(data: CreateTagInput): Promise<Tag> {
-  return await apiFetch<Tag>("/tags", { method: "POST", body: data });
+  return await apiFetch<Tag>("/tag", { method: "POST", body: data });
 }
 
 /**
@@ -177,7 +176,7 @@ export async function replaceTag(
   id: number,
   data: ReplaceTagInput,
 ): Promise<Tag> {
-  return await apiFetch<Tag>(`/tags/${id}`, { method: "PUT", body: data });
+  return await apiFetch<Tag>(`/tag/${id}`, { method: "PUT", body: data });
 }
 
 /**
@@ -196,7 +195,7 @@ export async function updateTag(
   id: number,
   data: UpdateTagInput,
 ): Promise<Tag> {
-  return await apiFetch<Tag>(`/tags/${id}`, { method: "PATCH", body: data });
+  return await apiFetch<Tag>(`/tag/${id}`, { method: "PATCH", body: data });
 }
 
 /**
@@ -207,7 +206,7 @@ export async function updateTag(
  * @throws {ApiError} 404 — tag not found.
  */
 export async function deleteTag(id: number): Promise<void> {
-  await apiFetch<void>(`/tags/${id}`, { method: "DELETE" });
+  await apiFetch<void>(`/tag/${id}`, { method: "DELETE" });
 }
 
 // ---------------------------------------------------------------------------
@@ -221,7 +220,7 @@ export async function deleteTag(id: number): Promise<void> {
  * const types = await getTagTypes();
  */
 export async function getTagTypes(): Promise<TagType[]> {
-  return await apiFetch<TagType[]>("/tags/type");
+  return await apiFetch<TagType[]>("/tag/type");
 }
 
 /**
@@ -231,7 +230,7 @@ export async function getTagTypes(): Promise<TagType[]> {
  * @throws {ApiError} 404 — tag type not found.
  */
 export async function getTagType(id: number): Promise<TagType> {
-  return await apiFetch<TagType>(`/tags/type/${id}`);
+  return await apiFetch<TagType>(`/tag/type/${id}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -246,7 +245,7 @@ export async function getTagType(id: number): Promise<TagType> {
  * @throws {ApiError} 404 — tag type not found.
  */
 export async function getTagTypeWithMeta(id: number): Promise<TagTypeWithMeta> {
-  return await apiFetch<TagTypeWithMeta>(`/tags/type/${id}/meta`);
+  return await apiFetch<TagTypeWithMeta>(`/tag/type/${id}/meta`);
 }
 
 /**
@@ -263,7 +262,7 @@ export async function getTagTypeWithMeta(id: number): Promise<TagTypeWithMeta> {
 export async function createTagType(
   data: CreateTagTypeInput,
 ): Promise<TagType> {
-  return await apiFetch<TagType>("/tags/type", { method: "POST", body: data });
+  return await apiFetch<TagType>("/tag/type", { method: "POST", body: data });
 }
 
 /**
@@ -278,7 +277,7 @@ export async function replaceTagType(
   id: number,
   data: ReplaceTagTypeInput,
 ): Promise<TagType> {
-  return await apiFetch<TagType>(`/tags/type/${id}`, { method: "PUT", body: data });
+  return await apiFetch<TagType>(`/tag/type/${id}`, { method: "PUT", body: data });
 }
 
 /**
@@ -293,7 +292,7 @@ export async function updateTagType(
   id: number,
   data: UpdateTagTypeInput,
 ): Promise<TagType> {
-  return await apiFetch<TagType>(`/tags/type/${id}`, { method: "PATCH", body: data });
+  return await apiFetch<TagType>(`/tag/type/${id}`, { method: "PATCH", body: data });
 }
 
 /**
@@ -304,5 +303,5 @@ export async function updateTagType(
  * @throws {ApiError} 404 — tag type not found.
  */
 export async function deleteTagType(id: number): Promise<void> {
-  await apiFetch<void>(`/tags/type/${id}`, { method: "DELETE" });
+  await apiFetch<void>(`/tag/type/${id}`, { method: "DELETE" });
 }

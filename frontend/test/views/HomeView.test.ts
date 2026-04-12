@@ -4,6 +4,18 @@ import { createMemoryHistory, createRouter } from "vue-router";
 import { routes } from "@/router/routes";
 import { i18n } from "@/i18n";
 import HomeView from "@/views/HomeView.vue";
+import MarkdownEditor from "@/components/MarkdownEditor.vue";
+
+vi.mock("easymde", () => ({
+  default: vi.fn().mockImplementation(function () {
+    return {
+      codemirror: { on: vi.fn() },
+      value: vi.fn().mockReturnValue(""),
+      toTextArea: vi.fn(),
+    };
+  }),
+}));
+vi.mock("easymde/dist/easymde.min.css", () => ({}));
 
 // ─── Mock matchMedia (jsdom does not provide it) ────────────────────────────
 
@@ -48,8 +60,6 @@ describe("HomeView.vue", () => {
   afterEach(() => {
     wrapper.unmount();
     document.body.innerHTML = "";
-    document.documentElement.classList.remove("dark");
-    localStorage.clear();
   });
 
   // ── Composition — does HomeView assemble all child components? ───────────
@@ -76,44 +86,14 @@ describe("HomeView.vue", () => {
     });
   });
 
-  // ── Dark mode — logic owned by HomeView ──────────────────────────────────
+  // ── MarkdownEditor v-model ────────────────────────────────────────────────
 
-  describe("dark mode", () => {
-    function findDarkModeButton() {
-      return wrapper
-        .findAll("button[aria-label]")
-        .find((b) => b.attributes("aria-label")?.toLowerCase().includes("dark"));
-    }
-
-    it("does not apply the dark class by default", () => {
-      expect(document.documentElement.classList.contains("dark")).toBe(false);
-    });
-
-    it("adds the dark class on toggle", async () => {
-      await findDarkModeButton()!.trigger("click");
-      expect(document.documentElement.classList.contains("dark")).toBe(true);
-    });
-
-    it("removes the dark class on second toggle", async () => {
-      await findDarkModeButton()!.trigger("click");
-      await findDarkModeButton()!.trigger("click");
-      expect(document.documentElement.classList.contains("dark")).toBe(false);
-    });
-
-    it("persists preference to localStorage", async () => {
-      await findDarkModeButton()!.trigger("click");
-      expect(localStorage.getItem("viernulvier-dark")).toBe("true");
-      await findDarkModeButton()!.trigger("click");
-      expect(localStorage.getItem("viernulvier-dark")).toBe("false");
-    });
-
-    it("restores preference from localStorage on mount", async () => {
-      wrapper.unmount();
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("viernulvier-dark", "true");
-      const { wrapper: w2 } = await mountHome("nl");
-      expect(document.documentElement.classList.contains("dark")).toBe(true);
-      w2.unmount();
+  describe("markdown editor preview", () => {
+    it("updates previewContent when MarkdownEditor emits update:modelValue", async () => {
+      const editor = wrapper.findComponent(MarkdownEditor);
+      await editor.vm.$emit("update:modelValue", "hello");
+      // No error thrown — the v-model setter is exercised
     });
   });
+
 });

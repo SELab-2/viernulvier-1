@@ -143,7 +143,7 @@ describe("Event Create Routes", () => {
       const response = await server.inject({
         method: "POST",
         url: "/api/v1/event",
-        payload: buildPayload(42),
+        payload: buildPayload(),
         cookies: { session: sessionCookie },
       });
 

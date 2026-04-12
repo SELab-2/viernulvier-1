@@ -8,9 +8,9 @@ import { foreignKey, languageMap, primaryKey, ForeignKey } from "./helpers.js";
 export const EventSchemaWithoutPrice = createSchema({
   id: primaryKey(),
   old_id: z.int().nonnegative().nullable(),
-  starts_at: z.date(),
-  ends_at: z.date().nullish(),
-  doors_at: z.date().nullish(),
+  starts_at: z.coerce.date(),
+  ends_at: z.coerce.date().nullish(),
+  doors_at: z.coerce.date().nullish(),
   info: languageMap.nullish(),
   get production(): ForeignKey<typeof ProductionSchema> {
     return foreignKey(() => ProductionSchema);
@@ -23,7 +23,7 @@ export const EventSchemaWithoutPrice = createSchema({
   // vendor_id: z.int().nonnegative(),
   // box_office_id: z.int().nonnegative(),
   // status: languageMap,
-  // intermission_at: z.date().nullable(),
+  // intermission_at: z.coerce.date().nullable(),
   // max_tickets_per_order: z.int().positive().nullable(),
   // uitdatabank_id: z.string().nullable(),
   // secure: z.boolean().nullable(),
@@ -55,7 +55,7 @@ export const EventPriceSchema = createSchema({
   // box_office_id: z.int().nonnegative(),
   // available: z.int().nonnegative(),
   // contingent_id: z.int().nonnegative().nullable(),
-  // expires_at: z.date().nullable(),
+  // expires_at: z.coerce.date().nullable(),
   // price: z.json(),
   // rank: z.json(),
 });

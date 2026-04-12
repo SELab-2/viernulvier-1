@@ -12,17 +12,37 @@ const mockCreatedAdmin: Admin = {
   id: 404,
   username: mockUsername,
   profile_picture: null,
+  super: true,
 };
+
+const mockEditedUsername = "Freddy";
+const mockEditedPassword = "ILoveKarel<3";
 
 beforeAll(async () => {
   server = await buildServer();
-  sessionCookie = server.jwt.sign({ id: 404, username: "Karel" });
+  sessionCookie = server.jwt.sign({ id: 404, username: mockUsername, super: true });
 
-  server.pg.query = vi.fn().mockImplementation((query: string) => {
+  server.pg.query = vi.fn().mockImplementation((query: string, values: unknown[]) => {
     const isUpdate = query.trim().toUpperCase().startsWith("UPDATE");
 
     if (isUpdate) {
-      return Promise.resolve({ rows: [mockCreatedAdmin], rowCount: 1 });
+      const row = { ...mockCreatedAdmin };
+
+      const setClause = query.match(/SET\s+([\s\S]+?)\s+WHERE/i)?.[1] ?? "";
+      const assignments = setClause.split(",").map(s => s.trim());
+
+      for (const assignment of assignments) {
+        const match = assignment.match(/^(\w+)\s*=\s*\$(\d+)/i);
+        if (!match) continue;
+
+        const [, field, indexStr] = match;
+        const value = values[parseInt(indexStr!) - 1];
+
+        if (field === "username") row.username = value as string;
+        if (field === "super") row.super = value as boolean;
+      }
+
+      return Promise.resolve({ rows: [row], rowCount: 1 });
     }
 
     return Promise.resolve({ rows: [], rowCount: 0 });
@@ -39,11 +59,46 @@ describe("Replace on auth route", () => {
       method: "PUT",
       url: `/api/v1/auth/${mockCreatedAdmin.id}`,
       cookies: { session: sessionCookie },
-      payload: { username: mockUsername, password: mockPassword },
+      payload: { username: mockEditedUsername, password: mockEditedPassword, super: false },
     });
 
     expect(response.statusCode).toBe(200);
-    expect(AdminSchema.parse(response.json())).toEqual(mockCreatedAdmin);
+    expect(AdminSchema.parse(response.json())).toEqual({
+      id: mockCreatedAdmin.id,
+      username: mockEditedUsername,
+      profile_picture: mockCreatedAdmin.profile_picture,
+      super: false,
+    });
+  });
+
+  test("PUT /api/v1/auth/:id — replaces with new username only leaves other fields unchanged", async () => {
+    const response = await server.inject({
+      method: "PUT",
+      url: `/api/v1/auth/${mockCreatedAdmin.id}`,
+      cookies: { session: sessionCookie },
+      payload: { username: mockEditedUsername, password: mockPassword, super: mockCreatedAdmin.super },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(AdminSchema.parse(response.json())).toEqual({
+      id: mockCreatedAdmin.id,
+      username: mockEditedUsername,
+      profile_picture: mockCreatedAdmin.profile_picture,
+      super: mockCreatedAdmin.super,
+    });
+  });
+
+  test("PUT /api/v1/auth/:id — returns 400 when not all fields are provided", async () => {
+    server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
+
+    const response = await server.inject({
+      method: "PUT",
+      url: `/api/v1/auth/${mockCreatedAdmin.id}`,
+      cookies: { session: sessionCookie },
+      payload: { username: mockEditedUsername, password: mockEditedPassword },
+    });
+
+    expect(response.statusCode).toBe(400);
   });
 
   test("PUT /api/v1/auth/:id — returns 404 when update returns no rows", async () => {
@@ -53,7 +108,7 @@ describe("Replace on auth route", () => {
       method: "PUT",
       url: `/api/v1/auth/${mockCreatedAdmin.id}`,
       cookies: { session: sessionCookie },
-      payload: { username: mockUsername, password: mockPassword },
+      payload: { username: mockEditedUsername, password: mockEditedPassword, super: false },
     });
 
     expect(response.statusCode).toBe(404);
