@@ -56,6 +56,7 @@ export async function fetchEventWithMeta(
 
 const EventsListQuerySchema = z.object({
   production: stringToInt.optional(),
+  old_id: stringToInt.optional(),
 });
 
 const fetchEventsAllQuery = (server: FastifyInstance) =>
@@ -78,19 +79,30 @@ const fetchEventsByProductionQuery = (server: FastifyInstance) =>
     EventSchema,
   );
 
+const fetchEventsByOldIdQuery = (server: FastifyInstance) =>
+  buildQuery(
+    server,
+    `SELECT id, old_id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}
+     FROM event
+     WHERE old_id = $1
+     ORDER BY starts_at`,
+    z.tuple([z.int()]),
+    EventSchema,
+  );
+
 /**
- * Fetches events, optionally filtered by a production ID.
+ * Fetches events, optionally filtered by a production ID or old_id.
  * Returns an empty array when parsing fails.
  *
  * @param server - The Fastify instance, used for database access and logging.
- * @param request - The Fastify request, can include query parameter `old_id` to filter events.
+ * @param request - The Fastify request, can include query parameters `production` or `old_id` to filter events.
  * @returns An array of parsed events.
  */
 export async function fetchEvents(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Event[]> {
-  const { production } = parseSchema(
+  const { production, old_id } = parseSchema(
     server,
     EventsListQuerySchema,
     request.query,
@@ -99,7 +111,9 @@ export async function fetchEvents(
   const result =
     production !== undefined
       ? await fetchEventsByProductionQuery(server)(production)
-      : await fetchEventsAllQuery(server)();
+      : old_id !== undefined
+        ? await fetchEventsByOldIdQuery(server)(old_id)
+        : await fetchEventsAllQuery(server)();
 
   return result;
 }
