@@ -101,7 +101,7 @@ export class HttpError extends Error {
 }
 
 export class ValidationError extends HttpError {
-  constructor(public details: z.ZodIssue[]) {
+  constructor(public details: z.core.$ZodIssue[]) {
     super(HttpClientError.BadRequest, "Invalid request data");
     this.name = "ValidationError";
   }
