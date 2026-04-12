@@ -18,7 +18,7 @@
     
     <!-- Center: logo -->
     <RouterLink :to="{ name: RouteNames.ADMIN, params: { lang: currentLang } }" class="brand">
-      <img src="@/assets/logo.svg" alt="VierNulVier" width="80" height="25" class="logo" />
+      <img src="@/assets/images/logo.svg" alt="VierNulVier" width="80" height="25" class="logo" />
       <span class="brand-divider" />
       <span class="brand-label">Admin</span>
     </RouterLink>
@@ -86,7 +86,7 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 <style scoped>
 @reference "@/style.css";
 
-.brand { @apply flex min-w-[140px] items-center gap-3 no-underline absolute left-1/2 -translate-x-1/2; }
+.brand { @apply flex min-w-[140px] items-end gap-3 no-underline absolute left-1/2 -translate-x-1/2; }
 .logo { @apply h-6 w-auto; }
 .brand-divider { @apply block h-4 w-px bg-surface-inv-border; }
 .brand-label { @apply text-xs font-semibold uppercase tracking-widest text-ink-on-inv-tertiary; }

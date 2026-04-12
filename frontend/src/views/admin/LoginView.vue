@@ -11,7 +11,7 @@
       <!-- Header mark -->
       <div class="login-header">
         <img
-          src="@/assets/logo.svg"
+          src="@/assets/images/logo.svg"
           alt="VierNulVier"
           width="120"
           height="38"
