@@ -1,4 +1,6 @@
-import { scrapeAllEvents } from "scripts/scraper/event.js";
+import { scrapeAllEvents } from "./event.js";
+//import { scrapeAllHalls } from "./hall.js";
+
 
 const authToken = process.env["VIERNULVIER_API_TOKEN"];
 if (!authToken) {

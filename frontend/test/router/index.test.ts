@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { type Router } from "vue-router";
 import { RouteNames } from "@/router/routeNames";
 import { i18n } from "@/i18n";
+import { createPinia, setActivePinia } from "pinia";
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 //
@@ -17,12 +18,25 @@ async function navigate(router: Router, path: string) {
   await router.isReady();
 }
 
+// mock the auth service so no real API calls are made
+vi.mock("@/services/auth", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/services/auth")>();
+  return {
+    ...actual,
+    getCurrentlyLoggedInAdmin: vi.fn().mockRejectedValue(
+      new actual.ApiError(401, "Unauthorized"),
+    ),
+  };
+});
+
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe("router/index.ts — navigation guard", () => {
   let router: Router;
 
   beforeEach(async () => {
+    setActivePinia(createPinia());
+    
     // Import the real router so the beforeEach guard is registered
     const mod = await import("@/router/index");
     router = mod.router;
@@ -89,18 +103,48 @@ describe("router/index.ts — navigation guard", () => {
   describe("admin guard", () => {
     it("redirects non-admin users away from the CMS route", async () => {
       await navigate(router, "/nl/admin/cms");
-      // checkUserIsAdmin() is hardcoded to false, so should redirect to /nl
-      expect(router.currentRoute.value.path).toBe("/nl");
+      expect(router.currentRoute.value.name).toBe(RouteNames.LOGIN);
+      // has a redirect parameter
+      expect(router.currentRoute.value.query.redirect).toBe("/nl/admin/cms");
     });
 
-    it("redirects to the correct language home when blocking admin access", async () => {
-      await navigate(router, "/fr/admin/cms");
-      expect(router.currentRoute.value.path).toBe("/fr");
+    it("redirects to the correct language when blocking admin access", async () => {
+      await navigate(router, "/fr/admin");
+      expect(router.currentRoute.value.params.lang).toBe("fr");
     });
 
     it("does not redirect regular routes for non-admin users", async () => {
       await navigate(router, "/nl/productions");
       expect(router.currentRoute.value.name).toBe(RouteNames.PRODUCTIONS);
+    });
+
+    it("allows admin users to access the CMS route", async () => {
+      const { getCurrentlyLoggedInAdmin } = await import("@/services/auth");
+      vi.mocked(getCurrentlyLoggedInAdmin).mockResolvedValueOnce({
+        id: 1,
+        username: "admin",
+        super: true,
+        profile_picture: null,
+      });
+
+      await navigate(router, "/nl/admin/cms");
+      expect(router.currentRoute.value.name).toBe(RouteNames.CMS);
+    });
+
+    it("rethrows non-authorization errors", async () => {
+      // Without an onError handler, vue-router logs warn + console.error in dev;
+      // that pollutes test output. Subscribing silences those while push() still rejects.
+      const removeErrorHandler = router.onError(() => {});
+      try {
+        const { getCurrentlyLoggedInAdmin } = await import("@/services/auth");
+        vi.mocked(getCurrentlyLoggedInAdmin).mockRejectedValueOnce(
+          new Error("Network error"),
+        );
+
+        await expect(navigate(router, "/nl/admin")).rejects.toThrow("Network error");
+      } finally {
+        removeErrorHandler();
+      }
     });
   });
 });

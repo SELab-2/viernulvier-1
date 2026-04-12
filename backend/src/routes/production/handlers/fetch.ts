@@ -1,7 +1,10 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { QueryResult } from "pg";
 import type {ProductionWithBackwardsRefs, ProductionWithMeta} from "@viernulvier/shared/index.js";
 import {ProductionSchema, ProductionSchemaWithBackwardsRefs, stringToInt} from "@viernulvier/shared/index.js";
 import { parseParams, parseSchema, ParseContext } from "@/routes/helpers.js";
+import { ProductionListQuerySchema } from "../helpers/pagination.js";
+import { productionListSearchClause } from "../helpers/search.js";
 import z from "zod";
 
 const ProductionSelect = `
@@ -128,21 +131,69 @@ export async function fetchProductionWithMeta(
   return parseSchema(server, z.array(ProductionSchema.withMeta()), result.rows, ParseContext.Database)[0] ?? null;
 }
 
+export type PaginatedProductions = {
+  items: ProductionWithBackwardsRefs[];
+  total: number;
+};
+
 /**
  * Fetches a list of productions.
  *
+ * - Without `limit`: returns every production (same ordering as before), as `{ items, total }`.
+ * - With `limit`: returns a page `{ items, total }` where `total` is the matching row count.
+ * - Optional `search`: comma-separated terms (`search=a,b`), AND semantics; each term is a
+ *   case-insensitive substring on title, artist, tagline, teaser, description, and hall names.
+ *   Repeating the `search` key is still accepted for older clients.
+ *
  * @param server - The Fastify instance, used for database access and logging.
- * @param _request - The Fastify request (currently unused, reserved for future filters).
- * @returns The list of productions, or `null` if parsing failed.
+ * @param request - The Fastify request; optional `limit`, `offset`, and `search` query params.
+ * @returns The list of productions as `{ items, total }`; throws if parsing failed.
  */
 export async function fetchProductions(
   server: FastifyInstance,
-  _request: FastifyRequest,
-): Promise<ProductionWithBackwardsRefs[] | null> {
-  const result = await server.pg.query<ProductionWithBackwardsRefs>(
-    `${ProductionSelect} ORDER BY p.id ASC`,
+  request: FastifyRequest,
+): Promise<PaginatedProductions> {
+  const query = parseSchema(
+    server,
+    ProductionListQuerySchema,
+    request.query,
+    ParseContext.Request,
   );
+  const limit = query.limit;
+  const offset = query.offset ?? 0;
+  const searchTerms = query.search ?? [];
+  const { sql: whereSql, params: searchParams } = productionListSearchClause(searchTerms);
 
-  return parseSchema(server, z.array(ProductionSchemaWithBackwardsRefs), result.rows, ParseContext.Database);
+  let result: QueryResult<ProductionWithBackwardsRefs>;
+  let total: number;
+
+  if (limit === undefined) {
+    result = await server.pg.query<ProductionWithBackwardsRefs>(
+      `${ProductionSelect}${whereSql} ORDER BY p.id ASC`,
+      searchParams,
+    );
+    total = result.rows.length;
+  } else {
+    const countResult = await server.pg.query<{ count: number }>(
+      `SELECT COUNT(*)::int AS count FROM production p${whereSql}`,
+      searchParams,
+    );
+    total = countResult.rows[0]?.count ?? 0;
+
+    const listParams = [...searchParams, limit, offset];
+    const limitIdx = searchParams.length + 1;
+    const offsetIdx = searchParams.length + 2;
+    result = await server.pg.query<ProductionWithBackwardsRefs>(
+      `${ProductionSelect}${whereSql} ORDER BY p.id ASC LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+      listParams,
+    );
+  }
+
+  const items = parseSchema(
+    server,
+    z.array(ProductionSchemaWithBackwardsRefs),
+    result.rows,
+    ParseContext.Database,
+  );
+  return { items, total };
 }
-

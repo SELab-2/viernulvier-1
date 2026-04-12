@@ -12,13 +12,13 @@ let shouldRejectQuery = false;
 let sessionCookie: string;
 
 const basePayload = {
-  old_id: 111,
   starts_at: "2026-01-01T18:00:00.000Z",
   ends_at: "2026-01-01T20:00:00.000Z",
   production: 10,
   hall: 3,
   doors_at: "2026-01-01T17:30:00.000Z",
   info: { nl: "Info mock create" },
+  old_id: 12345,
 };
 
 function buildPayload() {
@@ -142,7 +142,7 @@ describe("Event Create Routes", () => {
       const response = await server.inject({
         method: "POST",
         url: "/api/v1/event",
-        payload: buildPayload(42),
+        payload: buildPayload(),
         cookies: { session: sessionCookie },
       });
 
@@ -157,6 +157,32 @@ describe("Event Create Routes", () => {
       expect(params[1]).toBeInstanceOf(Date);
       expect(params[2]).toBeInstanceOf(Date);
       expect(params[5]).toBeInstanceOf(Date);
+    });
+
+    test("creates event with optional date fields as undefined", async () => {
+      const payload = {
+        ...buildPayload(),
+        ends_at: undefined,
+        doors_at: undefined,
+        info: undefined,
+      };
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/v1/event",
+        payload,
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual({
+        id: 2,
+        ...basePayload,
+        ends_at: undefined,
+        doors_at: undefined,
+        info: undefined,
+        price: [],
+      });
+      expect(queryMock).toHaveBeenCalledOnce();
     });
   });
 });

@@ -27,7 +27,7 @@ afterAll(async () => {
 });
 
 describe("Delete tag", () => {
-  test("DELETE /api/v1/tags/:id", async () => {
+  test("DELETE /api/v1/tag/:id", async () => {
     server.pg.query = vi.fn().mockResolvedValue({
       rows: [mockTag],
       rowCount: 1,
@@ -36,7 +36,7 @@ describe("Delete tag", () => {
     const response = await server.inject({
       method: "DELETE",
       cookies: { session: sessionCookie },
-      url: `/api/v1/tags/${mockTag.id}`,
+      url: `/api/v1/tag/${mockTag.id}`,
     });
 
     expect(response.statusCode).toBe(200);
@@ -52,7 +52,7 @@ describe("Delete tag", () => {
     const response = await server.inject({
       method: "DELETE",
       cookies: { session: sessionCookie },
-      url: `/api/v1/tags/${mockTag.id}`,
+      url: `/api/v1/tag/${mockTag.id}`,
     });
 
     expect(response.statusCode).toBe(404);
