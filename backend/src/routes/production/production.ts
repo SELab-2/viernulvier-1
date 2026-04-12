@@ -38,4 +38,3 @@ export default function productionRoutes(server: FastifyInstance) {
   server.patch("/api/v1/production/bulk", protect, replyHandler(server, bulkEditProductions));
   server.delete("/api/v1/production/:id", protect, replyHandler(server, deleteProduction));
 }
-
