@@ -194,7 +194,7 @@ export async function scrapeAllEvents(
 
 async function voorbeeldFunctie(_oldId: number): Promise<number> {
   // To Implement: fetch the old production ID based on the old API data
-  return Number.MAX_SAFE_INTEGER; // return a dummy value for now, to avoid foreign key constraint errors
+  return 1; // return a dummy value for now, to avoid foreign key constraint errors
 }
 
 async function dummyfunction(_prices: number[], _eventId: number, _authToken: string, _loginToken: string) {
