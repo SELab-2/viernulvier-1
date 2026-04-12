@@ -991,6 +991,16 @@ onMounted(async () => {
     filterDateFrom.value = initialRange.from;
     filterDateTo.value = initialRange.to;
   }
+  /** Year span and calendar period are mutually exclusive; keep dates if URL had both. */
+  let syncRouteAfterExclusiveTimeFilter = false;
+  if (
+    explicitYearRange.value !== null &&
+    filterDateFrom.value &&
+    filterDateTo.value
+  ) {
+    explicitYearRange.value = null;
+    syncRouteAfterExclusiveTimeFilter = true;
+  }
   const requestedOneBased = readPageOneBasedFromRoute();
   let page0 = Math.max(0, requestedOneBased - 1);
   try {
@@ -1033,7 +1043,7 @@ onMounted(async () => {
     hallsById.value = hallMapById(halls);
     eventsByProduction.value = groupEventsByProductionId(events);
 
-    if (urlNeedsSyncForPage0(page0)) {
+    if (syncRouteAfterExclusiveTimeFilter || urlNeedsSyncForPage0(page0)) {
       await replaceRouteForPage0(page0);
     }
   } catch (err) {

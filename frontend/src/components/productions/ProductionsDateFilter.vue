@@ -167,6 +167,25 @@ const yearRange = defineModel<YearSpan | null>("yearRange", { required: true });
 const dateFrom = defineModel<string | null>("dateFrom", { required: true });
 const dateTo = defineModel<string | null>("dateTo", { required: true });
 
+/** Calendar period vs year span are mutually exclusive (also catches v-model updates `@change` can miss). */
+watch(
+  () => [dateFrom.value, dateTo.value] as const,
+  ([from, to]) => {
+    if (from && to) yearRange.value = null;
+  },
+);
+
+watch(
+  yearRange,
+  (yr) => {
+    if (yr !== null) {
+      dateFrom.value = null;
+      dateTo.value = null;
+    }
+  },
+  { immediate: true },
+);
+
 const { t } = useI18n();
 const dateFilterRoot = ref<HTMLElement | null>(null);
 const yearTrackRef = ref<HTMLElement | null>(null);
