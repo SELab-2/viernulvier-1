@@ -40,10 +40,10 @@ const mockInvalidEvent: EventWithoutPrice = {
 };
 
 const mockEventPrices: EventPrice[] = [
-  { id: 1, event: 1, amount: 25.50, old_id: 54321 },
-  { id: 2, event: 2, amount: 30.00, old_id: 54322 },
-  { id: 3, event: 3, amount: 22.75, old_id: 54323 },
-  { id: 4, event: 1, amount: 15.00, old_id: 54324 },
+  { id: 1, event: 1, amount: 25.50},
+  { id: 2, event: 2, amount: 30.00},
+  { id: 3, event: 3, amount: 22.75},
+  { id: 4, event: 1, amount: 15.00},
 ];
 
 beforeAll(async () => {
@@ -123,8 +123,8 @@ describe("Event Fetch Routes", () => {
         ...baseMockEvent,
         price: storedEventPrices.filter(p => p["event"] === mockEvents[0]!.id).map(p => p.id),
         starts_at: baseMockEvent.starts_at.toISOString(),
-        ends_at: baseMockEvent.ends_at.toISOString(),
-        doors_at: baseMockEvent.doors_at.toISOString(),
+        ends_at: baseMockEvent.ends_at?.toISOString(),
+        doors_at: baseMockEvent.doors_at?.toISOString(),
       });
     });
 
@@ -172,22 +172,22 @@ describe("Event Fetch Routes", () => {
           ...mockEvents[0],
           price: storedEventPrices.filter(p => p["event"] === mockEvents[0]!.id).map(p => p.id),
           starts_at: mockEvents[0]!.starts_at.toISOString(),
-          ends_at: mockEvents[0]!.ends_at.toISOString(),
-          doors_at: mockEvents[0]!.doors_at.toISOString(),
+          ends_at: mockEvents[0]!.ends_at?.toISOString(),
+          doors_at: mockEvents[0]!.doors_at?.toISOString(),
         },
         {
           ...mockEvents[1],
           price: storedEventPrices.filter(p => p["event"] === mockEvents[1]!.id).map(p => p.id),
           starts_at: mockEvents[1]!.starts_at.toISOString(),
-          ends_at: mockEvents[1]!.ends_at.toISOString(),
-          doors_at: mockEvents[1]!.doors_at.toISOString(),
+          ends_at: mockEvents[1]!.ends_at?.toISOString(),
+          doors_at: mockEvents[1]!.doors_at?.toISOString(),
         },
         {
           ...mockEvents[2],
           price: storedEventPrices.filter(p => p["event"] === mockEvents[2]!.id).map(p => p.id),
           starts_at: mockEvents[2]!.starts_at.toISOString(),
-          ends_at: mockEvents[2]!.ends_at.toISOString(),
-          doors_at: mockEvents[2]!.doors_at.toISOString(),
+          ends_at: mockEvents[2]!.ends_at?.toISOString(),
+          doors_at: mockEvents[2]!.doors_at?.toISOString(),
         },
       ]);
     });
@@ -203,8 +203,8 @@ describe("Event Fetch Routes", () => {
         ...mockEvents[1],
         price: storedEventPrices.filter(p => p["event"] === mockEvents[1]!.id).map(p => p.id),
         starts_at: mockEvents[1]!.starts_at.toISOString(),
-        ends_at: mockEvents[1]!.ends_at.toISOString(),
-        doors_at: mockEvents[1]!.doors_at.toISOString(),
+        ends_at: mockEvents[1]!.ends_at?.toISOString(),
+        doors_at: mockEvents[1]!.doors_at?.toISOString(),
       }]);
     });
 
@@ -253,8 +253,8 @@ describe("Event Fetch Routes", () => {
         updated_by: metaData.updated_by,
         price: storedEventPrices.filter(p => p["event"] === mockEvents[0]!.id).map(p => p.id),
         starts_at: baseMockEvent.starts_at.toISOString(),
-        ends_at: baseMockEvent.ends_at.toISOString(),
-        doors_at: baseMockEvent.doors_at.toISOString(),
+        ends_at: baseMockEvent.ends_at?.toISOString(),
+        doors_at: baseMockEvent.doors_at?.toISOString(),
       });
     });
 

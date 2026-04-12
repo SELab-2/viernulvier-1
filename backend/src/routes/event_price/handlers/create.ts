@@ -8,13 +8,11 @@ import { EventPriceCreateSchema } from "./helper.js";
 import type { EventPriceCreate } from "./helper.js";
 
 /**
- * Creates a new event price row in the database.
- * Helpers returns a 400 response when the request body is invalid.
+ * Creates a new event price and returns the created record.
  *
  * @param server - The Fastify instance, used for database access and logging.
- * @param request - The Fastify request containing the event payload.
- * @param reply - The Fastify reply used to send HTTP error responses.
- * @returns The created event or `null` upon failure.
+ * @param request - The Fastify request, expected to contain `event` and `amount` in the body.
+ * @returns The created event price, or `null` if the insert failed or parsing failed.
  */
 export async function createEventPrice(
   server: FastifyInstance,
@@ -28,7 +26,7 @@ export async function createEventPrice(
     server,
     `INSERT INTO event_price (event, amount, created_at, updated_at, created_by, updated_by)
       VALUES ($1, $2, $3, $3, $4, $4)
-      RETURNING id, event, amount`,
+      RETURNING id, event, amount::float`,
     z.tuple([
       EventPriceCreateSchema.shape.event,
       EventPriceCreateSchema.shape.amount,

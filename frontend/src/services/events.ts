@@ -19,7 +19,7 @@
 
 import type { Event, EventWithMeta } from "@viernulvier/shared";
 import { apiFetch } from "./api";
-import type { LanguageMap } from "../utils/i18n";
+import type { LanguageMap } from "@/utils/i18n";
 
 // ---------------------------------------------------------------------------
 // Input types
@@ -63,16 +63,26 @@ export type UpdateEventInput = Partial<CreateEventInput>;
 // ---------------------------------------------------------------------------
 
 /**
- * Fetches all events (public — no session required).
+ * Fetches all events, optionally filtered by production ID (public — no session required).
  *
+ * @param production Optional production ID to filter events by.
  * @returns Array of events, each including a reference to its production,
  *          hall, and price tiers.
  *
  * @example
- * const events = await getEvents();
+ * // Fetch all events
+ * const allEvents = await getEvents();
+ *
+ * // Fetch events for a specific production
+ * const productionEvents = await getEvents(42);
  */
-export async function getEvents(): Promise<Event[]> {
-  return await apiFetch<Event[]>("/event");
+export async function getEvents(production?: number): Promise<Event[]> {
+  const params = new URLSearchParams();
+  if (production !== undefined) {
+    params.append("production", production.toString());
+  }
+  const url = params.toString() ? `/event?${params.toString()}` : "/event";
+  return await apiFetch<Event[]>(url);
 }
 
 /**

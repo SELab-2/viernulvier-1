@@ -7,8 +7,8 @@ let server: FastifyInstance;
 let sessionCookie: string;
 
 const mockAdmins = [
-  { id: 404, username: "Karel", profile_picture: null },
-  { id: 405, username: "Stagaire", profile_picture: null },
+  { id: 404, username: "Karel", profile_picture: null, super: true },
+  { id: 405, username: "Stagaire", profile_picture: null, super: false },
 ];
 
 const mockTime = new Date();
@@ -23,7 +23,7 @@ const mockAdminsWithMeta = mockAdmins.map((admin) => ({
 
 beforeAll(async () => {
   server = await buildServer();
-  sessionCookie = server.jwt.sign({ id: 404, username: "Karel" });
+  sessionCookie = server.jwt.sign({ id: 404, username: "Karel", super: true });
 });
 
 beforeEach(async () => {

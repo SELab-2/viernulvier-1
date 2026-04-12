@@ -39,7 +39,7 @@ function lastCall(): [string, RequestInit] {
   return calls[calls.length - 1]!;
 }
 
-const tagPayload = { id: 1, name: { nl: "Drama" }, type: 1, public: true };
+const tagPayload = { id: 1, name: { nl: "Drama" }, tag_type: 1, public: true };
 const tagTypePayload = { id: 1, name: { nl: "Genre" } };
 
 // ---------------------------------------------------------------------------
@@ -50,73 +50,85 @@ beforeEach(() => vi.stubGlobal("fetch", mockOk(tagPayload)));
 afterEach(() => vi.unstubAllGlobals());
 
 describe("getTags", () => {
-  it("GETs /api/v1/tags", async () => {
+  it("GETs /api/v1/tag", async () => {
     vi.stubGlobal("fetch", mockOk([tagPayload]));
     await getTags();
-    expect(lastCall()[0]).toBe("/api/v1/tags");
+    expect(lastCall()[0]).toBe("/api/v1/tag");
+  });
+
+  it("GETs /api/v1/tag?production=:id when filtered", async () => {
+    vi.stubGlobal("fetch", mockOk([tagPayload]));
+    await getTags(42);
+    expect(lastCall()[0]).toBe("/api/v1/tag?production=42");
   });
 });
 
 describe("getTag", () => {
-  it("GETs /api/v1/tags/:id", async () => {
+  it("GETs /api/v1/tag/:id", async () => {
     await getTag(1);
-    expect(lastCall()[0]).toBe("/api/v1/tags/1");
+    expect(lastCall()[0]).toBe("/api/v1/tag/1");
   });
 });
 
 describe("getAllTags", () => {
-  it("GETs /api/v1/tags/all", async () => {
+  it("GETs /api/v1/tag/all", async () => {
     vi.stubGlobal("fetch", mockOk([tagPayload]));
     await getAllTags();
-    expect(lastCall()[0]).toBe("/api/v1/tags/all");
+    expect(lastCall()[0]).toBe("/api/v1/tag/all");
+  });
+
+  it("GETs /api/v1/tag/all?production=:id when filtered", async () => {
+    vi.stubGlobal("fetch", mockOk([tagPayload]));
+    await getAllTags(42);
+    expect(lastCall()[0]).toBe("/api/v1/tag/all?production=42");
   });
 });
 
 describe("getTagAdmin", () => {
-  it("GETs /api/v1/tags/:id/all", async () => {
+  it("GETs /api/v1/tag/:id/all", async () => {
     await getTagAdmin(1);
-    expect(lastCall()[0]).toBe("/api/v1/tags/1/all");
+    expect(lastCall()[0]).toBe("/api/v1/tag/1/all");
   });
 });
 
 describe("getTagWithMeta", () => {
-  it("GETs /api/v1/tags/:id/meta", async () => {
+  it("GETs /api/v1/tag/:id/meta", async () => {
     await getTagWithMeta(1);
-    expect(lastCall()[0]).toBe("/api/v1/tags/1/meta");
+    expect(lastCall()[0]).toBe("/api/v1/tag/1/meta");
   });
 });
 
 describe("createTag", () => {
-  it("POSTs to /api/v1/tags", async () => {
-    const input = { name: { nl: "Drama" }, type: 1, public: true };
+  it("POSTs to /api/v1/tag", async () => {
+    const input = { name: { nl: "Drama" }, tag_type: 1, public: true };
     await createTag(input);
-    expect(lastCall()[0]).toBe("/api/v1/tags");
+    expect(lastCall()[0]).toBe("/api/v1/tag");
     expect(lastCall()[1].method).toBe("POST");
     expect(lastCall()[1].body).toBe(JSON.stringify(input));
   });
 });
 
 describe("replaceTag", () => {
-  it("PUTs to /api/v1/tags/:id", async () => {
-    await replaceTag(1, { name: { nl: "Komedie" }, type: 1, public: true });
-    expect(lastCall()[0]).toBe("/api/v1/tags/1");
+  it("PUTs to /api/v1/tag/:id", async () => {
+    await replaceTag(1, { name: { nl: "Komedie" }, tag_type: 1, public: true });
+    expect(lastCall()[0]).toBe("/api/v1/tag/1");
     expect(lastCall()[1].method).toBe("PUT");
   });
 });
 
 describe("updateTag", () => {
-  it("PATCHes /api/v1/tags/:id", async () => {
+  it("PATCHes /api/v1/tag/:id", async () => {
     await updateTag(1, { public: false });
-    expect(lastCall()[0]).toBe("/api/v1/tags/1");
+    expect(lastCall()[0]).toBe("/api/v1/tag/1");
     expect(lastCall()[1].method).toBe("PATCH");
   });
 });
 
 describe("deleteTag", () => {
-  it("DELETEs /api/v1/tags/:id", async () => {
+  it("DELETEs /api/v1/tag/:id", async () => {
     vi.stubGlobal("fetch", mockOk({}, 204));
     await deleteTag(1);
-    expect(lastCall()[0]).toBe("/api/v1/tags/1");
+    expect(lastCall()[0]).toBe("/api/v1/tag/1");
     expect(lastCall()[1].method).toBe("DELETE");
   });
 });
@@ -126,63 +138,63 @@ describe("deleteTag", () => {
 // ---------------------------------------------------------------------------
 
 describe("getTagTypes", () => {
-  it("GETs /api/v1/tags/type", async () => {
+  it("GETs /api/v1/tag/type", async () => {
     vi.stubGlobal("fetch", mockOk([tagTypePayload]));
     await getTagTypes();
-    expect(lastCall()[0]).toBe("/api/v1/tags/type");
+    expect(lastCall()[0]).toBe("/api/v1/tag/type");
   });
 });
 
 describe("getTagType", () => {
-  it("GETs /api/v1/tags/type/:id", async () => {
+  it("GETs /api/v1/tag/type/:id", async () => {
     vi.stubGlobal("fetch", mockOk(tagTypePayload));
     await getTagType(1);
-    expect(lastCall()[0]).toBe("/api/v1/tags/type/1");
+    expect(lastCall()[0]).toBe("/api/v1/tag/type/1");
   });
 });
 
 describe("getTagTypeWithMeta", () => {
-  it("GETs /api/v1/tags/type/:id/meta", async () => {
+  it("GETs /api/v1/tag/type/:id/meta", async () => {
     vi.stubGlobal("fetch", mockOk(tagTypePayload));
     await getTagTypeWithMeta(1);
-    expect(lastCall()[0]).toBe("/api/v1/tags/type/1/meta");
+    expect(lastCall()[0]).toBe("/api/v1/tag/type/1/meta");
   });
 });
 
 describe("createTagType", () => {
-  it("POSTs to /api/v1/tags/type", async () => {
+  it("POSTs to /api/v1/tag/type", async () => {
     vi.stubGlobal("fetch", mockOk(tagTypePayload, 201));
     const input = { name: { nl: "Genre" } };
     await createTagType(input);
-    expect(lastCall()[0]).toBe("/api/v1/tags/type");
+    expect(lastCall()[0]).toBe("/api/v1/tag/type");
     expect(lastCall()[1].method).toBe("POST");
     expect(lastCall()[1].body).toBe(JSON.stringify(input));
   });
 });
 
 describe("replaceTagType", () => {
-  it("PUTs to /api/v1/tags/type/:id", async () => {
+  it("PUTs to /api/v1/tag/type/:id", async () => {
     vi.stubGlobal("fetch", mockOk(tagTypePayload));
     await replaceTagType(1, { name: { nl: "Nieuw Genre" } });
-    expect(lastCall()[0]).toBe("/api/v1/tags/type/1");
+    expect(lastCall()[0]).toBe("/api/v1/tag/type/1");
     expect(lastCall()[1].method).toBe("PUT");
   });
 });
 
 describe("updateTagType", () => {
-  it("PATCHes /api/v1/tags/type/:id", async () => {
+  it("PATCHes /api/v1/tag/type/:id", async () => {
     vi.stubGlobal("fetch", mockOk(tagTypePayload));
     await updateTagType(1, { name: { en: "Genre" } });
-    expect(lastCall()[0]).toBe("/api/v1/tags/type/1");
+    expect(lastCall()[0]).toBe("/api/v1/tag/type/1");
     expect(lastCall()[1].method).toBe("PATCH");
   });
 });
 
 describe("deleteTagType", () => {
-  it("DELETEs /api/v1/tags/type/:id", async () => {
+  it("DELETEs /api/v1/tag/type/:id", async () => {
     vi.stubGlobal("fetch", mockOk({}, 204));
     await deleteTagType(1);
-    expect(lastCall()[0]).toBe("/api/v1/tags/type/1");
+    expect(lastCall()[0]).toBe("/api/v1/tag/type/1");
     expect(lastCall()[1].method).toBe("DELETE");
   });
 });

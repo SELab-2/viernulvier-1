@@ -14,7 +14,7 @@ export function updateEventPrice(server: FastifyInstance) {
     `UPDATE event_price
     SET event = $1, amount = $2, updated_at = $3, updated_by = $4
     WHERE id = $5
-    RETURNING id, event, amount`,
+    RETURNING id, event, amount::float`,
     z.tuple([
       EventPriceCreateSchema.shape.event,
       EventPriceCreateSchema.shape.amount,

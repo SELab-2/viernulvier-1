@@ -10,7 +10,11 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
  * @param reply - The Fastify reply, used to clear the session cookie.
  * @returns An object indicating success.
  */
-export async function logout(server: FastifyInstance, request: FastifyRequest, reply: FastifyReply) {
+export async function logout(
+  server: FastifyInstance,
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
   const payload = request.user as { jti?: string; exp?: number };
 
   if (payload.jti) {

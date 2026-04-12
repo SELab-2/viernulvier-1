@@ -1,7 +1,3 @@
-import type { Event } from "@viernulvier/shared/index.js";
-import { EventSchema } from "@viernulvier/shared/index.js";
-import { normalizeEventDates } from "@/routes/event/handlers/helper.js";
-
 interface EventListMeta {
   totalItems: number;
   view: {
@@ -17,7 +13,6 @@ interface EventJSON {
   starts_at: string;
   ends_at: string;
   doors_at: string;
-  vendor_id: number;
   info: Record<string, string>;
   production: {
     "@id": string;
@@ -99,6 +94,23 @@ async function fetchEventsListMeta(
   return data;
 }
 
+// Login to the new API to obtain an auth token
+async function login(username: string, password: string): Promise<string> {
+  const response = await fetch("http://localhost:3000/api/v1/auth/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ username, password }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Login failed: ${response.status} ${response.statusText}`);
+  }
+  const data = await response.json() as { token: string };
+  return data.token;
+}
+
 // Cache for old hall IDs to avoid redundant fetches, if not cached, fetch the old ID.
 // To Do: fetch function that maps old ID to current ID, if not present in db, fetch hall from old API and create it in current API, then return the new ID.
 const hallMap: Record<number, number> = {};
@@ -126,23 +138,27 @@ async function getOldProduction(oldId: number) {
 }
 
 // Process a single event: convert old id references to current db ones, then create the event in the current API
-async function processEvent(event: EventJSON) {
+async function processEvent(event: EventJSON, authToken: string, loginToken: string): Promise<void> {
   const id = parseInt(event["@id"].split("/").pop() as string, 10);
   const hallId = parseInt(event.hall.split("/").pop() as string, 10);
   const productionId = parseInt(event.production["@id"].split("/").pop() as string, 10);
 
 
   const body = {
-    ...event,
     old_id: id,
-    hall: await getOldHall(hallId),
+    starts_at: event.starts_at,
+    ends_at: event.ends_at,
+    doors_at: event.doors_at,
+    info: event.info,
     production: await getOldProduction(productionId),
+    hall: await getOldHall(hallId),
   };
 
-  const response = await fetch("http://localhost:5173/api/v1/event", {
+  const response = await fetch("http://localhost:3000/api/v1/event", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${loginToken}`,
     },
     body: JSON.stringify(body),
   });
@@ -155,7 +171,7 @@ async function processEvent(event: EventJSON) {
 
   // Add prices after event is created, to avoid foreign key constraint errors
   const prices = event.prices.map((priceUrl) => parseInt(priceUrl.split("/").pop() as string, 10));
-  await dummyfunction(prices, eventId);
+  await dummyfunction(prices, eventId, authToken, loginToken);
 }
 
 // fetch the amount of pages, then fetch each page and process the events
@@ -163,6 +179,7 @@ export async function scrapeAllEvents(
   beforeDate: Date,     
   authToken: string
 ) {
+  const loginToken = await login("admin", "password");
   const meta = await fetchEventsListMeta(beforeDate, authToken);
   const totalPages = meta.view.last.split("page=")[1] as unknown as number;
   for (let page = 1; page <= totalPages; page++) {
@@ -170,17 +187,17 @@ export async function scrapeAllEvents(
     for (const event of data.member) {
       // const id = event["@id"].split("/").pop() as unknown as number;
       console.log(`Processing event ${event["@id"]} (${page}/${totalPages})`);
-      await processEvent(event);
+      await processEvent(event, authToken, loginToken);
     }
   }
 }
 
-async function voorbeeldFunctie(oldId: number): Promise<number> {
+async function voorbeeldFunctie(_oldId: number): Promise<number> {
   // To Implement: fetch the old production ID based on the old API data
-  return Number.MAX_SAFE_INTEGER; // return a dummy value for now, to avoid foreign key constraint errors
+  return 1; // return a dummy value for now, to avoid foreign key constraint errors
 }
 
-async function dummyfunction(prices: number[], eventId: number) {
+async function dummyfunction(_prices: number[], _eventId: number, _authToken: string, _loginToken: string) {
   // To Implement: fetch the old production ID based on the old API data
   return; // return a dummy value for now, to avoid foreign key constraint errors
 }

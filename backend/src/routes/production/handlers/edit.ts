@@ -34,7 +34,10 @@ const NullableEditColumns = [
  * @param request - The Fastify request, expected to contain `id` in params and a partial production body.
  * @returns The updated production, or `null` if the update failed or parsing failed.
  */
-export async function editProduction(server: FastifyInstance, request: FastifyRequest): Promise<ProductionWithBackwardsRefs | null> {
+export async function editProduction(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<ProductionWithBackwardsRefs | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const body = parseSchema(server, PartialProductionBodySchema, request.body);
 

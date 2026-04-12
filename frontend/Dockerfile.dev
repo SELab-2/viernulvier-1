@@ -13,4 +13,6 @@ RUN pnpm install
 
 WORKDIR /app/frontend
 
-CMD ["pnpm", "dev"]
+# Run pnpm install at container startup so new packages are always available,
+# even if the node_modules volume is stale from a previous container.
+CMD ["sh", "-c", "pnpm install && pnpm dev"]

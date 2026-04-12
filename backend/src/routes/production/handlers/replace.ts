@@ -12,6 +12,8 @@ const ReplaceColumns = [
   "title",
   "artist",
   "tagline",
+  "finalized",
+  "old_id",
   "teaser",
   "description",
   "description_extra",
@@ -31,7 +33,10 @@ const ReplaceColumns = [
  * @param request - The Fastify request, expected to contain `id` in params and a full production body.
  * @returns The replaced production, or `null` if not found.
  */
-export async function replaceProduction(server: FastifyInstance, request: FastifyRequest): Promise<ProductionWithBackwardsRefs | null> {
+export async function replaceProduction(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<ProductionWithBackwardsRefs | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const body = parseSchema(server, ProductionBodySchema, request.body);
 

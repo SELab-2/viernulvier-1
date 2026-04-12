@@ -2,7 +2,7 @@
  * @file Production API — CRUD for productions.
  *
  * Public endpoints (no session required):
- *   - {@link getProductions} — list all productions
+ *   - {@link getProductions} — list productions (optional pagination)
  *   - {@link getProduction}  — fetch one production by ID
  *
  * Protected endpoints (active session required):
@@ -20,7 +20,7 @@
 
 import type {ProductionWithBackwardsRefs, ProductionWithMeta} from "@viernulvier/shared";
 import { apiFetch } from "./api";
-import type { LanguageMap } from "../utils/i18n";
+import type { LanguageMap } from "@/utils/i18n";
 
 // ---------------------------------------------------------------------------
 // Input types
@@ -81,16 +81,49 @@ export interface BulkUpdateProductionsInput {
 // Public endpoints
 // ---------------------------------------------------------------------------
 
+/** Paginated public list response from {@link getProductions}. */
+export type ProductionListPage = {
+  items: ProductionWithBackwardsRefs[];
+  /** Total number of productions (all pages), not just `items.length`. */
+  total: number;
+};
+
 /**
- * Fetches all productions (public — no session required).
+ * Fetches productions (public — no session required).
+ *
+ * - With `{ limit, offset }`: returns one page plus the full `total` count.
+ * - With `search` (string or array of strings), results must match every term
+ *   (title, artist, tagline, teaser, description, hall names).
+ * - With no options: returns every production as `items` and `total === items.length`.
  *
  * @returns Array of productions, each with `tags` and `events` as arrays of linked IDs.
  *
  * @example
- * const productions = await getProductions();
+ * const { items, total } = await getProductions({ limit: 20, offset: 0 });
  */
-export async function getProductions(): Promise<ProductionWithBackwardsRefs[]> {
-  return await apiFetch<ProductionWithBackwardsRefs[]>("/production");
+export async function getProductions(options?: {
+  limit?: number;
+  offset?: number;
+  search?: string | string[];
+}): Promise<ProductionListPage> {
+  const params = new URLSearchParams();
+  if (options?.limit !== undefined) {
+    params.set("limit", String(options.limit));
+    params.set("offset", String(options.offset ?? 0));
+  }
+  if (options?.search !== undefined) {
+    const raw = options.search;
+    const terms = (Array.isArray(raw) ? raw : [raw])
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+    if (terms.length > 0) {
+      params.set("search", terms.join(","));
+    }
+  }
+  const qs = params.toString();
+  return await apiFetch<ProductionListPage>(
+    qs ? `/production?${qs}` : "/production",
+  );
 }
 
 /**

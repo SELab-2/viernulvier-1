@@ -138,7 +138,7 @@ export async function apiFetch<T>(
   const response = await fetch(`${API_BASE}${path}`, {
     credentials: "same-origin",
     headers: {
-      "Content-Type": "application/json",
+      ...(body !== undefined ? { "Content-Type": "application/json" } : {}), // no content header if there's no body
       ...(headers as Record<string, string>),
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -169,5 +169,5 @@ export async function apiFetch<T>(
     return undefined as T;
   }
 
-  return await (response.json() as Promise<T>);
+  return (await response.json()) as T;
 }

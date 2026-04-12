@@ -89,7 +89,6 @@ beforeEach(() => {
 describe("Event Replace Routes", () => {
   describe("error handling", () => {
     const replacement = {
-      old_id: 112,
       starts_at: new Date("2026-03-01T18:00:00.000Z"),
       ends_at: new Date("2026-03-01T21:00:00.000Z"),
       production: 19,
@@ -167,7 +166,6 @@ describe("Event Replace Routes", () => {
 
   describe("replacing events", () => {
     const replacement = {
-      old_id: 112,
       starts_at: new Date("2026-03-01T18:00:00.000Z"),
       ends_at: new Date("2026-03-01T21:00:00.000Z"),
       production: 19,

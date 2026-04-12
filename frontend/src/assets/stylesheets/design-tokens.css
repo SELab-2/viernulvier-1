@@ -1,0 +1,79 @@
+/* ============================================================
+ * Design Tokens — Archival Newsprint Palette
+ * ============================================================
+ * Philosophy: warm neutrals only, hierarchy through value not hue.
+ * The single cool accent (--accent-highlight) is earned — reserve
+ * it for informational callouts and focus states.
+ * ============================================================ */
+
+:root {
+  /* ---- Surfaces (background → foreground layering) ---- */
+  --surface-0: #F5F0E8; /* page background — raw paper */
+  --surface-1: #EBE6DD; /* cards, nav, secondary panels */
+  --surface-2: #E2DCD2; /* raised elements, search area */
+  --surface-3: #D8D2C8; /* borders, dividers, strokes */
+
+  /* ---- Ink (text & icons) ---- */
+  --ink-primary: #2B2826;   /* headlines, logo, primary body */
+  --ink-secondary: #5C5650; /* descriptions, captions, meta */
+  --ink-tertiary: #8A8279;  /* placeholders, disabled labels */
+
+  /* ---- Accent & interactive ---- */
+  --accent-dark: #2B2826;       /* primary buttons, solid fills */
+  --accent-dark-hover: #3D3835; /* hover state for primary buttons */
+  --accent-outline: #2B2826;    /* ghost / outline buttons */
+  --accent-highlight: #D4E4EF;  /* soft blue tint — info callouts */
+
+  /* ---- Stats / display numerals ---- */
+  --stat-fill: #C8C1B5;  /* large display numbers — subtler than ink */
+  --stat-label: #5C5650; /* labels underneath stats */
+
+  /* ---- Inverted surfaces (high-contrast sections: nav, hero, newsletter) ---- */
+  --surface-inv: #2B2826;        /* dark bg on light mode */
+  --surface-inv-raised: #3D3835; /* raised element on inverted bg */
+  --surface-inv-border: #5C5650; /* borders / dividers on inverted bg */
+  --ink-on-inv: #F5F0E8;         /* primary text on inverted bg */
+  --ink-on-inv-secondary: #B5AFA6; /* secondary text on inverted bg */
+  --ink-on-inv-tertiary: #7D776E;  /* muted text on inverted bg */
+
+  /* ---- Photographic overlay ---- */
+  --photo-overlay: #2B2826;
+  --photo-opacity: 0.55;
+
+  /* ---- Tag chips (archive list — genre vs outline, Vooruit-style) ---- */
+  --tag-genre-bg: #8224e3;
+  --tag-genre-text: #f5f0e8;
+}
+
+/* ---- Dark mode ---- */
+.dark {
+  --surface-0: #1C1A17; /* deep warm charcoal */
+  --surface-1: #272420; /* cards, nav */
+  --surface-2: #33302B; /* raised panels */
+  --surface-3: #443F39; /* borders, dividers */
+
+  --ink-primary: #EDE8DF;   /* warm off-white, never #FFF */
+  --ink-secondary: #B5AFA6; /* descriptions, captions */
+  --ink-tertiary: #7D776E;  /* placeholders, disabled */
+
+  --accent-dark: #EDE8DF;       /* buttons swap to light fill */
+  --accent-dark-hover: #D8D2C8; /* hover — slightly muted */
+  --accent-outline: #EDE8DF;    /* ghost buttons — light border */
+  --accent-highlight: #263A48;  /* desaturated deep blue */
+
+  --stat-fill: #4A453E;  /* dim warm tone, decorative */
+  --stat-label: #B5AFA6; /* matches secondary ink */
+
+  --surface-inv: #1C1A17;
+  --surface-inv-raised: #272420;
+  --surface-inv-border: #443F39;
+  --ink-on-inv: #EDE8DF;
+  --ink-on-inv-secondary: #B5AFA6;
+  --ink-on-inv-tertiary: #7D776E;
+
+  --photo-overlay: #1C1A17;
+  --photo-opacity: 0.65;
+
+  --tag-genre-bg: #8224e3;
+  --tag-genre-text: #f5f0e8;
+}

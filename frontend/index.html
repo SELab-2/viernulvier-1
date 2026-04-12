@@ -3,10 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>VierNulVier Archive</title>
+    <!-- Font is self-hosted via src/assets/fonts/inter.css -->
   </head>
-  <body>
+  <body class="font-['Inter','Inter_Fallback',sans-serif]">
+    <script>
+      // Apply dark mode before first paint to prevent flash of light mode
+      (function () {
+        var stored = localStorage.getItem("viernulvier-dark");
+        var prefersDark =
+          stored !== null
+            ? stored === "true"
+            : window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (prefersDark) document.documentElement.classList.add("dark");
+      })();
+    </script>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

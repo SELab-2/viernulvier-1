@@ -10,7 +10,12 @@ export const RouteNames = {
   HOME: "home",
   PRODUCTIONS: "productions",
   PRODUCTION_DETAIL: "production-detail",
+
+  // admin
+  ADMIN: "admin",
   CMS: "cms",
+  LOGIN: "login",
+
   PRINTS: "prints",
   NOT_FOUND: "not-found",
 } as const;

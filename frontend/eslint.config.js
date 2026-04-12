@@ -13,6 +13,7 @@ const sharedRules = {
   "@typescript-eslint/no-floating-promises": "error",
   "@typescript-eslint/await-thenable": "error",
   "@typescript-eslint/no-misused-promises": "error",
+  "@typescript-eslint/no-deprecated": "error",
 
   "no-return-await": "off",
   "@typescript-eslint/return-await": ["error", "always"],

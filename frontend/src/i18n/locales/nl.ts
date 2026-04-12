@@ -2,23 +2,87 @@ export default {
   nav: {
     home: "Home",
     archive: "Archief",
+    productions: "Producties",
+    search: "Zoeken",
+    admin: {
+      dashboard: "Dashboard",
+      cms: "CMS",
+      signOut: "Uitloggen",
+    },
   },
   hero: {
-    title: "Welkom bij het VierNulVier Archief",
+    title: "Het Archief van De Vooruit",
     subtitle:
-      "Op deze pagina kunt u het archief van VierNulVier bekijken.<br />Dit archief bevat een overzicht van alle verleden voorstellingen, concerten, films en andere<br />culturele evenementen georganiseerd door VierNulVier.",
-    cta: "Bekijk Archief",
-  },
-  info: {
-    title: "Over het archief",
-    text: "In het VierNulVier-archief ontdek je duizenden producties en evenementen uit de geschiedenis van De Vooruit. Blader door theater, dans, film en muziek, of gebruik de zoekfunctie om snel een productie, artiest of reeks te vinden.",
+      "Meer dan 12.000 voorstellingen, concerten, films en culturele evenementen — gedocumenteerd, doorzoekbaar en voor iedereen toegankelijk.",
+    cta: "Doorzoek het archief",
   },
   stats: {
-    productions: "producties",
-    series: "reeksen",
-    years: "jaren",
+    productions: "Producties",
+    events: "Evenementen",
+    yearsOfHistory: "Jaar geschiedenis",
+    genres: "Genres",
+  },
+  bento: {
+    featured: {
+      label: "Uitgelicht",
+      title: "Theater, dans & meer",
+      description:
+        "Ontdek honderden producties uit de rijke programmering van De Vooruit — van avant-garde dans tot politiek theater.",
+      cta: "Verkennen",
+    },
+  },
+  footer: {
+    copyright: "© {year} VierNulVier / De Vooruit. Alle rechten voorbehouden.",
+    privacy: "Privacybeleid",
+    terms: "Gebruiksvoorwaarden",
+    contact: "Contact",
   },
   date: {
     doorsOpen: "Deuren open om",
+  },
+  productionsPage: {
+    heading: "Producties",
+    intro:
+      "Alle voorstellingen uit het archief op een rij.",
+    loading: "Producties laden…",
+    error:
+      "De producties konden niet worden geladen. Probeer het later opnieuw.",
+    empty: "Er staan nog geen producties in het archief.",
+    morePerformances: "nog {n}",
+    showingRange: "{from}–{to} van {total}",
+    prevPage: "Vorige",
+    nextPage: "Volgende",
+    pageWord: "Pagina",
+    pageOfTotal: "van {total}",
+    goToPage: "Ga naar pagina",
+    searchLabel: "Producties doorzoeken",
+    searchPlaceholder: "Titel, artiest, zaal, beschrijving…",
+    searchButton: "Zoeken",
+    activeSearchLabel: "Zoekterm:",
+    removeSearchFilter: "Zoekfilter verwijderen",
+    removeSearchTerm: "Zoekterm verwijderen: {term}",
+    noSearchResults: "Geen producties gevonden voor deze zoekterm.",
+    filterResultsSingle: "1 resultaat",
+    filterResultsPlural: "{count} resultaten",
+  },
+  admin: {
+    login: {
+      title: "Meld u aan om verder te gaan",
+      username: "Gebruikersnaam",
+      password: "Wachtwoord",
+      showPassword: "Wachtwoord tonen",
+      hidePassword: "Wachtwoord verbergen",
+      submit: "Aanmelden",
+      submitting: "Aanmelden…",
+      errorUnauthorized: "Ongeldige gebruikersnaam of wachtwoord.",
+      errorGeneric: "Er is iets misgegaan. Probeer het opnieuw.",
+    },
+    dashboard: {
+      signedInAs: "Aangemeld als",
+      superAdmin: "Super admin",
+      quickActions: "Snelle acties",
+      openCms: "CMS openen",
+      logout: "Uitloggen",
+    },
   },
 };

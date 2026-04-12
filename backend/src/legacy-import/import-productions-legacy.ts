@@ -9,11 +9,20 @@ import {
   type CsvRecord,
   type ImportArgs,
 } from "./shared.js";
+import { CreateProductionBodySchema } from "@/routes/production/handlers/body-schema.js";
+import {
+  formatLegacyZodError,
+  legacyGenreTagCreateBody,
+  legacyProductionRowToCreateBody,
+  LegacyTagCreateBodySchema,
+} from "./validate-legacy-inserts.js";
 
 export const LEGACY_PRODUCTION_IMPORT_SOURCE = "productions-output-csv";
 
-function nullableLanguageMap(value: string): Record<"nl", string> | null {
-  return value.length === 0 ? null : { nl: value };
+/** JSON for a nullable JSONB language field, or SQL NULL. */
+function jsonbLanguageNullable(value: Record<string, string> | null | undefined): string | null {
+  if (value == null) return null;
+  return JSON.stringify(value);
 }
 
 /** Split comma-separated genre cell into unique trimmed names. */
@@ -76,7 +85,7 @@ async function loadGenreTagCache(client: pg.Client, genreTagTypeId: number): Pro
   const existingTags = await client.query<{ id: number; name: string }>(
     `SELECT id, name->>'nl' AS name
      FROM tag
-     WHERE type_id = $1`,
+     WHERE tag_type = $1`,
     [genreTagTypeId],
   );
 
@@ -100,7 +109,7 @@ async function getOrCreateGenreTagId(
   const existing = await client.query<{ id: number }>(
     `SELECT id
      FROM tag
-     WHERE type_id = $1
+     WHERE tag_type = $1
        AND lower(name->>'nl') = lower($2)
      LIMIT 1`,
     [genreTagTypeId, genreName],
@@ -116,7 +125,7 @@ async function getOrCreateGenreTagId(
   }
 
   const inserted = await client.query<{ id: number }>(
-    `INSERT INTO tag (name, type_id, public)
+    `INSERT INTO tag (name, tag_type, public)
      VALUES ($1::jsonb, $2, true)
      RETURNING id`,
     [JSON.stringify(toLanguageMap(genreName)), genreTagTypeId],
@@ -132,6 +141,7 @@ type ImportStats = {
   skippedDuplicateLegacyIdInFile: number;
   skippedAlreadyImported: number;
   skippedNoTitle: number;
+  skippedValidationFailed: number;
   importedProductions: number;
   createdGenreTags: number;
   linkedProductionTags: number;
@@ -176,6 +186,7 @@ export async function importProductionsLegacy(client: pg.Client, args: ImportArg
     skippedDuplicateLegacyIdInFile: 0,
     skippedAlreadyImported: 0,
     skippedNoTitle: 0,
+    skippedValidationFailed: 0,
     importedProductions: 0,
     createdGenreTags: 0,
     linkedProductionTags: 0,
@@ -190,6 +201,12 @@ export async function importProductionsLegacy(client: pg.Client, args: ImportArg
   for await (const rowRaw of parser as AsyncIterable<CsvRecord>) {
     if (args.limit !== null && stats.totalRows >= args.limit) break;
     stats.totalRows++;
+
+    if (stats.totalRows % LEGACY_IMPORT_PROGRESS_EVERY === 0) {
+      console.log(
+        `Progress ${stats.totalRows} rows | imported=${stats.importedProductions} | failed=${stats.failedRows}`,
+      );
+    }
 
     const row = normalizeRow(rowRaw);
     const legacyId = row["id"] ?? "";
@@ -214,10 +231,35 @@ export async function importProductionsLegacy(client: pg.Client, args: ImportArg
       continue;
     }
 
-    const artist = row["ondertitel"] ?? "";
-    const description1 = row["description1"] ?? "";
-    const description2 = row["description2"] ?? "";
     const genres = splitGenres(row["genre"] ?? "");
+
+    const productionBody = legacyProductionRowToCreateBody(row);
+    const productionParsed = CreateProductionBodySchema.safeParse(productionBody);
+    if (!productionParsed.success) {
+      stats.skippedValidationFailed++;
+      console.error(
+        `Validation failed for legacy production row (id=${legacyId}): ${formatLegacyZodError(productionParsed.error)}`,
+      );
+      continue;
+    }
+
+    const genreTagTypeIdForValidation = tagTypeGenre.id ?? 1;
+    let genreValidationOk = true;
+    for (const genre of genres) {
+      const tagBody = legacyGenreTagCreateBody(genre, genreTagTypeIdForValidation);
+      const tagParsed = LegacyTagCreateBodySchema.safeParse(tagBody);
+      if (!tagParsed.success) {
+        console.error(
+          `Validation failed for genre tag (legacy id=${legacyId}, genre="${genre}"): ${formatLegacyZodError(tagParsed.error)}`,
+        );
+        genreValidationOk = false;
+        break;
+      }
+    }
+    if (!genreValidationOk) {
+      stats.skippedValidationFailed++;
+      continue;
+    }
 
     if (args.dryRun) {
       for (const genre of genres) {
@@ -238,6 +280,7 @@ export async function importProductionsLegacy(client: pg.Client, args: ImportArg
     try {
       await client.query("BEGIN");
 
+      const d = productionParsed.data;
       const insertedProduction = await client.query<{ id: number }>(
         `INSERT INTO production (
            supertitle, title, artist, tagline, teaser,
@@ -250,20 +293,20 @@ export async function importProductionsLegacy(client: pg.Client, args: ImportArg
          )
          RETURNING id`,
         [
-          null,
-          JSON.stringify(toLanguageMap(title)),
-          JSON.stringify(toLanguageMap(artist)),
-          JSON.stringify(toLanguageMap("")),
-          JSON.stringify(toLanguageMap("")),
-          description1.length > 0 ? JSON.stringify(toLanguageMap(description1)) : null,
-          null,
-          nullableLanguageMap(description2) ? JSON.stringify(toLanguageMap(description2)) : null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
+          jsonbLanguageNullable(d.supertitle),
+          JSON.stringify(d.title),
+          JSON.stringify(d.artist),
+          JSON.stringify(d.tagline),
+          JSON.stringify(d.teaser),
+          jsonbLanguageNullable(d.description),
+          jsonbLanguageNullable(d.description_extra),
+          jsonbLanguageNullable(d.description_2),
+          jsonbLanguageNullable(d.video_1),
+          jsonbLanguageNullable(d.video_2),
+          jsonbLanguageNullable(d.quote),
+          jsonbLanguageNullable(d.quote_source),
+          jsonbLanguageNullable(d.programme),
+          jsonbLanguageNullable(d.info),
         ],
       );
       const productionId = insertedProduction.rows[0]!.id;
@@ -280,7 +323,7 @@ export async function importProductionsLegacy(client: pg.Client, args: ImportArg
         if (tagResult.created) stats.createdGenreTags++;
 
         const linkResult = await client.query(
-          `INSERT INTO production_tag (production_id, tag_id)
+          `INSERT INTO production_tag (production, tag)
            VALUES ($1, $2)
            ON CONFLICT DO NOTHING`,
           [productionId, tagResult.id],
@@ -302,12 +345,6 @@ export async function importProductionsLegacy(client: pg.Client, args: ImportArg
       stats.failedRows++;
       console.error(`Failed row with legacy ID ${legacyId}:`, error);
     }
-
-    if (stats.totalRows % LEGACY_IMPORT_PROGRESS_EVERY === 0) {
-      console.log(
-        `Progress ${stats.totalRows} rows | imported=${stats.importedProductions} | failed=${stats.failedRows}`,
-      );
-    }
   }
 
   console.log("");
@@ -320,5 +357,6 @@ export async function importProductionsLegacy(client: pg.Client, args: ImportArg
   console.log(`  Skipped (missing legacy ID): ${stats.skippedNoLegacyId}`);
   console.log(`  Skipped (duplicate legacy ID in file): ${stats.skippedDuplicateLegacyIdInFile}`);
   console.log(`  Skipped (missing title): ${stats.skippedNoTitle}`);
+  console.log(`  Skipped (Zod validation failed): ${stats.skippedValidationFailed}`);
   console.log(`  Failed rows: ${stats.failedRows}`);
 }

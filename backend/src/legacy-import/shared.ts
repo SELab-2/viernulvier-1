@@ -74,10 +74,23 @@ export type ImportArgs = {
 };
 
 /**
+ * Converts a `file://` URL string to a filesystem path.
+ * If the input is already a plain path (not a file URL), it is returned as-is.
+ * This makes the function safe to call from both real `import.meta.url` values
+ * and from unit tests that pass synthetic file-URL strings.
+ */
+function importMetaUrlToPath(importMetaUrl: string): string {
+  if (!importMetaUrl.startsWith("file://")) {
+    return importMetaUrl;
+  }
+  return fileURLToPath(importMetaUrl);
+}
+
+/**
  * Resolves monorepo root from a script file URL under `backend/scripts/`.
  */
 export function getRepoRootFromImportMeta(importMetaUrl: string): string {
-  const scriptDir = path.dirname(fileURLToPath(importMetaUrl));
+  const scriptDir = path.dirname(importMetaUrlToPath(importMetaUrl));
   const backendDir = path.resolve(scriptDir, "..");
   return path.resolve(backendDir, "..");
 }
@@ -140,6 +153,7 @@ export function parseLegacyImportCli(
     : argvForLegacyImportYargs(hideBin(process.argv), false);
 
   const parsed = yargs(input)
+    .locale("en")
     .exitProcess(!fromTest)
     .scriptName(`pnpm run ${options.scriptForUsage}`)
     .usage(
