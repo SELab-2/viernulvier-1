@@ -86,4 +86,9 @@ export default {
       logout: "Logout",
     },
   },
+  time: {
+    minutes: "{m} min",
+    hours: "{h}h",
+    hoursMinutes: "{h}h {m}m",
+  },
 };

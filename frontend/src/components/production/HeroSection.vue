@@ -1,5 +1,5 @@
 <template>
-  <section class="relative flex min-h-175 w-full items-end overflow-hidden">
+  <section class="relative flex min-h-[70vh] w-full items-end overflow-hidden">
     <div class="absolute inset-0 z-0">
       <img
         alt="Contemporary dance performance"
@@ -14,19 +14,19 @@
       <div ref="heroContent" class="opacity-0 animate-fade-up max-w-4xl">
         <div class="mb-4 flex flex-col gap-2">
           <span class="text-sm font-bold uppercase tracking-[0.3em] text-ink-on-inv opacity-70">
-            {{ supertitle }}
+            {{ content.supertitle }}
           </span>
           <span class="italic text-3xl font-bold tracking-tighter text-ink-on-inv md:text-4xl">
-            {{ artist }}
+            {{ content.artist }}
           </span>
         </div>
         
         <div class="space-y-4">
           <h1 class="text-[clamp(2.5rem,8vw,8rem)] font-black uppercase leading-[0.9] tracking-tighter text-ink-on-inv wrap-break-word">
-            {{ title }}
+            {{ content.title }}
           </h1>
           <p class="italic text-xl font-light leading-tight text-ink-on-inv opacity-90 md:text-2xl">
-            Een woordeloos onderzoek naar mens en technologie
+            {{ content.tagline }}
           </p>
         </div>
       </div>
@@ -39,9 +39,15 @@
           </span>
   
           <div class="flex flex-col items-start md:items-end text-xl font-bold tracking-tight leading-tight">
-            <span>25 Oct 2024</span>
-            <span>—</span>
-            <span>2 Jan 2025</span>
+            <template v-if="showDateRange">
+              <span>{{ dateLabels.start }}</span>
+              <span>—</span>
+              <span>{{ dateLabels.end }}</span>
+            </template>
+
+            <template v-else>
+              <span>{{ dateLabels.start }}</span>
+            </template>
           </div>
 
         </div>
@@ -50,7 +56,9 @@
           <span class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">
             {{ t("production.hero.runningTime") }}
           </span>
-          <span class="text-xl font-bold tracking-tight">75m</span>
+          <span class="text-xl font-bold tracking-tight">
+            {{ formatDurationMinutesI18n(eventStats?.durationMinutes, t) }}
+          </span>
         </div>
         
         <div class="flex flex-wrap gap-3 pt-4 md:justify-end">
@@ -70,21 +78,38 @@
 </template>
 
 <script setup lang="ts">
-import { i18n, type SupportedLang } from "@/i18n";
+import { type SupportedLang } from "@/i18n";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { computed } from "vue";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/i18n";
 import { useI18n } from "vue-i18n";
+import { formatDurationMinutesI18n, formatNumericDate } from "@/utils/date";
 
-const { t } = useI18n();
-const currentLang = computed(
-  () => i18n.global.locale.value as SupportedLang,
-);
-
-const props = defineProps<{
+interface Props {
   production: ProductionWithBackwardsRefs;
   tagGroups: { label: string; tags: string[] }[];
-}>();
+  eventStats: {
+    firstDate: Date;
+    lastDate: Date;
+    durationMinutes: number | null;
+    hasMultipleDays: boolean;
+  } | null;
+}
+
+const props = defineProps<Props>();
+const { t, locale } = useI18n();
+
+const content = computed(() => {
+  const lang = locale.value as SupportedLang;
+  const translate = (map?: LanguageMap | null) => localizeOrEmpty(map ?? {}, lang);
+
+  return {
+    artist: translate(props.production.artist),
+    title: translate(props.production.title),
+    supertitle: translate(props.production.supertitle),
+    tagline: translate(props.production.tagline),
+  };
+});
 
 const genreTags = computed(() => {
   const genreGroup = props.tagGroups.find(group => {
@@ -94,12 +119,13 @@ const genreTags = computed(() => {
   return genreGroup ? genreGroup.tags : [];
 });
 
-const tProd = (map: LanguageMap | null | undefined) =>
-  localizeOrEmpty(map ?? {}, currentLang.value);
+const showDateRange = computed(() =>
+  props.eventStats?.hasMultipleDays ?? false,
+);
 
-const artist = computed(() => tProd(props.production.artist));
-const title = computed(() => tProd(props.production.title));
-const supertitle = computed(() => tProd(props.production.supertitle)); //nullable
-const tagline = computed(() => tProd(props.production.tagline));
+const dateLabels = computed(() => ({
+  start: props.eventStats?.firstDate ? formatNumericDate(props.eventStats.firstDate, locale.value) : "",
+  end: props.eventStats?.lastDate ? formatNumericDate(props.eventStats.lastDate, locale.value) : "",
+}));
 
 </script>

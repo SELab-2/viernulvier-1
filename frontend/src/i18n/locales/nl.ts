@@ -87,4 +87,9 @@ export default {
       logout: "Uitloggen",
     },
   },
+  time: {
+    minutes: "{m} min",
+    hours: "{h} u",
+    hoursMinutes: "{h} u {m} min",
+  },
 };

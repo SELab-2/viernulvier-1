@@ -17,7 +17,7 @@
       </div>
 
       <template v-else-if="production">
-        <HeroSection :production="production" :tag-groups="tagGroups" />
+        <HeroSection :production="production" :tag-groups="tagGroups" :event-stats="eventStats" />
         <DetailsSection 
           :production="production" 
           :tag-groups="tagGroups" 
@@ -42,7 +42,7 @@ import EventsSection from "@/components/production/EventsSection.vue";
 import GallerySection from "@/components/production/GallerySection.vue";
 import BlogSection from "@/components/production/BlogSection.vue";
 import NotFound from "@/components/NotFound.vue";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import { getProduction } from "@/services/productions";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
@@ -78,5 +78,29 @@ onMounted(async () => {
 
 const { tagGroups, totalTags, loading: tagsLoading } = useTagGroups(id);
 const { events, loading: eventsLoading } = useProductionEvents(id);
+
+const eventStats = computed(() => {
+  if (!events.value.length) return null;
+
+  const startTimes = events.value.map(e => new Date(e.starts_at).getTime());
+  
+  const firstDate = new Date(Math.min(...startTimes));
+  const lastDate = new Date(Math.max(...startTimes));
+
+  const firstEvent = events.value[0];
+  let durationMinutes = null;
+  if (firstEvent.starts_at && firstEvent.ends_at) {
+    const start = new Date(firstEvent.starts_at);
+    const end = new Date(firstEvent.ends_at);
+    durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+  }
+
+  return {
+    firstDate,
+    lastDate,
+    durationMinutes,
+    hasMultipleDays: firstDate.toDateString() !== lastDate.toDateString(),
+  };
+});
 
 </script>

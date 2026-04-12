@@ -87,4 +87,9 @@ export default {
       logout: "Se déconnecter",
     },
   },
+  time: {
+    minutes: "{m} min",
+    hours: "{h} h",
+    hoursMinutes: "{h} h {m} min",
+  },
 };
