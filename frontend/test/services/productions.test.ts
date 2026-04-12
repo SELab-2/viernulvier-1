@@ -93,6 +93,42 @@ describe("getProductions", () => {
       "/api/v1/production?limit=10&offset=0&search=foo%2Cbar",
     );
   });
+
+  it("GETs /api/v1/production with tags, year span, and date range", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockOk({ items: [productionPayload], total: 1 }),
+    );
+    await getProductions({
+      limit: 20,
+      offset: 0,
+      search: ["dance"],
+      tagIds: [2, 9],
+      yearMin: 2024,
+      yearMax: 2025,
+      dateFrom: "2024-06-01",
+      dateTo: "2024-12-31",
+    });
+    expect(lastCall()[0]).toBe(
+      "/api/v1/production?limit=20&offset=0&search=dance&tags=2%2C9&yearMin=2024&yearMax=2025&from=2024-06-01&to=2024-12-31",
+    );
+  });
+
+  it("GETs /api/v1/production with yearMin and yearMax (year span)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockOk({ items: [productionPayload], total: 1 }),
+    );
+    await getProductions({
+      limit: 20,
+      offset: 0,
+      yearMin: 2015,
+      yearMax: 2024,
+    });
+    expect(lastCall()[0]).toBe(
+      "/api/v1/production?limit=20&offset=0&yearMin=2015&yearMax=2024",
+    );
+  });
 });
 
 describe("getProduction", () => {

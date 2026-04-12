@@ -7,6 +7,7 @@ import {
   type ProductionWithBackwardsRefs,
 } from "@viernulvier/shared/index.js";
 import { getProductionsByIds } from "@/routes/production/handlers/fetch.js";
+import { PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE } from "@/routes/production/helpers/pagination.js";
 import { productionRowWithRefs, productionRowWithRefsAlt } from "./fixtures.js";
 
 let server: FastifyInstance;
@@ -238,6 +239,60 @@ describe("Production fetch routes", () => {
     const response = await server.inject({
       method: "GET",
       url: `/api/v1/production?search=${encodeURIComponent(search)}`,
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  test("GET /api/v1/production?from=… without to -> 400", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?limit=10&from=2026-01-01",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  test("GET /api/v1/production?from=…&to=… -> 400 when from after to", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?limit=10&from=2026-06-01&to=2026-01-01",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(400);
+    const body = response.json() as { error?: string };
+    expect(body.error).toBe(PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE);
+  });
+
+  test("GET /api/v1/production?yearMin=…&yearMax=… -> 200", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?limit=10&yearMin=2015&yearMax=2024&offset=0",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { items: unknown[]; total: number };
+    expect(json.total).toBe(1);
+  });
+
+  test("GET /api/v1/production?yearMin without yearMax -> 400", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?limit=10&yearMin=2020&offset=0",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  test("GET /api/v1/production?yearMin after yearMax -> 400", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?limit=10&yearMin=2024&yearMax=2010&offset=0",
       cookies: { session: sessionCookie },
     });
 
