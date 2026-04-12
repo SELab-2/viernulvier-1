@@ -2,7 +2,6 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi 
 import type { FastifyInstance } from "fastify";
 
 import { buildServer } from "@/server.js";
-import { info } from "node:console";
 
 
 let server: FastifyInstance;
@@ -162,7 +161,7 @@ describe("Event Create Routes", () => {
 
     test("creates event with optional date fields as undefined", async () => {
       const payload = {
-        ...buildPayload(42),
+        ...buildPayload(),
         ends_at: undefined,
         doors_at: undefined,
         info: undefined,
