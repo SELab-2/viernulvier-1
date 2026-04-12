@@ -1,3 +1,5 @@
+import { scrapeHallById } from "./hall.js";
+
 interface EventListMeta {
   totalItems: number;
   view: {
@@ -114,12 +116,12 @@ async function login(username: string, password: string): Promise<string> {
 // Cache for old hall IDs to avoid redundant fetches, if not cached, fetch the old ID.
 // To Do: fetch function that maps old ID to current ID, if not present in db, fetch hall from old API and create it in current API, then return the new ID.
 const hallMap: Record<number, number> = {};
-async function getOldHall(oldId: number) {
+async function getOldHall(oldId: number, authToken: string) {
   if (hallMap[oldId]) {
     return hallMap[oldId];
   }
   // To Implement: fetch the old hall ID based on the old API data
-  const id = await voorbeeldFunctie(oldId)
+  const id = await scrapeHallById(oldId, authToken);
   hallMap[oldId] = id;
   return id; // return a dummy value for now, to avoid foreign key constraint errors
 }
@@ -127,12 +129,12 @@ async function getOldHall(oldId: number) {
 // Cache for old production IDs to avoid redundant fetches, if not cached, fetch the old ID.
 // To Do: fetch function that maps old ID to current ID, if not present in db, fetch production from old API and create it in current API, then return the new ID.
 const productionMap: Record<number, number> = {};
-async function getOldProduction(oldId: number) {
+async function getOldProduction(oldId: number, authToken: string) {
   if (productionMap[oldId]) {
     return productionMap[oldId];
   }
   // To Implement: fetch the old production ID based on the old API data
-  const id = await voorbeeldFunctie(oldId)
+  const id = await voorbeeldFunctie(oldId, authToken);
   productionMap[oldId] = id;
   return id; // return a dummy value for now, to avoid foreign key constraint errors
 }
@@ -150,8 +152,8 @@ async function processEvent(event: EventJSON, authToken: string, loginToken: str
     ends_at: event.ends_at,
     doors_at: event.doors_at,
     info: event.info,
-    production: await getOldProduction(productionId),
-    hall: await getOldHall(hallId),
+    production: await getOldProduction(productionId, authToken),
+    hall: await getOldHall(hallId, authToken),
   };
 
   const response = await fetch("http://localhost:3000/api/v1/event", {
@@ -182,17 +184,22 @@ export async function scrapeAllEvents(
   const loginToken = await login("admin", "password");
   const meta = await fetchEventsListMeta(beforeDate, authToken);
   const totalPages = meta.view.last.split("page=")[1] as unknown as number;
-  for (let page = 1; page <= totalPages; page++) {
+  const maxPages = 10; // Limit to 10 pages for testing
+  const pagesToProcess = Math.min(totalPages, maxPages);
+  
+  console.log(`Processing ${pagesToProcess} pages (out of ${totalPages} total pages)`);
+  
+  for (let page = 1; page <= pagesToProcess; page++) {
     const data = await fetchEventsPage(page, beforeDate, authToken);
     for (const event of data.member) {
       // const id = event["@id"].split("/").pop() as unknown as number;
-      console.log(`Processing event ${event["@id"]} (${page}/${totalPages})`);
+      console.log(`Processing event ${event["@id"]} (${page}/${pagesToProcess})`);
       await processEvent(event, authToken, loginToken);
     }
   }
 }
 
-async function voorbeeldFunctie(_oldId: number): Promise<number> {
+async function voorbeeldFunctie(_oldId: number, _authToken: string): Promise<number> {
   // To Implement: fetch the old production ID based on the old API data
   return 1; // return a dummy value for now, to avoid foreign key constraint errors
 }

@@ -1,6 +1,4 @@
 import type { Hall } from "@viernulvier/shared/index.js";
-import { HallSchema } from "@viernulvier/shared/index.js";
-import { log } from "console";
 
 interface HallListMeta {
   totalItems: number;
@@ -16,6 +14,21 @@ interface HallJSON {
   "@id": string;
   name: string;
   description?: string;
+  space: string;
+  [key: string]: unknown;
+}
+
+interface Location {
+  street: string;
+  number: string;
+  postal_code: string;
+  city: string;
+  country: string;
+  [key: string]: unknown;
+}
+
+interface Space {
+  location: string;
   [key: string]: unknown;
 }
 
@@ -69,8 +82,65 @@ async function fetchHallsListMeta(
   return data;
 }
 
+// Cache for space addresses to avoid repeated API calls
+const spaceAddressCache = new Map<string, string>();
+
+async function fetchSpaceLocation(spaceUrl: string, authToken: string): Promise<string> {
+  // Check cache first
+  if (spaceAddressCache.has(spaceUrl)) {
+    return spaceAddressCache.get(spaceUrl) || "No address provided";
+  }
+
+  try {
+    const url = `https://www.viernulvier.gent${spaceUrl}`;
+    const response = await fetch(url, {
+      headers: {
+        accept: "application/ld+json",
+        "X-AUTH-TOKEN": authToken,
+      },
+    });
+
+    if (!response.ok) {
+      spaceAddressCache.set(spaceUrl, "No address provided");
+      return "No address provided";
+    }
+
+    const space = (await response.json()) as Space;
+    const address = await fetchLocationAddress(space.location, authToken);
+    
+    // Cache the result
+    spaceAddressCache.set(spaceUrl, address);
+    return address;
+  } catch {
+    spaceAddressCache.set(spaceUrl, "No address provided");
+    return "No address provided";
+  }
+}
+
+async function fetchLocationAddress(locationUrl: string, authToken: string): Promise<string> {
+  try {
+    const url = `https://www.viernulvier.gent${locationUrl}`;
+    const response = await fetch(url, {
+      headers: {
+        accept: "application/ld+json",
+        "X-AUTH-TOKEN": authToken,
+      },
+    });
+
+    if (!response.ok) {
+      return "No address provided";
+    }
+
+    const location = (await response.json()) as Location;
+    const address = `${location.street} ${location.number}, ${location.postal_code} ${location.city}, ${location.country}`;
+    return address;
+  } catch {
+    return "No address provided";
+  }
+}
+
 async function login(username: string, password: string): Promise<string> {
-  const response = await fetch("http://localhost:3000/auth/login", {
+  const response = await fetch("http://localhost:3000/api/v1/auth/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -88,12 +158,17 @@ async function login(username: string, password: string): Promise<string> {
 
 
 // Process a single hall: convert and create the hall in the current API
-async function processHall(hall: HallJSON, loginToken: string): Promise<number> {
+async function processHall(hall: HallJSON, loginToken: string, authToken: string): Promise<number> {
   const id = parseInt(hall["@id"].split("/").pop() as string, 10);
 
+  // Fetch the space to get the location
+  const address = await fetchSpaceLocation(hall.space, authToken);
+
   const body = {
-    ...hall,
+    name: hall.name,
+    address: address,
     old_id: id,
+    vendor_id: 0,
   };
 
   const response = await fetch("http://localhost:3000/api/v1/hall", {
@@ -126,7 +201,7 @@ export async function scrapeAllHalls(
     const data = await fetchHallsPage(page, authToken);
     for (const hall of data.member) {
       console.log(`Processing hall ${hall["@id"]} (${page}/${totalPages})`);
-      await processHall(hall, loginToken);
+      await processHall(hall, loginToken, authToken);
     }
   }
 }
@@ -161,7 +236,7 @@ export async function scrapeHallById(
     }
     const hall = await response.json() as HallJSON;
     const loginToken = await login("admin", "password");
-    return await processHall(hall, loginToken);
+    return await processHall(hall, loginToken, authToken);
   }
   if (hallList.length > 1) {
     throw new Error(`Multiple halls found with old_id ${id}`);

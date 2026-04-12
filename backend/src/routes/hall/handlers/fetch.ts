@@ -3,7 +3,7 @@ import type { Hall, HallWithMeta } from "@viernulvier/shared/index.js";
 import { HallSchema, stringToInt } from "@viernulvier/shared/index.js";
 import { parseParams, buildQuery } from "@/routes/helpers.js";
 import z from "zod";
-import { request } from "https";
+
 
 const HallSelect = `
 SELECT
