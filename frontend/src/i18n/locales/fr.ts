@@ -66,6 +66,14 @@ export default {
       show_less: "Afficher moins",
       remaining_more: "(+ {count} de plus)",
     },
+    notFound: {
+      title: "Production introuvable",
+      description: "Nous n'avons pas pu trouver cette production. Heureusement, il reste encore beaucoup à découvrir : revenez à la vue d'ensemble et replongez dans l'historique complet de nos productions.",
+      buttonLabel: "Retour aux productions",
+      helpTitle: "Besoin d'aide ?",
+      helpText: "Vous ne trouvez pas immédiatement ce que vous cherchez dans nos archives ? Pour toute question sur notre historique ou sur une production spécifique, envoyez-nous un e-mail à info{'@'}viernulvier.gent. Nous vous aiderons avec plaisir.",
+      contactLabel: "Contactez-nous",
+    },
   },
   admin: {
     login: {

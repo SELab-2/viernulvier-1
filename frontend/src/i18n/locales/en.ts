@@ -65,6 +65,14 @@ export default {
       show_less: "Show Less",
       remaining_more: "(+ {count} more)",
     },
+    notFound: {
+      title: "Production not found",
+      description: "We couldn't find this specific production for you. Luckily, there's plenty more to discover: return to the overview and dive back into our full history of productions.",
+      buttonLabel: "Back to productions",
+      helpTitle: "Need help?",
+      helpText: "Can't find what you're looking for in our records? For questions about our archives or specific productions, feel free to email info{'@'}viernulvier.gent. We're happy to help.",
+      contactLabel: "Contact us",
+    },
   },
   admin: {
     login: {

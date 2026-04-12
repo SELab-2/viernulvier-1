@@ -1,17 +1,19 @@
 <template>
-  <div class="min-h-screen bg-surface-0">
+  <div class="flex flex-col min-h-screen bg-surface-0">
     <AppNavbar :is-dark="isDark" @toggle-dark="isDark = !isDark" />
-    <main>
-      <div v-if="loading">
+    
+    <main class="grow flex flex-col">
+      
+      <div v-if="loading" class="grow flex items-center justify-center font-black uppercase tracking-widest opacity-50">
         Loading...
       </div>
 
-      <div v-else-if="notFound">
-        <NotFound message="Deze productie bestaat niet" />
+      <div v-else-if="notFound" class="grow flex flex-col">
+        <NotFound />
       </div>
 
-      <div v-else-if="error">
-        <div class="text-red-500">
+      <div v-else-if="error" class="grow flex items-center justify-center">
+        <div class="text-red-500 font-bold border border-red-500 p-8">
           {{ error }}
         </div>
       </div>
