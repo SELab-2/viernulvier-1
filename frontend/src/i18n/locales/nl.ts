@@ -63,6 +63,8 @@ export default {
     searchPlaceholder: "Titel, artiest, zaal, beschrijving…",
     searchButton: "Zoeken",
     activeSearchLabel: "Zoekterm:",
+    clearAllSearches: "Alle zoektermen wissen",
+    clearAllFilters: "Alle filters wissen",
     removeSearchFilter: "Zoekfilter verwijderen",
     removeSearchTerm: "Zoekterm verwijderen: {term}",
     noSearchResults: "Geen producties gevonden voor deze zoekterm.",

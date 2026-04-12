@@ -63,6 +63,8 @@ export default {
     searchPlaceholder: "Titre, artiste, lieu, description…",
     searchButton: "Rechercher",
     activeSearchLabel: "Recherche :",
+    clearAllSearches: "Effacer toutes les recherches",
+    clearAllFilters: "Effacer tous les filtres",
     removeSearchFilter: "Supprimer le filtre de recherche",
     removeSearchTerm: "Supprimer le terme de recherche : {term}",
     noSearchResults: "Aucune production ne correspond à votre recherche.",

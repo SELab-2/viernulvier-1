@@ -62,6 +62,8 @@ export default {
     searchPlaceholder: "Title, artist, venue, description…",
     searchButton: "Search",
     activeSearchLabel: "Search:",
+    clearAllSearches: "Clear all searches",
+    clearAllFilters: "Clear all filters",
     removeSearchFilter: "Remove search filter",
     removeSearchTerm: "Remove search term: {term}",
     noSearchResults: "No productions match your search.",
