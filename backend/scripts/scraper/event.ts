@@ -1,4 +1,5 @@
 import { scrapeHallById } from "./hall.js";
+import { scrapeEventPricesForEvent } from "./event_price.js";
 
 interface EventListMeta {
   totalItems: number;
@@ -173,7 +174,9 @@ async function processEvent(event: EventJSON, authToken: string, loginToken: str
 
   // Add prices after event is created, to avoid foreign key constraint errors
   const prices = event.prices.map((priceUrl) => parseInt(priceUrl.split("/").pop() as string, 10));
-  await dummyfunction(prices, eventId, authToken, loginToken);
+  if (prices.length > 0) {
+    await scrapeEventPricesForEvent(prices, eventId, authToken, loginToken);
+  }
 }
 
 // fetch the amount of pages, then fetch each page and process the events
@@ -184,16 +187,11 @@ export async function scrapeAllEvents(
   const loginToken = await login("admin", "password");
   const meta = await fetchEventsListMeta(beforeDate, authToken);
   const totalPages = meta.view.last.split("page=")[1] as unknown as number;
-  const maxPages = 10; // Limit to 10 pages for testing
-  const pagesToProcess = Math.min(totalPages, maxPages);
   
-  console.log(`Processing ${pagesToProcess} pages (out of ${totalPages} total pages)`);
-  
-  for (let page = 1; page <= pagesToProcess; page++) {
+  for (let page = 135; page <= totalPages; page++) {
     const data = await fetchEventsPage(page, beforeDate, authToken);
     for (const event of data.member) {
-      // const id = event["@id"].split("/").pop() as unknown as number;
-      console.log(`Processing event ${event["@id"]} (${page}/${pagesToProcess})`);
+      console.log(`Processing event ${event["@id"]} (${page}/${totalPages})`);
       await processEvent(event, authToken, loginToken);
     }
   }
@@ -202,9 +200,4 @@ export async function scrapeAllEvents(
 async function voorbeeldFunctie(_oldId: number, _authToken: string): Promise<number> {
   // To Implement: fetch the old production ID based on the old API data
   return 1; // return a dummy value for now, to avoid foreign key constraint errors
-}
-
-async function dummyfunction(_prices: number[], _eventId: number, _authToken: string, _loginToken: string) {
-  // To Implement: fetch the old production ID based on the old API data
-  return; // return a dummy value for now, to avoid foreign key constraint errors
 }

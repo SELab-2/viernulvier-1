@@ -1,7 +1,7 @@
 interface ViernulvierPriceResponse {
   "@id": string;
   "@type": string;
-  amount: number;
+  amount: number | string;
 }
 
 async function fetchPriceRequest(id: number, authToken: string) {
@@ -34,10 +34,10 @@ export async function scrapeEventPricesForEvent(
 
       const body = {
         event: eventId,
-        amount: priceData.amount,
+        amount: Number(priceData.amount),
       }
 
-      const createResponse = await fetch("http://localhost:3000/event_price", {
+      const createResponse = await fetch("http://localhost:3000/api/v1/event/price", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -47,7 +47,8 @@ export async function scrapeEventPricesForEvent(
       });
 
       if (!createResponse.ok) {
-        console.error(`Error creating event price for ID ${priceId}:`, createResponse.status);
+        const errorText = await createResponse.text();
+        console.error(`Error creating event price for ID ${priceId}: ${createResponse.status} ${errorText}`);
       }
     } catch (error) {
       console.error(`Error fetching price for ID ${priceId}:`, error);
