@@ -137,9 +137,15 @@ const props = defineProps<{
 const tProd = (map: LanguageMap | null | undefined) =>
   localizeOrEmpty(map ?? {}, currentLang.value);
 
-const teaser = computed(() => tProd(props.production.teaser));
+const teaser = computed(() => {
+  const val = tProd(props.production.teaser);
+  return val?.trim() ? val : ""; // make sure no empty box renders
+});
 const description = computed(() => tProd(props.production.description));
-const description_extra = computed(() => tProd(props.production.description_extra));
+const description_extra = computed(() => {
+  const val = tProd(props.production.description_extra);
+  return val?.trim() ? val : "";
+});
 const description_2 = computed(() => tProd(props.production.description_2));
 const quote = computed(() => tProd(props.production.quote));
 const quote_source = computed(() => tProd(props.production.quote_source));
@@ -150,8 +156,8 @@ const tagsExpanded = ref(true);
 
 const hasSidebarContent = computed(() => {
   const hasTags = props.tagGroups && props.tagGroups.length > 0;
-  const hasTeaserText = !!teaser.value && teaser.value.trim().length > 0;
-  const hasExtraText = !!description_extra.value && description_extra.value.trim().length > 0;
+  const hasTeaserText = !!teaser.value;
+  const hasExtraText = !!description_extra.value;
   
   return hasTags || hasTeaserText || hasExtraText;
 });
