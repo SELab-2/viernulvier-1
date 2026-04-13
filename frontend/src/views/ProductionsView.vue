@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-surface-0">
+  <div class="flex min-h-screen flex-col bg-surface-0">
     <AppNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
     <main>
       <section

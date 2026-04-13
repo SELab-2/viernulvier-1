@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-surface-0">
+  <div class="flex min-h-screen flex-col bg-surface-0">
     <AppNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
 
-    <main class="mx-auto max-w-3xl px-6 py-12">
+    <main class="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
       <!-- Loading state -->
       <div v-if="loading" class="post-loading" role="status" aria-live="polite">
         <p class="text-ink-secondary">{{ t("blogpost.loading") }}</p>
