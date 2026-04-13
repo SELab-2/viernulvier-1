@@ -1,4 +1,7 @@
 import type { Production } from "@viernulvier/shared/index.js";
+import type { z } from "zod";
+
+import { CreateProductionBodySchema } from "@/routes/production/handlers/body-schema.js";
 
 import { totalPagesFromHydraView } from "./hydra-view.js";
 
@@ -12,11 +15,12 @@ interface ProductionListMeta {
   };
 }
 
+/** Raw production from Viernulvier JSON-LD (only fields we read). */
 interface ProductionJSON {
   "@id": string;
   supertitle?: Record<string, string>;
   title: Record<string, string>;
-  artist: Record<string, string>;
+  artist?: Record<string, string>;
   tagline?: Record<string, string>;
   teaser?: Record<string, string>;
   description?: Record<string, string>;
@@ -28,7 +32,6 @@ interface ProductionJSON {
   quote_source?: Record<string, string>;
   programme?: Record<string, string>;
   info?: Record<string, string>;
-  [key: string]: unknown;
 }
 
 interface ViernulvierProductionApiResponse {
@@ -98,16 +101,35 @@ async function login(username: string, password: string): Promise<string> {
   return data.token;
 }
 
+function scraperProductionToCreateBody(
+  production: ProductionJSON,
+  legacyId: number,
+): z.infer<typeof CreateProductionBodySchema> {
+  return {
+    old_id: legacyId,
+    finalized: false,
+    title: production.title,
+    artist: production.artist ?? null,
+    tagline: production.tagline ?? null,
+    teaser: production.teaser ?? null,
+    supertitle: production.supertitle ?? null,
+    description: production.description ?? null,
+    description_extra: production.description_extra ?? null,
+    description_2: production.description_2 ?? null,
+    video_1: production.video_1 ?? null,
+    video_2: production.video_2 ?? null,
+    quote: production.quote ?? null,
+    quote_source: production.quote_source ?? null,
+    programme: production.programme ?? null,
+    info: production.info ?? null,
+  };
+}
 
 // Process a single production: convert and create the production in the current API
 async function processProduction(production: ProductionJSON, loginToken: string): Promise<number> {
   const id = parseInt(production["@id"].split("/").pop() as string, 10);
 
-  const payload = {
-    ...production,
-    old_id: id,
-    finalized: false,
-  };
+  const payload = scraperProductionToCreateBody(production, id);
 
   const response = await fetch("http://localhost:3000/api/v1/production", {
     method: "POST",
