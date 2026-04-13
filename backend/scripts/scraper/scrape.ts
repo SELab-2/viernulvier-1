@@ -1,3 +1,11 @@
+/**
+ * Scraper environment (see also `auth.ts`, `local-api.ts`):
+ *
+ * - **`VIERNULVIER_API_TOKEN`** — API key for `https://www.viernulvier.gent` (`X-AUTH-TOKEN`).
+ * - **`VIERNULVIER_LOCAL_API_URL`** — own API base (default `http://localhost:3000`).
+ * - **`SCRAPER_ADMIN_USERNAME`** / **`SCRAPER_ADMIN_PASSWORD`** — JWT login for protected `POST`s (defaults `admin` / `password`).
+ * - **`SCRAPE_EVENTS_WINDOW`** — `historical` | `previous-brussels-day`.
+ */
 import {
   previousBrusselsDayBounds,
   scrapeAllEvents,

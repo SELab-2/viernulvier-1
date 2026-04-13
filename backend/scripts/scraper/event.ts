@@ -1,4 +1,5 @@
 import type { ViernulvierEventStartBounds } from "./event-bounds.js";
+import { fetchScraperJwt } from "./auth.js";
 import { localApiUrl } from "./local-api.js";
 import { scrapeEventPricesForEvent } from "./event_price.js";
 import { totalPagesFromHydraView } from "./hydra-view.js";
@@ -108,23 +109,6 @@ async function fetchEventsListMeta(
   const data = await response.json() as EventListMeta;
 
   return data;
-}
-
-// Login to the new API to obtain an auth token
-async function login(username: string, password: string): Promise<string> {
-  const response = await fetch(localApiUrl("/api/v1/auth/login"), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ username, password }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Login failed: ${response.status} ${response.statusText}`);
-  }
-  const data = await response.json() as { token: string };
-  return data.token;
 }
 
 /** Map legacy hall id → local DB id (filled via GET; halls must be imported first). */
@@ -284,7 +268,7 @@ export async function scrapeAllEvents(
   bounds: ViernulvierEventStartBounds = {},
 ) {
   const resolved = resolveEventStartBounds(bounds);
-  const loginToken = await login("admin", "password");
+  const loginToken = await fetchScraperJwt();
   const meta = await fetchEventsListMeta(authToken, resolved);
   const totalPages = totalPagesFromHydraView(meta.view);
   

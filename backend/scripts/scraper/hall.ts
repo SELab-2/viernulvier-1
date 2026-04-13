@@ -1,5 +1,6 @@
 import type { Hall } from "@viernulvier/shared/index.js";
 
+import { fetchScraperJwt } from "./auth.js";
 import { totalPagesFromHydraView, VIERNULVIER_API_ORIGIN } from "./hydra-view.js";
 import { localApiUrl } from "./local-api.js";
 
@@ -164,24 +165,6 @@ async function fetchLocationAddress(locationUrl: string | null | undefined, auth
   }
 }
 
-async function login(username: string, password: string): Promise<string> {
-  const response = await fetch(localApiUrl("/api/v1/auth/login"), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ username, password }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to login: ${response.status} ${response.statusText}`);
-  }
-
-  const data = await response.json() as { token: string };
-  return data.token;
-}
-
-
 /** Local DB id if a hall with this legacy `old_id` exists, otherwise `null`. */
 export async function fetchLocalHallIdByOldId(oldId: number): Promise<number | null> {
   const url = localApiUrl(`/api/v1/hall?old_id=${oldId}`);
@@ -254,7 +237,7 @@ async function ensureHallImported(
 export async function scrapeAllHalls(
   authToken: string
 ) {
-  const loginToken = await login("admin", "password");
+  const loginToken = await fetchScraperJwt();
 
   const meta = await fetchHallsListMeta(authToken);
   const totalPages = totalPagesFromHydraView(meta.view);
@@ -286,6 +269,6 @@ export async function scrapeHallById(
     throw new Error(`Failed to fetch hall from Viernulvier API: ${viernulvierResponse.status} ${viernulvierResponse.statusText}`);
   }
   const hall = await viernulvierResponse.json() as HallJSON;
-  const loginToken = await login("admin", "password");
+  const loginToken = await fetchScraperJwt();
   return createLocalHallFromViernulvierJson(hall, loginToken, authToken);
 }
