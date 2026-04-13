@@ -71,8 +71,8 @@ export function legacyHallInsertBody(hall: { name: string; address: string }): z
 
 export function legacyEventCreateBody(input: {
   startsAt: Date;
-  endsAt: Date;
-  doorsAt: Date;
+  endsAt: Date | null;
+  doorsAt: Date | null;
   productionId: number;
   hallId: number;
 }): z.infer<typeof EventCreateSchema> {

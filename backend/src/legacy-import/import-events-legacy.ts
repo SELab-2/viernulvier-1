@@ -269,8 +269,9 @@ export async function importEventsLegacy(client: pg.Client, args: ImportArgs): P
       continue;
     }
 
-    const endsAt = parseCsvDate(row["endtime"] ?? "") ?? startsAt;
-    const doorsAt = startsAt;
+    // Legacy CSV has no doors column; `ends_at` is optional (null when endtime missing).
+    const endsAt = parseCsvDate(row["endtime"] ?? "");
+    const doorsAt: Date | null = null;
 
     const hallInsertBody = legacyHallInsertBody(hallRaw);
     const hallParsed = LegacyHallInsertSchema.safeParse(hallInsertBody);
