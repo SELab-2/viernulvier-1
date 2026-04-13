@@ -1,6 +1,4 @@
-import { scrapeHallById } from "./hall.js";
 import { scrapeEventPricesForEvent } from "./event_price.js";
-import { scrapeProductionById } from "./production.js";
 
 interface EventListMeta {
   totalItems: number;
@@ -115,30 +113,78 @@ async function login(username: string, password: string): Promise<string> {
   return data.token;
 }
 
-// Cache for old hall IDs to avoid redundant fetches, if not cached, fetch the old ID.
-// To Do: fetch function that maps old ID to current ID, if not present in db, fetch hall from old API and create it in current API, then return the new ID.
-const hallMap: Record<number, number> = {};
-async function getOldHall(oldId: number, authToken: string) {
-  if (hallMap[oldId]) {
-    return hallMap[oldId];
+/** Map legacy hall id → local DB id (filled via GET; halls must be imported first). */
+const hallIdByOldId: Record<number, number> = {};
+
+async function resolveHallId(oldId: number, authToken: string): Promise<number> {
+  const cached = hallIdByOldId[oldId];
+  if (cached !== undefined) return cached;
+
+  const url = `http://localhost:3000/api/v1/hall?old_id=${oldId}`;
+  const response = await fetch(url, {
+    headers: {
+      accept: "application/json",
+      "X-AUTH-TOKEN": authToken,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to resolve hall old_id=${oldId} from local API: ${response.status} ${response.statusText}`,
+    );
   }
-  // To Implement: fetch the old hall ID based on the old API data
-  const id = await scrapeHallById(oldId, authToken);
-  hallMap[oldId] = id;
-  return id; // return a dummy value for now, to avoid foreign key constraint errors
+
+  const halls = (await response.json()) as { id: number }[];
+  if (halls.length === 0) {
+    throw new Error(
+      `No hall with old_id=${oldId} in local API. Run a full scrape (halls → productions → events) so halls are imported first.`,
+    );
+  }
+  if (halls.length > 1) {
+    throw new Error(`Multiple halls found with old_id=${oldId}`);
+  }
+
+  const id = halls[0]!.id;
+  hallIdByOldId[oldId] = id;
+  return id;
 }
 
-// Cache for old production IDs to avoid redundant fetches, if not cached, fetch the old ID.
-// To Do: fetch function that maps old ID to current ID, if not present in db, fetch production from old API and create it in current API, then return the new ID.
-const productionMap: Record<number, number> = {};
-async function getOldProduction(oldId: number, authToken: string) {
-  if (productionMap[oldId]) {
-    return productionMap[oldId];
+/** Map legacy production id → local DB id (filled via GET; productions must be imported first). */
+const productionIdByOldId: Record<number, number> = {};
+
+async function resolveProductionId(oldId: number, authToken: string): Promise<number> {
+  const cached = productionIdByOldId[oldId];
+  if (cached !== undefined) return cached;
+
+  const url = new URL("http://localhost:3000/api/v1/production");
+  url.searchParams.set("old_id", String(oldId));
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      accept: "application/json",
+      "X-AUTH-TOKEN": authToken,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to resolve production old_id=${oldId} from local API: ${response.status} ${response.statusText}`,
+    );
   }
-  // To Implement: fetch the old production ID based on the old API data
-  const id = await scrapeProductionById(oldId, authToken);
-  productionMap[oldId] = id;
-  return id; // return a dummy value for now, to avoid foreign key constraint errors
+
+  const data = (await response.json()) as { items: { id: number }[]; total: number };
+  if (data.total === 0) {
+    throw new Error(
+      `No production with old_id=${oldId} in local API. Run a full scrape (halls → productions → events) so productions are imported before events.`,
+    );
+  }
+  if (data.total > 1) {
+    throw new Error(`Multiple productions found with old_id=${oldId}`);
+  }
+
+  const id = data.items[0]!.id;
+  productionIdByOldId[oldId] = id;
+  return id;
 }
 
 // Process a single event: convert old id references to current db ones, then create the event in the current API
@@ -154,8 +200,8 @@ async function processEvent(event: EventJSON, authToken: string, loginToken: str
     ends_at: event.ends_at,
     doors_at: event.doors_at,
     info: event.info,
-    production: await getOldProduction(productionId, authToken),
-    hall: await getOldHall(hallId, authToken),
+    production: await resolveProductionId(productionId, authToken),
+    hall: await resolveHallId(hallId, authToken),
   };
 
   const response = await fetch("http://localhost:3000/api/v1/event", {
