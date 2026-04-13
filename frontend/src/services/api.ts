@@ -148,7 +148,6 @@ export async function apiFetch<T>(
   options: ApiFetchOptions = {},
 ): Promise<T> {
   const { body, headers, ...rest } = options;
-  const token = getStoredAuthToken();
 
   const response = await fetch(`${API_BASE}${path}`, {
     credentials: "include",
