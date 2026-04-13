@@ -1,3 +1,5 @@
+import { localApiUrl } from "./local-api.js";
+
 interface ViernulvierPriceResponse {
   "@id": string;
   "@type": string;
@@ -37,7 +39,7 @@ export async function scrapeEventPricesForEvent(
         amount: Number(priceData.amount),
       }
 
-      const createResponse = await fetch("http://localhost:3000/api/v1/event/price", {
+      const createResponse = await fetch(localApiUrl("/api/v1/event/price"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

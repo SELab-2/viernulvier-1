@@ -3,6 +3,7 @@ import type { z } from "zod";
 
 import { CreateProductionBodySchema } from "@/routes/production/handlers/body-schema.js";
 
+import { localApiUrl } from "./local-api.js";
 import { totalPagesFromHydraView } from "./hydra-view.js";
 
 interface ProductionListMeta {
@@ -85,7 +86,7 @@ async function fetchProductionsListMeta(
 }
 
 async function login(username: string, password: string): Promise<string> {
-  const response = await fetch("http://localhost:3000/api/v1/auth/login", {
+  const response = await fetch(localApiUrl("/api/v1/auth/login"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -125,13 +126,41 @@ function scraperProductionToCreateBody(
   };
 }
 
-// Process a single production: convert and create the production in the current API
-async function processProduction(production: ProductionJSON, loginToken: string): Promise<number> {
+async function fetchLocalProductionIdByOldId(
+  oldId: number,
+  authToken: string,
+): Promise<number | null> {
+  const url = new URL(localApiUrl("/api/v1/production"));
+  url.searchParams.set("old_id", String(oldId));
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      accept: "application/json",
+      "X-AUTH-TOKEN": authToken,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch production from own api: ${response.status} ${response.statusText}`);
+  }
+
+  const data = (await response.json()) as { items: Production[]; total: number };
+  if (data.total === 0) return null;
+  if (data.total > 1) {
+    throw new Error(`Multiple productions found with old_id ${oldId}`);
+  }
+  return data.items[0]!.id;
+}
+
+async function createLocalProductionFromViernulvierJson(
+  production: ProductionJSON,
+  loginToken: string,
+): Promise<number> {
   const id = parseInt(production["@id"].split("/").pop() as string, 10);
 
   const payload = scraperProductionToCreateBody(production, id);
 
-  const response = await fetch("http://localhost:3000/api/v1/production", {
+  const response = await fetch(localApiUrl("/api/v1/production"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -148,6 +177,20 @@ async function processProduction(production: ProductionJSON, loginToken: string)
   return productionId;
 }
 
+async function ensureProductionImported(
+  production: ProductionJSON,
+  loginToken: string,
+  authToken: string,
+): Promise<number> {
+  const oldId = parseInt(production["@id"].split("/").pop() as string, 10);
+  const existing = await fetchLocalProductionIdByOldId(oldId, authToken);
+  if (existing !== null) {
+    console.log(`Production old_id=${oldId} already exists locally (id=${existing}), skipping create`);
+    return existing;
+  }
+  return createLocalProductionFromViernulvierJson(production, loginToken);
+}
+
 // fetch the amount of pages, then fetch each page and process the productions
 export async function scrapeAllProductions(
   authToken: string
@@ -161,7 +204,7 @@ export async function scrapeAllProductions(
     const data = await fetchProductionsPage(page, authToken);
     for (const production of data.member) {
       console.log(`Processing production ${production["@id"]} (${page}/${totalPages})`);
-      await processProduction(production, loginToken);
+      await ensureProductionImported(production, loginToken, authToken);
     }
   }
 }
@@ -170,37 +213,20 @@ export async function scrapeProductionById(
   id: number,
   authToken: string
 ) {
-  const url = `http://localhost:3000/api/v1/production?old_id=${id}`;
+  const existing = await fetchLocalProductionIdByOldId(id, authToken);
+  if (existing !== null) return existing;
+
+  const url = `https://www.viernulvier.gent/api/v1/productions/${id}`;
   const response = await fetch(url, {
     headers: {
-      accept: "application/json",
+      accept: "application/ld+json",
       "X-AUTH-TOKEN": authToken,
     },
   });
-
   if (!response.ok) {
-    throw new Error(`Failed to fetch production from own api: ${response.status} ${response.statusText}`);
+    throw new Error(`Failed to fetch production: ${response.status} ${response.statusText}`);
   }
-
-  const productionList = await response.json() as { items: Production[], total: number };
-  if (productionList.total === 0) {
-    const url = `https://www.viernulvier.gent/api/v1/productions/${id}`;
-    const response = await fetch(url, {
-      headers: {
-        accept: "application/ld+json",
-        "X-AUTH-TOKEN": authToken,
-      },
-    });
-    if (!response.ok) {
-      throw new Error(`Failed to fetch production: ${response.status} ${response.statusText}`);
-    }
-    const production = await response.json() as ProductionJSON;
-    const loginToken = await login("admin", "password");
-    return await processProduction(production, loginToken);
-  }
-  if (productionList.total > 1) {
-    throw new Error(`Multiple productions found with old_id ${id}`);
-  }
-
-  return productionList.items[0]!.id;
+  const production = await response.json() as ProductionJSON;
+  const loginToken = await login("admin", "password");
+  return createLocalProductionFromViernulvierJson(production, loginToken);
 }

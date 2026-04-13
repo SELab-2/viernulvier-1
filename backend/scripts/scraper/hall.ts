@@ -1,6 +1,7 @@
 import type { Hall } from "@viernulvier/shared/index.js";
 
 import { totalPagesFromHydraView, VIERNULVIER_API_ORIGIN } from "./hydra-view.js";
+import { localApiUrl } from "./local-api.js";
 
 interface HallListMeta {
   totalItems: number;
@@ -164,7 +165,7 @@ async function fetchLocationAddress(locationUrl: string | null | undefined, auth
 }
 
 async function login(username: string, password: string): Promise<string> {
-  const response = await fetch("http://localhost:3000/api/v1/auth/login", {
+  const response = await fetch(localApiUrl("/api/v1/auth/login"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -181,11 +182,38 @@ async function login(username: string, password: string): Promise<string> {
 }
 
 
-// Process a single hall: convert and create the hall in the current API
-async function processHall(hall: HallJSON, loginToken: string, authToken: string): Promise<number> {
+/** Local DB id if a hall with this legacy `old_id` exists, otherwise `null`. */
+export async function fetchLocalHallIdByOldId(
+  oldId: number,
+  authToken: string,
+): Promise<number | null> {
+  const url = localApiUrl(`/api/v1/hall?old_id=${oldId}`);
+  const response = await fetch(url, {
+    headers: {
+      accept: "application/json",
+      "X-AUTH-TOKEN": authToken,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch hall from own api: ${response.status} ${response.statusText}`);
+  }
+
+  const hallList = await response.json() as Hall[];
+  if (hallList.length === 0) return null;
+  if (hallList.length > 1) {
+    throw new Error(`Multiple halls found with old_id ${oldId}`);
+  }
+  return hallList[0]!.id;
+}
+
+async function createLocalHallFromViernulvierJson(
+  hall: HallJSON,
+  loginToken: string,
+  authToken: string,
+): Promise<number> {
   const id = parseInt(hall["@id"].split("/").pop() as string, 10);
 
-  // Fetch the space to get the location
   const address = await fetchSpaceLocation(hall.space, authToken);
 
   const body = {
@@ -195,7 +223,7 @@ async function processHall(hall: HallJSON, loginToken: string, authToken: string
     vendor_id: 0,
   };
 
-  const response = await fetch("http://localhost:3000/api/v1/hall", {
+  const response = await fetch(localApiUrl("/api/v1/hall"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -212,6 +240,20 @@ async function processHall(hall: HallJSON, loginToken: string, authToken: string
   return hallId;
 }
 
+async function ensureHallImported(
+  hall: HallJSON,
+  loginToken: string,
+  authToken: string,
+): Promise<number> {
+  const oldId = parseInt(hall["@id"].split("/").pop() as string, 10);
+  const existing = await fetchLocalHallIdByOldId(oldId, authToken);
+  if (existing !== null) {
+    console.log(`Hall old_id=${oldId} already exists locally (id=${existing}), skipping create`);
+    return existing;
+  }
+  return createLocalHallFromViernulvierJson(hall, loginToken, authToken);
+}
+
 // fetch the amount of pages, then fetch each page and process the halls
 export async function scrapeAllHalls(
   authToken: string
@@ -225,7 +267,7 @@ export async function scrapeAllHalls(
     const data = await fetchHallsPage(page, authToken);
     for (const hall of data.member) {
       console.log(`Processing hall ${hall["@id"]} (${page}/${totalPages})`);
-      await processHall(hall, loginToken, authToken);
+      await ensureHallImported(hall, loginToken, authToken);
     }
   }
 }
@@ -234,37 +276,20 @@ export async function scrapeHallById(
   id: number,
   authToken: string
 ) {
-  const url = `http://localhost:3000/api/v1/hall?old_id=${id}`;
-  const response = await fetch(url, {
+  const existing = await fetchLocalHallIdByOldId(id, authToken);
+  if (existing !== null) return existing;
+
+  const viernulvierUrl = `https://www.viernulvier.gent/api/v1/halls/${id}`;
+  const viernulvierResponse = await fetch(viernulvierUrl, {
     headers: {
-      accept: "application/json",
+      accept: "application/ld+json",
       "X-AUTH-TOKEN": authToken,
     },
   });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch hall from own api: ${response.status} ${response.statusText}`);
+  if (!viernulvierResponse.ok) {
+    throw new Error(`Failed to fetch hall from Viernulvier API: ${viernulvierResponse.status} ${viernulvierResponse.statusText}`);
   }
-
-  const hallList = await response.json() as Hall[];
-  
-  if (hallList.length === 0) {
-    const viernulvierUrl = `https://www.viernulvier.gent/api/v1/halls/${id}`;
-    const viernulvierResponse = await fetch(viernulvierUrl, {
-      headers: {
-        accept: "application/ld+json",
-        "X-AUTH-TOKEN": authToken,
-      },
-    });
-    if (!viernulvierResponse.ok) {
-      throw new Error(`Failed to fetch hall from Viernulvier API: ${viernulvierResponse.status} ${viernulvierResponse.statusText}`);
-    }
-    const hall = await viernulvierResponse.json() as HallJSON;
-    const loginToken = await login("admin", "password");
-    return await processHall(hall, loginToken, authToken);
-  }
-  if (hallList.length > 1) {
-    throw new Error(`Multiple halls found with old_id ${id}`);
-  }
-  return hallList[0]!.id;
+  const hall = await viernulvierResponse.json() as HallJSON;
+  const loginToken = await login("admin", "password");
+  return createLocalHallFromViernulvierJson(hall, loginToken, authToken);
 }
