@@ -19,7 +19,11 @@
       </div>
 
       <template v-else-if="production">
-        <HeroSection :production="production" :tag-groups="tagGroups" :event-stats="eventStats" />
+        <HeroSection 
+          :production="production" 
+          :tag-groups="tagGroups" 
+          :event-stats="eventStats"
+        />
         <DetailsSection 
           :production="production" 
           :tag-groups="tagGroups" 
@@ -67,20 +71,26 @@ const notFound = ref(false);
 onMounted(async () => {
   try {
     production.value = await getProduction(id);
-  } catch (e: any) {
+  } catch (e: unknown) {
     if (e instanceof ApiError && e.status === 404) {
       notFound.value = true;
+    } else if (e instanceof Error) {
+      error.value = e.message;
     } else {
-      error.value = e.message ?? "Fout bij laden";
+      error.value = "Error loading production";
     }
   } finally {
     loading.value = false;
   }
 });
 
-const { tagGroups, totalTags, loading: tagsLoading } = useTagGroups(id);
-const { events, loading: eventsLoading } = useProductionEvents(id);
+const { tagGroups, totalTags } = useTagGroups(id);
+const { events } = useProductionEvents(id);
 
+/**
+ * Computed statistics derived from the events list.
+ * Calculates date range and the duration of an event shown in the hero.
+ */
 const eventStats = computed(() => {
   if (!events.value.length) return null;
 

@@ -3,12 +3,18 @@ import { getEvents } from "@/services/events";
 import { getHalls } from "@/services/halls";
 import type { Event, Hall } from "@viernulvier/shared";
 
+/**
+ * Event data extended with full hall details and price range.
+ */
 export interface EnrichedEvent extends Omit<Event, 'hall'> {
   hall: Hall | null;
   minPrice: number | null;
   maxPrice: number | null;
 }
 
+/**
+ * Fetches events for a production and attaches hall info and prices.
+ */
 export function useProductionEvents(productionId: number) {
   const events = ref<Event[]>([]);
   const halls = ref<Hall[]>([]);
@@ -27,6 +33,10 @@ export function useProductionEvents(productionId: number) {
     }
   });
 
+  /**
+   * Merges event data with hall details and calculates 
+   * the lowest and highest ticket prices.
+   */
   const enrichedEvents = computed<EnrichedEvent[]>(() => {
     return events.value.map((event) => {
       const hallMatch = halls.value.find((h) => h.id === event.hall);
