@@ -1,31 +1,34 @@
 import z from "zod";
+import { ImageSchema } from "@viernulvier/shared/index.js";
+import { CropSchema } from "@viernulvier/shared/index.js";
 
 // ── Crop-file mapping (used inside multipart "data" JSON field) ──
 
-export const CropMappingSchema = z.object({
+export const CropMappingSchema = CropSchema.pick({ type: true }).extend({
   filename: z.string().min(1),
-  type: z.string().min(1).max(32),
 });
 
 // ── Image body schemas ──
 
 /** POST — create image, optionally with crops in one multipart request */
-export const CreateImageBodySchema = z.object({
-  res: z.string().max(16).nullable().optional(),
-  old_id: z.int().nonnegative().nullable().optional(),
+export const CreateImageBodySchema = ImageSchema.pick({
+  res: true,
+  old_id: true,
+}).partial().extend({
   crops: z.array(CropMappingSchema).optional(),
 });
 
 /** PATCH — partially update image fields (res, old_id) */
-export const PatchImageBodySchema = z.object({
-  res: z.string().max(16).nullable().optional(),
-  old_id: z.int().nonnegative().nullable().optional(),
-});
+export const PatchImageBodySchema = ImageSchema.pick({
+  res: true,
+  old_id: true,
+}).partial();
 
 /** PUT — fully replace image fields, optionally replace all crops */
-export const ReplaceImageBodySchema = z.object({
-  res: z.string().max(16).nullable(),
-  old_id: z.int().nonnegative().nullable(),
+export const ReplaceImageBodySchema = ImageSchema.pick({
+  res: true,
+  old_id: true,
+}).extend({
   crops: z.array(CropMappingSchema).optional(),
 });
 
@@ -37,11 +40,11 @@ export const CreateCropBodySchema = z.object({
 });
 
 /** PATCH — optionally change crop type and/or replace the file */
-export const PatchCropBodySchema = z.object({
-  type: z.string().min(1).max(32).optional(),
-});
+export const PatchCropBodySchema = CropSchema.pick({
+  type: true,
+}).partial();
 
 /** PUT — replace crop type + file */
-export const ReplaceCropBodySchema = z.object({
-  type: z.string().min(1).max(32),
+export const ReplaceCropBodySchema = CropSchema.pick({
+  type: true,
 });
