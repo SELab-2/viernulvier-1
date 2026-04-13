@@ -1,5 +1,6 @@
 import type { Event as ArchiveEvent, ProductionWithBackwardsRefs, Tag } from "@viernulvier/shared";
 import type { SupportedLang } from "@/i18n";
+import { collectProductionTagsByIdMap } from "@/services/productions";
 import type { LanguageMap } from "@/utils/i18n";
 
 export interface CmsEventGridRow {
@@ -114,9 +115,7 @@ export function buildProductionGridRow(
 ): CmsProductionGridRow {
   const eventIds = extractEventIds(production.events as unknown[]);
 
-  const tagLabels = production.tags
-    .map((tagId) => tagById.get(tagId as number))
-    .filter((tag): tag is Tag => tag !== undefined)
+  const tagLabels = collectProductionTagsByIdMap(production, tagById)
     .map((tag) => localize(tag.name))
     .filter((label) => label.length > 0);
 

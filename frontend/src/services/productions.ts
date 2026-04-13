@@ -18,9 +18,21 @@
  * ```
  */
 
-import type {ProductionWithBackwardsRefs, ProductionWithMeta} from "@viernulvier/shared";
+import type { ProductionWithBackwardsRefs, ProductionWithMeta, Tag } from "@viernulvier/shared";
 import { apiFetch } from "./api";
 import type { LanguageMap } from "@/utils/i18n";
+
+type LinkedEntityReference = number | string | { id: unknown };
+
+function parseLinkedEntityId(reference: LinkedEntityReference): number | null {
+  if (typeof reference === "number" || typeof reference === "string") {
+    const id = Number(reference);
+    return Number.isFinite(id) ? id : null;
+  }
+
+  const id = Number(reference.id);
+  return Number.isFinite(id) ? id : null;
+}
 
 // ---------------------------------------------------------------------------
 // Input types
@@ -88,6 +100,34 @@ export type ProductionListPage = {
   /** Total number of productions (all pages), not just `items.length`. */
   total: number;
 };
+
+/**
+ * Extracts normalized tag IDs from a production relation array.
+ * Handles numeric IDs and object references (`{ id }`).
+ */
+export function extractProductionTagIds(
+  production: Pick<ProductionWithBackwardsRefs, "tags">,
+): number[] {
+  const refs = production.tags as LinkedEntityReference[];
+  const ids = refs
+    .map((reference) => parseLinkedEntityId(reference))
+    .filter((id): id is number => id !== null);
+
+  return [...new Set(ids)];
+}
+
+/**
+ * Collects all tags linked to a production from a pre-fetched tag map.
+ * Intended for CMS usage where productions and tags are loaded in bulk.
+ */
+export function collectProductionTagsByIdMap(
+  production: Pick<ProductionWithBackwardsRefs, "tags">,
+  tagById: ReadonlyMap<number, Tag>,
+): Tag[] {
+  return extractProductionTagIds(production)
+    .map((tagId) => tagById.get(tagId))
+    .filter((tag): tag is Tag => tag !== undefined);
+}
 
 /**
  * Fetches productions (public — no session required).

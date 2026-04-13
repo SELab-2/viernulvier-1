@@ -446,7 +446,7 @@ import {
 } from "@/services/productions";
 import { createEvent, deleteEvent, getEvent, updateEvent } from "@/services/events";
 import { getHall, getHalls } from "@/services/halls";
-import { getTags } from "@/services/tags";
+import { getAllTags } from "@/services/tags";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/i18n";
 import {
   buildEventGridRows,
@@ -1246,13 +1246,13 @@ async function loadCmsData(): Promise<void> {
   loadError.value = null;
 
   try {
-    const [productions, tags, halls] = await Promise.all([
+    const [productionsPage, tags, halls] = await Promise.all([
       getProductions(),
-      getTags(),
+      getAllTags(),
       getHalls(),
     ]);
 
-    productionsData.value = productions;
+    productionsData.value = productionsPage.items;
     tagsData.value = tags;
     hallsData.value = halls;
     hallByIdCache.value = new Map(halls.map((hall) => [hall.id, hall]));
@@ -1277,6 +1277,58 @@ function getInitialDark(): boolean {
   if (stored !== null) return stored === "true";
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
+
+defineExpose({
+  __test: {
+    rowData,
+    createForm,
+    createModalOpen,
+    createEventModalOpen,
+    createError,
+    eventsPanelError,
+    editorPanel,
+    detailRowsCache,
+    eventByIdCache,
+    createLinkedEventForm,
+    selectedEventsProductionId,
+    selectedEventRows,
+    localizeValue,
+    setCurrentLanguageValue,
+    toLanguageMapOrNull,
+    toLanguageMap,
+    mediaToLanguageMap,
+    hasAnyLanguageValue,
+    resetCreateForm,
+    resetCreateLinkedEventForm,
+    openCreateModal,
+    closeCreateModal,
+    validateCreateForm,
+    submitCreateProduction,
+    showEventsForProduction,
+    refreshEventsPanelForSelectedProduction,
+    createAndLinkEvent,
+    saveLinkedEvent,
+    removeLinkedEvent,
+    openCreateEventModal,
+    closeCreateEventModal,
+    submitCreateEvent,
+    onEventRowFocusOut,
+    onEventRowEnter,
+    onCellClicked,
+    onProductionCellKeyDown,
+    onProductionCellEditingStarted,
+    onWindowKeyDown,
+    onCellEditingStopped,
+    onImageFileChange,
+    onVideoFileChange,
+    closeEventsPanel,
+    closeEditorPanel,
+    saveEditorPanel,
+    rebuildRows,
+    loadCmsData,
+    getInitialDark,
+  },
+});
 
 watchEffect(() => {
   const htmlEl = document.documentElement;

@@ -98,11 +98,11 @@ describe("apiFetch", () => {
     );
   });
 
-  it("sends credentials: same-origin by default", async () => {
+  it("sends credentials: include by default", async () => {
     await apiFetch("/production");
     expect(fetch).toHaveBeenCalledWith(
       expect.any(String),
-      expect.objectContaining({ credentials: "same-origin" }),
+      expect.objectContaining({ credentials: "include" }),
     );
   });
 
