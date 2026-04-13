@@ -9,7 +9,10 @@ import {
   isUpcoming,
   isPast,
   isOngoing,
+  formatDurationMinutesI18n,
+  formatNumericDate,
 } from "@/utils/date";
+import type { ComposerTranslation } from "vue-i18n";
 
 // ---------------------------------------------------------------------------
 // Fixed reference date used throughout these tests
@@ -78,6 +81,64 @@ describe("formatShortDate", () => {
 });
 
 // ---------------------------------------------------------------------------
+// formatNumericDate
+// ---------------------------------------------------------------------------
+
+describe("formatNumericDate", () => {
+  const DATE = "2026-04-08T12:00:00";
+
+  it("formats date in nl-BE format (DMY)", () => {
+    const result = formatNumericDate(DATE, "nl-BE");
+
+    expect(result).toBe("8.4.2026");
+  });
+
+  it("formats date in en-US format (MDY)", () => {
+    const result = formatNumericDate(DATE, "en-US");
+
+    expect(result).toBe("4.8.2026");
+  });
+
+  it("accepts a Date object", () => {
+    const result = formatNumericDate(new Date(DATE), "nl-BE");
+
+    expect(result).toBe("8.4.2026");
+  });
+
+  it("accepts a numeric timestamp", () => {
+    const result = formatNumericDate(new Date(DATE).getTime(), "nl-BE");
+
+    expect(result).toBe("8.4.2026");
+  });
+
+  it("uses nl-BE as default locale", () => {
+    const result = formatNumericDate(DATE);
+
+    expect(result).toBe("8.4.2026");
+  });
+
+  it("does not include leading zeros", () => {
+    const result = formatNumericDate("2026-01-05", "nl-BE");
+
+    expect(result).toBe("5.1.2026");
+  });
+
+  it("uses dots as separators", () => {
+    const result = formatNumericDate(DATE);
+
+    expect(result).toContain(".");
+    expect(result).not.toContain("/");
+    expect(result).not.toContain("-");
+  });
+
+  it("does not end with a trailing dot", () => {
+    const result = formatNumericDate(DATE);
+
+    expect(result.endsWith(".")).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // formatTime
 // ---------------------------------------------------------------------------
 
@@ -100,6 +161,57 @@ describe("formatTime", () => {
 
   it("accepts a numeric timestamp", () => {
     expect(formatTime(new Date(SAT_20).getTime())).toBe("20:00");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// formatDurationMinutesI18n
+// ---------------------------------------------------------------------------
+
+describe("formatDurationMinutesI18n", () => {
+  const t = vi.fn((key: string, params?: any) => {
+    return `${key}:${JSON.stringify(params)}`;
+  }) as unknown as ComposerTranslation;
+
+  it("returns em dash for null, undefined, or negative values", () => {
+    expect(formatDurationMinutesI18n(null, t)).toBe("—");
+    expect(formatDurationMinutesI18n(undefined, t)).toBe("—");
+    expect(formatDurationMinutesI18n(-10, t)).toBe("—");
+    expect(formatDurationMinutesI18n(0, t)).toBe("—");
+  });
+
+  it("formats minutes only when less than 60", () => {
+    const result = formatDurationMinutesI18n(45, t);
+
+    expect(t).toHaveBeenCalledWith("time.minutes", { m: 45 });
+    expect(result).toContain("time.minutes");
+  });
+
+  it("formats hours only when divisible by 60", () => {
+    const result = formatDurationMinutesI18n(120, t);
+
+    expect(t).toHaveBeenCalledWith("time.hours", { h: 2 });
+    expect(result).toContain("time.hours");
+  });
+
+  it("formats hours and minutes when both are present", () => {
+    const result = formatDurationMinutesI18n(75, t);
+
+    expect(t).toHaveBeenCalledWith("time.hoursMinutes", { h: 1, m: 15 });
+    expect(result).toContain("time.hoursMinutes");
+  });
+
+  it("handles edge case of exactly 60 minutes", () => {
+    const result = formatDurationMinutesI18n(60, t);
+
+    expect(t).toHaveBeenCalledWith("time.hours", { h: 1 });
+    expect(result).toContain("time.hours");
+  });
+
+  it("handles small minute values correctly", () => {
+    formatDurationMinutesI18n(1, t);
+
+    expect(t).toHaveBeenCalledWith("time.minutes", { m: 1 });
   });
 });
 

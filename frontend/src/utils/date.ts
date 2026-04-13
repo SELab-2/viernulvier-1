@@ -129,7 +129,7 @@ export function formatShortDate(
  */
 export function formatNumericDate(
   date: Date | string | number,
-  locale: string = "nl-BE",
+  locale: string = DEFAULT_LOCALE,
 ): string {
   const d = new Date(date);
   const formatter = new Intl.DateTimeFormat(locale, {
