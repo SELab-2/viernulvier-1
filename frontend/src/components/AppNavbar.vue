@@ -22,11 +22,11 @@
       class="navbar-center"
     >
       <img
-        src="@/assets/logo.svg"
+        src="@/assets/images/logo.svg"
         alt="VierNulVier"
         width="102"
         height="32"
-        class="h-8 w-[102px] brightness-0 invert"
+        class="logo"
       />
     </RouterLink>
 
@@ -52,4 +52,7 @@ const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 </script>
 
 <style scoped>
+@reference "@/style.css";
+
+.logo { @apply h-6 w-auto; }
 </style>
