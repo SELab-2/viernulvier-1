@@ -140,9 +140,9 @@ async function handleLogin() {
 
 
 .login-controls { @apply absolute right-6 top-4 z-10; }
-.login-shell { @apply relative z-10 flex w-full max-w-sm flex-col items-center gap-6; }
-.login-header { @apply flex flex-col items-center gap-2; }
-.login-logo { @apply h-9 w-auto; }
+.login-shell { @apply relative z-10 flex w-full max-w-sm flex-col items-center gap-8; }
+.login-header { @apply flex flex-col items-center gap-4; }
+.login-logo { @apply h-8 w-auto; }
 .login-scope { @apply text-xs font-semibold uppercase tracking-[0.2em] text-ink-secondary; }
 
 .login-card { @apply w-full rounded-2xl p-8 bg-surface-1 border border-surface-3 shadow-sm; }

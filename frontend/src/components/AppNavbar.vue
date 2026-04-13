@@ -54,5 +54,5 @@ const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 <style scoped>
 @reference "@/style.css";
 
-.logo { @apply h-8 w-auto; }
+.logo { @apply h-6 w-auto; }
 </style>
