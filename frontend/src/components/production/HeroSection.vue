@@ -1,6 +1,6 @@
 <template>
   <section class="relative flex min-h-[70vh] w-full items-end overflow-hidden">
-    <div class="absolute inset-0 z-0">
+    <div class="absolute inset-0 z-0 bg-surface-inv">
       <img
         alt="Contemporary dance performance"
         class="h-full w-full object-cover grayscale contrast-125"
