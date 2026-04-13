@@ -71,7 +71,7 @@
           
           <div v-if="quote" class="space-y-8 pb-12 border-b border-surface-3">
             <div class="space-y-4">
-              <p class="italic text-4xl font-black leading-[1.1] tracking-tighter text-ink-primary md:text-6xl">
+              <p class="italic text-3xl font-black leading-[1.1] tracking-tighter text-ink-primary md:text-5xl">
                 “{{ quote }}”
               </p>
               <p v-if="quote_source" class="pl-8 text-sm font-bold uppercase tracking-widest text-ink-secondary md:pl-16">
