@@ -7,7 +7,7 @@
 
 /* ===== NAV LINKS ===== */
 .nav-link {
-  @apply text-sm font-medium text-ink-on-inv-secondary transition hover:text-ink-on-inv;
+  @apply text-lg font-medium text-ink-on-inv-secondary transition hover:text-ink-on-inv;
 }
 .nav-link.router-link-active {
   @apply text-ink-on-inv;

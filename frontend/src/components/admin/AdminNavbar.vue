@@ -32,7 +32,7 @@
           <img v-if="admin?.profile_picture" :src="admin.profile_picture" class="avatar-img" alt="" />
           <span v-else class="avatar-fallback">{{ initials }}</span>
           <span class="profile-name hidden sm:inline">{{ admin?.username }}</span>
-          <svg class="h-3.5 w-3.5 transition-transform" :class="{ 'rotate-180': profileOpen }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+          <svg class="h-8 w-8 transition-transform" :class="{ 'rotate-180': profileOpen }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
         </button>
 
         <div v-if="profileOpen" class="dropdown">
