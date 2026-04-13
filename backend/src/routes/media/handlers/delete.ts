@@ -6,7 +6,7 @@ import {
   HttpError,
   parseParams,
 } from "@/routes/helpers.js";
-import { getCropById, /* getCropsByImageId, */ getImageById } from "./fetch.js";
+import { getCropById, getImageById } from "./fetch.js";
 import { deleteFromS3, deleteManyFromS3, extractS3Key } from "./s3-utils.js";
 import z from "zod";
 
