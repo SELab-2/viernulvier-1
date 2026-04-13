@@ -36,7 +36,6 @@ export function useTagGroups(productionId: number) {
       fetchedTypes.value = types;
     } catch (err) {
       error.value = err;
-      console.error("Failed to fetch tag data:", err);
     } finally {
       loading.value = false;
     }
@@ -55,12 +54,15 @@ export function useTagGroups(productionId: number) {
 
     for (const tag of fetchedTags.value) {
       const typeId = tag.tag_type as number;
+      const translatedName = tProd(tag.name).trim();
 
-      if (!grouped.has(typeId)) {
-        grouped.set(typeId, []);
+      if (translatedName) {
+        if (!grouped.has(typeId)) {
+          grouped.set(typeId, []);
+        }
+
+        grouped.get(typeId)!.push(tProd(tag.name));
       }
-
-      grouped.get(typeId)!.push(tProd(tag.name));
     }
 
     return fetchedTypes.value
