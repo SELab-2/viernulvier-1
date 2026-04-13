@@ -2,8 +2,8 @@
 @import "ag-grid-community/styles/ag-grid.css";
 @import "ag-grid-community/styles/ag-theme-alpine.css";
 @import "./styles/cms-ag-grid.css";
-@import "./assets/fonts/inter.css";
-@import "./assets/design-tokens.css";
+@import "@/assets/fonts/inter.css";
+@import "@/assets/stylesheets/design-tokens.css";
 
 /* ---- Map design tokens → Tailwind utility classes ---- */
 @theme {
@@ -32,6 +32,9 @@
   --color-ink-on-inv-tertiary: var(--ink-on-inv-tertiary);
 
   --color-photo-overlay: var(--photo-overlay);
+
+  --color-tag-genre-bg: var(--tag-genre-bg);
+  --color-tag-genre-text: var(--tag-genre-text);
 }
 
 @layer base {

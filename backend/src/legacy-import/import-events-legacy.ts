@@ -11,6 +11,13 @@ import {
   type CsvRecord,
   type ImportArgs,
 } from "./shared.js";
+import {
+  formatLegacyZodError,
+  legacyEventCreateBody,
+  legacyHallInsertBody,
+  LegacyHallInsertSchema,
+} from "./validate-legacy-inserts.js";
+import { EventCreateSchema } from "@/routes/event/handlers/helper.js";
 
 export const LEGACY_EVENT_IMPORT_SOURCE = "events-voorstellingen-csv";
 export const LEGACY_EVENT_PRODUCTION_MAP_SOURCE = "productions-output-csv";
@@ -30,6 +37,7 @@ type ImportStats = {
   skippedUnknownProduction: number;
   skippedDuplicateInFile: number;
   skippedAlreadyImported: number;
+  skippedValidationFailed: number;
   failedRows: number;
 };
 
@@ -204,6 +212,7 @@ export async function importEventsLegacy(client: pg.Client, args: ImportArgs): P
     skippedUnknownProduction: 0,
     skippedDuplicateInFile: 0,
     skippedAlreadyImported: 0,
+    skippedValidationFailed: 0,
     failedRows: 0,
   };
 
@@ -215,6 +224,12 @@ export async function importEventsLegacy(client: pg.Client, args: ImportArgs): P
   for await (const rowRaw of parser as AsyncIterable<CsvRecord>) {
     if (args.limit !== null && stats.totalRows >= args.limit) break;
     stats.totalRows++;
+
+    if (stats.totalRows % LEGACY_IMPORT_PROGRESS_EVERY === 0) {
+      console.log(
+        `Progress ${stats.totalRows} rows | imported=${stats.importedEvents} | failed=${stats.failedRows}`,
+      );
+    }
 
     const row = normalizeRow(rowRaw);
     const legacyKey = makeLegacyKey(row);
@@ -256,7 +271,36 @@ export async function importEventsLegacy(client: pg.Client, args: ImportArgs): P
 
     const endsAt = parseCsvDate(row["endtime"] ?? "") ?? startsAt;
     const doorsAt = startsAt;
-    const info = toLanguageMap("");
+
+    const hallInsertBody = legacyHallInsertBody(hallRaw);
+    const hallParsed = LegacyHallInsertSchema.safeParse(hallInsertBody);
+    if (!hallParsed.success) {
+      stats.skippedValidationFailed++;
+      console.error(
+        `Validation failed for hall (row #${stats.totalRows}): ${formatLegacyZodError(hallParsed.error)}`,
+      );
+      continue;
+    }
+
+    const existingHallIdDry = hallCache.get(hallKey(hallRaw.name));
+    const hallIdForEventValidation =
+      existingHallIdDry !== undefined && existingHallIdDry > 0 ? existingHallIdDry : 1;
+
+    const eventBody = legacyEventCreateBody({
+      startsAt,
+      endsAt,
+      doorsAt,
+      productionId,
+      hallId: hallIdForEventValidation,
+    });
+    const eventParsed = EventCreateSchema.safeParse(eventBody);
+    if (!eventParsed.success) {
+      stats.skippedValidationFailed++;
+      console.error(
+        `Validation failed for event (row #${stats.totalRows}): ${formatLegacyZodError(eventParsed.error)}`,
+      );
+      continue;
+    }
 
     if (args.dryRun) {
       const existingHallId = hallCache.get(hallKey(hallRaw.name));
@@ -277,11 +321,19 @@ export async function importEventsLegacy(client: pg.Client, args: ImportArgs): P
       }
       if (hallResult.created) stats.createdHalls++;
 
+      const ev = eventParsed.data;
       const insertedEvent = await client.query<{ id: number }>(
         `INSERT INTO event (starts_at, ends_at, doors_at, info, production, hall)
          VALUES ($1, $2, $3, $4::jsonb, $5, $6)
          RETURNING id`,
-        [startsAt, endsAt, doorsAt, JSON.stringify(info), productionId, hallResult.id],
+        [
+          ev.starts_at,
+          ev.ends_at,
+          ev.doors_at,
+          JSON.stringify(ev.info),
+          ev.production,
+          hallResult.id,
+        ],
       );
       const eventId = insertedEvent.rows[0]!.id;
 
@@ -299,12 +351,6 @@ export async function importEventsLegacy(client: pg.Client, args: ImportArgs): P
       stats.failedRows++;
       console.error(`Failed row #${stats.totalRows}:`, error);
     }
-
-    if (stats.totalRows % LEGACY_IMPORT_PROGRESS_EVERY === 0) {
-      console.log(
-        `Progress ${stats.totalRows} rows | imported=${stats.importedEvents} | failed=${stats.failedRows}`,
-      );
-    }
   }
 
   console.log("");
@@ -318,5 +364,6 @@ export async function importEventsLegacy(client: pg.Client, args: ImportArgs): P
   console.log(`  Skipped (unknown production mapping): ${stats.skippedUnknownProduction}`);
   console.log(`  Skipped (duplicate in file): ${stats.skippedDuplicateInFile}`);
   console.log(`  Skipped (already imported): ${stats.skippedAlreadyImported}`);
+  console.log(`  Skipped (Zod validation failed): ${stats.skippedValidationFailed}`);
   console.log(`  Failed rows: ${stats.failedRows}`);
 }

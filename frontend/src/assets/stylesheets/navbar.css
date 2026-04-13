@@ -1,0 +1,19 @@
+@reference "@/style.css";
+
+/* ===== BASE NAVBAR ===== */
+.navbar {
+  @apply sticky top-0 z-50 flex h-16 w-full items-center justify-between bg-surface-inv px-6 lg:px-10;
+}
+
+/* ===== NAV LINKS ===== */
+.nav-link {
+  @apply text-lg font-medium text-ink-on-inv-secondary transition hover:text-ink-on-inv;
+}
+.nav-link.router-link-active {
+  @apply text-ink-on-inv;
+}
+
+/* ===== CENTER POSITIONING ===== */
+.navbar-center {
+  @apply absolute left-1/2 -translate-x-1/2;
+}

@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-import { HallSchema, AdminSchema, BlogSchema, ProductionSchema, ProductionSchemaWithBackwardsRefs, EventSchema, EventPriceSchema, TagSchema, TagTypeSchema } from "@viernulvier/shared/index.js";
+import { HallSchema, AdminSchema, BlogSchema, BlogPostSchema, ProductionSchema, ProductionSchemaWithBackwardsRefs, EventSchema, EventPriceSchema, TagSchema, TagTypeSchema } from "@viernulvier/shared/index.js";
 import { HttpSuccess } from "@/routes/helpers.js";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { migrate } from "@/db/migrate.js";
@@ -342,6 +342,151 @@ describe("Blog routes — SQL integration", { sequential: true }, () => {
   });
 });
 
+describe("BlogPost routes — SQL integration", { sequential: true }, () => {
+  let blogId: number;
+  let blogPostId: number;
+
+  beforeAll(async () => {
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/blog",
+      cookies: { session: sessionCookie },
+      payload: { name: "BlogPost Test Blog", description: null },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    blogId = BlogSchema.parse(response.json()).id;
+  });
+
+  afterAll(async () => {
+    const response = await server.inject({
+      method: "DELETE",
+      url: `/api/v1/blog/${blogId}`,
+      cookies: { session: sessionCookie },
+    });
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+  });
+
+  test("POST /api/v1/blog/post — inserts and returns a new blogpost", async () => {
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/blog/post",
+      cookies: { session: sessionCookie },
+      payload: {
+        blog: blogId,
+        title: "Test Post",
+        content: { body: "Hello world" },
+        published_at: new Date().toISOString(),
+      },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const post = BlogPostSchema.parse(response.json());
+    expect(post).toMatchObject({ blog: blogId, title: "Test Post" });
+    blogPostId = post.id;
+  });
+
+  test("GET /api/v1/blog/post — returns a list containing the created blogpost", async () => {
+    const response = await server.inject({ method: "GET", url: "/api/v1/blog/post" });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const posts = response.json<unknown[]>();
+    expect(posts.some((p) => BlogPostSchema.parse(p).id === blogPostId)).toBe(true);
+  });
+
+  test("GET /api/v1/blog/post — does not return draft posts (published_at IS NULL)", async () => {
+    const draftResponse = await server.inject({
+      method: "POST",
+      url: "/api/v1/blog/post",
+      cookies: { session: sessionCookie },
+      payload: {
+        blog: blogId,
+        title: "Draft Post",
+        content: { body: "Not yet published" },
+        published_at: null,
+      },
+    });
+    expect(draftResponse.statusCode).toBe(HttpSuccess.OK);
+    const draftId = BlogPostSchema.parse(draftResponse.json()).id;
+
+    const listResponse = await server.inject({ method: "GET", url: "/api/v1/blog/post" });
+    expect(listResponse.statusCode).toBe(HttpSuccess.OK);
+    const posts = listResponse.json<unknown[]>();
+    expect(posts.some((p) => BlogPostSchema.parse(p).id === draftId)).toBe(false);
+
+    await server.inject({
+      method: "DELETE",
+      url: `/api/v1/blog/post/${draftId}`,
+      cookies: { session: sessionCookie },
+    });
+  });
+
+  test("GET /api/v1/blog/post/:id — returns the created blogpost", async () => {
+    const response = await server.inject({ method: "GET", url: `/api/v1/blog/post/${blogPostId}` });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(BlogPostSchema.parse(response.json())).toMatchObject({ id: blogPostId, title: "Test Post" });
+  });
+
+  test("GET /api/v1/blog/post/:id/meta — returns the blogpost with metadata", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/blog/post/${blogPostId}/meta`,
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(BlogPostSchema.withMeta().parse(response.json())).toMatchObject({ id: blogPostId });
+  });
+
+  test("PATCH /api/v1/blog/post/:id — updates only the supplied fields", async () => {
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/blog/post/${blogPostId}`,
+      cookies: { session: sessionCookie },
+      payload: { title: "Updated Title" },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const post = BlogPostSchema.parse(response.json());
+    expect(post.title).toBe("Updated Title");
+    expect(post.content).toEqual({ body: "Hello world" }); // unchanged
+  });
+
+  test("PUT /api/v1/blog/post/:id — replaces all fields of the blogpost", async () => {
+    const response = await server.inject({
+      method: "PUT",
+      url: `/api/v1/blog/post/${blogPostId}`,
+      cookies: { session: sessionCookie },
+      payload: {
+        blog: blogId,
+        title: "Replaced Title",
+        content: { body: "Replaced content" },
+        published_at: null,
+      },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(BlogPostSchema.parse(response.json())).toMatchObject({
+      id: blogPostId,
+      title: "Replaced Title",
+      published_at: null,
+    });
+  });
+
+  test("DELETE /api/v1/blog/post/:id — removes the blogpost from the database", async () => {
+    const deleteResponse = await server.inject({
+      method: "DELETE",
+      url: `/api/v1/blog/post/${blogPostId}`,
+      cookies: { session: sessionCookie },
+    });
+    expect(deleteResponse.statusCode).toBe(HttpSuccess.OK);
+
+    const fetchResponse = await server.inject({ method: "GET", url: `/api/v1/blog/post/${blogPostId}` });
+    expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
+  });
+});
+
 describe("Production routes — SQL integration", { sequential: true }, () => {
   let productionId: number;
 
@@ -372,8 +517,9 @@ describe("Production routes — SQL integration", { sequential: true }, () => {
     const response = await server.inject({ method: "GET", url: "/api/v1/production" });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    const productions = response.json<unknown[]>();
-    expect(productions.some((p) => ProductionSchemaWithBackwardsRefs.parse(p).id === productionId)).toBe(true);
+    const body = response.json<{ items: unknown[]; total: number }>();
+    expect(body.items.some((p) => ProductionSchemaWithBackwardsRefs.parse(p).id === productionId)).toBe(true);
+    expect(body.total).toBe(body.items.length);
   });
 
   test("GET /api/v1/production/:id — returns the created production", async () => {
@@ -530,6 +676,78 @@ describe("Event & event price routes — SQL integration", () => {
       expect(response.statusCode).toBe(HttpSuccess.OK);
       const events = response.json<unknown[]>();
       expect(events.some((e) => EventSchema.parse(e).id === eventId)).toBe(true);
+    });
+
+    test("GET /api/v1/event?production=:id — returns only events for that production", async () => {
+      // Create another production with its own event
+      const otherProdResponse = await server.inject({
+        method: "POST",
+        url: "/api/v1/production",
+        cookies: { session: sessionCookie },
+        payload: {
+          title: { nl: "Andere Productie" },
+          artist: { nl: "Ander Artist" },
+          tagline: { nl: "Test tagline" },
+          teaser: { nl: "Test teaser" },
+          finalized: false,
+        },
+      });
+      const otherProdId = otherProdResponse.json().id;
+
+      // Create an event for the other production
+      await server.inject({
+        method: "POST",
+        url: "/api/v1/event",
+        cookies: { session: sessionCookie },
+        payload: {
+          old_id: null,
+          starts_at: "2026-08-01T19:00:00.000Z",
+          ends_at: "2026-08-01T21:00:00.000Z",
+          doors_at: "2026-08-01T18:30:00.000Z",
+          info: { nl: "Ander event" },
+          production: otherProdId,
+          hall: hallId,
+        },
+      });
+
+      // Query with production filter
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/event?production=${productionId}`,
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const events = response.json<unknown[]>();
+      
+      // Should return our event
+      expect(events.some((e) => EventSchema.parse(e).id === eventId)).toBe(true);
+      
+      // Should NOT return the other production's event
+      expect(events.every((e) => EventSchema.parse(e).production === productionId)).toBe(true);
+    });
+
+    test("GET /api/v1/event?production=:id — returns empty array when no events match", async () => {
+      const emptyProdResponse = await server.inject({
+        method: "POST",
+        url: "/api/v1/production",
+        cookies: { session: sessionCookie },
+        payload: {
+          title: { nl: "Production Zonder Events" },
+          artist: { nl: "Test Artist" },
+          tagline: { nl: "Test tagline" },
+          teaser: { nl: "Test teaser" },
+          finalized: false,
+        },
+      });
+      const emptyProdId = emptyProdResponse.json().id;
+
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/event?production=${emptyProdId}`,
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(response.json<unknown[]>()).toEqual([]);
     });
 
     test("GET /api/v1/event/:id — returns the created event", async () => {

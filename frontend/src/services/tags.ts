@@ -87,15 +87,15 @@ export type UpdateTagTypeInput = Partial<CreateTagTypeInput>;
 // ---------------------------------------------------------------------------
 
 /**
- * Fetches all publicly visible tags (public — no session required).
- *
- * Only tags with `public: true` are returned.
- *
+ * Fetches publicly visible tags. 
+ * Can be filtered by production ID.
+ * @param productionId - Optional ID to get tags for a specific production.
  * @example
- * const tags = await getTags();
+ * const tags = await getTags(45); // Get public tags for production 45
  */
-export async function getTags(): Promise<Tag[]> {
-  return await apiFetch<Tag[]>("/tag");
+export async function getTags(productionId?: number): Promise<Tag[]> {
+  const url = productionId ? `/tag?production=${productionId}` : "/tag";
+  return await apiFetch<Tag[]>(url);
 }
 
 /**
@@ -113,15 +113,14 @@ export async function getTag(id: number): Promise<Tag> {
 // ---------------------------------------------------------------------------
 
 /**
- * Fetches all tags, including hidden ones (public: false).
- *
+ * Fetches all tags (including hidden ones).
+ * Can be filtered by production ID.
+ * @param productionId - Optional ID to get all tags for a specific production.
  * @throws {ApiError} 401 — unauthenticated.
- *
- * @example
- * const allTags = await getAllTags();
  */
-export async function getAllTags(): Promise<Tag[]> {
-  return await apiFetch<Tag[]>("/tag/all");
+export async function getAllTags(productionId?: number): Promise<Tag[]> {
+  const url = productionId ? `/tag/all?production=${productionId}` : "/tag/all";
+  return await apiFetch<Tag[]>(url);
 }
 
 /**
