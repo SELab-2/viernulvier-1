@@ -6,8 +6,10 @@ import { resolve } from "path";
 
 function readEnvFile(filePath: string): Record<string, string> {
   const vars: Record<string, string> = {};
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- input is never given by user, only internal paths
   if (!existsSync(filePath)) return vars;
   try {
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- input is never given by user, only internal paths
     const raw = readFileSync(filePath, "utf-8");
     for (const line of raw.split("\n")) {
       const trimmed = line.replace(/\r$/, "").trim();
@@ -16,6 +18,9 @@ function readEnvFile(filePath: string): Record<string, string> {
       if (eqIdx === -1) continue;
       const key = trimmed.slice(0, eqIdx).trim();
       const value = trimmed.slice(eqIdx + 1).trim();
+
+      // Security Check: Block prototype pollution keys
+      if (key === "__proto__" || key === "constructor") continue;
       vars[key] = value;
     }
   } catch {
@@ -26,8 +31,8 @@ function readEnvFile(filePath: string): Record<string, string> {
 
 const CREDENTIAL_PATHS = [
   "/garage-credentials/credentials.env",
-  // istanbul ignore next -- import.meta.dirname is always defined at runtime; fallback is for type safety only
-  resolve(import.meta.dirname ?? process.cwd(), "../../garage-credentials/credentials.env"),
+  // istanbul ignore next (for coverage, since this line wont be run during tests)
+  resolve(import.meta.dirname!, "../../garage-credentials/credentials.env"),
 ];
 
 function resolveCredentials(): { accessKeyId: string; secretAccessKey: string } | null {
