@@ -18,6 +18,7 @@
             <div
               v-for="event in displayedEvents"
               :key="event.id"
+              data-test="event-row"
               class="group -mx-4 grid grid-cols-1 gap-y-6 px-4 py-10 transition-colors duration-300 hover:bg-surface-1 md:grid-cols-12 md:items-center md:gap-x-8"
             >
               <div class="md:col-span-3">
@@ -27,7 +28,7 @@
                 <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-secondary flex items-center gap-2">
                   <span class="w-1.5 h-1.5 rounded-full bg-surface-3"></span>
                   {{ formatTime(event.starts_at) }}
-                  <span v-if="event.ends_at && formatTime(event.ends_at) !== formatTime(event.starts_at)" class="opacity-80">
+                  <span v-if="event.ends_at && formatTime(event.ends_at) !== formatTime(event.starts_at)" class="opacity-80" data-test="event-end-time">
                     — {{ formatTime(event.ends_at) }}
                   </span>
                 </div>
@@ -35,9 +36,9 @@
 
               <div class="md:col-span-6">
                 <h4 class="text-xl font-bold leading-tight text-ink-primary">
-                  {{ tProd(event.hall?.name) || 'Unnamed Venue' }}
+                  {{ tProd(event.hall?.name) }}
                 </h4>
-                <p v-if="event.hall?.address" class="mt-1 text-sm text-ink-secondary leading-relaxed">
+                <p v-if="event.hall?.address" class="mt-1 text-sm text-ink-secondary leading-relaxed" data-test="event-address">
                   {{ event.hall.address }}
                 </p>
               </div>
