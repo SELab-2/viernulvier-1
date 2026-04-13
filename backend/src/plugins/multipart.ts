@@ -5,6 +5,7 @@ import multipart from "@fastify/multipart";
 /**
  * Registers the `@fastify/multipart` plugin with sensible defaults for
  * image uploads.
+ * Multipart is used for uploading media in multiple chunks.
  *
  * @param server - The Fastify instance to register the plugin on.
  */
