@@ -126,17 +126,13 @@ function scraperProductionToCreateBody(
   };
 }
 
-async function fetchLocalProductionIdByOldId(
-  oldId: number,
-  authToken: string,
-): Promise<number | null> {
+async function fetchLocalProductionIdByOldId(oldId: number): Promise<number | null> {
   const url = new URL(localApiUrl("/api/v1/production"));
   url.searchParams.set("old_id", String(oldId));
 
   const response = await fetch(url.toString(), {
     headers: {
       accept: "application/json",
-      "X-AUTH-TOKEN": authToken,
     },
   });
 
@@ -180,10 +176,9 @@ async function createLocalProductionFromViernulvierJson(
 async function ensureProductionImported(
   production: ProductionJSON,
   loginToken: string,
-  authToken: string,
 ): Promise<number> {
   const oldId = parseInt(production["@id"].split("/").pop() as string, 10);
-  const existing = await fetchLocalProductionIdByOldId(oldId, authToken);
+  const existing = await fetchLocalProductionIdByOldId(oldId);
   if (existing !== null) {
     console.log(`Production old_id=${oldId} already exists locally (id=${existing}), skipping create`);
     return existing;
@@ -204,7 +199,7 @@ export async function scrapeAllProductions(
     const data = await fetchProductionsPage(page, authToken);
     for (const production of data.member) {
       console.log(`Processing production ${production["@id"]} (${page}/${totalPages})`);
-      await ensureProductionImported(production, loginToken, authToken);
+      await ensureProductionImported(production, loginToken);
     }
   }
 }
@@ -213,7 +208,7 @@ export async function scrapeProductionById(
   id: number,
   authToken: string
 ) {
-  const existing = await fetchLocalProductionIdByOldId(id, authToken);
+  const existing = await fetchLocalProductionIdByOldId(id);
   if (existing !== null) return existing;
 
   const url = `https://www.viernulvier.gent/api/v1/productions/${id}`;

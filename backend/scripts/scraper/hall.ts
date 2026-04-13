@@ -183,15 +183,11 @@ async function login(username: string, password: string): Promise<string> {
 
 
 /** Local DB id if a hall with this legacy `old_id` exists, otherwise `null`. */
-export async function fetchLocalHallIdByOldId(
-  oldId: number,
-  authToken: string,
-): Promise<number | null> {
+export async function fetchLocalHallIdByOldId(oldId: number): Promise<number | null> {
   const url = localApiUrl(`/api/v1/hall?old_id=${oldId}`);
   const response = await fetch(url, {
     headers: {
       accept: "application/json",
-      "X-AUTH-TOKEN": authToken,
     },
   });
 
@@ -246,7 +242,7 @@ async function ensureHallImported(
   authToken: string,
 ): Promise<number> {
   const oldId = parseInt(hall["@id"].split("/").pop() as string, 10);
-  const existing = await fetchLocalHallIdByOldId(oldId, authToken);
+  const existing = await fetchLocalHallIdByOldId(oldId);
   if (existing !== null) {
     console.log(`Hall old_id=${oldId} already exists locally (id=${existing}), skipping create`);
     return existing;
@@ -276,7 +272,7 @@ export async function scrapeHallById(
   id: number,
   authToken: string
 ) {
-  const existing = await fetchLocalHallIdByOldId(id, authToken);
+  const existing = await fetchLocalHallIdByOldId(id);
   if (existing !== null) return existing;
 
   const viernulvierUrl = `https://www.viernulvier.gent/api/v1/halls/${id}`;

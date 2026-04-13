@@ -130,7 +130,7 @@ async function login(username: string, password: string): Promise<string> {
 /** Map legacy hall id → local DB id (filled via GET; halls must be imported first). */
 const hallIdByOldId: Record<number, number> = {};
 
-async function resolveHallId(oldId: number, authToken: string): Promise<number> {
+async function resolveHallId(oldId: number): Promise<number> {
   const cached = hallIdByOldId[oldId];
   if (cached !== undefined) return cached;
 
@@ -138,7 +138,6 @@ async function resolveHallId(oldId: number, authToken: string): Promise<number> 
   const response = await fetch(url, {
     headers: {
       accept: "application/json",
-      "X-AUTH-TOKEN": authToken,
     },
   });
 
@@ -166,7 +165,7 @@ async function resolveHallId(oldId: number, authToken: string): Promise<number> 
 /** Map legacy production id → local DB id (filled via GET; productions must be imported first). */
 const productionIdByOldId: Record<number, number> = {};
 
-async function resolveProductionId(oldId: number, authToken: string): Promise<number> {
+async function resolveProductionId(oldId: number): Promise<number> {
   const cached = productionIdByOldId[oldId];
   if (cached !== undefined) return cached;
 
@@ -176,7 +175,6 @@ async function resolveProductionId(oldId: number, authToken: string): Promise<nu
   const response = await fetch(url.toString(), {
     headers: {
       accept: "application/json",
-      "X-AUTH-TOKEN": authToken,
     },
   });
 
@@ -201,12 +199,11 @@ async function resolveProductionId(oldId: number, authToken: string): Promise<nu
   return id;
 }
 
-async function fetchLocalEventIdByOldId(oldId: number, authToken: string): Promise<number | null> {
+async function fetchLocalEventIdByOldId(oldId: number): Promise<number | null> {
   const url = localApiUrl(`/api/v1/event?old_id=${oldId}`);
   const response = await fetch(url, {
     headers: {
       accept: "application/json",
-      "X-AUTH-TOKEN": authToken,
     },
   });
 
@@ -239,7 +236,7 @@ function optionalIsoTimestamp(value: unknown): string | null {
 async function ensureEventImported(event: EventJSON, authToken: string, loginToken: string): Promise<void> {
   const id = parseInt(event["@id"].split("/").pop() as string, 10);
 
-  const existingEventId = await fetchLocalEventIdByOldId(id, authToken);
+  const existingEventId = await fetchLocalEventIdByOldId(id);
   if (existingEventId !== null) {
     console.log(`Event old_id=${id} already exists locally (id=${existingEventId}), skipping create`);
     return;
@@ -254,8 +251,8 @@ async function ensureEventImported(event: EventJSON, authToken: string, loginTok
     ends_at: optionalIsoTimestamp(event.ends_at),
     doors_at: optionalIsoTimestamp(event.doors_at),
     info: event.info ?? null,
-    production: await resolveProductionId(productionId, authToken),
-    hall: await resolveHallId(hallId, authToken),
+    production: await resolveProductionId(productionId),
+    hall: await resolveHallId(hallId),
   };
 
   const response = await fetch(localApiUrl("/api/v1/event"), {
