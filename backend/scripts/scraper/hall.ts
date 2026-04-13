@@ -1,6 +1,6 @@
 import type { Hall } from "@viernulvier/shared/index.js";
 
-import { totalPagesFromHydraView } from "./hydra-view.js";
+import { totalPagesFromHydraView, VIERNULVIER_API_ORIGIN } from "./hydra-view.js";
 
 interface HallListMeta {
   totalItems: number;
@@ -16,7 +16,8 @@ interface HallJSON {
   "@id": string;
   name: string;
   description?: string;
-  space: string;
+  /** Usually `/api/v1/spaces/...`; sometimes omitted on the external API. */
+  space?: string | null;
   [key: string]: unknown;
 }
 
@@ -87,14 +88,31 @@ async function fetchHallsListMeta(
 // Cache for space addresses to avoid repeated API calls
 const spaceAddressCache = new Map<string, string>();
 
-async function fetchSpaceLocation(spaceUrl: string, authToken: string): Promise<string> {
+const NO_ADDRESS = "No address provided";
+
+/** Path like `/api/v1/spaces/1` or an absolute URL if the API ever returns one. */
+function resolveViernulvierFetchUrl(pathOrUrl: string): string {
+  const s = pathOrUrl.trim();
+  if (s.startsWith("http")) return s;
+  return `${VIERNULVIER_API_ORIGIN}${s.startsWith("/") ? s : `/${s}`}`;
+}
+
+async function fetchSpaceLocation(spaceUrl: string | null | undefined, authToken: string): Promise<string> {
+  if (typeof spaceUrl !== "string") {
+    return NO_ADDRESS;
+  }
+  const spaceKey = spaceUrl.trim();
+  if (spaceKey === "") {
+    return NO_ADDRESS;
+  }
+
   // Check cache first
-  if (spaceAddressCache.has(spaceUrl)) {
-    return spaceAddressCache.get(spaceUrl) || "No address provided";
+  if (spaceAddressCache.has(spaceKey)) {
+    return spaceAddressCache.get(spaceKey) || NO_ADDRESS;
   }
 
   try {
-    const url = `https://www.viernulvier.gent${spaceUrl}`;
+    const url = resolveViernulvierFetchUrl(spaceKey);
     const response = await fetch(url, {
       headers: {
         accept: "application/ld+json",
@@ -103,25 +121,29 @@ async function fetchSpaceLocation(spaceUrl: string, authToken: string): Promise<
     });
 
     if (!response.ok) {
-      spaceAddressCache.set(spaceUrl, "No address provided");
-      return "No address provided";
+      spaceAddressCache.set(spaceKey, NO_ADDRESS);
+      return NO_ADDRESS;
     }
 
     const space = (await response.json()) as Space;
     const address = await fetchLocationAddress(space.location, authToken);
     
     // Cache the result
-    spaceAddressCache.set(spaceUrl, address);
+    spaceAddressCache.set(spaceKey, address);
     return address;
   } catch {
-    spaceAddressCache.set(spaceUrl, "No address provided");
-    return "No address provided";
+    spaceAddressCache.set(spaceKey, NO_ADDRESS);
+    return NO_ADDRESS;
   }
 }
 
-async function fetchLocationAddress(locationUrl: string, authToken: string): Promise<string> {
+async function fetchLocationAddress(locationUrl: string | null | undefined, authToken: string): Promise<string> {
+  if (typeof locationUrl !== "string" || locationUrl.trim() === "") {
+    return NO_ADDRESS;
+  }
+
   try {
-    const url = `https://www.viernulvier.gent${locationUrl}`;
+    const url = resolveViernulvierFetchUrl(locationUrl);
     const response = await fetch(url, {
       headers: {
         accept: "application/ld+json",
@@ -130,14 +152,14 @@ async function fetchLocationAddress(locationUrl: string, authToken: string): Pro
     });
 
     if (!response.ok) {
-      return "No address provided";
+      return NO_ADDRESS;
     }
 
     const location = (await response.json()) as Location;
     const address = `${location.street} ${location.number}, ${location.postal_code} ${location.city}, ${location.country}`;
     return address;
   } catch {
-    return "No address provided";
+    return NO_ADDRESS;
   }
 }
 
