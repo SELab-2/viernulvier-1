@@ -14,15 +14,16 @@ interface EventListMeta {
 interface EventJSON {
   "@id": string;
   starts_at: string;
-  ends_at: string;
-  doors_at: string;
-  info: Record<string, string>;
+  /** Often omitted on the external API. */
+  ends_at?: string | null;
+  doors_at?: string | null;
+  info?: Record<string, string> | null;
   production: {
     "@id": string;
     "@type": string;
   };
   hall: string;
-  prices: string[];
+  prices?: string[] | null;
 }
 
 interface ViernulvierApiResponse {
@@ -188,19 +189,27 @@ async function resolveProductionId(oldId: number, authToken: string): Promise<nu
   return id;
 }
 
+/**
+ * External API often omits `ends_at` / `doors_at`; coerce absent, null, or blank to `null` for our API (`nullish` dates).
+ */
+function optionalIsoTimestamp(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string" || value.trim() === "") return null;
+  return value;
+}
+
 // Process a single event: convert old id references to current db ones, then create the event in the current API
 async function processEvent(event: EventJSON, authToken: string, loginToken: string): Promise<void> {
   const id = parseInt(event["@id"].split("/").pop() as string, 10);
   const hallId = parseInt(event.hall.split("/").pop() as string, 10);
   const productionId = parseInt(event.production["@id"].split("/").pop() as string, 10);
 
-
   const body = {
     old_id: id,
     starts_at: event.starts_at,
-    ends_at: event.ends_at,
-    doors_at: event.doors_at,
-    info: event.info,
+    ends_at: optionalIsoTimestamp(event.ends_at),
+    doors_at: optionalIsoTimestamp(event.doors_at),
+    info: event.info ?? null,
     production: await resolveProductionId(productionId, authToken),
     hall: await resolveHallId(hallId, authToken),
   };
@@ -221,7 +230,8 @@ async function processEvent(event: EventJSON, authToken: string, loginToken: str
   const eventId = (await response.json() as { id: number }).id;
 
   // Add prices after event is created, to avoid foreign key constraint errors
-  const prices = event.prices.map((priceUrl) => parseInt(priceUrl.split("/").pop() as string, 10));
+  const priceUrls = event.prices ?? [];
+  const prices = priceUrls.map((priceUrl) => parseInt(priceUrl.split("/").pop() as string, 10));
   if (prices.length > 0) {
     await scrapeEventPricesForEvent(prices, eventId, authToken, loginToken);
   }
