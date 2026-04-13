@@ -48,15 +48,23 @@ export class ApiError extends Error {
    */
   readonly fields?: Record<string, string[]>;
 
+  /**
+   * Validation issue details returned by the backend on 400 responses.
+   * Each issue includes a `path` and `message` describing what went wrong.
+   */
+  readonly details?: { path: (string | number)[]; message: string }[];
+
   constructor(
     status: number,
     message: string,
     fields?: Record<string, string[]>,
+    details?: { path: (string | number)[]; message: string }[],
   ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.fields = fields;
+    this.details = details;
   }
 
   /** `true` when the session is missing or expired (HTTP 401). */
@@ -148,20 +156,23 @@ export async function apiFetch<T>(
   if (!response.ok) {
     let message = response.statusText;
     let fields: Record<string, string[]> | undefined;
+    let details: { path: (string | number)[]; message: string }[] | undefined;
 
     try {
       const errorBody = (await response.json()) as {
         error?: string;
         message?: string;
         fields?: Record<string, string[]>;
+        details?: { path: (string | number)[]; message: string }[];
       };
       message = errorBody.error ?? errorBody.message ?? message;
       fields = errorBody.fields;
+      details = errorBody.details;
     } catch {
       // JSON parsing failed — keep the statusText as the message.
     }
 
-    throw new ApiError(response.status, message, fields);
+    throw new ApiError(response.status, message, fields, details);
   }
 
   // 204 No Content — nothing to parse.

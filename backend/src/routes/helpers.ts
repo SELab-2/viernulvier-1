@@ -114,16 +114,12 @@ export const enum ParseContext {
 
 type ParseContextType = (typeof ParseContext)[keyof typeof ParseContext];
 
-const parseErrors: Readonly<Record<ParseContextType, HttpError>> = {
-  [ParseContext.Request]: new HttpError(
-    HttpClientError.BadRequest,
-    "Invalid request data",
-  ),
-  [ParseContext.Database]: new HttpError(
-    HttpServerError.InternalServerError,
-    "Internal server error",
-  ),
-};
+function createParseError(context: ParseContextType, error: z.ZodError): HttpError {
+  if (context === ParseContext.Request) {
+    return new ValidationError(error.issues);
+  }
+  return new HttpError(HttpServerError.InternalServerError, "Internal server error");
+}
 /**
  * Uses a zod schema to validate the params and returns them as an object.
  *
@@ -143,7 +139,7 @@ export function parseParams<
   const parsed = schema.safeParse(request.params);
   if (!parsed.success) {
     request.log.error(parsed.error);
-    throw new ValidationError(parsed.error.issues);
+    throw createParseError(ParseContext.Request, parsed.error);
   }
   return parsed.data;
 }
@@ -164,7 +160,7 @@ export function parseUser(request: FastifyRequest): UserPayload {
   const parsed = UserPayloadSchema.safeParse(request.user);
   if (!parsed.success) {
     request.log.error(parsed.error);
-    throw parseErrors[ParseContext.Request];
+    throw createParseError(ParseContext.Request, parsed.error);
   }
   return parsed.data;
 }
@@ -191,11 +187,7 @@ export function parseSchema<ResultSchema extends z.ZodType>(
   const parsed = schema.safeParse(value);
   if (!parsed.success) {
     server.log.error(parsed.error);
-    if (context === ParseContext.Request) {
-      throw new ValidationError(parsed.error.issues);
-    }
-    // eslint-disable-next-line security/detect-object-injection
-    throw parseErrors[context];
+    throw createParseError(context, parsed.error);
   }
   return parsed.data;
 }
@@ -257,7 +249,7 @@ export function buildQuery<
     const parsed = filterFields.safeParse(values);
     if (!parsed.success) {
       server.log.error(parsed.error);
-      throw new ValidationError(parsed.error.issues);
+      throw createParseError(ParseContext.Request, parsed.error);
     }
     let res: QueryResult<z.output<ResultSchema>>;
     try {
@@ -267,7 +259,7 @@ export function buildQuery<
       );
     } catch (err) {
       server.log.error(err);
-      throw parseErrors[ParseContext.Database];
+      throw new HttpError(HttpServerError.InternalServerError, "Internal server error");
     }
     return parseSchema(
       server,

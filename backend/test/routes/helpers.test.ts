@@ -232,20 +232,22 @@ describe(parseSchema, () => {
   const errorContexts = {
     "ParseContext.Request": {
       idx: ParseContext.Request,
-      err: ValidationError,
+      expectedError: (value: object) =>
+        new ValidationError(schema.safeParse(value).error!.issues),
     },
     "ParseContext.Database": {
       idx: ParseContext.Database,
-      err: new HttpError(
-        HttpServerError.InternalServerError,
-        "Internal server error",
-      ),
+      expectedError: () =>
+        new HttpError(
+          HttpServerError.InternalServerError,
+          "Internal server error",
+        ),
     },
   };
   let schema: z.ZodObject = z.object();
   const expectedParseErrors = (value: object) => schema.safeParse(value).error;
 
-  for (const [ctx, { idx, err }] of Object.entries(errorContexts)) {
+  for (const [ctx, { idx, expectedError }] of Object.entries(errorContexts)) {
     describe(`Parsing in a ${ctx} context`, () => {
       describe("Parsing an empty schema: z.object({})", () => {
         beforeEach(() => {
@@ -283,18 +285,24 @@ describe(parseSchema, () => {
         });
 
         test(`parseSchema(server, schema, {id: 100}, ${ctx})`, () => {
-          expect(() =>
-            parseSchema(MockServer, schema, { id: 100 }, idx),
-          ).toThrow(err);
+          try {
+            parseSchema(MockServer, schema, { id: 100 }, idx);
+            expect.unreachable();
+          } catch (e) {
+            expect(e).toStrictEqual(expectedError({ id: 100 }));
+          }
           expect(MockServer.log.error).toHaveBeenCalledWith(
             expectedParseErrors({ id: 100 }),
           );
         });
 
         test(`parseSchema(server, schema, {name: 'blah'}, ${ctx})`, () => {
-          expect(() =>
-            parseSchema(MockServer, schema, { name: "blah" }, idx),
-          ).toThrow(err);
+          try {
+            parseSchema(MockServer, schema, { name: "blah" }, idx);
+            expect.unreachable();
+          } catch (e) {
+            expect(e).toStrictEqual(expectedError({ name: "blah" }));
+          }
           expect(MockServer.log.error).toHaveBeenCalledWith(
             expectedParseErrors({ name: "blah" }),
           );
@@ -307,7 +315,12 @@ describe(parseSchema, () => {
         });
 
         test(`parseSchema(server, schema, {}, ${ctx})`, () => {
-          expect(() => parseSchema(MockServer, schema, {}, idx)).toThrow(err);
+          try {
+            parseSchema(MockServer, schema, {}, idx);
+            expect.unreachable();
+          } catch (e) {
+            expect(e).toStrictEqual(expectedError({}));
+          }
           expect(MockServer.log.error).toHaveBeenCalledWith(expectedParseErrors({}));
         });
 
@@ -321,9 +334,12 @@ describe(parseSchema, () => {
         });
 
         test(`parseSchema(server, schema, {name: 'blah'}, ${ctx})`, () => {
-          expect(() =>
-            parseSchema(MockServer, schema, { name: "blah" }, idx),
-          ).toThrow(err);
+          try {
+            parseSchema(MockServer, schema, { name: "blah" }, idx);
+            expect.unreachable();
+          } catch (e) {
+            expect(e).toStrictEqual(expectedError({ name: "blah" }));
+          }
           expect(MockServer.log.error).toHaveBeenCalledWith(
             expectedParseErrors({ name: "blah" }),
           );
@@ -344,32 +360,46 @@ describe(parseSchema, () => {
         });
 
         test(`parseSchema(server, schema, {}, ${ctx})`, () => {
-          expect(() => parseSchema(MockServer, schema, {}, idx)).toThrow(err);
+          try {
+            parseSchema(MockServer, schema, {}, idx);
+            expect.unreachable();
+          } catch (e) {
+            expect(e).toStrictEqual(expectedError({}));
+          }
           expect(MockServer.log.error).toHaveBeenCalledWith(expectedParseErrors({}));
         });
 
         test(`parseSchema(server, schema, {id: 100}, ${ctx})`, () => {
-          expect(() =>
-            parseSchema(MockServer, schema, { id: 100 }, idx),
-          ).toThrow(err);
+          try {
+            parseSchema(MockServer, schema, { id: 100 }, idx);
+            expect.unreachable();
+          } catch (e) {
+            expect(e).toStrictEqual(expectedError({ id: 100 }));
+          }
           expect(MockServer.log.error).toHaveBeenCalledWith(
             expectedParseErrors({ id: 100 }),
           );
         });
 
         test(`parseSchema(server, schema, {name: 'blah'}, ${ctx})`, () => {
-          expect(() =>
-            parseSchema(MockServer, schema, { name: "blah" }, idx),
-          ).toThrow(err);
+          try {
+            parseSchema(MockServer, schema, { name: "blah" }, idx);
+            expect.unreachable();
+          } catch (e) {
+            expect(e).toStrictEqual(expectedError({ name: "blah" }));
+          }
           expect(MockServer.log.error).toHaveBeenCalledWith(
             expectedParseErrors({ name: "blah" }),
           );
         });
 
         test(`parseSchema(server, schema, {name: 'blah', id: 100}, ${ctx})`, () => {
-          expect(() =>
-            parseSchema(MockServer, schema, { name: "blah", id: 100 }, idx),
-          ).toThrow(err);
+          try {
+            parseSchema(MockServer, schema, { name: "blah", id: 100 }, idx);
+            expect.unreachable();
+          } catch (e) {
+            expect(e).toStrictEqual(expectedError({ name: "blah", id: 100 }));
+          }
           expect(MockServer.log.error).toHaveBeenCalledWith(
             expectedParseErrors({ name: "blah", id: 100 }),
           );
@@ -569,17 +599,10 @@ describe(buildQuery, () => {
       });
     });
   });
-  const expectedErrors = {
-    [ParseContext.Request]: expect.objectContaining({
-      message: "Invalid request data",
-      status: 400,
-      name: "ValidationError",
-    }),
-    [ParseContext.Database]: new HttpError(
-      HttpServerError.InternalServerError,
-      "Internal server error",
-    ),
-  };
+  const expectedDbError = new HttpError(
+    HttpServerError.InternalServerError,
+    "Internal server error",
+  );
   describe(`Having the production rows: [
         {id: 1, name: 'Iker', good_dancer: true},
         {id: 2, name: 'Lex', good_dance: false},
@@ -666,7 +689,7 @@ describe(buildQuery, () => {
               await query();
               expect.fail();
             } catch (err) {
-              expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
+              expect(err).toStrictEqual(expectedDbError);
               expect(MockServer.log.error).toHaveBeenCalledWith(
                 z
                   .array(z.object({ price: z.number().positive() }))
@@ -696,7 +719,7 @@ describe(buildQuery, () => {
             await query();
             expect.fail();
           } catch (err) {
-            expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
+            expect(err).toStrictEqual(expectedDbError);
             expect(MockServer.log.error).toHaveBeenCalledWith(
               z
                 .array(
@@ -782,7 +805,7 @@ describe(buildQuery, () => {
             await query();
             expect.fail();
           } catch (err) {
-            expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
+            expect(err).toStrictEqual(expectedDbError);
             expect(MockServer.log.error).toHaveBeenCalledWith(
               z
                 .array(z.object({ name: z.string().max(32) }))
@@ -811,7 +834,7 @@ describe(buildQuery, () => {
             await query();
             expect.fail();
           } catch (err) {
-            expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
+            expect(err).toStrictEqual(expectedDbError);
             expect(MockServer.log.error).toHaveBeenCalledWith(
               z
                 .array(
@@ -848,7 +871,7 @@ describe(buildQuery, () => {
             await query();
             expect.fail();
           } catch (err) {
-            expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
+            expect(err).toStrictEqual(expectedDbError);
             expect(MockServer.log.error).toHaveBeenCalledWith(
               z
                 .array(
@@ -929,10 +952,9 @@ describe(buildQuery, () => {
               await query("1" as unknown as number);
               expect.fail();
             } catch (err) {
-              expect(err).toStrictEqual(expectedErrors[ParseContext.Request]);
-              expect(MockServer.log.error).toHaveBeenCalledWith(
-                z.tuple([z.int().positive()]).safeParse(["1"]).error,
-              );
+              const zodError = z.tuple([z.int().positive()]).safeParse(["1"]).error!;
+              expect(err).toStrictEqual(new ValidationError(zodError.issues));
+              expect(MockServer.log.error).toHaveBeenCalledWith(zodError);
               expect(MockServer.pg.query).not.toHaveBeenCalled();
             }
           });
@@ -1001,10 +1023,9 @@ describe(buildQuery, () => {
               await query("1" as unknown as number);
               expect.fail();
             } catch (err) {
-              expect(err).toStrictEqual(expectedErrors[ParseContext.Request]);
-              expect(MockServer.log.error).toHaveBeenCalledWith(
-                z.tuple([z.int().positive()]).safeParse(["1"]).error,
-              );
+              const zodError = z.tuple([z.int().positive()]).safeParse(["1"]).error!;
+              expect(err).toStrictEqual(new ValidationError(zodError.issues));
+              expect(MockServer.log.error).toHaveBeenCalledWith(zodError);
               expect(MockServer.pg.query).not.toHaveBeenCalled();
             }
           });
@@ -1035,7 +1056,7 @@ describe(buildQuery, () => {
               await query(1);
               expect.fail();
             } catch (err) {
-              expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
+              expect(err).toStrictEqual(expectedDbError);
               expect(MockServer.log.error).toHaveBeenCalledWith(
                 z
                   .array(z.object({ price: z.number().positive() }))
@@ -1068,11 +1089,9 @@ describe(buildQuery, () => {
               await query("Trixie is cool!" as unknown as number);
               expect.fail();
             } catch (err) {
-              expect(err).toStrictEqual(expectedErrors[ParseContext.Request]);
-              expect(MockServer.log.error).toHaveBeenCalledWith(
-                z.tuple([z.int().positive()]).safeParse(["Trixie is cool!"])
-                  .error,
-              );
+              const zodError = z.tuple([z.int().positive()]).safeParse(["Trixie is cool!"]).error!;
+              expect(err).toStrictEqual(new ValidationError(zodError.issues));
+              expect(MockServer.log.error).toHaveBeenCalledWith(zodError);
               // Note we expect this not to be called.
               expect(MockServer.pg.query).not.toHaveBeenCalled();
             }
@@ -1102,7 +1121,7 @@ describe(buildQuery, () => {
         await query();
         expect.fail();
       } catch (err) {
-        expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
+        expect(err).toStrictEqual(expectedDbError);
         expect(MockServer.log.error).toHaveBeenCalledWith(new Error("Connection refused"));
         expect(MockServer.pg.query).toHaveBeenCalled();
       }
@@ -1119,7 +1138,7 @@ describe(buildQuery, () => {
         await query(1);
         expect.fail();
       } catch (err) {
-        expect(err).toStrictEqual(expectedErrors[ParseContext.Database]);
+        expect(err).toStrictEqual(expectedDbError);
         expect(MockServer.log.error).toHaveBeenCalledWith(new Error("Connection refused"));
         expect(MockServer.pg.query).toHaveBeenCalled();
       }
