@@ -1,6 +1,6 @@
 import type { Hall } from "@viernulvier/shared/index.js";
 
-import { parseHydraLastPageIndex } from "./hydra-view.js";
+import { totalPagesFromHydraView } from "./hydra-view.js";
 
 interface HallListMeta {
   totalItems: number;
@@ -197,7 +197,7 @@ export async function scrapeAllHalls(
   const loginToken = await login("admin", "password");
 
   const meta = await fetchHallsListMeta(authToken);
-  const totalPages = parseHydraLastPageIndex(meta.view.last);
+  const totalPages = totalPagesFromHydraView(meta.view);
   
   for (let page = 1; page <= totalPages; page++) {
     const data = await fetchHallsPage(page, authToken);
