@@ -1,4 +1,5 @@
 import { scrapeEventPricesForEvent } from "./event_price.js";
+import { parseHydraLastPageIndex } from "./hydra-view.js";
 
 interface EventListMeta {
   totalItems: number;
@@ -233,7 +234,7 @@ export async function scrapeAllEvents(
 ) {
   const loginToken = await login("admin", "password");
   const meta = await fetchEventsListMeta(beforeDate, authToken);
-  const totalPages = meta.view.last.split("page=")[1] as unknown as number;
+  const totalPages = parseHydraLastPageIndex(meta.view.last);
   
   for (let page = 1; page <= totalPages; page++) {
     const data = await fetchEventsPage(page, beforeDate, authToken);

@@ -1,6 +1,6 @@
 import type { Production } from "@viernulvier/shared/index.js";
-import { ProductionSchema } from "@viernulvier/shared/index.js";
-import { log } from "console";
+
+import { parseHydraLastPageIndex } from "./hydra-view.js";
 
 interface ProductionListMeta {
   totalItems: number;
@@ -133,7 +133,7 @@ export async function scrapeAllProductions(
   const loginToken = await login("admin", "password");
 
   const meta = await fetchProductionsListMeta(authToken);
-  const totalPages = meta.view.last.split("page=")[1] as unknown as number;
+  const totalPages = parseHydraLastPageIndex(meta.view.last);
   
   for (let page = 1; page <= totalPages; page++) {
     const data = await fetchProductionsPage(page, authToken);
