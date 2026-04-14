@@ -60,6 +60,12 @@ interface EventJSON {
   prices?: string[] | null;
 }
 
+/** Viernulvier “longterm” runs use a different production IRI shape; we do not import them. */
+function isLongtermViernulvierEvent(event: EventJSON): boolean {
+  if (event.production["@type"] === "LongtermProduction") return true;
+  return event.production["@id"].includes("/productions/longterm/");
+}
+
 interface ViernulvierApiResponse {
   totalItems: number;
   member: EventJSON[];
@@ -223,6 +229,13 @@ async function ensureEventImported(event: EventJSON, authToken: string, loginTok
   const existingEventId = await fetchLocalEventIdByOldId(id);
   if (existingEventId !== null) {
     console.log(`Event old_id=${id} already exists locally (id=${existingEventId}), skipping create`);
+    return;
+  }
+
+  if (isLongtermViernulvierEvent(event)) {
+    console.warn(
+      `Skipping event old_id=${id}: LongtermProduction is out of scope (${event.production["@id"]}).`,
+    );
     return;
   }
 
