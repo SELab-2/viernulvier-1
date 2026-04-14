@@ -70,6 +70,26 @@ beforeAll(async () => {
       return Promise.resolve({ rows: [] });
     }
 
+    if (query.includes("ANY($1::int[])") && query.includes("production")) {
+      const prodIds = params?.[0] as number[];
+      const filtered = mockEvents.filter((e) => prodIds.includes(e.production));
+      const rows = filtered.map((event) => ({
+        ...event,
+        price: storedEventPrices.filter((p) => p["event"] === event.id).map((p) => p.id),
+      }));
+      return Promise.resolve({ rows });
+    }
+
+    if (query.includes("WHERE production = $1") && !query.includes("ANY($1::int[])")) {
+      const prodId: number = params?.[0] as number;
+      const filtered = mockEvents.filter((e) => e.production === prodId);
+      const rows = filtered.map((event) => ({
+        ...event,
+        price: storedEventPrices.filter((p) => p["event"] === event.id).map((p) => p.id),
+      }));
+      return Promise.resolve({ rows });
+    }
+
     if (query.includes("WHERE old_id = $1")) {
       const oldId: number = params?.[0] as number;
       const eventWithoutPrice = mockEvents.find(e => e.old_id === oldId);
@@ -206,6 +226,76 @@ describe("Event Fetch Routes", () => {
         ends_at: mockEvents[1]!.ends_at?.toISOString(),
         doors_at: mockEvents[1]!.doors_at?.toISOString(),
       }]);
+    });
+
+    test("GET /api/v1/event?production=… -> filters by single production id", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/event?production=10",
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual([{
+        ...mockEvents[0],
+        price: storedEventPrices.filter((p) => p["event"] === mockEvents[0]!.id).map((p) => p.id),
+        starts_at: mockEvents[0]!.starts_at.toISOString(),
+        ends_at: mockEvents[0]!.ends_at?.toISOString(),
+        doors_at: mockEvents[0]!.doors_at?.toISOString(),
+      }]);
+    });
+
+    test("GET /api/v1/event?production=… -> filters by multiple production ids", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/event?production=10,11",
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual([
+        {
+          ...mockEvents[0],
+          price: storedEventPrices.filter((p) => p["event"] === mockEvents[0]!.id).map((p) => p.id),
+          starts_at: mockEvents[0]!.starts_at.toISOString(),
+          ends_at: mockEvents[0]!.ends_at?.toISOString(),
+          doors_at: mockEvents[0]!.doors_at?.toISOString(),
+        },
+        {
+          ...mockEvents[1],
+          price: storedEventPrices.filter((p) => p["event"] === mockEvents[1]!.id).map((p) => p.id),
+          starts_at: mockEvents[1]!.starts_at.toISOString(),
+          ends_at: mockEvents[1]!.ends_at?.toISOString(),
+          doors_at: mockEvents[1]!.doors_at?.toISOString(),
+        },
+      ]);
+    });
+
+    test("GET /api/v1/event?production=… -> 400 when no valid production ids after parse", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/event?production=abc",
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    test("GET /api/v1/event?production= -> treats empty value as no production filter", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/event?production=",
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toHaveLength(3);
+    });
+
+    test("GET /api/v1/event?production=…&production=… -> accepts repeated keys as comma list", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/event?production=10&production=11",
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toHaveLength(2);
     });
 
     test("returns empty array when no events are found", async () => {

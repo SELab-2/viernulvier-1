@@ -36,6 +36,26 @@ describe("Event Date Normalization Helpers", () => {
       expect(result["hall"]).toBe(5);
     });
 
+    test("maps explicit null on nullable date fields to null", () => {
+      const result = normalizePartialEventDates({
+        ends_at: null,
+        doors_at: null,
+        starts_at: "2026-01-01T18:00:00.000Z",
+      }) as Record<string, unknown>;
+
+      expect(result["starts_at"]).toBeInstanceOf(Date);
+      expect(result["ends_at"]).toBeNull();
+      expect(result["doors_at"]).toBeNull();
+    });
+
+    test("maps invalid date strings to undefined", () => {
+      const result = normalizePartialEventDates({
+        starts_at: "not-a-real-date",
+      }) as Record<string, unknown>;
+
+      expect(result["starts_at"]).toBeUndefined();
+    });
+
     test("handles partial updates with all Date instances", () => {
       const startDate = new Date("2026-01-01T18:00:00.000Z");
       const endDate = new Date("2026-01-01T20:00:00.000Z");

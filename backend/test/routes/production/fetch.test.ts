@@ -156,6 +156,20 @@ describe("Production fetch routes", () => {
     expect(parsed).toEqual([ProductionSchemaWithBackwardsRefs.parse(baseProduction)]);
   });
 
+  test("GET /api/v1/production?old_id=…&limit=10 -> filters by legacy id", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/production?old_id=${baseProduction["old_id"]}&limit=10&offset=0`,
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { items: unknown[]; total: number };
+    expect(json.total).toBe(1);
+    const parsed = ProductionSchemaWithBackwardsRefs.array().parse(json.items);
+    expect(parsed).toEqual([ProductionSchemaWithBackwardsRefs.parse(baseProduction)]);
+  });
+
   test("GET /api/v1/production?search=… -> 400 when search exceeds max length", async () => {
     const response = await server.inject({
       method: "GET",

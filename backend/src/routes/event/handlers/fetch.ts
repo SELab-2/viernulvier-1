@@ -57,39 +57,46 @@ export async function fetchEventWithMeta(
 /** Max distinct production IDs accepted in `?production=1,2,3` (comma-separated). */
 const MAX_EVENT_PRODUCTION_FILTER = 100;
 
+function parseProductionIdsFromQuery(
+  production: string | string[] | undefined,
+): { ok: true; ids: number[] | undefined } | { ok: false } {
+  if (production === undefined) {
+    return { ok: true, ids: undefined };
+  }
+  const raw = Array.isArray(production) ? production.join(",") : production;
+  const trimmed = raw.trim();
+  if (trimmed === "") {
+    return { ok: true, ids: undefined };
+  }
+  const ids = trimmed
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+    .map((p) => Number.parseInt(p, 10))
+    .filter((n) => Number.isFinite(n) && n >= 1);
+  const unique = [...new Set(ids)].slice(0, MAX_EVENT_PRODUCTION_FILTER);
+  if (unique.length === 0) {
+    return { ok: false };
+  }
+  return { ok: true, ids: unique };
+}
+
 const EventsListQuerySchema = z
   .object({
     production: z.union([z.string(), z.array(z.string())]).optional(),
     old_id: stringToInt.optional(),
   })
-  .transform((q) => {
-    let production: number[] | undefined;
-    if (q.production !== undefined) {
-      const raw = Array.isArray(q.production)
-        ? q.production.join(",")
-        : q.production;
-      const trimmed = raw.trim();
-      if (trimmed !== "") {
-        const ids = trimmed
-          .split(",")
-          .map((s) => s.trim())
-          .filter((s) => s.length > 0)
-          .map((p) => Number.parseInt(p, 10))
-          .filter((n) => Number.isFinite(n) && n >= 1);
-        const unique = [...new Set(ids)].slice(0, MAX_EVENT_PRODUCTION_FILTER);
-        if (unique.length === 0) {
-          throw new z.ZodError([
-            {
-              code: "custom",
-              path: ["production"],
-              message: "Invalid production id(s)",
-            },
-          ]);
-        }
-        production = unique;
-      }
+  .transform((q, ctx) => {
+    const parsed = parseProductionIdsFromQuery(q.production);
+    if (!parsed.ok) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["production"],
+        message: "Invalid production id(s)",
+      });
+      return z.NEVER;
     }
-    return { production, old_id: q.old_id };
+    return { production: parsed.ids, old_id: q.old_id };
   });
 
 const fetchEventsAllQuery = (server: FastifyInstance) =>
