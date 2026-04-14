@@ -5,12 +5,18 @@ import { localApiUrl } from "./local-api.js";
  * The parent event still counts as imported; many events legitimately have no prices (`[]`).
  */
 
+/**
+ * Minimal shape of a Viernulvier event price resource (`amount` may be string or number).
+ */
 interface ViernulvierPriceResponse {
   "@id": string;
   "@type": string;
   amount: number | string;
 }
 
+/**
+ * Parses a non-negative finite price from API `amount` (supports comma decimals); otherwise `null`.
+ */
 export function parseNonNegativePriceAmount(value: unknown): number | null {
   if (value === undefined || value === null) return null;
   if (typeof value === "number") {
@@ -27,6 +33,9 @@ export function parseNonNegativePriceAmount(value: unknown): number | null {
   return null;
 }
 
+/**
+ * Loads one price tier from Viernulvier (`/api/v1/events/prices/{id}`) as `application/ld+json`.
+ */
 async function fetchPriceRequest(id: number, authToken: string) {
   const url = `https://www.viernulvier.gent/api/v1/events/prices/${id}`;
 
@@ -44,6 +53,9 @@ async function fetchPriceRequest(id: number, authToken: string) {
   return response;
 }
 
+/**
+ * For each legacy price id, fetches the tier and `POST`s a row linked to the given local `eventId` (best-effort).
+ */
 export async function scrapeEventPricesForEvent(
   priceIds: number[],
   eventId: number,

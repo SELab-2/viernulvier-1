@@ -1,10 +1,10 @@
 /**
  * Scraper environment (see also `auth.ts`, `local-api.ts`, `event.ts`):
  *
- * - **`VIERNULVIER_API_TOKEN`** — API key for `https://www.viernulvier.gent` (`X-AUTH-TOKEN`).
- * - **`VIERNULVIER_LOCAL_API_URL`** — own API base (default `http://localhost:3000`).
- * - **`SCRAPER_ADMIN_USERNAME`** / **`SCRAPER_ADMIN_PASSWORD`** — JWT login for protected `POST`s (defaults `admin` / `password`).
- * - **`SCRAPE_EVENTS_WINDOW`** — `historical` | `previous-brussels-day`.
+ * - `VIERNULVIER_API_TOKEN` — API key for `https://www.viernulvier.gent` (`X-AUTH-TOKEN`).
+ * - `VIERNULVIER_LOCAL_API_URL` — own API base (default `http://localhost:3000`).
+ * - `SCRAPER_ADMIN_USERNAME` / `SCRAPER_ADMIN_PASSWORD` — JWT login for protected `POST`s (defaults `admin` / `password`).
+ * - `SCRAPE_EVENTS_WINDOW` — `historical` | `previous-brussels-day`.
  *
  * This entrypoint is events-only: halls and productions are imported lazily while processing each event
  */
@@ -24,7 +24,7 @@ function readViernulvierApiToken(): string {
 }
 
 /**
- * Which slice of the external **events** list to pull (`aanvang` bounds).
+ * Which slice of the external events list to pull (`aanvang` bounds).
  *
  * - `historical` (default): `{ before: new Date() }` — past performances only (per API semantics).
  * - `previous-brussels-day`: half-open yesterday in Europe/Brussels.

@@ -17,7 +17,9 @@ interface ProductionListMeta {
   };
 }
 
-/** Raw production from Viernulvier JSON-LD (only fields we read). */
+/** 
+ * Raw production from Viernulvier JSON-LD (only fields we read). 
+ */
 interface ProductionJSON {
   "@id": string;
   supertitle?: Record<string, string>;
@@ -41,7 +43,9 @@ interface ViernulvierProductionApiResponse {
   member: ProductionJSON[];
 }
 
-// Fetch singular page and return raw response
+/**
+ * Requests one page of the Viernulvier productions list and returns the raw `Response`.
+ */
 async function fetchPageRequest(
   page: number = 1,
   authToken: string,
@@ -63,7 +67,9 @@ async function fetchPageRequest(
   return response;
 }
 
-// Fetch singular page of productions, used for pagination, refine response to return parsed JSON
+/**
+ * Fetches one page of productions and parses JSON into {@link ViernulvierProductionApiResponse}.
+ */
 async function fetchProductionsPage(
   page: number = 1,
   authToken: string,
@@ -75,7 +81,9 @@ async function fetchProductionsPage(
   return data;
 }
 
-// Fetch first page to obtain the view and total items, view will contain the last page number, which we can use to fetch all pages
+/**
+ * Fetches page 1 only to read Hydra `view` metadata for total page count.
+ */
 async function fetchProductionsListMeta(
   authToken: string
 ): Promise<ProductionListMeta> {
@@ -86,6 +94,9 @@ async function fetchProductionsListMeta(
   return data;
 }
 
+/**
+ * Maps Viernulvier JSON-LD into our `CreateProduction` payload (legacy id from `@id` path segment).
+ */
 function scraperProductionToCreateBody(
   production: ProductionJSON,
   legacyId: number,
@@ -110,6 +121,9 @@ function scraperProductionToCreateBody(
   };
 }
 
+/**
+ * Returns the local production id for a legacy `old_id`, or `null` if none exists.
+ */
 async function fetchLocalProductionIdByOldId(oldId: number): Promise<number | null> {
   const url = new URL(localApiUrl("/api/v1/production"));
   url.searchParams.set("old_id", String(oldId));
@@ -157,6 +171,9 @@ async function createLocalProductionFromViernulvierJson(
   return productionId;
 }
 
+/**
+ * Creates the production locally when `old_id` is absent; otherwise returns the existing id.
+ */
 async function ensureProductionImported(
   production: ProductionJSON,
   loginToken: string,
@@ -170,7 +187,9 @@ async function ensureProductionImported(
   return createLocalProductionFromViernulvierJson(production, loginToken);
 }
 
-// fetch the amount of pages, then fetch each page and process the productions
+/**
+ * Optional full crawl of every Viernulvier production (not used by the default `scrape.ts` entrypoint).
+ */
 export async function scrapeAllProductions(
   authToken: string
 ) {
@@ -188,6 +207,9 @@ export async function scrapeAllProductions(
   }
 }
 
+/**
+ * Fetches a single production by legacy id from Viernulvier and ensures it exists locally.
+ */
 export async function scrapeProductionById(
   id: number,
   authToken: string,

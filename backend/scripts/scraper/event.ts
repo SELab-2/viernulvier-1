@@ -26,6 +26,9 @@ export {
   startOfCalendarDayUtc,
 } from "./zoned-day.js";
 
+/**
+ * Supplies default `{ before: new Date() }` when the caller passes an empty bounds object.
+ */
 function resolveEventStartBounds(bounds: ViernulvierEventStartBounds): ViernulvierEventStartBounds {
   if (bounds.before !== undefined || bounds.after !== undefined) {
     return bounds;
@@ -46,7 +49,6 @@ interface EventListMeta {
 interface EventJSON {
   "@id": string;
   starts_at: string;
-  /** Often omitted on the external API. */
   ends_at?: string | null;
   doors_at?: string | null;
   info?: Record<string, string> | null;
@@ -63,7 +65,9 @@ interface ViernulvierApiResponse {
   member: EventJSON[];
 }
 
-// Fetch singular page and return raw response
+/**
+ * Requests one page of the Viernulvier events list (`application/ld+json`) and returns the raw `Response`.
+ */
 async function fetchPageRequest(
   page: number,
   authToken: string,
@@ -92,7 +96,9 @@ async function fetchPageRequest(
   return response;
 }
 
-// Fetch singular page of events, used for pagination, refine response to return parsed JSON
+/**
+ * Fetches one page of events and parses the JSON body into {@link ViernulvierApiResponse}.
+ */
 async function fetchEventsPage(
   page: number,
   authToken: string,
@@ -105,7 +111,9 @@ async function fetchEventsPage(
   return data;
 }
 
-// Fetch first page to obtain the view and total items, view will contain the last page number, which we can use to fetch all pages
+/**
+ * Fetches page 1 only to read Hydra `view` metadata (e.g. last page index via {@link totalPagesFromHydraView}).
+ */
 async function fetchEventsListMeta(
   authToken: string,
   bounds: ViernulvierEventStartBounds,
@@ -117,9 +125,14 @@ async function fetchEventsListMeta(
   return data;
 }
 
-/** In-process cache: legacy hall id → local DB id (avoids repeat `scrapeHallById` work per run). */
+/** 
+ * In-process cache: legacy hall id → local DB id (avoids repeat `scrapeHallById` work per run). 
+ */
 const hallIdByOldId: Record<number, number> = {};
 
+/**
+ * Resolves legacy hall id to local primary key, using {@link scrapeHallById} when the row is not yet imported.
+ */
 async function resolveHallId(
   oldId: number,
   authToken: string,
@@ -132,9 +145,14 @@ async function resolveHallId(
   return id;
 }
 
-/** In-process cache: legacy production id → local DB id. */
+/** 
+ * In-process cache: legacy production id → local DB id. 
+ */
 const productionIdByOldId: Record<number, number> = {};
 
+/**
+ * Resolves legacy production id to local primary key, using {@link scrapeProductionById} when missing locally.
+ */
 async function resolveProductionId(
   oldId: number,
   authToken: string,
@@ -147,6 +165,9 @@ async function resolveProductionId(
   return id;
 }
 
+/**
+ * Returns the local event id for a legacy `old_id`, or `null` if no row exists yet.
+ */
 async function fetchLocalEventIdByOldId(oldId: number): Promise<number | null> {
   const url = localApiUrl(`/api/v1/event?old_id=${oldId}`);
   const response = await fetch(url, {
@@ -218,7 +239,9 @@ async function ensureEventImported(event: EventJSON, authToken: string, loginTok
 
   const eventId = (await response.json() as { id: number }).id;
 
-  // Add prices after event is created, to avoid foreign key constraint errors
+  /**
+   * Import ticket prices only after the event row exists so `event_price.event` satisfies FK constraints.
+   */
   const priceUrls = event.prices ?? [];
   const prices = priceUrls.map((priceUrl) => parseInt(priceUrl.split("/").pop() as string, 10));
   if (prices.length > 0) {
@@ -226,7 +249,9 @@ async function ensureEventImported(event: EventJSON, authToken: string, loginTok
   }
 }
 
-// fetch the amount of pages, then fetch each page and process the events
+/**
+ * Walks every page of the (bounded) Viernulvier events list and runs {@link ensureEventImported} per member.
+ */
 export async function scrapeAllEvents(
   authToken: string,
   bounds: ViernulvierEventStartBounds = {},

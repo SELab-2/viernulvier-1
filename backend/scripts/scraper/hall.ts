@@ -18,7 +18,6 @@ interface HallJSON {
   "@id": string;
   name: string;
   description?: string;
-  /** Usually `/api/v1/spaces/...`; sometimes omitted on the external API. */
   space?: string | null;
   [key: string]: unknown;
 }
@@ -42,7 +41,9 @@ interface ViernulvierHallApiResponse {
   member: HallJSON[];
 }
 
-// Fetch singular page and return raw response
+/**
+ * Requests one page of the Viernulvier halls collection and returns the raw `Response`.
+ */
 async function fetchPageRequest(
   page: number = 1,
   authToken: string,
@@ -64,7 +65,9 @@ async function fetchPageRequest(
   return response;
 }
 
-// Fetch singular page of halls, used for pagination, refine response to return parsed JSON
+/**
+ * Fetches one page of halls and parses JSON into {@link ViernulvierHallApiResponse}.
+ */
 async function fetchHallsPage(
   page: number = 1,
   authToken: string,
@@ -76,7 +79,9 @@ async function fetchHallsPage(
   return data;
 }
 
-// Fetch first page to obtain the view and total items, view will contain the last page number, which we can use to fetch all pages
+/**
+ * Fetches page 1 only to read Hydra `view` metadata for total page count.
+ */
 async function fetchHallsListMeta(
   authToken: string
 ): Promise<HallListMeta> {
@@ -87,7 +92,9 @@ async function fetchHallsListMeta(
   return data;
 }
 
-// Cache for space addresses to avoid repeated API calls
+/**
+ * Maps space resource URL (trimmed) → resolved address string for this process (avoids duplicate venue fetches).
+ */
 const spaceAddressCache = new Map<string, string>();
 
 const NO_ADDRESS = "No address provided";
@@ -99,6 +106,9 @@ function resolveViernulvierFetchUrl(pathOrUrl: string): string {
   return `${VIERNULVIER_API_ORIGIN}${s.startsWith("/") ? s : `/${s}`}`;
 }
 
+/**
+ * Follows a hall’s `space` IRI (and nested `location`) on Viernulvier to build a single-line postal address.
+ */
 async function fetchSpaceLocation(spaceUrl: string | null | undefined, authToken: string): Promise<string> {
   if (typeof spaceUrl !== "string") {
     return NO_ADDRESS;
@@ -108,7 +118,9 @@ async function fetchSpaceLocation(spaceUrl: string | null | undefined, authToken
     return NO_ADDRESS;
   }
 
-  // Check cache first
+  /*
+   * Return a memoized address when this space URL was already resolved in this run.
+   */
   if (spaceAddressCache.has(spaceKey)) {
     return spaceAddressCache.get(spaceKey) || NO_ADDRESS;
   }
@@ -129,8 +141,10 @@ async function fetchSpaceLocation(spaceUrl: string | null | undefined, authToken
 
     const space = (await response.json()) as Space;
     const address = await fetchLocationAddress(space.location, authToken);
-    
-    // Cache the result
+
+    /*
+     * Store the resolved address for later hall rows that share the same space.
+     */
     spaceAddressCache.set(spaceKey, address);
     return address;
   } catch {
@@ -139,6 +153,9 @@ async function fetchSpaceLocation(spaceUrl: string | null | undefined, authToken
   }
 }
 
+/**
+ * Loads a Viernulvier `location` resource and formats street, number, postal code, city, and country.
+ */
 async function fetchLocationAddress(locationUrl: string | null | undefined, authToken: string): Promise<string> {
   if (typeof locationUrl !== "string" || locationUrl.trim() === "") {
     return NO_ADDRESS;
@@ -165,7 +182,9 @@ async function fetchLocationAddress(locationUrl: string | null | undefined, auth
   }
 }
 
-/** Local DB id if a hall with this legacy `old_id` exists, otherwise `null`. */
+/** 
+ * Local DB id if a hall with this legacy `old_id` exists, otherwise `null`. 
+ */
 export async function fetchLocalHallIdByOldId(oldId: number): Promise<number | null> {
   const url = localApiUrl(`/api/v1/hall?old_id=${oldId}`);
   const response = await fetch(url, {
@@ -186,6 +205,9 @@ export async function fetchLocalHallIdByOldId(oldId: number): Promise<number | n
   return hallList[0]!.id;
 }
 
+/**
+ * `POST`s one hall parsed from Viernulvier JSON-LD into our API.
+ */
 async function createLocalHallFromViernulvierJson(
   hall: HallJSON,
   loginToken: string,
@@ -219,6 +241,9 @@ async function createLocalHallFromViernulvierJson(
   return hallId;
 }
 
+/**
+ * Creates the hall locally when `old_id` is absent; otherwise returns the existing id.
+ */
 async function ensureHallImported(
   hall: HallJSON,
   loginToken: string,
@@ -233,7 +258,9 @@ async function ensureHallImported(
   return createLocalHallFromViernulvierJson(hall, loginToken, authToken);
 }
 
-// fetch the amount of pages, then fetch each page and process the halls
+/**
+ * Optional full crawl of every Viernulvier hall (not used by the default `scrape.ts` entrypoint).
+ */
 export async function scrapeAllHalls(
   authToken: string
 ) {
