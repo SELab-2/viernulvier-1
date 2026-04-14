@@ -253,7 +253,8 @@ export async function scrapeAllHalls(
 
 export async function scrapeHallById(
   id: number,
-  authToken: string
+  authToken: string,
+  loginToken?: string,
 ) {
   const existing = await fetchLocalHallIdByOldId(id);
   if (existing !== null) return existing;
@@ -269,6 +270,6 @@ export async function scrapeHallById(
     throw new Error(`Failed to fetch hall from Viernulvier API: ${viernulvierResponse.status} ${viernulvierResponse.statusText}`);
   }
   const hall = await viernulvierResponse.json() as HallJSON;
-  const loginToken = await fetchScraperJwt();
-  return createLocalHallFromViernulvierJson(hall, loginToken, authToken);
+  const jwt = loginToken ?? await fetchScraperJwt();
+  return createLocalHallFromViernulvierJson(hall, jwt, authToken);
 }

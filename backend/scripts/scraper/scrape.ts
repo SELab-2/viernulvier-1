@@ -1,18 +1,18 @@
 /**
- * Scraper environment (see also `auth.ts`, `local-api.ts`):
+ * Scraper environment (see also `auth.ts`, `local-api.ts`, `event.ts`):
  *
  * - **`VIERNULVIER_API_TOKEN`** — API key for `https://www.viernulvier.gent` (`X-AUTH-TOKEN`).
  * - **`VIERNULVIER_LOCAL_API_URL`** — own API base (default `http://localhost:3000`).
  * - **`SCRAPER_ADMIN_USERNAME`** / **`SCRAPER_ADMIN_PASSWORD`** — JWT login for protected `POST`s (defaults `admin` / `password`).
  * - **`SCRAPE_EVENTS_WINDOW`** — `historical` | `previous-brussels-day`.
+ *
+ * This entrypoint is events-only: halls and productions are imported lazily while processing each event
  */
 import {
   previousBrusselsDayBounds,
   scrapeAllEvents,
   type ViernulvierEventStartBounds,
 } from "./event.js";
-import { scrapeAllHalls } from "./hall.js";
-import { scrapeAllProductions } from "./production.js";
 
 function readViernulvierApiToken(): string {
   const token = process.env["VIERNULVIER_API_TOKEN"];
@@ -24,10 +24,10 @@ function readViernulvierApiToken(): string {
 }
 
 /**
- * Which slice of the external events list to pull (see `event.ts` / `ViernulvierEventStartBounds`).
+ * Which slice of the external **events** list to pull (`aanvang` bounds).
  *
- * - `historical` (default): all events with start before “now” (UTC) -> initial full archive / re-runs are idempotent.
- * - `previous-brussels-day`: `[00:00 yesterday, 00:00 today)` in Europe/Brussels (venue/archive calendar).
+ * - `historical` (default): `{ before: new Date() }` — past performances only (per API semantics).
+ * - `previous-brussels-day`: half-open yesterday in Europe/Brussels.
  */
 function resolveEventScrapeBounds(): ViernulvierEventStartBounds {
   const mode = process.env["SCRAPE_EVENTS_WINDOW"]?.trim() ?? "historical";
@@ -44,18 +44,10 @@ function resolveEventScrapeBounds(): ViernulvierEventStartBounds {
 
 const viernulvierApiToken = readViernulvierApiToken();
 
-/**
- * Import order: halls → productions → events. Event time window: env `SCRAPE_EVENTS_WINDOW`.
- */
 async function main() {
-  console.log("Scraping halls…");
-  await scrapeAllHalls(viernulvierApiToken);
-  console.log("Scraping productions…");
-  await scrapeAllProductions(viernulvierApiToken);
-
   const eventBounds = resolveEventScrapeBounds();
   console.log(
-    `Scraping events… (window: ${process.env["SCRAPE_EVENTS_WINDOW"]?.trim() ?? "historical"}; after=${eventBounds.after?.toISOString() ?? "—"} before=${eventBounds.before?.toISOString() ?? "—"})`,
+    `Scraping events (lazy halls/productions)… window: ${process.env["SCRAPE_EVENTS_WINDOW"]?.trim() ?? "historical"}; after=${eventBounds.after?.toISOString() ?? "—"} before=${eventBounds.before?.toISOString() ?? "—"}`,
   );
   await scrapeAllEvents(viernulvierApiToken, eventBounds);
 }

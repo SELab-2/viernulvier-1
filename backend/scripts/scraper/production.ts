@@ -190,7 +190,8 @@ export async function scrapeAllProductions(
 
 export async function scrapeProductionById(
   id: number,
-  authToken: string
+  authToken: string,
+  loginToken?: string,
 ) {
   const existing = await fetchLocalProductionIdByOldId(id);
   if (existing !== null) return existing;
@@ -206,6 +207,6 @@ export async function scrapeProductionById(
     throw new Error(`Failed to fetch production: ${response.status} ${response.statusText}`);
   }
   const production = await response.json() as ProductionJSON;
-  const loginToken = await fetchScraperJwt();
-  return createLocalProductionFromViernulvierJson(production, loginToken);
+  const jwt = loginToken ?? await fetchScraperJwt();
+  return createLocalProductionFromViernulvierJson(production, jwt);
 }

@@ -1,14 +1,20 @@
 import type { ViernulvierEventStartBounds } from "./event-bounds.js";
 import { fetchScraperJwt } from "./auth.js";
+import { scrapeHallById } from "./hall.js";
 import { localApiUrl } from "./local-api.js";
+import { scrapeProductionById } from "./production.js";
 import { scrapeEventPricesForEvent } from "./event_price.js";
 import { totalPagesFromHydraView } from "./hydra-view.js";
 
 /**
- * Bounds on external `aanvang` (event start) for `GET https://www.viernulvier.gent/api/v1/events`.
+ * Archive scraper is event-first: only pages the Viernulvier events API (with `aanvang` bounds).
+ * Halls and productions are lazy-imported per event via {@link scrapeHallById} / {@link scrapeProductionById}
+ * when missing locally
  *
- * - **Full historical backfill:** `{ before: new Date() }` — events with start **before** “now” (UTC on the wire).
- * - **Nightly archive slice:** both `after` and `before`, e.g. {@link previousBrusselsDayBounds} from `./zoned-day.js`.
+ * Bounds on external `aanvang` (event start) for `GET https://www.viernulvier.gent/api/v1/events`:
+ *
+ * - Full past backfill: `{ before: new Date() }` — performances starting before “now” (confirm semantics on live API).
+ * - Incremental slice: both `after` and `before`, e.g. {@link previousBrusselsDayBounds}.
  *
  * If both are omitted, {@link scrapeAllEvents} defaults to `{ before: new Date() }`.
  */
@@ -111,74 +117,32 @@ async function fetchEventsListMeta(
   return data;
 }
 
-/** Map legacy hall id → local DB id (filled via GET; halls must be imported first). */
+/** In-process cache: legacy hall id → local DB id (avoids repeat `scrapeHallById` work per run). */
 const hallIdByOldId: Record<number, number> = {};
 
-async function resolveHallId(oldId: number): Promise<number> {
+async function resolveHallId(
+  oldId: number,
+  authToken: string,
+  loginToken: string,
+): Promise<number> {
   const cached = hallIdByOldId[oldId];
   if (cached !== undefined) return cached;
-
-  const url = localApiUrl(`/api/v1/hall?old_id=${oldId}`);
-  const response = await fetch(url, {
-    headers: {
-      accept: "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to resolve hall old_id=${oldId} from local API: ${response.status} ${response.statusText}`,
-    );
-  }
-
-  const halls = (await response.json()) as { id: number }[];
-  if (halls.length === 0) {
-    throw new Error(
-      `No hall with old_id=${oldId} in local API. Run a full scrape (halls → productions → events) so halls are imported first.`,
-    );
-  }
-  if (halls.length > 1) {
-    throw new Error(`Multiple halls found with old_id=${oldId}`);
-  }
-
-  const id = halls[0]!.id;
+  const id = await scrapeHallById(oldId, authToken, loginToken);
   hallIdByOldId[oldId] = id;
   return id;
 }
 
-/** Map legacy production id → local DB id (filled via GET; productions must be imported first). */
+/** In-process cache: legacy production id → local DB id. */
 const productionIdByOldId: Record<number, number> = {};
 
-async function resolveProductionId(oldId: number): Promise<number> {
+async function resolveProductionId(
+  oldId: number,
+  authToken: string,
+  loginToken: string,
+): Promise<number> {
   const cached = productionIdByOldId[oldId];
   if (cached !== undefined) return cached;
-
-  const url = new URL(localApiUrl("/api/v1/production"));
-  url.searchParams.set("old_id", String(oldId));
-
-  const response = await fetch(url.toString(), {
-    headers: {
-      accept: "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to resolve production old_id=${oldId} from local API: ${response.status} ${response.statusText}`,
-    );
-  }
-
-  const data = (await response.json()) as { items: { id: number }[]; total: number };
-  if (data.total === 0) {
-    throw new Error(
-      `No production with old_id=${oldId} in local API. Run a full scrape (halls → productions → events) so productions are imported before events.`,
-    );
-  }
-  if (data.total > 1) {
-    throw new Error(`Multiple productions found with old_id=${oldId}`);
-  }
-
-  const id = data.items[0]!.id;
+  const id = await scrapeProductionById(oldId, authToken, loginToken);
   productionIdByOldId[oldId] = id;
   return id;
 }
@@ -235,8 +199,8 @@ async function ensureEventImported(event: EventJSON, authToken: string, loginTok
     ends_at: optionalIsoTimestamp(event.ends_at),
     doors_at: optionalIsoTimestamp(event.doors_at),
     info: event.info ?? null,
-    production: await resolveProductionId(productionId),
-    hall: await resolveHallId(hallId),
+    production: await resolveProductionId(productionId, authToken, loginToken),
+    hall: await resolveHallId(hallId, authToken, loginToken),
   };
 
   const response = await fetch(localApiUrl("/api/v1/event"), {
