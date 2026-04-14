@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Hall, HallWithMeta } from "@viernulvier/shared/index.js";
 import { HallSchema, stringToInt } from "@viernulvier/shared/index.js";
-import { parseParams, buildQuery } from "@/routes/helpers.js";
+import { parseParams, parseSchema, buildQuery } from "@/routes/helpers.js";
 import z from "zod";
 
 
@@ -46,6 +46,9 @@ const fetchHallByOldIdQuery = (server: FastifyInstance) =>
     HallSchema,
   );
 
+const HallsListQuerySchema = z.object({
+  old_id: stringToInt.optional(),
+});
 
 /**
  * Internal helper to fetch a single hall by ID.
@@ -94,19 +97,16 @@ export async function fetchHallWithMeta(
 }
 
 /**
- * Fetches a list of halls.
+ * Fetches all halls, optionally filtered by `old_id` query (legacy id).
  *
- * @param server - The Fastify instance, used for database access and logging.
- * @param request - The Fastify request.
- * @returns The list of halls, or `null` if parsing failed.
+ * Invalid query values are rejected by {@link parseSchema} (same pattern as event list).
  */
-export async function fetchHalls(server: FastifyInstance, request: FastifyRequest): Promise<Hall[] | null> {
-  const { old_id } = request.query as { old_id?: string };
+export async function fetchHalls(server: FastifyInstance, request: FastifyRequest): Promise<Hall[]> {
+  const { old_id } = parseSchema(server, HallsListQuerySchema, request.query);
 
-  if (old_id) {
-    const result = await fetchHallByOldIdQuery(server)(parseInt(old_id, 10));
-    return result;
-  } 
+  if (old_id !== undefined) {
+    return await fetchHallByOldIdQuery(server)(old_id);
+  }
 
   return await fetchHallsQuery(server)();
 }
