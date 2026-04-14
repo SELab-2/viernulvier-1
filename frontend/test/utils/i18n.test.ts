@@ -38,6 +38,11 @@ describe("localize", () => {
     expect(localize({}, "nl")).toBeNull();
   });
 
+  it("returns null when the map is null or undefined (nullable API fields)", () => {
+    expect(localize(null, "nl")).toBeNull();
+    expect(localize(undefined, "en")).toBeNull();
+  });
+
   it("returns null when no language key has a value", () => {
     // Partial record with only undefined keys — simulated via empty object
     expect(localize({} as Record<never, string>, "fr")).toBeNull();
@@ -121,6 +126,11 @@ describe("hasLanguage", () => {
   it("returns false when the language value is only whitespace", () => {
     expect(hasLanguage({ nl: "   " }, "nl")).toBe(false);
   });
+
+  it("returns false when the map is null or undefined", () => {
+    expect(hasLanguage(null, "nl")).toBe(false);
+    expect(hasLanguage(undefined, "en")).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -142,6 +152,11 @@ describe("availableLanguages", () => {
 
   it("returns an empty array when the map is empty", () => {
     expect(availableLanguages({})).toEqual([]);
+  });
+
+  it("returns an empty array when the map is null or undefined", () => {
+    expect(availableLanguages(null)).toEqual([]);
+    expect(availableLanguages(undefined)).toEqual([]);
   });
 
   it("preserves canonical order nl → en → fr", () => {
