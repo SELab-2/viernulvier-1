@@ -108,8 +108,8 @@
 
           <div v-else>
             <ProductionListCard
-              v-for="p in productions"
-              :key="p.id"
+              v-for="(p, idx) in productions"
+              :key="`${currentPage}-${idx}-${p.id}`"
               :production="p"
               :date-summary="dateSummaryFor(p.id)"
               :tag-chips="tagChipsFor(p)"
@@ -194,8 +194,8 @@ import {
   watch,
 } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute, useRouter } from "vue-router";
-import type { LocationQueryRaw } from "vue-router";
+import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
+import type { LocationQuery, LocationQueryRaw } from "vue-router";
 import type {
   Event as ProductionEvent,
   Hall,
@@ -208,7 +208,7 @@ import AppNavbar from "@/components/AppNavbar.vue";
 import ProductionListCard from "@/components/productions/ProductionListCard.vue";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
-import { getEvents } from "@/services/events";
+import { getEventsForProductions } from "@/services/events";
 import { getHalls } from "@/services/halls";
 import { getProductions } from "@/services/productions";
 import { getTags, getTagTypes } from "@/services/tags";
@@ -240,15 +240,19 @@ const { t } = useI18n();
 const pageTopAnchor = useTemplateRef<HTMLElement>("pageTopAnchor");
 
 /**
- * Reads a positive 1-based page from the route query; invalid or missing -> 1.
+ * Reads a positive 1-based page from a query object; invalid or missing -> 1.
  */
-function readPageOneBasedFromRoute(): number {
-  const raw = route.query[PAGE_QUERY_KEY];
+function readPageOneBasedFromQuery(q: LocationQuery): number {
+  const raw = q[PAGE_QUERY_KEY];
   const s = Array.isArray(raw) ? raw[0] : raw;
   if (s === undefined || s === null || s === "") return 1;
   const n = Number.parseInt(String(s), 10);
   if (!Number.isFinite(n) || n < 1) return 1;
   return n;
+}
+
+function readPageOneBasedFromRoute(): number {
+  return readPageOneBasedFromQuery(route.query);
 }
 
 function dedupeSearchTermsPreserveOrder(terms: string[]): string[] {
@@ -277,8 +281,11 @@ function dedupePreserveSearchCap(parts: string[]): string[] {
   return dedupeSearchTermsPreserveOrder(parts).slice(0, MAX_SEARCH_TERMS);
 }
 
-function queryForPage0(page0: number): LocationQueryRaw {
-  const q: LocationQueryRaw = { ...route.query };
+function queryForPage0WithBase(
+  page0: number,
+  baseQuery: LocationQuery,
+): LocationQueryRaw {
+  const q: LocationQueryRaw = { ...baseQuery };
   if (page0 <= 0) {
     delete q[PAGE_QUERY_KEY];
   } else {
@@ -291,6 +298,10 @@ function queryForPage0(page0: number): LocationQueryRaw {
     delete q[SEARCH_QUERY_KEY];
   }
   return q;
+}
+
+function queryForPage0(page0: number): LocationQueryRaw {
+  return queryForPage0WithBase(page0, route.query);
 }
 
 function urlNeedsSyncForPage0(page0: number): boolean {
@@ -347,6 +358,13 @@ const searchDraft = ref("");
  */
 const displayedFilteredTotal = ref<number | null>(null);
 
+const eventsByProduction = ref(new Map<number, ProductionEvent[]>());
+const tagsById = ref(new Map<number, Tag>());
+const tagTypesById = ref(new Map<number, TagType>());
+const hallsById = ref(new Map<number, Hall>());
+
+const locale = computed(() => i18n.global.locale.value as SupportedLang);
+
 const emptyStateMessage = computed(() =>
   appliedSearchTerms.value.length > 0
     ? t("productionsPage.noSearchResults")
@@ -382,6 +400,14 @@ async function fetchProductionsPageData(page0: number) {
     displayedFilteredTotal.value = null;
   }
   searchBannerTerms.value = [...appliedSearchTerms.value];
+
+  const ids = items.map((p) => p.id);
+  if (ids.length === 0) {
+    eventsByProduction.value = new Map();
+  } else {
+    const events = await getEventsForProductions(ids);
+    eventsByProduction.value = groupEventsByProductionId(events);
+  }
 }
 
 function scrollAfterPageChange() {
@@ -526,12 +552,6 @@ const rangeFrom = computed(() =>
 const rangeTo = computed(() =>
   Math.min((currentPage.value + 1) * PAGE_SIZE, totalCount.value),
 );
-const eventsByProduction = ref(new Map<number, ProductionEvent[]>());
-const tagsById = ref(new Map<number, Tag>());
-const tagTypesById = ref(new Map<number, TagType>());
-const hallsById = ref(new Map<number, Hall>());
-
-const locale = computed(() => i18n.global.locale.value as SupportedLang);
 
 onMounted(async () => {
   loading.value = true;
@@ -540,48 +560,31 @@ onMounted(async () => {
   if (initialSearch.length > 0) {
     appliedSearchTerms.value = initialSearch;
   }
-  const requestedOneBased = readPageOneBasedFromRoute();
-  let page0 = Math.max(0, requestedOneBased - 1);
+  let page0 = Math.max(0, readPageOneBasedFromRoute() - 1);
   try {
-    const [page, tags, events, halls, tagTypes] = await Promise.all([
-      getProductions(productionsListArgs(page0)),
+    const [tags, halls, tagTypes] = await Promise.all([
       getTags(),
-      getEvents(),
       getHalls(),
       getTagTypes(),
     ]);
-    totalCount.value = page.total;
-    const tp =
-      totalCount.value === 0
-        ? 0
-        : Math.ceil(totalCount.value / PAGE_SIZE);
-
-    if (tp > 0) {
-      const clamped0 = Math.min(Math.max(0, page0), tp - 1);
-      if (clamped0 !== page0) {
-        page0 = clamped0;
-        const again = await getProductions(productionsListArgs(page0));
-        productions.value = again.items;
-        totalCount.value = again.total;
-      } else {
-        productions.value = page.items;
-      }
-    } else {
-      productions.value = page.items;
-      page0 = 0;
-    }
-
-    currentPage.value = page0;
-    if (appliedSearchTerms.value.length > 0) {
-      displayedFilteredTotal.value = totalCount.value;
-    } else {
-      displayedFilteredTotal.value = null;
-    }
-    searchBannerTerms.value = [...appliedSearchTerms.value];
     tagsById.value = tagMapById(tags);
     tagTypesById.value = new Map(tagTypes.map((tt) => [tt.id, tt]));
     hallsById.value = hallMapById(halls);
-    eventsByProduction.value = groupEventsByProductionId(events);
+
+    /** Events for listing cards are loaded per page (see fetchProductionsPageData), not the full catalog. */
+    await fetchProductionsPageData(page0);
+
+    const tp = totalPages.value;
+    if (tp === 0) {
+      page0 = 0;
+      await fetchProductionsPageData(0);
+    } else {
+      const clamped0 = Math.min(Math.max(0, page0), tp - 1);
+      if (clamped0 !== page0) {
+        await fetchProductionsPageData(clamped0);
+        page0 = clamped0;
+      }
+    }
 
     if (urlNeedsSyncForPage0(page0)) {
       await replaceRouteForPage0(page0);
@@ -593,35 +596,41 @@ onMounted(async () => {
   }
 });
 
-watch(
-  () => readPageOneBasedFromRoute(),
-  async (oneBased) => {
-    if (loading.value) return;
-    if (totalPages.value <= 0) return;
+/**
+ * Same-component navigations (back/forward, editing `?page=`). Uses a navigation
+ * guard instead of a `watch` so we never run after `loading` flips false while the
+ * route still reflects a stale page — that race could refetch the wrong offset.
+ */
+onBeforeRouteUpdate(async (to) => {
+  if (loading.value) return;
+  if (totalPages.value <= 0) return;
 
-    let page0 = oneBased - 1;
-    const max0 = totalPages.value - 1;
-    const clamped0 = Math.min(Math.max(0, page0), max0);
-    if (page0 !== clamped0) {
-      await replaceRouteForPage0(clamped0);
-      return;
-    }
-    page0 = clamped0;
+  let page0 = readPageOneBasedFromQuery(to.query) - 1;
+  const max0 = totalPages.value - 1;
+  const clamped0 = Math.min(Math.max(0, page0), max0);
+  if (page0 !== clamped0) {
+    await router.replace({
+      path: to.path,
+      query: queryForPage0WithBase(clamped0, to.query),
+      hash: to.hash,
+    });
+    return;
+  }
+  page0 = clamped0;
 
-    if (page0 === currentPage.value) return;
+  if (page0 === currentPage.value) return;
 
-    listLoading.value = true;
-    loadError.value = false;
-    try {
-      await fetchProductionsPageData(page0);
-      scrollAfterPageChange();
-    } catch {
-      loadError.value = true;
-    } finally {
-      listLoading.value = false;
-    }
-  },
-);
+  listLoading.value = true;
+  loadError.value = false;
+  try {
+    await fetchProductionsPageData(page0);
+    scrollAfterPageChange();
+  } catch {
+    loadError.value = true;
+  } finally {
+    listLoading.value = false;
+  }
+});
 
 async function goToPage(page: number) {
   if (page < 0 || page >= totalPages.value) return;
