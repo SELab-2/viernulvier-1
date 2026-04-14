@@ -65,6 +65,14 @@ export default {
     filterResultsSingle: "1 résultat",
     filterResultsPlural: "{count} résultats",
   },
+  blogpost: {
+    loading: "Chargement de l'article…",
+    notFound: "Article introuvable",
+    notFoundDescription: "Cet article n'existe pas ou n'est plus disponible.",
+    errorGeneric: "Une erreur s'est produite lors du chargement de cet article.",
+    publishedOn: "Publié le {date}",
+    backToHome: "Retour à l'accueil",
+  },
   admin: {
     login: {
       title: "Connectez-vous pour continuer",

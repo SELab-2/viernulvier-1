@@ -65,6 +65,14 @@ export default {
     filterResultsSingle: "1 resultaat",
     filterResultsPlural: "{count} resultaten",
   },
+  blogpost: {
+    loading: "Blogpost laden…",
+    notFound: "Blogpost niet gevonden",
+    notFoundDescription: "Deze blogpost bestaat niet of is niet meer beschikbaar.",
+    errorGeneric: "Er is iets misgegaan bij het laden van deze blogpost.",
+    publishedOn: "Gepubliceerd op {date}",
+    backToHome: "Terug naar home",
+  },
   admin: {
     login: {
       title: "Meld u aan om verder te gaan",
