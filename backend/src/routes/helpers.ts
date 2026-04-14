@@ -259,7 +259,7 @@ export function buildQuery<
       );
     } catch (err) {
       server.log.error(err);
-      throw createParseError(ParseContext.Database, err);
+      throw new HttpError(HttpServerError.InternalServerError, "Internal server error");
     }
     return parseSchema(
       server,
