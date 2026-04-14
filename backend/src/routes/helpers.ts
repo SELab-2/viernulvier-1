@@ -114,8 +114,8 @@ export const enum ParseContext {
 
 type ParseContextType = (typeof ParseContext)[keyof typeof ParseContext];
 
-function createParseError(context: ParseContextType, error: z.ZodError): HttpError {
-  if (context === ParseContext.Request) {
+function createParseError(context: ParseContextType, error?: z.ZodError): HttpError {
+  if (context === ParseContext.Request && error) {
     return new ValidationError(error.issues);
   }
   return new HttpError(HttpServerError.InternalServerError, "Internal server error");
@@ -259,7 +259,7 @@ export function buildQuery<
       );
     } catch (err) {
       server.log.error(err);
-      throw new HttpError(HttpServerError.InternalServerError, "Internal server error");
+      throw createParseError(ParseContext.Database);
     }
     return parseSchema(
       server,
