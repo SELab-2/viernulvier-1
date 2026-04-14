@@ -6,8 +6,11 @@
  * - `SCRAPER_ADMIN_USERNAME` / `SCRAPER_ADMIN_PASSWORD` — JWT login for protected `POST`s (defaults `admin` / `password`).
  * - `SCRAPE_EVENTS_WINDOW` — `historical` | `previous-brussels-day`.
  *
- * This entrypoint is events-only: halls and productions are imported lazily while processing each event
+ * This entrypoint is events-only: halls and productions are imported lazily while processing each event.
+ *
+ * `VIERNULVIER_API_TOKEN` (and other vars) are read from the repository root `.env` (see `load-repo-env.ts`).
  */
+import "./load-repo-env.js";
 import {
   previousBrusselsDayBounds,
   scrapeAllEvents,
