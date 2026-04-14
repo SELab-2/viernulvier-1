@@ -130,6 +130,8 @@ async function fetchEventsListMeta(
  */
 const hallIdByOldId: Record<number, number> = {};
 
+const skippedHallOldIds = new Set<number>();
+
 /**
  * Resolves legacy hall id to local primary key, using {@link scrapeHallById} when the row is not yet imported.
  */
@@ -137,10 +139,15 @@ async function resolveHallId(
   oldId: number,
   authToken: string,
   loginToken: string,
-): Promise<number> {
+): Promise<number | null> {
+  if (skippedHallOldIds.has(oldId)) return null;
   const cached = hallIdByOldId[oldId];
   if (cached !== undefined) return cached;
   const id = await scrapeHallById(oldId, authToken, loginToken);
+  if (id === null) {
+    skippedHallOldIds.add(oldId);
+    return null;
+  }
   hallIdByOldId[oldId] = id;
   return id;
 }
@@ -150,6 +157,9 @@ async function resolveHallId(
  */
 const productionIdByOldId: Record<number, number> = {};
 
+/** Legacy production ids that cannot be imported (404, no title, or local `POST` failed); do not retry every event. */
+const skippedProductionOldIds = new Set<number>();
+
 /**
  * Resolves legacy production id to local primary key, using {@link scrapeProductionById} when missing locally.
  */
@@ -157,10 +167,15 @@ async function resolveProductionId(
   oldId: number,
   authToken: string,
   loginToken: string,
-): Promise<number> {
+): Promise<number | null> {
+  if (skippedProductionOldIds.has(oldId)) return null;
   const cached = productionIdByOldId[oldId];
   if (cached !== undefined) return cached;
   const id = await scrapeProductionById(oldId, authToken, loginToken);
+  if (id === null) {
+    skippedProductionOldIds.add(oldId);
+    return null;
+  }
   productionIdByOldId[oldId] = id;
   return id;
 }
@@ -214,14 +229,30 @@ async function ensureEventImported(event: EventJSON, authToken: string, loginTok
   const hallId = parseInt(event.hall.split("/").pop() as string, 10);
   const productionId = parseInt(event.production["@id"].split("/").pop() as string, 10);
 
+  const productionLocalId = await resolveProductionId(productionId, authToken, loginToken);
+  if (productionLocalId === null) {
+    console.warn(
+      `Skipping event old_id=${id}: production old_id=${productionId} could not be imported (missing on API, no title, or create failed).`,
+    );
+    return;
+  }
+
+  const hallLocalId = await resolveHallId(hallId, authToken, loginToken);
+  if (hallLocalId === null) {
+    console.warn(
+      `Skipping event old_id=${id}: hall old_id=${hallId} could not be imported (missing on API or create failed).`,
+    );
+    return;
+  }
+
   const body = {
     old_id: id,
     starts_at: event.starts_at,
     ends_at: optionalIsoTimestamp(event.ends_at),
     doors_at: optionalIsoTimestamp(event.doors_at),
     info: event.info ?? null,
-    production: await resolveProductionId(productionId, authToken, loginToken),
-    hall: await resolveHallId(hallId, authToken, loginToken),
+    production: productionLocalId,
+    hall: hallLocalId,
   };
 
   const response = await fetch(localApiUrl("/api/v1/event"), {

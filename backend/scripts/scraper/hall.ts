@@ -212,7 +212,7 @@ async function createLocalHallFromViernulvierJson(
   hall: HallJSON,
   loginToken: string,
   authToken: string,
-): Promise<number> {
+): Promise<number | null> {
   const id = parseInt(hall["@id"].split("/").pop() as string, 10);
 
   const address = await fetchSpaceLocation(hall.space, authToken);
@@ -234,7 +234,11 @@ async function createLocalHallFromViernulvierJson(
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to create hall: ${response.status} ${response.statusText}`);
+    const detail = await response.text();
+    console.warn(
+      `Failed to create hall old_id=${id}: ${response.status} ${response.statusText}${detail ? ` — ${detail}` : ""}`,
+    );
+    return null;
   }
 
   const hallId = (await response.json() as { id: number }).id;
@@ -248,7 +252,7 @@ async function ensureHallImported(
   hall: HallJSON,
   loginToken: string,
   authToken: string,
-): Promise<number> {
+): Promise<number | null> {
   const oldId = parseInt(hall["@id"].split("/").pop() as string, 10);
   const existing = await fetchLocalHallIdByOldId(oldId);
   if (existing !== null) {
@@ -278,11 +282,14 @@ export async function scrapeAllHalls(
   }
 }
 
+/**
+ * Returns `null` when the hall is missing on Viernulvier or local `POST` fails.
+ */
 export async function scrapeHallById(
   id: number,
   authToken: string,
   loginToken?: string,
-) {
+): Promise<number | null> {
   const existing = await fetchLocalHallIdByOldId(id);
   if (existing !== null) return existing;
 
@@ -293,8 +300,15 @@ export async function scrapeHallById(
       "X-AUTH-TOKEN": authToken,
     },
   });
+  if (viernulvierResponse.status === 404) {
+    console.warn(`Viernulvier hall old_id=${id} not found (404); will not import.`);
+    return null;
+  }
   if (!viernulvierResponse.ok) {
-    throw new Error(`Failed to fetch hall from Viernulvier API: ${viernulvierResponse.status} ${viernulvierResponse.statusText}`);
+    console.warn(
+      `Viernulvier hall old_id=${id} fetch failed: ${viernulvierResponse.status} ${viernulvierResponse.statusText}`,
+    );
+    return null;
   }
   const hall = await viernulvierResponse.json() as HallJSON;
   const jwt = loginToken ?? await fetchScraperJwt();

@@ -23,7 +23,7 @@ interface ProductionListMeta {
 interface ProductionJSON {
   "@id": string;
   supertitle?: Record<string, string>;
-  title: Record<string, string>;
+  title?: Record<string, string>;
   artist?: Record<string, string>;
   tagline?: Record<string, string>;
   teaser?: Record<string, string>;
@@ -36,11 +36,53 @@ interface ProductionJSON {
   quote_source?: Record<string, string>;
   programme?: Record<string, string>;
   info?: Record<string, string>;
+  /** SEO-style title; used as fallback when `title` is missing or empty (not stored separately in our DB). */
+  meta_title?: Record<string, string>;
 }
 
 interface ViernulvierProductionApiResponse {
   totalItems: number;
   member: ProductionJSON[];
+}
+
+/** Must match {@link languageMap} in shared types (at least one non-empty entry for required fields). */
+const LANG_KEYS = ["nl", "en", "fr"] as const;
+
+/**
+ * Keeps only allowed language keys with non-empty trimmed strings.
+ * Returns `null` when the result would be `{}` (our Zod `languageMap` rejects empty objects).
+ */
+function coerceLanguageMap(
+  value: Record<string, string> | undefined | null,
+): Record<string, string> | null {
+  if (value == null || typeof value !== "object") return null;
+  const out: Record<string, string> = {};
+  for (const lang of LANG_KEYS) {
+    const raw = value[lang];
+    if (typeof raw === "string" && raw.trim() !== "") {
+      out[lang] = raw.trim();
+    }
+  }
+   return Object.keys(out).length > 0 ? out : null;
+}
+
+/**
+ * Value we send as `title` on create: real `title`, else `meta_title`, else `artist` (each must pass {@link coerceLanguageMap}).
+ */
+function resolveProductionTitleForCreate(production: ProductionJSON): Record<string, string> | null {
+  return (
+    coerceLanguageMap(production.title) ??
+    coerceLanguageMap(production.meta_title) ??
+    coerceLanguageMap(production.artist) ??
+    null
+  );
+}
+
+/**
+ * Whether we can insert this production: at least one of `title`, `meta_title`, or `artist` yields a valid `languageMap`.
+ */
+export function hasImportableProductionTitle(production: ProductionJSON): boolean {
+  return resolveProductionTitleForCreate(production) !== null;
 }
 
 /**
@@ -101,23 +143,27 @@ function scraperProductionToCreateBody(
   production: ProductionJSON,
   legacyId: number,
 ): z.infer<typeof CreateProductionBodySchema> {
+  const title = resolveProductionTitleForCreate(production);
+  if (title === null) {
+    throw new Error("scraperProductionToCreateBody called without resolvable title");
+  }
   return {
     old_id: legacyId,
     finalized: false,
-    title: production.title,
-    artist: production.artist ?? null,
-    tagline: production.tagline ?? null,
-    teaser: production.teaser ?? null,
-    supertitle: production.supertitle ?? null,
-    description: production.description ?? null,
-    description_extra: production.description_extra ?? null,
-    description_2: production.description_2 ?? null,
-    video_1: production.video_1 ?? null,
-    video_2: production.video_2 ?? null,
-    quote: production.quote ?? null,
-    quote_source: production.quote_source ?? null,
-    programme: production.programme ?? null,
-    info: production.info ?? null,
+    title,
+    artist: coerceLanguageMap(production.artist),
+    tagline: coerceLanguageMap(production.tagline),
+    teaser: coerceLanguageMap(production.teaser),
+    supertitle: coerceLanguageMap(production.supertitle),
+    description: coerceLanguageMap(production.description),
+    description_extra: coerceLanguageMap(production.description_extra),
+    description_2: coerceLanguageMap(production.description_2),
+    video_1: coerceLanguageMap(production.video_1),
+    video_2: coerceLanguageMap(production.video_2),
+    quote: coerceLanguageMap(production.quote),
+    quote_source: coerceLanguageMap(production.quote_source),
+    programme: coerceLanguageMap(production.programme),
+    info: coerceLanguageMap(production.info),
   };
 }
 
@@ -149,7 +195,7 @@ async function fetchLocalProductionIdByOldId(oldId: number): Promise<number | nu
 async function createLocalProductionFromViernulvierJson(
   production: ProductionJSON,
   loginToken: string,
-): Promise<number> {
+): Promise<number | null> {
   const id = parseInt(production["@id"].split("/").pop() as string, 10);
 
   const payload = scraperProductionToCreateBody(production, id);
@@ -164,7 +210,11 @@ async function createLocalProductionFromViernulvierJson(
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to create production: ${response.status} ${response.statusText}`);
+    const detail = await response.text();
+    console.warn(
+      `Failed to create production old_id=${id}: ${response.status} ${response.statusText}${detail ? ` — ${detail}` : ""}`,
+    );
+    return null;
   }
 
   const productionId = (await response.json() as { id: number }).id;
@@ -177,12 +227,18 @@ async function createLocalProductionFromViernulvierJson(
 async function ensureProductionImported(
   production: ProductionJSON,
   loginToken: string,
-): Promise<number> {
+): Promise<number | null> {
   const oldId = parseInt(production["@id"].split("/").pop() as string, 10);
   const existing = await fetchLocalProductionIdByOldId(oldId);
   if (existing !== null) {
     console.log(`Production old_id=${oldId} already exists locally (id=${existing}), skipping create`);
     return existing;
+  }
+  if (!hasImportableProductionTitle(production)) {
+    console.warn(
+      `Skipping production old_id=${oldId}: no usable title, meta_title, or artist (nl/en/fr text).`,
+    );
+    return null;
   }
   return createLocalProductionFromViernulvierJson(production, loginToken);
 }
@@ -209,12 +265,14 @@ export async function scrapeAllProductions(
 
 /**
  * Fetches a single production by legacy id from Viernulvier and ensures it exists locally.
+ *
+ * Returns `null` when the remote production is missing (404), not importable (no usable title), or the local `POST` fails.
  */
 export async function scrapeProductionById(
   id: number,
   authToken: string,
   loginToken?: string,
-) {
+): Promise<number | null> {
   const existing = await fetchLocalProductionIdByOldId(id);
   if (existing !== null) return existing;
 
@@ -225,10 +283,21 @@ export async function scrapeProductionById(
       "X-AUTH-TOKEN": authToken,
     },
   });
+  if (response.status === 404) {
+    console.warn(`Viernulvier production old_id=${id} not found (404); will not import.`);
+    return null;
+  }
   if (!response.ok) {
-    throw new Error(`Failed to fetch production: ${response.status} ${response.statusText}`);
+    console.warn(`Viernulvier production old_id=${id} fetch failed: ${response.status} ${response.statusText}`);
+    return null;
   }
   const production = await response.json() as ProductionJSON;
+  if (!hasImportableProductionTitle(production)) {
+    console.warn(
+      `Viernulvier production old_id=${id} has no usable title, meta_title, or artist; will not insert.`,
+    );
+    return null;
+  }
   const jwt = loginToken ?? await fetchScraperJwt();
   return createLocalProductionFromViernulvierJson(production, jwt);
 }
