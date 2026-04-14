@@ -64,7 +64,7 @@ export function localize(
   map: LanguageMap | null | undefined,
   lang: Language,
 ): string | null {
-  if (map == null) return null;
+  if (map === null || map === undefined) return null;
   if (map[lang] !== undefined) return map[lang] as string;
 
   for (const fallback of FALLBACK_ORDER) {
@@ -133,7 +133,7 @@ export function hasLanguage(
   map: LanguageMap | null | undefined,
   lang: Language,
 ): boolean {
-  if (map == null) return false;
+  if (map === null || map === undefined) return false;
   const value = map[lang];
   return value !== undefined && value.trim().length > 0;
 }
@@ -149,6 +149,6 @@ export function hasLanguage(
 export function availableLanguages(
   map: LanguageMap | null | undefined,
 ): Language[] {
-  if (map == null) return [];
+  if (map === null || map === undefined) return [];
   return ALL_LANGUAGES.filter((lang) => hasLanguage(map, lang));
 }

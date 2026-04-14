@@ -72,7 +72,9 @@ beforeAll(async () => {
 
     if (query.includes("ANY($1::int[])") && query.includes("production")) {
       const prodIds = params?.[0] as number[];
-      const filtered = mockEvents.filter((e) => prodIds.includes(e.production));
+      const filtered = mockEvents.filter((e) =>
+        prodIds.includes(e.production as number),
+      );
       const rows = filtered.map((event) => ({
         ...event,
         price: storedEventPrices.filter((p) => p["event"] === event.id).map((p) => p.id),
