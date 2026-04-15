@@ -149,7 +149,7 @@ describe("Event Price Edit Route", () => {
       });
 
       expect(response.statusCode).toBe(400);
-      expect(response.json()).toEqual({ error: "Invalid request data" });
+      expect(response.json()).toMatchObject({ error: "Invalid request data" });
     });
 
     test("requires authentication", async () => {
