@@ -15,25 +15,31 @@ interface HallListMeta {
   };
 }
 
-interface HallJSON {
+/** Viernulvier `/api/v1/halls/{id}` (or collection member) JSON-LD shape used by the scraper. */
+export interface HallJSON {
   "@id": string;
   name: string;
   description?: string;
-  space?: string | null;
+  /** IRI string or expanded `{ "@id": "..." }` depending on endpoint. */
+  space?: unknown;
   [key: string]: unknown;
 }
 
+/** Viernulvier `Location` JSON-LD (fields optional in practice). */
 interface Location {
-  street: string;
-  number: string;
-  postal_code: string;
-  city: string;
-  country: string;
+  "@id"?: string;
+  "@type"?: string;
+  street?: string | null;
+  number?: string | null;
+  postal_code?: string | null;
+  city?: string | null;
+  country?: string | null;
   [key: string]: unknown;
 }
 
+/** Viernulvier `Space` JSON-LD; `location` is an IRI when present. */
 interface Space {
-  location: string;
+  location?: string | null;
   [key: string]: unknown;
 }
 
@@ -94,11 +100,9 @@ async function fetchHallsListMeta(
 }
 
 /**
- * Maps space resource URL (trimmed) → resolved address string for this process (avoids duplicate venue fetches).
+ * Maps space resource URL (trimmed) → resolved address or `null` when unknown (avoids duplicate venue fetches).
  */
-const spaceAddressCache = new Map<string, string>();
-
-const NO_ADDRESS = "No address provided";
+const spaceAddressCache = new Map<string, string | null>();
 
 /** Path like `/api/v1/spaces/1` or an absolute URL if the API ever returns one. */
 function resolveViernulvierFetchUrl(pathOrUrl: string): string {
@@ -107,23 +111,37 @@ function resolveViernulvierFetchUrl(pathOrUrl: string): string {
   return `${VIERNULVIER_API_ORIGIN}${s.startsWith("/") ? s : `/${s}`}`;
 }
 
-/**
- * Follows a hall’s `space` IRI (and nested `location`) on Viernulvier to build a single-line postal address.
- */
-async function fetchSpaceLocation(spaceUrl: string | null | undefined, authToken: string): Promise<string> {
-  if (typeof spaceUrl !== "string") {
-    return NO_ADDRESS;
+/** Hydra / JSON-LD link: plain IRI string or `{ "@id": "..." }`. */
+export function hydraIriString(ref: unknown): string | null {
+  if (ref == null) return null;
+  if (typeof ref === "string") {
+    const t = ref.trim();
+    return t === "" ? null : t;
   }
-  const spaceKey = spaceUrl.trim();
-  if (spaceKey === "") {
-    return NO_ADDRESS;
+  if (typeof ref === "object" && ref !== null && "@id" in ref) {
+    const id = (ref as { "@id": unknown })["@id"];
+    if (typeof id === "string") {
+      const t = id.trim();
+      return t === "" ? null : t;
+    }
+  }
+  return null;
+}
+
+/**
+ * Hall → Space (if IRI present) → Location (if space has `location` IRI) → formatted `address` or `null`.
+ */
+async function fetchSpaceLocation(
+  spaceRef: unknown,
+  authToken: string,
+): Promise<string | null> {
+  const spaceKey = hydraIriString(spaceRef);
+  if (spaceKey === null) {
+    return null;
   }
 
-  /*
-   * Return a memoized address when this space URL was already resolved in this run.
-   */
   if (spaceAddressCache.has(spaceKey)) {
-    return spaceAddressCache.get(spaceKey) || NO_ADDRESS;
+    return spaceAddressCache.get(spaceKey) ?? null;
   }
 
   try {
@@ -136,30 +154,70 @@ async function fetchSpaceLocation(spaceUrl: string | null | undefined, authToken
     });
 
     if (!response.ok) {
-      spaceAddressCache.set(spaceKey, NO_ADDRESS);
-      return NO_ADDRESS;
+      spaceAddressCache.set(spaceKey, null);
+      return null;
     }
 
     const space = (await response.json()) as Space;
-    const address = await fetchLocationAddress(space.location, authToken);
+    const locationIri = hydraIriString(space.location);
+    if (locationIri === null) {
+      spaceAddressCache.set(spaceKey, null);
+      return null;
+    }
 
-    /*
-     * Store the resolved address for later hall rows that share the same space.
-     */
+    const address = await fetchLocationAddress(locationIri, authToken);
     spaceAddressCache.set(spaceKey, address);
     return address;
   } catch {
-    spaceAddressCache.set(spaceKey, NO_ADDRESS);
-    return NO_ADDRESS;
+    spaceAddressCache.set(spaceKey, null);
+    return null;
   }
 }
 
 /**
- * Loads a Viernulvier `location` resource and formats street, number, postal code, city, and country.
+ * Builds one line: no `street` → unusable. No `city` → only `street [number]` (postal omitted).
+ * With `city` → `street [number], [postal_code] city` (postal optional).
  */
-async function fetchLocationAddress(locationUrl: string | null | undefined, authToken: string): Promise<string> {
-  if (typeof locationUrl !== "string" || locationUrl.trim() === "") {
-    return NO_ADDRESS;
+function formatAddressFromLocation(location: Location): string | null {
+  const streetRaw = location.street;
+  const street = typeof streetRaw === "string" ? streetRaw.trim() : "";
+  if (street === "") {
+    return null;
+  }
+
+  const numRaw = location.number;
+  const number =
+    typeof numRaw === "string"
+      ? numRaw.trim()
+      : numRaw != null && numRaw !== ""
+        ? String(numRaw).trim()
+        : "";
+  const line1 = number !== "" ? `${street} ${number}` : street;
+
+  const cityRaw = location.city;
+  const city = typeof cityRaw === "string" ? cityRaw.trim() : "";
+  if (city === "") {
+    return line1;
+  }
+
+  const pcRaw = location.postal_code;
+  const postal = typeof pcRaw === "string" ? pcRaw.trim() : "";
+  if (postal !== "") {
+    return `${line1}, ${postal} ${city}`;
+  }
+  return `${line1}, ${city}`;
+}
+
+/**
+ * Fetches a Viernulvier `location` resource and formats it for {@link HallSchema.address}.
+ */
+async function fetchLocationAddress(
+  locationRef: unknown,
+  authToken: string,
+): Promise<string | null> {
+  const locationUrl = hydraIriString(locationRef);
+  if (locationUrl === null) {
+    return null;
   }
 
   try {
@@ -172,15 +230,25 @@ async function fetchLocationAddress(locationUrl: string | null | undefined, auth
     });
 
     if (!response.ok) {
-      return NO_ADDRESS;
+      return null;
     }
 
     const location = (await response.json()) as Location;
-    const address = `${location.street} ${location.number}, ${location.postal_code} ${location.city}, ${location.country}`;
-    return address;
+    return formatAddressFromLocation(location);
   } catch {
-    return NO_ADDRESS;
+    return null;
   }
+}
+
+/**
+ * Same resolution as when creating a hall via the scraper (`space` → location → one line).
+ * For one-off scripts that PATCH existing rows (see `refresh-hall-addresses.ts`).
+ */
+export async function resolveAddressForViernulvierHallJson(
+  hall: HallJSON,
+  authToken: string,
+): Promise<string | null> {
+  return fetchSpaceLocation(hall.space, authToken);
 }
 
 /** 
