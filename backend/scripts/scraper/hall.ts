@@ -222,7 +222,6 @@ async function createLocalHallFromViernulvierJson(
     name: hall.name,
     address: address,
     old_id: id,
-    vendor_id: 0,
   };
 
   const response = await fetch(localApiUrl("/api/v1/hall"), {
