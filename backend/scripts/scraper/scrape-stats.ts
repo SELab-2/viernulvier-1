@@ -1,3 +1,7 @@
+import { writeFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import type { ViernulvierEventStartBounds } from "./event-bounds.js";
 
 /**
@@ -87,4 +91,21 @@ export function formatRunReport(
 export function scraperVerbose(): boolean {
   const v = process.env["SCRAPE_VERBOSE"]?.trim().toLowerCase();
   return v === "1" || v === "true" || v === "yes";
+}
+
+const scraperDir = path.dirname(fileURLToPath(import.meta.url));
+
+/**
+ * Where to write {@link formatRunReport} output. Override with `SCRAPE_STATS_FILE` (absolute or relative to cwd).
+ */
+export function resolveScrapeStatsOutputPath(): string {
+  const fromEnv = process.env["SCRAPE_STATS_FILE"]?.trim();
+  if (fromEnv !== undefined && fromEnv !== "") {
+    return path.isAbsolute(fromEnv) ? fromEnv : path.join(process.cwd(), fromEnv);
+  }
+  return path.join(scraperDir, "last-scrape-stats.txt");
+}
+
+export async function writeRunReportFile(report: string, filePath: string): Promise<void> {
+  await writeFile(filePath, `${report}\n`, "utf8");
 }

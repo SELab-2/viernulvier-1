@@ -6,6 +6,7 @@ import { CreateProductionBodySchema } from "@/routes/production/handlers/body-sc
 import { fetchScraperJwt } from "./auth.js";
 import { localApiUrl } from "./local-api.js";
 import { totalPagesFromHydraView } from "./hydra-view.js";
+import type { ScrapeRunStats } from "./scrape-stats.js";
 
 interface ProductionListMeta {
   totalItems: number;
@@ -272,9 +273,13 @@ export async function scrapeProductionById(
   id: number,
   authToken: string,
   loginToken?: string,
+  stats?: ScrapeRunStats,
 ): Promise<number | null> {
   const existing = await fetchLocalProductionIdByOldId(id);
-  if (existing !== null) return existing;
+  if (existing !== null) {
+    if (stats !== undefined) stats.productions.reusedExisting++;
+    return existing;
+  }
 
   const url = `https://www.viernulvier.gent/api/v1/productions/${id}`;
   const response = await fetch(url, {
@@ -299,5 +304,7 @@ export async function scrapeProductionById(
     return null;
   }
   const jwt = loginToken ?? await fetchScraperJwt();
-  return createLocalProductionFromViernulvierJson(production, jwt);
+  const created = await createLocalProductionFromViernulvierJson(production, jwt);
+  if (created !== null && stats !== undefined) stats.productions.created++;
+  return created;
 }

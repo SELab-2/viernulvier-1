@@ -5,6 +5,7 @@ import { localApiUrl } from "./local-api.js";
 import { scrapeProductionById } from "./production.js";
 import { scrapeEventPricesForEvent } from "./event_price.js";
 import { totalPagesFromHydraView } from "./hydra-view.js";
+import { createEmptyRunStats, type ScrapeRunStats } from "./scrape-stats.js";
 
 /**
  * Archive scraper is event-first: only pages the Viernulvier events API (with `aanvang` bounds).
@@ -145,11 +146,15 @@ async function resolveHallId(
   oldId: number,
   authToken: string,
   loginToken: string,
+  stats: ScrapeRunStats,
 ): Promise<number | null> {
   if (skippedHallOldIds.has(oldId)) return null;
   const cached = hallIdByOldId[oldId];
-  if (cached !== undefined) return cached;
-  const id = await scrapeHallById(oldId, authToken, loginToken);
+  if (cached !== undefined) {
+    stats.halls.reusedExisting++;
+    return cached;
+  }
+  const id = await scrapeHallById(oldId, authToken, loginToken, stats);
   if (id === null) {
     skippedHallOldIds.add(oldId);
     return null;
@@ -173,11 +178,15 @@ async function resolveProductionId(
   oldId: number,
   authToken: string,
   loginToken: string,
+  stats: ScrapeRunStats,
 ): Promise<number | null> {
   if (skippedProductionOldIds.has(oldId)) return null;
   const cached = productionIdByOldId[oldId];
-  if (cached !== undefined) return cached;
-  const id = await scrapeProductionById(oldId, authToken, loginToken);
+  if (cached !== undefined) {
+    stats.productions.reusedExisting++;
+    return cached;
+  }
+  const id = await scrapeProductionById(oldId, authToken, loginToken, stats);
   if (id === null) {
     skippedProductionOldIds.add(oldId);
     return null;
@@ -223,37 +232,78 @@ function optionalIsoTimestamp(value: unknown): string | null {
 /**
  * Idempotent event import: skip if `old_id` already exists; otherwise POST (and prices).
  */
-async function ensureEventImported(event: EventJSON, authToken: string, loginToken: string): Promise<void> {
-  const id = parseInt(event["@id"].split("/").pop() as string, 10);
+async function ensureEventImported(
+  event: EventJSON,
+  authToken: string,
+  loginToken: string,
+  stats: ScrapeRunStats,
+): Promise<void> {
+  stats.events.seen++;
+
+  const idSegment = event["@id"].split("/").pop();
+  const id = idSegment !== undefined ? parseInt(idSegment, 10) : Number.NaN;
+  if (!Number.isFinite(id)) {
+    stats.events.skippedInvalidEventId++;
+    console.warn(`Skipping event: could not parse legacy id from ${event["@id"]}`);
+    return;
+  }
+
+  if (typeof event.starts_at !== "string" || event.starts_at.trim() === "") {
+    stats.events.skippedMissingStartsAt++;
+    console.warn(`Skipping event old_id=${id}: missing starts_at`);
+    return;
+  }
+  if (Number.isNaN(Date.parse(event.starts_at))) {
+    stats.events.skippedMissingStartsAt++;
+    console.warn(`Skipping event old_id=${id}: invalid starts_at`);
+    return;
+  }
 
   const existingEventId = await fetchLocalEventIdByOldId(id);
   if (existingEventId !== null) {
+    stats.events.skippedAlreadyImported++;
     console.log(`Event old_id=${id} already exists locally (id=${existingEventId}), skipping create`);
     return;
   }
 
   if (isLongtermViernulvierEvent(event)) {
+    stats.events.skippedInvalidProductionRef++;
     console.warn(
       `Skipping event old_id=${id}: LongtermProduction is out of scope (${event.production["@id"]}).`,
     );
     return;
   }
 
-  const hallId = parseInt(event.hall.split("/").pop() as string, 10);
-  const productionId = parseInt(event.production["@id"].split("/").pop() as string, 10);
+  const hallSegment = event.hall.split("/").pop();
+  const productionSegment = event.production["@id"].split("/").pop();
+  const hallOldId = hallSegment !== undefined ? parseInt(hallSegment, 10) : Number.NaN;
+  const productionOldId = productionSegment !== undefined ? parseInt(productionSegment, 10) : Number.NaN;
 
-  const productionLocalId = await resolveProductionId(productionId, authToken, loginToken);
+  if (!Number.isFinite(hallOldId)) {
+    stats.events.skippedInvalidHallRef++;
+    console.warn(`Skipping event old_id=${id}: invalid hall IRI (${event.hall}).`);
+    return;
+  }
+  if (!Number.isFinite(productionOldId)) {
+    stats.events.skippedInvalidProductionRef++;
+    console.warn(`Skipping event old_id=${id}: invalid production IRI (${event.production["@id"]}).`);
+    return;
+  }
+
+  const productionLocalId = await resolveProductionId(productionOldId, authToken, loginToken, stats);
   if (productionLocalId === null) {
+    stats.events.skippedInvalidProductionRef++;
     console.warn(
-      `Skipping event old_id=${id}: production old_id=${productionId} could not be imported (missing on API, no title, or create failed).`,
+      `Skipping event old_id=${id}: production old_id=${productionOldId} could not be imported (missing on API, no title, or create failed).`,
     );
     return;
   }
 
-  const hallLocalId = await resolveHallId(hallId, authToken, loginToken);
+  const hallLocalId = await resolveHallId(hallOldId, authToken, loginToken, stats);
   if (hallLocalId === null) {
+    stats.events.skippedInvalidHallRef++;
     console.warn(
-      `Skipping event old_id=${id}: hall old_id=${hallId} could not be imported (missing on API or create failed).`,
+      `Skipping event old_id=${id}: hall old_id=${hallOldId} could not be imported (missing on API or create failed).`,
     );
     return;
   }
@@ -282,6 +332,7 @@ async function ensureEventImported(event: EventJSON, authToken: string, loginTok
   }
 
   const eventId = (await response.json() as { id: number }).id;
+  stats.events.imported++;
 
   /**
    * Import ticket prices only after the event row exists so `event_price.event` satisfies FK constraints.
@@ -299,17 +350,25 @@ async function ensureEventImported(event: EventJSON, authToken: string, loginTok
 export async function scrapeAllEvents(
   authToken: string,
   bounds: ViernulvierEventStartBounds = {},
-) {
+): Promise<ScrapeRunStats> {
+  const stats = createEmptyRunStats();
   const resolved = resolveEventStartBounds(bounds);
   const loginToken = await fetchScraperJwt();
   const meta = await fetchEventsListMeta(authToken, resolved);
   const totalPages = totalPagesFromHydraView(meta.view);
-  
+
   for (let page = 1; page <= totalPages; page++) {
     const data = await fetchEventsPage(page, authToken, resolved);
     for (const event of data.member) {
       console.log(`Processing event ${event["@id"]} (${page}/${totalPages})`);
-      await ensureEventImported(event, authToken, loginToken);
+      try {
+        await ensureEventImported(event, authToken, loginToken, stats);
+      } catch (err) {
+        stats.events.failed++;
+        console.error(err);
+      }
     }
   }
+
+  return stats;
 }

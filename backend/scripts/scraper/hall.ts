@@ -3,6 +3,7 @@ import type { Hall } from "@viernulvier/shared/index.js";
 import { fetchScraperJwt } from "./auth.js";
 import { totalPagesFromHydraView, VIERNULVIER_API_ORIGIN } from "./hydra-view.js";
 import { localApiUrl } from "./local-api.js";
+import type { ScrapeRunStats } from "./scrape-stats.js";
 
 interface HallListMeta {
   totalItems: number;
@@ -289,9 +290,13 @@ export async function scrapeHallById(
   id: number,
   authToken: string,
   loginToken?: string,
+  stats?: ScrapeRunStats,
 ): Promise<number | null> {
   const existing = await fetchLocalHallIdByOldId(id);
-  if (existing !== null) return existing;
+  if (existing !== null) {
+    if (stats !== undefined) stats.halls.reusedExisting++;
+    return existing;
+  }
 
   const viernulvierUrl = `https://www.viernulvier.gent/api/v1/halls/${id}`;
   const viernulvierResponse = await fetch(viernulvierUrl, {
@@ -312,5 +317,7 @@ export async function scrapeHallById(
   }
   const hall = await viernulvierResponse.json() as HallJSON;
   const jwt = loginToken ?? await fetchScraperJwt();
-  return createLocalHallFromViernulvierJson(hall, jwt, authToken);
+  const created = await createLocalHallFromViernulvierJson(hall, jwt, authToken);
+  if (created !== null && stats !== undefined) stats.halls.created++;
+  return created;
 }

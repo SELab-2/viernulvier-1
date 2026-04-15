@@ -16,6 +16,11 @@ import {
   scrapeAllEvents,
   type ViernulvierEventStartBounds,
 } from "./event.js";
+import {
+  formatRunReport,
+  resolveScrapeStatsOutputPath,
+  writeRunReportFile,
+} from "./scrape-stats.js";
 
 function readViernulvierApiToken(): string {
   const token = process.env["VIERNULVIER_API_TOKEN"];
@@ -48,11 +53,16 @@ function resolveEventScrapeBounds(): ViernulvierEventStartBounds {
 const viernulvierApiToken = readViernulvierApiToken();
 
 async function main() {
+  const windowLabel = process.env["SCRAPE_EVENTS_WINDOW"]?.trim() ?? "historical";
   const eventBounds = resolveEventScrapeBounds();
   console.log(
-    `Scraping events (lazy halls/productions)… window: ${process.env["SCRAPE_EVENTS_WINDOW"]?.trim() ?? "historical"}; after=${eventBounds.after?.toISOString() ?? "—"} before=${eventBounds.before?.toISOString() ?? "—"}`,
+    `Scraping events (lazy halls/productions)… window: ${windowLabel}; after=${eventBounds.after?.toISOString() ?? "—"} before=${eventBounds.before?.toISOString() ?? "—"}`,
   );
-  await scrapeAllEvents(viernulvierApiToken, eventBounds);
+  const stats = await scrapeAllEvents(viernulvierApiToken, eventBounds);
+  const report = formatRunReport(stats, { windowLabel, bounds: eventBounds });
+  const statsPath = resolveScrapeStatsOutputPath();
+  await writeRunReportFile(report, statsPath);
+  console.log(`Scrape stats written to ${statsPath}`);
 }
 
 main().catch((err) => {
