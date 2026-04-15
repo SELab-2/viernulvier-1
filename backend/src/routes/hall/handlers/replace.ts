@@ -13,12 +13,12 @@ const replaceHallQuery = (server: FastifyInstance) =>
      WHERE id = $6
      RETURNING id, old_id, name, address`,
     z.tuple([
-      z.int().nonnegative().nullable(), // old_id
-      languageMap,           // name
-      z.string(),            // address
-      z.int(),               // admin
-      z.date(),              // current_time
-      z.int(),               // id
+      z.int().nonnegative().nullable(),
+      languageMap,
+      z.string().nullable(),
+      z.int(),
+      z.date(),
+      z.int(),
     ]),
     HallSchema,
   );

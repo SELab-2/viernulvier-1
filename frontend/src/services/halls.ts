@@ -29,8 +29,8 @@ import type { LanguageMap } from "@/utils/i18n";
 export interface CreateHallInput {
   /** External vendor ID. */
   vendor_id: number;
-  /** Physical address of the venue. */
-  address: string;
+  /** Physical address of the venue, or `null` when unknown. */
+  address: string | null;
   /** Localised name of the hall (at least one language required). */
   name: LanguageMap;
 }
