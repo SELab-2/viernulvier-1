@@ -9,7 +9,7 @@
     "@viernulvier/shared": "workspace:*",
     "bcrypt": "^6.0.0",
     "dotenv": "^17.3.1",
-    "fastify": "^5.7.4",
+    "fastify": "^5.8.5",
     "fastify-plugin": "^5.1.0",
     "pg": "^8.18.0",
     "postgrator": "^8.0.0",
