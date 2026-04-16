@@ -133,14 +133,14 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
 
 /**
  * Where to write {@link formatRunReport} output. Override with `SCRAPE_STATS_FILE` (absolute or relative to cwd).
- * Default file stays next to the CLI wrapper: `backend/scripts/scraper/last-scrape-stats.txt`.
+ * Default file: `backend/scripts/last-scrape-stats.txt` (next to `scripts/scrape.ts`).
  */
 export function resolveScrapeStatsOutputPath(): string {
   const fromEnv = process.env["SCRAPE_STATS_FILE"]?.trim();
   if (fromEnv !== undefined && fromEnv !== "") {
     return path.isAbsolute(fromEnv) ? fromEnv : path.join(process.cwd(), fromEnv);
   }
-  return path.join(repoRoot, "backend", "scripts", "scraper", "last-scrape-stats.txt");
+  return path.join(repoRoot, "backend", "scripts", "last-scrape-stats.txt");
 }
 
 export async function writeRunReportFile(report: string, filePath: string): Promise<void> {
