@@ -10,13 +10,13 @@ import { viernulvierApiUrl } from "./viernulvier-api.js";
 import { createEmptyRunStats, type ScrapeRunStats } from "./scrape-stats.js";
 
 /**
- * Archive scraper is event-first: only pages the Viernulvier events API (with `aanvang` bounds).
+ * Archive scraper is event-first: only pages the Viernulvier events API (with `starts_at` bounds).
  * Halls and productions are lazy-imported per event via {@link scrapeHallById} / {@link scrapeProductionById}
  * when missing locally
  *
- * Bounds on external `aanvang` (event start) for `GET {origin}/api/v1/events` (see {@link viernulvierApiUrl}):
+ * Bounds map to `starts_at[before]` / `starts_at[after]` on `GET {origin}/api/v1/events`
  *
- * - Full past backfill: `{ before: new Date() }` — performances starting before “now” (confirm semantics on live API).
+ * - Full past backfill: `{ before: new Date() }` — performances with `starts_at` strictly before “now” (per live API).
  * - Incremental slice: both `after` and `before`, e.g. {@link previousBrusselsDayBounds}.
  *
  * If both are omitted, {@link scrapeAllEvents} defaults to `{ before: new Date() }`.
@@ -85,10 +85,10 @@ async function fetchPageRequest(
   const url = new URL(viernulvierApiUrl("/api/v1/events"));
   url.searchParams.append("page", page.toString());
   if (bounds.before !== undefined) {
-    url.searchParams.append("aanvang[before]", bounds.before.toISOString());
+    url.searchParams.append("starts_at[before]", bounds.before.toISOString());
   }
   if (bounds.after !== undefined) {
-    url.searchParams.append("aanvang[after]", bounds.after.toISOString());
+    url.searchParams.append("starts_at[after]", bounds.after.toISOString());
   }
 
   const response = await fetch(url.toString(), {

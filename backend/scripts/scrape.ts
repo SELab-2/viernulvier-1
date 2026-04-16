@@ -35,7 +35,7 @@ function readViernulvierApiToken(): string {
 }
 
 /**
- * Which slice of the external events list to pull (`aanvang` bounds).
+ * Which slice of the external events list to pull (`starts_at` query bounds).
  *
  * - `historical` (default): `{ before: new Date() }` — past performances only (per API semantics).
  * - `previous-brussels-day`: half-open yesterday in Europe/Brussels.

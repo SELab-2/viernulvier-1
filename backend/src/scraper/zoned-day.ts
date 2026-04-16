@@ -30,7 +30,7 @@ export function startOfCalendarDayUtc(ymd: string, timeZone: string): Date {
 
 /**
  * Half-open interval [start of yesterday, start of today) in {@link ARCHIVE_TIME_ZONE}.
- * Use with external `aanvang[after]` / `aanvang[before]` for a nightly “archive what left the site” job.
+ * Use with external `starts_at[after]` / `starts_at[before]` for a nightly “archive what left the site” job.
  */
 export function previousBrusselsDayBounds(): ViernulvierEventStartBounds {
   const tz = ARCHIVE_TIME_ZONE;
