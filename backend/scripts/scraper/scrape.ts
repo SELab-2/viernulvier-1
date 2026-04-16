@@ -3,7 +3,8 @@
  *
  * Environment (see `src/scraper/auth.ts`, `local-api.ts`, `event.ts`):
  *
- * - `VIERNULVIER_API_TOKEN` — API key for `https://www.viernulvier.gent` (`X-AUTH-TOKEN`).
+ * - `VIERNULVIER_API_TOKEN` — API key for the archive API (`X-AUTH-TOKEN`).
+ * - `VIERNULVIER_API_ORIGIN` — archive API origin (default `https://www.viernulvier.gent`).
  * - `VIERNULVIER_LOCAL_API_URL` — own API base (default `http://localhost:3000`).
  * - `SCRAPER_ADMIN_USERNAME` / `SCRAPER_ADMIN_PASSWORD` — JWT login for protected `POST`s (defaults `admin` / `password`).
  * - `SCRAPE_EVENTS_WINDOW` — `historical` | `previous-brussels-day`.

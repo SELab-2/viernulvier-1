@@ -7,6 +7,7 @@ import {
 } from "./hydra-view.js";
 import { localApiUrl } from "./local-api.js";
 import type { ScrapeRunStats } from "./scrape-stats.js";
+import { viernulvierApiUrl } from "./viernulvier-api.js";
 
 interface HallListMeta {
   totalItems: number;
@@ -58,7 +59,7 @@ async function fetchPageRequest(
   page: number = 1,
   authToken: string,
 ) {
-  const url = new URL("https://www.viernulvier.gent/api/v1/halls");
+  const url = new URL(viernulvierApiUrl("/api/v1/halls"));
   url.searchParams.append("page", page.toString());
 
   const response = await fetch(url.toString(), {
@@ -361,7 +362,7 @@ export async function scrapeHallById(
     return existing;
   }
 
-  const viernulvierUrl = `https://www.viernulvier.gent/api/v1/halls/${id}`;
+  const viernulvierUrl = viernulvierApiUrl(`/api/v1/halls/${id}`);
   const viernulvierResponse = await fetch(viernulvierUrl, {
     headers: {
       accept: "application/ld+json",

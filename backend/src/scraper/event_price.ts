@@ -1,4 +1,5 @@
 import { localApiUrl } from "./local-api.js";
+import { viernulvierApiUrl } from "./viernulvier-api.js";
 
 /**
  * Price import is best-effort: fetch/create errors for individual tiers are logged and skipped.
@@ -37,7 +38,7 @@ export function parseNonNegativePriceAmount(value: unknown): number | null {
  * Loads one price tier from Viernulvier (`/api/v1/events/prices/{id}`) as `application/ld+json`.
  */
 async function fetchPriceRequest(id: number, authToken: string) {
-  const url = `https://www.viernulvier.gent/api/v1/events/prices/${id}`;
+  const url = viernulvierApiUrl(`/api/v1/events/prices/${id}`);
 
   const response = await fetch(url, {
     headers: {

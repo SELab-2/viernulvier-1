@@ -6,6 +6,7 @@ import { scrapeProductionById } from "./production.js";
 import { syncProductionGenreTagsFromViernulvier } from "./production-tags.js";
 import { scrapeEventPricesForEvent } from "./event_price.js";
 import { totalPagesFromHydraView } from "./hydra-view.js";
+import { viernulvierApiUrl } from "./viernulvier-api.js";
 import { createEmptyRunStats, type ScrapeRunStats } from "./scrape-stats.js";
 
 /**
@@ -13,7 +14,7 @@ import { createEmptyRunStats, type ScrapeRunStats } from "./scrape-stats.js";
  * Halls and productions are lazy-imported per event via {@link scrapeHallById} / {@link scrapeProductionById}
  * when missing locally
  *
- * Bounds on external `aanvang` (event start) for `GET https://www.viernulvier.gent/api/v1/events`:
+ * Bounds on external `aanvang` (event start) for `GET {origin}/api/v1/events` (see {@link viernulvierApiUrl}):
  *
  * - Full past backfill: `{ before: new Date() }` — performances starting before “now” (confirm semantics on live API).
  * - Incremental slice: both `after` and `before`, e.g. {@link previousBrusselsDayBounds}.
@@ -81,7 +82,7 @@ async function fetchPageRequest(
   authToken: string,
   bounds: ViernulvierEventStartBounds,
 ) {
-  const url = new URL("https://www.viernulvier.gent/api/v1/events");
+  const url = new URL(viernulvierApiUrl("/api/v1/events"));
   url.searchParams.append("page", page.toString());
   if (bounds.before !== undefined) {
     url.searchParams.append("aanvang[before]", bounds.before.toISOString());

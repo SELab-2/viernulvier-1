@@ -5,6 +5,7 @@ import { CreateProductionBodySchema } from "@/routes/production/handlers/body-sc
 
 import { fetchScraperJwt } from "./auth.js";
 import { totalPagesFromHydraView } from "./hydra-view.js";
+import { viernulvierApiUrl } from "./viernulvier-api.js";
 import { coerceLanguageMap } from "./language-map.js";
 import { localApiUrl } from "./local-api.js";
 import {
@@ -79,7 +80,7 @@ async function fetchPageRequest(
   page: number = 1,
   authToken: string,
 ) {
-  const url = new URL("https://www.viernulvier.gent/api/v1/productions");
+  const url = new URL(viernulvierApiUrl("/api/v1/productions"));
   url.searchParams.append("page", page.toString());
 
   const response = await fetch(url.toString(), {
@@ -290,7 +291,7 @@ export async function scrapeProductionById(
     return existing;
   }
 
-  const url = `https://www.viernulvier.gent/api/v1/productions/${id}`;
+  const url = viernulvierApiUrl(`/api/v1/productions/${id}`);
   const response = await fetch(url, {
     headers: {
       accept: "application/ld+json",

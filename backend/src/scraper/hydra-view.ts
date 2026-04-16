@@ -1,5 +1,4 @@
-/** Origin for resolving relative Hydra collection view IRIs (API Platform often returns path-only `first` / `last`). */
-export const VIERNULVIER_API_ORIGIN = "https://www.viernulvier.gent";
+import { viernulvierApiOrigin } from "./viernulvier-api.js";
 
 /**
  * Absolute URL for a Viernulvier JSON-LD resource (`path` or full `http(s)` URL).
@@ -8,7 +7,8 @@ export const VIERNULVIER_API_ORIGIN = "https://www.viernulvier.gent";
 export function resolveViernulvierResourceUrl(pathOrUrl: string): string {
   const s = pathOrUrl.trim();
   if (s.startsWith("http")) return s;
-  return `${VIERNULVIER_API_ORIGIN}${s.startsWith("/") ? s : `/${s}`}`;
+  const origin = viernulvierApiOrigin();
+  return `${origin}${s.startsWith("/") ? s : `/${s}`}`;
 }
 
 /**
@@ -18,7 +18,7 @@ export function resolveViernulvierResourceUrl(pathOrUrl: string): string {
  */
 export function parseHydraLastPageIndex(
   iri: string,
-  baseOrigin: string = VIERNULVIER_API_ORIGIN,
+  baseOrigin: string = viernulvierApiOrigin(),
 ): number {
   const url = new URL(iri, baseOrigin);
 
@@ -42,7 +42,7 @@ export function parseHydraLastPageIndex(
  */
 export function totalPagesFromHydraView(
   view: { first: string; last?: string },
-  baseOrigin: string = VIERNULVIER_API_ORIGIN,
+  baseOrigin: string = viernulvierApiOrigin(),
 ): number {
   const iri = view.last ?? view.first;
   if (iri.length === 0) {

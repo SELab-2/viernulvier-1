@@ -14,6 +14,7 @@ import {
   SCRAPER_LANGUAGE_KEYS,
 } from "./language-map.js";
 import { localApiUrl } from "./local-api.js";
+import { viernulvierApiUrl } from "./viernulvier-api.js";
 import type { ScrapeRunStats } from "./scrape-stats.js";
 import { scraperVerbose } from "./scrape-stats.js";
 
@@ -141,7 +142,7 @@ async function fetchViernulvierGenreJson(
   const cached = genreResourceByOldId[genreOldId];
   if (cached) return cached;
 
-  const url = `https://www.viernulvier.gent/api/v1/genres/${genreOldId}`;
+  const url = viernulvierApiUrl(`/api/v1/genres/${genreOldId}`);
   const res = await fetch(url, {
     headers: {
       accept: "application/ld+json",
@@ -288,7 +289,7 @@ async function getViernulvierProductionJson(
   const cached = productionJsonByOldId[productionOldId];
   if (cached) return cached;
 
-  const url = `https://www.viernulvier.gent/api/v1/productions/${productionOldId}`;
+  const url = viernulvierApiUrl(`/api/v1/productions/${productionOldId}`);
   const res = await fetch(url, {
     headers: {
       accept: "application/ld+json",
