@@ -4,9 +4,14 @@ import type { z } from "zod";
 import { CreateProductionBodySchema } from "@/routes/production/handlers/body-schema.js";
 
 import { fetchScraperJwt } from "./auth.js";
-import { localApiUrl } from "./local-api.js";
 import { totalPagesFromHydraView } from "./hydra-view.js";
-import type { ScrapeRunStats } from "./scrape-stats.js";
+import { coerceLanguageMap } from "./language-map.js";
+import { localApiUrl } from "./local-api.js";
+import {
+  rememberViernulvierProductionJson,
+  syncProductionGenreTagsWithPayload,
+} from "./production-tags.js";
+import { createEmptyRunStats, type ScrapeRunStats } from "./scrape-stats.js";
 
 interface ProductionListMeta {
   totalItems: number;
@@ -18,10 +23,10 @@ interface ProductionListMeta {
   };
 }
 
-/** 
- * Raw production from Viernulvier JSON-LD (only fields we read). 
+/**
+ * Raw production from Viernulvier JSON-LD (only fields we read).
  */
-interface ProductionJSON {
+export interface ProductionJSON {
   "@id": string;
   supertitle?: Record<string, string>;
   title?: Record<string, string>;
@@ -39,32 +44,13 @@ interface ProductionJSON {
   info?: Record<string, string>;
   /** SEO-style title; used as fallback when `title` is missing or empty (not stored separately in our DB). */
   meta_title?: Record<string, string>;
+  /** Genre/tag IRIs or embedded objects (`/api/v1/genres/...`). */
+  genres?: unknown;
 }
 
 interface ViernulvierProductionApiResponse {
   totalItems: number;
   member: ProductionJSON[];
-}
-
-/** Must match {@link languageMap} in shared types (at least one non-empty entry for required fields). */
-const LANG_KEYS = ["nl", "en", "fr"] as const;
-
-/**
- * Keeps only allowed language keys with non-empty trimmed strings.
- * Returns `null` when the result would be `{}` (our Zod `languageMap` rejects empty objects).
- */
-function coerceLanguageMap(
-  value: Record<string, string> | undefined | null,
-): Record<string, string> | null {
-  if (value == null || typeof value !== "object") return null;
-  const out: Record<string, string> = {};
-  for (const lang of LANG_KEYS) {
-    const raw = value[lang];
-    if (typeof raw === "string" && raw.trim() !== "") {
-      out[lang] = raw.trim();
-    }
-  }
-   return Object.keys(out).length > 0 ? out : null;
 }
 
 /**
@@ -228,11 +214,21 @@ async function createLocalProductionFromViernulvierJson(
 async function ensureProductionImported(
   production: ProductionJSON,
   loginToken: string,
+  authToken: string,
+  stats?: ScrapeRunStats,
 ): Promise<number | null> {
   const oldId = parseInt(production["@id"].split("/").pop() as string, 10);
+  rememberViernulvierProductionJson(oldId, production);
   const existing = await fetchLocalProductionIdByOldId(oldId);
   if (existing !== null) {
     console.log(`Production old_id=${oldId} already exists locally (id=${existing}), skipping create`);
+    await syncProductionGenreTagsWithPayload(
+      existing,
+      production,
+      authToken,
+      loginToken,
+      stats,
+    );
     return existing;
   }
   if (!hasImportableProductionTitle(production)) {
@@ -241,7 +237,17 @@ async function ensureProductionImported(
     );
     return null;
   }
-  return createLocalProductionFromViernulvierJson(production, loginToken);
+  const created = await createLocalProductionFromViernulvierJson(production, loginToken);
+  if (created !== null) {
+    await syncProductionGenreTagsWithPayload(
+      created,
+      production,
+      authToken,
+      loginToken,
+      stats,
+    );
+  }
+  return created;
 }
 
 /**
@@ -251,6 +257,7 @@ export async function scrapeAllProductions(
   authToken: string
 ) {
   const loginToken = await fetchScraperJwt();
+  const stats = createEmptyRunStats();
 
   const meta = await fetchProductionsListMeta(authToken);
   const totalPages = totalPagesFromHydraView(meta.view);
@@ -259,9 +266,11 @@ export async function scrapeAllProductions(
     const data = await fetchProductionsPage(page, authToken);
     for (const production of data.member) {
       console.log(`Processing production ${production["@id"]} (${page}/${totalPages})`);
-      await ensureProductionImported(production, loginToken);
+      await ensureProductionImported(production, loginToken, authToken, stats);
     }
   }
+
+  console.log("Tag sync stats (full production crawl):", stats.tags);
 }
 
 /**
@@ -297,6 +306,7 @@ export async function scrapeProductionById(
     return null;
   }
   const production = await response.json() as ProductionJSON;
+  rememberViernulvierProductionJson(id, production);
   if (!hasImportableProductionTitle(production)) {
     console.warn(
       `Viernulvier production old_id=${id} has no usable title, meta_title, or artist; will not insert.`,

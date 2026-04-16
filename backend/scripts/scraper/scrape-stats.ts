@@ -12,6 +12,24 @@ export type LazyEntityRunStats = {
   reusedExisting: number;
 };
 
+/**
+ * Genre/tag sync: Viernulvier `genres` → local `tag` + `production_tag`.
+ */
+export type TagRunStats = {
+  /** New `tag` rows (`POST /api/v1/tag`). */
+  tagsCreated: number;
+  /** Existing tag resolved via `GET /tag/all?old_id=&tag_type=` (not created this run). */
+  tagsReusedExisting: number;
+  /** New `production_tag` rows (`POST /production/:id/tags` with `linked: true`). */
+  linksCreated: number;
+  /** `production_tag` row already existed (`linked: false`). */
+  linksAlreadyPresent: number;
+  /** Default `tag_type` rows created (`genre` / `tag` bootstrap). */
+  tagTypesCreated: number;
+  /** Genre refs not linked (bad IRI, 404, wrong `use_as`, no name, tag create/link failed). */
+  genresSkipped: number;
+};
+
 export type EventSliceRunStats = {
   seen: number;
   imported: number;
@@ -27,6 +45,7 @@ export type ScrapeRunStats = {
   events: EventSliceRunStats;
   halls: LazyEntityRunStats;
   productions: LazyEntityRunStats;
+  tags: TagRunStats;
 };
 
 export function createEmptyRunStats(): ScrapeRunStats {
@@ -43,6 +62,14 @@ export function createEmptyRunStats(): ScrapeRunStats {
     },
     halls: { created: 0, reusedExisting: 0 },
     productions: { created: 0, reusedExisting: 0 },
+    tags: {
+      tagsCreated: 0,
+      tagsReusedExisting: 0,
+      linksCreated: 0,
+      linksAlreadyPresent: 0,
+      tagTypesCreated: 0,
+      genresSkipped: 0,
+    },
   };
 }
 
@@ -83,6 +110,14 @@ export function formatRunReport(
     "Halls (lazy, while importing events):",
     `  Created: ${stats.halls.created}`,
     `  Already in database (reuse): ${stats.halls.reusedExisting}`,
+    "",
+    "Tags / genres (sync with productions):",
+    `  Tags created: ${stats.tags.tagsCreated}`,
+    `  Tags reused (existing): ${stats.tags.tagsReusedExisting}`,
+    `  Production–tag links created: ${stats.tags.linksCreated}`,
+    `  Production–tag links already present: ${stats.tags.linksAlreadyPresent}`,
+    `  Tag types created (bootstrap): ${stats.tags.tagTypesCreated}`,
+    `  Genre refs skipped: ${stats.tags.genresSkipped}`,
     "",
   ];
   return lines.join("\n");

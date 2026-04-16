@@ -1,7 +1,10 @@
 import type { Hall } from "@viernulvier/shared/index.js";
 
 import { fetchScraperJwt } from "./auth.js";
-import { totalPagesFromHydraView, VIERNULVIER_API_ORIGIN } from "./hydra-view.js";
+import {
+  resolveViernulvierResourceUrl,
+  totalPagesFromHydraView,
+} from "./hydra-view.js";
 import { localApiUrl } from "./local-api.js";
 import type { ScrapeRunStats } from "./scrape-stats.js";
 
@@ -104,13 +107,6 @@ async function fetchHallsListMeta(
  */
 const spaceAddressCache = new Map<string, string | null>();
 
-/** Path like `/api/v1/spaces/1` or an absolute URL if the API ever returns one. */
-function resolveViernulvierFetchUrl(pathOrUrl: string): string {
-  const s = pathOrUrl.trim();
-  if (s.startsWith("http")) return s;
-  return `${VIERNULVIER_API_ORIGIN}${s.startsWith("/") ? s : `/${s}`}`;
-}
-
 /** Hydra / JSON-LD link: plain IRI string or `{ "@id": "..." }`. */
 export function hydraIriString(ref: unknown): string | null {
   if (ref == null) return null;
@@ -145,7 +141,7 @@ async function fetchSpaceLocation(
   }
 
   try {
-    const url = resolveViernulvierFetchUrl(spaceKey);
+    const url = resolveViernulvierResourceUrl(spaceKey);
     const response = await fetch(url, {
       headers: {
         accept: "application/ld+json",
@@ -221,7 +217,7 @@ async function fetchLocationAddress(
   }
 
   try {
-    const url = resolveViernulvierFetchUrl(locationUrl);
+    const url = resolveViernulvierResourceUrl(locationUrl);
     const response = await fetch(url, {
       headers: {
         accept: "application/ld+json",

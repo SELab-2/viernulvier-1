@@ -2,6 +2,16 @@
 export const VIERNULVIER_API_ORIGIN = "https://www.viernulvier.gent";
 
 /**
+ * Absolute URL for a Viernulvier JSON-LD resource (`path` or full `http(s)` URL).
+ * Used by hall / production-tags and similar scraper fetches.
+ */
+export function resolveViernulvierResourceUrl(pathOrUrl: string): string {
+  const s = pathOrUrl.trim();
+  if (s.startsWith("http")) return s;
+  return `${VIERNULVIER_API_ORIGIN}${s.startsWith("/") ? s : `/${s}`}`;
+}
+
+/**
  * Reads the `page` query from a Hydra partial collection view IRI (API Platform).
  * IRIs may be absolute or path-only (e.g. `/api/v1/halls?page=9`); relative ones are resolved against `baseOrigin`.
  * When the API omits `page` (single-page collection), treats it as page 1.

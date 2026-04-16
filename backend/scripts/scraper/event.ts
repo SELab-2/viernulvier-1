@@ -3,6 +3,7 @@ import { fetchScraperJwt } from "./auth.js";
 import { scrapeHallById } from "./hall.js";
 import { localApiUrl } from "./local-api.js";
 import { scrapeProductionById } from "./production.js";
+import { syncProductionGenreTagsFromViernulvier } from "./production-tags.js";
 import { scrapeEventPricesForEvent } from "./event_price.js";
 import { totalPagesFromHydraView } from "./hydra-view.js";
 import { createEmptyRunStats, type ScrapeRunStats } from "./scrape-stats.js";
@@ -184,6 +185,13 @@ async function resolveProductionId(
   const cached = productionIdByOldId[oldId];
   if (cached !== undefined) {
     stats.productions.reusedExisting++;
+    await syncProductionGenreTagsFromViernulvier(
+      oldId,
+      cached,
+      authToken,
+      loginToken,
+      stats,
+    );
     return cached;
   }
   const id = await scrapeProductionById(oldId, authToken, loginToken, stats);
@@ -192,6 +200,7 @@ async function resolveProductionId(
     return null;
   }
   productionIdByOldId[oldId] = id;
+  await syncProductionGenreTagsFromViernulvier(oldId, id, authToken, loginToken, stats);
   return id;
 }
 
