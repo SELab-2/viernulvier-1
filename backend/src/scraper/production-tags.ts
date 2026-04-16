@@ -86,8 +86,7 @@ async function ensureScraperTagTypeIds(
   loginToken: string,
   stats?: ScrapeRunStats,
 ): Promise<Record<"genre" | "tag", number>> {
-  tagTypeIdsPromise ??= loadOrCreateTagTypes(loginToken, stats);
-  return tagTypeIdsPromise;
+  return await (tagTypeIdsPromise ??= loadOrCreateTagTypes(loginToken, stats));
 }
 
 async function loadOrCreateTagTypes(

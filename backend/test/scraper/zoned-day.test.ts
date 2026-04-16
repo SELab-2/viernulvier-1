@@ -3,7 +3,7 @@ import {
   formatYmdInTimeZone,
   previousBrusselsDayBounds,
   startOfCalendarDayUtc,
-} from "../../scripts/scraper/zoned-day.js";
+} from "@/scraper/zoned-day.js";
 
 describe("zoned-day (Europe/Brussels archive window)", () => {
   it("formats Y-M-D in Brussels", () => {

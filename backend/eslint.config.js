@@ -128,6 +128,15 @@ export default defineConfig([
     },
   },
 
+  // Archive scraper: external API JSON → trusted numeric keys; stats path from env / fixed default.
+  {
+    files: ["src/scraper/**/*.ts"],
+    rules: {
+      "security/detect-non-literal-fs-filename": "off",
+      "security/detect-object-injection": "off",
+    },
+  },
+
   // --------------------------------------------------
   // Tests (Vitest / Jest style)
   // --------------------------------------------------

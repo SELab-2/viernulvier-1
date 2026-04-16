@@ -114,7 +114,7 @@ async function fetchProductionsPage(
  * Fetches page 1 only to read Hydra `view` metadata for total page count.
  */
 async function fetchProductionsListMeta(
-  authToken: string
+  authToken: string,
 ): Promise<ProductionListMeta> {
   const response = await fetchPageRequest(1, authToken);
 
@@ -254,7 +254,7 @@ async function ensureProductionImported(
  * Optional full crawl of every Viernulvier production (not used by the default `scrape.ts` entrypoint).
  */
 export async function scrapeAllProductions(
-  authToken: string
+  authToken: string,
 ) {
   const loginToken = await fetchScraperJwt();
   const stats = createEmptyRunStats();

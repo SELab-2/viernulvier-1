@@ -13,28 +13,29 @@ FROM tag
 const TagDbRowSchema = TagSchema.omit({ productions: true });
 const TagDbRowWithMetaSchema = TagSchema.withMeta().omit({ productions: true });
 
-const TagsListQuerySchema = z.object({
-  production: stringToInt.optional(),
-  old_id: stringToInt.optional(),
-  tag_type: stringToInt.optional(),
-  /** When `includeProductions=true`, each tag includes a `productions` id list; otherwise the field is omitted. */
-  includeProductions: z.literal("true").optional(),
-})
-.refine(
-  (q) =>
-    (q.old_id === undefined && q.tag_type === undefined) ||
-    (q.old_id !== undefined && q.tag_type !== undefined),
-  { message: "Query parameters old_id and tag_type must be passed together" },
-)
-.refine(
-  (q) =>
-    q.production === undefined ||
-    (q.old_id === undefined && q.tag_type === undefined),
-  {
-    message:
-      "Query parameter production cannot be combined with old_id / tag_type",
-  },
-);
+const TagsListQuerySchema = z
+  .object({
+    production: stringToInt.optional(),
+    old_id: stringToInt.optional(),
+    tag_type: stringToInt.optional(),
+    /** When `includeProductions=true`, each tag includes a `productions` id list; otherwise the field is omitted. */
+    includeProductions: z.literal("true").optional(),
+  })
+  .refine(
+    (q) =>
+      (q.old_id === undefined && q.tag_type === undefined) ||
+      (q.old_id !== undefined && q.tag_type !== undefined),
+    { message: "Query parameters old_id and tag_type must be passed together" },
+  )
+  .refine(
+    (q) =>
+      q.production === undefined ||
+      (q.old_id === undefined && q.tag_type === undefined),
+    {
+      message:
+        "Query parameter production cannot be combined with old_id / tag_type",
+    },
+  );
 
 const ProductionTagLinkSchema = z.object({
   tag: z.int(),

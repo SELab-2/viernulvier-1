@@ -93,7 +93,7 @@ async function fetchHallsPage(
  * Fetches page 1 only to read Hydra `view` metadata for total page count.
  */
 async function fetchHallsListMeta(
-  authToken: string
+  authToken: string,
 ): Promise<HallListMeta> {
   const response = await fetchPageRequest(1, authToken);
 
@@ -244,7 +244,7 @@ export async function resolveAddressForViernulvierHallJson(
   hall: HallJSON,
   authToken: string,
 ): Promise<string | null> {
-  return fetchSpaceLocation(hall.space, authToken);
+  return await fetchSpaceLocation(hall.space, authToken);
 }
 
 /** 
@@ -323,14 +323,14 @@ async function ensureHallImported(
     console.log(`Hall old_id=${oldId} already exists locally (id=${existing}), skipping create`);
     return existing;
   }
-  return createLocalHallFromViernulvierJson(hall, loginToken, authToken);
+  return await createLocalHallFromViernulvierJson(hall, loginToken, authToken);
 }
 
 /**
  * Optional full crawl of every Viernulvier hall (not used by the default `scrape.ts` entrypoint).
  */
 export async function scrapeAllHalls(
-  authToken: string
+  authToken: string,
 ) {
   const loginToken = await fetchScraperJwt();
 

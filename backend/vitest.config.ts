@@ -24,7 +24,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/index.ts"],
+      exclude: ["src/index.ts", "src/scraper/**"],
       thresholds: {
         "src/**/!(import-productions-legacy|import-events-legacy).{ts,tsx}": {
           statements: 97.5,

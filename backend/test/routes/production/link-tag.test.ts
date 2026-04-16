@@ -52,4 +52,20 @@ describe("Link tag to production", () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ linked: false });
   });
+
+  test("POST /api/v1/production/:id/tags returns linked: false when rowCount is omitted", async () => {
+    server.pg.query = vi.fn().mockResolvedValue({
+      rows: [],
+    });
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/production/3/tags",
+      cookies: { session: sessionCookie },
+      payload: { tag: 9 },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ linked: false });
+  });
 });

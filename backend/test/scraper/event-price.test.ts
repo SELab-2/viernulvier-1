@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseNonNegativePriceAmount } from "../../scripts/scraper/event_price.js";
+import { parseNonNegativePriceAmount } from "@/scraper/event_price.js";
 
 describe("parseNonNegativePriceAmount", () => {
   it("accepts valid numbers and strings", () => {

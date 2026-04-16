@@ -128,17 +128,19 @@ export function scraperVerbose(): boolean {
   return v === "1" || v === "true" || v === "yes";
 }
 
-const scraperDir = path.dirname(fileURLToPath(import.meta.url));
+/** Repo root (`viernulvier/`), from `backend/src/scraper/*.ts`. */
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 
 /**
  * Where to write {@link formatRunReport} output. Override with `SCRAPE_STATS_FILE` (absolute or relative to cwd).
+ * Default file stays next to the CLI wrapper: `backend/scripts/scraper/last-scrape-stats.txt`.
  */
 export function resolveScrapeStatsOutputPath(): string {
   const fromEnv = process.env["SCRAPE_STATS_FILE"]?.trim();
   if (fromEnv !== undefined && fromEnv !== "") {
     return path.isAbsolute(fromEnv) ? fromEnv : path.join(process.cwd(), fromEnv);
   }
-  return path.join(scraperDir, "last-scrape-stats.txt");
+  return path.join(repoRoot, "backend", "scripts", "scraper", "last-scrape-stats.txt");
 }
 
 export async function writeRunReportFile(report: string, filePath: string): Promise<void> {

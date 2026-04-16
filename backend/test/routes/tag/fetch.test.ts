@@ -292,6 +292,19 @@ describe("Fetch visible tags", () => {
     );
   });
 
+  test("GET /api/v1/tag?old_id=&tag_type= returns public tags for that legacy pair", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/tag?old_id=${tag1.old_id}&tag_type=${tag1.tag_type}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const result = TagSchema.array().parse(response.json());
+    expect(result).toEqual(
+      mockTagsListDefault.filter((t) => t.public && t.old_id === tag1.old_id && t.tag_type === tag1.tag_type),
+    );
+  });
+
 });
 
 describe("Fetch tags for production", () => {

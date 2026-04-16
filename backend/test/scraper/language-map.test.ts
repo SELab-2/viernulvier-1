@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coerceLanguageMap, plainTextFromHtmlish } from "../../scripts/scraper/language-map.js";
+import { coerceLanguageMap, plainTextFromHtmlish } from "@/scraper/language-map.js";
 
 describe("plainTextFromHtmlish", () => {
   it("strips tags and nbsp from vendor-style genre strings", () => {
