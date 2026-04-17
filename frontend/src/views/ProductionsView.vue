@@ -228,8 +228,8 @@
 
           <div v-else>
             <ProductionListCard
-              v-for="p in productions"
-              :key="p.id"
+              v-for="(p, idx) in productions"
+              :key="`${currentPage}-${idx}-${p.id}`"
               :production="p"
               :date-summary="dateSummaryFor(p.id)"
               :tag-chips="tagChipsFor(p)"
@@ -315,7 +315,7 @@ import {
 } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
-import type { LocationQueryRaw } from "vue-router";
+import type { LocationQuery, LocationQueryRaw } from "vue-router";
 import type {
   Event as ProductionEvent,
   Hall,
@@ -329,7 +329,7 @@ import ProductionListCard from "@/components/productions/ProductionListCard.vue"
 import ProductionsDateFilter from "@/components/productions/ProductionsDateFilter.vue";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
-import { getEvents } from "@/services/events";
+import { getEventsForProductions } from "@/services/events";
 import { getHalls } from "@/services/halls";
 import { ApiError } from "@/services/api";
 import { getProductions } from "@/services/productions";
@@ -414,15 +414,19 @@ function filterBannerHasNonSearchChips(): boolean {
 }
 
 /**
- * Reads a positive 1-based page from the route query; invalid or missing -> 1.
+ * Reads a positive 1-based page from a query object; invalid or missing -> 1.
  */
-function readPageOneBasedFromRoute(): number {
-  const raw = route.query[PAGE_QUERY_KEY];
+function readPageOneBasedFromQuery(q: LocationQuery): number {
+  const raw = q[PAGE_QUERY_KEY];
   const s = Array.isArray(raw) ? raw[0] : raw;
   if (s === undefined || s === null || s === "") return 1;
   const n = Number.parseInt(String(s), 10);
   if (!Number.isFinite(n) || n < 1) return 1;
   return n;
+}
+
+function readPageOneBasedFromRoute(): number {
+  return readPageOneBasedFromQuery(route.query);
 }
 
 function dedupeSearchTermsPreserveOrder(terms: string[]): string[] {
@@ -503,8 +507,11 @@ function readDateRangeFromRoute(): { from: string; to: string } | null {
   return { from, to: toStr };
 }
 
-function queryForPage0(page0: number): LocationQueryRaw {
-  const q: LocationQueryRaw = { ...route.query };
+function queryForPage0WithBase(
+  page0: number,
+  baseQuery: LocationQuery,
+): LocationQueryRaw {
+  const q: LocationQueryRaw = { ...baseQuery };
   if (page0 <= 0) {
     delete q[PAGE_QUERY_KEY];
   } else {
@@ -537,6 +544,10 @@ function queryForPage0(page0: number): LocationQueryRaw {
     delete q[TO_QUERY_KEY];
   }
   return q;
+}
+
+function queryForPage0(page0: number): LocationQueryRaw {
+  return queryForPage0WithBase(page0, route.query);
 }
 
 function urlNeedsSyncForPage0(page0: number): boolean {
@@ -661,6 +672,14 @@ async function fetchProductionsPageData(page0: number) {
   displayedFilteredTotal.value = hasActiveListFilters.value ? total : null;
   searchBannerTerms.value = [...appliedSearchTerms.value];
   syncFilterBannerFromApplied();
+
+  const ids = items.map((p) => p.id);
+  if (ids.length === 0) {
+    eventsByProduction.value = new Map();
+  } else {
+    const events = await getEventsForProductions(ids);
+    eventsByProduction.value = groupEventsByProductionId(events);
+  }
 }
 
 function toggleGenreTag(id: number) {
@@ -893,25 +912,10 @@ const genreTagsForFilter = computed(() => {
   return items;
 });
 
+/** Matches backend `yearMin`/`yearMax` bounds; not derived from loaded events (list loads events per page only). */
 const filterYearBounds = computed(() => {
   const current = new Date().getFullYear();
-  let minY = Number.POSITIVE_INFINITY;
-  let any = false;
-  for (const evs of eventsByProduction.value.values()) {
-    for (const ev of evs) {
-      if (!ev.starts_at) continue;
-      any = true;
-      const sy = new Date(ev.starts_at).getFullYear();
-      minY = Math.min(minY, sy);
-    }
-  }
-  if (!any) {
-    return { minYear: current, maxYear: current };
-  }
-  return {
-    minYear: minY,
-    maxYear: current,
-  };
+  return { minYear: 1900, maxYear: Math.max(1900, current) };
 });
 
 /** `YYYY-MM-DD` → `dd/mm/yyyy` for filter chips (fixed order for every locale). */
@@ -1001,47 +1005,30 @@ onMounted(async () => {
     explicitYearRange.value = null;
     syncRouteAfterExclusiveTimeFilter = true;
   }
-  const requestedOneBased = readPageOneBasedFromRoute();
-  let page0 = Math.max(0, requestedOneBased - 1);
+  let page0 = Math.max(0, readPageOneBasedFromRoute() - 1);
   try {
-    const [page, tags, events, halls, tagTypes] = await Promise.all([
-      getProductions(productionsListArgs(page0)),
+    const [tags, halls, tagTypes] = await Promise.all([
       getTags(),
-      getEvents(),
       getHalls(),
       getTagTypes(),
     ]);
-    totalCount.value = page.total;
-    const tp =
-      totalCount.value === 0
-        ? 0
-        : Math.ceil(totalCount.value / PAGE_SIZE);
-
-    if (tp > 0) {
-      const clamped0 = Math.min(Math.max(0, page0), tp - 1);
-      if (clamped0 !== page0) {
-        page0 = clamped0;
-        const again = await getProductions(productionsListArgs(page0));
-        productions.value = again.items;
-        totalCount.value = again.total;
-      } else {
-        productions.value = page.items;
-      }
-    } else {
-      productions.value = page.items;
-      page0 = 0;
-    }
-
-    currentPage.value = page0;
-    displayedFilteredTotal.value = hasActiveListFilters.value
-      ? totalCount.value
-      : null;
-    searchBannerTerms.value = [...appliedSearchTerms.value];
-    syncFilterBannerFromApplied();
     tagsById.value = tagMapById(tags);
     tagTypesById.value = new Map(tagTypes.map((tt) => [tt.id, tt]));
     hallsById.value = hallMapById(halls);
-    eventsByProduction.value = groupEventsByProductionId(events);
+
+    await fetchProductionsPageData(page0);
+
+    const tp = totalPages.value;
+    if (tp === 0) {
+      page0 = 0;
+      await fetchProductionsPageData(0);
+    } else {
+      const clamped0 = Math.min(Math.max(0, page0), tp - 1);
+      if (clamped0 !== page0) {
+        await fetchProductionsPageData(clamped0);
+        page0 = clamped0;
+      }
+    }
 
     if (syncRouteAfterExclusiveTimeFilter || urlNeedsSyncForPage0(page0)) {
       await replaceRouteForPage0(page0);
@@ -1053,13 +1040,14 @@ onMounted(async () => {
   }
 });
 
+/** Refetch when `?page=` changes (browser back/forward or programmatic `router.replace`). */
 watch(
   () => readPageOneBasedFromRoute(),
-  async (oneBased) => {
+  async () => {
     if (loading.value) return;
     if (totalPages.value <= 0) return;
 
-    let page0 = oneBased - 1;
+    let page0 = readPageOneBasedFromQuery(route.query) - 1;
     const max0 = totalPages.value - 1;
     const clamped0 = Math.min(Math.max(0, page0), max0);
     if (page0 !== clamped0) {

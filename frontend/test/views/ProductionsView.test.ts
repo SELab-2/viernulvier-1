@@ -96,6 +96,9 @@ describe("ProductionsView.vue", () => {
     vi.spyOn(tagsService, "getTags").mockResolvedValue([mockTag]);
     vi.spyOn(tagsService, "getTagTypes").mockResolvedValue([mockTagTypeGenre]);
     vi.spyOn(eventsService, "getEvents").mockResolvedValue([mockEvent]);
+    vi.spyOn(eventsService, "getEventsForProductions").mockResolvedValue([
+      mockEvent,
+    ]);
     vi.spyOn(hallsService, "getHalls").mockResolvedValue([mockHall]);
   });
 

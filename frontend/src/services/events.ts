@@ -86,6 +86,20 @@ export async function getEvents(production?: number): Promise<Event[]> {
 }
 
 /**
+ * Fetches events for several productions in parallel (one public GET per id).
+ * Avoids loading the full event catalog when only list-card summaries are needed.
+ */
+export async function getEventsForProductions(
+  productionIds: number[],
+): Promise<Event[]> {
+  if (productionIds.length === 0) return [];
+  const batches = await Promise.all(
+    productionIds.map((id) => getEvents(id)),
+  );
+  return batches.flat();
+}
+
+/**
  * Fetches a single event by ID (public — no session required).
  *
  * @param id The event's primary key.
