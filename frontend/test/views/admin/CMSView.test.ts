@@ -12,6 +12,12 @@ import * as productionsService from "@/services/productions";
 import * as tagsService from "@/services/tags";
 import * as hallsService from "@/services/halls";
 import * as eventsService from "@/services/events";
+import {
+  hasAnyLanguageValue,
+  mediaToLanguageMap,
+  toLanguageMap,
+  toLanguageMapOrNull,
+} from "@/services/cms/forms";
 
 vi.mock("@/services/productions", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/services/productions")>();
@@ -299,10 +305,10 @@ describe("CMSView", () => {
 
     expect(api.localizeValue(undefined)).toBe("");
     expect(api.setCurrentLanguageValue({ en: "old" }, "new")).toMatchObject({ nl: "new" });
-    expect(api.toLanguageMapOrNull({ nl: "", en: "", fr: "" })).toBeNull();
-    expect(api.toLanguageMap({ nl: "x", en: "", fr: "" })).toEqual({ nl: "x" });
-    expect(api.mediaToLanguageMap({ nl: "", en: "x", fr: "y" })).toBeNull();
-    expect(api.mediaToLanguageMap({ nl: "media", en: "", fr: "" })).toEqual({ nl: "media" });
+    expect(toLanguageMapOrNull({ nl: "", en: "", fr: "" })).toBeNull();
+    expect(toLanguageMap({ nl: "x", en: "", fr: "" })).toEqual({ nl: "x" });
+    expect(mediaToLanguageMap({ nl: "", en: "x", fr: "y" })).toBeNull();
+    expect(mediaToLanguageMap({ nl: "media", en: "", fr: "" })).toEqual({ nl: "media" });
 
     api.createForm.value.title.nl = "something";
     api.resetCreateForm();
@@ -469,8 +475,8 @@ describe("CMSView", () => {
     const wrapper = await mountCMSView();
     const api = (wrapper.vm as any).__test;
 
-    expect(api.hasAnyLanguageValue({ nl: "", en: "", fr: "" })).toBe(false);
-    expect(api.hasAnyLanguageValue({ nl: "x", en: "", fr: "" })).toBe(true);
+    expect(hasAnyLanguageValue({ nl: "", en: "", fr: "" })).toBe(false);
+    expect(hasAnyLanguageValue({ nl: "x", en: "", fr: "" })).toBe(true);
 
     await api.loadCmsData();
     expect(api.rowData.value.length).toBeGreaterThanOrEqual(0);

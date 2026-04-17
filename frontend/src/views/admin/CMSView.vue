@@ -162,116 +162,23 @@
       </div>
     </aside>
 
-    <div v-if="createModalOpen" class="cms-modal-overlay" @click.self="closeCreateModal">
-      <section class="cms-modal" role="dialog" aria-modal="true">
-        <header class="cms-modal-header">
-          <h2 class="text-xl font-bold text-ink-primary">{{ t("cms.create.title") }}</h2>
-          <button type="button" class="cms-side-close" @click="closeCreateModal">
-            {{ t("cms.panel.close") }}
-          </button>
-        </header>
-
-        <div class="cms-modal-body">
-          <label class="cms-toggle-row">
-            <input v-model="createForm.finalized" type="checkbox" />
-            <span>{{ t("cms.create.finalized") }}</span>
-          </label>
-
-          <div class="cms-language-toggle-row">
-            <span class="text-sm font-semibold text-ink-primary">{{ t("cms.create.languages") }}</span>
-            <div class="flex items-center gap-2">
-              <span class="cms-language-pill active">NL</span>
-              <button
-                type="button"
-                class="cms-language-pill"
-                :class="{ active: createExtraLangs.en }"
-                @click="createExtraLangs.en = !createExtraLangs.en"
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                class="cms-language-pill"
-                :class="{ active: createExtraLangs.fr }"
-                @click="createExtraLangs.fr = !createExtraLangs.fr"
-              >
-                FR
-              </button>
-            </div>
-          </div>
-
-          <fieldset v-for="field in createFields" :key="field.key" class="cms-form-block">
-            <legend class="cms-form-legend">
-              {{ t(field.labelKey) }}
-              <span v-if="field.required" class="cms-required">*</span>
-            </legend>
-
-            <div :class="langGridClass">
-              <label v-for="lang in visibleCreateLangs" :key="`${field.key}-${lang}`" class="cms-form-lang-field">
-                <span class="cms-lang-label">{{ lang.toUpperCase() }}</span>
-                <textarea
-                  v-if="field.multiline"
-                  v-model="createForm[field.key][lang]"
-                  class="cms-side-textarea"
-                  rows="3"
-                />
-                <input
-                  v-else
-                  v-model="createForm[field.key][lang]"
-                  type="text"
-                  class="cms-text-input"
-                />
-              </label>
-            </div>
-          </fieldset>
-
-          <fieldset class="cms-form-block">
-            <legend class="cms-form-legend">{{ t("cms.create.media.title") }}</legend>
-
-            <div class="cms-upload-controls">
-              <label class="cms-form-lang-field">
-                <span class="cms-lang-label">{{ t("cms.create.media.uploadImage") }}</span>
-                <input type="file" accept="image/*" class="cms-text-input" @change="onImageFileChange" />
-              </label>
-
-              <label class="cms-form-lang-field">
-                <span class="cms-lang-label">{{ t("cms.create.media.uploadVideo") }}</span>
-                <input type="file" accept="video/*" class="cms-text-input" @change="onVideoFileChange" />
-              </label>
-            </div>
-
-            <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-              <label class="cms-form-lang-field">
-                <span class="cms-lang-label">{{ t("cms.create.fields.imagePrimary") }}</span>
-                <input v-model="createForm.video_1.nl" type="text" class="cms-text-input" />
-              </label>
-
-              <label class="cms-form-lang-field">
-                <span class="cms-lang-label">{{ t("cms.create.fields.imageSecondary") }}</span>
-                <input v-model="createForm.video_2.nl" type="text" class="cms-text-input" />
-              </label>
-            </div>
-
-            <p class="mt-2 text-xs text-ink-tertiary">
-              {{ t("cms.create.media.hint") }}
-            </p>
-          </fieldset>
-
-          <p v-if="createError" class="text-sm text-red-700">
-            {{ createError }}
-          </p>
-        </div>
-
-        <footer class="cms-modal-footer">
-          <button type="button" class="cms-side-close" @click="closeCreateModal">
-            {{ t("cms.create.cancel") }}
-          </button>
-          <button type="button" class="cms-side-save" :disabled="isCreating" @click="submitCreateProduction">
-            {{ isCreating ? t("cms.create.saving") : t("cms.create.submit") }}
-          </button>
-        </footer>
-      </section>
-    </div>
+    <CmsCreateProductionModal
+      :open="createModalOpen"
+      :create-form="createForm"
+      :create-extra-langs="createExtraLangs"
+      :visible-create-langs="visibleCreateLangs"
+      :lang-grid-class="langGridClass"
+      :create-fields="createFields"
+      :create-error="createError"
+      :is-creating="isCreating"
+      @update-finalized="createForm.finalized = $event"
+      @update-extra-lang="setCreateExtraLang"
+      @update-form-field="setCreateFormField"
+      @image-file-change="onImageFileChange"
+      @video-file-change="onVideoFileChange"
+      @close="closeCreateModal"
+      @submit="submitCreateProduction"
+    />
 
     <CmsCreateEventModal
       :open="createEventModalOpen"
@@ -308,6 +215,7 @@ import CmsColumnChooser from "@/components/admin/cms/CmsColumnChooser.vue";
 import CmsCreateEventModal from "@/components/admin/cms/CmsCreateEventModal.vue";
 import CmsEventsDrawer from "@/components/admin/cms/CmsEventsDrawer.vue";
 import CmsGridControls from "@/components/admin/cms/CmsGridControls.vue";
+import CmsCreateProductionModal from "@/components/admin/cms/CmsCreateProductionModal.vue";
 import { useCmsProductionGrid } from "@/composables/useCmsProductionGrid";
 import { i18n, SUPPORTED_LANGS, type SupportedLang } from "@/i18n";
 import {
@@ -321,53 +229,29 @@ import { getAllTags } from "@/services/tags";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/i18n";
 import {
   buildEventGridRows,
-  buildProductionGridRow,
+  buildProductionGridRows,
+  applyUpdatedProductionToRow,
+  createProductionFields,
+  buildEmptyCreateForm,
+  fileToDataUrl,
+  mediaToLanguageMap,
+  toLanguageMap,
+  toLanguageMapOrNull,
+  validateCreateProductionForm,
+  getBulkTargetRows,
   type CmsCreateLinkedEventForm,
   type CmsEventGridRow,
+  type CreateFieldKey,
+  type CreateFormState,
+  type EditorPanelState,
+  type InlineEditableField,
+  type LongField,
   type CmsProductionGridRow,
-  emptyLangRecord,
   extractEventIds,
   makeEditorValues,
   toIsoStringFromLocalInput,
   toLocalDateTimeInput,
 } from "@/services/cms";
-
-type EventGridRow = CmsEventGridRow;
-type ProductionGridRow = CmsProductionGridRow;
-
-type InlineEditableField = "performer" | "title" | "producer" | "teaser";
-type LongField = "teaser"|"description" | "description_2" | "video_1";
-
-interface EditorPanelState {
-  rowId: number;
-  apiField: LongField;
-  label: string;
-  values: Record<SupportedLang, string>;
-}
-
-type CreateFieldKey =
-  | "title"
-  | "artist"
-  | "tagline"
-  | "teaser"
-  | "supertitle"
-  | "description"
-  | "description_2"
-  | "video_1"
-  | "video_2";
-
-interface CreateFormState {
-  finalized: boolean;
-  title: Record<SupportedLang, string>;
-  artist: Record<SupportedLang, string>;
-  tagline: Record<SupportedLang, string>;
-  teaser: Record<SupportedLang, string>;
-  supertitle: Record<SupportedLang, string>;
-  description: Record<SupportedLang, string>;
-  description_2: Record<SupportedLang, string>;
-  video_1: Record<SupportedLang, string>;
-  video_2: Record<SupportedLang, string>;
-}
 
 const { t } = useI18n();
 const { isDark, toggleDark } = useDarkMode();
@@ -433,9 +317,9 @@ const tagsData = ref<Tag[]>([]);
 const hallsData = ref<Hall[]>([]);
 const eventByIdCache = ref(new Map<number, ArchiveEvent>());
 const hallByIdCache = ref(new Map<number, Hall>());
-const detailRowsCache = ref(new Map<number, EventGridRow[]>());
+const detailRowsCache = ref(new Map<number, CmsEventGridRow[]>());
 const selectedEventsProductionId = ref<number | null>(null);
-const selectedEventRows = ref<EventGridRow[]>([]);
+const selectedEventRows = ref<CmsEventGridRow[]>([]);
 const eventsPanelLoading = ref(false);
 const eventsPanelError = ref<string | null>(null);
 const createLinkedEventForm = ref<CmsCreateLinkedEventForm>({
@@ -455,7 +339,7 @@ const editorBulkCount = computed(() => {
     return 0;
   }
   const row = rowData.value.find((item) => item.id === editorPanel.value?.rowId);
-  return row ? getBulkTargetRows(row).length : 0;
+  return row ? getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], row).length : 0;
 });
 
 const selectedEventsProduction = computed(() => {
@@ -465,33 +349,9 @@ const selectedEventsProduction = computed(() => {
   return rowData.value.find((row) => row.id === selectedEventsProductionId.value) ?? null;
 });
 
-const createFields: Array<{
-  key: CreateFieldKey;
-  labelKey: string;
-  required: boolean;
-  multiline: boolean;
-}> = [
-  { key: "title", labelKey: "cms.create.fields.title", required: true, multiline: false },
-  { key: "artist", labelKey: "cms.create.fields.artist", required: true, multiline: false },
-  { key: "tagline", labelKey: "cms.create.fields.tagline", required: true, multiline: true },
-  { key: "teaser", labelKey: "cms.create.fields.teaser", required: true, multiline: true },
-  { key: "supertitle", labelKey: "cms.create.fields.supertitle", required: false, multiline: false },
-  { key: "description", labelKey: "cms.create.fields.description", required: false, multiline: true },
-  { key: "description_2", labelKey: "cms.create.fields.descriptionTwo", required: false, multiline: true },
-];
+const createFields = createProductionFields;
 
-const createForm = ref<CreateFormState>({
-  finalized: false,
-  title: emptyLangRecord(),
-  artist: emptyLangRecord(),
-  tagline: emptyLangRecord(),
-  teaser: emptyLangRecord(),
-  supertitle: emptyLangRecord(),
-  description: emptyLangRecord(),
-  description_2: emptyLangRecord(),
-  video_1: emptyLangRecord(),
-  video_2: emptyLangRecord(),
-});
+const createForm = ref<CreateFormState>(buildEmptyCreateForm());
 
 const inlineFieldToApi: Record<InlineEditableField, keyof ProductionWithBackwardsRefs> = {
   performer: "artist",
@@ -544,30 +404,6 @@ function revertEventRow(row: CmsEventGridRow): void {
   row.infoNl = snapshot.infoNl;
 }
 
-function toLanguageMapOrNull(values: Record<SupportedLang, string>): LanguageMap | null {
-  const next: LanguageMap = {};
-  for (const lang of languages) {
-    const value = values[lang].trim();
-    if (value.length > 0) {
-      next[lang] = value;
-    }
-  }
-
-  return Object.keys(next).length > 0 ? next : null;
-}
-
-function toLanguageMap(values: Record<SupportedLang, string>): LanguageMap {
-  return toLanguageMapOrNull(values) ?? {};
-}
-
-function mediaToLanguageMap(values: Record<SupportedLang, string>): LanguageMap | null {
-  const nlValue = values.nl.trim();
-  if (nlValue.length === 0) {
-    return null;
-  }
-  return { nl: nlValue };
-}
-
 function resetCreateLinkedEventForm(): void {
   const now = new Date();
   const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000);
@@ -588,6 +424,27 @@ function setCreateLinkedEventField(
   createLinkedEventForm.value = {
     ...createLinkedEventForm.value,
     [field]: value,
+  };
+}
+
+function setCreateFormField(
+  field: CreateFieldKey,
+  lang: SupportedLang,
+  value: string,
+): void {
+  createForm.value = {
+    ...createForm.value,
+    [field]: {
+      ...createForm.value[field],
+      [lang]: value,
+    },
+  };
+}
+
+function setCreateExtraLang(lang: "en" | "fr", value: boolean): void {
+  createExtraLangs.value = {
+    ...createExtraLangs.value,
+    [lang]: value,
   };
 }
 
@@ -622,20 +479,9 @@ async function loadEventsForProduction(production: ProductionWithBackwardsRefs):
   return events;
 }
 
-function buildProductionRows(
-  productions: ProductionWithBackwardsRefs[],
-  tags: Tag[],
-): ProductionGridRow[] {
-  const tagById = new Map(tags.map((tag) => [tag.id, tag]));
-
-  return productions.map((production) => {
-    return buildProductionGridRow(production, tagById, localizeValue);
-  });
-}
-
 async function loadDetailRowsForProduction(
   production: ProductionWithBackwardsRefs,
-): Promise<EventGridRow[]> {
+): Promise<CmsEventGridRow[]> {
   const cached = detailRowsCache.value.get(production.id);
   if (cached) {
     return cached;
@@ -654,18 +500,7 @@ function closeEditorPanel(): void {
 }
 
 function resetCreateForm(): void {
-  createForm.value = {
-    finalized: false,
-    title: emptyLangRecord(),
-    artist: emptyLangRecord(),
-    tagline: emptyLangRecord(),
-    teaser: emptyLangRecord(),
-    supertitle: emptyLangRecord(),
-    description: emptyLangRecord(),
-    description_2: emptyLangRecord(),
-    video_1: emptyLangRecord(),
-    video_2: emptyLangRecord(),
-  };
+  createForm.value = buildEmptyCreateForm();
   createExtraLangs.value = { en: false, fr: false };
 }
 
@@ -678,19 +513,6 @@ function closeCreateModal(): void {
   createModalOpen.value = false;
   createError.value = null;
   resetCreateForm();
-}
-
-function hasAnyLanguageValue(values: Record<SupportedLang, string>): boolean {
-  return languages.some((lang) => values[lang].trim().length > 0);
-}
-
-async function fileToDataUrl(file: File): Promise<string> {
-  return await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result ?? ""));
-    reader.onerror = () => reject(new Error("file-read-failed"));
-    reader.readAsDataURL(file);
-  });
 }
 
 async function onImageFileChange(event: Event): Promise<void> {
@@ -711,27 +533,8 @@ async function onVideoFileChange(event: Event): Promise<void> {
   input.value = "";
 }
 
-function validateCreateForm(): string | null {
-  const requiredKeys: CreateFieldKey[] = ["title", "artist", "tagline", "teaser"];
-  for (const key of requiredKeys) {
-    if (!hasAnyLanguageValue(createForm.value[key])) {
-      return t("cms.create.validation.requiredOneLanguage", {
-        field: t(`cms.create.fields.${key === "description_2" ? "descriptionTwo" : key}`),
-      });
-    }
-  }
-
-  const hasImageOne = hasAnyLanguageValue(createForm.value.video_1);
-  const hasImageTwo = hasAnyLanguageValue(createForm.value.video_2);
-  if (!hasImageOne && !hasImageTwo) {
-    return t("cms.create.validation.imageRequired");
-  }
-
-  return null;
-}
-
 async function submitCreateProduction(): Promise<void> {
-  const validationError = validateCreateForm();
+  const validationError = validateCreateProductionForm(createForm.value, t);
   if (validationError) {
     createError.value = validationError;
     return;
@@ -768,27 +571,13 @@ async function submitCreateProduction(): Promise<void> {
   }
 }
 
-function applyUpdatedProductionToRow(
-  row: ProductionGridRow,
-  updated: ProductionWithBackwardsRefs,
-): void {
-  row.source = updated;
-  row.performer = localizeValue(updated.artist) || "";
-  row.title = localizeValue(updated.title) || "";
-  row.producer = localizeValue(updated.supertitle) || "";
-  row.teaser = localizeValue(updated.teaser) || "";
-  row.descriptionOne = localizeValue(updated.description) || "";
-  row.descriptionTwo = localizeValue(updated.description_2) || "";
-  row.media = localizeValue(updated.video_1) || "";
-}
-
 async function persistProductionPatch(
-  row: ProductionGridRow,
+  row: CmsProductionGridRow,
   patch: Record<string, unknown>,
 ): Promise<void> {
   try {
     const updated = await updateProduction(row.id, patch as never);
-    applyUpdatedProductionToRow(row, updated);
+    applyUpdatedProductionToRow(row, updated, localizeValue);
   } catch (error) {
     saveError.value =
       error instanceof Error
@@ -799,11 +588,11 @@ async function persistProductionPatch(
 }
 
 async function saveInlineBulkUpdate(
-  primaryRow: ProductionGridRow,
+  primaryRow: CmsProductionGridRow,
   apiField: keyof ProductionWithBackwardsRefs,
   newValue: string,
 ): Promise<void> {
-  const targetRows = getBulkTargetRows(primaryRow);
+  const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], primaryRow);
   isSaving.value = true;
   saveError.value = null;
   try {
@@ -819,19 +608,8 @@ async function saveInlineBulkUpdate(
   }
 }
 
-function getBulkTargetRows(primaryRow: ProductionGridRow): ProductionGridRow[] {
-  const selectedRows = gridApi.value?.getSelectedRows() ?? [];
-  if (
-    selectedRows.length > 1
-    && selectedRows.some((row) => row.id === primaryRow.id)
-  ) {
-    return selectedRows;
-  }
-  return [primaryRow];
-}
-
 async function onCellEditingStopped(
-  event: CellEditingStoppedEvent<ProductionGridRow>,
+  event: CellEditingStoppedEvent<CmsProductionGridRow>,
 ): Promise<void> {
   if (!event.data || !event.colDef.field) {
     return;
@@ -870,7 +648,7 @@ async function onCellEditingStopped(
   }
 }
 
-function onProductionCellKeyDown(event: CellKeyDownEvent<ProductionGridRow>): void {
+function onProductionCellKeyDown(event: CellKeyDownEvent<CmsProductionGridRow>): void {
   const domEvent = event.event as KeyboardEvent | null | undefined;
   if (!event.data || !event.colDef.field || domEvent?.key !== "Enter") {
     return;
@@ -879,7 +657,7 @@ function onProductionCellKeyDown(event: CellKeyDownEvent<ProductionGridRow>): vo
   pendingProductionEnterCommits.value.add(getProductionEditKey(event.data.id, event.colDef.field));
 }
 
-function onProductionCellEditingStarted(event: CellEditingStartedEvent<ProductionGridRow>): void {
+function onProductionCellEditingStarted(event: CellEditingStartedEvent<CmsProductionGridRow>): void {
   if (!event.data || !event.colDef.field) {
     return;
   }
@@ -895,7 +673,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
   pendingProductionEnterCommits.value.add(activeProductionEditKey.value);
 }
 
-function onCellClicked(event: CellClickedEvent<ProductionGridRow>): void {
+function onCellClicked(event: CellClickedEvent<CmsProductionGridRow>): void {
   if (!event.data) {
     return;
   }
@@ -937,7 +715,7 @@ async function saveEditorPanel(): Promise<void> {
   }
 
   const payload = toLanguageMapOrNull(editorPanel.value.values);
-  const targetRows = getBulkTargetRows(row);
+  const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], row);
 
   isSaving.value = true;
   saveError.value = null;
@@ -957,13 +735,14 @@ async function saveEditorPanel(): Promise<void> {
 }
 
 function rebuildRows(): void {
-  rowData.value = buildProductionRows(
+  rowData.value = buildProductionGridRows(
     productionsData.value,
     tagsData.value,
+    localizeValue,
   );
 }
 
-async function showEventsForProduction(row: ProductionGridRow): Promise<void> {
+async function showEventsForProduction(row: CmsProductionGridRow): Promise<void> {
   selectedEventsProductionId.value = row.id;
   eventsPanelLoading.value = true;
   eventsPanelError.value = null;
@@ -1004,7 +783,7 @@ async function refreshEventsPanelForSelectedProduction(): Promise<void> {
   await showEventsForProduction(row);
 }
 
-async function saveLinkedEvent(eventRow: EventGridRow): Promise<void> {
+async function saveLinkedEvent(eventRow: CmsEventGridRow): Promise<void> {
   if (selectedEventsProductionId.value === null) return;
   eventsPanelLoading.value = true;
   eventsPanelError.value = null;
@@ -1032,7 +811,7 @@ async function saveLinkedEvent(eventRow: EventGridRow): Promise<void> {
   }
 }
 
-async function removeLinkedEvent(eventRow: EventGridRow): Promise<void> {
+async function removeLinkedEvent(eventRow: CmsEventGridRow): Promise<void> {
   if (selectedEventsProductionId.value === null) return;
   eventsPanelLoading.value = true;
   eventsPanelError.value = null;
@@ -1175,15 +954,10 @@ defineExpose({
     selectedEventRows,
     localizeValue,
     setCurrentLanguageValue,
-    toLanguageMapOrNull,
-    toLanguageMap,
-    mediaToLanguageMap,
-    hasAnyLanguageValue,
     resetCreateForm,
     resetCreateLinkedEventForm,
     openCreateModal,
     closeCreateModal,
-    validateCreateForm,
     submitCreateProduction,
     showEventsForProduction,
     refreshEventsPanelForSelectedProduction,

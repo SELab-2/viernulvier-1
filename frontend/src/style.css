@@ -44,6 +44,13 @@
   --color-tag-genre-text: var(--tag-genre-text);
 }
 
+/* ---- Global Base + AG Grid Theme Bridge ----
+ * The block below does two things:
+ * 1) sets app-level base sizing for html/body/#app
+ * 2) maps AG Grid quartz variables to our design tokens (light + dark)
+ * Keep AG Grid overrides here generic and framework-level.
+ * Put view/component-specific grid styling in cms-ag-grid.css.
+ */
 @layer base {
   html,
   body {
