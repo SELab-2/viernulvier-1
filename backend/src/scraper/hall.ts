@@ -11,11 +11,11 @@ import { viernulvierApiUrl } from "./viernulvier-api.js";
 
 interface HallListMeta {
   totalItems: number;
-  view: {
-    "@id": string;
-    "@type": string;
-    first: string;
-    last: string;
+  view?: {
+    "@id"?: string;
+    "@type"?: string;
+    first?: string;
+    last?: string;
   };
 }
 
@@ -279,7 +279,12 @@ async function createLocalHallFromViernulvierJson(
   loginToken: string,
   authToken: string,
 ): Promise<number | null> {
-  const id = parseInt(hall["@id"].split("/").pop() as string, 10);
+  const idSegment = hall["@id"].split("/").pop();
+  const id = idSegment !== undefined ? parseInt(idSegment, 10) : Number.NaN;
+  if (!Number.isFinite(id)) {
+    console.warn(`Skipping hall: could not parse legacy id from ${hall["@id"]}`);
+    return null;
+  }
 
   const address = await fetchSpaceLocation(hall.space, authToken);
 
@@ -318,7 +323,12 @@ async function ensureHallImported(
   loginToken: string,
   authToken: string,
 ): Promise<number | null> {
-  const oldId = parseInt(hall["@id"].split("/").pop() as string, 10);
+  const idSegment = hall["@id"].split("/").pop();
+  const oldId = idSegment !== undefined ? parseInt(idSegment, 10) : Number.NaN;
+  if (!Number.isFinite(oldId)) {
+    console.warn(`Skipping hall: could not parse legacy id from ${hall["@id"]}`);
+    return null;
+  }
   const existing = await fetchLocalHallIdByOldId(oldId);
   if (existing !== null) {
     console.log(`Hall old_id=${oldId} already exists locally (id=${existing}), skipping create`);
@@ -336,7 +346,7 @@ export async function scrapeAllHalls(
   const loginToken = await fetchScraperJwt();
 
   const meta = await fetchHallsListMeta(authToken);
-  const totalPages = totalPagesFromHydraView(meta.view);
+  const totalPages = totalPagesFromHydraView(meta.view, meta.totalItems);
   
   for (let page = 1; page <= totalPages; page++) {
     const data = await fetchHallsPage(page, authToken);

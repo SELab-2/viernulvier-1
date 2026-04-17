@@ -41,10 +41,10 @@ function resolveEventStartBounds(bounds: ViernulvierEventStartBounds): Viernulvi
 
 interface EventListMeta {
   totalItems: number;
-  view: {
-    "@id": string;
-    "@type": string;
-    first: string;
+  view?: {
+    "@id"?: string;
+    "@type"?: string;
+    first?: string;
     last?: string;
   };
 }
@@ -365,7 +365,7 @@ export async function scrapeAllEvents(
   const resolved = resolveEventStartBounds(bounds);
   const loginToken = await fetchScraperJwt();
   const meta = await fetchEventsListMeta(authToken, resolved);
-  const totalPages = totalPagesFromHydraView(meta.view);
+  const totalPages = totalPagesFromHydraView(meta.view, meta.totalItems);
 
   for (let page = 1; page <= totalPages; page++) {
     const data = await fetchEventsPage(page, authToken, resolved);

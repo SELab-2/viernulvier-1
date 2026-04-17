@@ -35,18 +35,30 @@ export function parseHydraLastPageIndex(
   return page;
 }
 
+/** Fallback when the API omits `view.first` / `view.last` but `totalItems` is non-zero (rare). */
+const DEFAULT_HYDRA_PAGE_SIZE = 30;
+
 /**
  * Page count for iterating a Hydra `PartialCollectionView`.
  * Uses `view.last` when present (normal for API Platform, including single-page where `last` === `first`).
  * If `last` is ever omitted for a one-page collection, falls back to `view.first`.
+ * Empty collections (`totalItems` ≤ 0) return 0 even when `view` is missing (e.g. filtered events).
  */
 export function totalPagesFromHydraView(
-  view: { first: string; last?: string },
+  view: { first?: string; last?: string } | undefined,
+  totalItems: number,
   baseOrigin: string = viernulvierApiOrigin(),
 ): number {
-  const iri = view.last ?? view.first;
-  if (iri.length === 0) {
-    throw new Error("Hydra view has empty first/last IRI");
+  const total =
+    typeof totalItems === "number" && Number.isFinite(totalItems) && totalItems > 0
+      ? totalItems
+      : 0;
+  if (total <= 0) return 0;
+
+  const iri = view?.last ?? view?.first;
+  if (iri !== undefined && iri.length > 0) {
+    return parseHydraLastPageIndex(iri, baseOrigin);
   }
-  return parseHydraLastPageIndex(iri, baseOrigin);
+
+  return Math.max(1, Math.ceil(total / DEFAULT_HYDRA_PAGE_SIZE));
 }

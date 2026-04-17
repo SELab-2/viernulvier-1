@@ -16,10 +16,10 @@ import { createEmptyRunStats, type ScrapeRunStats } from "./scrape-stats.js";
 
 interface ProductionListMeta {
   totalItems: number;
-  view: {
-    "@id": string;
-    "@type": string;
-    first: string;
+  view?: {
+    "@id"?: string;
+    "@type"?: string;
+    first?: string;
     last?: string;
   };
 }
@@ -184,7 +184,12 @@ async function createLocalProductionFromViernulvierJson(
   production: ProductionJSON,
   loginToken: string,
 ): Promise<number | null> {
-  const id = parseInt(production["@id"].split("/").pop() as string, 10);
+  const idSegment = production["@id"].split("/").pop();
+  const id = idSegment !== undefined ? parseInt(idSegment, 10) : Number.NaN;
+  if (!Number.isFinite(id)) {
+    console.warn(`Skipping production: could not parse legacy id from ${production["@id"]}`);
+    return null;
+  }
 
   const payload = scraperProductionToCreateBody(production, id);
 
@@ -218,7 +223,12 @@ async function ensureProductionImported(
   authToken: string,
   stats?: ScrapeRunStats,
 ): Promise<number | null> {
-  const oldId = parseInt(production["@id"].split("/").pop() as string, 10);
+  const idSegment = production["@id"].split("/").pop();
+  const oldId = idSegment !== undefined ? parseInt(idSegment, 10) : Number.NaN;
+  if (!Number.isFinite(oldId)) {
+    console.warn(`Skipping production: could not parse legacy id from ${production["@id"]}`);
+    return null;
+  }
   rememberViernulvierProductionJson(oldId, production);
   const existing = await fetchLocalProductionIdByOldId(oldId);
   if (existing !== null) {
@@ -261,7 +271,7 @@ export async function scrapeAllProductions(
   const stats = createEmptyRunStats();
 
   const meta = await fetchProductionsListMeta(authToken);
-  const totalPages = totalPagesFromHydraView(meta.view);
+  const totalPages = totalPagesFromHydraView(meta.view, meta.totalItems);
   
   for (let page = 1; page <= totalPages; page++) {
     const data = await fetchProductionsPage(page, authToken);
