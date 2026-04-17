@@ -7,7 +7,7 @@ import type { Event, EventPrice, Hall } from "@viernulvier/shared";
 /**
  * Event data extended with full hall details and price range.
  */
-export interface EnrichedEvent extends Omit<Event, 'hall'> {
+export interface EnrichedEvent extends Omit<Event, "hall"> {
   hall: Hall | null;
   minPrice: number | null;
   maxPrice: number | null;
@@ -19,11 +19,13 @@ function groupPricesForEvents(
 ): Record<number, EventPrice[]> {
   const ids = new Set(productionEvents.map((e) => e.id));
   const grouped: Record<number, EventPrice[]> = {};
+
   for (const row of allPrices) {
     const eventId = row.event;
     if (typeof eventId !== "number" || !ids.has(eventId)) continue;
     (grouped[eventId] ??= []).push(row);
   }
+
   return grouped;
 }
 
@@ -34,16 +36,21 @@ export function useProductionEvents(productionId: number) {
   const events = ref<Event[]>([]);
   const halls = ref<Hall[]>([]);
   const pricesByEventId = ref<Record<number, EventPrice[]>>({});
+
   const loading = ref(true);
   const error = ref<Error | null>(null);
 
-  onMounted(async () => {
+  async function fetchEvents() {
+    loading.value = true;
+    error.value = null;
+
     try {
       const [eventData, hallData, priceRows] = await Promise.all([
         getEvents(productionId),
         getHalls(),
         getEventPrices().catch((): EventPrice[] => []),
       ]);
+
       events.value = eventData;
       halls.value = hallData;
       pricesByEventId.value = groupPricesForEvents(eventData, priceRows);
@@ -52,20 +59,28 @@ export function useProductionEvents(productionId: number) {
     } finally {
       loading.value = false;
     }
-  });
+  }
+
+  onMounted(fetchEvents);
 
   /**
-   * Merges event data with hall details and calculates 
-   * the lowest and highest ticket prices.
+   * Merge events + hall + prijzen
    */
   const enrichedEvents = computed<EnrichedEvent[]>(() => {
     return events.value.map((event) => {
       const hallMatch = halls.value.find((h) => h.id === event.hall);
       const priceRows = pricesByEventId.value[event.id] ?? [];
+
       const { minPrice, maxPrice } = priceRows.reduce(
         (acc, { amount }) => ({
-          minPrice: acc.minPrice === null ? amount : Math.min(acc.minPrice, amount),
-          maxPrice: acc.maxPrice === null ? amount : Math.max(acc.maxPrice, amount),
+          minPrice:
+            acc.minPrice === null
+              ? amount
+              : Math.min(acc.minPrice, amount),
+          maxPrice:
+            acc.maxPrice === null
+              ? amount
+              : Math.max(acc.maxPrice, amount),
         }),
         { minPrice: null as number | null, maxPrice: null as number | null },
       );
@@ -83,5 +98,6 @@ export function useProductionEvents(productionId: number) {
     events: enrichedEvents,
     loading,
     error,
+    retry: fetchEvents, // 👈 dit gebruik je in je button
   };
 }

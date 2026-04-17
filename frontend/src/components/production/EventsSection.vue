@@ -42,6 +42,24 @@
               </div>
             </template>
 
+            <template v-else-if="error">
+              <div class="py-16 px-6 bg-surface-1/50 border border-dashed border-surface-3 text-center">
+                <p class="font-mono text-[10px] uppercase tracking-widest text-ink-primary mb-2">
+                  {{ t('production.events.error_title') }}
+                </p>
+                <p class="text-xs text-ink-tertiary mb-6">
+                  {{ t('production.events.error_body') }}
+                </p>
+                <button 
+                  :disabled="loading"
+                  class="text-[10px] font-black uppercase tracking-widest border-b border-ink-primary pb-1 hover:text-ink-secondary transition-colors"
+                  @click="emit('retry')"
+                >
+                  {{ t('production.events.retry') }}
+                </button>
+              </div>
+            </template>
+
             <template v-else>
               <div
                 v-for="event in displayedEvents"
@@ -143,7 +161,10 @@ import type { EnrichedEvent } from '@/composables/useProductionEvents';
 const props = defineProps<{
   events: EnrichedEvent[];
   loading: boolean;
+  error: Error | null;
 }>();
+
+const emit = defineEmits<{ (e: 'retry'): void }>();
 
 const { t } = useI18n();
 const currentLang = computed(() => i18n.global.locale.value as SupportedLang);

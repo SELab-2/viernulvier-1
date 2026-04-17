@@ -80,6 +80,9 @@ export default {
       show_less: "Show Less",
       remaining_more: "(+ {count} more)",
       none_found: "No performance dates for this production were found in our archive.",
+      error_title: "Loading error",
+      error_body: "We couldn't retrieve the performance data from the archive.",
+      retry: "Try again",
     },
     notFound: {
       title: "Production not found",

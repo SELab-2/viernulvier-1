@@ -81,6 +81,9 @@ export default {
       show_less: "Toon minder",
       remaining_more: "(+ {count} meer)",
       none_found: "Er zijn geen speeldata voor deze productie gevonden in ons archief.",
+      error_title: "Fout bij laden",
+      error_body: "We konden de gegevens over de voorstellingen niet ophalen uit het archief.",
+      retry: "Opnieuw proberen",
     },
     notFound: {
       title: "Productie niet gevonden",

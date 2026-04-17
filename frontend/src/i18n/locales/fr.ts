@@ -81,6 +81,9 @@ export default {
       show_less: "Afficher moins",
       remaining_more: "(+ {count} de plus)",
       none_found: "Aucune date de représentation n'a été trouvée dans nos archives pour cette production.",
+      error_title: "Erreur de chargement",
+      error_body: "Nous n'avons pas pu récupérer les données des représentations dans les archives.",
+      retry: "Réessayer",
     },
     notFound: {
       title: "Production introuvable",
