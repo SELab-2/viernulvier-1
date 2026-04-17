@@ -1,8 +1,14 @@
+/*
+ * CMS AG Grid styles
+ * Owns: grid shell/layout and all AG Grid-specific visual overrides.
+ * Avoid adding modal/panel/form styles here.
+ */
+
 .cms-grid-shell {
   position: relative;
   overflow: hidden;
   border: 1px solid var(--surface-3);
-  border-radius: 1.5rem;
+  border-radius: 0.5rem;
   background: var(--surface-0);
   box-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 10px 30px rgb(15 23 42 / 0.06);
 }
@@ -125,12 +131,6 @@ html.dark .cms-grid.ag-theme-alpine {
   letter-spacing: 0.01em;
 }
 
-.cms-grid .ag-header-cell-text,
-.cms-grid .ag-header-cell .ag-icon,
-.cms-grid .ag-header-select-all .ag-icon {
-  color: var(--ag-header-foreground-color) !important;
-}
-
 .cms-grid .ag-cell {
   border-right: 1px solid color-mix(in srgb, var(--surface-3) 55%, transparent);
   align-items: flex-start;
@@ -194,6 +194,140 @@ html.dark .cms-grid .ag-pinned-right-header {
   white-space: normal;
 }
 
+/* Grid cell behavior and action-cell affordance. */
+.cms-truncate-cell .ag-cell-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cms-events-action-cell .ag-cell-value {
+  @apply cursor-pointer font-semibold text-ink-primary underline decoration-1 underline-offset-2;
+}
+
+/* Header, editor, selection and checkbox overrides for CMS grid only. */
+.cms-grid .ag-header-cell,
+.cms-grid .ag-header-group-cell {
+  background-color: var(--ag-header-background-color) !important;
+  color: var(--ag-header-foreground-color) !important;
+}
+
+.cms-grid .ag-header-cell-text,
+.cms-grid .ag-header-group-text,
+.cms-grid .ag-header-cell-label {
+  color: var(--cms-header-fg) !important;
+}
+
+.cms-grid .ag-header-cell .ag-icon,
+.cms-grid .ag-header-select-all .ag-icon,
+.cms-grid .ag-header-cell-menu-button .ag-icon,
+.cms-grid .ag-header-cell-filter-button .ag-icon {
+  color: var(--cms-header-fg) !important;
+}
+
+.cms-grid .ag-cell-inline-editing,
+.cms-grid .ag-cell-inline-editing .ag-cell-wrapper,
+.cms-grid .ag-cell-inline-editing .ag-cell-edit-wrapper {
+  background-color: inherit !important;
+}
+
+.cms-grid .ag-cell-inline-editing .ag-input-field-input,
+.cms-grid .ag-cell-inline-editing .ag-text-field-input,
+.cms-grid .ag-cell-inline-editing input,
+.cms-grid .ag-cell-inline-editing textarea {
+  background-color: var(--ag-background-color) !important;
+  color: var(--ag-foreground-color) !important;
+  caret-color: var(--ag-foreground-color) !important;
+}
+
+.cms-grid-dark .ag-cell-inline-editing .ag-input-field-input,
+.cms-grid-dark .ag-cell-inline-editing .ag-text-field-input,
+.cms-grid-dark .ag-cell-inline-editing input,
+.cms-grid-dark .ag-cell-inline-editing textarea {
+  background-color: var(--surface-0) !important;
+  color: var(--ink-primary) !important;
+  caret-color: var(--ink-primary) !important;
+}
+
+.cms-grid-light .ag-cell-inline-editing .ag-input-field-input,
+.cms-grid-light .ag-cell-inline-editing .ag-text-field-input,
+.cms-grid-light .ag-cell-inline-editing input,
+.cms-grid-light .ag-cell-inline-editing textarea {
+  background-color: var(--surface-0) !important;
+  color: var(--ink-primary) !important;
+  caret-color: var(--ink-primary) !important;
+}
+
+.cms-grid-dark .ag-header-cell-text,
+.cms-grid-dark .ag-header-group-text,
+.cms-grid-dark .ag-header-cell-label,
+.cms-grid-dark .ag-header-cell .ag-icon,
+.cms-grid-dark .ag-header-select-all .ag-icon,
+.cms-grid-dark .ag-header-cell-menu-button .ag-icon,
+.cms-grid-dark .ag-header-cell-filter-button .ag-icon {
+  color: #ede8df !important;
+}
+
+.cms-grid-light .ag-header-cell-text,
+.cms-grid-light .ag-header-group-text,
+.cms-grid-light .ag-header-cell-label,
+.cms-grid-light .ag-header-cell .ag-icon,
+.cms-grid-light .ag-header-select-all .ag-icon,
+.cms-grid-light .ag-header-cell-menu-button .ag-icon,
+.cms-grid-light .ag-header-cell-filter-button .ag-icon {
+  color: #2b2826 !important;
+}
+
+html.dark .cms-grid .ag-header-cell-text,
+html.dark .cms-grid .ag-header-group-text,
+html.dark .cms-grid .ag-header-cell-label,
+html.dark .cms-grid .ag-header-cell .ag-icon,
+html.dark .cms-grid .ag-header-select-all .ag-icon,
+html.dark .cms-grid .ag-header-cell-menu-button .ag-icon,
+html.dark .cms-grid .ag-header-cell-filter-button .ag-icon {
+  color: #ede8df !important;
+}
+
+html:not(.dark) .cms-grid .ag-header-cell-text,
+html:not(.dark) .cms-grid .ag-header-group-text,
+html:not(.dark) .cms-grid .ag-header-cell-label,
+html:not(.dark) .cms-grid .ag-header-cell .ag-icon,
+html:not(.dark) .cms-grid .ag-header-select-all .ag-icon,
+html:not(.dark) .cms-grid .ag-header-cell-menu-button .ag-icon,
+html:not(.dark) .cms-grid .ag-header-cell-filter-button .ag-icon {
+  color: #2b2826 !important;
+}
+
+.cms-grid .ag-row.ag-row-selected,
+.cms-grid .ag-row.ag-row-selected .ag-cell,
+.cms-grid .ag-cell-range-selected,
+.cms-grid .ag-cell-range-single-cell,
+.cms-grid .ag-cell.ag-cell-focus.ag-cell-range-selected {
+  background-color: var(--cms-selected-row-bg) !important;
+}
+
+.cms-grid .ag-row.ag-row-selected::before {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+.cms-grid .ag-checkbox-input-wrapper {
+  color: var(--cms-checkbox-color) !important;
+  background-color: transparent !important;
+  border-color: color-mix(in srgb, var(--cms-checkbox-color) 90%, transparent) !important;
+}
+
+.cms-grid .ag-checkbox-input-wrapper.ag-checked,
+.cms-grid .ag-checkbox-input-wrapper.ag-indeterminate {
+  color: var(--cms-checkbox-color) !important;
+  background-color: color-mix(in srgb, var(--cms-checkbox-color) 34%, transparent) !important;
+  border-color: var(--cms-checkbox-color) !important;
+}
+
+.dark .cms-grid .ag-checkbox-input-wrapper {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink-on-inv) 45%, transparent) inset;
+}
+
 /* Icon-opened filter popup styling. */
 .ag-popup .ag-menu,
 .ag-popup .ag-filter-wrapper,
@@ -240,6 +374,5 @@ html.dark .cms-grid .ag-pinned-right-header {
 }
 
 .ag-input-field-input.ag-text-field-input {
-
   padding-left: 28px !important; /* Adjust based on the actual icon size and desired spacing */
 }

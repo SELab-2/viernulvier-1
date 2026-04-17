@@ -7,8 +7,11 @@ describe("main", () => {
   });
 
   async function importMainWithMocks() {
-    vi.doMock("@/App.vue", () => ({
-      default: { name: "App", template: "<div />" },
+    vi.doMock("vue-router", () => ({
+      RouterView: {
+        name: "RouterView",
+        template: '<div data-testid="router-view" />',
+      },
     }));
     vi.doMock("@/router", () => ({
       default: { install: vi.fn() },

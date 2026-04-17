@@ -1,7 +1,14 @@
 @import "tailwindcss";
 @import "ag-grid-community/styles/ag-grid.css";
 @import "ag-grid-community/styles/ag-theme-alpine.css";
-@import "./styles/cms-ag-grid.css";
+
+/* CMS grid and AG Grid overrides */
+@import "@/assets/stylesheets/cms-ag-grid.css";
+
+/* CMS modal/panel/form layout styles */
+@import "@/assets/stylesheets/cms-view.css";
+
+/* Shared app typography and design tokens */
 @import "@/assets/fonts/inter.css";
 @import "@/assets/stylesheets/design-tokens.css";
 

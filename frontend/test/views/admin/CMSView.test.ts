@@ -694,7 +694,7 @@ describe("CMSView", () => {
     i18n.global.locale.value = "fr";
     await nextTick();
 
-    await wrapper.get('[data-testid="nav-dark-toggle"]').trigger("click");
+    await wrapper.get('button[aria-label="Toggle dark mode"]').trigger("click");
 
     wrapper.unmount();
   });

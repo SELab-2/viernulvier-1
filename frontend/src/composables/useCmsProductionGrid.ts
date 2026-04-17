@@ -53,7 +53,7 @@ import {
   ValidationModule,
   ValueCacheModule,
 } from "ag-grid-community";
-import type { CmsProductionGridRow } from "@/views/admin/cms-helpers";
+import type { CmsProductionGridRow } from "@/services/cms";
 
 type TranslateFunction = (key: string, params?: Record<string, unknown>) => string;
 

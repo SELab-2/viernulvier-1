@@ -27,7 +27,7 @@
  */
 
 import type { Admin, AdminWithMeta } from "@viernulvier/shared";
-import { apiFetch, ApiError, setStoredAuthToken } from "./api";
+import { apiFetch, ApiError } from "./api";
 
 // Re-export ApiError so callers only need to import from this module.
 export { ApiError };
@@ -85,11 +85,10 @@ export type UpdateAdminInput = Partial<ReplaceAdminInput>;
  * await login({ username: "admin", password: "secret" });
  */
 export async function login(credentials: LoginCredentials): Promise<void> {
-  const response = await apiFetch<{ token: string }>("/auth/login", {
+  await apiFetch("/auth/login", {
     method: "POST",
     body: credentials,
   });
-  setStoredAuthToken(response.token);
 }
 
 /**
@@ -100,7 +99,6 @@ export async function login(credentials: LoginCredentials): Promise<void> {
  */
 export async function logout(): Promise<void> {
   await apiFetch("/auth/logout", { method: "POST" });
-  setStoredAuthToken(null);
 }
 
 /**

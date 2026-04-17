@@ -2,42 +2,8 @@ import type { Event as ArchiveEvent, ProductionWithBackwardsRefs, Tag } from "@v
 import type { SupportedLang } from "@/i18n";
 import { collectProductionTagsByIdMap } from "@/services/productions";
 import type { LanguageMap } from "@/utils/i18n";
-
-export interface CmsEventGridRow {
-  id: number;
-  date: string;
-  time: string;
-  location: string;
-  price: string;
-  startsAt: string;
-  endsAt: string;
-  doorsAt: string;
-  hallId: number;
-  infoNl: string;
-}
-
-export interface CmsCreateLinkedEventForm {
-  startsAt: string;
-  endsAt: string;
-  doorsAt: string;
-  hallId: number;
-  infoNl: string;
-}
-
-export interface CmsProductionGridRow {
-  id: number;
-  source: ProductionWithBackwardsRefs;
-  performer: string;
-  title: string;
-  producer: string;
-  teaser: string;
-  genres: string;
-  tags: string;
-  descriptionOne: string;
-  descriptionTwo: string;
-  media: string;
-  events: number[];
-}
+import { toLocalDateTimeInput } from "./date";
+import type { CmsEventGridRow, CmsProductionGridRow } from "./types";
 
 export function emptyLangRecord(): Record<SupportedLang, string> {
   return { nl: "", fr: "", en: "" };
@@ -49,25 +15,14 @@ export function extractEventIds(values: unknown[]): number[] {
       if (typeof entry === "number" || typeof entry === "string") {
         return Number(entry);
       }
+
       if (entry && typeof entry === "object" && "id" in entry) {
         return Number((entry as { id: unknown }).id);
       }
+
       return Number.NaN;
     })
     .filter((id) => Number.isFinite(id));
-}
-
-export function toLocalDateTimeInput(value: Date | string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return local.toISOString().slice(0, 16);
-}
-
-export function toIsoStringFromLocalInput(value: string): string {
-  return new Date(value).toISOString();
 }
 
 export function makeEditorValues(map: LanguageMap | null | undefined): Record<SupportedLang, string> {
@@ -90,6 +45,7 @@ export function buildEventGridRows(
     .map((event) => {
       const hallId = event.hall as number;
       const hall = hallById.get(hallId);
+
       return {
         id: event.id,
         date: new Date(event.starts_at).toLocaleDateString("nl-BE"),

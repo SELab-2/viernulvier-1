@@ -1,6 +1,7 @@
+
 <template>
   <div class="min-h-screen bg-surface-0">
-    <AppNavbar :is-dark="isDark" @toggle-dark="isDark = !isDark" />
+    <AdminNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
 
     <main class="bg-surface-1 px-6 py-10 lg:px-10">
       <div class="mx-auto flex max-w-[1400px] flex-col gap-6">
@@ -23,32 +24,19 @@
           {{ t("cms.actions.loadedCount", { count: rowData.length }) }}
         </p>
 
-        <div class="cms-toolbar">
-          <input
-            v-model="quickFilterText"
-            type="text"
-            class="cms-search-input"
-            :placeholder="t('cms.actions.searchPlaceholder')"
-            @input="applyQuickFilter"
-          />
-
-          <div class="flex items-center gap-2">
-            <span class="cms-selected-chip">
-              {{ t("cms.actions.selectedCount", { count: selectedCount }) }}
-            </span>
-          </div>
-        </div>
-
-        <div class="cms-grid-actions">
-          <button type="button" class="cms-mini-btn" @click="fitGridColumns">Fit columns</button>
-          <button type="button" class="cms-mini-btn" @click="autoSizeGridColumns">Auto-size</button>
-          <button type="button" class="cms-mini-btn" @click="resetGridFilters">Reset filters</button>
-          <button type="button" class="cms-mini-btn" @click="exportGridCsv">Export CSV</button>
-          <button type="button" class="cms-mini-btn" @click="resetGridState">Reset state</button>
-          <button type="button" class="cms-mini-btn" @click="columnChooserOpen = !columnChooserOpen">
-            Columns
-          </button>
-        </div>
+        <CmsGridControls
+          :quick-filter-text="quickFilterText"
+          :selected-count="selectedCount"
+          :column-chooser-open="columnChooserOpen"
+          @update:quick-filter-text="quickFilterText = $event"
+          @apply-quick-filter="applyQuickFilter"
+          @fit-columns="fitGridColumns"
+          @auto-size-columns="autoSizeGridColumns"
+          @reset-filters="resetGridFilters"
+          @export-csv="exportGridCsv"
+          @reset-state="resetGridState"
+          @toggle-columns="columnChooserOpen = !columnChooserOpen"
+        />
 
         <div
           v-if="loadError"
@@ -88,105 +76,29 @@
           />
         </div>
 
-        <aside v-if="columnChooserOpen && !loadError" class="cms-column-side-popup">
-          <div class="cms-column-popover-header">
-            <span class="text-sm font-semibold text-ink-primary">Visible columns</span>
-            <button type="button" class="cms-mini-btn" @click="columnChooserOpen = false">Close</button>
-          </div>
+        <CmsColumnChooser
+          :show="columnChooserOpen && !loadError"
+          :column-options="gridColumnOptions"
+          :column-visibility="columnVisibility"
+          @close="columnChooserOpen = false"
+          @set-column-visibility="setGridColumnVisibility"
+        />
 
-          <div class="cms-column-chooser">
-            <label v-for="column in gridColumnOptions" :key="column.colId" class="cms-column-chooser-item">
-              <input
-                :checked="columnVisibility[column.colId] !== false"
-                type="checkbox"
-                @change="setGridColumnVisibility(column.colId, ($event.target as HTMLInputElement).checked)"
-              />
-              <span>{{ column.label }}</span>
-            </label>
-          </div>
-        </aside>
-
-        <aside v-if="selectedEventsProduction" class="cms-events-drawer">
-          <div class="cms-events-panel-header">
-            <div>
-              <h3 class="text-base font-semibold text-ink-primary">Events</h3>
-              <p class="text-sm text-ink-secondary">
-                {{ selectedEventsProduction.title || selectedEventsProduction.performer }}
-              </p>
-            </div>
-            <button type="button" class="cms-side-close" @click="closeEventsPanel">
-              {{ t("cms.panel.close") }}
-            </button>
-          </div>
-
-          <div class="cms-events-actions">
-            <div class="flex justify-end">
-              <button type="button" class="cms-side-save" :disabled="eventsPanelLoading" @click="openCreateEventModal">
-                + Add Event
-              </button>
-            </div>
-          </div>
-
-          <p v-if="eventsPanelLoading" class="text-sm text-ink-secondary">
-            {{ t("cms.panel.saving") }}
-          </p>
-          <p v-else-if="eventsPanelError" class="text-sm text-red-700">
-            {{ eventsPanelError }}
-          </p>
-          <p v-else-if="selectedEventRows.length === 0" class="text-sm text-ink-secondary">
-            {{ t("cms.actions.noRows") }}
-          </p>
-          <div v-else class="overflow-x-auto">
-            <table class="cms-events-table">
-              <thead>
-                <tr>
-                  <th>{{ t("cms.events.date") }}</th>
-                  <th>{{ t("cms.events.time") }}</th>
-                  <th>{{ t("cms.events.location") }}</th>
-                  <th>{{ t("cms.events.price") }}</th>
-                  <th>Info (NL)</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="eventRow in selectedEventRows"
-                  :key="eventRow.id"
-                  @focusout="onEventRowFocusOut(eventRow, $event)"
-                  @keydown.enter.prevent="onEventRowEnter(eventRow)"
-                >
-                  <td>
-                    <input v-model="eventRow.startsAt" type="datetime-local" class="cms-text-input" />
-                  </td>
-                  <td>
-                    <input v-model="eventRow.endsAt" type="datetime-local" class="cms-text-input" />
-                  </td>
-                  <td>
-                    <select v-model.number="eventRow.hallId" class="cms-text-input">
-                      <option v-for="hall in hallsData" :key="`event-${eventRow.id}-hall-${hall.id}`" :value="hall.id">
-                        {{ localizeValue(hall.name) || `Hall #${hall.id}` }}
-                      </option>
-                    </select>
-                  </td>
-                  <td>{{ eventRow.price }}</td>
-                  <td>
-                    <input v-model="eventRow.infoNl" type="text" class="cms-text-input" />
-                  </td>
-                  <td>
-                    <div class="cms-events-inline-action">
-                      <button type="button" class="cms-side-save" :disabled="eventsPanelLoading" @click="saveLinkedEvent(eventRow)">
-                        Save
-                      </button>
-                      <button type="button" class="cms-side-close" :disabled="eventsPanelLoading" @click="removeLinkedEvent(eventRow)">
-                        Remove
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </aside>
+        <CmsEventsDrawer
+          :show="selectedEventsProduction !== null"
+          :selected-production="selectedEventsProduction"
+          :selected-event-rows="selectedEventRows"
+          :halls-data="hallsData"
+          :events-panel-loading="eventsPanelLoading"
+          :events-panel-error="eventsPanelError"
+          :localize-value="localizeValue"
+          @close="closeEventsPanel"
+          @open-create-event="openCreateEventModal"
+          @save-linked-event="saveLinkedEvent"
+          @remove-linked-event="removeLinkedEvent"
+          @event-row-focus-out="onEventRowFocusOut"
+          @event-row-enter="onEventRowEnter"
+        />
 
         <p
           v-if="!isLoading && !loadError && rowData.length === 0"
@@ -361,70 +273,25 @@
       </section>
     </div>
 
-    <div
-      v-if="createEventModalOpen && selectedEventsProduction"
-      class="cms-modal-overlay"
-      @click.self="closeCreateEventModal"
-    >
-      <section class="cms-modal !h-auto !max-w-3xl" role="dialog" aria-modal="true">
-        <header class="cms-modal-header">
-          <h2 class="text-xl font-bold text-ink-primary">Add Event</h2>
-          <button type="button" class="cms-side-close" @click="closeCreateEventModal">
-            {{ t("cms.panel.close") }}
-          </button>
-        </header>
-
-        <div class="cms-modal-body">
-          <p class="text-sm text-ink-secondary">
-            {{ selectedEventsProduction.title || selectedEventsProduction.performer }}
-          </p>
-
-          <div class="cms-events-create-grid">
-            <label class="cms-form-lang-field">
-              <span class="cms-lang-label">Start</span>
-              <input v-model="createLinkedEventForm.startsAt" type="datetime-local" class="cms-text-input" />
-            </label>
-            <label class="cms-form-lang-field">
-              <span class="cms-lang-label">End</span>
-              <input v-model="createLinkedEventForm.endsAt" type="datetime-local" class="cms-text-input" />
-            </label>
-            <label class="cms-form-lang-field">
-              <span class="cms-lang-label">Doors</span>
-              <input v-model="createLinkedEventForm.doorsAt" type="datetime-local" class="cms-text-input" />
-            </label>
-            <label class="cms-form-lang-field">
-              <span class="cms-lang-label">Hall</span>
-              <select v-model.number="createLinkedEventForm.hallId" class="cms-text-input">
-                <option v-for="hall in hallsData" :key="`create-event-hall-${hall.id}`" :value="hall.id">
-                  {{ localizeValue(hall.name) || `Hall #${hall.id}` }}
-                </option>
-              </select>
-            </label>
-            <label class="cms-form-lang-field cms-events-create-info">
-              <span class="cms-lang-label">Info (NL)</span>
-              <input v-model="createLinkedEventForm.infoNl" type="text" class="cms-text-input" />
-            </label>
-          </div>
-
-          <p v-if="eventsPanelError" class="text-sm text-red-700">
-            {{ eventsPanelError }}
-          </p>
-        </div>
-
-        <footer class="cms-modal-footer">
-          <button type="button" class="cms-side-close" @click="closeCreateEventModal">
-            {{ t("cms.create.cancel") }}
-          </button>
-          <button type="button" class="cms-side-save" :disabled="eventsPanelLoading" @click="submitCreateEvent">
-            {{ eventsPanelLoading ? t("cms.panel.saving") : "Create event" }}
-          </button>
-        </footer>
-      </section>
-    </div>
+    <CmsCreateEventModal
+      :open="createEventModalOpen"
+      :selected-production="selectedEventsProduction"
+      :create-linked-event-form="createLinkedEventForm"
+      :halls-data="hallsData"
+      :events-panel-loading="eventsPanelLoading"
+      :events-panel-error="eventsPanelError"
+      :localize-value="localizeValue"
+      @close="closeCreateEventModal"
+      @submit="submitCreateEvent"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+
+import { useDarkMode } from "@/composables/useDarkMode";
+import AdminNavbar from "@/components/admin/AdminNavbar.vue";
+
 import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from "vue";
 import { AgGridVue } from "ag-grid-vue3";
 import type {
@@ -435,8 +302,11 @@ import type {
 } from "ag-grid-community";
 import { useI18n } from "vue-i18n";
 import type { Event as ArchiveEvent, Hall, ProductionWithBackwardsRefs, Tag } from "@viernulvier/shared";
-import AppNavbar from "@/components/AppNavbar.vue";
 import AppFooter from "@/components/AppFooter.vue";
+import CmsColumnChooser from "@/components/admin/cms/CmsColumnChooser.vue";
+import CmsCreateEventModal from "@/components/admin/cms/CmsCreateEventModal.vue";
+import CmsEventsDrawer from "@/components/admin/cms/CmsEventsDrawer.vue";
+import CmsGridControls from "@/components/admin/cms/CmsGridControls.vue";
 import { useCmsProductionGrid } from "@/composables/useCmsProductionGrid";
 import { i18n, SUPPORTED_LANGS, type SupportedLang } from "@/i18n";
 import {
@@ -459,7 +329,7 @@ import {
   makeEditorValues,
   toIsoStringFromLocalInput,
   toLocalDateTimeInput,
-} from "./cms-helpers";
+} from "@/services/cms";
 
 type EventGridRow = CmsEventGridRow;
 type ProductionGridRow = CmsProductionGridRow;
@@ -499,7 +369,7 @@ interface CreateFormState {
 }
 
 const { t } = useI18n();
-const isDark = ref(getInitialDark());
+const { isDark, toggleDark } = useDarkMode();
 
 const {
   agThemeVars,
@@ -1355,311 +1225,3 @@ onBeforeUnmount(() => {
   persistGridState();
 });
 </script>
-
-<style scoped>
-@reference "../../style.css";
-
-.cms-add-button {
-  @apply inline-flex w-fit items-center rounded-full border border-transparent bg-surface-inv px-5 py-2.5 text-sm font-semibold text-ink-on-inv transition hover:bg-surface-inv-raised;
-}
-
-.cms-toolbar {
-  @apply flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between;
-}
-
-.cms-grid-actions {
-  @apply flex flex-wrap items-center gap-2;
-}
-
-.cms-search-input {
-  @apply w-full rounded-md border border-surface-3 bg-surface-0 px-4 py-2 text-sm text-ink-primary placeholder:text-ink-tertiary sm:max-w-md;
-}
-
-.cms-selected-chip {
-  @apply inline-flex w-fit items-center rounded-full border border-surface-3 bg-surface-0 px-3 py-1 text-xs font-semibold text-ink-secondary;
-}
-
-.cms-mini-btn {
-  @apply rounded-md border border-surface-3 bg-surface-0 px-3 py-1 text-xs font-semibold text-ink-secondary transition hover:bg-surface-1;
-}
-
-.cms-events-drawer {
-  @apply fixed right-0 top-0 z-50 flex h-screen w-full max-w-3xl flex-col gap-4 overflow-y-auto border-l border-surface-3 bg-surface-0 p-5 shadow-2xl;
-}
-
-.cms-events-panel-header {
-  @apply mb-3 flex items-start justify-between gap-3;
-}
-
-.cms-events-table {
-  @apply min-w-full border-collapse text-sm;
-}
-
-.cms-events-actions {
-  @apply flex flex-col gap-4;
-}
-
-.cms-events-inline-action {
-  @apply flex items-center gap-2;
-}
-
-.cms-events-create-grid {
-  @apply mt-3 grid grid-cols-1 gap-3 md:grid-cols-2;
-}
-
-.cms-events-create-info {
-  @apply md:col-span-2;
-}
-
-.cms-events-table th {
-  @apply border-b border-surface-3 px-3 py-2 text-left font-semibold text-ink-primary;
-}
-
-.cms-events-table td {
-  @apply border-b border-surface-3 px-3 py-2 text-ink-secondary;
-}
-
-.cms-side-panel {
-  @apply fixed right-0 top-0 z-50 flex h-screen w-full max-w-xl flex-col border-l border-surface-3 bg-surface-0 p-5 shadow-2xl;
-}
-
-.cms-side-header {
-  @apply mb-4 flex items-center justify-between;
-}
-
-.cms-side-close {
-  @apply rounded-md border border-surface-3 px-3 py-1.5 text-sm text-ink-secondary transition hover:bg-surface-1;
-}
-
-.cms-side-body {
-  @apply flex flex-1 flex-col gap-4 overflow-y-auto;
-}
-
-.cms-side-field {
-  @apply flex flex-col gap-2;
-}
-
-.cms-side-textarea {
-  @apply min-h-28 rounded-md border border-surface-3 bg-surface-1 p-3 text-sm text-ink-primary;
-}
-
-.cms-side-footer {
-  @apply mt-4 flex justify-end;
-}
-
-.cms-side-save {
-  @apply rounded-md bg-surface-inv px-4 py-2 text-sm font-semibold text-ink-on-inv transition hover:bg-surface-inv-raised disabled:cursor-not-allowed disabled:opacity-60;
-}
-
-.cms-modal-overlay {
-  @apply fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4;
-}
-
-.cms-modal {
-  @apply flex h-[85vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-surface-3 bg-surface-0;
-}
-
-.cms-modal-header {
-  @apply flex items-center justify-between border-b border-surface-3 px-5 py-4;
-}
-
-.cms-modal-body {
-  @apply flex-1 space-y-5 overflow-y-auto px-5 py-4;
-}
-
-.cms-modal-footer {
-  @apply flex justify-end gap-2 border-t border-surface-3 px-5 py-4;
-}
-
-.cms-form-block {
-  @apply rounded-lg border border-surface-3 bg-surface-1 p-4;
-}
-
-.cms-form-legend {
-  @apply px-1 text-sm font-semibold text-ink-primary;
-}
-
-.cms-required {
-  @apply ml-1 text-red-600;
-}
-
-.cms-lang-grid {
-  @apply mt-3 grid grid-cols-1 gap-3 md:grid-cols-3;
-}
-
-.cms-lang-grid-single {
-  @apply grid-cols-1 md:grid-cols-1;
-}
-
-.cms-lang-grid-double {
-  @apply grid-cols-1 md:grid-cols-2;
-}
-
-.cms-form-lang-field {
-  @apply flex flex-col gap-2;
-}
-
-.cms-language-toggle-row {
-  @apply flex flex-wrap items-center justify-between gap-3 rounded-md border border-surface-3 bg-surface-0 px-3 py-2;
-}
-
-.cms-language-pill {
-  @apply rounded-full border border-surface-3 px-3 py-1 text-xs font-semibold text-ink-secondary transition hover:bg-surface-1;
-}
-
-.cms-language-pill.active {
-  @apply border-transparent bg-surface-inv text-ink-on-inv;
-}
-
-.cms-upload-controls {
-  @apply grid grid-cols-1 gap-3 md:grid-cols-3;
-}
-
-.cms-lang-label {
-  @apply text-xs font-semibold uppercase tracking-wide text-ink-secondary;
-}
-
-.cms-text-input {
-  @apply rounded-md border border-surface-3 bg-surface-0 px-3 py-2 text-sm text-ink-primary;
-}
-
-.cms-toggle-row {
-  @apply flex items-center gap-2 text-sm text-ink-primary;
-}
-
-:deep(.cms-truncate-cell .ag-cell-value) {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-:deep(.cms-events-action-cell .ag-cell-value) {
-  @apply cursor-pointer font-semibold text-ink-primary underline decoration-1 underline-offset-2;
-}
-
-:deep(.cms-grid .ag-header),
-:deep(.cms-grid .ag-header-viewport),
-:deep(.cms-grid .ag-pinned-left-header),
-:deep(.cms-grid .ag-pinned-right-header),
-:deep(.cms-grid .ag-header-cell),
-:deep(.cms-grid .ag-header-group-cell) {
-  background-color: var(--ag-header-background-color) !important;
-  color: var(--ag-header-foreground-color) !important;
-}
-
-:deep(.cms-grid .ag-header-cell-text),
-:deep(.cms-grid .ag-header-group-text),
-:deep(.cms-grid .ag-header-cell-label) {
-  color: var(--cms-header-fg) !important;
-}
-
-:deep(.cms-grid .ag-header-cell .ag-icon),
-:deep(.cms-grid .ag-header-select-all .ag-icon),
-:deep(.cms-grid .ag-header-cell-menu-button .ag-icon),
-:deep(.cms-grid .ag-header-cell-filter-button .ag-icon) {
-  color: var(--cms-header-fg) !important;
-}
-
-:deep(.cms-grid .ag-cell-inline-editing),
-:deep(.cms-grid .ag-cell-inline-editing .ag-cell-wrapper),
-:deep(.cms-grid .ag-cell-inline-editing .ag-cell-edit-wrapper) {
-  background-color: inherit !important;
-}
-
-:deep(.cms-grid .ag-cell-inline-editing .ag-input-field-input),
-:deep(.cms-grid .ag-cell-inline-editing .ag-text-field-input),
-:deep(.cms-grid .ag-cell-inline-editing input),
-:deep(.cms-grid .ag-cell-inline-editing textarea) {
-  background-color: var(--ag-background-color) !important;
-  color: var(--ag-foreground-color) !important;
-  caret-color: var(--ag-foreground-color) !important;
-}
-
-:deep(.cms-grid-dark .ag-cell-inline-editing .ag-input-field-input),
-:deep(.cms-grid-dark .ag-cell-inline-editing .ag-text-field-input),
-:deep(.cms-grid-dark .ag-cell-inline-editing input),
-:deep(.cms-grid-dark .ag-cell-inline-editing textarea) {
-  background-color: var(--surface-0) !important;
-  color: var(--ink-primary) !important;
-  caret-color: var(--ink-primary) !important;
-}
-
-:deep(.cms-grid-light .ag-cell-inline-editing .ag-input-field-input),
-:deep(.cms-grid-light .ag-cell-inline-editing .ag-text-field-input),
-:deep(.cms-grid-light .ag-cell-inline-editing input),
-:deep(.cms-grid-light .ag-cell-inline-editing textarea) {
-  background-color: var(--surface-0) !important;
-  color: var(--ink-primary) !important;
-  caret-color: var(--ink-primary) !important;
-}
-
-:deep(.cms-grid-dark .ag-header-cell-text),
-:deep(.cms-grid-dark .ag-header-group-text),
-:deep(.cms-grid-dark .ag-header-cell-label),
-:deep(.cms-grid-dark .ag-header-cell .ag-icon),
-:deep(.cms-grid-dark .ag-header-select-all .ag-icon),
-:deep(.cms-grid-dark .ag-header-cell-menu-button .ag-icon),
-:deep(.cms-grid-dark .ag-header-cell-filter-button .ag-icon) {
-  color: #ede8df !important;
-}
-
-:deep(.cms-grid-light .ag-header-cell-text),
-:deep(.cms-grid-light .ag-header-group-text),
-:deep(.cms-grid-light .ag-header-cell-label),
-:deep(.cms-grid-light .ag-header-cell .ag-icon),
-:deep(.cms-grid-light .ag-header-select-all .ag-icon),
-:deep(.cms-grid-light .ag-header-cell-menu-button .ag-icon),
-:deep(.cms-grid-light .ag-header-cell-filter-button .ag-icon) {
-  color: #2b2826 !important;
-}
-
-:deep(html.dark .cms-grid .ag-header-cell-text),
-:deep(html.dark .cms-grid .ag-header-group-text),
-:deep(html.dark .cms-grid .ag-header-cell-label),
-:deep(html.dark .cms-grid .ag-header-cell .ag-icon),
-:deep(html.dark .cms-grid .ag-header-select-all .ag-icon),
-:deep(html.dark .cms-grid .ag-header-cell-menu-button .ag-icon),
-:deep(html.dark .cms-grid .ag-header-cell-filter-button .ag-icon) {
-  color: #ede8df !important;
-}
-
-:deep(html:not(.dark) .cms-grid .ag-header-cell-text),
-:deep(html:not(.dark) .cms-grid .ag-header-group-text),
-:deep(html:not(.dark) .cms-grid .ag-header-cell-label),
-:deep(html:not(.dark) .cms-grid .ag-header-cell .ag-icon),
-:deep(html:not(.dark) .cms-grid .ag-header-select-all .ag-icon),
-:deep(html:not(.dark) .cms-grid .ag-header-cell-menu-button .ag-icon),
-:deep(html:not(.dark) .cms-grid .ag-header-cell-filter-button .ag-icon) {
-  color: #2b2826 !important;
-}
-
-:deep(.cms-grid .ag-row.ag-row-selected),
-:deep(.cms-grid .ag-row.ag-row-selected .ag-cell),
-:deep(.cms-grid .ag-cell-range-selected),
-:deep(.cms-grid .ag-cell-range-single-cell),
-:deep(.cms-grid .ag-cell.ag-cell-focus.ag-cell-range-selected) {
-  background-color: var(--cms-selected-row-bg) !important;
-}
-
-:deep(.cms-grid .ag-row.ag-row-selected::before) {
-  background: transparent !important;
-  border: 0 !important;
-}
-
-:deep(.cms-grid .ag-checkbox-input-wrapper) {
-  color: var(--cms-checkbox-color) !important;
-  background-color: transparent !important;
-  border-color: color-mix(in srgb, var(--cms-checkbox-color) 90%, transparent) !important;
-}
-
-:deep(.cms-grid .ag-checkbox-input-wrapper.ag-checked),
-:deep(.cms-grid .ag-checkbox-input-wrapper.ag-indeterminate) {
-  color: var(--cms-checkbox-color) !important;
-  background-color: color-mix(in srgb, var(--cms-checkbox-color) 34%, transparent) !important;
-  border-color: var(--cms-checkbox-color) !important;
-}
-
-:deep(.dark .cms-grid .ag-checkbox-input-wrapper) {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink-on-inv) 45%, transparent) inset;
-}
-</style>

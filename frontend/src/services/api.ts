@@ -14,20 +14,7 @@
 
 /** Root path prepended to every {@link apiFetch} call. */
 const API_BASE = "/api/v1";
-const AUTH_TOKEN_STORAGE_KEY = "viernulvier-auth-token";
 
-export function getStoredAuthToken(): string | null {
-  return localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
-}
-
-export function setStoredAuthToken(token: string | null): void {
-  if (token) {
-    localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
-    return;
-  }
-
-  localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
-}
 
 // ---------------------------------------------------------------------------
 // ApiError

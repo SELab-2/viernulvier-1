@@ -8,7 +8,7 @@ import {
   makeEditorValues,
   toIsoStringFromLocalInput,
   toLocalDateTimeInput,
-} from "@/views/admin/cms-helpers";
+} from "@/services/cms";
 
 const collectProductionTagsByIdMapMock = vi.hoisted(() => vi.fn());
 
