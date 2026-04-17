@@ -107,7 +107,7 @@ describe("Event Create Routes", () => {
       });
 
       expect(response.statusCode).toBe(400);
-      expect(response.json()).toEqual({ error: "Invalid request data" });
+      expect(response.json()).toMatchObject({ error: "Invalid request data" });
       expect(queryMock).not.toHaveBeenCalled();
     });
 

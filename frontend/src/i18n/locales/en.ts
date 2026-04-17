@@ -89,6 +89,14 @@ export default {
       contactLabel: "Contact us",
     },
   },
+  blogpost: {
+    loading: "Loading blogpost…",
+    notFound: "Blogpost not found",
+    notFoundDescription: "This blogpost does not exist or is no longer available.",
+    errorGeneric: "Something went wrong while loading this blogpost.",
+    publishedOn: "Published on {date}",
+    backToHome: "Back to home",
+  },
   admin: {
     login: {
       title: "Sign in to continue",
