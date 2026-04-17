@@ -1,235 +1,98 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { mount, flushPromises } from "@vue/test-utils";
-import { defineComponent } from "vue";
-import { useProductionEvents } from "@/composables/useProductionEvents";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  getEventPrices,
+  getEventPrice,
+  getEventPriceWithMeta,
+  createEventPrice,
+  replaceEventPrice,
+  updateEventPrice,
+  deleteEventPrice,
+} from "@/services/eventPrices";
 
-// ─── Mock services ────────────────────────────────────────────────────────────
-const mockGetEvents = vi.fn();
-const mockGetHalls = vi.fn();
-const mockGetEventPrices = vi.fn();
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
-vi.mock("@/services/events", () => ({
-  getEvents: (...a: any[]) => mockGetEvents(...a),
-}));
-
-vi.mock("@/services/halls", () => ({
-  getHalls: (...a: any[]) => mockGetHalls(...a),
-}));
-
-vi.mock("@/services/eventPrices", () => ({
-  getEventPrices: (...a: any[]) => mockGetEventPrices(...a),
-}));
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function mountComposable(productionId = 1) {
-  let result: ReturnType<typeof useProductionEvents>;
-
-  mount(
-    defineComponent({
-      setup() {
-        result = useProductionEvents(productionId);
-        return {};
-      },
-      template: "<div />",
-    }),
-  );
-
-  return result!;
+function mockOk(body: unknown = {}, status = 200) {
+  return vi.fn().mockResolvedValue({
+    ok: true,
+    status,
+    statusText: "OK",
+    json: vi.fn().mockResolvedValue(body),
+  });
 }
 
-const makeHall = (id: number) => ({
-  id,
-  old_id: null,
-  address: `Street ${id}`,
-  name: { nl: `Zaal ${id}`, en: `Hall ${id}`, fr: `Salle ${id}` },
+function lastCall(): [string, RequestInit] {
+  const calls = (fetch as ReturnType<typeof vi.fn>).mock.calls as [
+    string,
+    RequestInit,
+  ][];
+  return calls[calls.length - 1]!;
+}
+
+const pricePayload = { id: 5, event: 7, amount: 18.5 };
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+beforeEach(() => vi.stubGlobal("fetch", mockOk(pricePayload)));
+afterEach(() => vi.unstubAllGlobals());
+
+describe("getEventPrices", () => {
+  it("GETs /api/v1/event/price", async () => {
+    vi.stubGlobal("fetch", mockOk([pricePayload]));
+    await getEventPrices();
+    expect(lastCall()[0]).toBe("/api/v1/event/price");
+    expect(lastCall()[1].method).toBeUndefined();
+  });
 });
 
-const makeEvent = (overrides: Record<string, unknown> = {}) => ({
-  id: 1,
-  old_id: null,
-  starts_at: new Date("2024-06-01T19:00:00"),
-  ends_at: new Date("2024-06-01T21:30:00"),
-  doors_at: new Date("2024-06-01T18:30:00"),
-  info: {},
-  production: 1,
-  hall: 10,
-  ...overrides,
+describe("getEventPrice", () => {
+  it("GETs /api/v1/event/price/:id", async () => {
+    await getEventPrice(5);
+    expect(lastCall()[0]).toBe("/api/v1/event/price/5");
+  });
 });
 
-const makePrice = (eventId: number, amount: number) => ({
-  event: eventId,
-  amount,
+describe("getEventPriceWithMeta", () => {
+  it("GETs /api/v1/event/price/:id/meta", async () => {
+    await getEventPriceWithMeta(5);
+    expect(lastCall()[0]).toBe("/api/v1/event/price/5/meta");
+  });
 });
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
-describe("useProductionEvents", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockGetEvents.mockResolvedValue([]);
-    mockGetHalls.mockResolvedValue([]);
-    mockGetEventPrices.mockResolvedValue([]);
+describe("createEventPrice", () => {
+  it("POSTs to /api/v1/event/price", async () => {
+    const input = { event: 7, amount: 18.5 };
+    await createEventPrice(input);
+    expect(lastCall()[0]).toBe("/api/v1/event/price");
+    expect(lastCall()[1].method).toBe("POST");
+    expect(lastCall()[1].body).toBe(JSON.stringify(input));
   });
+});
 
-  // ── Initial state ────────────────────────────────────────────────────────────
-  describe("initial state", () => {
-    it("loading is true before the requests settle", () => {
-      mockGetEvents.mockReturnValue(new Promise(() => {}));
-      mockGetHalls.mockReturnValue(new Promise(() => {}));
-      mockGetEventPrices.mockReturnValue(new Promise(() => {}));
-
-      const { loading } = mountComposable();
-      expect(loading.value).toBe(true);
-    });
-
-    it("events is an empty array before the requests settle", () => {
-      mockGetEvents.mockReturnValue(new Promise(() => {}));
-      mockGetHalls.mockReturnValue(new Promise(() => {}));
-      mockGetEventPrices.mockReturnValue(new Promise(() => {}));
-
-      const { events } = mountComposable();
-      expect(events.value).toEqual([]);
-    });
+describe("replaceEventPrice", () => {
+  it("PUTs to /api/v1/event/price/:id", async () => {
+    await replaceEventPrice(5, { event: 7, amount: 20.0 });
+    expect(lastCall()[0]).toBe("/api/v1/event/price/5");
+    expect(lastCall()[1].method).toBe("PUT");
   });
+});
 
-  // ── After fetch ─────────────────────────────────────────────────────────────
-  describe("after a successful fetch", () => {
-    it("loading becomes false", async () => {
-      const { loading } = mountComposable();
-      await flushPromises();
-      expect(loading.value).toBe(false);
-    });
-
-    it("calls getEvents with correct productionId", async () => {
-      mountComposable(42);
-      await flushPromises();
-      expect(mockGetEvents).toHaveBeenCalledWith(42);
-    });
-
-    it("calls all services once", async () => {
-      mountComposable();
-      await flushPromises();
-
-      expect(mockGetEvents).toHaveBeenCalledTimes(1);
-      expect(mockGetHalls).toHaveBeenCalledTimes(1);
-      expect(mockGetEventPrices).toHaveBeenCalledTimes(1);
-    });
+describe("updateEventPrice", () => {
+  it("PATCHes /api/v1/event/price/:id", async () => {
+    await updateEventPrice(5, { amount: 22.0 });
+    expect(lastCall()[0]).toBe("/api/v1/event/price/5");
+    expect(lastCall()[1].method).toBe("PATCH");
   });
+});
 
-  // ── Hall matching ───────────────────────────────────────────────────────────
-  describe("enrichedEvents — hall matching", () => {
-    it("attaches matching hall", async () => {
-      const hall = makeHall(10);
-      mockGetEvents.mockResolvedValue([makeEvent({ id: 1, hall: 10 })]);
-      mockGetHalls.mockResolvedValue([hall]);
-
-      const { events } = mountComposable();
-      await flushPromises();
-
-      expect(events.value[0].hall).toEqual(hall);
-    });
-
-    it("returns null if no match", async () => {
-      mockGetEvents.mockResolvedValue([makeEvent({ id: 1, hall: 99 })]);
-      mockGetHalls.mockResolvedValue([makeHall(10)]);
-
-      const { events } = mountComposable();
-      await flushPromises();
-
-      expect(events.value[0].hall).toBeNull();
-    });
-  });
-
-  // ── Price calculation ───────────────────────────────────────────────────────
-  describe("enrichedEvents — price calculation", () => {
-    it("returns null when no prices exist", async () => {
-      mockGetEvents.mockResolvedValue([makeEvent({ id: 1 })]);
-      mockGetEventPrices.mockResolvedValue([]);
-
-      const { events } = mountComposable();
-      await flushPromises();
-
-      expect(events.value[0].minPrice).toBeNull();
-      expect(events.value[0].maxPrice).toBeNull();
-    });
-
-    it("calculates min/max for single price", async () => {
-      mockGetEvents.mockResolvedValue([makeEvent({ id: 1 })]);
-      mockGetEventPrices.mockResolvedValue([
-        makePrice(1, 15),
-      ]);
-
-      const { events } = mountComposable();
-      await flushPromises();
-
-      expect(events.value[0].minPrice).toBe(15);
-      expect(events.value[0].maxPrice).toBe(15);
-    });
-
-    it("calculates min/max for multiple prices", async () => {
-      mockGetEvents.mockResolvedValue([makeEvent({ id: 1 })]);
-      mockGetEventPrices.mockResolvedValue([
-        makePrice(1, 20),
-        makePrice(1, 5),
-        makePrice(1, 12),
-      ]);
-
-      const { events } = mountComposable();
-      await flushPromises();
-
-      expect(events.value[0].minPrice).toBe(5);
-      expect(events.value[0].maxPrice).toBe(20);
-    });
-
-    it("handles identical prices", async () => {
-      mockGetEvents.mockResolvedValue([makeEvent({ id: 1 })]);
-      mockGetEventPrices.mockResolvedValue([
-        makePrice(1, 10),
-        makePrice(1, 10),
-      ]);
-
-      const { events } = mountComposable();
-      await flushPromises();
-
-      expect(events.value[0].minPrice).toBe(10);
-      expect(events.value[0].maxPrice).toBe(10);
-    });
-  });
-
-  // ── Multiple events ─────────────────────────────────────────────────────────
-  describe("enrichedEvents — multiple events", () => {
-    it("enriches each event independently", async () => {
-      const hall10 = makeHall(10);
-      const hall20 = makeHall(20);
-
-      mockGetHalls.mockResolvedValue([hall10, hall20]);
-
-      mockGetEvents.mockResolvedValue([
-        makeEvent({ id: 1, hall: 10 }),
-        makeEvent({ id: 2, hall: 20 }),
-        makeEvent({ id: 3, hall: 99 }),
-      ]);
-
-      mockGetEventPrices.mockResolvedValue([
-        makePrice(1, 8),
-        makePrice(2, 25),
-        makePrice(2, 30),
-      ]);
-
-      const { events } = mountComposable();
-      await flushPromises();
-
-      expect(events.value[0].hall).toEqual(hall10);
-      expect(events.value[0].minPrice).toBe(8);
-      expect(events.value[0].maxPrice).toBe(8);
-
-      expect(events.value[1].hall).toEqual(hall20);
-      expect(events.value[1].minPrice).toBe(25);
-      expect(events.value[1].maxPrice).toBe(30);
-
-      expect(events.value[2].hall).toBeNull();
-      expect(events.value[2].minPrice).toBeNull();
-      expect(events.value[2].maxPrice).toBeNull();
-    });
+describe("deleteEventPrice", () => {
+  it("DELETEs /api/v1/event/price/:id", async () => {
+    vi.stubGlobal("fetch", mockOk({}, 204));
+    await deleteEventPrice(5);
+    expect(lastCall()[0]).toBe("/api/v1/event/price/5");
+    expect(lastCall()[1].method).toBe("DELETE");
   });
 });
