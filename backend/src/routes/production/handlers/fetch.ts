@@ -155,6 +155,7 @@ export type PaginatedProductions = {
  * - Optional `tags`: comma-separated tag IDs — production must include **every** tag.
  * - Optional `yearMin` / `yearMax` (inclusive) — event year must fall in that span.
  * - Optional `from` / `to` (`YYYY-MM-DD`) — production must have an event in that range (venue TZ).
+ * - Optional `old_id` — legacy id; when set, only `p.old_id` (same as staging; other filters ignored).
  *
  * @param server - The Fastify instance, used for database access and logging.
  * @param request - The Fastify request; optional list query params as documented above.
@@ -188,6 +189,7 @@ export async function fetchProductions(
     yearRange,
     dateFrom,
     dateTo,
+    query.old_id,
   );
 
   let result: QueryResult<ProductionWithBackwardsRefs>;

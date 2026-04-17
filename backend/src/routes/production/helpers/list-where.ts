@@ -27,8 +27,7 @@ function escapeIlikePattern(value: string): string {
 }
 
 /**
- * Combined WHERE for public list: text search (AND across terms), tag IDs (AND),
- * optional inclusive calendar-year span on events, and/or event date range on `starts_at`.
+ * Combined WHERE for public list: text search, tags, year span, date span; or `legacyOldId` alone (`WHERE p.old_id = $1`, staging-compatible).
  */
 export function buildProductionListWhere(
   searchTerms: string[],
@@ -36,7 +35,12 @@ export function buildProductionListWhere(
   yearRange: { from: number; to: number } | undefined,
   dateFrom: string | undefined,
   dateTo: string | undefined,
+  legacyOldId?: number | undefined,
 ): { whereSql: string; params: unknown[] } {
+  if (legacyOldId !== undefined) {
+    return { whereSql: " WHERE p.old_id = $1", params: [legacyOldId] };
+  }
+
   const parts: string[] = [];
   const params: unknown[] = [];
 
