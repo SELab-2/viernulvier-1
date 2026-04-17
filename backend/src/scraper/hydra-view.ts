@@ -11,6 +11,23 @@ export function resolveViernulvierResourceUrl(pathOrUrl: string): string {
   return `${origin}${s.startsWith("/") ? s : `/${s}`}`;
 }
 
+/** Hydra / JSON-LD link: plain IRI string or `{ "@id": "..." }`. */
+export function hydraIriString(ref: unknown): string | null {
+  if (ref == null) return null;
+  if (typeof ref === "string") {
+    const t = ref.trim();
+    return t === "" ? null : t;
+  }
+  if (typeof ref === "object" && ref !== null && "@id" in ref) {
+    const id = (ref as { "@id": unknown })["@id"];
+    if (typeof id === "string") {
+      const t = id.trim();
+      return t === "" ? null : t;
+    }
+  }
+  return null;
+}
+
 /**
  * Reads the `page` query from a Hydra partial collection view IRI (API Platform).
  * IRIs may be absolute or path-only (e.g. `/api/v1/halls?page=9`); relative ones are resolved against `baseOrigin`.

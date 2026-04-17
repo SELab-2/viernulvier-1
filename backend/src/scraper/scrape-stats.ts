@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -133,16 +133,17 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
 
 /**
  * Where to write {@link formatRunReport} output. Override with `SCRAPE_STATS_FILE` (absolute or relative to cwd).
- * Default file: `backend/scripts/last-scrape-stats.txt` (next to `scripts/scrape.ts`).
+ * Default file: `backend/out/last-scrape-stats.log` (see repo `.gitignore`).
  */
 export function resolveScrapeStatsOutputPath(): string {
   const fromEnv = process.env["SCRAPE_STATS_FILE"]?.trim();
   if (fromEnv !== undefined && fromEnv !== "") {
     return path.isAbsolute(fromEnv) ? fromEnv : path.join(process.cwd(), fromEnv);
   }
-  return path.join(repoRoot, "backend", "scripts", "last-scrape-stats.txt");
+  return path.join(repoRoot, "backend", "out", "last-scrape-stats.log");
 }
 
 export async function writeRunReportFile(report: string, filePath: string): Promise<void> {
+  await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, `${report}\n`, "utf8");
 }

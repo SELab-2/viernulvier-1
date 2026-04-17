@@ -6,5 +6,5 @@ node_modules
 .claude/
 database_data
 data/imports/*.csv
-backend/scripts/last-scrape-stats.txt
+backend/out/
 .DS_Store

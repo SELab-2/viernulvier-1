@@ -6,8 +6,7 @@
  */
 import type { Tag, TagType } from "@viernulvier/shared/index.js";
 
-import { hydraIriString } from "./hall.js";
-import { resolveViernulvierResourceUrl } from "./hydra-view.js";
+import { hydraIriString, resolveViernulvierResourceUrl } from "./hydra-view.js";
 import {
   coerceLanguageMap,
   plainTextFromHtmlish,

@@ -2,6 +2,7 @@ import type { Hall } from "@viernulvier/shared/index.js";
 
 import { fetchScraperJwt } from "./auth.js";
 import {
+  hydraIriString,
   resolveViernulvierResourceUrl,
   totalPagesFromHydraView,
 } from "./hydra-view.js";
@@ -107,23 +108,6 @@ async function fetchHallsListMeta(
  * Maps space resource URL (trimmed) → resolved address or `null` when unknown (avoids duplicate venue fetches).
  */
 const spaceAddressCache = new Map<string, string | null>();
-
-/** Hydra / JSON-LD link: plain IRI string or `{ "@id": "..." }`. */
-export function hydraIriString(ref: unknown): string | null {
-  if (ref == null) return null;
-  if (typeof ref === "string") {
-    const t = ref.trim();
-    return t === "" ? null : t;
-  }
-  if (typeof ref === "object" && ref !== null && "@id" in ref) {
-    const id = (ref as { "@id": unknown })["@id"];
-    if (typeof id === "string") {
-      const t = id.trim();
-      return t === "" ? null : t;
-    }
-  }
-  return null;
-}
 
 /**
  * Hall → Space (if IRI present) → Location (if space has `location` IRI) → formatted `address` or `null`.
