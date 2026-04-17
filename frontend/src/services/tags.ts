@@ -124,6 +124,19 @@ export async function getAllTags(productionId?: number): Promise<Tag[]> {
 }
 
 /**
+ * Fetches tags linked to one production.
+ *
+ * @param productionId Production ID to filter tags for.
+ * @param options.includeHidden When true, uses the admin endpoint and includes hidden tags.
+ */
+export async function getTagsForProduction(
+  productionId: number,
+  options?: { includeHidden?: boolean },
+): Promise<Tag[]> {
+  return options?.includeHidden ? await getAllTags(productionId) : await getTags(productionId);
+}
+
+/**
  * Fetches any tag by ID, regardless of its `public` flag.
  *
  * @param id The tag's primary key.

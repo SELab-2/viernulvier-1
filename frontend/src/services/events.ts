@@ -30,6 +30,8 @@ import type { LanguageMap } from "@/utils/i18n";
  * Dates can be ISO 8601 strings — the backend coerces them.
  */
 export interface CreateEventInput {
+  /** Optional legacy ID; can be null for newly created events. */
+  old_id?: number | null;
   /** ID of the production this event belongs to. */
   production: number;
   /** ID of the hall (venue) where the event takes place. */
@@ -40,8 +42,8 @@ export interface CreateEventInput {
   ends_at: string | Date;
   /** Time doors open. ISO 8601 string or Date. */
   doors_at: string | Date;
-  /** External vendor ID. */
-  vendor_id: number;
+  /** Optional external vendor ID. */
+  vendor_id?: number;
   /** Additional info text shown to the public. */
   info: LanguageMap;
 }

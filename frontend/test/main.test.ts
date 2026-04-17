@@ -1,19 +1,44 @@
-import { describe, test, expect, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 describe("main", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+  });
+
+  async function importMainWithMocks() {
+    vi.doMock("vue-router", () => ({
+      RouterView: {
+        name: "RouterView",
+        template: '<div data-testid="router-view" />',
+      },
+    }));
+    vi.doMock("@/router", () => ({
+      default: { install: vi.fn() },
+    }));
+    vi.doMock("@/i18n", () => ({
+      i18n: { install: vi.fn() },
+    }));
+    vi.doMock("pinia", () => ({
+      createPinia: vi.fn(() => ({ install: vi.fn() })),
+    }));
+
+    return await import("@/main");
+  }
+
   test("mounts app to #app", async () => {
-    // mock body
     document.body.innerHTML = `<div id="app"></div>`;
 
-    await import("@/main");
+    const { app } = await importMainWithMocks();
 
     expect(document.querySelector("#app")?.innerHTML).not.toBe("");
+    app.unmount();
   });
 
   test("errorHandler logs the error to console", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const { app } = await import("@/main");
+    const { app } = await importMainWithMocks();
 
     const err = new Error("test");
 
@@ -26,6 +51,7 @@ describe("main", () => {
       null,
     );
 
+    app.unmount();
     consoleSpy.mockRestore();
   });
 });

@@ -1,0 +1,41 @@
+/*
+ * CMS view-level styles
+ * Owns: side panel presentation.
+ * Avoid adding AG Grid internals or modal/create-form styles here; those live in CMS components.
+ */
+
+.cms-add-button {
+  @apply inline-flex w-fit items-center rounded-full border border-transparent bg-surface-inv px-5 py-2.5 text-sm font-semibold text-ink-on-inv transition hover:bg-surface-inv-raised;
+}
+
+.cms-side-panel {
+  @apply fixed right-0 top-0 z-50 flex h-screen w-full max-w-xl flex-col border-l border-surface-3 bg-surface-0 p-5 shadow-2xl;
+}
+
+.cms-side-header {
+  @apply mb-4 flex items-center justify-between;
+}
+
+.cms-side-close {
+  @apply rounded-md border border-surface-3 px-3 py-1.5 text-sm text-ink-secondary transition hover:bg-surface-1;
+}
+
+.cms-side-body {
+  @apply flex flex-1 flex-col gap-4 overflow-y-auto;
+}
+
+.cms-side-field {
+  @apply flex flex-col gap-2;
+}
+
+.cms-side-textarea {
+  @apply min-h-28 rounded-md border border-surface-3 bg-surface-1 p-3 text-sm text-ink-primary;
+}
+
+.cms-side-footer {
+  @apply mt-4 flex justify-end;
+}
+
+.cms-side-save {
+  @apply rounded-md bg-surface-inv px-4 py-2 text-sm font-semibold text-ink-on-inv transition hover:bg-surface-inv-raised disabled:cursor-not-allowed disabled:opacity-60;
+}
