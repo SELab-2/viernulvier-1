@@ -61,7 +61,7 @@ export function useTagGroups(productionId: number) {
           grouped.set(typeId, []);
         }
 
-        grouped.get(typeId)!.push(tProd(tag.name));
+        grouped.get(typeId)!.push(translatedName);
       }
     }
 

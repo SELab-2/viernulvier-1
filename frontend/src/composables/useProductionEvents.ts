@@ -35,6 +35,7 @@ export function useProductionEvents(productionId: number) {
   const halls = ref<Hall[]>([]);
   const pricesByEventId = ref<Record<number, EventPrice[]>>({});
   const loading = ref(true);
+  const error = ref<Error | null>(null);
 
   onMounted(async () => {
     try {
@@ -46,6 +47,8 @@ export function useProductionEvents(productionId: number) {
       events.value = eventData;
       halls.value = hallData;
       pricesByEventId.value = groupPricesForEvents(eventData, priceRows);
+    } catch (err) {
+      error.value = err instanceof Error ? err : new Error("Unknown error");
     } finally {
       loading.value = false;
     }
@@ -79,5 +82,6 @@ export function useProductionEvents(productionId: number) {
   return {
     events: enrichedEvents,
     loading,
+    error,
   };
 }
