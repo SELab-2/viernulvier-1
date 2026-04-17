@@ -11,7 +11,7 @@
     </div>
     
     <div class="relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-between gap-12 px-6 pb-20 md:flex-row md:items-end md:px-12">
-      <div ref="heroContent" class="opacity-0 animate-fade-up max-w-4xl">
+      <div class="opacity-0 animate-fade-up max-w-4xl">
         <div class="mb-4 flex flex-col gap-2">
           <span class="text-sm font-bold uppercase tracking-[0.3em] text-ink-on-inv opacity-70">
             {{ content.supertitle }}
@@ -31,7 +31,7 @@
         </div>
       </div>
 
-      <div ref="statsContent" class="opacity-0 animate-fade-in flex flex-col gap-6 text-ink-on-inv md:items-end">
+      <div class="opacity-0 animate-fade-in flex flex-col gap-6 text-ink-on-inv md:items-end">
         <div class="flex flex-col gap-1 items-start md:items-end">
   
           <span class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">
