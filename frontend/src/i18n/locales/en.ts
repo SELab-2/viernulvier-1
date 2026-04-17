@@ -79,6 +79,7 @@ export default {
       show_all: "Show All Events",
       show_less: "Show Less",
       remaining_more: "(+ {count} more)",
+      none_found: "No performance dates for this production were found in our archive.",
     },
     notFound: {
       title: "Production not found",

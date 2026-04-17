@@ -80,6 +80,7 @@ export default {
       show_all: "Afficher tous les événements",
       show_less: "Afficher moins",
       remaining_more: "(+ {count} de plus)",
+      none_found: "Aucune date de représentation n'a été trouvée dans nos archives pour cette production.",
     },
     notFound: {
       title: "Production introuvable",

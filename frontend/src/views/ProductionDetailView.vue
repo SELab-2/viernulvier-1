@@ -29,7 +29,7 @@
           :tag-groups="tagGroups" 
           :total-tags="totalTags" 
         />
-        <EventsSection :events="events" />
+        <EventsSection :events="events" :loading="eventsLoading" />
         <GallerySection />
         <BlogSection />
       </template>
@@ -85,7 +85,7 @@ onMounted(async () => {
 });
 
 const { tagGroups, totalTags } = useTagGroups(id);
-const { events } = useProductionEvents(id);
+const { events, loading: eventsLoading } = useProductionEvents(id);
 
 /**
  * Computed statistics derived from the events list.

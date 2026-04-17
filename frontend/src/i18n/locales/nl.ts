@@ -80,6 +80,7 @@ export default {
       show_all: "Toon alle evenementen",
       show_less: "Toon minder",
       remaining_more: "(+ {count} meer)",
+      none_found: "Er zijn geen speeldata voor deze productie gevonden in ons archief.",
     },
     notFound: {
       title: "Productie niet gevonden",
