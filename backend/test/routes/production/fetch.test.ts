@@ -157,10 +157,10 @@ describe("Production fetch routes", () => {
     expect(parsed).toEqual([ProductionSchemaWithBackwardsRefs.parse(baseProduction)]);
   });
 
-  test("GET /api/v1/production?old_id=…&limit=10 -> filters by legacy id (staging contract)", async () => {
+  test("GET /api/v1/production?old_id=…&limit=10 -> filters by legacy id", async () => {
     const response = await server.inject({
       method: "GET",
-      url: `/api/v1/production?old_id=${baseProduction.old_id}&limit=10&offset=0`,
+      url: `/api/v1/production?old_id=${baseProduction["old_id"]}&limit=10&offset=0`,
       cookies: { session: sessionCookie },
     });
 

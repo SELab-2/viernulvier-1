@@ -6,7 +6,7 @@ import { languageMap, primaryKey } from "./helpers.js";
 export const HallSchema = createSchema({
   id: primaryKey(),
   old_id: z.int().nonnegative().nullable(),
-  address: z.string(),
+  address: z.string().nullable(),
   name: languageMap,
 
   // unnecessary
@@ -15,7 +15,6 @@ export const HallSchema = createSchema({
   // seat_selection: z.boolean().nullable(),
   // open_seating: z.boolean().nullable(),
   // remark: z.json().nullable(),
-  // space: z.json().nullable(),
 });
 
 export type Hall = z.infer<typeof HallSchema>;

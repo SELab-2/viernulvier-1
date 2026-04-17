@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-surface-0">
+  <div class="flex min-h-screen flex-col bg-surface-0">
     <AppNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
     <main>
       <section
@@ -621,6 +621,13 @@ const hasActiveListFilters = computed(() => {
   return false;
 });
 
+const eventsByProduction = ref(new Map<number, ProductionEvent[]>());
+const tagsById = ref(new Map<number, Tag>());
+const tagTypesById = ref(new Map<number, TagType>());
+const hallsById = ref(new Map<number, Hall>());
+
+const locale = computed(() => i18n.global.locale.value as SupportedLang);
+
 const emptyStateMessage = computed(() => {
   const hasSearch = appliedSearchTerms.value.length > 0;
   const hasOther =
@@ -891,12 +898,6 @@ const rangeFrom = computed(() =>
 const rangeTo = computed(() =>
   Math.min((currentPage.value + 1) * PAGE_SIZE, totalCount.value),
 );
-const eventsByProduction = ref(new Map<number, ProductionEvent[]>());
-const tagsById = ref(new Map<number, Tag>());
-const tagTypesById = ref(new Map<number, TagType>());
-const hallsById = ref(new Map<number, Hall>());
-
-const locale = computed(() => i18n.global.locale.value as SupportedLang);
 
 const genreTagsForFilter = computed(() => {
   const lang = locale.value;
@@ -1016,6 +1017,7 @@ onMounted(async () => {
     tagTypesById.value = new Map(tagTypes.map((tt) => [tt.id, tt]));
     hallsById.value = hallMapById(halls);
 
+    /** Events for listing cards are loaded per page (see fetchProductionsPageData), not the full catalog. */
     await fetchProductionsPageData(page0);
 
     const tp = totalPages.value;

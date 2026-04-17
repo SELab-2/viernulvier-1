@@ -58,8 +58,13 @@ const FALLBACK_ORDER: Language[] = ["nl", "en", "fr"];
  * localize({ nl: "Welkom" }, "en");       // → "Welkom"  (nl fallback)
  * localize({ en: "Welcome" }, "en");      // → "Welcome"
  * localize({}, "nl");                     // → null
+ * localize(null, "nl");                   // → null  (nullable JSON fields from the API)
  */
-export function localize(map: LanguageMap, lang: Language): string | null {
+export function localize(
+  map: LanguageMap | null | undefined,
+  lang: Language,
+): string | null {
+  if (map === null || map === undefined) return null;
   if (map[lang] !== undefined) return map[lang] as string;
 
   for (const fallback of FALLBACK_ORDER) {
@@ -76,14 +81,18 @@ export function localize(map: LanguageMap, lang: Language): string | null {
  * text is available. Useful for binding directly to template attributes that
  * expect a `string`.
  *
- * @param map  A `LanguageMap` from the API.
+ * @param map  A `LanguageMap` from the API, or `null` when the field is unset.
  * @param lang The preferred language code.
  *
  * @example
  * localizeOrEmpty({ nl: "Welkom" }, "fr"); // → "Welkom"  (fallback)
  * localizeOrEmpty({}, "nl");               // → ""
+ * localizeOrEmpty(null, "nl");            // → ""
  */
-export function localizeOrEmpty(map: LanguageMap, lang: Language): string {
+export function localizeOrEmpty(
+  map: LanguageMap | null | undefined,
+  lang: Language,
+): string {
   return localize(map, lang) ?? "";
 }
 
@@ -120,7 +129,11 @@ export function emptyLanguageMap(): LanguageMap {
  * hasLanguage({ nl: "Welkom" }, "en"); // → false
  * hasLanguage({ nl: "Welkom" }, "nl"); // → true
  */
-export function hasLanguage(map: LanguageMap, lang: Language): boolean {
+export function hasLanguage(
+  map: LanguageMap | null | undefined,
+  lang: Language,
+): boolean {
+  if (map === null || map === undefined) return false;
   const value = map[lang];
   return value !== undefined && value.trim().length > 0;
 }
@@ -133,6 +146,9 @@ export function hasLanguage(map: LanguageMap, lang: Language): boolean {
  * availableLanguages({ nl: "Welkom", fr: "" }); // → ["nl"]
  * availableLanguages({ nl: "Welkom", en: "Welcome", fr: "Bienvenue" }); // → ["nl", "en", "fr"]
  */
-export function availableLanguages(map: LanguageMap): Language[] {
+export function availableLanguages(
+  map: LanguageMap | null | undefined,
+): Language[] {
+  if (map === null || map === undefined) return [];
   return ALL_LANGUAGES.filter((lang) => hasLanguage(map, lang));
 }

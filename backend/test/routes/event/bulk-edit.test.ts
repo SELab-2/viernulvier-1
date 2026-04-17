@@ -9,19 +9,19 @@ let sessionCookie: string;
 
 const baseEvent = {
   id: 1,
-  old_id: 111,
   starts_at: new Date("2026-01-01T18:00:00.000Z"),
   ends_at: new Date("2026-01-01T20:00:00.000Z"),
   production: 10,
   hall: 3,
   doors_at: new Date("2026-01-01T17:30:00.000Z"),
   info: { nl: "Info mock 1" },
+  old_id: 12345,
 };
 
 const initialEvents = [
   baseEvent,
-  { ...baseEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" } },
-  { ...baseEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" } },
+  { ...baseEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" }, old_id: 12346 },
+  { ...baseEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" }, old_id: 12347 },
 ];
 
 beforeAll(async () => {
@@ -299,7 +299,7 @@ describe("Event Bulk Edit Routes", () => {
       });
 
       expect(response.statusCode).toBe(400);
-      expect(response.json()).toEqual({ error: "Invalid request data" });
+      expect(response.json()).toMatchObject({ error: "Invalid request data" });
     });
 
     test("returns 404 when any event not in database", async () => {

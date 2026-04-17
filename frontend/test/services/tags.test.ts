@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   getTags,
+  getTagsForProduction,
   getTag,
   getAllTags,
   getTagAdmin,
@@ -60,6 +61,20 @@ describe("getTags", () => {
     vi.stubGlobal("fetch", mockOk([tagPayload]));
     await getTags(42);
     expect(lastCall()[0]).toBe("/api/v1/tag?production=42");
+  });
+});
+
+describe("getTagsForProduction", () => {
+  it("uses public endpoint by default", async () => {
+    vi.stubGlobal("fetch", mockOk([tagPayload]));
+    await getTagsForProduction(42);
+    expect(lastCall()[0]).toBe("/api/v1/tag?production=42");
+  });
+
+  it("uses admin endpoint when includeHidden is true", async () => {
+    vi.stubGlobal("fetch", mockOk([tagPayload]));
+    await getTagsForProduction(42, { includeHidden: true });
+    expect(lastCall()[0]).toBe("/api/v1/tag/all?production=42");
   });
 });
 

@@ -22,11 +22,11 @@ export const ProductionBodySchema = ProductionSchema.pick({
 
 export const CreateProductionBodySchema = ProductionSchema.pick({
   title: true,
-  artist: true,
-  tagline: true,
-  teaser: true,
 }).extend(
   ProductionSchema.pick({
+    artist: true,
+    tagline: true,
+    teaser: true,
     old_id: true,
     finalized: true,
     supertitle: true,

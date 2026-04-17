@@ -13,11 +13,29 @@ FROM tag
 const TagDbRowSchema = TagSchema.omit({ productions: true });
 const TagDbRowWithMetaSchema = TagSchema.withMeta().omit({ productions: true });
 
-const TagsListQuerySchema = z.object({
-  production: stringToInt.optional(),
-  /** When `includeProductions=true`, each tag includes a `productions` id list; otherwise the field is omitted. */
-  includeProductions: z.literal("true").optional(),
-});
+const TagsListQuerySchema = z
+  .object({
+    production: stringToInt.optional(),
+    old_id: stringToInt.optional(),
+    tag_type: stringToInt.optional(),
+    /** When `includeProductions=true`, each tag includes a `productions` id list; otherwise the field is omitted. */
+    includeProductions: z.literal("true").optional(),
+  })
+  .refine(
+    (q) =>
+      (q.old_id === undefined && q.tag_type === undefined) ||
+      (q.old_id !== undefined && q.tag_type !== undefined),
+    { message: "Query parameters old_id and tag_type must be passed together" },
+  )
+  .refine(
+    (q) =>
+      q.production === undefined ||
+      (q.old_id === undefined && q.tag_type === undefined),
+    {
+      message:
+        "Query parameter production cannot be combined with old_id / tag_type",
+    },
+  );
 
 const ProductionTagLinkSchema = z.object({
   tag: z.int(),
@@ -117,6 +135,22 @@ const fetchTagsByProductionQuery = (server: FastifyInstance) =>
     TagDbRowSchema,
   );
 
+const fetchTagsByOldIdAndTypeQuery = (server: FastifyInstance) =>
+  buildQuery(
+    server,
+    `${TagSelect} WHERE old_id = $1 AND tag_type = $2`,
+    z.tuple([z.int(), z.int()]),
+    TagDbRowSchema,
+  );
+
+const fetchTagsVisibleByOldIdAndTypeQuery = (server: FastifyInstance) =>
+  buildQuery(
+    server,
+    `${TagSelect} WHERE old_id = $1 AND tag_type = $2 AND public = true`,
+    z.tuple([z.int(), z.int()]),
+    TagDbRowSchema,
+  );
+
 const fetchTagsVisibleAllQuery = (server: FastifyInstance) =>
   buildQuery(server, `${TagSelect} WHERE public = true`, TagDbRowSchema);
 
@@ -203,15 +237,17 @@ async function fetchTags(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Tag[] | null> {
-  const { production, includeProductions } = parseSchema(
+  const { production, old_id, tag_type, includeProductions } = parseSchema(
     server,
     TagsListQuerySchema,
     request.query,
   );
   const rows =
-    production !== undefined
-      ? await fetchTagsByProductionQuery(server)(production)
-      : await fetchTagsAllQuery(server)();
+    old_id !== undefined && tag_type !== undefined
+      ? await fetchTagsByOldIdAndTypeQuery(server)(old_id, tag_type)
+      : production !== undefined
+        ? await fetchTagsByProductionQuery(server)(production)
+        : await fetchTagsAllQuery(server)();
   const byTag =
     includeProductions !== undefined
       ? await fetchProductionIdsByTagIds(
@@ -234,15 +270,17 @@ async function fetchTagsVisible(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Tag[] | null> {
-  const { production, includeProductions } = parseSchema(
+  const { production, old_id, tag_type, includeProductions } = parseSchema(
     server,
     TagsListQuerySchema,
     request.query,
   );
   const rows =
-    production !== undefined
-      ? await fetchTagsVisibleByProductionQuery(server)(production)
-      : await fetchTagsVisibleAllQuery(server)();
+    old_id !== undefined && tag_type !== undefined
+      ? await fetchTagsVisibleByOldIdAndTypeQuery(server)(old_id, tag_type)
+      : production !== undefined
+        ? await fetchTagsVisibleByProductionQuery(server)(production)
+        : await fetchTagsVisibleAllQuery(server)();
   const byTag =
     includeProductions !== undefined
       ? await fetchProductionIdsByTagIds(

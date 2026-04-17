@@ -100,6 +100,13 @@ export class HttpError extends Error {
   }
 }
 
+export class ValidationError extends HttpError {
+  constructor(public details: z.core.$ZodIssue[]) {
+    super(HttpClientError.BadRequest, "Invalid request data");
+    this.name = "ValidationError";
+  }
+}
+
 export const enum ParseContext {
   Request,
   Database,
@@ -107,16 +114,12 @@ export const enum ParseContext {
 
 type ParseContextType = (typeof ParseContext)[keyof typeof ParseContext];
 
-const parseErrors: Readonly<Record<ParseContextType, HttpError>> = {
-  [ParseContext.Request]: new HttpError(
-    HttpClientError.BadRequest,
-    "Invalid request data",
-  ),
-  [ParseContext.Database]: new HttpError(
-    HttpServerError.InternalServerError,
-    "Internal server error",
-  ),
-};
+function createParseError(context: ParseContextType, error?: z.ZodError): HttpError {
+  if (context === ParseContext.Request && error) {
+    return new ValidationError(error.issues);
+  }
+  return new HttpError(HttpServerError.InternalServerError, "Internal server error");
+}
 /**
  * Uses a zod schema to validate the params and returns them as an object.
  *
@@ -136,7 +139,7 @@ export function parseParams<
   const parsed = schema.safeParse(request.params);
   if (!parsed.success) {
     request.log.error(parsed.error);
-    throw parseErrors[ParseContext.Request];
+    throw createParseError(ParseContext.Request, parsed.error);
   }
   return parsed.data;
 }
@@ -157,7 +160,7 @@ export function parseUser(request: FastifyRequest): UserPayload {
   const parsed = UserPayloadSchema.safeParse(request.user);
   if (!parsed.success) {
     request.log.error(parsed.error);
-    throw parseErrors[ParseContext.Request];
+    throw createParseError(ParseContext.Request, parsed.error);
   }
   return parsed.data;
 }
@@ -184,8 +187,7 @@ export function parseSchema<ResultSchema extends z.ZodType>(
   const parsed = schema.safeParse(value);
   if (!parsed.success) {
     server.log.error(parsed.error);
-    // eslint-disable-next-line security/detect-object-injection
-    throw parseErrors[context];
+    throw createParseError(context, parsed.error);
   }
   return parsed.data;
 }
@@ -247,7 +249,7 @@ export function buildQuery<
     const parsed = filterFields.safeParse(values);
     if (!parsed.success) {
       server.log.error(parsed.error);
-      throw parseErrors[ParseContext.Request];
+      throw createParseError(ParseContext.Request, parsed.error);
     }
     let res: QueryResult<z.output<ResultSchema>>;
     try {
@@ -257,7 +259,7 @@ export function buildQuery<
       );
     } catch (err) {
       server.log.error(err);
-      throw parseErrors[ParseContext.Database];
+      throw createParseError(ParseContext.Database);
     }
     return parseSchema(
       server,
@@ -290,6 +292,9 @@ export function replyHandler<Z extends z.ZodType>(
       if (!result) throw new HttpError(HttpClientError.NotFound, "Not Found");
       return await reply.status(HttpSuccess.OK).send(result);
     } catch (err) {
+      if (err instanceof ValidationError) {
+        return await reply.status(err.status).send({ error: err.message, details: err.details });
+      }
       if (err instanceof HttpError) {
         return await reply.status(err.status).send({ error: err.message });
       }

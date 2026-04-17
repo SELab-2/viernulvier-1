@@ -1,10 +1,7 @@
 /**
  * @file EventPrice API — CRUD for price tiers attached to events.
  *
- * > **⚠ Backend bug:** the event price routes are currently registered with an
- * > incorrect prefix (`/event_price/api/v1/...` instead of
- * > `/api/v1/event_price/...`). The functions below use the *intended* correct
- * > paths. They will work once the backend prefix is fixed.
+ * Paths match the backend: `/api/v1/event/price` (see `event_price.ts` routes).
  *
  * Public endpoints (no session required):
  *   - {@link getEventPrices} — list all event prices
@@ -59,7 +56,7 @@ export type UpdateEventPriceInput = Partial<CreateEventPriceInput>;
  * const prices = await getEventPrices();
  */
 export async function getEventPrices(): Promise<EventPrice[]> {
-  return await apiFetch<EventPrice[]>("/event_price");
+  return await apiFetch<EventPrice[]>("/event/price");
 }
 
 /**
@@ -69,7 +66,7 @@ export async function getEventPrices(): Promise<EventPrice[]> {
  * @throws {ApiError} 404 — event price not found.
  */
 export async function getEventPrice(id: number): Promise<EventPrice> {
-  return await apiFetch<EventPrice>(`/event_price/${id}`);
+  return await apiFetch<EventPrice>(`/event/price/${id}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -86,7 +83,7 @@ export async function getEventPrice(id: number): Promise<EventPrice> {
 export async function getEventPriceWithMeta(
   id: number,
 ): Promise<EventPriceWithMeta> {
-  return await apiFetch<EventPriceWithMeta>(`/event_price/${id}/meta`);
+  return await apiFetch<EventPriceWithMeta>(`/event/price/${id}/meta`);
 }
 
 /**
@@ -103,7 +100,7 @@ export async function getEventPriceWithMeta(
 export async function createEventPrice(
   data: CreateEventPriceInput,
 ): Promise<EventPrice> {
-  return await apiFetch<EventPrice>("/event_price", { method: "POST", body: data });
+  return await apiFetch<EventPrice>("/event/price", { method: "POST", body: data });
 }
 
 /**
@@ -118,7 +115,7 @@ export async function replaceEventPrice(
   id: number,
   data: ReplaceEventPriceInput,
 ): Promise<EventPrice> {
-  return await apiFetch<EventPrice>(`/event_price/${id}`, {
+  return await apiFetch<EventPrice>(`/event/price/${id}`, {
     method: "PUT",
     body: data,
   });
@@ -140,7 +137,7 @@ export async function updateEventPrice(
   id: number,
   data: UpdateEventPriceInput,
 ): Promise<EventPrice> {
-  return await apiFetch<EventPrice>(`/event_price/${id}`, {
+  return await apiFetch<EventPrice>(`/event/price/${id}`, {
     method: "PATCH",
     body: data,
   });
@@ -154,5 +151,5 @@ export async function updateEventPrice(
  * @throws {ApiError} 404 — event price not found.
  */
 export async function deleteEventPrice(id: number): Promise<void> {
-  await apiFetch<void>(`/event_price/${id}`, { method: "DELETE" });
+  await apiFetch<void>(`/event/price/${id}`, { method: "DELETE" });
 }

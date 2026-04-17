@@ -8,6 +8,8 @@ import {
   updateProduction,
   bulkUpdateProductions,
   deleteProduction,
+  extractProductionTagIds,
+  collectProductionTagsByIdMap,
 } from "@/services/productions";
 
 // ---------------------------------------------------------------------------
@@ -201,5 +203,39 @@ describe("deleteProduction", () => {
     await deleteProduction(7);
     expect(lastCall()[0]).toBe("/api/v1/production/7");
     expect(lastCall()[1].method).toBe("DELETE");
+  });
+});
+
+describe("extractProductionTagIds", () => {
+  it("extracts ids from mixed reference formats", () => {
+    const production = {
+      tags: [1, "2", { id: 3 }, { id: "4" }, { id: "x" }],
+    } as never;
+
+    expect(extractProductionTagIds(production)).toEqual([1, 2, 3, 4]);
+  });
+
+  it("deduplicates duplicate ids", () => {
+    const production = {
+      tags: [1, { id: 1 }, "1", 2],
+    } as never;
+
+    expect(extractProductionTagIds(production)).toEqual([1, 2]);
+  });
+});
+
+describe("collectProductionTagsByIdMap", () => {
+  it("collects only tags that exist in the map", () => {
+    const production = {
+      tags: [5, 7, 999],
+    } as never;
+    const tag5 = { id: 5, name: { nl: "Drama" } } as never;
+    const tag7 = { id: 7, name: { nl: "Muziek" } } as never;
+    const tags = new Map<number, never>([
+      [5, tag5],
+      [7, tag7],
+    ]);
+
+    expect(collectProductionTagsByIdMap(production, tags)).toEqual([tag5, tag7]);
   });
 });

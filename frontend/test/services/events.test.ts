@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   getEvents,
+  getEventsForProductions,
   getEvent,
   getEventWithMeta,
   createEvent,
@@ -63,6 +64,23 @@ describe("getEvents", () => {
     await getEvents(42);
     expect(lastCall()[0]).toBe("/api/v1/event?production=42");
     expect(lastCall()[1].method).toBeUndefined();
+  });
+});
+
+describe("getEventsForProductions", () => {
+  it("GETs /api/v1/event with comma-separated production ids", async () => {
+    vi.stubGlobal("fetch", mockOk([eventPayload]));
+    await getEventsForProductions([10, 20, 10]);
+    expect(lastCall()[0]).toBe("/api/v1/event?production=10%2C20");
+    expect(lastCall()[1].method).toBeUndefined();
+  });
+
+  it("returns an empty list without calling fetch when ids are empty", async () => {
+    const fetchMock = mockOk([eventPayload]);
+    vi.stubGlobal("fetch", fetchMock);
+    const out = await getEventsForProductions([]);
+    expect(out).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

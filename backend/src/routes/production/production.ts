@@ -9,6 +9,7 @@ import {
   editProduction,
   bulkEditProductions,
   deleteProduction,
+  linkTagToProduction,
 } from "./handlers/index.js";
 
 /**
@@ -19,6 +20,7 @@ import {
  * - `GET /api/v1/production/:id` — fetch a single production by ID.
  * - `GET /api/v1/production/:id/meta` — fetch a single production with metadata by ID. 🔒
  * - `POST /api/v1/production` — create a new production. 🔒
+ * - `POST /api/v1/production/:id/tags` — link a tag to a production. 🔒
  * - `PUT /api/v1/production/:id` — replace an existing production. 🔒
  * - `PATCH /api/v1/production/:id` — partially update an existing production. 🔒
  * - `PATCH /api/v1/production/bulk` — bulk update multiple productions. 🔒
@@ -33,9 +35,9 @@ export default function productionRoutes(server: FastifyInstance) {
   server.get("/api/v1/production/:id", replyHandler(server, fetchProduction));
   server.get("/api/v1/production/:id/meta", protect, replyHandler(server, fetchProductionWithMeta));
   server.post("/api/v1/production", protect, replyHandler(server, createProduction));
+  server.post("/api/v1/production/:id/tags", protect, replyHandler(server, linkTagToProduction));
   server.put("/api/v1/production/:id", protect, replyHandler(server, replaceProduction));
   server.patch("/api/v1/production/:id", protect, replyHandler(server, editProduction));
   server.patch("/api/v1/production/bulk", protect, replyHandler(server, bulkEditProductions));
   server.delete("/api/v1/production/:id", protect, replyHandler(server, deleteProduction));
 }
-
