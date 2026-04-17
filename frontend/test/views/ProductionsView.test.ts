@@ -11,7 +11,6 @@ import type {
 import { routes } from "@/router/routes";
 import { i18n } from "@/i18n";
 import { __reset as resetDarkMode } from "@/composables/useDarkMode";
-import ProductionsView from "@/views/ProductionsView.vue";
 import * as productionsService from "@/services/productions";
 import type { ProductionListPage } from "@/services/productions";
 import * as tagsService from "@/services/tags";
@@ -87,6 +86,9 @@ const mockTagTypeGenre = {
   name: { nl: "Genre", en: "Genre", fr: "Genre" },
 } as TagType;
 
+/** Mount through `<router-view />` so `onBeforeRouteUpdate` registers (matches the real app). */
+const routerViewRoot = { template: "<router-view />" };
+
 describe("ProductionsView.vue", () => {
   beforeEach(() => {
     vi.spyOn(productionsService, "getProductions").mockResolvedValue({
@@ -95,7 +97,9 @@ describe("ProductionsView.vue", () => {
     });
     vi.spyOn(tagsService, "getTags").mockResolvedValue([mockTag]);
     vi.spyOn(tagsService, "getTagTypes").mockResolvedValue([mockTagTypeGenre]);
-    vi.spyOn(eventsService, "getEvents").mockResolvedValue([mockEvent]);
+    vi.spyOn(eventsService, "getEventsForProductions").mockResolvedValue([
+      mockEvent,
+    ]);
     vi.spyOn(hallsService, "getHalls").mockResolvedValue([mockHall]);
   });
 
@@ -111,7 +115,7 @@ describe("ProductionsView.vue", () => {
     await router.push(initialPath);
     await router.isReady();
 
-    const wrapper = mount(ProductionsView, {
+    const wrapper = mount(routerViewRoot, {
       global: { plugins: [router, i18n] },
       attachTo: document.body,
     });
@@ -126,6 +130,28 @@ describe("ProductionsView.vue", () => {
       limit: 20,
       offset: 0,
     });
+    wrapper.unmount();
+  });
+
+  it("renders one archive detail link per production when a full page is returned", async () => {
+    const items = Array.from({ length: 20 }, (_, i) => ({
+      ...mockProduction,
+      id: i + 1,
+      title: { nl: `Titel ${i + 1}` },
+      tags: [] as unknown as ProductionWithBackwardsRefs["tags"],
+      events: [] as unknown as ProductionWithBackwardsRefs["events"],
+    })) as ProductionWithBackwardsRefs[];
+    vi.spyOn(productionsService, "getProductions").mockResolvedValue({
+      items,
+      total: 500,
+    });
+    vi.spyOn(eventsService, "getEventsForProductions").mockResolvedValue([]);
+
+    const { wrapper } = await mountView();
+    const detailLinks = wrapper.findAll("a").filter((w) =>
+      /\/(nl|en|fr)\/productions\/\d+$/.test(w.attributes("href") ?? ""),
+    );
+    expect(detailLinks.length).toBe(20);
     wrapper.unmount();
   });
 
@@ -156,7 +182,7 @@ describe("ProductionsView.vue", () => {
     await router.push("/nl/productions");
     await router.isReady();
 
-    const wrapper = mount(ProductionsView, {
+    const wrapper = mount(routerViewRoot, {
       global: { plugins: [router, i18n] },
       attachTo: document.body,
     });
@@ -442,7 +468,7 @@ describe("ProductionsView.vue", () => {
     await router.push({ path: "/nl/productions", query: { page: "1" } });
     await router.isReady();
 
-    const wrapper = mount(ProductionsView, {
+    const wrapper = mount(routerViewRoot, {
       global: { plugins: [router, i18n] },
       attachTo: document.body,
     });

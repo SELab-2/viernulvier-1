@@ -32,22 +32,42 @@ function escapeIlikePattern(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
 }
 
-export type ListSearchClause = { sql: string; params: string[] };
+export type ListSearchClause = { sql: string; params: (string | number)[] };
+
+interface SearchClauseParams {
+  search?: string[] | undefined;
+  old_id?: number | undefined;
+}
+
+const SearchClauseParamsSchema = z.object({
+  search: SearchParamSchema,
+  old_id: z.number().int().nonnegative().optional(),
+});
 
 /**
  * WHERE clause for public list search: title, artist, tagline, teaser,
  * description (all locales in JSON text), and hall names via events.
  * Multiple terms are combined with AND (each term must match somewhere).
+ * If old_id is provided, filters by old_id instead of search terms.
  */
-export function productionListSearchClause(searchTerms: string[]): ListSearchClause {
+export function productionListSearchClause(params: SearchClauseParams): ListSearchClause {
+  const validated = SearchClauseParamsSchema.parse(params);
+  const searchTerms = validated.search ?? [];
+  const oldId = validated.old_id;
+
+  // If old_id is provided, filter by that instead
+  if (oldId !== undefined) {
+    return { sql: " WHERE p.old_id = $1", params: [oldId] };
+  }
+
   if (searchTerms.length === 0) {
     return { sql: "", params: [] };
   }
   const conds: string[] = [];
-  const params: string[] = [];
+  const params_list: string[] = [];
   for (const term of searchTerms) {
     const pattern = `%${escapeIlikePattern(term)}%`;
-    const idx = params.length + 1;
+    const idx = params_list.length + 1;
     conds.push(`(p.title::text ILIKE $${idx} ESCAPE '\\'
     OR p.artist::text ILIKE $${idx} ESCAPE '\\'
     OR p.tagline::text ILIKE $${idx} ESCAPE '\\'
@@ -59,7 +79,7 @@ export function productionListSearchClause(searchTerms: string[]): ListSearchCla
       WHERE e.production = p.id
         AND h.name::text ILIKE $${idx} ESCAPE '\\'
     ))`);
-    params.push(pattern);
+    params_list.push(pattern);
   }
-  return { sql: ` WHERE ${conds.join(" AND ")}`, params };
+  return { sql: ` WHERE ${conds.join(" AND ")}`, params: params_list };
 }

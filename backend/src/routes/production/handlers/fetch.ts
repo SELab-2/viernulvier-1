@@ -144,9 +144,10 @@ export type PaginatedProductions = {
  * - Optional `search`: comma-separated terms (`search=a,b`), AND semantics; each term is a
  *   case-insensitive substring on title, artist, tagline, teaser, description, and hall names.
  *   Repeating the `search` key is still accepted for older clients.
+ * - Optional `old_id`: filter by old_id value.
  *
  * @param server - The Fastify instance, used for database access and logging.
- * @param request - The Fastify request; optional `limit`, `offset`, and `search` query params.
+ * @param request - The Fastify request; optional `limit`, `offset`, `search`, and `old_id` query params.
  * @returns The list of productions as `{ items, total }`; throws if parsing failed.
  */
 export async function fetchProductions(
@@ -161,8 +162,11 @@ export async function fetchProductions(
   );
   const limit = query.limit;
   const offset = query.offset ?? 0;
-  const searchTerms = query.search ?? [];
-  const { sql: whereSql, params: searchParams } = productionListSearchClause(searchTerms);
+  
+  const { sql: whereSql, params: searchParams } = productionListSearchClause({
+    search: query.search,
+    old_id: query.old_id,
+  });
 
   let result: QueryResult<ProductionWithBackwardsRefs>;
   let total: number;

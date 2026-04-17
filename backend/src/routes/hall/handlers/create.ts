@@ -14,11 +14,11 @@ const insertHall = (server: FastifyInstance) =>
      VALUES ($1, $2, $3, $4, $4, $5, $5)
      RETURNING id, old_id, name, address`,
     z.tuple([
-      z.int().nonnegative().nullable(), // old_id
-      languageMap,                      // name
-      z.string(),                       // address
-      z.int(),                          // admin
-      z.date(),                         // current_time
+      z.int().nonnegative().nullable(),
+      languageMap,
+      z.string().nullable(),
+      z.int(),
+      z.date(),
     ]),
     HallSchema,
   );

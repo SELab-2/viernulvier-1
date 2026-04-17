@@ -81,7 +81,7 @@ describe("LegacyHallInsertSchema", () => {
 });
 
 describe("EventCreateSchema (legacy event body)", () => {
-  it("accepts event create payload", () => {
+  it("accepts event create payload with end and doors times", () => {
     const startsAt = new Date("2024-06-01T14:00:00.000Z");
     const endsAt = new Date("2024-06-01T16:00:00.000Z");
     const body = legacyEventCreateBody({
@@ -93,5 +93,21 @@ describe("EventCreateSchema (legacy event body)", () => {
     });
     const parsed = EventCreateSchema.safeParse(body);
     expect(parsed.success).toBe(true);
+  });
+
+  it("accepts null ends_at and doors_at (legacy CSV has no doors; endtime often empty)", () => {
+    const startsAt = new Date("2024-06-01T14:00:00.000Z");
+    const body = legacyEventCreateBody({
+      startsAt,
+      endsAt: null,
+      doorsAt: null,
+      productionId: 7,
+      hallId: 3,
+    });
+    const parsed = EventCreateSchema.safeParse(body);
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) throw new Error("expected success");
+    expect(parsed.data.ends_at).toBeNull();
+    expect(parsed.data.doors_at).toBeNull();
   });
 });

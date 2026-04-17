@@ -65,6 +65,26 @@ export type UpdateEventInput = Partial<CreateEventInput>;
 // ---------------------------------------------------------------------------
 
 /**
+ * Fetches events for one or more productions (`?production=1,2,3`) — public, no session.
+ *
+ * @param productionIds Distinct production primary keys (duplicates are ignored).
+ * @returns Events for those productions, ordered by start time (same as the list API).
+ */
+export async function getEventsForProductions(
+  productionIds: number[],
+): Promise<Event[]> {
+  const unique = [
+    ...new Set(
+      productionIds.filter((id) => Number.isFinite(id) && id >= 1) as number[],
+    ),
+  ];
+  if (unique.length === 0) return [];
+  const params = new URLSearchParams();
+  params.set("production", unique.join(","));
+  return await apiFetch<Event[]>(`/event?${params.toString()}`);
+}
+
+/**
  * Fetches all events, optionally filtered by production ID (public — no session required).
  *
  * @param production Optional production ID to filter events by.
@@ -79,12 +99,10 @@ export type UpdateEventInput = Partial<CreateEventInput>;
  * const productionEvents = await getEvents(42);
  */
 export async function getEvents(production?: number): Promise<Event[]> {
-  const params = new URLSearchParams();
   if (production !== undefined) {
-    params.append("production", production.toString());
+    return await getEventsForProductions([production]);
   }
-  const url = params.toString() ? `/event?${params.toString()}` : "/event";
-  return await apiFetch<Event[]>(url);
+  return await apiFetch<Event[]>("/event");
 }
 
 /**
