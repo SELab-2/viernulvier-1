@@ -45,7 +45,7 @@
     "@eslint/js": "^10",
     "@testcontainers/postgresql": "^11.14.0",
     "@types/bcrypt": "^6.0.0",
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.6.0",
     "@types/pg": "^8.20.0",
     "@types/yargs": "^17.0.35",
     "@vitest/coverage-v8": "4.1.1",
