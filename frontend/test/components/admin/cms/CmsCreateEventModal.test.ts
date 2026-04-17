@@ -92,16 +92,19 @@ describe("CmsCreateEventModal.vue", () => {
     expect(options).toContain("Hall #2");
   });
 
-  it("updates bound form values and emits close/submit", async () => {
+  it("emits form field updates and close/submit", async () => {
     const wrapper = mountModal();
 
     await wrapper.get('input[type="datetime-local"]').setValue("2026-04-14T10:00");
     await wrapper.get('select.cms-text-input').setValue("2");
     await wrapper.get('input[type="text"]').setValue("extra info");
 
-    expect((wrapper.props("createLinkedEventForm") as CmsCreateLinkedEventForm).startsAt).toBe("2026-04-14T10:00");
-    expect((wrapper.props("createLinkedEventForm") as CmsCreateLinkedEventForm).hallId).toBe(2);
-    expect((wrapper.props("createLinkedEventForm") as CmsCreateLinkedEventForm).infoNl).toBe("extra info");
+    const fieldUpdates = wrapper.emitted("update-form-field") ?? [];
+    expect(fieldUpdates).toEqual([
+      ["startsAt", "2026-04-14T10:00"],
+      ["hallId", 2],
+      ["infoNl", "extra info"],
+    ]);
 
     await wrapper.get(".cms-modal-overlay").trigger("click");
     await wrapper.get(".cms-modal-overlay").trigger("click.self");

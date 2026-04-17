@@ -20,19 +20,38 @@
         <div class="cms-events-create-grid">
           <label class="cms-form-lang-field">
             <span class="cms-lang-label">Start</span>
-            <input v-model="createLinkedEventForm.startsAt" type="datetime-local" class="cms-text-input" />
+            <input
+              :value="createLinkedEventForm.startsAt"
+              type="datetime-local"
+              class="cms-text-input"
+              @input="onTextInput('startsAt', $event)"
+            />
           </label>
           <label class="cms-form-lang-field">
             <span class="cms-lang-label">End</span>
-            <input v-model="createLinkedEventForm.endsAt" type="datetime-local" class="cms-text-input" />
+            <input
+              :value="createLinkedEventForm.endsAt"
+              type="datetime-local"
+              class="cms-text-input"
+              @input="onTextInput('endsAt', $event)"
+            />
           </label>
           <label class="cms-form-lang-field">
             <span class="cms-lang-label">Doors</span>
-            <input v-model="createLinkedEventForm.doorsAt" type="datetime-local" class="cms-text-input" />
+            <input
+              :value="createLinkedEventForm.doorsAt"
+              type="datetime-local"
+              class="cms-text-input"
+              @input="onTextInput('doorsAt', $event)"
+            />
           </label>
           <label class="cms-form-lang-field">
             <span class="cms-lang-label">Hall</span>
-            <select v-model.number="createLinkedEventForm.hallId" class="cms-text-input">
+            <select
+              :value="createLinkedEventForm.hallId"
+              class="cms-text-input"
+              @change="onHallChange"
+            >
               <option v-for="hall in hallsData" :key="`create-event-hall-${hall.id}`" :value="hall.id">
                 {{ localizeValue(hall.name) || `Hall #${hall.id}` }}
               </option>
@@ -40,7 +59,12 @@
           </label>
           <label class="cms-form-lang-field cms-events-create-info">
             <span class="cms-lang-label">Info (NL)</span>
-            <input v-model="createLinkedEventForm.infoNl" type="text" class="cms-text-input" />
+            <input
+              :value="createLinkedEventForm.infoNl"
+              type="text"
+              class="cms-text-input"
+              @input="onTextInput('infoNl', $event)"
+            />
           </label>
         </div>
 
@@ -77,12 +101,26 @@ defineProps<{
   localizeValue: (map: LanguageMap | null | undefined) => string;
 }>();
 
-defineEmits<{
+const { t } = useI18n();
+
+const emit = defineEmits<{
   close: [];
   submit: [];
+  "update-form-field": [
+    field: keyof CmsCreateLinkedEventForm,
+    value: CmsCreateLinkedEventForm[keyof CmsCreateLinkedEventForm],
+  ];
 }>();
 
-const { t } = useI18n();
+function onTextInput(field: "startsAt" | "endsAt" | "doorsAt" | "infoNl", event: Event): void {
+  const target = event.target as HTMLInputElement;
+  emit("update-form-field", field, target.value);
+}
+
+function onHallChange(event: Event): void {
+  const target = event.target as HTMLSelectElement;
+  emit("update-form-field", "hallId", Number(target.value));
+}
 </script>
 
 <style scoped>

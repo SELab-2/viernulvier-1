@@ -281,6 +281,7 @@
       :events-panel-loading="eventsPanelLoading"
       :events-panel-error="eventsPanelError"
       :localize-value="localizeValue"
+      @update-form-field="setCreateLinkedEventField"
       @close="closeCreateEventModal"
       @submit="submitCreateEvent"
     />
@@ -577,6 +578,16 @@ function resetCreateLinkedEventForm(): void {
     doorsAt: toLocalDateTimeInput(halfHourBefore),
     hallId: hallsData.value[0]?.id ?? 0,
     infoNl: "",
+  };
+}
+
+function setCreateLinkedEventField(
+  field: keyof CmsCreateLinkedEventForm,
+  value: CmsCreateLinkedEventForm[keyof CmsCreateLinkedEventForm],
+): void {
+  createLinkedEventForm.value = {
+    ...createLinkedEventForm.value,
+    [field]: value,
   };
 }
 
