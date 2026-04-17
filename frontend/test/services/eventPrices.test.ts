@@ -40,59 +40,59 @@ beforeEach(() => vi.stubGlobal("fetch", mockOk(pricePayload)));
 afterEach(() => vi.unstubAllGlobals());
 
 describe("getEventPrices", () => {
-  it("GETs /api/v1/event_price", async () => {
+  it("GETs /api/v1/event/price", async () => {
     vi.stubGlobal("fetch", mockOk([pricePayload]));
     await getEventPrices();
-    expect(lastCall()[0]).toBe("/api/v1/event_price");
+    expect(lastCall()[0]).toBe("/api/v1/event/price");
     expect(lastCall()[1].method).toBeUndefined();
   });
 });
 
 describe("getEventPrice", () => {
-  it("GETs /api/v1/event_price/:id", async () => {
+  it("GETs /api/v1/event/price/:id", async () => {
     await getEventPrice(5);
-    expect(lastCall()[0]).toBe("/api/v1/event_price/5");
+    expect(lastCall()[0]).toBe("/api/v1/event/price/5");
   });
 });
 
 describe("getEventPriceWithMeta", () => {
-  it("GETs /api/v1/event_price/:id/meta", async () => {
+  it("GETs /api/v1/event/price/:id/meta", async () => {
     await getEventPriceWithMeta(5);
-    expect(lastCall()[0]).toBe("/api/v1/event_price/5/meta");
+    expect(lastCall()[0]).toBe("/api/v1/event/price/5/meta");
   });
 });
 
 describe("createEventPrice", () => {
-  it("POSTs to /api/v1/event_price", async () => {
+  it("POSTs to /api/v1/event/price", async () => {
     const input = { event: 7, amount: 18.5 };
     await createEventPrice(input);
-    expect(lastCall()[0]).toBe("/api/v1/event_price");
+    expect(lastCall()[0]).toBe("/api/v1/event/price");
     expect(lastCall()[1].method).toBe("POST");
     expect(lastCall()[1].body).toBe(JSON.stringify(input));
   });
 });
 
 describe("replaceEventPrice", () => {
-  it("PUTs to /api/v1/event_price/:id", async () => {
+  it("PUTs to /api/v1/event/price/:id", async () => {
     await replaceEventPrice(5, { event: 7, amount: 20.0 });
-    expect(lastCall()[0]).toBe("/api/v1/event_price/5");
+    expect(lastCall()[0]).toBe("/api/v1/event/price/5");
     expect(lastCall()[1].method).toBe("PUT");
   });
 });
 
 describe("updateEventPrice", () => {
-  it("PATCHes /api/v1/event_price/:id", async () => {
+  it("PATCHes /api/v1/event/price/:id", async () => {
     await updateEventPrice(5, { amount: 22.0 });
-    expect(lastCall()[0]).toBe("/api/v1/event_price/5");
+    expect(lastCall()[0]).toBe("/api/v1/event/price/5");
     expect(lastCall()[1].method).toBe("PATCH");
   });
 });
 
 describe("deleteEventPrice", () => {
-  it("DELETEs /api/v1/event_price/:id", async () => {
+  it("DELETEs /api/v1/event/price/:id", async () => {
     vi.stubGlobal("fetch", mockOk({}, 204));
     await deleteEventPrice(5);
-    expect(lastCall()[0]).toBe("/api/v1/event_price/5");
+    expect(lastCall()[0]).toBe("/api/v1/event/price/5");
     expect(lastCall()[1].method).toBe("DELETE");
   });
 });
