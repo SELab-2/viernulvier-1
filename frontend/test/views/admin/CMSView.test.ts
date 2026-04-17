@@ -622,6 +622,20 @@ describe("CMSView", () => {
     expect(wrapper.exists()).toBe(true);
   });
 
+  it("keeps create-event modal open when submitCreateEvent hits validation error", async () => {
+    const wrapper = await mountCMSView();
+    const api = (wrapper.vm as any).__test;
+
+    api.selectedEventsProductionId.value = mockProduction.id;
+    api.createEventModalOpen.value = true;
+    api.createLinkedEventForm.value.hallId = 0;
+
+    await api.submitCreateEvent();
+
+    expect(api.eventsPanelError.value).toContain("hall");
+    expect(api.createEventModalOpen.value).toBe(true);
+  });
+
   it("covers template v-model handlers for create and event modals", async () => {
     const wrapper = await mountCMSView();
 
@@ -697,5 +711,43 @@ describe("CMSView", () => {
     await wrapper.get('button[aria-label="Toggle dark mode"]').trigger("click");
 
     wrapper.unmount();
+  });
+
+  it("covers remaining event-panel branch paths", async () => {
+    const wrapper = await mountCMSView();
+    const api = (wrapper.vm as any).__test;
+    const row = api.rowData.value[0];
+
+    row.source.events = [];
+    api.createLinkedEventForm.value.hallId = 0;
+    await api.showEventsForProduction(row);
+    expect(api.createLinkedEventForm.value.hallId).toBe(mockHall.id);
+
+    api.selectedEventsProductionId.value = null;
+    await api.refreshEventsPanelForSelectedProduction();
+
+    const container = document.createElement("div");
+    const child = document.createElement("button");
+    container.appendChild(child);
+    api.onEventRowFocusOut(
+      {
+        id: 1,
+        date: "",
+        time: "",
+        location: "",
+        price: "",
+        startsAt: "",
+        endsAt: "",
+        doorsAt: "",
+        hallId: 1,
+        infoNl: "",
+      },
+      {
+        currentTarget: container,
+        relatedTarget: child,
+      } as unknown as FocusEvent,
+    );
+
+    expect(wrapper.exists()).toBe(true);
   });
 });
