@@ -128,6 +128,27 @@ export default defineConfig([
     },
   },
 
+  // Scraper: narrow suppressions to modules that need dynamic keys or non-literal report paths.
+  {
+    files: ["src/scraper/scrape-stats.ts"],
+    rules: {
+      "security/detect-non-literal-fs-filename": "off",
+      "security/detect-object-injection": "off",
+    },
+  },
+  {
+    files: ["src/scraper/language-map.ts"],
+    rules: {
+      "security/detect-object-injection": "off",
+    },
+  },
+  {
+    files: ["src/scraper/event.ts", "src/scraper/production-tags.ts"],
+    rules: {
+      "security/detect-object-injection": "off",
+    },
+  },
+
   // --------------------------------------------------
   // Tests (Vitest / Jest style)
   // --------------------------------------------------

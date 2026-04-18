@@ -14,7 +14,14 @@ overrides:
 
 importers:
 
-  .: {}
+  .:
+    dependencies:
+      ag-grid-community:
+        specifier: ^35.2.0
+        version: 35.2.0
+      ag-grid-vue3:
+        specifier: ^35.2.0
+        version: 35.2.0(vue@3.5.31(typescript@6.0.2))
 
   backend:
     dependencies:
@@ -124,6 +131,12 @@ importers:
       '@viernulvier/shared':
         specifier: workspace:*
         version: link:../shared
+      ag-grid-community:
+        specifier: ^35.2.0
+        version: 35.2.0
+      ag-grid-vue3:
+        specifier: ^35.2.0
+        version: 35.2.0(vue@3.5.31(typescript@6.0.2))
       dompurify:
         specifier: ^3.4.0
         version: 3.4.0
@@ -958,9 +971,6 @@ packages:
   '@types/tern@0.23.9':
     resolution: {integrity: sha512-ypzHFE/wBzh+BlH6rrBgS5I/Z7RD21pGhZ2rltb/+ZrVM1awdZwjx7hE5XfuYgHWk9uvV5HLZN3SloevCAp3Bw==}
 
-  '@types/trusted-types@2.0.7':
-    resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
-
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
 
@@ -1318,6 +1328,17 @@ packages:
     resolution: {integrity: sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw==}
     engines: {node: '>=0.4.0'}
     hasBin: true
+
+  ag-charts-types@13.2.0:
+    resolution: {integrity: sha512-O9TTqZmKwLpjylaxxfKqiQ3reWplCSkyB0yG/cRYKxyyIPxEIh312E/aFn63F0rqdY+yYvz/7xe4rmF6clL1gw==}
+
+  ag-grid-community@35.2.0:
+    resolution: {integrity: sha512-YLprL+RsOLHbhgpCXN62MASHGhtR4g1z4bNTY4dnUqKU/RRts13TgHukOEA5JKjyDpeQic8JA17bY8hO/KZBfQ==}
+
+  ag-grid-vue3@35.2.0:
+    resolution: {integrity: sha512-VP2pDiccD0FnJUfZ+X0j1J1YAkdDa7lY993k+AZgexWxy2AjaVpwO+yQOc4RKwtlNTqbTko5F+UbfEMxXluN1Q==}
+    peerDependencies:
+      vue: ^3.5.0
 
   ajv-formats@3.0.1:
     resolution: {integrity: sha512-8iUql50EUR+uUcdRQ3HDqa6EVyo3docL8g5WJ3FNcWmu62IbkGUue/pEyLBW8VGKKucTPgqeks4fIU1DA4yowQ==}
@@ -4253,9 +4274,6 @@ snapshots:
     dependencies:
       '@types/estree': 1.0.8
 
-  '@types/trusted-types@2.0.7':
-    optional: true
-
   '@types/yargs-parser@21.0.3': {}
 
   '@types/yargs@17.0.35':
@@ -4679,6 +4697,17 @@ snapshots:
       acorn: 8.16.0
 
   acorn@8.16.0: {}
+
+  ag-charts-types@13.2.0: {}
+
+  ag-grid-community@35.2.0:
+    dependencies:
+      ag-charts-types: 13.2.0
+
+  ag-grid-vue3@35.2.0(vue@3.5.31(typescript@6.0.2)):
+    dependencies:
+      ag-grid-community: 35.2.0
+      vue: 3.5.31(typescript@6.0.2)
 
   ajv-formats@3.0.1(ajv@8.18.0):
     optionalDependencies:

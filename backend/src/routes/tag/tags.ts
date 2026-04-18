@@ -17,7 +17,7 @@ import {
  * Registers tag routes on the Fastify instance.
  *
  * @remarks
- * - `GET /api/v1/tag/all` — fetch tags (optionally filtered by production); includes non-public tags. 🔒
+ * - `GET /api/v1/tag/all` — fetch tags (optional `production`, or `old_id` + `tag_type` together); includes non-public tags. 🔒
  * - `GET /api/v1/tag` — fetch public tags only (same query parameters as `GET /api/v1/tag/all`).
  * - `GET /api/v1/tag/:id/all` — fetch a single tag by ID (non-public allowed). 🔒
  * - `GET /api/v1/tag/:id` — fetch a single public tag by ID.

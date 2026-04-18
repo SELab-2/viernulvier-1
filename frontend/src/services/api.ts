@@ -15,6 +15,7 @@
 /** Root path prepended to every {@link apiFetch} call. */
 const API_BASE = "/api/v1";
 
+
 // ---------------------------------------------------------------------------
 // ApiError
 // ---------------------------------------------------------------------------
@@ -113,7 +114,7 @@ type ApiFetchOptions = Omit<RequestInit, "body"> & {
 /**
  * Fetch wrapper for all `/api/v1/*` calls.
  *
- * - Sends cookies with every request (`credentials: "same-origin"`).
+ * - Sends cookies with every request (`credentials: "include"`).
  * - Sets `Content-Type: application/json` automatically.
  * - Serialises `options.body` with `JSON.stringify`.
  * - On non-ok responses, parses the error body and throws an {@link ApiError}.
@@ -144,7 +145,7 @@ export async function apiFetch<T>(
   const { body, headers, ...rest } = options;
 
   const response = await fetch(`${API_BASE}${path}`, {
-    credentials: "same-origin",
+    credentials: "include",
     headers: {
       ...(body !== undefined ? { "Content-Type": "application/json" } : {}), // no content header if there's no body
       ...(headers as Record<string, string>),

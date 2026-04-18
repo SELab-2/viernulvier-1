@@ -130,7 +130,7 @@ function parseField(map: LanguageMap | null | undefined): string {
   const value = tProd(map);
   return parseAndSanitizeContent(value);
 }
-console.log(tProd(props.production.description_2))
+
 const teaser = computed(() => parseField(props.production.teaser));
 const description = computed(() => parseField(props.production.description));
 const description_extra = computed(() => parseField(props.production.description_extra));

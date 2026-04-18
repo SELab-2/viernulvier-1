@@ -9,9 +9,9 @@ export const EventSchemaWithoutPrice = createSchema({
   id: primaryKey(),
   old_id: z.int().nonnegative().nullable(),
   starts_at: z.coerce.date(),
-  ends_at: z.coerce.date(),
-  doors_at: z.coerce.date(),
-  info: languageMap,
+  ends_at: z.coerce.date().nullish(),
+  doors_at: z.coerce.date().nullish(),
+  info: languageMap.nullish(),
   get production(): ForeignKey<typeof ProductionSchema> {
     return foreignKey(() => ProductionSchema);
   },
