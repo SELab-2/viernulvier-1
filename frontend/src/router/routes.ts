@@ -22,6 +22,12 @@ export const routes: RouteRecordRaw[] = [
         component: () => import("../views/ProductionDetailView.vue"),
         props: true,
       },
+      {
+        path: "blog/post/:id",
+        name: RouteNames.BLOG_POST_DETAIL,
+        component: () => import("../views/BlogPostDetailView.vue"),
+        props: true,
+      },
       //   {
       //     path: "prints",
       //     name: RouteNames.PRINTS,

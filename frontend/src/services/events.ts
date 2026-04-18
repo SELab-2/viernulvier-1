@@ -30,6 +30,8 @@ import type { LanguageMap } from "@/utils/i18n";
  * Dates can be ISO 8601 strings — the backend coerces them.
  */
 export interface CreateEventInput {
+  /** Optional legacy ID; can be null for newly created events. */
+  old_id?: number | null;
   /** ID of the production this event belongs to. */
   production: number;
   /** ID of the hall (venue) where the event takes place. */
@@ -40,8 +42,8 @@ export interface CreateEventInput {
   ends_at: string | Date;
   /** Time doors open. ISO 8601 string or Date. */
   doors_at: string | Date;
-  /** External vendor ID. */
-  vendor_id: number;
+  /** Optional external vendor ID. */
+  vendor_id?: number;
   /** Additional info text shown to the public. */
   info: LanguageMap;
 }
@@ -63,6 +65,26 @@ export type UpdateEventInput = Partial<CreateEventInput>;
 // ---------------------------------------------------------------------------
 
 /**
+ * Fetches events for one or more productions (`?production=1,2,3`) — public, no session.
+ *
+ * @param productionIds Distinct production primary keys (duplicates are ignored).
+ * @returns Events for those productions, ordered by start time (same as the list API).
+ */
+export async function getEventsForProductions(
+  productionIds: number[],
+): Promise<Event[]> {
+  const unique = [
+    ...new Set(
+      productionIds.filter((id) => Number.isFinite(id) && id >= 1) as number[],
+    ),
+  ];
+  if (unique.length === 0) return [];
+  const params = new URLSearchParams();
+  params.set("production", unique.join(","));
+  return await apiFetch<Event[]>(`/event?${params.toString()}`);
+}
+
+/**
  * Fetches all events, optionally filtered by production ID (public — no session required).
  *
  * @param production Optional production ID to filter events by.
@@ -77,12 +99,10 @@ export type UpdateEventInput = Partial<CreateEventInput>;
  * const productionEvents = await getEvents(42);
  */
 export async function getEvents(production?: number): Promise<Event[]> {
-  const params = new URLSearchParams();
   if (production !== undefined) {
-    params.append("production", production.toString());
+    return await getEventsForProductions([production]);
   }
-  const url = params.toString() ? `/event?${params.toString()}` : "/event";
-  return await apiFetch<Event[]>(url);
+  return await apiFetch<Event[]>("/event");
 }
 
 /**

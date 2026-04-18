@@ -10,6 +10,7 @@ export const RouteNames = {
   HOME: "home",
   PRODUCTIONS: "productions",
   PRODUCTION_DETAIL: "production-detail",
+  BLOG_POST_DETAIL: "blog-post-detail",
 
   // admin
   ADMIN: "admin",

@@ -100,7 +100,17 @@ beforeAll(async () => {
       updated_by: number;
     }>;
 
-    if (query.includes("production_tag")) {
+    if (
+      query.includes("FROM tag") &&
+      query.includes("old_id = $1") &&
+      query.includes("tag_type = $2")
+    ) {
+      const oldId = Number(params?.[0]);
+      const tt = Number(params?.[1]);
+      rows = mockTags
+        .filter((t) => t.old_id === oldId && t.tag_type === tt)
+        .map(tagToDbRow);
+    } else if (query.includes("production_tag")) {
       rows = mockTags
         .filter((t) => (t.productions ?? []).includes(Number(id)))
         .map(tagToDbRow);
@@ -220,6 +230,28 @@ describe("Fetch tags", () => {
     expect(TagSchema.array().parse(response.json())).toEqual(mockTagsListDefault);
   });
 
+  test("GET /api/v1/tag/all?old_id=&tag_type= filters by legacy id and type", async () => {
+    const response = await server.inject({
+      method: "GET",
+      cookies: { session: sessionCookie },
+      url: `/api/v1/tag/all?old_id=${tag1.old_id}&tag_type=${tag1.tag_type}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const rows = TagSchema.array().parse(response.json());
+    expect(rows).toEqual([{ ...tag1, productions: undefined }]);
+  });
+
+  test("GET /api/v1/tag/all?old_id= without tag_type is rejected", async () => {
+    const response = await server.inject({
+      method: "GET",
+      cookies: { session: sessionCookie },
+      url: `/api/v1/tag/all?old_id=111`,
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
   test("GET /api/v1/tag/all?includeProductions=true", async () => {
     const response = await server.inject({
       method: "GET",
@@ -257,6 +289,19 @@ describe("Fetch visible tags", () => {
     expect(response.statusCode).toBe(200);
     expect(TagSchema.array().parse(response.json())).toEqual(
       mockTags.filter((t) => t.public),
+    );
+  });
+
+  test("GET /api/v1/tag?old_id=&tag_type= returns public tags for that legacy pair", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/tag?old_id=${tag1.old_id}&tag_type=${tag1.tag_type}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const result = TagSchema.array().parse(response.json());
+    expect(result).toEqual(
+      mockTagsListDefault.filter((t) => t.public && t.old_id === tag1.old_id && t.tag_type === tag1.tag_type),
     );
   });
 

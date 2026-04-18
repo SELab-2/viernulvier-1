@@ -51,6 +51,8 @@ services:
       - "${FRONTEND_PORT}:${FRONTEND_PORT}"
     depends_on:
       - backend
+    environment:
+     - CHOKIDAR_USEPOLLING=true
 
   garage:
     image: dxflrs/garage:v2.1.0
@@ -99,6 +101,7 @@ volumes:
   object-store:
     external: false
     name: viernulvier-object-store    
+   
 networks:
   viernulvier-network:
     driver: bridge

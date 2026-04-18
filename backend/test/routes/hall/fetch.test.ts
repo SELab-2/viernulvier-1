@@ -38,6 +38,12 @@ beforeAll(async () => {
     }
 
     if (upper.startsWith("SELECT")) {
+      const lower = query.toLowerCase();
+      if (lower.includes("where old_id = $1")) {
+        const oldId = Number(params?.[0]);
+        const rows = mockHalls.filter((h) => h["old_id"] === oldId);
+        return Promise.resolve({ rows, rowCount: rows.length });
+      }
       const rows = id !== undefined
         ? mockHalls.filter((h) => h["id"] === id)
         : mockHalls;
@@ -61,6 +67,16 @@ describe("Hall fetch routes", () => {
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
     expect(response.json()).toEqual(mockHalls);
+  });
+
+  test("GET /api/v1/hall?old_id=… -> returns halls matching legacy id", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/hall?old_id=111",
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(response.json()).toEqual([mockHalls[0]]);
   });
 
   test("GET /api/v1/hall/:id -> returns a single hall", async () => {

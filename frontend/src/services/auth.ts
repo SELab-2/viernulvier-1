@@ -85,7 +85,10 @@ export type UpdateAdminInput = Partial<ReplaceAdminInput>;
  * await login({ username: "admin", password: "secret" });
  */
 export async function login(credentials: LoginCredentials): Promise<void> {
-  await apiFetch("/auth/login", { method: "POST", body: credentials });
+  await apiFetch("/auth/login", {
+    method: "POST",
+    body: credentials,
+  });
 }
 
 /**

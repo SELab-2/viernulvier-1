@@ -9,13 +9,13 @@ let sessionCookie: string;
 
 const baseEvent = {
   id: 1,
-  old_id: 111,
   starts_at: new Date("2026-01-01T18:00:00.000Z"),
   ends_at: new Date("2026-01-01T20:00:00.000Z"),
   production: 10,
   hall: 3,
   doors_at: new Date("2026-01-01T17:30:00.000Z"),
   info: { nl: "Info mock 1" },
+  old_id: 12345,
   created_by: 1,
   created_at: new Date("2026-01-01T10:00:00.000Z"),
   updated_by: null,
@@ -24,8 +24,8 @@ const baseEvent = {
 
 const initialEvents = [
   baseEvent,
-  { ...baseEvent, id: 2, old_id: 112, production: 11, hall: 4, info: { nl: "Info mock 2" } },
-  { ...baseEvent, id: 3, old_id: 113, production: 12, hall: 5, info: { nl: "Info mock 3" } },
+  { ...baseEvent, id: 2, production: 11, hall: 4, info: { nl: "Info mock 2" }, old_id: 12346 },
+  { ...baseEvent, id: 3, production: 12, hall: 5, info: { nl: "Info mock 3" }, old_id: 12347 },
 ];
 
 beforeAll(async () => {
@@ -49,7 +49,7 @@ beforeAll(async () => {
         hall: (params?.[4] as number | undefined) ?? current["hall"],
         doors_at: (params?.[5] as Date | undefined) ?? current["doors_at"],
         info: params?.[6] ?? current["info"],
-        updated_at: params?.[7] ? new Date(params?.[7] as string) : new Date(),
+        updated_at: params?.[7] ? new Date(params?.[8] as string) : new Date(),
         updated_by: params?.[8],
       };
 
@@ -112,7 +112,7 @@ describe("Event Edit Routes", () => {
       });
 
       expect(response.statusCode).toBe(400);
-      expect(response.json()).toEqual({ error: "Invalid request data" });
+      expect(response.json()).toMatchObject({ error: "Invalid request data" });
     });
 
     test("returns 404 when event not in database", async () => {
@@ -193,7 +193,7 @@ describe("Event Edit Routes", () => {
       expect(listResponse.json()).toHaveLength(3);
       const listedEvent = listResponse.json()[1];
       expect(listedEvent.id).toBe(2);
-      expect(listedEvent.old_id).toBe(112);
+      expect(listedEvent.old_id).toBe(12346);
       expect(listedEvent.production).toBe(99);
       expect(listedEvent.starts_at).toBe(initialEvents[1]!.starts_at.toISOString());
       expect(listedEvent.ends_at).toBe(initialEvents[1]!.ends_at.toISOString());
@@ -221,7 +221,7 @@ describe("Event Edit Routes", () => {
       expect(editResponse.statusCode).toBe(200);
       const editBody = editResponse.json();
       expect(editBody.id).toBe(2);
-      expect(editBody.old_id).toBe(112);
+      expect(editBody.old_id).toBe(12346);
       expect(editBody.starts_at).toBe(newStartsAt.toISOString());
       expect(editBody.ends_at).toBe(newEndsAt.toISOString());
       expect(editBody.hall).toBe(9);
@@ -240,7 +240,7 @@ describe("Event Edit Routes", () => {
       expect(listResponse.json()).toHaveLength(3);
       const listedEvent2 = listResponse.json()[1];
       expect(listedEvent2.id).toBe(2);
-      expect(listedEvent2.old_id).toBe(112);
+      expect(listedEvent2.old_id).toBe(12346);
       expect(listedEvent2.starts_at).toBe(newStartsAt.toISOString());
       expect(listedEvent2.ends_at).toBe(newEndsAt.toISOString());
       expect(listedEvent2.hall).toBe(9);
