@@ -26,5 +26,5 @@ export default fp(async (server: FastifyInstance) => {
     transformObject: jsonSchemaTransformObject,
   });
 
-  server.register(swaggerUI, { routePrefix: "/api" });
+  server.register(swaggerUI, { routePrefix: "/api/v1/docs" });
 });
