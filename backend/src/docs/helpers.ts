@@ -3,6 +3,7 @@
  * The goal being to make them extendable and reusable.
  */
 import { HttpClientError, HttpServerError, type HTTPErrorCode, type HttpSuccess } from "@/routes/helpers.js";
+import { stringToInt } from "@viernulvier/shared/types/helpers.js";
 import z from "zod";
 
 type schemaDef = {
@@ -183,4 +184,8 @@ export const DefaultRequestErrorMessages = new CombinedRequestSchema(
   new RequestErrorMessage(HttpClientError.NotFound, "Not Found"),
   new RequestErrorMessage(HttpClientError.BadRequest, "Invalid request data"),
   new RequestErrorMessage(HttpServerError.InternalServerError, "Internal server error"),
+);
+
+export const requestById = new RequestParams(
+  z.object({ id: stringToInt }),
 );

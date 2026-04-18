@@ -1,5 +1,5 @@
-import { requestSchema, RequestDescription } from "@/docs/helpers.js";
-import { requestById, returnsAdmin, sharedRequestSchema } from "./shared.js";
+import { requestSchema, RequestDescription, requestById } from "@/docs/helpers.js";
+import { returnsAdmin, sharedRequestSchema } from "./shared.js";
 
 export const deleteAdminDocs =  requestSchema(
   sharedRequestSchema,

@@ -1,6 +1,6 @@
-import { requestSchema, RequestBody, RequestDescription } from "@/docs/helpers.js";
+import { requestSchema, RequestBody, RequestDescription, requestById } from "@/docs/helpers.js";
 import { ReplaceAdminBodySchema } from "../handlers/replace.js";
-import { requestById, returnsAdmin, sharedRequestSchema } from "./shared.js";
+import {  returnsAdmin, sharedRequestSchema } from "./shared.js";
 
 export const replaceAdminDocs = requestSchema(
   sharedRequestSchema,

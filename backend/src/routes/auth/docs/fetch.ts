@@ -1,5 +1,5 @@
-import { RequestDescription, requestSchema } from "@/docs/helpers.js";
-import { requestById, returnsAdminArray, returnsAdmin, sharedRequestSchema } from "./shared.js";
+import { RequestDescription, requestSchema, requestById } from "@/docs/helpers.js";
+import { returnsAdminArray, returnsAdmin, sharedRequestSchema } from "./shared.js";
 
 
 const fetchAdminsDocs = requestSchema(
