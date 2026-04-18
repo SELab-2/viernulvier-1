@@ -1,5 +1,4 @@
 import { defineConfig } from "vitest/config";
-import tsconfigPaths from "vite-tsconfig-paths";
 import path from "path";
 
 /** Same bar for both legacy CSV importers (streaming / DB-heavy; branches are costly to drive). */
@@ -32,7 +31,6 @@ export default defineConfig({
       "@viernulvier/shared": path.resolve(__dirname, "../shared/src"),
     },
   },
-  plugins: [tsconfigPaths()],
   test: {
     globals: true,
     environment: "node",
