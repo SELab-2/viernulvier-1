@@ -4,7 +4,7 @@ import { buildQuery, parseSchema, HttpError } from "@/routes/helpers.js";
 import { z } from "zod";
 import { comparePassword } from "./hash.js";
 
-const LoginBodySchema = AdminSchema.pick({ username: true }).extend({
+export const LoginBodySchema = AdminSchema.pick({ username: true }).extend({
   password: z.string(),
 });
 

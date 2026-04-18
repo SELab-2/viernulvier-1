@@ -5,7 +5,7 @@ import { buildQuery, getMetadata, parseParams, parseSchema } from "@/routes/help
 import { z } from "zod";
 import { hashPassword } from "./hash.js";
 
-const ReplaceAdminBodySchema = AdminSchema.pick({ username: true, super: true }).extend({
+export const ReplaceAdminBodySchema = AdminSchema.pick({ username: true, super: true }).extend({
   password: z.string().min(8).max(72),
 });
 
