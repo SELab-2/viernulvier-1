@@ -8,6 +8,7 @@ import {
   serializerCompiler,
   validatorCompiler,
 } from "fastify-type-provider-zod";
+import path from 'path';
 
 export default fp(async (server: FastifyInstance) => {
   server.setValidatorCompiler(validatorCompiler);
@@ -26,5 +27,10 @@ export default fp(async (server: FastifyInstance) => {
     transformObject: jsonSchemaTransformObject,
   });
 
-  server.register(swaggerUI, { routePrefix: "/api/v1/docs" });
+
+
+  server.register(swaggerUI, {
+    routePrefix: "/api/v1/docs",
+    baseDir: path.resolve("static"),
+  });
 });
