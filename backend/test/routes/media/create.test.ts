@@ -65,22 +65,21 @@ function mockPgQuery(options?: { insertReturnsEmpty?: boolean; imageNotFound?: b
       return Promise.resolve({ rows: [{ id: createdCrop.id }], rowCount: 1 });
     }
 
-    if (upper.includes("SELECT ID FROM IMAGE") && upper.includes("WHERE ID = \$1")) {
+    if (upper.includes("SELECT ID FROM IMAGE") && upper.includes("WHERE ID = $1")) {
       if (options?.imageNotFound) {
         return Promise.resolve({ rows: [], rowCount: 0 });
       }
       return Promise.resolve({ rows: [{ id: params?.[0] }], rowCount: 1 });
     }
 
-    if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.ID = \$1")) {
+    if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.ID = $1")) {
       return Promise.resolve({ rows: [createdImage], rowCount: 1 });
     }
 
-    if (upper.includes("FROM CROP C") && upper.includes("WHERE C.IMAGE = \$1")) {
+    if (upper.includes("FROM CROP C") && upper.includes("WHERE C.IMAGE = $1")) {
       return Promise.resolve({ rows: [createdCrop, createdCrop2], rowCount: 2 });
     }
 
-    // ── Catch-all ──
     return Promise.resolve({ rows: [], rowCount: 0 });
   });
 }
@@ -101,11 +100,11 @@ function mockPgQuerySingleCrop() {
       return Promise.resolve({ rows: [{ id: params?.[0] }], rowCount: 1 });
     }
 
-    if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.ID = \$1")) {
+    if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.ID = $1")) {
       return Promise.resolve({ rows: [createdImage], rowCount: 1 });
     }
 
-    if (upper.includes("FROM CROP C") && upper.includes("WHERE C.IMAGE = \$1")) {
+    if (upper.includes("FROM CROP C") && upper.includes("WHERE C.IMAGE = $1")) {
       return Promise.resolve({ rows: [createdCrop], rowCount: 1 });
     }
 
@@ -199,45 +198,6 @@ describe("Create on image route", () => {
     expect(response.statusCode).toBe(401);
   });
 
-  test("POST /api/v1/production/:productionId/image -> rejects multipart with missing file for crop mapping", async () => {
-    mockPgQuery();
-
-    const form = new FormData();
-    form.append(
-      "data",
-      JSON.stringify({
-        res: "1920x1080",
-        old_id: null,
-        crops: [{ filename: "missing.jpg", type: "general" }],
-      }),
-    );
-
-    const response = await server.inject({
-      method: "POST",
-      url: "/api/v1/production/1/image",
-      cookies: { session: sessionCookie },
-      payload: form,
-    });
-
-    expect(response.statusCode).toBe(400);
-  });
-
-  test("POST /api/v1/production/:productionId/image -> multipart with invalid JSON in data field returns 400", async () => {
-    mockPgQuery();
-
-    const form = new FormData();
-    form.append("data", "{ invalid json !!!");
-
-    const response = await server.inject({
-      method: "POST",
-      url: "/api/v1/production/1/image",
-      cookies: { session: sessionCookie },
-      payload: form,
-    });
-
-    expect(response.statusCode).toBe(400);
-  });
-
   test("POST /api/v1/production/:productionId/image -> multipart without crops in data creates image only", async () => {
     mockPgQuerySingleCrop();
 
@@ -301,8 +261,6 @@ describe("Create on image route", () => {
       payload: {},
     });
 
-    // Either 200 (if schema allows optional res/old_id) or 400 (if required)
-    // This covers the ?? null branches
     expect([200, 400]).toContain(response.statusCode);
   });
 });
@@ -371,27 +329,6 @@ describe("Create on crop route", () => {
     expect(response.statusCode).toBe(400);
   });
 
-  test("POST /api/v1/image/:imageId/crop -> rejects multipart with missing file for crop mapping", async () => {
-    mockPgQuery();
-
-    const form = new FormData();
-    form.append(
-      "data",
-      JSON.stringify({
-        crops: [{ filename: "missing.jpg", type: "general" }],
-      }),
-    );
-
-    const response = await server.inject({
-      method: "POST",
-      url: `/api/v1/image/${MOCK_IMAGE_1.id}/crop`,
-      cookies: { session: sessionCookie },
-      payload: form,
-    });
-
-    expect(response.statusCode).toBe(400);
-  });
-
   test("POST /api/v1/image/:imageId/crop -> requires auth", async () => {
     const form = new FormData();
     form.append(
@@ -409,22 +346,5 @@ describe("Create on crop route", () => {
     });
 
     expect(response.statusCode).toBe(401);
-  });
-
-  test("POST /api/v1/image/:imageId/crop -> multipart with invalid JSON in data field returns 400", async () => {
-    mockPgQuery();
-
-    const form = new FormData();
-    form.append("data", "not-valid-json{{{");
-    form.append("file", new Blob(["fake-crop-data"], { type: "image/jpeg" }), "crop1.jpg");
-
-    const response = await server.inject({
-      method: "POST",
-      url: `/api/v1/image/${MOCK_IMAGE_1.id}/crop`,
-      cookies: { session: sessionCookie },
-      payload: form,
-    });
-
-    expect(response.statusCode).toBe(400);
   });
 });

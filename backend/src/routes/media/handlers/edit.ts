@@ -11,7 +11,7 @@ import {
 import { getImageById, getCropById } from "./fetch.js";
 import { PatchImageBodySchema, PatchCropBodySchema } from "./body-schema.js";
 import { hasOwn, getNullableFieldValue } from "./field-utils.js";
-import { parseMultipart } from "./create.js";
+import { parseMultipart } from "./multipart-helpers.js";
 import {
   uploadToS3,
   deleteFromS3,
