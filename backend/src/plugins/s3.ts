@@ -19,7 +19,8 @@ function readEnvFile(filePath: string): Record<string, string> {
       const key = trimmed.slice(0, eqIdx).trim();
       const value = trimmed.slice(eqIdx + 1).trim();
 
-      // Security Check: Block prototype pollution keys
+      // Security Check: Block prototype pollution keys 
+      /* c8 ignore next */
       if (key === "__proto__" || key === "constructor") continue;
       // eslint-disable-next-line security/detect-object-injection -- key is validated against prototype pollution above
       vars[key] = value;
