@@ -118,6 +118,7 @@ const agModules: Module[] = [
 
 ModuleRegistry.registerModules(agModules);
 
+/** Truncates long cell values for compact grid rendering. */
 function truncateValue(value: string, maxLength = 48): string {
   if (value.length <= maxLength) {
     return value;
@@ -126,6 +127,15 @@ function truncateValue(value: string, maxLength = 48): string {
   return `${value.slice(0, maxLength - 1)}...`;
 }
 
+/**
+ * Encapsulates CMS AG Grid configuration, state, and utility actions.
+ *
+ * Responsibilities:
+ * - define column config and editor behavior
+ * - persist/restore grid state to localStorage
+ * - expose actions for filtering, exporting, and sizing
+ * - expose theme variables compatible with light/dark modes
+ */
 export function useCmsProductionGrid(options: {
   isDark: Ref<boolean>;
   t: TranslateFunction;

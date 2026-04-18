@@ -100,6 +100,11 @@ import { useI18n } from "vue-i18n";
 import type { LanguageMap } from "@/utils/i18n";
 import type { CmsEventGridRow, CmsProductionGridRow } from "@/services/cms";
 
+/**
+ * Side drawer for viewing/editing events linked to the selected production.
+ *
+ * The component is presentational and emits all persistence actions to the parent.
+ */
 defineProps<{
   show: boolean;
   selectedProduction: CmsProductionGridRow | null;

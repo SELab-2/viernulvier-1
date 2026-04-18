@@ -1,11 +1,13 @@
 import type { Tag, TagType } from "@viernulvier/shared";
 import type { LanguageMap } from "@/utils/i18n";
 
+/** Tag choice shown in CMS selectors. */
 export interface CmsTagChoice {
   id: number;
   label: string;
 }
 
+/** Grouped tags by tag type for CMS editors/modals. */
 export interface CmsTagGroup {
   tagTypeId: number;
   label: string;
@@ -13,15 +15,22 @@ export interface CmsTagGroup {
   tags: CmsTagChoice[];
 }
 
+/** Normalizes a label for case-insensitive comparisons. */
 function normalizeLabel(value: string): string {
   return value.trim().toLowerCase();
 }
 
+/** Returns true when a label is recognized as the genre tag type. */
 function isGenreLabel(value: string): boolean {
   const normalized = normalizeLabel(value);
   return normalized === "genre" || normalized === "genres";
 }
 
+/**
+ * Determines whether a tag type should be treated as genre.
+ *
+ * Uses both the localized label and all translations to avoid locale-specific mismatches.
+ */
 function isGenreTagType(
   label: string,
   name: LanguageMap | null | undefined,
@@ -37,6 +46,7 @@ function isGenreTagType(
   return Object.values(name).some((value) => isGenreLabel(String(value ?? "")));
 }
 
+/** Localizes a label and falls back to a readable placeholder when empty. */
 function localizeLabel(
   label: LanguageMap | null | undefined,
   localize: (map: LanguageMap | null | undefined) => string,
@@ -46,6 +56,15 @@ function localizeLabel(
   return localized.length > 0 ? localized : fallback;
 }
 
+/**
+ * Builds sorted CMS tag groups from flat tag/tag-type API payloads.
+ *
+ * Behavior:
+ * - groups tags by `tag_type`
+ * - sorts tag labels inside groups
+ * - marks and orders genre groups first
+ * - filters out empty groups
+ */
 export function buildCmsTagGroups(
   tags: Tag[],
   tagTypes: TagType[],

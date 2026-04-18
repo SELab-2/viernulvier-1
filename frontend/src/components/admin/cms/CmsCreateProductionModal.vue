@@ -174,6 +174,9 @@ import { useI18n } from "vue-i18n";
 import type { SupportedLang } from "@/i18n";
 import type { CmsCreateFieldConfig, CmsTagGroup, CreateFieldKey, CreateFormState } from "@/services/cms";
 
+/**
+ * Modal for creating productions, including language fields, media inputs, and tag assignment.
+ */
 const props = defineProps<{
   open: boolean;
   createForm: CreateFormState;
@@ -202,20 +205,25 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 
+/** Genre tags shown as primary-tag selector options. */
 const primaryTagOptions = computed(() => props.tagGroups.find((group) => group.isGenre)?.tags ?? []);
+/** Non-genre tag groups shown as checkbox lists. */
 const additionalTagGroups = computed(() => props.tagGroups.filter((group) => !group.isGenre));
 
+/** Emits finalized toggle from checkbox state. */
 function onFinalizedChange(event: Event): void {
   const target = event.target as HTMLInputElement;
   emit("update-finalized", target.checked);
 }
 
+/** Parses primary-tag selection and emits nullable numeric ID. */
 function onPrimaryTagChange(event: Event): void {
   const target = event.target as HTMLSelectElement;
   const value = target.value.trim();
   emit("update-primary-tag", value.length > 0 ? Number(value) : null);
 }
 
+/** Emits additional-tag checkbox toggles. */
 function onTagToggle(tagId: number, selected: boolean): void {
   emit("toggle-tag", tagId, selected);
 }

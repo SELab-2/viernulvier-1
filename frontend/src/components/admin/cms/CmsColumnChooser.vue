@@ -27,6 +27,11 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * Sidebar popup for toggling AG Grid column visibility.
+ *
+ * Stateless component: it only receives current visibility and emits updates.
+ */
 defineProps<{
   show: boolean;
   columnOptions: ReadonlyArray<{ colId: string; label: string }>;

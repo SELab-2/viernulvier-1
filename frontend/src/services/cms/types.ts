@@ -1,6 +1,7 @@
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import type { SupportedLang } from "@/i18n";
 
+/** Editable event row model used in the CMS events drawer. */
 export interface CmsEventGridRow {
   id: number;
   date: string;
@@ -14,6 +15,7 @@ export interface CmsEventGridRow {
   infoNl: string;
 }
 
+/** Form model used by the "create linked event" modal. */
 export interface CmsCreateLinkedEventForm {
   startsAt: string;
   endsAt: string;
@@ -22,6 +24,7 @@ export interface CmsCreateLinkedEventForm {
   infoNl: string;
 }
 
+/** AG Grid row model for the CMS production table. */
 export interface CmsProductionGridRow {
   id: number;
   source: ProductionWithBackwardsRefs;
@@ -37,8 +40,10 @@ export interface CmsProductionGridRow {
   events: number[];
 }
 
+/** Inline-editable short text columns in AG Grid. */
 export type InlineEditableField = "performer" | "title" | "producer" | "teaser";
 
+/** Long-form fields edited via side panel. */
 export type LongField = "teaser" | "description" | "description_2" | "video_1";
 
 export type CreateFieldKey =
@@ -52,6 +57,7 @@ export type CreateFieldKey =
   | "video_1"
   | "video_2";
 
+/** Create-production modal form state. */
 export interface CreateFormState {
   finalized: boolean;
   title: Record<SupportedLang, string>;
@@ -65,6 +71,7 @@ export interface CreateFormState {
   video_2: Record<SupportedLang, string>;
 }
 
+/** Side panel editor state for long-form multilingual content. */
 export interface EditorPanelState {
   rowId: number;
   apiField: LongField;
@@ -72,6 +79,7 @@ export interface EditorPanelState {
   values: Record<SupportedLang, string>;
 }
 
+/** Declarative config for rendering create modal field blocks. */
 export interface CmsCreateFieldConfig {
   key: CreateFieldKey;
   labelKey: string;

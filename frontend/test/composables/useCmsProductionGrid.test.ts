@@ -74,6 +74,27 @@ describe("useCmsProductionGrid", () => {
     expect(grid.agThemeVars.value["--cms-header-fg"]).toBe("var(--ink-on-inv)");
   });
 
+  it("builds genre editor values from primary tag labels with safe fallback", () => {
+    const withLabels = useCmsProductionGrid({
+      isDark: ref(false),
+      t: (key) => key,
+      getPrimaryTagLabels: () => ["Genre A", "Genre B"],
+    });
+    const withLabelsGenresCol = withLabels.columnDefs.value.find((col) => col.field === "genres");
+    const withLabelsParams = withLabelsGenresCol?.cellEditorParams as (() => { values: string[] }) | undefined;
+    expect(withLabelsParams?.().values).toEqual(["Genre A", "Genre B"]);
+
+    const withoutLabels = useCmsProductionGrid({
+      isDark: ref(false),
+      t: (key) => key,
+    });
+    const withoutLabelsGenresCol = withoutLabels.columnDefs.value.find((col) => col.field === "genres");
+    const withoutLabelsParams = withoutLabelsGenresCol?.cellEditorParams as
+      | (() => { values: string[] })
+      | undefined;
+    expect(withoutLabelsParams?.().values).toEqual([]);
+  });
+
   it("restores state on grid ready when persisted state is present", () => {
     const api = createGridApiMock();
     localStorage.setItem("viernulvier-cms-grid-state", JSON.stringify({ columns: [] }));

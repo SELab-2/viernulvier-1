@@ -91,6 +91,9 @@ import { useI18n } from "vue-i18n";
 import type { LanguageMap } from "@/utils/i18n";
 import type { CmsCreateLinkedEventForm, CmsProductionGridRow } from "@/services/cms";
 
+/**
+ * Modal used to create and link a new event to the currently selected production.
+ */
 defineProps<{
   open: boolean;
   selectedProduction: CmsProductionGridRow | null;
@@ -112,11 +115,13 @@ const emit = defineEmits<{
   ];
 }>();
 
+/** Emits text/date input updates to the parent form state. */
 function onTextInput(field: "startsAt" | "endsAt" | "doorsAt" | "infoNl", event: Event): void {
   const target = event.target as HTMLInputElement;
   emit("update-form-field", field, target.value);
 }
 
+/** Emits hall selection changes as a numeric hall ID. */
 function onHallChange(event: Event): void {
   const target = event.target as HTMLSelectElement;
   emit("update-form-field", "hallId", Number(target.value));

@@ -167,68 +167,17 @@
       </aside>
     </div>
 
-    <div v-else-if="tagEditorPanel" class="cms-side-overlay" @click.self="closeTagEditorPanel">
-      <aside class="cms-side-panel">
-        <div class="cms-side-header">
-          <h2 class="text-lg font-semibold text-ink-primary">
-            {{ tagEditorPanel.label }}
-          </h2>
-          <button
-            type="button"
-            class="cms-side-close"
-            @click="closeTagEditorPanel"
-          >
-            {{ t("cms.panel.close") }}
-          </button>
-        </div>
-
-        <div class="cms-side-body">
-          <p v-if="tagEditorBulkCount > 1" class="text-xs text-ink-secondary">
-            {{ t("cms.panel.bulkNotice", { count: tagEditorBulkCount }) }}
-          </p>
-
-          <div
-            v-for="group in additionalTagGroups"
-            :key="group.tagTypeId"
-            class="cms-side-field rounded-md border border-surface-3 bg-surface-0 p-3"
-          >
-            <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-secondary">
-              {{ group.label }}
-            </h3>
-            <label
-              v-for="tag in group.tags"
-              :key="tag.id"
-              class="flex items-center gap-2 py-1 text-sm text-ink-primary"
-            >
-              <input
-                :checked="tagEditorPanel.selectedTagIds.includes(tag.id)"
-                type="checkbox"
-                @change="onTagEditorCheckboxChange(tag.id, $event)"
-              >
-              <span>{{ tag.label }}</span>
-            </label>
-          </div>
-
-          <p v-if="saveError" class="text-sm text-red-700">
-            {{ saveError }}
-          </p>
-        </div>
-
-        <div class="cms-side-footer">
-          <p class="cms-side-save-hint">
-            {{ t("cms.panel.saveHint") }}
-          </p>
-          <button
-            type="button"
-            class="cms-side-save"
-            :disabled="isSaving"
-            @click="saveTagEditorPanel"
-          >
-            {{ isSaving ? t("cms.panel.saving") : t("cms.panel.saveAction") }}
-          </button>
-        </div>
-      </aside>
-    </div>
+    <CmsTagDrawer
+      :show="!editorPanel && tagEditorPanel !== null"
+      :panel="tagEditorPanel"
+      :additional-tag-groups="additionalTagGroups"
+      :bulk-count="tagEditorBulkCount"
+      :save-error="saveError"
+      :is-saving="isSaving"
+      @close="closeTagEditorPanel"
+      @toggle-tag="toggleTagEditorTag"
+      @save="saveTagEditorPanel"
+    />
 
     <CmsCreateProductionModal
       :open="createModalOpen"
@@ -270,6 +219,16 @@
 
 <script setup lang="ts">
 
+/**
+ * CMS production administration page.
+ *
+ * Coordinates:
+ * - AG Grid row rendering and inline editing
+ * - create/edit side panels and modals
+ * - linked event management
+ * - tag grouping and assignment workflows
+ */
+
 import { useDarkMode } from "@/composables/useDarkMode";
 import AdminNavbar from "@/components/admin/AdminNavbar.vue";
 
@@ -289,6 +248,7 @@ import CmsCreateEventModal from "@/components/admin/cms/CmsCreateEventModal.vue"
 import CmsEventsDrawer from "@/components/admin/cms/CmsEventsDrawer.vue";
 import CmsGridControls from "@/components/admin/cms/CmsGridControls.vue";
 import CmsCreateProductionModal from "@/components/admin/cms/CmsCreateProductionModal.vue";
+import CmsTagDrawer from "@/components/admin/cms/CmsTagDrawer.vue";
 import { useCmsProductionGrid } from "@/composables/useCmsProductionGrid";
 import { i18n, SUPPORTED_LANGS, type SupportedLang } from "@/i18n";
 import {
@@ -465,6 +425,7 @@ function localizeValue(map: LanguageMap | null | undefined): string {
   return localizeOrEmpty(map, currentLang.value);
 }
 
+/** Builds a language map patch by replacing only the active locale value. */
 function setCurrentLanguageValue(
   map: LanguageMap | null | undefined,
   newValue: string,
@@ -479,10 +440,12 @@ function getProductionEditKey(rowId: number, field: string): string {
   return `${rowId}:${field}`;
 }
 
+/** Stores event-row snapshots so unsaved edits can be restored on blur. */
 function snapshotEventRows(rows: CmsEventGridRow[]): void {
   eventRowSnapshots.value = new Map(rows.map((row) => [row.id, { ...row }]));
 }
 
+/** Reverts one event row to its last snapshot. */
 function revertEventRow(row: CmsEventGridRow): void {
   const snapshot = eventRowSnapshots.value.get(row.id);
   if (!snapshot) {
@@ -496,6 +459,7 @@ function revertEventRow(row: CmsEventGridRow): void {
   row.infoNl = snapshot.infoNl;
 }
 
+/** Initializes default values for the create-linked-event modal. */
 function resetCreateLinkedEventForm(): void {
   const now = new Date();
   const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000);
@@ -509,6 +473,7 @@ function resetCreateLinkedEventForm(): void {
   };
 }
 
+/** Generic setter for create-linked-event form fields. */
 function setCreateLinkedEventField(
   field: keyof CmsCreateLinkedEventForm,
   value: CmsCreateLinkedEventForm[keyof CmsCreateLinkedEventForm],
@@ -519,6 +484,7 @@ function setCreateLinkedEventField(
   };
 }
 
+/** Generic setter for multilingual create-production form fields. */
 function setCreateFormField(
   field: CreateFieldKey,
   lang: SupportedLang,
@@ -533,6 +499,7 @@ function setCreateFormField(
   };
 }
 
+/** Toggles optional create-form languages (EN/FR). */
 function setCreateExtraLang(lang: "en" | "fr", value: boolean): void {
   createExtraLangs.value = {
     ...createExtraLangs.value,
@@ -540,6 +507,7 @@ function setCreateExtraLang(lang: "en" | "fr", value: boolean): void {
   };
 }
 
+/** Loads all linked events and required hall records for one production. */
 async function loadEventsForProduction(production: ProductionWithBackwardsRefs): Promise<ArchiveEvent[]> {
   const eventIds = extractEventIds(production.events as unknown[]);
   if (eventIds.length === 0) {
@@ -571,6 +539,7 @@ async function loadEventsForProduction(production: ProductionWithBackwardsRefs):
   return events;
 }
 
+/** Builds/caches events drawer rows for one production. */
 async function loadDetailRowsForProduction(
   production: ProductionWithBackwardsRefs,
 ): Promise<CmsEventGridRow[]> {
@@ -586,28 +555,36 @@ async function loadDetailRowsForProduction(
   return rows;
 }
 
+/** Resets the long-text editor panel state. */
 function closeEditorPanel(): void {
   editorPanel.value = null;
   saveError.value = null;
 }
 
+/** Resets the additional-tags editor panel state. */
 function closeTagEditorPanel(): void {
   tagEditorPanel.value = null;
   saveError.value = null;
 }
 
+/** Restores create modal to a clean default state. */
 function resetCreateForm(): void {
   createForm.value = buildEmptyCreateForm();
   createExtraLangs.value = { en: false, fr: false };
   resetCreateTagSelection();
 }
 
+/** Resets selected primary and additional tags for create flow. */
 function resetCreateTagSelection(): void {
   const primaryOptions = createPrimaryTagOptions.value;
   selectedPrimaryTagId.value = primaryOptions[0]?.id ?? null;
   selectedTagIds.value = [];
 }
 
+/**
+ * Reconciles selected tags with currently loaded tag metadata.
+ * Keeps primary tag valid and removes stale/deleted tag IDs.
+ */
 function syncCreateTagSelection(): void {
   const primaryOptions = createPrimaryTagOptions.value;
   const availableTagIds = new Set(createTagGroups.value.flatMap((group) => group.tags.map((tag) => tag.id)));
@@ -625,6 +602,7 @@ function syncCreateTagSelection(): void {
   selectedTagIds.value = selectedTagIds.value.filter((tagId) => availableTagIds.has(tagId));
 }
 
+/** Sets create-flow primary tag and removes it from additional selection. */
 function setCreatePrimaryTag(tagId: number | null): void {
   selectedPrimaryTagId.value = tagId;
   if (tagId !== null) {
@@ -632,6 +610,7 @@ function setCreatePrimaryTag(tagId: number | null): void {
   }
 }
 
+/** Toggles an additional tag in the create-flow selection. */
 function toggleCreateTag(tagId: number, selected: boolean): void {
   if (selected) {
     selectedTagIds.value = [...new Set([...selectedTagIds.value, tagId])];
@@ -641,10 +620,12 @@ function toggleCreateTag(tagId: number, selected: boolean): void {
   selectedTagIds.value = selectedTagIds.value.filter((selectedTagId) => selectedTagId !== tagId);
 }
 
+/** Returns deduplicated combined tag payload (primary + additional). */
 function getSelectedProductionTagIds(): number[] {
   return [...new Set([selectedPrimaryTagId.value, ...selectedTagIds.value].filter((tagId): tagId is number => typeof tagId === "number" && Number.isFinite(tagId)))];
 }
 
+/** Opens side panel for editing non-primary (additional) tags. */
 function openTagEditorPanel(row: CmsProductionGridRow): void {
   const tagIds = extractProductionTagIds(row.source);
   const primaryOptionIds = new Set(createPrimaryTagOptions.value.map((tag) => tag.id));
@@ -656,6 +637,7 @@ function openTagEditorPanel(row: CmsProductionGridRow): void {
   saveError.value = null;
 }
 
+/** Local helper to toggle a tag inside the tag editor panel state. */
 function toggleTagEditorTag(tagId: number, selected: boolean): void {
   if (!tagEditorPanel.value) {
     return;
@@ -671,11 +653,7 @@ function toggleTagEditorTag(tagId: number, selected: boolean): void {
   };
 }
 
-function onTagEditorCheckboxChange(tagId: number, event: Event): void {
-  const target = event.target as HTMLInputElement | null;
-  toggleTagEditorTag(tagId, Boolean(target?.checked));
-}
-
+/** Builds final tag payload while preserving the current primary tag. */
 function getTagEditorPayload(row: CmsProductionGridRow): number[] {
   const currentTagIds = extractProductionTagIds(row.source);
   const primaryTagIds = new Set(createPrimaryTagOptions.value.map((tag) => tag.id));
@@ -687,6 +665,7 @@ function getTagEditorPayload(row: CmsProductionGridRow): number[] {
   ])];
 }
 
+/** Resolves a primary-tag ID from a displayed label in the grid editor. */
 function resolvePrimaryTagIdByLabel(label: string): number | null {
   const normalized = label.trim();
   if (normalized.length === 0 || normalized === "-") {
@@ -696,6 +675,7 @@ function resolvePrimaryTagIdByLabel(label: string): number | null {
   return createPrimaryTagOptions.value.find((tag) => tag.label === normalized)?.id ?? null;
 }
 
+/** Saves additional-tag edits for selected row(s). */
 async function saveTagEditorPanel(): Promise<void> {
   if (!tagEditorPanel.value) {
     return;
@@ -729,18 +709,21 @@ async function saveTagEditorPanel(): Promise<void> {
   }
 }
 
+/** Opens the create-production modal and syncs tag defaults. */
 function openCreateModal(): void {
   createError.value = null;
   syncCreateTagSelection();
   createModalOpen.value = true;
 }
 
+/** Closes create modal and clears transient create errors/state. */
 function closeCreateModal(): void {
   createModalOpen.value = false;
   createError.value = null;
   resetCreateForm();
 }
 
+/** Converts chosen image file to data URL for create form. */
 async function onImageFileChange(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
@@ -750,6 +733,7 @@ async function onImageFileChange(event: Event): Promise<void> {
   input.value = "";
 }
 
+/** Converts chosen secondary media file to data URL for create form. */
 async function onVideoFileChange(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
@@ -798,6 +782,7 @@ async function submitCreateProduction(): Promise<void> {
   }
 }
 
+/** Persists a partial production patch and applies it back to the local row. */
 async function persistProductionPatch(
   row: CmsProductionGridRow,
   patch: Record<string, unknown>,
@@ -814,6 +799,7 @@ async function persistProductionPatch(
   }
 }
 
+/** Applies one inline text edit to selected row(s), scoped to active locale. */
 async function saveInlineBulkUpdate(
   primaryRow: CmsProductionGridRow,
   apiField: keyof ProductionWithBackwardsRefs,
@@ -835,6 +821,7 @@ async function saveInlineBulkUpdate(
   }
 }
 
+/** Handles AG Grid edit completion for primary-tag and inline text fields. */
 async function onCellEditingStopped(
   event: CellEditingStoppedEvent<CmsProductionGridRow>,
 ): Promise<void> {
@@ -912,6 +899,7 @@ async function onCellEditingStopped(
   }
 }
 
+/** Tracks Enter-driven commits so accidental blur edits are ignored. */
 function onProductionCellKeyDown(event: CellKeyDownEvent<CmsProductionGridRow>): void {
   const domEvent = event.event as KeyboardEvent | null | undefined;
   if (!event.data || !event.colDef.field || domEvent?.key !== "Enter") {
@@ -921,6 +909,7 @@ function onProductionCellKeyDown(event: CellKeyDownEvent<CmsProductionGridRow>):
   pendingProductionEnterCommits.value.add(getProductionEditKey(event.data.id, event.colDef.field));
 }
 
+/** Stores currently edited production cell key for keyboard commit flow. */
 function onProductionCellEditingStarted(event: CellEditingStartedEvent<CmsProductionGridRow>): void {
   if (!event.data || !event.colDef.field) {
     return;
@@ -929,6 +918,7 @@ function onProductionCellEditingStarted(event: CellEditingStartedEvent<CmsProduc
   activeProductionEditKey.value = getProductionEditKey(event.data.id, event.colDef.field);
 }
 
+/** Global Enter key handler to support AG Grid edit commit semantics. */
 function onWindowKeyDown(event: KeyboardEvent): void {
   if (event.key !== "Enter" || !activeProductionEditKey.value) {
     return;
@@ -937,6 +927,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
   pendingProductionEnterCommits.value.add(activeProductionEditKey.value);
 }
 
+/** Routes cell clicks to their dedicated editor/action surfaces. */
 function onCellClicked(event: CellClickedEvent<CmsProductionGridRow>): void {
   if (!event.data) {
     return;
@@ -973,6 +964,7 @@ function onCellClicked(event: CellClickedEvent<CmsProductionGridRow>): void {
   saveError.value = null;
 }
 
+/** Saves side-panel long-text edits for selected row(s). */
 async function saveEditorPanel(): Promise<void> {
   if (!editorPanel.value) {
     return;
@@ -1003,6 +995,7 @@ async function saveEditorPanel(): Promise<void> {
   closeEditorPanel();
 }
 
+/** Rebuilds AG Grid rows from latest API caches and locale. */
 function rebuildRows(): void {
   rowData.value = buildProductionGridRows(
     productionsData.value,
@@ -1012,6 +1005,7 @@ function rebuildRows(): void {
   );
 }
 
+/** Opens events drawer and loads linked event rows for a production. */
 async function showEventsForProduction(row: CmsProductionGridRow): Promise<void> {
   selectedEventsProductionId.value = row.id;
   eventsPanelLoading.value = true;
@@ -1034,6 +1028,7 @@ async function showEventsForProduction(row: CmsProductionGridRow): Promise<void>
   }
 }
 
+/** Closes events drawer and resets dependent state. */
 function closeEventsPanel(): void {
   selectedEventsProductionId.value = null;
   selectedEventRows.value = [];
@@ -1041,6 +1036,7 @@ function closeEventsPanel(): void {
   createEventModalOpen.value = false;
 }
 
+/** Reloads currently opened events drawer after CRUD operations. */
 async function refreshEventsPanelForSelectedProduction(): Promise<void> {
   if (selectedEventsProductionId.value === null) {
     return;
@@ -1053,6 +1049,7 @@ async function refreshEventsPanelForSelectedProduction(): Promise<void> {
   await showEventsForProduction(row);
 }
 
+/** Persists one linked event edit. */
 async function saveLinkedEvent(eventRow: CmsEventGridRow): Promise<void> {
   if (selectedEventsProductionId.value === null) return;
   eventsPanelLoading.value = true;
@@ -1081,6 +1078,7 @@ async function saveLinkedEvent(eventRow: CmsEventGridRow): Promise<void> {
   }
 }
 
+/** Deletes one linked event and refreshes dependent caches/UI. */
 async function removeLinkedEvent(eventRow: CmsEventGridRow): Promise<void> {
   if (selectedEventsProductionId.value === null) return;
   eventsPanelLoading.value = true;
@@ -1102,6 +1100,7 @@ async function removeLinkedEvent(eventRow: CmsEventGridRow): Promise<void> {
   }
 }
 
+/** Creates a new event and links it to the selected production. */
 async function createAndLinkEvent(): Promise<void> {
   if (selectedEventsProductionId.value === null) return;
   if (!createLinkedEventForm.value.hallId) {
@@ -1139,6 +1138,7 @@ async function createAndLinkEvent(): Promise<void> {
   }
 }
 
+/** Reverts event row when focus leaves the row without save action. */
 function onEventRowFocusOut(eventRow: CmsEventGridRow, focusEvent: FocusEvent): void {
   const currentTarget = focusEvent.currentTarget as HTMLElement | null;
   const relatedTarget = focusEvent.relatedTarget as Node | null;
@@ -1149,21 +1149,25 @@ function onEventRowFocusOut(eventRow: CmsEventGridRow, focusEvent: FocusEvent): 
   revertEventRow(eventRow);
 }
 
+/** Enter-key shortcut for saving a linked event row. */
 function onEventRowEnter(eventRow: CmsEventGridRow): void {
   void saveLinkedEvent(eventRow);
 }
 
+/** Opens create-event modal from events drawer. */
 function openCreateEventModal(): void {
   eventsPanelError.value = null;
   createEventModalOpen.value = true;
 }
 
+/** Closes create-event modal and resets event-form defaults. */
 function closeCreateEventModal(): void {
   createEventModalOpen.value = false;
   eventsPanelError.value = null;
   resetCreateLinkedEventForm();
 }
 
+/** Submits event-create flow and closes modal on success. */
 async function submitCreateEvent(): Promise<void> {
   await createAndLinkEvent();
   if (!eventsPanelError.value) {
@@ -1171,6 +1175,7 @@ async function submitCreateEvent(): Promise<void> {
   }
 }
 
+/** Loads productions, tags, tag types, and halls required by CMS screen. */
 async function loadCmsData(): Promise<void> {
   isLoading.value = true;
   loadError.value = null;
@@ -1205,6 +1210,7 @@ async function loadCmsData(): Promise<void> {
   }
 }
 
+/** Returns initial dark-mode value from localStorage or OS preference. */
 function getInitialDark(): boolean {
   const stored = localStorage.getItem("viernulvier-dark");
   if (stored !== null) return stored === "true";

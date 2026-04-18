@@ -5,15 +5,18 @@ import { toLocalDateTimeInput } from "./date";
 import { extractEventIds } from "./helpers";
 import type { CmsEventGridRow, CmsProductionGridRow } from "./types";
 
+/** Normalizes labels for case-insensitive checks. */
 function normalizeLabel(value: string): string {
   return value.trim().toLowerCase();
 }
 
+/** Checks whether a label is the genre tag type. */
 function isGenreLabel(value: string): boolean {
   const normalized = normalizeLabel(value);
   return normalized === "genre" || normalized === "genres";
 }
 
+/** Detects genre tag types based on any available translation. */
 function isGenreTagType(name: LanguageMap | null | undefined): boolean {
   if (!name) {
     return false;
@@ -22,6 +25,9 @@ function isGenreTagType(name: LanguageMap | null | undefined): boolean {
   return Object.values(name).some((value) => isGenreLabel(String(value ?? "")));
 }
 
+/**
+ * Maps archive events to rows used by the CMS events drawer.
+ */
 export function buildEventGridRows(
   events: ArchiveEvent[],
   hallById: Map<number, { name: LanguageMap }>,
@@ -53,6 +59,11 @@ export function buildEventGridRows(
     });
 }
 
+/**
+ * Builds one CMS production grid row from API production data.
+ *
+ * The primary genre is derived by tag type (genre), not by tag array position.
+ */
 export function buildProductionGridRow(
   production: ProductionWithBackwardsRefs,
   tagById: Map<number, Tag>,
@@ -87,6 +98,9 @@ export function buildProductionGridRow(
   };
 }
 
+/**
+ * Builds all CMS production grid rows and precomputes genre tag-type IDs.
+ */
 export function buildProductionGridRows(
   productions: ProductionWithBackwardsRefs[],
   tags: Tag[],
@@ -103,6 +117,11 @@ export function buildProductionGridRows(
   return productions.map((production) => buildProductionGridRow(production, tagById, genreTagTypeIds, localize));
 }
 
+/**
+ * Applies inline-updated production fields back into an existing grid row.
+ *
+ * Used for optimistic-ish UI refresh after PATCH requests.
+ */
 export function applyUpdatedProductionToRow(
   row: CmsProductionGridRow,
   updated: ProductionWithBackwardsRefs,
@@ -118,6 +137,12 @@ export function applyUpdatedProductionToRow(
   row.media = localize(updated.video_1) || "";
 }
 
+/**
+ * Returns bulk-edit targets.
+ *
+ * If multiple rows are selected and include the clicked row, all selected rows are updated.
+ * Otherwise only the clicked row is targeted.
+ */
 export function getBulkTargetRows(
   selectedRows: CmsProductionGridRow[],
   primaryRow: CmsProductionGridRow,

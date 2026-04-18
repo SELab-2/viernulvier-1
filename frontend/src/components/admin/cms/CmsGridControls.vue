@@ -30,6 +30,9 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 
+/**
+ * Toolbar controls for AG Grid search, selection summary, and utility actions.
+ */
 defineProps<{
   quickFilterText: string;
   selectedCount: number;
@@ -49,6 +52,9 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 
+/**
+ * Keeps the quick-filter model in sync and requests immediate grid filtering.
+ */
 function onQuickFilterInput(event: Event): void {
   const target = event.target as HTMLInputElement;
   emit("update:quickFilterText", target.value);
