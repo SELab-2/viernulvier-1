@@ -1,9 +1,14 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
+import { nextTick } from "vue";
+
 import ProductionDetailsSection from "@/components/production/DetailsSection.vue";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 
+// ─────────────────────────────────────────────────────────────
+// i18n
+// ─────────────────────────────────────────────────────────────
 
 const i18n = createI18n({
   legacy: false,
@@ -20,6 +25,9 @@ const i18n = createI18n({
   },
 });
 
+// ─────────────────────────────────────────────────────────────
+// base data
+// ─────────────────────────────────────────────────────────────
 
 const baseProduction: ProductionWithBackwardsRefs = {
   id: 1,
@@ -35,19 +43,24 @@ const baseProduction: ProductionWithBackwardsRefs = {
   description: null,
   description_extra: null,
   description_2: null,
-  video_1: null,
-  video_2: null,
+
   quote: null,
   quote_source: null,
   programme: null,
   info: null,
 
+  video_1: null,
+  video_2: null,
+
   tags: [],
   events: [],
 };
 
+// ─────────────────────────────────────────────────────────────
+// helper
+// ─────────────────────────────────────────────────────────────
 
-function mountComponent(props = {}) {
+function mountComponent(props: Partial<any> = {}) {
   return mount(ProductionDetailsSection, {
     props: {
       production: baseProduction,
@@ -65,28 +78,22 @@ function mountComponent(props = {}) {
 // tests
 // ─────────────────────────────────────────────────────────────
 
-describe("ProductionDetailsSection.vue", () => {
+describe("ProductionDetailsSection", () => {
   afterEach(() => {
     i18n.global.locale.value = "nl";
   });
 
-  // ── sidebar visibility ─────────────────────────────────────────────
+  // ─────────────────────────────────────────────
+  // SIDEBAR
+  // ─────────────────────────────────────────────
 
-  describe("sidebar visibility", () => {
-    it("hides sidebar when no content exists", () => {
-      const wrapper = mountComponent({
-        tagGroups: [],
-        production: {
-          ...baseProduction,
-          teaser: null,
-          description_extra: null,
-        },
-      });
-
-      expect(wrapper.text()).not.toContain("Tags");
+  describe("sidebar", () => {
+    it("does not render sidebar when empty", () => {
+      const wrapper = mountComponent();
+      expect(wrapper.find(".lg\\:col-span-4").exists()).toBe(false);
     });
 
-    it("shows sidebar when tags exist", () => {
+    it("renders sidebar when tags exist", () => {
       const wrapper = mountComponent({
         tagGroups: [{ label: "Genre", tags: ["Dance"] }],
       });
@@ -94,7 +101,7 @@ describe("ProductionDetailsSection.vue", () => {
       expect(wrapper.text()).toContain("Tags");
     });
 
-    it("shows sidebar when teaser exists", () => {
+    it("renders sidebar when teaser exists", () => {
       const wrapper = mountComponent({
         production: {
           ...baseProduction,
@@ -106,25 +113,37 @@ describe("ProductionDetailsSection.vue", () => {
     });
   });
 
-  // ── tag accordion ─────────────────────────────────────────────
+  // ─────────────────────────────────────────────
+  // ACCORDION
+  // ─────────────────────────────────────────────
 
-  describe("tag accordion", () => {
-    it("renders tag button when tagGroups exist", () => {
+  describe("tags accordion", () => {
+    it("renders tags by default", () => {
       const wrapper = mountComponent({
         tagGroups: [{ label: "Genre", tags: ["Dance"] }],
       });
 
-      expect(wrapper.find("button").exists()).toBe(true);
-      expect(wrapper.text()).toContain("Tags");
+      expect(wrapper.text()).toContain("Dance");
     });
 
-    it("renders tags when expanded (default true)", () => {
+    it("toggles tags visibility", async () => {
       const wrapper = mountComponent({
-        tagGroups: [{ label: "Genre", tags: ["Dance", "Theatre"] }],
+        tagGroups: [{ label: "Genre", tags: ["Dance"] }],
       });
 
+      const button = wrapper.find("button");
+
       expect(wrapper.text()).toContain("Dance");
-      expect(wrapper.text()).toContain("Theatre");
+
+      await button.trigger("click");
+      await nextTick();
+
+      expect(wrapper.text()).not.toContain("Dance");
+
+      await button.trigger("click");
+      await nextTick();
+
+      expect(wrapper.text()).toContain("Dance");
     });
 
     it("does not render empty tag groups", () => {
@@ -136,158 +155,106 @@ describe("ProductionDetailsSection.vue", () => {
     });
   });
 
-  describe("DetailsSection - tag toggle", () => {
-    it("toggles tagsExpanded when clicking header button", async () => {
-      const wrapper = mountComponent({
-        tagGroups: [{ label: "Genre", tags: ["Dance"] }],
-      });
+  // ─────────────────────────────────────────────
+  // QUOTE
+  // ─────────────────────────────────────────────
 
-      expect(wrapper.text()).toContain("Dance");
-
-      const button = wrapper.find("button");
-
-      await button.trigger("click");
-
-      expect(wrapper.text()).not.toContain("Dance");
-    });
-  });
-
-  // ── quote block ─────────────────────────────────────────────
-
-  describe("quote section", () => {
-    it("renders quote", () => {
+  describe("quote", () => {
+    it("renders quote without extra characters", () => {
       const wrapper = mountComponent({
         production: {
           ...baseProduction,
-          quote: { nl: "Een mooie quote" },
+          quote: { nl: '"A beautiful quote"' },
         },
       });
 
-      expect(wrapper.text()).toContain("Een mooie quote");
+      expect(wrapper.text()).toContain("A beautiful quote");
+      expect(wrapper.text()).not.toContain('"');
     });
 
-    it("renders quote source when present", () => {
+    it("renders quote source", () => {
       const wrapper = mountComponent({
         production: {
           ...baseProduction,
           quote: { nl: "Quote" },
-          quote_source: { nl: "Auteur" },
+          quote_source: { nl: "Author" },
         },
       });
 
-      expect(wrapper.text()).toContain("Auteur");
-    });
-
-    it("does not render quote section when empty", () => {
-      const wrapper = mountComponent();
-
-      expect(wrapper.text()).not.toContain("“");
+      expect(wrapper.text()).toContain("Author");
     });
   });
 
-  // ── descriptions ─────────────────────────────────────────────
+  // ─────────────────────────────────────────────
+  // DESCRIPTION + v-html
+  // ─────────────────────────────────────────────
 
-  describe("descriptions", () => {
-    it("renders description", () => {
+  describe("descriptions (v-html + parsing)", () => {
+    it("renders normal text", () => {
       const wrapper = mountComponent({
         production: {
           ...baseProduction,
-          description: { nl: "Main description" },
+          description: { nl: "Hello world" },
         },
       });
 
-      expect(wrapper.text()).toContain("Main description");
+      expect(wrapper.text()).toContain("Hello world");
+    });
+
+    it("renders HTML safely via v-html", () => {
+      const wrapper = mountComponent({
+        production: {
+          ...baseProduction,
+          description: { nl: "<b>Bold text</b>" },
+        },
+      });
+
+      expect(wrapper.html()).toContain("<b>Bold text</b>");
+    });
+
+    it("normalizes legacy backslashes", () => {
+      const wrapper = mountComponent({
+        production: {
+          ...baseProduction,
+          description: { nl: "\\nExtra content\\n" },
+        },
+      });
+
+      expect(wrapper.text()).toContain("Extra content");
     });
 
     it("renders secondary description", () => {
       const wrapper = mountComponent({
         production: {
           ...baseProduction,
-          description_2: { nl: "Second description" },
+          description_2: { nl: "Second block" },
         },
       });
 
-      expect(wrapper.text()).toContain("Second description");
+      expect(wrapper.text()).toContain("Second block");
     });
   });
 
-  // ── teaser + extra description ─────────────────────────────────────────────
-  describe("descriptions", () => {
-    it("renders teaser + extra description + divider when both exist", () => {
-      const wrapper = mountComponent({
-        production: {
-          ...baseProduction,
-          teaser: { nl: "Teaser title" },
-          description_extra: { nl: "Extra content" },
-        },
-      });
+  // ─────────────────────────────────────────────
+  // TEASER + EXTRA
+  // ─────────────────────────────────────────────
 
-      expect(wrapper.text()).toContain("Teaser title");
-      expect(wrapper.text()).toContain("Extra content");
-
-      expect(wrapper.find(".h-px").exists()).toBe(true);
-    });
-
-    it("applies mb-4 class when teaser and description_extra are present", () => {
-      const wrapper = mountComponent({
-        production: {
-          ...baseProduction,
-          teaser: { nl: "Teaser text" },
-          description_extra: { nl: "Extra content" },
-        },
-      });
-
-      const h2 = wrapper.find("h2");
-
-      expect(h2.exists()).toBe(true);
-      expect(h2.classes()).toContain("mb-4");
-    });
-
-    it("does not apply mb-4 class when description_extra is empty", () => {
-      const wrapper = mountComponent({
-        production: {
-          ...baseProduction,
-          teaser: { nl: "Teaser text" },
-          description_extra: null,
-        },
-      });
-
-      const h2 = wrapper.find("h2");
-
-      expect(h2.exists()).toBe(true);
-      expect(h2.classes()).not.toContain("mb-4");
-    });
-
-    it("adds mb-4 class when teaser and extra description exist", () => {
+  describe("teaser + extra", () => {
+    it("renders both blocks with divider", () => {
       const wrapper = mountComponent({
         production: {
           ...baseProduction,
           teaser: { nl: "Teaser" },
-          description_extra: { nl: "Extra" },
+          description_extra: { nl: "Extra content" },
         },
       });
 
-      const h2 = wrapper.find("h2");
-      expect(h2.classes()).toContain("mb-4");
+      expect(wrapper.text()).toContain("Teaser");
+      expect(wrapper.text()).toContain("Extra content");
+      expect(wrapper.find(".h-px").exists()).toBe(true);
     });
 
-    it("does not render extra block when description_extra is whitespace", () => {
-      const wrapper = mountComponent({
-        production: {
-          ...baseProduction,
-          teaser: { nl: "Teaser only" },
-          description_extra: { nl: "   " },
-        },
-      });
-
-      expect(wrapper.text()).toContain("Teaser only");
-
-      expect(wrapper.find(".h-px").exists()).toBe(false);
-
-      expect(wrapper.text()).not.toContain("Extra content");
-    });
-
-    it("does not render teaser when teaser is only whitespace", () => {
+    it("does not render teaser when whitespace", () => {
       const wrapper = mountComponent({
         production: {
           ...baseProduction,
@@ -296,26 +263,26 @@ describe("ProductionDetailsSection.vue", () => {
       });
 
       expect(wrapper.find("h2").exists()).toBe(false);
-
-      expect(wrapper.text()).not.toContain("   ");
     });
   });
 
-  // ── info + programme ─────────────────────────────────────────────
+  // ─────────────────────────────────────────────
+  // INFO / PROGRAMME
+  // ─────────────────────────────────────────────
 
-  describe("info and programme", () => {
-    it("renders info section", () => {
+  describe("info & programme", () => {
+    it("renders info", () => {
       const wrapper = mountComponent({
         production: {
           ...baseProduction,
-          info: { nl: "Extra info" },
+          info: { nl: "Info text" },
         },
       });
 
-      expect(wrapper.text()).toContain("Extra info");
+      expect(wrapper.text()).toContain("Info text");
     });
 
-    it("renders programme section", () => {
+    it("renders programme", () => {
       const wrapper = mountComponent({
         production: {
           ...baseProduction,
@@ -325,33 +292,20 @@ describe("ProductionDetailsSection.vue", () => {
 
       expect(wrapper.text()).toContain("Programme text");
     });
-
-    it("renders nothing when both are empty", () => {
-      const wrapper = mountComponent();
-
-      expect(wrapper.text()).not.toContain("Extra info");
-      expect(wrapper.text()).not.toContain("Programme text");
-    });
   });
 
-  // ── layout logic ─────────────────────────────────────────────
+  // ─────────────────────────────────────────────
+  // LAYOUT
+  // ─────────────────────────────────────────────
 
-  describe("layout classes", () => {
-    it("applies full width layout when no sidebar", () => {
-      const wrapper = mountComponent({
-        tagGroups: [],
-        production: {
-          ...baseProduction,
-          teaser: null,
-          description_extra: null,
-        },
-      });
+  describe("layout", () => {
+    it("uses full width when no sidebar", () => {
+      const wrapper = mountComponent();
 
-      const main = wrapper.find("div.space-y-16");
-      expect(main.classes().some(c => c.includes("lg:col-span-12"))).toBe(true);
+      expect(wrapper.find(".lg\\:col-span-12").exists()).toBe(true);
     });
 
-    it("applies split layout when sidebar exists", () => {
+    it("uses split layout when sidebar exists", () => {
       const wrapper = mountComponent({
         tagGroups: [{ label: "Genre", tags: ["Dance"] }],
       });

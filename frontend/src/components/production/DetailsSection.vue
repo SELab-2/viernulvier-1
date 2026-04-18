@@ -7,15 +7,11 @@
           <div class="sticky top-32 h-fit space-y-6">
             
             <div v-if="teaser || description_extra" class="bg-surface-inv p-8 shadow-xl text-ink-on-inv border border-surface-3">
-              <h2 v-if="teaser" class="text-[10px] font-black uppercase tracking-[0.3em] text-ink-on-inv-tertiary" :class="{ 'mb-4': description_extra }">
-                {{ teaser }}
-              </h2>
+              <h2 v-if="teaser" class="text-[10px] font-black uppercase tracking-[0.3em] text-ink-on-inv-tertiary" :class="{ 'mb-4': description_extra }" v-html="teaser" />
               
               <div v-if="teaser && description_extra" class="mb-6 h-px w-12 bg-ink-on-inv-tertiary opacity-30"></div>
               
-              <p v-if="description_extra" class="text-sm leading-relaxed whitespace-pre-line">
-                {{ description_extra }}
-              </p>
+              <p v-if="description_extra" class="text-sm leading-relaxed whitespace-pre-line" v-html="description_extra" />
             </div>
               
             <div v-if="tagGroups && tagGroups.length > 0" class="border border-surface-3 bg-surface-0 transition-all duration-300">
@@ -81,12 +77,8 @@
           </div>
           
           <div v-if="description || description_2" class="space-y-10">
-            <p v-if="description" class="text-lg font-light leading-relaxed text-ink-primary md:text-xl whitespace-pre-line">
-              {{ description }}
-            </p>
-            <p v-if="description_2" class="text-base font-light leading-relaxed text-ink-secondary whitespace-pre-line">
-              {{ description_2 }}
-            </p>
+            <p v-if="description" class="text-lg font-light leading-relaxed text-ink-primary md:text-xl whitespace-pre-line" v-html="description" />
+            <p v-if="description_2" class="text-base font-light leading-relaxed text-ink-secondary whitespace-pre-line" v-html="description_2" />
           </div>
         </div>
 
@@ -96,16 +88,12 @@
               <h3 class="text-xs font-black uppercase tracking-[0.2em] text-ink-primary">
                 {{ t("production.details.extraInfo") }}
               </h3>
-              <p class="max-w-2xl text-sm italic text-ink-secondary leading-relaxed whitespace-pre-line">
-                {{ info }}
-              </p>
+              <p class="max-w-2xl text-sm italic text-ink-secondary leading-relaxed whitespace-pre-line" v-html="info" />
             </div>
 
             <div v-if="programme" class="lg:col-span-4" :class="{ 'lg:col-start-9': !info }">
               <div class="sticky top-32 h-fit border border-surface-3 bg-surface-0 p-6 shadow-sm">
-                <p class="text-xs font-medium leading-relaxed text-ink-primary whitespace-pre-line">
-                  {{ programme }}
-                </p>
+                <p class="text-xs font-medium leading-relaxed text-ink-primary whitespace-pre-line" v-html="programme" />
               </div>
             </div>
           </div>
@@ -122,6 +110,7 @@ import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { computed, ref } from "vue";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/i18n";
 import { useI18n } from "vue-i18n";
+import { normalizeQuote, parseAndSanitizeContent } from "@/utils/parsers";
 
 const { t } = useI18n();
 const currentLang = computed(
@@ -137,20 +126,19 @@ const props = defineProps<{
 const tProd = (map: LanguageMap | null | undefined) =>
   localizeOrEmpty(map ?? {}, currentLang.value);
 
-const teaser = computed(() => {
-  const val = tProd(props.production.teaser);
-  return val?.trim() ? val : ""; // make sure no empty box renders
-});
-const description = computed(() => tProd(props.production.description));
-const description_extra = computed(() => {
-  const val = tProd(props.production.description_extra);
-  return val?.trim() ? val : "";
-});
-const description_2 = computed(() => tProd(props.production.description_2));
-const quote = computed(() => tProd(props.production.quote));
-const quote_source = computed(() => tProd(props.production.quote_source));
-const programme = computed(() => tProd(props.production.programme));
-const info = computed(() => tProd(props.production.info));
+function parseField(map: LanguageMap | null | undefined): string {
+  const value = tProd(map);
+  return parseAndSanitizeContent(value);
+}
+console.log(tProd(props.production.description_2))
+const teaser = computed(() => parseField(props.production.teaser));
+const description = computed(() => parseField(props.production.description));
+const description_extra = computed(() => parseField(props.production.description_extra));
+const description_2 = computed(() => parseField(props.production.description_2));
+const quote = computed(() => normalizeQuote(parseField(props.production.quote)));
+const quote_source = computed(() => parseField(props.production.quote_source));
+const programme = computed(() => parseField(props.production.programme));
+const info = computed(() => parseField(props.production.info));
 
 const tagsExpanded = ref(true);
 
