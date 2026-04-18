@@ -44,6 +44,14 @@ export default {
     title: "Gegevens bewerken",
     subtitle:
       "In dit overzicht kan je de gegevens rechtstreeks aanpassen, net zoals in Excel. Klik op een veld om te wijzigen en druk op Enter om op te slaan; als je wegklikt zonder Enter, wordt de wijziging teruggedraaid.",
+    tabs: {
+      ariaLabel: "CMS-secties",
+      productions: "Producties",
+      tags: "Tags",
+      admins: "Admins",
+      tagsPlaceholder: "Tagbeheer komt binnenkort.",
+      adminsPlaceholder: "Adminbeheer komt binnenkort.",
+    },
     columns: {
       performer: "Artiest",
       title: "Titel",

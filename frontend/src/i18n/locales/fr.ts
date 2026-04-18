@@ -44,6 +44,14 @@ export default {
     title: "Modifier les donnees",
     subtitle:
       "Dans cette vue, vous pouvez modifier les valeurs directement, comme dans Excel. Cliquez sur un champ et appuyez sur Entree pour enregistrer ; si vous quittez sans appuyer sur Entree, la modification est annulée.",
+    tabs: {
+      ariaLabel: "Sections CMS",
+      productions: "Productions",
+      tags: "Tags",
+      admins: "Admins",
+      tagsPlaceholder: "La gestion des tags arrive bientôt.",
+      adminsPlaceholder: "La gestion des admins arrive bientôt.",
+    },
     columns: {
       performer: "Artiste",
       title: "Titre",

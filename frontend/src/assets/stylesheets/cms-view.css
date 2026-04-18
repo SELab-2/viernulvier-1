@@ -39,3 +39,23 @@
 .cms-side-save {
   @apply rounded-md bg-surface-inv px-4 py-2 text-sm font-semibold text-ink-on-inv transition hover:bg-surface-inv-raised disabled:cursor-not-allowed disabled:opacity-60;
 }
+
+.cms-tabs {
+  @apply flex gap-1 border-b border-surface-3;
+}
+
+.cms-tab {
+  @apply -mb-px rounded-t-md border border-transparent px-4 py-2 text-sm font-medium text-ink-secondary transition hover:text-ink-primary;
+}
+
+.cms-tab-active {
+  @apply border-surface-3 border-b-transparent bg-surface-0 text-ink-primary;
+}
+
+.cms-tab-content {
+  @apply flex flex-col gap-6;
+}
+
+.cms-tab-placeholder {
+  @apply rounded-md border border-dashed border-surface-3 bg-surface-0 p-8 text-center;
+}
