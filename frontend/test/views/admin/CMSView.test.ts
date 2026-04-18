@@ -199,6 +199,34 @@ describe("CMSView", () => {
     expect(wrapper.exists()).toBe(true);
   });
 
+  it("shows the productions tab by default", async () => {
+    const wrapper = await mountCMSView();
+    expect(wrapper.findComponent(CmsProductionsTab).exists()).toBe(true);
+    expect(wrapper.get('[data-testid="cms-tab-productions"]').attributes("aria-selected")).toBe("true");
+  });
+
+  it("switches to the tags tab and unmounts productions", async () => {
+    const wrapper = await mountCMSView();
+    await wrapper.get('[data-testid="cms-tab-tags"]').trigger("click");
+    expect(wrapper.findComponent(CmsProductionsTab).exists()).toBe(false);
+    expect(wrapper.find(".cms-tab-placeholder").exists()).toBe(true);
+  });
+
+  it("switches to the admins tab", async () => {
+    const wrapper = await mountCMSView();
+    await wrapper.get('[data-testid="cms-tab-admins"]').trigger("click");
+    expect(wrapper.findComponent(CmsProductionsTab).exists()).toBe(false);
+    expect(wrapper.find(".cms-tab-placeholder").exists()).toBe(true);
+  });
+
+  it("switches back to productions after visiting another tab", async () => {
+    const wrapper = await mountCMSView();
+    await wrapper.get('[data-testid="cms-tab-tags"]').trigger("click");
+    await wrapper.get('[data-testid="cms-tab-productions"]').trigger("click");
+    await flushPromises();
+    expect(wrapper.findComponent(CmsProductionsTab).exists()).toBe(true);
+  });
+
   it("renders the CMS text", async () => {
     const wrapper = await mountCMSView();
     expect(wrapper.text()).toMatch(/Gegevens bewerken|CMS \(admin only\)/);
