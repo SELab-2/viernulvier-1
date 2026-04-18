@@ -47,6 +47,8 @@ export interface CreateProductionInput {
   vendor_id: number;
   box_office_id: number;
   finalized?: boolean;
+  /** Tag IDs to link to the new production. */
+  tags?: number[];
   /** Main title of the production (at least one language required). */
   title: LanguageMap;
   /** Performing artist or company. */

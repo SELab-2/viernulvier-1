@@ -87,6 +87,12 @@ export default {
       cancel: "Cancel",
       submit: "Add production",
       saving: "Adding...",
+      tags: {
+        title: "Tags",
+        primary: "Primary tag",
+        primaryEmpty: "No genre tags available",
+        hint: "Choose one primary genre tag and check extra tags per type.",
+      },
       fields: {
         title: "Title",
         artist: "Artist",
@@ -113,6 +119,8 @@ export default {
     panel: {
       close: "Close",
       save: "Save",
+      saveAction: "Save Changes",
+      saveHint: "Changes are only applied after clicking Save Changes.",
       saving: "Saving...",
       text: "Text",
       bulkNotice: "Change will be applied to {count} selected productions.",

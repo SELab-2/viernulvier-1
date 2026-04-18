@@ -129,6 +129,7 @@ function truncateValue(value: string, maxLength = 48): string {
 export function useCmsProductionGrid(options: {
   isDark: Ref<boolean>;
   t: TranslateFunction;
+  getPrimaryTagLabels?: () => string[];
 }) {
   const gridApi = ref<GridApi<CmsProductionGridRow> | null>(null);
   const quickFilterText = ref("");
@@ -211,6 +212,12 @@ export function useCmsProductionGrid(options: {
     {
       headerName: options.t("cms.columns.genres"),
       field: "genres",
+      editable: true,
+      singleClickEdit: true,
+      cellEditor: "agSelectCellEditor",
+      cellEditorParams: () => ({
+        values: options.getPrimaryTagLabels?.() ?? [],
+      }),
       minWidth: 120,
     },
     {

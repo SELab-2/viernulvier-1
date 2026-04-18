@@ -3,7 +3,7 @@ import { flushPromises, mount } from "@vue/test-utils";
 import { defineComponent, nextTick } from "vue";
 import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
-import type { Hall, ProductionWithBackwardsRefs, Tag } from "@viernulvier/shared";
+import type { Hall, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
 import { useAuthStore } from "@/stores/auth";
 import { RouteNames } from "@/router/routeNames";
 import { i18n } from "@/i18n";
@@ -32,6 +32,7 @@ vi.mock("@/services/productions", async (importOriginal) => {
 vi.mock("@/services/tags", () => ({
   getAllTags: vi.fn(),
   getTagsForProduction: vi.fn(),
+  getTagTypes: vi.fn(),
 }));
 
 vi.mock("@/services/halls", () => ({
@@ -114,7 +115,7 @@ const mockProduction = {
   quote_source: null,
   programme: null,
   info: null,
-  tags: [1, 2] as unknown as ProductionWithBackwardsRefs["tags"],
+  tags: [2, 1] as unknown as ProductionWithBackwardsRefs["tags"],
   events: [] as unknown as ProductionWithBackwardsRefs["events"],
 } as ProductionWithBackwardsRefs;
 
@@ -130,9 +131,22 @@ const mockHiddenTag = {
   id: 2,
   old_id: null,
   name: { en: "HiddenTag" },
-  tag_type: 1 as never,
+  tag_type: 2 as never,
   public: false,
 } as Tag;
+
+const mockGenreTagTwo = {
+  id: 3,
+  old_id: null,
+  name: { en: "AltGenre" },
+  tag_type: 1 as never,
+  public: true,
+} as Tag;
+
+const mockTagTypes = [
+  { id: 1, name: { en: "Genre", nl: "Genre", fr: "Genre" } },
+  { id: 2, name: { en: "Theme", nl: "Thema", fr: "Thème" } },
+] as TagType[];
 
 const mockHall = {
   id: 1,
@@ -152,7 +166,8 @@ describe("CMSView", () => {
     });
     vi.spyOn(productionsService, "createProduction").mockResolvedValue(mockProduction);
     vi.spyOn(productionsService, "updateProduction").mockResolvedValue(mockProduction);
-    vi.spyOn(tagsService, "getAllTags").mockResolvedValue([mockPublicTag, mockHiddenTag]);
+    vi.spyOn(tagsService, "getAllTags").mockResolvedValue([mockPublicTag, mockHiddenTag, mockGenreTagTwo]);
+    vi.spyOn(tagsService, "getTagTypes").mockResolvedValue(mockTagTypes);
     vi.spyOn(hallsService, "getHalls").mockResolvedValue([mockHall]);
     vi.spyOn(eventsService, "createEvent").mockResolvedValue({
       id: 100,
@@ -208,6 +223,7 @@ describe("CMSView", () => {
 
     expect(productionsService.getProductions).toHaveBeenCalledTimes(1);
     expect(tagsService.getAllTags).toHaveBeenCalledTimes(1);
+    expect(tagsService.getTagTypes).toHaveBeenCalledTimes(1);
     expect(hallsService.getHalls).toHaveBeenCalledTimes(1);
   });
 
@@ -215,6 +231,7 @@ describe("CMSView", () => {
     const wrapper = await mountCMSView();
 
     expect(wrapper.get('[data-testid="row-count"]').text()).toBe("1");
+    expect(wrapper.get('[data-testid="first-row-tags"]').text()).toContain("PublicTag");
     expect(wrapper.get('[data-testid="first-row-tags"]').text()).toContain("HiddenTag");
   });
 
@@ -250,6 +267,9 @@ describe("CMSView", () => {
     await api.submitCreateProduction();
 
     expect(productionsService.createProduction).toHaveBeenCalledTimes(1);
+    const payload = (productionsService.createProduction as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as { tags?: number[] };
+    expect(payload.tags).toEqual([expect.any(Number)]);
+    expect(payload.tags?.length).toBe(1);
     expect(api.createModalOpen.value).toBe(false);
   });
 
@@ -267,6 +287,47 @@ describe("CMSView", () => {
     await api.saveEditorPanel();
     expect(productionsService.updateProduction).toHaveBeenCalled();
     expect(api.editorPanel.value).toBeNull();
+  });
+
+  it("opens tag editor panel when clicking additional tags and saves tag changes", async () => {
+    const wrapper = await mountCMSView();
+    const api = (wrapper.vm as any).__test;
+    const row = api.rowData.value[0];
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "tags", headerName: "Additional tags" },
+    });
+
+    expect(api.tagEditorPanel.value).toBeTruthy();
+    api.tagEditorPanel.value.selectedTagIds = [];
+
+    await api.saveTagEditorPanel();
+
+    expect(productionsService.updateProduction).toHaveBeenCalledWith(row.id, {
+      tags: [1],
+    });
+    expect(api.tagEditorPanel.value).toBeNull();
+  });
+
+  it("updates primary tag from the genres grid cell", async () => {
+    const wrapper = await mountCMSView();
+    const api = (wrapper.vm as any).__test;
+    const row = api.rowData.value[0];
+    const setDataValue = vi.fn();
+
+    await api.onCellEditingStopped({
+      data: row,
+      value: "AltGenre",
+      oldValue: "PublicTag",
+      colDef: { field: "genres" },
+      node: { setDataValue },
+    });
+
+    expect(productionsService.updateProduction).toHaveBeenCalledWith(row.id, {
+      tags: [3, 2],
+    });
+    expect(setDataValue).not.toHaveBeenCalled();
   });
 
   it("handles create event modal open/close and no-selection submit", async () => {
@@ -390,6 +451,37 @@ describe("CMSView", () => {
     } as unknown as FocusEvent;
     api.onEventRowFocusOut({ id: 123, startsAt: "", endsAt: "", doorsAt: "", hallId: 1, infoNl: "", date: "", time: "", location: "", price: "" }, focusOutEvent);
     api.onEventRowEnter({ id: 123, startsAt: "", endsAt: "", doorsAt: "", hallId: 1, infoNl: "", date: "", time: "", location: "", price: "" });
+  });
+
+  it("closes CMS popups when clicking outside", async () => {
+    const wrapper = await mountCMSView();
+    const api = (wrapper.vm as any).__test;
+    const row = api.rowData.value[0];
+
+    await wrapper.findAll(".cms-grid-actions .cms-mini-btn").at(-1)?.trigger("click");
+    await nextTick();
+    const columnOverlay = wrapper.find(".cms-column-popup-overlay");
+    expect(columnOverlay.exists()).toBe(true);
+    await columnOverlay.trigger("click");
+    await nextTick();
+    expect(wrapper.find(".cms-column-popup-overlay").exists()).toBe(false);
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "descriptionOne", headerName: "Description" },
+    });
+    await nextTick();
+    const sideOverlay = wrapper.find(".cms-side-overlay");
+    expect(sideOverlay.exists()).toBe(true);
+    await sideOverlay.trigger("click");
+    expect(api.editorPanel.value).toBeNull();
+
+    api.onCellClicked({ data: row, colDef: { colId: "eventsAction" } });
+    await flushPromises();
+    const eventsOverlay = wrapper.find(".cms-events-overlay");
+    expect(eventsOverlay.exists()).toBe(true);
+    await eventsOverlay.trigger("click");
+    expect(api.selectedEventsProductionId.value).toBeNull();
   });
 
   it("covers showEventsForProduction success and error branches", async () => {
@@ -755,5 +847,112 @@ describe("CMSView", () => {
     );
 
     expect(wrapper.exists()).toBe(true);
+  });
+
+  it("covers side-panel save early returns and tag-save error branch", async () => {
+    const wrapper = await mountCMSView();
+    const api = (wrapper.vm as any).__test;
+    const row = api.rowData.value[0];
+
+    await api.saveTagEditorPanel();
+    await api.saveEditorPanel();
+
+    api.tagEditorPanel.value = { rowId: 999_999, label: "Missing", selectedTagIds: [] };
+    await api.saveTagEditorPanel();
+
+    api.editorPanel.value = {
+      rowId: 999_999,
+      apiField: "description",
+      label: "Missing",
+      values: { nl: "", en: "", fr: "" },
+    };
+    await api.saveEditorPanel();
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "tags", headerName: "Additional tags" },
+    });
+
+    vi.spyOn(productionsService, "updateProduction").mockRejectedValueOnce(new Error("tag save fail"));
+    await api.saveTagEditorPanel();
+
+    expect(api.tagEditorPanel.value).toBeTruthy();
+  });
+
+  it("covers event row snapshot restore, cached detail rows and hall-cache miss", async () => {
+    vi.spyOn(hallsService, "getHalls").mockResolvedValueOnce([]);
+    vi.spyOn(eventsService, "getEvent").mockResolvedValueOnce({
+      id: 222,
+      hall: 999,
+      starts_at: new Date().toISOString(),
+      ends_at: new Date().toISOString(),
+      doors_at: new Date().toISOString(),
+      info: { nl: "" },
+      production: mockProduction.id,
+    } as never);
+
+    const wrapper = await mountCMSView();
+    const api = (wrapper.vm as any).__test;
+    const row = api.rowData.value[0];
+
+    row.source.events = [222];
+    await api.showEventsForProduction(row);
+
+    const firstEventRow = api.selectedEventRows.value[0];
+    const original = {
+      startsAt: firstEventRow.startsAt,
+      endsAt: firstEventRow.endsAt,
+      doorsAt: firstEventRow.doorsAt,
+      hallId: firstEventRow.hallId,
+      infoNl: firstEventRow.infoNl,
+    };
+
+    firstEventRow.startsAt = "2030-01-01T10:00";
+    firstEventRow.endsAt = "2030-01-01T12:00";
+    firstEventRow.doorsAt = "2030-01-01T09:30";
+    firstEventRow.hallId = 12345;
+    firstEventRow.infoNl = "changed";
+
+    api.onEventRowFocusOut(firstEventRow, {
+      currentTarget: document.createElement("div"),
+      relatedTarget: null,
+    } as unknown as FocusEvent);
+
+    expect(firstEventRow.startsAt).toBe(original.startsAt);
+    expect(firstEventRow.endsAt).toBe(original.endsAt);
+    expect(firstEventRow.doorsAt).toBe(original.doorsAt);
+    expect(firstEventRow.hallId).toBe(original.hallId);
+    expect(firstEventRow.infoNl).toBe(original.infoNl);
+
+    await api.showEventsForProduction(row);
+    expect(eventsService.getEvent).toHaveBeenCalledTimes(1);
+    expect(hallsService.getHall).toHaveBeenCalledWith(999);
+
+    expect(wrapper.exists()).toBe(true);
+  });
+
+  it("covers no-genre tag selection branch and create save failure", async () => {
+    vi.spyOn(tagsService, "getTagTypes").mockResolvedValueOnce([
+      { id: 2, name: { en: "Theme", nl: "Thema", fr: "Theme" } },
+    ] as TagType[]);
+
+    const wrapper = await mountCMSView();
+    const api = (wrapper.vm as any).__test;
+
+    api.openCreateModal();
+    const modal = wrapper.findComponent({ name: "CmsCreateProductionModal" });
+    expect(modal.props("selectedPrimaryTagId")).toBeNull();
+
+    api.createForm.value.title.nl = "Title";
+    api.createForm.value.artist.nl = "Artist";
+    api.createForm.value.tagline.nl = "Tagline";
+    api.createForm.value.teaser.nl = "Teaser";
+    api.createForm.value.video_1.nl = "data:image/png;base64,abc";
+
+    vi.spyOn(productionsService, "createProduction").mockRejectedValueOnce(new Error("create fail"));
+    await api.submitCreateProduction();
+
+    expect(api.createError.value).toBeTruthy();
+    expect(api.createModalOpen.value).toBe(true);
   });
 });

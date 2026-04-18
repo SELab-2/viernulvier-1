@@ -106,6 +106,51 @@
           </p>
         </fieldset>
 
+        <fieldset class="cms-form-block">
+          <legend class="cms-form-legend">{{ t("cms.create.tags.title") }}</legend>
+
+          <div class="cms-tag-selector-grid">
+            <label class="cms-form-lang-field">
+              <span class="cms-lang-label">{{ t("cms.create.tags.primary") }}</span>
+              <select
+                class="cms-text-input cms-select-input"
+                :disabled="primaryTagOptions.length === 0"
+                :value="selectedPrimaryTagId ?? ''"
+                @change="onPrimaryTagChange"
+              >
+                <option v-if="primaryTagOptions.length === 0" value="">
+                  {{ t("cms.create.tags.primaryEmpty") }}
+                </option>
+                <option v-for="tag in primaryTagOptions" :key="tag.id" :value="tag.id">
+                  {{ tag.label }}
+                </option>
+              </select>
+            </label>
+
+            <p class="text-xs text-ink-tertiary">
+              {{ t("cms.create.tags.hint") }}
+            </p>
+          </div>
+
+          <details v-for="group in additionalTagGroups" :key="group.tagTypeId" class="cms-tag-group">
+            <summary class="cms-tag-group-summary">
+              <span>{{ group.label }}</span>
+              <span class="cms-tag-count">{{ group.tags.length }}</span>
+            </summary>
+
+            <div class="cms-tag-checkbox-list">
+              <label v-for="tag in group.tags" :key="tag.id" class="cms-tag-checkbox-row">
+                <input
+                  :checked="selectedTagIds.includes(tag.id)"
+                  type="checkbox"
+                  @change="onTagToggle(tag.id, ($event.target as HTMLInputElement).checked)"
+                />
+                <span>{{ tag.label }}</span>
+              </label>
+            </div>
+          </details>
+        </fieldset>
+
         <p v-if="createError" class="text-sm text-red-700">
           {{ createError }}
         </p>
@@ -124,17 +169,21 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { SupportedLang } from "@/i18n";
-import type { CmsCreateFieldConfig, CreateFieldKey, CreateFormState } from "@/services/cms";
+import type { CmsCreateFieldConfig, CmsTagGroup, CreateFieldKey, CreateFormState } from "@/services/cms";
 
-defineProps<{
+const props = defineProps<{
   open: boolean;
   createForm: CreateFormState;
   createExtraLangs: { en: boolean; fr: boolean };
   visibleCreateLangs: ReadonlyArray<SupportedLang>;
   langGridClass: string;
   createFields: Array<CmsCreateFieldConfig>;
+  tagGroups: ReadonlyArray<CmsTagGroup>;
+  selectedPrimaryTagId: number | null;
+  selectedTagIds: ReadonlyArray<number>;
   createError: string | null;
   isCreating: boolean;
 }>();
@@ -145,15 +194,30 @@ const emit = defineEmits<{
   "update-finalized": [value: boolean];
   "update-extra-lang": [lang: "en" | "fr", value: boolean];
   "update-form-field": [field: CreateFieldKey, lang: SupportedLang, value: string];
+  "update-primary-tag": [value: number | null];
+  "toggle-tag": [tagId: number, selected: boolean];
   "image-file-change": [event: Event];
   "video-file-change": [event: Event];
 }>();
 
 const { t } = useI18n();
 
+const primaryTagOptions = computed(() => props.tagGroups.find((group) => group.isGenre)?.tags ?? []);
+const additionalTagGroups = computed(() => props.tagGroups.filter((group) => !group.isGenre));
+
 function onFinalizedChange(event: Event): void {
   const target = event.target as HTMLInputElement;
   emit("update-finalized", target.checked);
+}
+
+function onPrimaryTagChange(event: Event): void {
+  const target = event.target as HTMLSelectElement;
+  const value = target.value.trim();
+  emit("update-primary-tag", value.length > 0 ? Number(value) : null);
+}
+
+function onTagToggle(tagId: number, selected: boolean): void {
+  emit("toggle-tag", tagId, selected);
 }
 </script>
 
@@ -222,6 +286,34 @@ function onFinalizedChange(event: Event): void {
 
 .cms-upload-controls {
   @apply grid grid-cols-1 gap-3 md:grid-cols-3;
+}
+
+.cms-tag-selector-grid {
+  @apply mt-3 grid grid-cols-1 gap-3 md:grid-cols-2;
+}
+
+.cms-select-input {
+  @apply appearance-none;
+}
+
+.cms-tag-group {
+  @apply mt-3 rounded-md border border-surface-3 bg-surface-0 px-3 py-2;
+}
+
+.cms-tag-group-summary {
+  @apply flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-ink-primary;
+}
+
+.cms-tag-count {
+  @apply rounded-full bg-surface-1 px-2 py-0.5 text-xs font-semibold text-ink-secondary;
+}
+
+.cms-tag-checkbox-list {
+  @apply mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2;
+}
+
+.cms-tag-checkbox-row {
+  @apply flex items-center gap-2 rounded-md border border-surface-3 bg-surface-1 px-3 py-2 text-sm text-ink-primary;
 }
 
 .cms-lang-label {

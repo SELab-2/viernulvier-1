@@ -83,8 +83,8 @@ describe("cms-helpers", () => {
   });
 
   it("builds production row with localized text and split tag labels", () => {
-    const tag1 = { id: 1, name: { nl: "Genre" } } as Tag;
-    const tag2 = { id: 2, name: { nl: "Hidden" } } as Tag;
+    const tag1 = { id: 1, name: { nl: "Genre" }, tag_type: 1 } as unknown as Tag;
+    const tag2 = { id: 2, name: { nl: "Hidden" }, tag_type: 2 } as unknown as Tag;
     collectProductionTagsByIdMapMock.mockReturnValue([tag1, tag2]);
 
     const production = {
@@ -100,7 +100,7 @@ describe("cms-helpers", () => {
       events: ["10", { id: 11 }],
     } as unknown as ProductionWithBackwardsRefs;
 
-    const row = buildProductionGridRow(production, new Map(), (map) => map?.nl ?? "");
+    const row = buildProductionGridRow(production, new Map(), new Set([1]), (map) => map?.nl ?? "");
 
     expect(collectProductionTagsByIdMapMock).toHaveBeenCalledWith(production, expect.any(Map));
     expect(row.id).toBe(5);
@@ -131,7 +131,7 @@ describe("cms-helpers", () => {
       events: [],
     } as unknown as ProductionWithBackwardsRefs;
 
-    const row = buildProductionGridRow(production, new Map(), () => "");
+    const row = buildProductionGridRow(production, new Map(), new Set([1]), () => "");
 
     expect(row.genres).toBe("-");
     expect(row.tags).toBe("-");

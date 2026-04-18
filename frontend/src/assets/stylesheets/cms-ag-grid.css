@@ -376,3 +376,8 @@ html:not(.dark) .cms-grid .ag-header-cell-filter-button .ag-icon {
 .ag-input-field-input.ag-text-field-input {
   padding-left: 28px !important; /* Adjust based on the actual icon size and desired spacing */
 }
+
+html.dark .cms-grid .ag-cell-inline-editing, .cms-grid .ag-cell-inline-editing .ag-cell-wrapper, .cms-grid .ag-cell-inline-editing .ag-cell-edit-wrapper {
+  background-color: inherit !important;
+  color: black !important;
+}

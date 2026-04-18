@@ -111,56 +111,124 @@
 
     <AppFooter />
 
-    <aside v-if="editorPanel" class="cms-side-panel">
-      <div class="cms-side-header">
-        <h2 class="text-lg font-semibold text-ink-primary">
-          {{ editorPanel.label }}
-        </h2>
-        <button
-          type="button"
-          class="cms-side-close"
-          @click="closeEditorPanel"
-        >
-          {{ t("cms.panel.close") }}
-        </button>
-      </div>
+    <div v-if="editorPanel" class="cms-side-overlay" @click.self="closeEditorPanel">
+      <aside class="cms-side-panel">
+        <div class="cms-side-header">
+          <h2 class="text-lg font-semibold text-ink-primary">
+            {{ editorPanel.label }}
+          </h2>
+          <button
+            type="button"
+            class="cms-side-close"
+            @click="closeEditorPanel"
+          >
+            {{ t("cms.panel.close") }}
+          </button>
+        </div>
 
-      <div class="cms-side-body">
-        <p v-if="editorBulkCount > 1" class="text-xs text-ink-secondary">
-          {{ t("cms.panel.bulkNotice", { count: editorBulkCount }) }}
-        </p>
+        <div class="cms-side-body">
+          <p v-if="editorBulkCount > 1" class="text-xs text-ink-secondary">
+            {{ t("cms.panel.bulkNotice", { count: editorBulkCount }) }}
+          </p>
 
-        <label
-          v-for="lang in languages"
-          :key="lang"
-          class="cms-side-field"
-        >
-          <span class="text-xs font-semibold uppercase tracking-wide text-ink-secondary">
-            {{ lang.toUpperCase() }}
-          </span>
-          <textarea
-            v-model="editorPanel.values[lang]"
-            class="cms-side-textarea"
-            rows="5"
-          />
-        </label>
+          <label
+            v-for="lang in languages"
+            :key="lang"
+            class="cms-side-field"
+          >
+            <span class="text-xs font-semibold uppercase tracking-wide text-ink-secondary">
+              {{ lang.toUpperCase() }}
+            </span>
+            <textarea
+              v-model="editorPanel.values[lang]"
+              class="cms-side-textarea"
+              rows="5"
+            />
+          </label>
 
-        <p v-if="saveError" class="text-sm text-red-700">
-          {{ saveError }}
-        </p>
-      </div>
+          <p v-if="saveError" class="text-sm text-red-700">
+            {{ saveError }}
+          </p>
+        </div>
 
-      <div class="cms-side-footer">
-        <button
-          type="button"
-          class="cms-side-save"
-          :disabled="isSaving"
-          @click="saveEditorPanel"
-        >
-          {{ isSaving ? t("cms.panel.saving") : t("cms.panel.save") }}
-        </button>
-      </div>
-    </aside>
+        <div class="cms-side-footer">
+          <p class="cms-side-save-hint">
+            {{ t("cms.panel.saveHint") }}
+          </p>
+          <button
+            type="button"
+            class="cms-side-save"
+            :disabled="isSaving"
+            @click="saveEditorPanel"
+          >
+            {{ isSaving ? t("cms.panel.saving") : t("cms.panel.saveAction") }}
+          </button>
+        </div>
+      </aside>
+    </div>
+
+    <div v-else-if="tagEditorPanel" class="cms-side-overlay" @click.self="closeTagEditorPanel">
+      <aside class="cms-side-panel">
+        <div class="cms-side-header">
+          <h2 class="text-lg font-semibold text-ink-primary">
+            {{ tagEditorPanel.label }}
+          </h2>
+          <button
+            type="button"
+            class="cms-side-close"
+            @click="closeTagEditorPanel"
+          >
+            {{ t("cms.panel.close") }}
+          </button>
+        </div>
+
+        <div class="cms-side-body">
+          <p v-if="tagEditorBulkCount > 1" class="text-xs text-ink-secondary">
+            {{ t("cms.panel.bulkNotice", { count: tagEditorBulkCount }) }}
+          </p>
+
+          <div
+            v-for="group in additionalTagGroups"
+            :key="group.tagTypeId"
+            class="cms-side-field rounded-md border border-surface-3 bg-surface-0 p-3"
+          >
+            <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-secondary">
+              {{ group.label }}
+            </h3>
+            <label
+              v-for="tag in group.tags"
+              :key="tag.id"
+              class="flex items-center gap-2 py-1 text-sm text-ink-primary"
+            >
+              <input
+                :checked="tagEditorPanel.selectedTagIds.includes(tag.id)"
+                type="checkbox"
+                @change="onTagEditorCheckboxChange(tag.id, $event)"
+              >
+              <span>{{ tag.label }}</span>
+            </label>
+          </div>
+
+          <p v-if="saveError" class="text-sm text-red-700">
+            {{ saveError }}
+          </p>
+        </div>
+
+        <div class="cms-side-footer">
+          <p class="cms-side-save-hint">
+            {{ t("cms.panel.saveHint") }}
+          </p>
+          <button
+            type="button"
+            class="cms-side-save"
+            :disabled="isSaving"
+            @click="saveTagEditorPanel"
+          >
+            {{ isSaving ? t("cms.panel.saving") : t("cms.panel.saveAction") }}
+          </button>
+        </div>
+      </aside>
+    </div>
 
     <CmsCreateProductionModal
       :open="createModalOpen"
@@ -169,11 +237,16 @@
       :visible-create-langs="visibleCreateLangs"
       :lang-grid-class="langGridClass"
       :create-fields="createFields"
+      :tag-groups="createTagGroups"
+      :selected-primary-tag-id="selectedPrimaryTagId"
+      :selected-tag-ids="selectedTagIds"
       :create-error="createError"
       :is-creating="isCreating"
       @update-finalized="createForm.finalized = $event"
       @update-extra-lang="setCreateExtraLang"
       @update-form-field="setCreateFormField"
+      @update-primary-tag="setCreatePrimaryTag"
+      @toggle-tag="toggleCreateTag"
       @image-file-change="onImageFileChange"
       @video-file-change="onVideoFileChange"
       @close="closeCreateModal"
@@ -209,7 +282,7 @@ import type {
   CellKeyDownEvent,
 } from "ag-grid-community";
 import { useI18n } from "vue-i18n";
-import type { Event as ArchiveEvent, Hall, ProductionWithBackwardsRefs, Tag } from "@viernulvier/shared";
+import type { Event as ArchiveEvent, Hall, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
 import AppFooter from "@/components/AppFooter.vue";
 import CmsColumnChooser from "@/components/admin/cms/CmsColumnChooser.vue";
 import CmsCreateEventModal from "@/components/admin/cms/CmsCreateEventModal.vue";
@@ -221,11 +294,12 @@ import { i18n, SUPPORTED_LANGS, type SupportedLang } from "@/i18n";
 import {
   createProduction,
   getProductions,
+  extractProductionTagIds,
   updateProduction,
 } from "@/services/productions";
 import { createEvent, deleteEvent, getEvent, updateEvent } from "@/services/events";
 import { getHall, getHalls } from "@/services/halls";
-import { getAllTags } from "@/services/tags";
+import { getAllTags, getTagTypes } from "@/services/tags";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/i18n";
 import {
   buildEventGridRows,
@@ -239,8 +313,10 @@ import {
   toLanguageMapOrNull,
   validateCreateProductionForm,
   getBulkTargetRows,
+  buildCmsTagGroups,
   type CmsCreateLinkedEventForm,
   type CmsEventGridRow,
+  type CmsTagGroup,
   type CreateFieldKey,
   type CreateFormState,
   type EditorPanelState,
@@ -281,6 +357,7 @@ const {
 } = useCmsProductionGrid({
   isDark,
   t,
+  getPrimaryTagLabels: () => createPrimaryTagOptions.value.map((tag) => tag.label),
 });
 
 const isLoading = ref(false);
@@ -314,10 +391,14 @@ const langGridClass = computed(() => {
 
 const productionsData = ref<ProductionWithBackwardsRefs[]>([]);
 const tagsData = ref<Tag[]>([]);
+const tagTypesData = ref<TagType[]>([]);
 const hallsData = ref<Hall[]>([]);
 const eventByIdCache = ref(new Map<number, ArchiveEvent>());
 const hallByIdCache = ref(new Map<number, Hall>());
 const detailRowsCache = ref(new Map<number, CmsEventGridRow[]>());
+const selectedPrimaryTagId = ref<number | null>(null);
+const selectedTagIds = ref<number[]>([]);
+const tagEditorPanel = ref<{ rowId: number; label: string; selectedTagIds: number[] } | null>(null);
 const selectedEventsProductionId = ref<number | null>(null);
 const selectedEventRows = ref<CmsEventGridRow[]>([]);
 const eventsPanelLoading = ref(false);
@@ -342,6 +423,14 @@ const editorBulkCount = computed(() => {
   return row ? getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], row).length : 0;
 });
 
+const tagEditorBulkCount = computed(() => {
+  if (!tagEditorPanel.value) {
+    return 0;
+  }
+  const row = rowData.value.find((item) => item.id === tagEditorPanel.value?.rowId);
+  return row ? getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], row).length : 0;
+});
+
 const selectedEventsProduction = computed(() => {
   if (selectedEventsProductionId.value === null) {
     return null;
@@ -350,6 +439,9 @@ const selectedEventsProduction = computed(() => {
 });
 
 const createFields = createProductionFields;
+const createTagGroups = computed<CmsTagGroup[]>(() => buildCmsTagGroups(tagsData.value, tagTypesData.value, localizeValue));
+const createPrimaryTagOptions = computed(() => createTagGroups.value.find((group) => group.isGenre)?.tags ?? []);
+const additionalTagGroups = computed(() => createTagGroups.value.filter((group) => !group.isGenre));
 
 const createForm = ref<CreateFormState>(buildEmptyCreateForm());
 
@@ -499,13 +591,147 @@ function closeEditorPanel(): void {
   saveError.value = null;
 }
 
+function closeTagEditorPanel(): void {
+  tagEditorPanel.value = null;
+  saveError.value = null;
+}
+
 function resetCreateForm(): void {
   createForm.value = buildEmptyCreateForm();
   createExtraLangs.value = { en: false, fr: false };
+  resetCreateTagSelection();
+}
+
+function resetCreateTagSelection(): void {
+  const primaryOptions = createPrimaryTagOptions.value;
+  selectedPrimaryTagId.value = primaryOptions[0]?.id ?? null;
+  selectedTagIds.value = [];
+}
+
+function syncCreateTagSelection(): void {
+  const primaryOptions = createPrimaryTagOptions.value;
+  const availableTagIds = new Set(createTagGroups.value.flatMap((group) => group.tags.map((tag) => tag.id)));
+
+  if (primaryOptions.length === 0) {
+    selectedPrimaryTagId.value = null;
+  } else if (!primaryOptions.some((tag) => tag.id === selectedPrimaryTagId.value)) {
+    selectedPrimaryTagId.value = primaryOptions[0]?.id ?? null;
+  }
+
+  if (selectedPrimaryTagId.value !== null) {
+    selectedTagIds.value = selectedTagIds.value.filter((tagId) => tagId !== selectedPrimaryTagId.value);
+  }
+
+  selectedTagIds.value = selectedTagIds.value.filter((tagId) => availableTagIds.has(tagId));
+}
+
+function setCreatePrimaryTag(tagId: number | null): void {
+  selectedPrimaryTagId.value = tagId;
+  if (tagId !== null) {
+    selectedTagIds.value = selectedTagIds.value.filter((selectedTagId) => selectedTagId !== tagId);
+  }
+}
+
+function toggleCreateTag(tagId: number, selected: boolean): void {
+  if (selected) {
+    selectedTagIds.value = [...new Set([...selectedTagIds.value, tagId])];
+    return;
+  }
+
+  selectedTagIds.value = selectedTagIds.value.filter((selectedTagId) => selectedTagId !== tagId);
+}
+
+function getSelectedProductionTagIds(): number[] {
+  return [...new Set([selectedPrimaryTagId.value, ...selectedTagIds.value].filter((tagId): tagId is number => typeof tagId === "number" && Number.isFinite(tagId)))];
+}
+
+function openTagEditorPanel(row: CmsProductionGridRow): void {
+  const tagIds = extractProductionTagIds(row.source);
+  const primaryOptionIds = new Set(createPrimaryTagOptions.value.map((tag) => tag.id));
+  tagEditorPanel.value = {
+    rowId: row.id,
+    label: row.title || t("cms.columns.tags"),
+    selectedTagIds: tagIds.filter((tagId) => !primaryOptionIds.has(tagId)),
+  };
+  saveError.value = null;
+}
+
+function toggleTagEditorTag(tagId: number, selected: boolean): void {
+  if (!tagEditorPanel.value) {
+    return;
+  }
+
+  const nextSelectedTagIds = selected
+    ? [...new Set([...tagEditorPanel.value.selectedTagIds, tagId])]
+    : tagEditorPanel.value.selectedTagIds.filter((selectedTagId) => selectedTagId !== tagId);
+
+  tagEditorPanel.value = {
+    ...tagEditorPanel.value,
+    selectedTagIds: nextSelectedTagIds,
+  };
+}
+
+function onTagEditorCheckboxChange(tagId: number, event: Event): void {
+  const target = event.target as HTMLInputElement | null;
+  toggleTagEditorTag(tagId, Boolean(target?.checked));
+}
+
+function getTagEditorPayload(row: CmsProductionGridRow): number[] {
+  const currentTagIds = extractProductionTagIds(row.source);
+  const primaryTagIds = new Set(createPrimaryTagOptions.value.map((tag) => tag.id));
+  const primaryTagId = currentTagIds.find((tagId) => primaryTagIds.has(tagId)) ?? null;
+
+  return [...new Set([
+    ...(primaryTagId !== null ? [primaryTagId] : []),
+    ...(tagEditorPanel.value?.selectedTagIds ?? []),
+  ])];
+}
+
+function resolvePrimaryTagIdByLabel(label: string): number | null {
+  const normalized = label.trim();
+  if (normalized.length === 0 || normalized === "-") {
+    return null;
+  }
+
+  return createPrimaryTagOptions.value.find((tag) => tag.label === normalized)?.id ?? null;
+}
+
+async function saveTagEditorPanel(): Promise<void> {
+  if (!tagEditorPanel.value) {
+    return;
+  }
+
+  const row = rowData.value.find((item) => item.id === tagEditorPanel.value?.rowId);
+  if (!row) {
+    return;
+  }
+
+  const tagIds = getTagEditorPayload(row);
+  const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], row);
+
+  isSaving.value = true;
+  saveError.value = null;
+  try {
+    await Promise.all(
+      targetRows.map(async (targetRow) => {
+        await updateProduction(targetRow.id, { tags: tagIds });
+      }),
+    );
+    await loadCmsData();
+    closeTagEditorPanel();
+  } catch (error) {
+    saveError.value =
+      error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+  } finally {
+    isSaving.value = false;
+  }
 }
 
 function openCreateModal(): void {
   createError.value = null;
+  syncCreateTagSelection();
   createModalOpen.value = true;
 }
 
@@ -548,6 +774,7 @@ async function submitCreateProduction(): Promise<void> {
       vendor_id: 0,
       box_office_id: 0,
       finalized: createForm.value.finalized,
+      tags: getSelectedProductionTagIds(),
       title: toLanguageMap(createForm.value.title),
       artist: toLanguageMap(createForm.value.artist),
       tagline: toLanguageMap(createForm.value.tagline),
@@ -612,6 +839,43 @@ async function onCellEditingStopped(
   event: CellEditingStoppedEvent<CmsProductionGridRow>,
 ): Promise<void> {
   if (!event.data || !event.colDef.field) {
+    return;
+  }
+
+  if (event.colDef.field === "genres") {
+    const newValue = String(event.value ?? "").trim();
+    const oldValue = String(event.oldValue ?? "").trim();
+    if (newValue === oldValue) {
+      return;
+    }
+
+    const primaryTagId = resolvePrimaryTagIdByLabel(newValue);
+    if (primaryTagId === null) {
+      event.node.setDataValue("genres", oldValue);
+      return;
+    }
+
+    const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], event.data);
+    const primaryTagIds = new Set(createPrimaryTagOptions.value.map((tag) => tag.id));
+
+    isSaving.value = true;
+    saveError.value = null;
+    try {
+      await Promise.all(
+        targetRows.map(async (row) => {
+          const currentTagIds = extractProductionTagIds(row.source);
+          const additionalTagIds = currentTagIds.filter((tagId) => !primaryTagIds.has(tagId) && tagId !== primaryTagId);
+          await updateProduction(row.id, { tags: [primaryTagId, ...additionalTagIds] });
+        }),
+      );
+      await loadCmsData();
+    } catch {
+      event.node.setDataValue("genres", oldValue);
+    } finally {
+      isSaving.value = false;
+      persistGridState();
+    }
+
     return;
   }
 
@@ -687,6 +951,11 @@ function onCellClicked(event: CellClickedEvent<CmsProductionGridRow>): void {
     return;
   }
 
+  if (event.colDef.field === "tags") {
+    openTagEditorPanel(event.data);
+    return;
+  }
+
   const gridField = event.colDef.field as "descriptionOne" | "descriptionTwo" | "media";
   if (!(gridField in longGridFieldToApi)) {
     return;
@@ -738,6 +1007,7 @@ function rebuildRows(): void {
   rowData.value = buildProductionGridRows(
     productionsData.value,
     tagsData.value,
+    tagTypesData.value,
     localizeValue,
   );
 }
@@ -906,20 +1176,23 @@ async function loadCmsData(): Promise<void> {
   loadError.value = null;
 
   try {
-    const [productionsPage, tags, halls] = await Promise.all([
+    const [productionsPage, tags, tagTypes, halls] = await Promise.all([
       getProductions(),
       getAllTags(),
+      getTagTypes(),
       getHalls(),
     ]);
 
     productionsData.value = productionsPage.items;
     tagsData.value = tags;
+    tagTypesData.value = tagTypes;
     hallsData.value = halls;
     hallByIdCache.value = new Map(halls.map((hall) => [hall.id, hall]));
     detailRowsCache.value.clear();
     if (!createLinkedEventForm.value.hallId) {
       resetCreateLinkedEventForm();
     }
+    syncCreateTagSelection();
 
     rebuildRows();
   } catch (error) {
@@ -947,6 +1220,7 @@ defineExpose({
     createError,
     eventsPanelError,
     editorPanel,
+    tagEditorPanel,
     detailRowsCache,
     eventByIdCache,
     createLinkedEventForm,
@@ -978,7 +1252,9 @@ defineExpose({
     onVideoFileChange,
     closeEventsPanel,
     closeEditorPanel,
+    closeTagEditorPanel,
     saveEditorPanel,
+    saveTagEditorPanel,
     rebuildRows,
     loadCmsData,
     getInitialDark,

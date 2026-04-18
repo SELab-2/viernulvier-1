@@ -12,6 +12,10 @@
   @apply fixed right-0 top-0 z-50 flex h-screen w-full max-w-xl flex-col border-l border-surface-3 bg-surface-0 p-5 shadow-2xl;
 }
 
+.cms-side-overlay {
+  @apply fixed inset-0 z-50 bg-black/25;
+}
+
 .cms-side-header {
   @apply mb-4 flex items-center justify-between;
 }
@@ -32,10 +36,34 @@
   @apply min-h-28 rounded-md border border-surface-3 bg-surface-1 p-3 text-sm text-ink-primary;
 }
 
+.cms-tag-selector-grid {
+  @apply grid grid-cols-1 gap-3;
+}
+
+.cms-form-lang-field {
+  @apply flex flex-col gap-2;
+}
+
+.cms-lang-label {
+  @apply text-xs font-semibold uppercase tracking-wide text-ink-secondary;
+}
+
+.cms-text-input {
+  @apply rounded-md border border-surface-3 bg-surface-0 px-3 py-2 text-sm text-ink-primary;
+}
+
+.cms-select-input {
+  @apply appearance-none;
+}
+
 .cms-side-footer {
-  @apply mt-4 flex justify-end;
+  @apply mt-4 flex flex-col gap-2 border-t border-surface-3 pt-4;
+}
+
+.cms-side-save-hint {
+  @apply text-xs font-medium text-ink-secondary;
 }
 
 .cms-side-save {
-  @apply rounded-md bg-surface-inv px-4 py-2 text-sm font-semibold text-ink-on-inv transition hover:bg-surface-inv-raised disabled:cursor-not-allowed disabled:opacity-60;
+  @apply inline-flex w-full items-center justify-center rounded-md bg-surface-inv px-4 py-3 text-sm font-semibold text-ink-on-inv shadow-sm transition hover:bg-surface-inv-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ink-primary disabled:cursor-not-allowed disabled:opacity-60;
 }

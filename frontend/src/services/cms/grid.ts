@@ -1,9 +1,26 @@
-import type { Event as ArchiveEvent, ProductionWithBackwardsRefs, Tag } from "@viernulvier/shared";
+import type { Event as ArchiveEvent, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
 import { collectProductionTagsByIdMap } from "@/services/productions";
 import type { LanguageMap } from "@/utils/i18n";
 import { toLocalDateTimeInput } from "./date";
 import { extractEventIds } from "./helpers";
 import type { CmsEventGridRow, CmsProductionGridRow } from "./types";
+
+function normalizeLabel(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function isGenreLabel(value: string): boolean {
+  const normalized = normalizeLabel(value);
+  return normalized === "genre" || normalized === "genres";
+}
+
+function isGenreTagType(name: LanguageMap | null | undefined): boolean {
+  if (!name) {
+    return false;
+  }
+
+  return Object.values(name).some((value) => isGenreLabel(String(value ?? "")));
+}
 
 export function buildEventGridRows(
   events: ArchiveEvent[],
@@ -39,11 +56,18 @@ export function buildEventGridRows(
 export function buildProductionGridRow(
   production: ProductionWithBackwardsRefs,
   tagById: Map<number, Tag>,
+  genreTagTypeIds: Set<number>,
   localize: (map: LanguageMap | null | undefined) => string,
 ): CmsProductionGridRow {
   const eventIds = extractEventIds(production.events as unknown[]);
 
-  const tagLabels = collectProductionTagsByIdMap(production, tagById)
+  const productionTags = collectProductionTagsByIdMap(production, tagById);
+  const genreLabels = productionTags
+    .filter((tag) => genreTagTypeIds.has(Number(tag.tag_type)))
+    .map((tag) => localize(tag.name))
+    .filter((label) => label.length > 0);
+  const additionalLabels = productionTags
+    .filter((tag) => !genreTagTypeIds.has(Number(tag.tag_type)))
     .map((tag) => localize(tag.name))
     .filter((label) => label.length > 0);
 
@@ -54,8 +78,8 @@ export function buildProductionGridRow(
     title: localize(production.title) || "",
     producer: localize(production.supertitle) || "",
     teaser: localize(production.teaser) || "",
-    genres: tagLabels.slice(0, 1).join(", ") || "-",
-    tags: tagLabels.slice(1).join(", ") || "-",
+    genres: genreLabels.slice(0, 1).join(", ") || "-",
+    tags: additionalLabels.join(", ") || "-",
     descriptionOne: localize(production.description) || "",
     descriptionTwo: localize(production.description_2) || "",
     media: localize(production.video_1) || "",
@@ -66,11 +90,17 @@ export function buildProductionGridRow(
 export function buildProductionGridRows(
   productions: ProductionWithBackwardsRefs[],
   tags: Tag[],
+  tagTypes: TagType[],
   localize: (map: LanguageMap | null | undefined) => string,
 ): CmsProductionGridRow[] {
   const tagById = new Map(tags.map((tag) => [tag.id, tag]));
+  const genreTagTypeIds = new Set(
+    tagTypes
+      .filter((tagType) => isGenreTagType(tagType.name))
+      .map((tagType) => tagType.id),
+  );
 
-  return productions.map((production) => buildProductionGridRow(production, tagById, localize));
+  return productions.map((production) => buildProductionGridRow(production, tagById, genreTagTypeIds, localize));
 }
 
 export function applyUpdatedProductionToRow(

@@ -4,6 +4,21 @@ import { i18n } from "@/i18n";
 import type { CreateFormState } from "@/services/cms";
 import CmsCreateProductionModal from "@/components/admin/cms/CmsCreateProductionModal.vue";
 
+const tagGroups = [
+  {
+    tagTypeId: 1,
+    label: "Genre",
+    isGenre: true,
+    tags: [{ id: 10, label: "Drama" }],
+  },
+  {
+    tagTypeId: 2,
+    label: "Theme",
+    isGenre: false,
+    tags: [{ id: 20, label: "Classic" }],
+  },
+];
+
 function buildForm(overrides: Partial<CreateFormState> = {}): CreateFormState {
   return {
     finalized: false,
@@ -32,6 +47,9 @@ function mountModal(overrides: Partial<InstanceType<typeof CmsCreateProductionMo
         { key: "title", labelKey: "cms.create.fields.title", required: true, multiline: false },
         { key: "teaser", labelKey: "cms.create.fields.teaser", required: true, multiline: true },
       ],
+      tagGroups,
+      selectedPrimaryTagId: 10,
+      selectedTagIds: [20],
       createError: null,
       isCreating: false,
       ...overrides,
@@ -55,11 +73,14 @@ describe("CmsCreateProductionModal.vue", () => {
     await wrapper.get(".cms-language-pill:not(.active)").trigger("click");
     await wrapper.get('input[type="text"]').setValue("New title");
     await wrapper.get('textarea').setValue("New teaser");
+    await wrapper.get("select").setValue("10");
+    await wrapper.get(".cms-tag-group input[type='checkbox']").setValue(true);
 
     expect(wrapper.emitted("update-finalized")?.[0]).toEqual([true]);
     expect(wrapper.emitted("update-extra-lang")?.[0]).toEqual(["en", true]);
     expect(wrapper.emitted("update-form-field")?.some((payload) => payload[0] === "title")).toBe(true);
     expect(wrapper.emitted("update-form-field")?.some((payload) => payload[0] === "teaser")).toBe(true);
+    expect(wrapper.emitted("update-primary-tag")?.[0]).toEqual([10]);
   });
 
   it("emits file change, close and submit events", async () => {

@@ -87,6 +87,12 @@ export default {
       cancel: "Annuleer",
       submit: "Productie toevoegen",
       saving: "Toevoegen...",
+      tags: {
+        title: "Tags",
+        primary: "Primaire tag",
+        primaryEmpty: "Geen genre-tags beschikbaar",
+        hint: "Kies één primaire genre-tag en vink extra tags aan per type.",
+      },
       fields: {
         title: "Titel",
         artist: "Uitvoerder",
@@ -113,6 +119,8 @@ export default {
     panel: {
       close: "Sluit",
       save: "Opslaan",
+      saveAction: "Wijzigingen Opslaan",
+      saveHint: "Wijzigingen worden pas toegepast nadat je op Wijzigingen Opslaan klikt.",
       saving: "Opslaan...",
       text: "Tekst",
       bulkNotice: "Wijziging wordt toegepast op {count} geselecteerde producties.",

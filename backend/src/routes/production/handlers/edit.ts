@@ -5,6 +5,7 @@ import { stringToInt } from "@viernulvier/shared/index.js";
 import { getProductionById } from "./fetch.js";
 import { PartialProductionBodySchema } from "./body-schema.js";
 import { getFieldValue, getNullableFieldValue, hasOwn } from "./field-utils.js";
+import { syncProductionTags } from "./tags.js";
 import z from "zod";
 
 const DirectEditColumns = [
@@ -64,7 +65,7 @@ export async function editProduction(
     }
   }
 
-  if (fields.length === 0) {
+  if (fields.length === 0 && !hasOwn(body, "tags")) {
     throw new HttpError(HttpClientError.BadRequest, "No fields to update");
   }
 
@@ -77,6 +78,8 @@ export async function editProduction(
      RETURNING id`,
     values,
   );
+
+  await syncProductionTags(server, id, body.tags);
 
   return await getProductionById(server, id);
 }

@@ -87,6 +87,12 @@ export default {
       cancel: "Annuler",
       submit: "Ajouter la production",
       saving: "Ajout...",
+      tags: {
+        title: "Tags",
+        primary: "Tag principal",
+        primaryEmpty: "Aucun tag de genre disponible",
+        hint: "Choisissez un tag principal de genre et cochez des tags supplémentaires par type.",
+      },
       fields: {
         title: "Titre",
         artist: "Artiste",
@@ -113,6 +119,8 @@ export default {
     panel: {
       close: "Fermer",
       save: "Enregistrer",
+      saveAction: "Enregistrer les modifications",
+      saveHint: "Les changements ne sont appliques qu'apres avoir clique sur Enregistrer les modifications.",
       saving: "Enregistrement...",
       text: "Texte",
       bulkNotice: "La modification sera appliquee a {count} productions selectionnees.",
