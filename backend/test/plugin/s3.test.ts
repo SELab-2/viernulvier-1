@@ -35,8 +35,10 @@ describe("S3 Plugin", () => {
   afterEach(() => {
     for (const [key, value] of Object.entries(savedEnv)) {
       if (value === undefined) {
+        // eslint-disable-next-line security/detect-object-injection
         delete process.env[key];
       } else {
+        // eslint-disable-next-line security/detect-object-injection
         process.env[key] = value;
       }
     }

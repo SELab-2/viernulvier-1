@@ -21,10 +21,11 @@ function readEnvFile(filePath: string): Record<string, string> {
 
       // Security Check: Block prototype pollution keys
       if (key === "__proto__" || key === "constructor") continue;
+      // eslint-disable-next-line security/detect-object-injection -- key is validated against prototype pollution above
       vars[key] = value;
     }
   } catch {
-     /* c8 ignore next */
+    /* c8 ignore next */
     // silently ignore
   }
   return vars;
