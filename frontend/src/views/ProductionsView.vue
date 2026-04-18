@@ -930,28 +930,40 @@ const rangeTo = computed(() =>
 const genreTagsForFilter = computed(() => {
   const lang = locale.value;
   const items: { id: number; label: string }[] = [];
-  for (const tag of tagsById.value.values()) {
+  const byId = tagsById.value;
+  for (const tag of byId.values()) {
     const tt = tagTypesById.value.get(tag.tag_type as number);
     if (!tagTypeIsGenre(tt)) continue;
     const label = localizeOrEmpty(tag.name, lang);
     if (!label) continue;
     items.push({ id: tag.id, label });
   }
-  items.sort((a, b) => a.label.localeCompare(b.label, lang));
+  items.sort((a, b) => {
+    const ca = byId.get(a.id)?.production_count ?? 0;
+    const cb = byId.get(b.id)?.production_count ?? 0;
+    if (cb !== ca) return cb - ca;
+    return a.label.localeCompare(b.label, lang);
+  });
   return items;
 });
 
 const nonGenreTagsForFilter = computed(() => {
   const lang = locale.value;
   const items: { id: number; label: string }[] = [];
-  for (const tag of tagsById.value.values()) {
+  const byId = tagsById.value;
+  for (const tag of byId.values()) {
     const tt = tagTypesById.value.get(tag.tag_type as number);
     if (tagTypeIsGenre(tt)) continue;
     const label = localizeOrEmpty(tag.name, lang);
     if (!label) continue;
     items.push({ id: tag.id, label });
   }
-  items.sort((a, b) => a.label.localeCompare(b.label, lang));
+  items.sort((a, b) => {
+    const ca = byId.get(a.id)?.production_count ?? 0;
+    const cb = byId.get(b.id)?.production_count ?? 0;
+    if (cb !== ca) return cb - ca;
+    return a.label.localeCompare(b.label, lang);
+  });
   return items;
 });
 
@@ -1051,7 +1063,7 @@ onMounted(async () => {
   let page0 = Math.max(0, readPageOneBasedFromRoute() - 1);
   try {
     const [tags, halls, tagTypes] = await Promise.all([
-      getTags(),
+      getTags(undefined, { includeProductionCount: true }),
       getHalls(),
       getTagTypes(),
     ]);

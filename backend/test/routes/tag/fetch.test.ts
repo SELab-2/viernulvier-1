@@ -75,6 +75,17 @@ beforeAll(async () => {
   sessionCookie = server.jwt.sign({ id: 1, username: "Admin" });
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+    if (query.includes("COUNT(DISTINCT production)")) {
+      const raw = params?.[0];
+      const ids = Array.isArray(raw) ? (raw as number[]) : [];
+      const rows: { tag: number; cnt: number }[] = [];
+      for (const t of mockTags) {
+        if (!ids.includes(t.id)) continue;
+        const cnt = (t.productions ?? []).length;
+        if (cnt > 0) rows.push({ tag: t.id, cnt });
+      }
+      return Promise.resolve({ rows, rowCount: rows.length });
+    }
     if (query.includes("tag = ANY")) {
       const raw = params?.[0];
       const ids = Array.isArray(raw) ? (raw as number[]) : [];
@@ -290,6 +301,32 @@ describe("Fetch visible tags", () => {
     expect(TagSchema.array().parse(response.json())).toEqual(
       mockTags.filter((t) => t.public),
     );
+  });
+
+  test("GET /api/v1/tag?includeProductionCount=true adds production_count", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/tag?includeProductionCount=true`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const parsed = TagSchema.array().parse(response.json());
+    const publicTags = mockTags.filter((t) => t.public);
+    expect(parsed).toHaveLength(publicTags.length);
+    for (const t of parsed) {
+      const expected = publicTags.find((x) => x.id === t.id);
+      expect(expected).toBeDefined();
+      expect(t.production_count).toBe((expected!.productions ?? []).length);
+    }
+  });
+
+  test("GET /api/v1/tag rejects includeProductions and includeProductionCount together", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/tag?includeProductions=true&includeProductionCount=true`,
+    });
+
+    expect(response.statusCode).toBe(400);
   });
 
   test("GET /api/v1/tag?old_id=&tag_type= returns public tags for that legacy pair", async () => {
