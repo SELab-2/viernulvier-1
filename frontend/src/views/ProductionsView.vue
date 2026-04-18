@@ -106,12 +106,40 @@
                 type="button"
                 class="rounded-full border px-3 py-1 text-sm transition disabled:opacity-100"
                 :class="
-                  selectedGenreTagIds.includes(g.id)
+                  selectedTagIds.includes(g.id)
                     ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
                     : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
                 "
                 :disabled="listLoading || loadError"
-                @click="toggleGenreTag(g.id)"
+                @click="toggleTag(g.id)"
+              >
+                {{ g.label }}
+              </button>
+            </div>
+          </div>
+
+          <div
+            v-if="nonGenreTagsForFilter.length > 0"
+            class="mt-4 space-y-3 border-t border-surface-3 pt-4"
+          >
+            <p
+              class="text-xs font-medium uppercase tracking-wide text-ink-secondary"
+            >
+              {{ t("productionsPage.tagFiltersHeading") }}
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="g in nonGenreTagsForFilter"
+                :key="g.id"
+                type="button"
+                class="rounded-full border px-3 py-1 text-sm transition disabled:opacity-100"
+                :class="
+                  selectedTagIds.includes(g.id)
+                    ? 'border-accent-outline bg-surface-2 text-ink-primary'
+                    : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
+                "
+                :disabled="listLoading || loadError"
+                @click="toggleTag(g.id)"
               >
                 {{ g.label }}
               </button>
@@ -149,8 +177,8 @@
                 type="button"
                 class="inline-flex max-w-full cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary hover:bg-surface-2 disabled:opacity-100"
                 :disabled="listLoading"
-                :aria-label="t('productionsPage.removeGenreFilter')"
-                @click="removeGenreTag(tid)"
+                :aria-label="t('productionsPage.removeTagFilter')"
+                @click="removeTag(tid)"
               >
                 <span class="min-w-0 truncate">{{ tagLabel(tid) }}</span>
                 <span class="text-lg leading-none text-ink-secondary" aria-hidden="true">×</span>
@@ -373,8 +401,8 @@ const { t } = useI18n();
 
 const pageTopAnchor = useTemplateRef<HTMLElement>("pageTopAnchor");
 
-/** Genre tags toggled for list filtering (AND). */
-const selectedGenreTagIds = ref<number[]>([]);
+/** Tag IDs for list filtering — genres and non-genres share `tags=` / `tagIds` (IDs are unique). */
+const selectedTagIds = ref<number[]>([]);
 /** `null` = all years in the archive slider span; otherwise inclusive calendar-year range. */
 const explicitYearRange = ref<{ from: number; to: number } | null>(null);
 const filterDateFrom = ref<string | null>(null);
@@ -390,7 +418,7 @@ const filterBannerDateFrom = ref<string | null>(null);
 const filterBannerDateTo = ref<string | null>(null);
 
 function syncFilterBannerFromApplied() {
-  filterBannerTagIds.value = [...selectedGenreTagIds.value];
+  filterBannerTagIds.value = [...selectedTagIds.value];
   filterBannerYearRange.value =
     explicitYearRange.value === null ? null : { ...explicitYearRange.value };
   filterBannerDateFrom.value = filterDateFrom.value;
@@ -399,7 +427,7 @@ function syncFilterBannerFromApplied() {
 
 function hasAppliedNonSearchFilters(): boolean {
   return (
-    selectedGenreTagIds.value.length > 0 ||
+    selectedTagIds.value.length > 0 ||
     explicitYearRange.value !== null ||
     !!(filterDateFrom.value && filterDateTo.value)
   );
@@ -523,7 +551,7 @@ function queryForPage0WithBase(
   } else {
     delete q[SEARCH_QUERY_KEY];
   }
-  const tagIds = selectedGenreTagIds.value;
+  const tagIds = selectedTagIds.value;
   if (tagIds.length > 0) {
     q[TAGS_QUERY_KEY] = [...tagIds].sort((a, b) => a - b).join(",");
   } else {
@@ -615,7 +643,7 @@ const searchAwaitingList = ref(false);
 
 const hasActiveListFilters = computed(() => {
   if (appliedSearchTerms.value.length > 0) return true;
-  if (selectedGenreTagIds.value.length > 0) return true;
+  if (selectedTagIds.value.length > 0) return true;
   if (explicitYearRange.value !== null) return true;
   if (filterDateFrom.value && filterDateTo.value) return true;
   return false;
@@ -631,7 +659,7 @@ const locale = computed(() => i18n.global.locale.value as SupportedLang);
 const emptyStateMessage = computed(() => {
   const hasSearch = appliedSearchTerms.value.length > 0;
   const hasOther =
-    selectedGenreTagIds.value.length > 0 ||
+    selectedTagIds.value.length > 0 ||
     explicitYearRange.value !== null ||
     !!(filterDateFrom.value && filterDateTo.value);
   if (!hasSearch && !hasOther) return t("productionsPage.empty");
@@ -655,8 +683,8 @@ function productionsListArgs(page: number) {
   if (appliedSearchTerms.value.length > 0) {
     args.search = appliedSearchTerms.value;
   }
-  if (selectedGenreTagIds.value.length > 0) {
-    args.tagIds = [...selectedGenreTagIds.value].sort((a, b) => a - b);
+  if (selectedTagIds.value.length > 0) {
+    args.tagIds = [...selectedTagIds.value].sort((a, b) => a - b);
   }
   if (explicitYearRange.value !== null) {
     args.yearMin = explicitYearRange.value.from;
@@ -689,15 +717,15 @@ async function fetchProductionsPageData(page0: number) {
   }
 }
 
-function toggleGenreTag(id: number) {
-  const set = new Set(selectedGenreTagIds.value);
+function toggleTag(id: number) {
+  const set = new Set(selectedTagIds.value);
   if (set.has(id)) set.delete(id);
   else set.add(id);
-  selectedGenreTagIds.value = [...set].sort((a, b) => a - b);
+  selectedTagIds.value = [...set].sort((a, b) => a - b);
 }
 
-function removeGenreTag(id: number) {
-  selectedGenreTagIds.value = selectedGenreTagIds.value.filter((x) => x !== id);
+function removeTag(id: number) {
+  selectedTagIds.value = selectedTagIds.value.filter((x) => x !== id);
 }
 
 function clearYearRangeFilter() {
@@ -913,6 +941,20 @@ const genreTagsForFilter = computed(() => {
   return items;
 });
 
+const nonGenreTagsForFilter = computed(() => {
+  const lang = locale.value;
+  const items: { id: number; label: string }[] = [];
+  for (const tag of tagsById.value.values()) {
+    const tt = tagTypesById.value.get(tag.tag_type as number);
+    if (tagTypeIsGenre(tt)) continue;
+    const label = localizeOrEmpty(tag.name, lang);
+    if (!label) continue;
+    items.push({ id: tag.id, label });
+  }
+  items.sort((a, b) => a.label.localeCompare(b.label, lang));
+  return items;
+});
+
 /** Matches backend `yearMin`/`yearMax` bounds; not derived from loaded events (list loads events per page only). */
 const filterYearBounds = computed(() => {
   const current = new Date().getFullYear();
@@ -952,7 +994,7 @@ function tagLabel(id: number): string {
 let suppressNonSearchFilterWatch = false;
 
 watch(
-  [selectedGenreTagIds, explicitYearRange, filterDateFrom, filterDateTo],
+  [selectedTagIds, explicitYearRange, filterDateFrom, filterDateTo],
   async () => {
     if (loading.value || suppressNonSearchFilterWatch) return;
     await applyFilterChange();
@@ -970,7 +1012,7 @@ async function clearAllNonSearchFilters(): Promise<void> {
   }
   suppressNonSearchFilterWatch = true;
   try {
-    selectedGenreTagIds.value = [];
+    selectedTagIds.value = [];
     explicitYearRange.value = null;
     filterDateFrom.value = null;
     filterDateTo.value = null;
@@ -989,7 +1031,7 @@ onMounted(async () => {
     appliedSearchTerms.value = initialSearch;
   }
   const initialTags = readTagsFromRoute();
-  if (initialTags.length > 0) selectedGenreTagIds.value = initialTags;
+  if (initialTags.length > 0) selectedTagIds.value = initialTags;
   explicitYearRange.value = readYearRangeFromRoute();
   const initialRange = readDateRangeFromRoute();
   if (initialRange) {

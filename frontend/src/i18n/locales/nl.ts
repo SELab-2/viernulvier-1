@@ -156,6 +156,7 @@ export default {
     filterResultsPlural: "{count} resultaten",
     noFilterResults: "Geen producties gevonden met deze filters.",
     genreFiltersHeading: "Genre",
+    tagFiltersHeading: "Tags",
     selectDates: "Selecteer datums",
     filterByYearRange: "Filter op jaren",
     yearRangeIntro:
@@ -170,6 +171,7 @@ export default {
       "Kies een start- en einddatum (of vul beide velden in).",
     clearDateRange: "Datums wissen",
     removeGenreFilter: "Genrefilter verwijderen",
+    removeTagFilter: "Tagfilter verwijderen",
     removeYearRangeFilter: "Jaarbereik verwijderen",
     removeDateRangeFilter: "Datumbereik verwijderen",
     activeFiltersLabel: "Actieve filters:",

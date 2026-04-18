@@ -156,6 +156,7 @@ export default {
     filterResultsPlural: "{count} résultats",
     noFilterResults: "Aucune production ne correspond à ces filtres.",
     genreFiltersHeading: "Genre",
+    tagFiltersHeading: "Tags",
     selectDates: "Sélectionner des dates",
     filterByYearRange: "Filtrer par années",
     yearRangeIntro:
@@ -170,6 +171,7 @@ export default {
       "Choisissez une date de début et de fin (ou remplissez les deux champs).",
     clearDateRange: "Effacer les dates",
     removeGenreFilter: "Retirer le filtre genre",
+    removeTagFilter: "Retirer le filtre par tag",
     removeYearRangeFilter: "Retirer le filtre par années",
     removeDateRangeFilter: "Retirer la plage de dates",
     activeFiltersLabel: "Filtres actifs :",
