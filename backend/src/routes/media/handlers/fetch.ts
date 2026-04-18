@@ -19,7 +19,7 @@ const ImageSelectWithMeta = `
 SELECT
   i.id,
   i.old_id,
-  i.production_id AS production,
+  i.production,
   i.res,
   i.created_at,
   i.created_by,
