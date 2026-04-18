@@ -98,6 +98,6 @@ export function useProductionEvents(productionId: number) {
     events: enrichedEvents,
     loading,
     error,
-    retry: fetchEvents, // 👈 dit gebruik je in je button
+    retry: fetchEvents,
   };
 }

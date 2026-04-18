@@ -114,6 +114,41 @@ describe("useProductionEvents", () => {
       expect(mockGetHalls).toHaveBeenCalledTimes(1);
       expect(mockGetEventPrices).toHaveBeenCalledTimes(1);
     });
+
+    it("sets error when a service fails", async () => {
+      mockGetEvents.mockRejectedValue(new Error("events failed"));
+
+      const { error, loading, events } = mountComposable();
+      await flushPromises();
+
+      expect(error.value).toBeInstanceOf(Error);
+      expect(error.value?.message).toBe("events failed");
+
+      expect(loading.value).toBe(false);
+      expect(events.value).toEqual([]);
+    });
+
+    it("handles non-Error throws as unknown error", async () => {
+      mockGetEvents.mockRejectedValue("boom");
+
+      const { error } = mountComposable();
+      await flushPromises();
+
+      expect(error.value).toBeInstanceOf(Error);
+      expect(error.value?.message).toBe("Unknown error");
+    });
+
+    it("retry triggers a new fetch", async () => {
+      const { retry } = mountComposable();
+      await flushPromises();
+
+      expect(mockGetEvents).toHaveBeenCalledTimes(1);
+
+      await retry();
+      await flushPromises();
+
+      expect(mockGetEvents).toHaveBeenCalledTimes(2);
+    });
   });
 
   // ── Hall matching ───────────────────────────────────────────────────────────
@@ -193,6 +228,20 @@ describe("useProductionEvents", () => {
 
       expect(events.value[0].minPrice).toBe(10);
       expect(events.value[0].maxPrice).toBe(10);
+    });
+
+    it("falls back to empty prices when getEventPrices fails", async () => {
+      mockGetEvents.mockResolvedValue([makeEvent({ id: 1 })]);
+      mockGetHalls.mockResolvedValue([makeHall(10)]);
+      mockGetEventPrices.mockRejectedValue(new Error("fail prices"));
+
+      const { events, error } = mountComposable();
+      await flushPromises();
+
+      expect(error.value).toBeNull();
+
+      expect(events.value[0].minPrice).toBeNull();
+      expect(events.value[0].maxPrice).toBeNull();
     });
   });
 
