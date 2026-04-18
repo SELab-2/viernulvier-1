@@ -24,6 +24,7 @@ function readEnvFile(filePath: string): Record<string, string> {
       vars[key] = value;
     }
   } catch {
+     /* c8 ignore next */
     // silently ignore
   }
   return vars;
@@ -31,7 +32,7 @@ function readEnvFile(filePath: string): Record<string, string> {
 
 const CREDENTIAL_PATHS = [
   "/garage-credentials/credentials.env",
-  // istanbul ignore next (for coverage, since this line wont be run during tests)
+  /* c8 ignore next */  // for coverage, since this line wont be run during tests
   resolve(import.meta.dirname!, "../../garage-credentials/credentials.env"),
 ];
 
