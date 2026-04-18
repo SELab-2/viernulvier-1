@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import { i18n } from "@/i18n";
-import CmsTagsTab from "@/components/admin/cms/CmsTagsTab.vue";
+import CmsTagsTab from "@/components/admin/cms/tabs/CmsTagsTab.vue";
 
 describe("CmsTagsTab", () => {
   it("renders the placeholder message", () => {

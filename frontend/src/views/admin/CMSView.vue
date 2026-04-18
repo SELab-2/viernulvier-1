@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-surface-0">
+  <div class="flex min-h-screen flex-col bg-surface-0">
     <AdminNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
 
-    <main class="bg-surface-1 px-6 py-10 lg:px-10">
+    <main class="flex-1 bg-surface-1 px-6 py-10 lg:px-10">
       <div class="mx-auto flex max-w-[1400px] flex-col gap-6">
         <header class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -30,7 +30,7 @@
           </button>
         </nav>
 
-        <CmsProductionsTab v-if="activeTab === 'productions'" ref="productionsTabRef" />
+        <CmsProductionsTab v-if="activeTab === 'productions'" />
         <CmsTagsTab v-else-if="activeTab === 'tags'" />
         <CmsAdminsTab v-else-if="activeTab === 'admins'" />
       </div>
@@ -45,9 +45,9 @@ import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import AdminNavbar from "@/components/admin/AdminNavbar.vue";
 import AppFooter from "@/components/AppFooter.vue";
-import CmsProductionsTab from "@/components/admin/cms/CmsProductionsTab.vue";
-import CmsTagsTab from "@/components/admin/cms/CmsTagsTab.vue";
-import CmsAdminsTab from "@/components/admin/cms/CmsAdminsTab.vue";
+import CmsProductionsTab from "@/components/admin/cms/tabs/CmsProductionsTab.vue";
+import CmsTagsTab from "@/components/admin/cms/tabs/CmsTagsTab.vue";
+import CmsAdminsTab from "@/components/admin/cms/tabs/CmsAdminsTab.vue";
 import { useDarkMode } from "@/composables/useDarkMode";
 
 type CmsTabId = "productions" | "tags" | "admins";
@@ -62,7 +62,6 @@ const tabs: ReadonlyArray<{ id: CmsTabId; labelKey: string }> = [
 ];
 
 const activeTab = ref<CmsTabId>("productions");
-const productionsTabRef = ref<InstanceType<typeof CmsProductionsTab> | null>(null);
 
-defineExpose({ activeTab, productionsTabRef });
+defineExpose({ activeTab });
 </script>

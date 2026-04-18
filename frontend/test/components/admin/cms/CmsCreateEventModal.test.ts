@@ -3,7 +3,7 @@ import { mount } from "@vue/test-utils";
 import type { Hall } from "@viernulvier/shared";
 import { i18n } from "@/i18n";
 import type { CmsCreateLinkedEventForm, CmsProductionGridRow } from "@/services/cms";
-import CmsCreateEventModal from "@/components/admin/cms/CmsCreateEventModal.vue";
+import CmsCreateEventModal from "@/components/admin/cms/productions/CmsCreateEventModal.vue";
 
 function buildProduction(overrides: Partial<CmsProductionGridRow> = {}): CmsProductionGridRow {
   return {

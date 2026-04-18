@@ -189,10 +189,10 @@ import type {
 import { useI18n } from "vue-i18n";
 import type { Event as ArchiveEvent, Hall, ProductionWithBackwardsRefs, Tag } from "@viernulvier/shared";
 import CmsColumnChooser from "@/components/admin/cms/CmsColumnChooser.vue";
-import CmsCreateEventModal from "@/components/admin/cms/CmsCreateEventModal.vue";
-import CmsEventsDrawer from "@/components/admin/cms/CmsEventsDrawer.vue";
+import CmsCreateEventModal from "@/components/admin/cms/productions/CmsCreateEventModal.vue";
+import CmsEventsDrawer from "@/components/admin/cms/productions/CmsEventsDrawer.vue";
 import CmsGridControls from "@/components/admin/cms/CmsGridControls.vue";
-import CmsCreateProductionModal from "@/components/admin/cms/CmsCreateProductionModal.vue";
+import CmsCreateProductionModal from "@/components/admin/cms/productions/CmsCreateProductionModal.vue";
 import { useCmsProductionGrid } from "@/composables/useCmsProductionGrid";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, SUPPORTED_LANGS, type SupportedLang } from "@/i18n";
@@ -879,12 +879,6 @@ async function submitCreateEvent(): Promise<void> {
   }
 }
 
-function getInitialDark(): boolean {
-  const stored = localStorage.getItem("viernulvier-dark");
-  if (stored !== null) return stored === "true";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
-}
-
 async function loadCmsData(): Promise<void> {
   isLoading.value = true;
   loadError.value = null;
@@ -959,7 +953,6 @@ defineExpose({
     saveEditorPanel,
     rebuildRows,
     loadCmsData,
-    getInitialDark,
   },
 });
 

@@ -8,7 +8,8 @@ import { useAuthStore } from "@/stores/auth";
 import { RouteNames } from "@/router/routeNames";
 import { i18n } from "@/i18n";
 import CMSView from "@/views/admin/CMSView.vue";
-import CmsProductionsTab from "@/components/admin/cms/CmsProductionsTab.vue";
+import CmsProductionsTab from "@/components/admin/cms/tabs/CmsProductionsTab.vue";
+import { getInitialDark } from "@/composables/useDarkMode";
 import * as productionsService from "@/services/productions";
 import * as tagsService from "@/services/tags";
 import * as hallsService from "@/services/halls";
@@ -648,11 +649,11 @@ describe("CMSView", () => {
     expect(api.eventsPanelError.value).toBeTruthy();
 
     localStorage.setItem("viernulvier-dark", "false");
-    expect(api.getInitialDark()).toBe(false);
+    expect(getInitialDark()).toBe(false);
     localStorage.setItem("viernulvier-dark", "true");
-    expect(api.getInitialDark()).toBe(true);
+    expect(getInitialDark()).toBe(true);
     localStorage.removeItem("viernulvier-dark");
-    expect(typeof api.getInitialDark()).toBe("boolean");
+    expect(typeof getInitialDark()).toBe("boolean");
 
     expect(wrapper.exists()).toBe(true);
   });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import { i18n } from "@/i18n";
-import CmsAdminsTab from "@/components/admin/cms/CmsAdminsTab.vue";
+import CmsAdminsTab from "@/components/admin/cms/tabs/CmsAdminsTab.vue";
 
 describe("CmsAdminsTab", () => {
   it("renders the placeholder message", () => {
