@@ -8,7 +8,7 @@ services:
       - POSTGRES_HOST_AUTH_METHOD=trust
 
     volumes:
-      - database-data:/var/lib/postgresql
+      - ./database_data:/var/lib/postgresql
     networks:
       - viernulvier-network
     ports:
@@ -26,8 +26,6 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    volumes:
-      - ./backend:/app/backend
     networks:
       - viernulvier-network
     ports:
@@ -48,14 +46,10 @@ services:
       dockerfile: frontend/Dockerfile
     ports:
       - "${FRONTEND_PORT}:${FRONTEND_PORT}"
-    volumes:
-      - ./frontend:/app/frontend
     depends_on:
       - backend
-volumes:
-  database-data:
-    external: false
-    name: viernulvier-database-data
+    environment:
+     - CHOKIDAR_USEPOLLING=true
 networks:
   viernulvier-network:
     driver: bridge

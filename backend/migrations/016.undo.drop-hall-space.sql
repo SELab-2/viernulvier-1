@@ -1,0 +1,7 @@
+-- UNDER NO CIRCUMSTANCES MAY THIS FILE BE EDITED WHEN LIVE
+-- ANY EDITS WILL RESOLVE IN DIFFERENT CHECKSUMS AND THE DB REJECTING THE MIGRATION
+
+-- Restores column removed in 016.do.drop-hall-space.sql (see 002.do.create-hall-table.sql).
+
+ALTER TABLE hall
+  ADD COLUMN space JSONB;

@@ -1,79 +1,174 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import "tailwindcss";
+@import "ag-grid-community/styles/ag-grid.css";
+@import "ag-grid-community/styles/ag-theme-alpine.css";
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+/* CMS grid and AG Grid overrides */
+@import "@/assets/stylesheets/cms-ag-grid.css";
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+/* CMS modal/panel/form layout styles */
+@import "@/assets/stylesheets/cms-view.css";
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
+/* Shared app typography and design tokens */
+@import "@/assets/fonts/inter.css";
+@import "@/assets/stylesheets/design-tokens.css";
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
+/* ---- Map design tokens → Tailwind utility classes ---- */
+@theme {
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
+  --color-ink-primary: var(--ink-primary);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-tertiary: var(--ink-tertiary);
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  --color-accent-dark: var(--accent-dark);
+  --color-accent-dark-hover: var(--accent-dark-hover);
+  --color-accent-outline: var(--accent-outline);
+  --color-accent-highlight: var(--accent-highlight);
+
+  --color-stat-fill: var(--stat-fill);
+  --color-stat-label: var(--stat-label);
+
+  --color-surface-inv: var(--surface-inv);
+  --color-surface-inv-raised: var(--surface-inv-raised);
+  --color-surface-inv-border: var(--surface-inv-border);
+  --color-ink-on-inv: var(--ink-on-inv);
+  --color-ink-on-inv-secondary: var(--ink-on-inv-secondary);
+  --color-ink-on-inv-tertiary: var(--ink-on-inv-tertiary);
+
+  --color-photo-overlay: var(--photo-overlay);
+
+  --color-tag-genre-bg: var(--tag-genre-bg);
+  --color-tag-genre-text: var(--tag-genre-text);
 }
 
-.card {
-  padding: 2em;
-}
-
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+/* ---- Global Base + AG Grid Theme Bridge ----
+ * The block below does two things:
+ * 1) sets app-level base sizing for html/body/#app
+ * 2) maps AG Grid quartz variables to our design tokens (light + dark)
+ * Keep AG Grid overrides here generic and framework-level.
+ * Put view/component-specific grid styling in cms-ag-grid.css.
+ */
+@layer base {
+  html,
+  body {
+    @apply h-full w-full overflow-x-hidden;
   }
-  a:hover {
-    color: #747bff;
+
+  #app {
+    @apply min-h-screen w-full;
   }
-  button {
-    background-color: #f9f9f9;
+
+  .ag-theme-quartz,
+  .ag-theme-quartz-dark {
+    --ag-background-color: var(--surface-0);
+    --ag-foreground-color: var(--ink-primary);
+    --ag-header-background-color: var(--surface-1);
+    --ag-header-foreground-color: var(--ink-primary);
+    --ag-odd-row-background-color: var(--surface-1);
+    --ag-row-hover-color: color-mix(in srgb, var(--surface-2) 70%, transparent);
+    --ag-border-color: var(--surface-3);
+    --ag-font-family: "Inter Variable", sans-serif;
+    --ag-font-size: 13px;
+    --ag-selected-row-background-color: color-mix(in srgb, var(--surface-2) 55%, transparent);
+    --ag-range-selection-background-color: color-mix(in srgb, var(--surface-2) 40%, transparent);
+    --ag-header-column-separator-color: var(--surface-3);
+    --ag-input-focus-border-color: var(--surface-inv);
+  }
+
+  .ag-theme-quartz-dark,
+  .dark .ag-theme-quartz {
+    --ag-background-color: var(--surface-0);
+    --ag-foreground-color: var(--ink-primary);
+    --ag-header-background-color: var(--surface-inv-raised);
+    --ag-header-foreground-color: var(--ink-on-inv);
+    --ag-odd-row-background-color: color-mix(in srgb, var(--surface-inv-raised) 55%, transparent);
+    --ag-row-hover-color: color-mix(in srgb, var(--surface-inv-border) 65%, transparent);
+    --ag-border-color: var(--surface-inv-border);
+    --ag-selected-row-background-color: color-mix(in srgb, var(--surface-inv-border) 55%, transparent);
+    --ag-range-selection-background-color: color-mix(in srgb, var(--surface-inv-border) 40%, transparent);
+  }
+
+  .ag-theme-quartz .ag-header-cell-label,
+  .ag-theme-quartz-dark .ag-header-cell-label {
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  .ag-theme-quartz .ag-header-cell-text,
+  .ag-theme-quartz-dark .ag-header-cell-text {
+    color: var(--ag-header-foreground-color) !important;
+  }
+
+  .ag-theme-quartz .ag-header-cell .ag-icon,
+  .ag-theme-quartz-dark .ag-header-cell .ag-icon,
+  .ag-theme-quartz .ag-header-select-all .ag-icon,
+  .ag-theme-quartz-dark .ag-header-select-all .ag-icon {
+    color: var(--ag-header-foreground-color) !important;
+  }
+
+  .ag-theme-quartz .ag-cell,
+  .ag-theme-quartz-dark .ag-cell {
+    border-right: 1px solid color-mix(in srgb, var(--surface-3) 55%, transparent);
+  }
+
+  .ag-theme-quartz-dark .ag-cell,
+  .dark .ag-theme-quartz .ag-cell {
+    border-right: 1px solid color-mix(in srgb, var(--surface-inv-border) 55%, transparent);
+  }
+
+  .ag-theme-quartz .ag-row-selected .ag-cell,
+  .ag-theme-quartz-dark .ag-row-selected .ag-cell {
+    box-shadow: none;
+  }
+
+  .ag-theme-quartz .ag-row-selected,
+  .ag-theme-quartz-dark .ag-row-selected {
+    background-color: transparent !important;
+  }
+
+  .ag-theme-quartz .ag-root-wrapper,
+  .ag-theme-quartz-dark .ag-root-wrapper {
+    border: none;
+  }
+
+  .ag-theme-quartz .ag-header,
+  .ag-theme-quartz-dark .ag-header {
+    border-bottom: 1px solid var(--surface-3);
+  }
+
+  html:not(.dark) .ag-theme-quartz .ag-root-wrapper,
+  html:not(.dark) .ag-theme-quartz .ag-header,
+  html:not(.dark) .ag-theme-quartz .ag-row,
+  html:not(.dark) .ag-theme-quartz .ag-body-viewport,
+  html:not(.dark) .ag-theme-quartz .ag-center-cols-container {
+    background-color: var(--surface-0) !important;
+    color: var(--ink-primary) !important;
+  }
+
+  html:not(.dark) .ag-theme-quartz .ag-header,
+  html:not(.dark) .ag-theme-quartz .ag-header-viewport,
+  html:not(.dark) .ag-theme-quartz .ag-pinned-left-header,
+  html:not(.dark) .ag-theme-quartz .ag-pinned-right-header {
+    background-color: var(--surface-1) !important;
+  }
+
+  html.dark .ag-theme-quartz .ag-root-wrapper,
+  html.dark .ag-theme-quartz .ag-header,
+  html.dark .ag-theme-quartz .ag-row,
+  html.dark .ag-theme-quartz .ag-body-viewport,
+  html.dark .ag-theme-quartz .ag-center-cols-container {
+    background-color: var(--surface-0) !important;
+    color: var(--ink-primary) !important;
+  }
+
+  html.dark .ag-theme-quartz .ag-header,
+  html.dark .ag-theme-quartz .ag-header-viewport,
+  html.dark .ag-theme-quartz .ag-pinned-left-header,
+  html.dark .ag-theme-quartz .ag-pinned-right-header {
+    background-color: var(--surface-inv-raised) !important;
+    color: var(--ink-on-inv) !important;
   }
 }

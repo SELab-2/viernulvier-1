@@ -8,15 +8,14 @@ const LoginBodySchema = AdminSchema.pick({ username: true }).extend({
   password: z.string(),
 });
 
-const LoginRowSchema = z.object({
-  id: z.int().nonnegative(),
+const LoginRowSchema = AdminSchema.pick({ id: true, super: true }).extend({
   password: z.string(),
 });
 
 const fetchAdminCredentials = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `SELECT id, password FROM admin WHERE username = $1`,
+    `SELECT id, password, super FROM admin WHERE username = $1`,
     z.tuple([z.string()]),
     LoginRowSchema,
   );
@@ -25,25 +24,32 @@ const fetchAdminCredentials = (server: FastifyInstance) =>
 const DUMMY_HASH = "$2b$12$invalidhashvaluethatwillnevermatchangything";
 
 /**
- * Authenticates an admin by username and password and sets a session cookie.
+ * Authenticates an admin by username and password, sets a session cookie, and returns a signed JWT.
+ * The token contains the admin's `id`, `username`, `super`, and a unique `jti` claim used for revocation on logout.
+ * Clients that cannot use cookies should store the returned token and pass it via the `Authorization: Bearer <token>` header.
  *
  * @param server - The Fastify instance, used for database access and logging.
  * @param request - The Fastify request, expected to contain `username` and `password` in its body.
  * @param reply - The Fastify reply, used to set the session cookie.
- * @returns An object indicating success.
+ * @returns The signed JWT token.
  * @throws `HttpError` With status 401 if the username is not found or the password is incorrect.
  */
-export async function login(server: FastifyInstance, request: FastifyRequest, reply: FastifyReply) {
+export async function login(
+  server: FastifyInstance,
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
   const { username, password } = parseSchema(server, LoginBodySchema, request.body);
 
   const rows = await fetchAdminCredentials(server)(username);
 
   // always compare hash to prevent a timing attack
   const valid = await comparePassword(password, rows[0]?.password ?? DUMMY_HASH);
-  if (!valid) throw new HttpError(401, "Invalid credentials");
+
+  if (rows.length === 0 || !valid) throw new HttpError(401, "Invalid credentials");
 
   const token = server.jwt.sign(
-    { id: rows[0]!.id, username },
+    { id: rows[0]!.id, username, super: rows[0]!.super, jti: server.generateJti() },
     { expiresIn: "24h" },
   );
 
@@ -54,5 +60,5 @@ export async function login(server: FastifyInstance, request: FastifyRequest, re
     path: "/",
   });
 
-  return { succes: true };
+  return { token };
 }

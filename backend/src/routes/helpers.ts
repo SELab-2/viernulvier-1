@@ -1,3 +1,4 @@
+import { AdminSchema } from "@viernulvier/shared/index.js";
 import { primaryKey } from "@viernulvier/shared/types/helpers.js";
 import {
   type FastifyInstance,
@@ -99,6 +100,13 @@ export class HttpError extends Error {
   }
 }
 
+export class ValidationError extends HttpError {
+  constructor(public details: z.core.$ZodIssue[]) {
+    super(HttpClientError.BadRequest, "Invalid request data");
+    this.name = "ValidationError";
+  }
+}
+
 export const enum ParseContext {
   Request,
   Database,
@@ -106,16 +114,12 @@ export const enum ParseContext {
 
 type ParseContextType = (typeof ParseContext)[keyof typeof ParseContext];
 
-const parseErrors: Readonly<Record<ParseContextType, HttpError>> = {
-  [ParseContext.Request]: new HttpError(
-    HttpClientError.BadRequest,
-    "Invalid request data",
-  ),
-  [ParseContext.Database]: new HttpError(
-    HttpServerError.InternalServerError,
-    "Internal server error",
-  ),
-};
+function createParseError(context: ParseContextType, error?: z.ZodError): HttpError {
+  if (context === ParseContext.Request && error) {
+    return new ValidationError(error.issues);
+  }
+  return new HttpError(HttpServerError.InternalServerError, "Internal server error");
+}
 /**
  * Uses a zod schema to validate the params and returns them as an object.
  *
@@ -135,28 +139,31 @@ export function parseParams<
   const parsed = schema.safeParse(request.params);
   if (!parsed.success) {
     request.log.error(parsed.error);
-    throw parseErrors[ParseContext.Request];
+    throw createParseError(ParseContext.Request, parsed.error);
   }
   return parsed.data;
 }
-// Coverage ignore as it is being deprecated.
-/* v8 ignore start */
+
+const UserPayloadSchema = AdminSchema.pick({ id: true, username: true });
+type UserPayload = z.infer<typeof UserPayloadSchema>;
+
 /**
- * @deprecated Please use `parseParams()` instead.
+ * Extracts and validates the JWT payload from the request, returning only `id` and `username`.
  *
- * @param request - The Fastify request to extract params from.
- * @param key - The parameter key to extract.
- * @returns The parameter value as a string.
- * @throws `Error` if the parameter is not present in the request.
+ * Example: `const { id } = parseUser(request);`
+ *
+ * @param request - The Fastify request to extract the user payload from.
+ * @returns A type-safe object containing only `id` and `username`.
+ * @throws `HttpError` If the payload doesn't match the expected shape.
  */
-export function getParam(request: FastifyRequest, key: string): string {
-  // eslint-disable-next-line security/detect-object-injection
-  const value = (request.params as Record<string, string>)[key];
-  if (value === undefined)
-    throw new HttpError(400, `Missing route parameter: "${key}"`);
-  return value;
+export function parseUser(request: FastifyRequest): UserPayload {
+  const parsed = UserPayloadSchema.safeParse(request.user);
+  if (!parsed.success) {
+    request.log.error(parsed.error);
+    throw createParseError(ParseContext.Request, parsed.error);
+  }
+  return parsed.data;
 }
-/* v8 ignore stop */
 
 /**
  * Parses an unknown value against a Zod schema.
@@ -180,45 +187,10 @@ export function parseSchema<ResultSchema extends z.ZodType>(
   const parsed = schema.safeParse(value);
   if (!parsed.success) {
     server.log.error(parsed.error);
-    // eslint-disable-next-line security/detect-object-injection
-    throw parseErrors[context];
+    throw createParseError(context, parsed.error);
   }
   return parsed.data;
 }
-
-// Coverage ignore as it is being deprecated.
-/* v8 ignore start */
-/**
- *  @deprecated currently just an alias for `parseSchema`, I suggest using that instead.
- */
-export const parse = parseSchema;
-/* v8 ignore stop */
-
-// Coverage ignore as it is being deprecated
-/* v8 ignore start */
-/**
- * @deprecated please use `buildQuery()` instead
- *
- * @param server - The Fastify instance, used for error logging.
- * @param schema - The Zod schema to validate and parse the row against.
- * @param rows - The array of rows returned from a database query.
- * @returns The parsed and typed value, or `null` if not found.
- * @throws `HttpError` If validation failed.
- *
- * @internal
- */
-export function parseFirstRow<
-  ResultType extends z.ZodRawShape,
-  ResultSchema extends z.ZodObject<ResultType>,
->(
-  server: FastifyInstance,
-  schema: ResultSchema,
-  rows: unknown[],
-): z.output<ResultSchema> | null {
-  if (rows.length === 0) return null;
-  return parseSchema(server, schema, rows[0], ParseContext.Database);
-}
-/* v8 ignore stop */
 
 /**
  * Helper function that adds data validation to both the input and output of a db query.
@@ -277,7 +249,7 @@ export function buildQuery<
     const parsed = filterFields.safeParse(values);
     if (!parsed.success) {
       server.log.error(parsed.error);
-      throw parseErrors[ParseContext.Request];
+      throw createParseError(ParseContext.Request, parsed.error);
     }
     let res: QueryResult<z.output<ResultSchema>>;
     try {
@@ -287,7 +259,7 @@ export function buildQuery<
       );
     } catch (err) {
       server.log.error(err);
-      throw parseErrors[ParseContext.Database];
+      throw createParseError(ParseContext.Database);
     }
     return parseSchema(
       server,
@@ -318,10 +290,11 @@ export function replyHandler<Z extends z.ZodType>(
     try {
       const result = await handler(server, request, reply);
       if (!result) throw new HttpError(HttpClientError.NotFound, "Not Found");
-      return await reply.status(HttpSuccess.OK).send({
-        body: result,
-      });
+      return await reply.status(HttpSuccess.OK).send(result);
     } catch (err) {
+      if (err instanceof ValidationError) {
+        return await reply.status(err.status).send({ error: err.message, details: err.details });
+      }
       if (err instanceof HttpError) {
         return await reply.status(err.status).send({ error: err.message });
       }
@@ -342,39 +315,4 @@ export function getMetadata(request: FastifyRequest) {
     admin: payload.id,
     current_time: new Date(),
   };
-}
-
-type schemaDef = {
-  body?: z.ZodType;
-  params?: z.ZodType;
-  response?: Record<number, z.ZodType>;
-  default?: z.ZodType;
-  description?: string;
-  tags?: string[];
-};
-
-export class RequestSchema {
-  private _schema: schemaDef;
-  constructor(schema: schemaDef = {}) {
-    this._schema = schema;
-    return this;
-  }
-
-  public extend(schema: schemaDef) {
-    const newSchema = {
-      ...this._schema,
-      ...schema,
-    };
-    newSchema.response = {
-      ...this._schema.response,
-      ...schema.response,
-    };
-    newSchema.tags = [...(this._schema.tags ?? []), ...(schema.tags ?? [])];
-    this._schema = newSchema;
-    return this;
-  }
-
-  public use() {
-    return this._schema;
-  }
 }

@@ -1,11 +1,11 @@
 import { defineConfig } from "vitest/config";
 import vue from "@vitejs/plugin-vue";
+import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath, URL } from "node:url";
-import tsconfigPaths from "vite-tsconfig-paths";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue(), tsconfigPaths()],
+  plugins: [tailwindcss(), vue()],
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
@@ -27,11 +27,13 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "jsdom",
+    setupFiles: ["./test/setup.ts"],
     coverage: {
       provider: "v8",
-      include: ["src/**/*.{ts,tsx}"],
+      include: ["src/**/*.{ts,tsx,vue}"],
+      exclude: ["**/*.d.ts"],
       thresholds: {
-        "src/*/**/*.{ts,tsx}": {
+        "src/**/*.{ts,tsx,vue}": {
           statements: 80,
           functions: 80,
           branches: 80,

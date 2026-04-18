@@ -1,59 +1,68 @@
-## Dev omgeving opstarten voor dummies.
+## Dev Omgeving Opzetten voor Dummies
 
-- Zorg eerst dat je node versie 24 hebt door `nvm install --lts` uit te voeren. Als u systeem geen nvm heeft zoek zelf uit hoe node te updaten.
-- Node komt standaard met npm maar wij gebruiken pnpm dus doe hierna ook. `npm i -g pnpm`
-- Eens dit gedaan is kan je alle dependencies downloaden met door `pnpm i` in de hoofd repo uit te voeren.
-- Om een scriptje te runnen verander je eerst daar ofwel `backend` of `frontend` dir en voer je `pnpm run <NAAM>` uit.
+- Zorg er eerst voor dat je Node versie 24 hebt door `nvm install --lts` uit te voeren. Als je systeem geen nvm heeft, zoek dan zelf uit hoe je Node kunt updaten.
+- Node komt standaard met npm, maar wij gebruiken pnpm, dus doe ook dit: `npm i -g pnpm`
+- Daarna kun je alle dependencies downloaden door `pnpm i` uit te voeren in de root van de repo.
+- Om een script uit te voeren ga je eerst naar de map `backend`, `frontend` of `shared` en voer je `pnpm run <NAAM>` uit, of je draait ze allemaal tegelijk met `pnpm run <NAAM>-all` vanuit de root.
 
-### .env opstellen
+### .env instellen
 
-- Omdat we in de toekomst met geheime sleutels zullen werken wordt de `.env` file ge ignored door git. Ik heb wel een `.env.example` file aangemaakt met wat standaard poorten. Een later zal dit ook `<REPLACE ME>` placeholder bevatten voor geheime data.
+- Omdat we in de toekomst met geheime sleutels zullen werken, wordt het `.env`-bestand genegeerd door git. Er is wel een `.env.example`-bestand aangemaakt met een aantal standaardpoorten. Later zal dit ook tijdelijke aanduidingen voor geheime gegevens bevatten, met instructies om deze te genereren.
 
-- Voor dat je docker container kan opstarten moet je eerst dus `cp .env.example .env` uitvoeren en de missende velden invullen.
+- Voordat je de Docker-container kunt starten, moet je eerst `cp .env.example .env` uitvoeren en de instructies volgen om de geheime gegevens te genereren.
 
-## Docker containers opstarten.
+## Docker Containers Starten
 
-- Zorg eerst en vooral dat je docker engine op u laptop ge geïnstalleerd hebt. [Install Guide](https://docs.docker.com/engine/install/)
+- Zorg er allereerst voor dat Docker Engine op je laptop is geïnstalleerd. [Installatiegids](https://docs.docker.com/engine/install/)
 
-- Check dat docker engine aant runnen is met, `sudo systemctl status docker`.
+- Controleer of Docker Engine actief is met `sudo systemctl status docker`.
 
-- Indien niet het geval `sudo systemctl start docker`.
+- Als dat niet het geval is: `sudo systemctl start docker`.
 
-### Met vsc (easy mode)
+### Met VSCode (makkelijke modus)
 
-- Druk `F1` om de command prompt van vsc open te doen.
-- Zoek `Tasks: Run Build Tasks`, de standaard keyboard shortcut voor dit is ook `F7`.
-- Nu zal vsc 2 terminal windows open doen 1 met die de docker containers opstart en een ander die de logs toont van zowel de backend als de frontend in een split view.
+- Druk op `F1` om de VSCode-opdrachtprompt te openen.
+- Zoek naar `Tasks: Run Build Tasks`, de standaard sneltoets hiervoor is ook `F7`.
+- VSCode opent nu 2 terminalvensters: één dat de Docker-containers start en een ander dat de logs van zowel de backend als de frontend in een gesplitste weergave toont.
 
-- Om de containers af te sluiten voer je het vscode commando `Tasks: Run Tasks` `docker:cleanup` uit.
+- Om de containers af te sluiten voer je de VSCode-opdracht `Tasks: Run Tasks` → `docker:cleanup` uit.
 
-### Via de helper scriptjes
+### Via de hulpscripts
 
-- In de root directory vind je 2 scriptjes `rundev.sh`(Unix) en `rundev.bat`(Windows). Voer het scriptje uit dat bij u OS past.
+- In de root-map vind je 2 scripts: `rundev.sh` (Unix) en `rundev.bat` (Windows). Voer het script uit dat bij jouw besturingssysteem past.
 
-- Eens docker is opgestart kan je de output van de backend/frontend zien door `docker logs --tail 100 viernulvier-(backend|frontend)` uit te voeren.
+- Zodra Docker is gestart, kun je de uitvoer van de backend/frontend bekijken met `docker logs --tail 100 viernulvier-(backend|frontend)`.
 
-- Om de containers af te sluiten voer je gwn `docker compose down` uit.
+- Om de containers af te sluiten voer je gewoon `docker compose down` uit.
 
-## Het bekijken van de endpoints
+### SQL-database migreren en nep-beheerder aanmaken
 
-- De frontend wordt normaal gezien op <http:://localhost:5173> geserveerd. Als je de env variable `FRONTEND_PORT` aangepast hebt in de `.env` file moet je die raadplegen om de juiste poort te vinden.
+- Om de SQL-database naar de Docker-container te migreren, voer je `docker exec -t viernulvier-backend pnpm run migrate` uit, of gebruik je `migrate-db.sh`.
 
-- De backend kan ofwel bereikt worden door het frontent url met `/api` er achter ofwel op het default url <http:://localhost:3000>. Idem dito over het veranderen van de env variable `BACKEND_PORT`.
+- Je kunt een nep-beheerder toevoegen door `docker exec -t viernulvier-backend pnpm run create-admin` uit te voeren. De beheerder heeft gebruikersnaam `admin` en wachtwoord `password`; je kunt hiermee inloggen en vervolgens autoriseren op de beveiligde endpoints.
 
-## Linting testing en zo voort
+*(Opmerking: we zijn van plan om meer nepdata toe te voegen en de scripts te integreren in de Docker-containers)*
 
-- Om te checken dat u code de juiste standaard behaald dat zal worden gecheckt door onze github actions kan je op u eigen de pnpm scriptjes uitvoeren in de root repo. `pnpm run check-(backend|frontend|all)` deze zullen op hun beurt zowel de linter als de tests uitvoeren voor u code.
+## Endpoints Bekijken
 
-- Als je wenst enkel te checken of de linter slaagt in een gegeven package (frontend/backend) kan je in die directory `pnpm run lint` uitvoeren.
+- De frontend is normaal beschikbaar op <http://localhost:5173>. Als je de omgevingsvariabele `FRONTEND_PORT` in het `.env`-bestand hebt gewijzigd, controleer dan daar de juiste poort.
 
-- Als je wenst enkel te checken of de testen slagen in een gegeven package (frontend/backend) kan je in die directory `pnpm run test` uitvoeren.
+- De backend is bereikbaar via de frontend-URL met het voorvoegsel `/api/v1/`, of op de standaard-URL <http://localhost:3000>. Als je de omgevingsvariabele `BACKEND_PORT` in het `.env`-bestand hebt gewijzigd, controleer dan daar de juiste poort.
 
-### Enkel voor vsc gebruikers
+## Linting, Testen, enzovoort
 
-- Ik raad aan de eslint extension te gebruiken. die zal vanzelf de eslint.config files vinden en constant de linter in de background runnen, om u meer directe info te geven.
+- Om te controleren of je code voldoet aan de standaard die wordt geverifieerd door onze GitHub Actions, kun je de pnpm-scripts in de root van de repo zelf uitvoeren: `pnpm run check-(backend|frontend|shared|all)` — deze voeren op hun beurt zowel de linter als de tests uit voor je code.
 
-## Veel voorkomende problemen
+- Als je alleen wilt controleren of de linter slaagt in een bepaald pakket (frontend/backend/shared), kun je `pnpm run lint` uitvoeren in die map.
 
-- Als na het runnen van de docker startup je het probleem van permission denied krijgt voer dan `sudo usermod -aG docker $USER` uit om te zorgen dat u user toegang heeft to de docker groep.
-- Als ge docker probeert te gebruiken op wsl, dan is het belangrijk dat je docker engine via docker desktop die op je windows draait. In de settings kan je dan naar `Resources -> WSL Integration` gaan om de engine ook toegang te geven tot u WSL distro's.
+- Als je alleen wilt controleren of de tests slagen in een bepaald pakket (frontend/backend), kun je `pnpm run test` uitvoeren in die map.
+
+### Alleen voor VSCode-gebruikers
+
+- Ik raad aan de ESLint-extensie te gebruiken. Deze vindt automatisch de `eslint.config.js`-bestanden en voert de linter continu op de achtergrond uit, waardoor je directere feedback krijgt.
+
+## Veelvoorkomende Problemen
+
+- Als je na het starten van Docker een foutmelding krijgt over geweigerde toegang, voer dan `sudo usermod -aG docker $USER` uit om ervoor te zorgen dat je gebruiker toegang heeft tot de Docker-groep.
+- Als je Docker probeert te gebruiken op WSL, is het belangrijk dat je Docker Engine uitvoert via Docker Desktop op je Windows. In de instellingen kun je naar `Resources → WSL Integration` gaan om de engine ook toegang te geven tot je WSL-distributies.
+- Als je de SQL-database probeert te migreren en de foutmelding `MD5 checksum failed for migration` krijgt, verwijder dan de Docker-containers met `docker compose down -v` en start ze opnieuw op.

@@ -49,6 +49,11 @@ WORKDIR /app
 
 COPY --from=build /app/backend/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/backend/migrations ./migrations
+
+COPY backend/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 EXPOSE 80
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["node", "dist/backend/src/index.js"]

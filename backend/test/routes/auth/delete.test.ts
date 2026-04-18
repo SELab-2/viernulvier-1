@@ -11,11 +11,12 @@ const mockCreatedAdmin: Admin = {
   id: 404,
   username: mockUsername,
   profile_picture: null,
+  super: true,
 };
 
 beforeAll(async () => {
   server = await buildServer();
-  sessionCookie = server.jwt.sign({ id: 404, username: "Karel" });
+  sessionCookie = server.jwt.sign({ id: 404, username: mockCreatedAdmin, super: true });
 });
 
 afterAll(async () => {
@@ -33,7 +34,7 @@ describe("Delete on auth route", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(AdminSchema.parse(response.json().body)).toEqual(mockCreatedAdmin);
+    expect(AdminSchema.parse(response.json())).toEqual(mockCreatedAdmin);
   });
 
   test("DELETE /api/v1/auth/:id — returns 404 when admin not found", async () => {

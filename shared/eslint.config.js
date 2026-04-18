@@ -1,10 +1,9 @@
 import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 import security from "eslint-plugin-security";
-import prettierConfig from "eslint-config-prettier";
 import importX from "eslint-plugin-import-x";
 import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
-import tsdoc from 'eslint-plugin-tsdoc'
+import tsdoc from 'eslint-plugin-tsdoc';
 
 export default defineConfig([
   // --------------------------------------------------
@@ -83,12 +82,20 @@ export default defineConfig([
 
       // Prevent common API logic mistakes
       "@typescript-eslint/no-misused-promises": "error",
+      "@typescript-eslint/no-deprecated": "error",
 
       // Rely on the beter import resolver
       "import-x/no-unresolved": "error",
 
       // tsdoc config
-      "tsdoc/syntax": "warn"
+      "tsdoc/syntax": "warn",
+
+      // ----------------------------
+      // Code Style
+      // ----------------------------
+
+      "indent": ["error", 2],
+      "comma-dangle": ["error", "always-multiline"],
     }
   },
 
@@ -101,10 +108,4 @@ export default defineConfig([
 
     ...tseslint.configs.disableTypeChecked
   },
-
-  // --------------------------------------------------
-  // Prettier must always be last
-  // --------------------------------------------------
-
-  prettierConfig
 ]);

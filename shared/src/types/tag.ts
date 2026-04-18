@@ -11,7 +11,6 @@ import { createSchema } from "./metadata.js";
 export const TagTypeSchema = createSchema({
   id: primaryKey(),
   name: languageMap,
-  visible: z.boolean(),
 });
 
 export type TagType = z.infer<typeof TagTypeSchema>;
@@ -19,12 +18,21 @@ export type TagTypeWithMeta = z.infer<
   ReturnType<typeof TagTypeSchema.withMeta>
 >;
 
+type TagProductionsSchema = z.ZodOptional<
+  z.ZodArray<ForeignKey<typeof ProductionSchema>>
+>;
+
 export const TagSchema = createSchema({
   id: primaryKey(),
+  old_id: z.int().nonnegative().nullable(),
   name: languageMap,
-  type: foreignKey(() => TagTypeSchema),
-  get productions(): z.ZodArray<ForeignKey<typeof ProductionSchema>> {
-    return z.array(foreignKey(() => ProductionSchema));
+  get tag_type(): ForeignKey<typeof TagTypeSchema> {
+    return foreignKey(() => TagTypeSchema);
+  },
+  public: z.boolean(),
+
+  get productions(): TagProductionsSchema {
+    return z.array(foreignKey(() => ProductionSchema)).optional();
   },
 });
 

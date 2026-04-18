@@ -1,0 +1,203 @@
+import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { QueryResult } from "pg";
+import type {ProductionWithBackwardsRefs, ProductionWithMeta} from "@viernulvier/shared/index.js";
+import {ProductionSchema, ProductionSchemaWithBackwardsRefs, stringToInt} from "@viernulvier/shared/index.js";
+import { parseParams, parseSchema, ParseContext } from "@/routes/helpers.js";
+import { ProductionListQuerySchema } from "../helpers/pagination.js";
+import { productionListSearchClause } from "../helpers/search.js";
+import z from "zod";
+
+const ProductionSelect = `
+SELECT
+  p.id,
+  p.old_id,
+  p.finalized,
+  (SELECT COALESCE(ARRAY_AGG(e.id), '{}') FROM event e WHERE e.production = p.id) AS events,
+  p.supertitle,
+  p.title,
+  p.artist,
+  p.tagline,
+  p.teaser,
+  p.description,
+  p.description_extra,
+  p.description_2,
+  p.video_1,
+  p.video_2,
+  p.quote,
+  p.quote_source,
+  p.programme,
+  p.info,
+  (SELECT COALESCE(ARRAY_AGG(pt.tag), '{}') FROM production_tag pt WHERE pt.production = p.id) AS tags
+FROM production p
+`;
+
+/**
+ * Internal helper to fetch a single production by ID.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param id - The production ID to fetch.
+ * @returns The production, or `null` if not found or parsing failed.
+ */
+export async function getProductionById(
+  server: FastifyInstance,
+  id: string | number,
+): Promise<ProductionWithBackwardsRefs | null> {
+  const result = await server.pg.query<ProductionWithBackwardsRefs>(
+    `${ProductionSelect} WHERE p.id = $1`,
+    [id],
+  );
+
+  return parseSchema(server, z.array(ProductionSchemaWithBackwardsRefs), result.rows, ParseContext.Database)[0] ?? null;
+}
+
+/**
+ * Internal helper to fetch multiple productions by IDs.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param ids - The production IDs to fetch.
+ * @returns The productions that were found, preserving the input ID order.
+ */
+export async function getProductionsByIds(
+  server: FastifyInstance,
+  ids: number[],
+): Promise<ProductionWithBackwardsRefs[]> {
+  if (ids.length === 0) return [];
+
+  const result = await server.pg.query<ProductionWithBackwardsRefs>(
+    `${ProductionSelect}
+     WHERE p.id = ANY($1::int[])
+     ORDER BY array_position($1::int[], p.id)`,
+    [ids],
+  );
+
+  return parseSchema(server, z.array(ProductionSchemaWithBackwardsRefs), result.rows, ParseContext.Database);
+}
+
+/**
+ * Fetches a single production by ID.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request, expected to contain `id` in its params.
+ * @returns The production, or `null` if not found or parsing failed.
+ */
+export async function fetchProduction(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<ProductionWithBackwardsRefs | null> {
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  return await getProductionById(server, id);
+}
+
+/**
+ * Fetches a single production by ID, including metadata.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request, expected to contain `id` in its params.
+ * @returns The production with metadata, or `null` if not found or parsing failed.
+ */
+export async function fetchProductionWithMeta(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<ProductionWithMeta | null> {
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const result = await server.pg.query<ProductionWithMeta>(
+    `SELECT
+       p.id,
+       p.old_id,
+       p.finalized,
+       p.supertitle,
+       p.title,
+       p.artist,
+       p.tagline,
+       p.teaser,
+       p.description,
+       p.description_extra,
+       p.description_2,
+       p.video_1,
+       p.video_2,
+       p.quote,
+       p.quote_source,
+       p.programme,
+       p.info,
+       p.created_at,
+       p.updated_at,
+       p.created_by,
+       p.updated_by
+     FROM production p
+     WHERE p.id = $1`,
+    [id],
+  );
+
+  return parseSchema(server, z.array(ProductionSchema.withMeta()), result.rows, ParseContext.Database)[0] ?? null;
+}
+
+export type PaginatedProductions = {
+  items: ProductionWithBackwardsRefs[];
+  total: number;
+};
+
+/**
+ * Fetches a list of productions.
+ *
+ * - Without `limit`: returns every production (same ordering as before), as `{ items, total }`.
+ * - With `limit`: returns a page `{ items, total }` where `total` is the matching row count.
+ * - Optional `search`: comma-separated terms (`search=a,b`), AND semantics; each term is a
+ *   case-insensitive substring on title, artist, tagline, teaser, description, and hall names.
+ *   Repeating the `search` key is still accepted for older clients.
+ * - Optional `old_id`: filter by old_id value.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request; optional `limit`, `offset`, `search`, and `old_id` query params.
+ * @returns The list of productions as `{ items, total }`; throws if parsing failed.
+ */
+export async function fetchProductions(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<PaginatedProductions> {
+  const query = parseSchema(
+    server,
+    ProductionListQuerySchema,
+    request.query,
+    ParseContext.Request,
+  );
+  const limit = query.limit;
+  const offset = query.offset ?? 0;
+  
+  const { sql: whereSql, params: searchParams } = productionListSearchClause({
+    search: query.search,
+    old_id: query.old_id,
+  });
+
+  let result: QueryResult<ProductionWithBackwardsRefs>;
+  let total: number;
+
+  if (limit === undefined) {
+    result = await server.pg.query<ProductionWithBackwardsRefs>(
+      `${ProductionSelect}${whereSql} ORDER BY p.id ASC`,
+      searchParams,
+    );
+    total = result.rows.length;
+  } else {
+    const countResult = await server.pg.query<{ count: number }>(
+      `SELECT COUNT(*)::int AS count FROM production p${whereSql}`,
+      searchParams,
+    );
+    total = countResult.rows[0]?.count ?? 0;
+
+    const listParams = [...searchParams, limit, offset];
+    const limitIdx = searchParams.length + 1;
+    const offsetIdx = searchParams.length + 2;
+    result = await server.pg.query<ProductionWithBackwardsRefs>(
+      `${ProductionSelect}${whereSql} ORDER BY p.id ASC LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+      listParams,
+    );
+  }
+
+  const items = parseSchema(
+    server,
+    z.array(ProductionSchemaWithBackwardsRefs),
+    result.rows,
+    ParseContext.Database,
+  );
+  return { items, total };
+}

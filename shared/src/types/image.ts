@@ -1,16 +1,16 @@
 import z from "zod";
 import { createSchema } from "./metadata.js";
-import { ProductionSchema } from "./index.js";
+import { ProductionSchema } from "./production.js";
 import { primaryKey, foreignKey } from "./helpers.js";
 
 export const ImageSchema = createSchema({
   id: primaryKey(),
 
-  production_id: foreignKey(() => ProductionSchema),
+  production: foreignKey(() => ProductionSchema),
 
   res: z
     .string()
-    .max(16)
+    .max(16),
 }).refine((img) => {
   // resolution should not be empty or whitespace
   return img.res.trim().length > 0;
