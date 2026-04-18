@@ -28,8 +28,8 @@ export function buildEventGridRows(
         location: hall ? localize(hall.name) : `Hall #${hallId}`,
         price: naLabel,
         startsAt: toLocalDateTimeInput(event.starts_at),
-        endsAt: toLocalDateTimeInput(event.ends_at),
-        doorsAt: toLocalDateTimeInput(event.doors_at),
+        endsAt: event.ends_at ? toLocalDateTimeInput(event.ends_at) : "",
+        doorsAt: event.doors_at ? toLocalDateTimeInput(event.doors_at) : "",
         hallId,
         infoNl: event.info?.nl ?? "",
       };
