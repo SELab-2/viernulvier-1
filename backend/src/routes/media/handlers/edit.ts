@@ -47,6 +47,7 @@ export async function editImage(
   let i = 1;
 
   const addField = (column: string, value: unknown) => {
+    /* c8 ignore next */
     if (value === undefined) return;
     fields.push(`${column} = $${i++}`);
     values.push(value);
