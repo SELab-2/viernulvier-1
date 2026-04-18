@@ -34,11 +34,15 @@ abstract class AbstractRequestSchema {
       ...this._schema,
       ...schema,
     };
-    newSchema.response = {
-      ...this._schema.response,
-      ...schema.response,
-    };
-    newSchema.tags = [...(this._schema.tags ?? []), ...(schema.tags ?? [])];
+    if (this._schema.response || schema.response) {
+      newSchema.response = {
+        ...this._schema.response,
+        ...schema.response,
+      };
+    }
+    if (this._schema.tags || schema.tags) {
+      newSchema.tags = [...(this._schema.tags ?? []), ...(schema.tags ?? [])];
+    }
     this._schema = newSchema;
     return this;
   }
@@ -84,7 +88,7 @@ export class RequestErrorMessage extends AbstractRequestSchema {
   constructor(statusCode: HttpServerError | HttpClientError, msg: string) {
     super({
       response: {
-        [statusCode]: z.object({error: msg}),
+        [statusCode]: z.object({error: z.literal(msg)}),
       },
     })
   }
