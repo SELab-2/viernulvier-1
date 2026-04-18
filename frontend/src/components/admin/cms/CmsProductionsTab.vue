@@ -879,6 +879,12 @@ async function submitCreateEvent(): Promise<void> {
   }
 }
 
+function getInitialDark(): boolean {
+  const stored = localStorage.getItem("viernulvier-dark");
+  if (stored !== null) return stored === "true";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
 async function loadCmsData(): Promise<void> {
   isLoading.value = true;
   loadError.value = null;
@@ -953,6 +959,7 @@ defineExpose({
     saveEditorPanel,
     rebuildRows,
     loadCmsData,
+    getInitialDark,
   },
 });
 
