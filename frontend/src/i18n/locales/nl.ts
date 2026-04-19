@@ -140,7 +140,7 @@ export default {
       saveGeneric: "Opslaan mislukt.",
     },
     admin: {
-      noPermission: "Je hebt geen rechten om admins te beheren.",
+      noPermission: "Je hebt geen toestemming om admins te beheren.",
     },
   },
   productionsPage: {

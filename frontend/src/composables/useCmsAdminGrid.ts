@@ -61,14 +61,14 @@ export function useCmsAdminGrid(options: {
 
   const columnDefs = computed<ColDef<CmsAdminGridRow>[]>(() => [
     {
-      headerName: options.t("cms.columns.username"),
+      headerName: options.t("cms.columns.admin.username"),
       field: "username",
       editable: true,
       minWidth: 200,
       flex: 1,
     },
     {
-      headerName: options.t("cms.columns.profilePicture"),
+      headerName: options.t("cms.columns.admin.profilePicture"),
       field: "profilePicture",
       editable: false,
       minWidth: 240,
@@ -79,7 +79,7 @@ export function useCmsAdminGrid(options: {
       },
     },
     {
-      headerName: options.t("cms.columns.super"),
+      headerName: options.t("cms.columns.admin.super"),
       field: "super",
       editable: true,
       cellEditor: "agCheckboxCellEditor",

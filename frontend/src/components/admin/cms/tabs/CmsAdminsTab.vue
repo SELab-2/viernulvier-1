@@ -87,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { AgGridVue } from "ag-grid-vue3";
 import type { CellEditingStoppedEvent } from "ag-grid-community";
 import { useI18n } from "vue-i18n";
@@ -222,15 +222,6 @@ defineExpose({
     onCellEditingStopped,
   },
 });
-
-watch(
-  () => isSuper,
-  (isSuper) => {
-    if (isSuper && rowData.value.length === 0 && !loadError.value) {
-      void loadAdminsData();
-    }
-  },
-);
 
 onMounted(() => {
   if (isSuper.value) {

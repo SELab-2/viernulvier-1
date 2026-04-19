@@ -9,6 +9,8 @@ import { RouteNames } from "@/router/routeNames";
 import { i18n } from "@/i18n";
 import CMSView from "@/views/admin/CMSView.vue";
 import CmsProductionsTab from "@/components/admin/cms/tabs/CmsProductionsTab.vue";
+import CmsTagsTab from "@/components/admin/cms/tabs/CmsTagsTab.vue";
+import CmsAdminsTab from "@/components/admin/cms/tabs/CmsAdminsTab.vue";
 import { getInitialDark } from "@/composables/useDarkMode";
 import * as productionsService from "@/services/productions";
 import * as tagsService from "@/services/tags";
@@ -209,15 +211,17 @@ describe("CMSView", () => {
   it("switches to the tags tab and unmounts productions", async () => {
     const wrapper = await mountCMSView();
     await wrapper.get('[data-testid="cms-tab-tags"]').trigger("click");
+    await flushPromises(); // wait for router to update (URL params changed)
     expect(wrapper.findComponent(CmsProductionsTab).exists()).toBe(false);
-    expect(wrapper.find(".cms-tab-placeholder").exists()).toBe(true);
+    expect(wrapper.findComponent(CmsTagsTab).exists()).toBe(true);
   });
 
   it("switches to the admins tab", async () => {
     const wrapper = await mountCMSView();
     await wrapper.get('[data-testid="cms-tab-admins"]').trigger("click");
+    await flushPromises(); // wait for router to update (URL params changed)
     expect(wrapper.findComponent(CmsProductionsTab).exists()).toBe(false);
-    expect(wrapper.find(".cms-tab-placeholder").exists()).toBe(true);
+    expect(wrapper.findComponent(CmsAdminsTab).exists()).toBe(true);
   });
 
   it("switches back to productions after visiting another tab", async () => {
