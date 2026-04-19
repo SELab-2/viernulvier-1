@@ -1,4 +1,4 @@
-import { requestById, RequestDescription, RequestQueryString, RequestResponse, requestSchema } from "@/docs/helpers.js";
+import { protectedRequest, requestById, RequestDescription, RequestQueryString, RequestResponse, requestSchema } from "@/docs/helpers.js";
 import { HttpSuccess } from "@/routes/helpers.js";
 import { TagSchema } from "@viernulvier/shared/index.js";
 import { sharedRequestSchema, returnsTag, returnsTagArray } from "./shared.js";
@@ -8,6 +8,7 @@ export const fetchTagDocs = requestSchema(
   sharedRequestSchema,
   requestById,
   returnsTag,
+  protectedRequest,
   new RequestDescription("Fetches a single tag by ID; non-public tags are included."),
 );
 
@@ -22,6 +23,7 @@ export const fetchTagWithMetaDocs = requestSchema(
   sharedRequestSchema,
   requestById,
   new RequestResponse(HttpSuccess.OK, TagSchema.withMeta()),
+  protectedRequest,
   new RequestDescription("Returns a single tag with metadata by ID; non-public tags are included."),
 );
 
@@ -29,6 +31,7 @@ export const fetchTagsDocs = requestSchema(
   sharedRequestSchema,
   new RequestQueryString(TagsListQuerySchema),
   returnsTagArray,
+  protectedRequest,
   new RequestDescription(
     "Fetches tags, optionally filtered by `production` or by `old_id` + `tag_type` together. Non-public tags are included.",
   ),

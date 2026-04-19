@@ -13,6 +13,7 @@ type schemaDef = {
   querystring?: z.ZodType;
   default?: z.ZodType;
   description?: string;
+  security?: Record<string, string[]>[];
   tags?: string[];
 };
 
@@ -187,6 +188,19 @@ export class RequestQueryString extends AbstractRequestSchema {
   }
 }
 
+export class RequestSecurity extends AbstractRequestSchema {
+  constructor(securityName: string, scopes: string[] = []) {
+    super({
+      security: [
+        {
+          [securityName]: scopes,
+        },
+      ],
+    })
+  }
+}
+
+
 export const DefaultRequestErrorMessages = new CombinedRequestSchema(
   new RequestErrorMessage(HttpClientError.NotFound, "Not Found"),
   new RequestErrorMessage(HttpClientError.BadRequest, "Invalid request data"),
@@ -196,3 +210,5 @@ export const DefaultRequestErrorMessages = new CombinedRequestSchema(
 export const requestById = new RequestParams(
   z.object({ id: stringToInt }),
 );
+
+export const protectedRequest = new RequestSecurity("Login Session");

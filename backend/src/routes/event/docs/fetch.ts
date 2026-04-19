@@ -1,4 +1,4 @@
-import { requestById, RequestDescription, requestSchema, RequestResponse, RequestQueryString } from "@/docs/helpers.js";
+import { requestById, RequestDescription, requestSchema, RequestResponse, RequestQueryString, protectedRequest } from "@/docs/helpers.js";
 import { returnsEvent, returnsEventArray, sharedRequestSchema } from "./shared.js";
 import { HttpSuccess } from "@/routes/helpers.js";
 import { EventSchema } from "@viernulvier/shared/index.js";
@@ -15,6 +15,7 @@ export const fetchEventWithMetaDocs = requestSchema(
   sharedRequestSchema,
   requestById,
   new RequestResponse(HttpSuccess.OK, EventSchema.withMeta()),
+  protectedRequest,
   new RequestDescription("Fetches a single event by ID from the database, with metadata."),
 );
 

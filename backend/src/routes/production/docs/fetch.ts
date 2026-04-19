@@ -1,4 +1,4 @@
-import { requestById, RequestDescription, RequestQueryString, RequestResponse, requestSchema } from "@/docs/helpers.js";
+import { protectedRequest, requestById, RequestDescription, RequestQueryString, RequestResponse, requestSchema } from "@/docs/helpers.js";
 import { returnsProduction, returnsProductionArray, sharedRequestSchema } from "./shared.js";
 import { ProductionListQuerySchema } from "../helpers/pagination.js";
 import { HttpSuccess } from "@/routes/helpers.js";
@@ -38,6 +38,7 @@ export const fetchProductionWithMetaDocs = requestSchema(
   sharedRequestSchema,
   requestById,
   new RequestResponse(HttpSuccess.OK, ProductionSchemaWithBackwardsRefs.withMeta()),
+  protectedRequest,
   new RequestDescription("Fetch a single production by ID, with metadata"),
 );
 

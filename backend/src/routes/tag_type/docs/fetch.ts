@@ -1,4 +1,4 @@
-import { requestById, RequestDescription, RequestResponse, requestSchema } from "@/docs/helpers.js";
+import { protectedRequest, requestById, RequestDescription, RequestResponse, requestSchema } from "@/docs/helpers.js";
 import { HttpSuccess } from "@/routes/helpers.js";
 import { TagTypeSchema } from "@viernulvier/shared/index.js";
 import { sharedRequestSchema, returnsTagType, returnsTagTypeArray } from "./shared.js";
@@ -14,6 +14,7 @@ export const fetchTagTypeWithMetaDocs = requestSchema(
   sharedRequestSchema,
   requestById,
   new RequestResponse(HttpSuccess.OK, TagTypeSchema.withMeta()),
+  protectedRequest,
   new RequestDescription("Fetches a single tag type by ID, including metadata."),
 );
 

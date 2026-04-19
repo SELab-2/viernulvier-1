@@ -1,4 +1,4 @@
-import { requestById, RequestDescription, RequestQueryString, RequestResponse, requestSchema } from "@/docs/helpers.js";
+import { protectedRequest, requestById, RequestDescription, RequestQueryString, RequestResponse, requestSchema } from "@/docs/helpers.js";
 import { sharedRequestSchema, returnsHall, returnsHallArray } from "./shared.js";
 import { HttpSuccess } from "@/routes/helpers.js";
 import { HallSchema } from "@viernulvier/shared/index.js";
@@ -15,6 +15,7 @@ export const fetchHallWithMetaDocs = requestSchema(
   sharedRequestSchema,
   requestById,
   new RequestResponse(HttpSuccess.OK, HallSchema.withMeta(), true),
+  protectedRequest,
   new RequestDescription("Fetches a single hall by its ID, including metadata."),
 );
 

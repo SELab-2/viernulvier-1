@@ -1,4 +1,4 @@
-import { requestSchema, RequestBody, RequestDescription, requestById } from "@/docs/helpers.js";
+import { requestSchema, RequestBody, RequestDescription, requestById, protectedRequest } from "@/docs/helpers.js";
 import { EventUpdateSchema } from "../handlers/edit.js";
 import { returnsEvent, sharedRequestSchema } from "./shared.js";
 
@@ -7,5 +7,6 @@ export const editEventDocs = requestSchema(
   requestById,
   new RequestBody(EventUpdateSchema),
   returnsEvent,
+  protectedRequest,
   new RequestDescription("Updates certain fields from a single event by ID in the database. Returns the updated event, or `null` if not found or validation failed."),
 );
