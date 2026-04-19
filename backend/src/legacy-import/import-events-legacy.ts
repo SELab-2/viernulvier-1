@@ -1,10 +1,13 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { parse } from "csv-parse";
 import {
   indexLanguageMapValues,
   SQL_FIND_HALL_ID_BY_ANY_LANG_NAME,
+  SQL_LIST_PRODUCTION_IDS_BY_TITLE_AND_ARTIST,
 } from "./jsonb-name-match.js";
 import {
   cleanValue,
@@ -23,8 +26,17 @@ import {
 } from "./validate-legacy-inserts.js";
 import { EventCreateSchema } from "@/routes/event/handlers/helper.js";
 
+/** Alias for callers/tests; same as {@link ImportArgs} (includes optional `productionsFilePath`). */
+export type LegacyEventImportArgs = ImportArgs;
+
 export const LEGACY_EVENT_IMPORT_SOURCE = "events-voorstellingen-csv";
 export const LEGACY_EVENT_PRODUCTION_MAP_SOURCE = "productions-output-csv";
+
+/** True when this legacy production row was inserted by the importer (vs mapped to existing API row). */
+export type ProductionMapEntry = {
+  productionId: number;
+  createdNew: boolean;
+};
 
 type ParsedHall = {
   name: string;
@@ -42,8 +54,44 @@ type ImportStats = {
   skippedDuplicateInFile: number;
   skippedAlreadyImported: number;
   skippedValidationFailed: number;
+  skippedFullDuplicateProductionEvent: number;
+  deletedOrphanProductionsAfterDuplicate: number;
   failedRows: number;
 };
+
+type BufferedEventRow = {
+  row: Record<string, string>;
+  legacyKey: string;
+};
+
+const SQL_EVENT_EXISTS_ON_PRODUCTIONS_FOR_BRUSSELS_DAYS = `
+SELECT EXISTS (
+  SELECT 1
+  FROM unnest($1::date[]) AS gd(gday)
+  WHERE EXISTS (
+    SELECT 1 FROM event e
+    WHERE e.production = ANY($2::int[])
+    AND (e.starts_at AT TIME ZONE 'Europe/Brussels')::date = gd.gday
+  )
+)
+`;
+
+function defaultLegacyProductionsCsvPath(): string {
+  return path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "..",
+    "..",
+    "..",
+    "data",
+    "imports",
+    "productions.csv",
+  );
+}
+
+/** Calendar date string YYYY-MM-DD in Europe/Brussels for a UTC instant (matches DB comparison). */
+export function calendarDateBrussels(utc: Date): string {
+  return utc.toLocaleDateString("en-CA", { timeZone: "Europe/Brussels" });
+}
 
 /** Parse legacy event datetime cell to UTC Date or null. */
 export function parseCsvDate(value: string): Date | null {
@@ -106,18 +154,52 @@ async function assertProductionMapTableExists(client: pg.Client): Promise<void> 
   }
 }
 
-async function loadProductionMap(client: pg.Client): Promise<Map<string, number>> {
-  const map = new Map<string, number>();
-  const rows = await client.query<{ legacy_id: string; production_id: number }>(
-    `SELECT legacy_id, production_id
+async function loadProductionMap(client: pg.Client): Promise<Map<string, ProductionMapEntry>> {
+  const map = new Map<string, ProductionMapEntry>();
+  const rows = await client.query<{
+    legacy_id: string;
+    production_id: number;
+    created_new_production: boolean | null;
+  }>(
+    `SELECT legacy_id, production_id,
+            COALESCE(created_new_production, false) AS created_new_production
      FROM legacy_production_import_map
      WHERE source = $1`,
     [LEGACY_EVENT_PRODUCTION_MAP_SOURCE],
   );
   for (const row of rows.rows) {
-    map.set(row.legacy_id, row.production_id);
+    map.set(row.legacy_id, {
+      productionId: row.production_id,
+      createdNew: row.created_new_production === true,
+    });
   }
   return map;
+}
+
+async function loadLegacyProductionMetaFromCsv(filePath: string): Promise<Map<string, { titel: string; ondertitel: string }>> {
+  const map = new Map<string, { titel: string; ondertitel: string }>();
+  const stream = fs.createReadStream(filePath);
+  const parser = parse({ ...legacyCsvParseOptions });
+  stream.pipe(parser);
+  for await (const rowRaw of parser as AsyncIterable<CsvRecord>) {
+    const row = normalizeRow(rowRaw);
+    const legacyId = row["id"] ?? "";
+    if (legacyId.length === 0) continue;
+    map.set(legacyId, { titel: row["titel"] ?? "", ondertitel: row["ondertitel"] ?? "" });
+  }
+  return map;
+}
+
+async function listProductionIdsByTitleAndArtist(
+  client: pg.Client,
+  titel: string,
+  ondertitel: string,
+): Promise<number[]> {
+  const t = titel.trim();
+  if (t.length === 0) return [];
+  const a = ondertitel.trim();
+  const result = await client.query<{ id: number }>(SQL_LIST_PRODUCTION_IDS_BY_TITLE_AND_ARTIST, [t, a]);
+  return result.rows.map((r) => r.id);
 }
 
 async function loadHallCache(client: pg.Client): Promise<Map<string, number>> {
@@ -167,10 +249,37 @@ async function getOrCreateHallId(
   return { id, created: true };
 }
 
+async function legacyProductionIsFullDuplicateOfExistingEvents(
+  client: pg.Client,
+  titel: string,
+  ondertitel: string,
+  mappedProductionId: number,
+  legacyStartsUtc: Date[],
+): Promise<boolean> {
+  const matchingIds = await listProductionIdsByTitleAndArtist(client, titel, ondertitel);
+  const others = matchingIds.filter((id) => id !== mappedProductionId);
+  const productionIdsForDayCheck = others.length > 0 ? others : [mappedProductionId];
+  const dayStrings = new Set<string>();
+  for (const d of legacyStartsUtc) {
+    dayStrings.add(calendarDateBrussels(d));
+  }
+  if (dayStrings.size === 0) return false;
+  const days = [...dayStrings].sort();
+  const result = await client.query<{ exists: boolean }>(SQL_EVENT_EXISTS_ON_PRODUCTIONS_FOR_BRUSSELS_DAYS, [
+    days,
+    productionIdsForDayCheck,
+  ]);
+  return result.rows[0]?.exists === true;
+}
+
 /**
  * Stream legacy events CSV into `event`, halls, and `legacy_event_import_map`.
  * Requires production import map rows for {@link LEGACY_EVENT_PRODUCTION_MAP_SOURCE}.
+ * Groups rows by legacy production id so duplicate calendar days vs API can skip the whole production safely.
  * Caller owns the client (connect / end).
+ *
+ * `args.productionsFilePath` (from `--productions-file` or default) must point at the same productions export
+ * used for title/artist dedupe; when omitted, falls back to repo `data/imports/productions.csv` next to the backend package.
  */
 export async function importEventsLegacy(client: pg.Client, args: ImportArgs): Promise<void> {
   await assertProductionMapTableExists(client);
@@ -179,7 +288,15 @@ export async function importEventsLegacy(client: pg.Client, args: ImportArgs): P
     await ensureIdempotencyTable(client);
   }
 
-  const productionMap = await loadProductionMap(client);
+  const productionsCsvPath = args.productionsFilePath ?? defaultLegacyProductionsCsvPath();
+  if (!fs.existsSync(productionsCsvPath)) {
+    throw new Error(
+      `Productions CSV not found: ${productionsCsvPath}. Pass productionsFilePath or add data/imports/productions.csv.`,
+    );
+  }
+
+  const productionMetaByLegacyId = await loadLegacyProductionMetaFromCsv(productionsCsvPath);
+  let productionMap = await loadProductionMap(client);
   if (productionMap.size === 0) {
     throw new Error("No production mappings found. Import productions first in write mode.");
   }
@@ -198,6 +315,7 @@ export async function importEventsLegacy(client: pg.Client, args: ImportArgs): P
   }
 
   console.log(`CSV file: ${args.filePath}`);
+  console.log(`Productions CSV (title/artist for dedupe): ${productionsCsvPath}`);
   console.log(`Mode: ${args.dryRun ? "dry-run" : "write"}`);
   if (args.limit) console.log(`Row limit: ${args.limit}`);
   console.log(`Known production mappings: ${productionMap.size}`);
@@ -213,10 +331,12 @@ export async function importEventsLegacy(client: pg.Client, args: ImportArgs): P
     skippedDuplicateInFile: 0,
     skippedAlreadyImported: 0,
     skippedValidationFailed: 0,
+    skippedFullDuplicateProductionEvent: 0,
+    deletedOrphanProductionsAfterDuplicate: 0,
     failedRows: 0,
   };
 
-  const seenKeysInFile = new Set<string>();
+  const buffered: BufferedEventRow[] = [];
   const stream = fs.createReadStream(args.filePath);
   const parser = parse({ ...legacyCsvParseOptions });
   stream.pipe(parser);
@@ -225,14 +345,79 @@ export async function importEventsLegacy(client: pg.Client, args: ImportArgs): P
     if (args.limit !== null && stats.totalRows >= args.limit) break;
     stats.totalRows++;
 
-    if (stats.totalRows % LEGACY_IMPORT_PROGRESS_EVERY === 0) {
+    const row = normalizeRow(rowRaw);
+    buffered.push({ row, legacyKey: makeLegacyKey(row) });
+  }
+
+  const byLegacyProduction = new Map<string, BufferedEventRow[]>();
+  for (const item of buffered) {
+    const legacyProdId = cleanValue(item.row["production"]);
+    if (legacyProdId.length === 0) continue;
+    const list = byLegacyProduction.get(legacyProdId);
+    if (list) list.push(item);
+    else byLegacyProduction.set(legacyProdId, [item]);
+  }
+
+  const suppressedLegacyProductionIds = new Set<string>();
+  const scheduledOrphanDeletes = new Map<string, number>();
+
+  for (const [legacyProdId, group] of byLegacyProduction) {
+    const mapEntry = productionMap.get(legacyProdId);
+    if (!mapEntry) continue;
+
+    const meta = productionMetaByLegacyId.get(legacyProdId);
+    const title = meta?.titel?.trim() ?? "";
+    if (title.length === 0) continue;
+
+    const startsUtc: Date[] = [];
+    for (const item of group) {
+      const s = parseCsvDate(item.row["starttime"] ?? "");
+      if (s) startsUtc.push(s);
+    }
+
+    const isDup = await legacyProductionIsFullDuplicateOfExistingEvents(
+      client,
+      title,
+      meta?.ondertitel ?? "",
+      mapEntry.productionId,
+      startsUtc,
+    );
+    if (!isDup) continue;
+
+    suppressedLegacyProductionIds.add(legacyProdId);
+    if (mapEntry.createdNew) {
+      scheduledOrphanDeletes.set(legacyProdId, mapEntry.productionId);
+    }
+  }
+
+  if (!args.dryRun) {
+    for (const [, productionId] of scheduledOrphanDeletes) {
+      try {
+        await client.query(`DELETE FROM production WHERE id = $1`, [productionId]);
+        stats.deletedOrphanProductionsAfterDuplicate++;
+      } catch (error) {
+        stats.failedRows++;
+        console.error(`Failed to delete orphan production ${productionId} after duplicate detection:`, error);
+      }
+    }
+    if (scheduledOrphanDeletes.size > 0) {
+      productionMap = await loadProductionMap(client);
+    }
+  }
+
+  const seenKeysInFile = new Set<string>();
+
+  let progressCounter = 0;
+  for (const item of buffered) {
+    progressCounter++;
+    if (progressCounter % LEGACY_IMPORT_PROGRESS_EVERY === 0) {
       console.log(
-        `Progress ${stats.totalRows} rows | imported=${stats.importedEvents} | failed=${stats.failedRows}`,
+        `Progress ${progressCounter}/${buffered.length} rows | imported=${stats.importedEvents} | failed=${stats.failedRows}`,
       );
     }
 
-    const row = normalizeRow(rowRaw);
-    const legacyKey = makeLegacyKey(row);
+    const row = item.row;
+    const legacyKey = item.legacyKey;
 
     if (seenKeysInFile.has(legacyKey)) {
       stats.skippedDuplicateInFile++;
@@ -263,13 +448,18 @@ export async function importEventsLegacy(client: pg.Client, args: ImportArgs): P
       continue;
     }
 
-    const productionId = productionMap.get(productionLegacyId);
-    if (!productionId) {
-      stats.skippedUnknownProduction++;
+    if (suppressedLegacyProductionIds.has(productionLegacyId)) {
+      stats.skippedFullDuplicateProductionEvent++;
       continue;
     }
 
-    // Legacy CSV has no doors column; `ends_at` is optional (null when endtime missing).
+    const mapEntry = productionMap.get(productionLegacyId);
+    if (!mapEntry) {
+      stats.skippedUnknownProduction++;
+      continue;
+    }
+    const productionId = mapEntry.productionId;
+
     const endsAt = parseCsvDate(row["endtime"] ?? "");
     const doorsAt: Date | null = null;
 
@@ -278,7 +468,7 @@ export async function importEventsLegacy(client: pg.Client, args: ImportArgs): P
     if (!hallParsed.success) {
       stats.skippedValidationFailed++;
       console.error(
-        `Validation failed for hall (row #${stats.totalRows}): ${formatLegacyZodError(hallParsed.error)}`,
+        `Validation failed for hall (legacy key=${legacyKey.slice(0, 8)}…): ${formatLegacyZodError(hallParsed.error)}`,
       );
       continue;
     }
@@ -298,7 +488,7 @@ export async function importEventsLegacy(client: pg.Client, args: ImportArgs): P
     if (!eventParsed.success) {
       stats.skippedValidationFailed++;
       console.error(
-        `Validation failed for event (row #${stats.totalRows}): ${formatLegacyZodError(eventParsed.error)}`,
+        `Validation failed for event (legacy key=${legacyKey.slice(0, 8)}…): ${formatLegacyZodError(eventParsed.error)}`,
       );
       continue;
     }
@@ -318,7 +508,7 @@ export async function importEventsLegacy(client: pg.Client, args: ImportArgs): P
 
       const hallResult = await getOrCreateHallId(client, hallRaw, false, hallCache);
       if (!hallResult.id) {
-        throw new Error(`Could not resolve hall for row ${stats.totalRows}`);
+        throw new Error(`Could not resolve hall for legacy key ${legacyKey}`);
       }
       if (hallResult.created) stats.createdHalls++;
 
@@ -350,7 +540,7 @@ export async function importEventsLegacy(client: pg.Client, args: ImportArgs): P
     } catch (error) {
       await client.query("ROLLBACK");
       stats.failedRows++;
-      console.error(`Failed row #${stats.totalRows}:`, error);
+      console.error(`Failed row (legacy key=${legacyKey.slice(0, 8)}…):`, error);
     }
   }
 
@@ -359,6 +549,10 @@ export async function importEventsLegacy(client: pg.Client, args: ImportArgs): P
   console.log(`  Rows read: ${stats.totalRows}`);
   console.log(`  Imported events: ${stats.importedEvents}`);
   console.log(`  Created halls: ${stats.createdHalls}`);
+  console.log(`  Skipped (full duplicate production vs API calendar day): ${stats.skippedFullDuplicateProductionEvent}`);
+  if (!args.dryRun) {
+    console.log(`  Deleted orphan productions after duplicate detection: ${stats.deletedOrphanProductionsAfterDuplicate}`);
+  }
   console.log(`  Skipped (missing starttime): ${stats.skippedMissingStart}`);
   console.log(`  Skipped (missing hall): ${stats.skippedMissingHall}`);
   console.log(`  Skipped (missing production legacy id): ${stats.skippedMissingProductionLegacyId}`);

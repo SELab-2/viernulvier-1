@@ -46,12 +46,13 @@ LIMIT 1
 `;
 
 /**
- * Parameters: ($1 legacy titel, $2 legacy ondertitel / artist — may be empty string).
+ * All productions matching legacy title + artist (any language), deterministic order.
+ * Parameters: ($1 titel, $2 ondertitel / artist (may be empty string)).
  * A row matches only if some language in `title` matches $1 AND either:
  * - $2 is non-empty and some language in `artist` matches $2, or
  * - $2 is empty and `artist` has no non-empty language value (scraped + legacy both “no artist”).
  */
-export const SQL_FIND_PRODUCTION_ID_BY_TITLE_AND_ARTIST = `
+export const SQL_LIST_PRODUCTION_IDS_BY_TITLE_AND_ARTIST = `
 SELECT p.id
 FROM production p
 WHERE EXISTS (
@@ -78,5 +79,8 @@ AND (
     )
   )
 )
-LIMIT 1
+ORDER BY p.id
 `;
+
+export const SQL_FIND_PRODUCTION_ID_BY_TITLE_AND_ARTIST =
+  `${SQL_LIST_PRODUCTION_IDS_BY_TITLE_AND_ARTIST.trimEnd()}\nLIMIT 1`;
