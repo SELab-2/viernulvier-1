@@ -33,4 +33,6 @@ export default fp(async (server: FastifyInstance) => {
     routePrefix: "/api/v1/docs",
     baseDir: path.resolve("static"),
   });
+
+  server.get("/api", (_, reply) => reply.redirect("/api/v1/docs"));
 });
