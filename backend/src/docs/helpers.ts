@@ -10,6 +10,7 @@ type schemaDef = {
   body?: z.ZodType;
   params?: z.ZodType;
   response?: Partial<Record<HTTPErrorCode | "default", z.ZodType>>;
+  querystring?: z.ZodType;
   default?: z.ZodType;
   description?: string;
   tags?: string[];
@@ -177,6 +178,12 @@ export class RequestParams extends AbstractRequestSchema {
 export class RequestBody extends AbstractRequestSchema {
   constructor(bodySchema: z.ZodType) {
     super({body: bodySchema})
+  }
+}
+
+export class RequestQueryString extends AbstractRequestSchema {
+  constructor(queryStringSchema: z.ZodType) {
+    super({querystring: queryStringSchema})
   }
 }
 
