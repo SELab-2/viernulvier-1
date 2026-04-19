@@ -55,7 +55,18 @@
           {{ loadError }}
         </div>
 
-        <div v-else class="cms-grid-shell">
+        <div class="cms-status-slot" :class="{ 'is-open': !!saveSuccess }">
+          <Transition name="fade" appear>
+            <div
+              v-if="saveSuccess"
+              class="rounded-lg border border-green-400/40 bg-green-400/10 p-4 text-sm text-green-700"
+            >
+              ✓ {{ saveSuccess }}
+            </div>
+          </Transition>
+        </div>
+
+        <div v-if="!loadError" class="cms-grid-shell">
           <AgGridVue
             :class="['ag-theme-alpine', 'cms-grid']"
             :style="agThemeVars"
@@ -269,6 +280,7 @@
 
         <div class="cms-modal-body cms-media-preview-body">
           <img v-if="mediaPreview.kind === 'image'" :src="mediaPreview.url" :alt="mediaPreview.label" class="cms-media-preview-large" />
+          <iframe v-else-if="mediaPreview.kind === 'youtube'" :src="mediaPreview.url" :title="mediaPreview.label" class="cms-media-preview-large" frameborder="0" allowfullscreen></iframe>
           <video v-else controls playsinline class="cms-media-preview-large">
             <source :src="mediaPreview.url" />
           </video>
@@ -388,6 +400,7 @@ const isCreating = ref(false);
 const loadError = ref<string | null>(null);
 const saveError = ref<string | null>(null);
 const createError = ref<string | null>(null);
+const saveSuccess = ref<string | null>(null);
 const rowData = ref<CmsProductionGridRow[]>([]);
 const editorPanel = ref<EditorPanelState | null>(null);
 const createModalOpen = ref(false);
@@ -395,7 +408,7 @@ const createEventModalOpen = ref(false);
 const removeConfirmOpen = ref(false);
 const removeConfirmLoading = ref(false);
 const removeConfirmError = ref<string | null>(null);
-const mediaPreview = ref<{ url: string; kind: "image" | "video"; label: string } | null>(null);
+const mediaPreview = ref<{ url: string; kind: "image" | "video" | "youtube"; label: string } | null>(null);
 const languages = SUPPORTED_LANGS as ReadonlyArray<SupportedLang>;
 const createExtraLangs = ref({ en: false, fr: false });
 const visibleCreateLangs = computed<SupportedLang[]>(() => {
@@ -580,7 +593,12 @@ function isImagePreviewUrl(url: string): boolean {
 
 function isVideoPreviewUrl(url: string): boolean {
   const value = url.trim().toLowerCase();
-  return /^(data:video\/|https?:\/\/.*\.(?:mp4|webm|ogg|mov)(?:\?.*)?$)/.test(value);
+  // Check for YouTube URLs
+  if (value.includes('youtube.com') || value.includes('youtu.be')) {
+    return true;
+  }
+  // Check for other video formats (webm, ogg, mov - but NOT mp4)
+  return /^(data:video\/|https?:\/\/.*\.(?:webm|ogg|mov)(?:\?.*)?$)/.test(value);
 }
 
 function openMediaPreview(url: string, label: string): void {
@@ -594,6 +612,21 @@ function openMediaPreview(url: string, label: string): void {
     return;
   }
 
+  // Handle YouTube URLs by converting to embed URL
+  if (trimmed.includes('youtube.com') || trimmed.includes('youtu.be')) {
+    let videoId = '';
+    if (trimmed.includes('youtube.com/watch?v=')) {
+      videoId = trimmed.split('v=')[1]?.split('&')[0] ?? '';
+    } else if (trimmed.includes('youtu.be/')) {
+      videoId = trimmed.split('youtu.be/')[1]?.split('?')[0] ?? '';
+    }
+    if (videoId) {
+      const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+      mediaPreview.value = { url: embedUrl, kind: "youtube", label };
+    }
+    return;
+  }
+
   if (isVideoPreviewUrl(trimmed)) {
     mediaPreview.value = { url: trimmed, kind: "video", label };
   }
@@ -601,6 +634,14 @@ function openMediaPreview(url: string, label: string): void {
 
 function closeMediaPreview(): void {
   mediaPreview.value = null;
+}
+
+/** Displays a success message that auto-dismisses after 3 seconds. */
+function showSaveSuccess(message: string): void {
+  saveSuccess.value = message;
+  setTimeout(() => {
+    saveSuccess.value = null;
+  }, 3000);
 }
 
 /** Loads all linked events and required hall records for one production. */
@@ -795,6 +836,7 @@ async function saveTagEditorPanel(): Promise<void> {
     );
     await loadCmsData();
     closeTagEditorPanel();
+    showSaveSuccess(t("cms.feedback.saveSuccess"));
   } catch (error) {
     saveError.value =
       error instanceof Error
@@ -851,6 +893,7 @@ async function confirmRemoveProductions(): Promise<void> {
     gridApi.value?.deselectAll();
     await loadCmsData();
     closeRemoveProductionsConfirm();
+    showSaveSuccess(t("cms.feedback.removeSuccess"));
   } catch (error) {
     removeConfirmError.value =
       error instanceof Error
@@ -1030,6 +1073,7 @@ async function onCellEditingStopped(
 
   try {
     await saveInlineBulkUpdate(event.data, apiField, newValue);
+    showSaveSuccess(t("cms.feedback.saveSuccess"));
   } catch {
     event.node.setDataValue(field, oldValue);
   } finally {
@@ -1150,6 +1194,7 @@ async function saveEditorPanel(): Promise<void> {
   }
 
   closeEditorPanel();
+  showSaveSuccess(t("cms.feedback.saveSuccess"));
 }
 
 /** Rebuilds AG Grid rows from latest API caches and locale. */
@@ -1460,3 +1505,69 @@ onBeforeUnmount(() => {
   persistGridState();
 });
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition:
+    opacity 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform, filter;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.985);
+  filter: blur(2px);
+}
+
+.fade-enter-to,
+.fade-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
+.cms-status-slot {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cms-status-slot.is-open {
+  max-height: 88px;
+}
+
+.cms-media-preview-body {
+  min-width: 600px;
+  min-height: 500px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cms-media-preview-large {
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+img.cms-media-preview-large {
+  max-width: 70vh;
+  max-height: 70vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+iframe.cms-media-preview-large {
+  height: 100%;
+  aspect-ratio: 16 / 9;
+}
+</style>

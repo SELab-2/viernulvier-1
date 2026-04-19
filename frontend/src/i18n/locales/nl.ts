@@ -115,8 +115,8 @@ export default {
         title: "Media",
         language: "Taal voor upload",
         uploadImage: "Upload afbeelding",
-        uploadVideo: "Upload video",
-        hint: "Je kan uploaden of handmatig een URL invullen. Minstens een afbeelding of video is verplicht.",
+        youtubeLink: "YouTube link",
+        hint: "Je kan een afbeelding uploaden, een afbeelding/media URL invullen, of een YouTube link plakken. Minstens één afbeelding is verplicht.",
       },
       validation: {
         requiredOneLanguage: "Vul minstens 1 taal in voor: {field}",
@@ -137,6 +137,10 @@ export default {
       loadGeneric: "Kon CMS-gegevens niet laden.",
       saveFailed: "Opslaan mislukt: {message}",
       saveGeneric: "Opslaan mislukt.",
+    },
+    feedback: {
+      saveSuccess: "Wijzigingen opgeslagen",
+      removeSuccess: "Productie verwijderd",
     },
   },
   productionsPage: {

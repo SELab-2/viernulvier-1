@@ -194,6 +194,18 @@ export function useCmsProductionGrid(options: {
     floatingFilter: true,
     resizable: true,
     minWidth: 120,
+    cellStyle: (params) => {
+      const value = params.value;
+      const isEmpty = !value || (typeof value === 'string' && value.trim() === '');
+      if (isEmpty) {
+        return {
+          backgroundColor: 'rgba(249, 115, 22, 0.05)',
+          color: 'rgba(120, 113, 108, 0.6)',
+          fontStyle: 'italic',
+        };
+      }
+      return null;
+    },
   };
 
   const gridColumnOptions = computed(() => [

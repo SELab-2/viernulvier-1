@@ -115,8 +115,8 @@ export default {
         title: "Media",
         language: "Upload language",
         uploadImage: "Upload image",
-        uploadVideo: "Upload video",
-        hint: "You can upload a file or enter a URL manually. At least one image or video is required.",
+        youtubeLink: "YouTube link",
+        hint: "You can upload an image file, enter an image/media URL, or paste a YouTube link. At least one image is required.",
       },
       validation: {
         requiredOneLanguage: "Fill at least 1 language for: {field}",
@@ -137,6 +137,10 @@ export default {
       loadGeneric: "Could not load CMS data.",
       saveFailed: "Save failed: {message}",
       saveGeneric: "Save failed.",
+    },
+    feedback: {
+      saveSuccess: "Changes saved successfully",
+      removeSuccess: "Production removed successfully",
     },
   },
   productionsPage: {

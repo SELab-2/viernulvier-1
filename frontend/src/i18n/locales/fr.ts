@@ -115,8 +115,8 @@ export default {
         title: "Media",
         language: "Langue de l'upload",
         uploadImage: "Uploader une image",
-        uploadVideo: "Uploader une video",
-        hint: "Vous pouvez uploader un fichier ou saisir une URL manuellement. Au moins une image ou video est requise.",
+        youtubeLink: "Lien YouTube",
+        hint: "Vous pouvez uploader une image, saisir une URL d'image/média, ou coller un lien YouTube. Au moins une image est requise.",
       },
       validation: {
         requiredOneLanguage: "Remplissez au moins 1 langue pour: {field}",
@@ -137,6 +137,10 @@ export default {
       loadGeneric: "Impossible de charger les donnees CMS.",
       saveFailed: "Echec de l'enregistrement: {message}",
       saveGeneric: "Echec de l'enregistrement.",
+    },
+    feedback: {
+      saveSuccess: "Modifications enregistrees",
+      removeSuccess: "Production supprimee",
     },
   },
   productionsPage: {

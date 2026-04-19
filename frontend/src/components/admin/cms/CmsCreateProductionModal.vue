@@ -117,11 +117,6 @@
               <span class="cms-lang-label">{{ t("cms.create.media.uploadImage") }}</span>
               <input type="file" accept="image/*" class="cms-text-input" @change="emit('image-file-change', $event)" />
             </label>
-
-            <label class="cms-form-lang-field">
-              <span class="cms-lang-label">{{ t("cms.create.media.uploadVideo") }}</span>
-              <input type="file" accept="video/*" class="cms-text-input" @change="emit('video-file-change', $event)" />
-            </label>
           </div>
 
           <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -131,6 +126,7 @@
                 :value="createForm.video_1.nl"
                 type="text"
                 class="cms-text-input"
+                placeholder="https://example.com/image.jpg"
                 @input="emit('update-form-field', 'video_1', 'nl', ($event.target as HTMLInputElement).value)"
               />
             </label>
@@ -141,7 +137,19 @@
                 :value="createForm.video_2.nl"
                 type="text"
                 class="cms-text-input"
+                placeholder="https://example.com/image.jpg"
                 @input="emit('update-form-field', 'video_2', 'nl', ($event.target as HTMLInputElement).value)"
+              />
+            </label>
+
+            <label class="cms-form-lang-field md:col-span-2">
+              <span class="cms-lang-label">{{ t("cms.create.media.youtubeLink") }}</span>
+              <input
+                :value="createForm.video_1.nl"
+                type="text"
+                class="cms-text-input"
+                placeholder="https://www.youtube.com/watch?v=..."
+                @input="emit('update-form-field', 'video_1', 'nl', ($event.target as HTMLInputElement).value)"
               />
             </label>
           </div>
