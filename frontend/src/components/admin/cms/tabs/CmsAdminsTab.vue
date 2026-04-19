@@ -220,6 +220,8 @@ defineExpose({
     isSaving,
     loadAdminsData,
     onCellEditingStopped,
+    quickFilterText,
+    columnChooserOpen,
   },
 });
 

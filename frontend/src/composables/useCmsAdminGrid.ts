@@ -14,7 +14,7 @@ const cmsAdminGridStateStorageKey = "viernulvier-cms-admin-grid-state";
 const cmsAdminGridColumnIds = [
   "username",
   "profilePicture",
-  "isSuper",
+  "super",
 ] as const;
 
 export function useCmsAdminGrid(options: {
@@ -56,7 +56,7 @@ export function useCmsAdminGrid(options: {
   const gridColumnOptions = computed(() => [
     { colId: "username", label: options.t("cms.columns.admin.username") },
     { colId: "profilePicture", label: options.t("cms.columns.admin.profilePicture") },
-    { colId: "isSuper", label: options.t("cms.columns.admin.super") },
+    { colId: "super", label: options.t("cms.columns.admin.super") },
   ] as const);
 
   const columnDefs = computed<ColDef<CmsAdminGridRow>[]>(() => [

@@ -37,13 +37,31 @@ const superAdmin: Admin = {
   super: true,
 };
 
+const CmsGridControlsStub = {
+  template: `
+    <div>
+      <button data-testid="emit-filter" @click="$emit('update:quick-filter-text', 'john')" />
+      <button data-testid="apply-filter" @click="$emit('apply-quick-filter')" />
+    </div>
+  `,
+};
+
+const CmsColumnChooserStub = {
+  template: `
+    <div>
+      <button data-testid="close-chooser" @click="$emit('close')" />
+    </div>
+  `,
+  props: ["show"],
+};
+
 function mountTab() {
   return mount(CmsAdminsTab, {
     global: {
       plugins: [i18n],
       stubs: {
-        CmsGridControls: true,
-        CmsColumnChooser: true,
+        CmsGridControls: CmsGridControlsStub,
+        CmsColumnChooser: CmsColumnChooserStub,
       },
     },
   });
@@ -229,6 +247,35 @@ describe("CmsAdminsTab", () => {
 
       // We can't directly spy persistGridState, but this ensures no crash
       expect(spy).not.toThrow;
+    });
+  });
+
+  describe("grid control interactions", () => {
+    it("updates quick filter text", async () => {
+      mockStoreAdmin = { ...superAdmin };
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      await wrapper.get('[data-testid="emit-filter"]').trigger("click");
+
+      expect(wrapper.vm.__test.quickFilterText.value).toBe("john");
+    });
+
+    it("closes column chooser", async () => {
+      mockStoreAdmin = { ...superAdmin };
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      wrapper.vm.__test.columnChooserOpen.value = true;
+      await wrapper.vm.$nextTick();
+
+      await wrapper.get('[data-testid="close-chooser"]').trigger("click");
+
+      expect(wrapper.vm.__test.columnChooserOpen.value).toBe(false);
     });
   });
 });
