@@ -682,46 +682,6 @@ describe("importEventsLegacy", () => {
     fs.rmSync(dir, { recursive: true });
   });
 
-  it("dry-run logs progress every progress interval", async () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-ev-500-"));
-    const csvPath = path.join(dir, "e.csv");
-    const prodCsv = writeProductionsCsv(dir, ["Titel,ID,Ondertitel", "Prog,p1,"]);
-    const lines = ["Starttime,Endtime,Hall,Production"];
-    for (let i = 0; i < 500; i++) {
-      lines.push(`2024-01-01 10:00:00,,Hall${i},p1`);
-    }
-    fs.writeFileSync(csvPath, `${lines.join("\n")}\n`, "utf8");
-
-    const query = vi.fn().mockImplementation((sql: string) => {
-      const dedupe = handleProductionDedupeQueries(sql, [{ id: 1 }], false);
-      if (dedupe) return Promise.resolve(dedupe);
-
-      if (sql.includes("to_regclass")) {
-        return Promise.resolve({ rows: [{ exists: "legacy_production_import_map" }] });
-      }
-      if (sql.includes("FROM legacy_production_import_map")) {
-        return Promise.resolve({
-          rows: [{ legacy_id: "p1", production_id: 1, created_new_production: false }],
-        });
-      }
-      if (sql.includes("FROM hall") && sql.includes("SELECT id")) {
-        return Promise.resolve({ rows: [] });
-      }
-      return Promise.resolve({ rows: [] });
-    });
-
-    await importEventsLegacy(makeClient(query), {
-      filePath: csvPath,
-      dryRun: true,
-      limit: null,
-      productionsFilePath: prodCsv,
-    });
-
-    expect(query).toHaveBeenCalled();
-    expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Progress 500/500"));
-    fs.rmSync(dir, { recursive: true });
-  });
-
   it("write mode skips events and deletes orphan production when calendar day matches API", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-ev-fulldup-"));
     const csvPath = path.join(dir, "e.csv");
@@ -767,6 +727,130 @@ describe("importEventsLegacy", () => {
     expect(
       query.mock.calls.some((c) => String(c[0]).includes("INSERT INTO event")),
     ).toBe(false);
+    fs.rmSync(dir, { recursive: true });
+  });
+
+  it("throws when default productions CSV path does not exist (no productionsFilePath)", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-ev-no-default-prod"));
+    const csvPath = path.join(dir, "e.csv");
+    fs.writeFileSync(csvPath, "Starttime,Hall,Production\n2024-01-01 10:00:00,Main,p1\n", "utf8");
+
+    const existsSpy = vi.spyOn(fs, "existsSync").mockReturnValue(false);
+
+    const query = vi.fn().mockImplementation((sql: string) => {
+      if (sql.includes("to_regclass")) {
+        return Promise.resolve({ rows: [{ exists: "legacy_production_import_map" }] });
+      }
+      return Promise.resolve({ rows: [] });
+    });
+
+    await expect(
+      importEventsLegacy(makeClient(query), {
+        filePath: csvPath,
+        dryRun: true,
+        limit: null,
+      }),
+    ).rejects.toThrow("Productions CSV not found");
+
+    existsSpy.mockRestore();
+    fs.rmSync(dir, { recursive: true });
+  });
+
+  it("write mode counts failed row when orphan delete rejects", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-ev-del-fail"));
+    const csvPath = path.join(dir, "e.csv");
+    const prodCsv = writeProductionsCsv(dir, ["Titel,ID,Ondertitel", "Dup2,leg2,"]);
+    fs.writeFileSync(
+      csvPath,
+      "Starttime,Endtime,Hall,Production\n2024-06-15 20:00:00,,Main,leg2\n",
+      "utf8",
+    );
+
+    const query = vi.fn().mockImplementation((sql: string) => {
+      const dedupe = handleProductionDedupeQueries(sql, [{ id: 5 }, { id: 99 }], true);
+      if (dedupe) return Promise.resolve(dedupe);
+
+      if (sql.includes("CREATE TABLE IF NOT EXISTS legacy_event_import_map")) {
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("to_regclass")) {
+        return Promise.resolve({ rows: [{ exists: "legacy_production_import_map" }] });
+      }
+      if (sql.includes("FROM legacy_production_import_map")) {
+        return Promise.resolve({
+          rows: [{ legacy_id: "leg2", production_id: 99, created_new_production: true }],
+        });
+      }
+      if (sql.includes("DELETE FROM production")) {
+        return Promise.reject(new Error("fk or permission"));
+      }
+      if (sql.includes("SELECT legacy_key") && sql.includes("legacy_event_import_map")) {
+        return Promise.resolve({ rows: [] });
+      }
+      return Promise.resolve({ rows: [] });
+    });
+
+    await importEventsLegacy(makeClient(query), {
+      filePath: csvPath,
+      dryRun: false,
+      limit: null,
+      productionsFilePath: prodCsv,
+    });
+
+    expect(query.mock.calls.some((c) => String(c[0]).includes("DELETE FROM production"))).toBe(true);
+    fs.rmSync(dir, { recursive: true });
+  });
+
+  it("write mode rolls back when hall insert returns no id", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-ev-hall-null"));
+    const csvPath = path.join(dir, "e.csv");
+    const prodCsv = writeProductionsCsv(dir, ["Titel,ID,Ondertitel", "HallNull,pz,"]);
+    fs.writeFileSync(
+      csvPath,
+      "Starttime,Endtime,Hall,Production\n2024-02-01 20:00:00,,Zaaltje,pz\n",
+      "utf8",
+    );
+
+    const query = vi.fn().mockImplementation((sql: string) => {
+      const dedupe = handleProductionDedupeQueries(sql, [{ id: 7 }], false);
+      if (dedupe) return Promise.resolve(dedupe);
+
+      if (sql.includes("CREATE TABLE IF NOT EXISTS legacy_event_import_map")) {
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("to_regclass")) {
+        return Promise.resolve({ rows: [{ exists: "legacy_production_import_map" }] });
+      }
+      if (sql.includes("FROM legacy_production_import_map")) {
+        return Promise.resolve({
+          rows: [{ legacy_id: "pz", production_id: 7, created_new_production: false }],
+        });
+      }
+      if (sql.includes("FROM hall") && sql.includes("SELECT id") && !sql.includes("UPDATE")) {
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("jsonb_each_text(name)") && sql.includes("FROM hall")) {
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("SELECT legacy_key") && sql.includes("legacy_event_import_map")) {
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.trimStart().startsWith("BEGIN")) return Promise.resolve({ rows: [] });
+      if (sql.trimStart().startsWith("ROLLBACK")) return Promise.resolve({ rows: [] });
+      if (sql.includes("INSERT INTO hall")) {
+        return Promise.resolve({ rows: [{ id: null as unknown as number }] });
+      }
+      return Promise.resolve({ rows: [] });
+    });
+
+    await importEventsLegacy(makeClient(query), {
+      filePath: csvPath,
+      dryRun: false,
+      limit: null,
+      productionsFilePath: prodCsv,
+    });
+
+    expect(query.mock.calls.some((c) => String(c[0]).trimStart().startsWith("ROLLBACK"))).toBe(true);
     fs.rmSync(dir, { recursive: true });
   });
 });

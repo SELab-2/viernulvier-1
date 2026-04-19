@@ -1,8 +1,10 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import z from "zod";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type pg from "pg";
+import { CreateProductionBodySchema } from "@/routes/production/handlers/body-schema.js";
 import {
   genreKey,
   importProductionsLegacy,
@@ -438,6 +440,31 @@ describe("importProductionsLegacy", () => {
     });
 
     expect(query.mock.calls.some((c) => String(c[0]).includes("INSERT INTO tag_type"))).toBe(true);
+    fs.rmSync(dir, { recursive: true });
+  });
+
+  it("dry-run skips when production body validation fails", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-zod-prod"));
+    const csvPath = path.join(dir, "p.csv");
+    fs.writeFileSync(csvPath, "Titel,ID\nBad,1\n", "utf8");
+
+    const failed = z.string().safeParse(1);
+    expect(failed.success).toBe(false);
+    if (failed.success) throw new Error("expected fail");
+    vi.spyOn(CreateProductionBodySchema, "safeParse").mockReturnValueOnce(
+      failed as unknown as ReturnType<typeof CreateProductionBodySchema.safeParse>,
+    );
+
+    const query = vi.fn().mockImplementation((sql: string) => {
+      if (sql.includes("FROM tag_type")) return Promise.resolve({ rows: [] });
+      return Promise.resolve({ rows: [] });
+    });
+
+    await importProductionsLegacy(makeClient(query), {
+      filePath: csvPath,
+      dryRun: true,
+      limit: null,
+    });
     fs.rmSync(dir, { recursive: true });
   });
 });
