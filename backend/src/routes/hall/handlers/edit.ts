@@ -4,7 +4,7 @@ import { HallSchema, stringToInt } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, parseSchema, HttpError, HttpClientError, ParseContext } from "@/routes/helpers.js";
 import { z } from "zod";
 
-const EditHallBodySchema = HallSchema.omit({ id: true }).partial();
+export const EditHallBodySchema = HallSchema.omit({ id: true }).partial();
 
 /**
  * Updates an existing hall and returns the updated record.

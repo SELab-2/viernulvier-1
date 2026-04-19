@@ -4,7 +4,7 @@ import { HallSchema, languageMap, stringToInt } from "@viernulvier/shared/index.
 import { getMetadata, parseParams, buildQuery, parseSchema } from "@/routes/helpers.js";
 import { z } from "zod";
 
-const ReplaceHallBodySchema = HallSchema.omit({ id: true });
+export const ReplaceHallBodySchema = HallSchema.omit({ id: true });
 
 const replaceHallQuery = (server: FastifyInstance) =>
   buildQuery(

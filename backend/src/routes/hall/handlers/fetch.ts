@@ -46,7 +46,7 @@ const fetchHallByOldIdQuery = (server: FastifyInstance) =>
     HallSchema,
   );
 
-const HallsListQuerySchema = z.object({
+export const HallsListQuerySchema = z.object({
   old_id: stringToInt.optional(),
 });
 
