@@ -7,11 +7,11 @@
           <div class="sticky top-32 h-fit space-y-6">
             
             <div v-if="teaser || description_extra" class="bg-surface-inv p-8 shadow-xl text-ink-on-inv border border-surface-3">
-              <h2 v-if="teaser" class="text-[10px] font-black uppercase tracking-[0.3em] text-ink-on-inv-tertiary" :class="{ 'mb-4': description_extra }" v-html="teaser" />
+              <div v-if="teaser" class="text-[10px] font-black uppercase tracking-[0.3em] text-ink-on-inv-tertiary" :class="{ 'mb-4': description_extra }" v-html="teaser" />
               
               <div v-if="teaser && description_extra" class="mb-6 h-px w-12 bg-ink-on-inv-tertiary opacity-30"></div>
               
-              <p v-if="description_extra" class="text-sm leading-relaxed whitespace-pre-line" v-html="description_extra" />
+              <div v-if="description_extra" class="text-sm leading-relaxed whitespace-pre-line" v-html="description_extra" />
             </div>
               
             <div v-if="tagGroups && tagGroups.length > 0" class="border border-surface-3 bg-surface-0 transition-all duration-300">
@@ -77,25 +77,31 @@
           </div>
           
           <div v-if="description || description_2" class="space-y-10">
-            <p v-if="description" class="text-lg font-light leading-relaxed text-ink-primary md:text-xl whitespace-pre-line" v-html="description" />
-            <p v-if="description_2" class="text-base font-light leading-relaxed text-ink-secondary whitespace-pre-line" v-html="description_2" />
+            <div v-if="description" class="text-lg font-light leading-relaxed text-ink-primary md:text-xl whitespace-pre-line" v-html="description" />
+            <div v-if="description_2" class="text-base font-light leading-relaxed text-ink-secondary whitespace-pre-line" v-html="description_2" />
           </div>
         </div>
 
         <div v-if="info || programme" class="border-t border-surface-3 pt-12 lg:col-span-12">
           <div class="grid grid-cols-1 gap-12 lg:grid-cols-12">
+
             <div v-if="info" class="lg:col-span-8 space-y-6">
               <h3 class="text-xs font-black uppercase tracking-[0.2em] text-ink-primary">
                 {{ t("production.details.extraInfo") }}
               </h3>
-              <p class="max-w-2xl text-sm italic text-ink-secondary leading-relaxed whitespace-pre-line" v-html="info" />
+              <div class="max-w-2xl text-sm italic text-ink-secondary leading-relaxed whitespace-pre-line" v-html="info" />
             </div>
 
-            <div v-if="programme" class="lg:col-span-4" :class="{ 'lg:col-start-9': !info }">
-              <div class="sticky top-32 h-fit border border-surface-3 bg-surface-0 p-6 shadow-sm">
-                <p class="text-xs font-medium leading-relaxed text-ink-primary whitespace-pre-line" v-html="programme" />
-              </div>
+            <div 
+              v-if="programme" 
+              :class="[
+                'h-fit border border-surface-3 bg-surface-0 p-6 shadow-sm',
+                info ? 'lg:col-span-4 lg:col-start-9 sticky top-32' : 'lg:col-span-5 lg:col-start-1'
+              ]"
+            >
+              <div class="text-xs font-medium leading-relaxed text-ink-primary whitespace-pre-line" v-html="programme" />
             </div>
+
           </div>
         </div>
 
@@ -156,3 +162,16 @@ const mainContentClass = computed(() => {
     : "lg:col-span-12";
 });
 </script>
+
+<style scoped>
+:deep(a) {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  transition: opacity 0.2s;
+}
+
+:deep(a:hover) {
+  text-decoration-thickness: 2px;
+}
+</style>
