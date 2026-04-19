@@ -13,6 +13,22 @@ vi.mock("@/composables/useDarkMode", () => ({
   useDarkMode: () => ({ isDark: { value: false } }),
 }));
 
+vi.mock("@/components/admin/cms/admins/CmsCreateAdminModal.vue", () => ({
+  default: {
+    template: `
+      <div v-if="open" data-testid="create-admin-modal">
+        <button data-testid="modal-submit" @click="$emit('submit')" />
+        <button data-testid="modal-close" @click="$emit('close')" />
+        <button data-testid="modal-update-username" @click="$emit('update-username', 'alice')" />
+        <button data-testid="modal-update-password" @click="$emit('update-password', 'secret')" />
+        <button data-testid="modal-update-super" @click="$emit('update-super', true)" />
+      </div>
+    `,
+    props: ["open", "createForm", "createError", "isCreating"],
+    emits: ["close", "submit", "update-username", "update-password", "update-super"],
+  },
+}));
+
 // Module-level so the hoisted vi.mock factory can close over it
 let mockStoreAdmin: Admin = {
   id: 1,
@@ -210,6 +226,7 @@ describe("CmsAdminsTab", () => {
       const event = createEvent({
         colDef: { field: "super" },
         value: true,
+        oldValue: false,
       });
 
       await wrapper.vm.__test.onCellEditingStopped(event);
@@ -228,6 +245,191 @@ describe("CmsAdminsTab", () => {
       expect(event.node.setDataValue).toHaveBeenCalledWith("username", "old");
       expect(wrapper.vm.__test.saveError.value).toBeTruthy();
     });
+
+    it("reverts unknown field without saving", async () => {
+      const spy = vi.spyOn(auth, "updateAdmin");
+      const wrapper = mountTab();
+      const event = createEvent({ colDef: { field: "profilePicture" }, value: "x", oldValue: "y" });
+
+      await wrapper.vm.__test.onCellEditingStopped(event);
+
+      expect(spy).not.toHaveBeenCalled();
+      expect(event.node.setDataValue).toHaveBeenCalledWith("profilePicture", "y");
+    });
+  });
+
+  describe("create modal", () => {
+    beforeEach(() => {
+      mockStoreAdmin = { ...superAdmin };
+    });
+
+    it("modal is closed by default", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      const wrapper = mountTab();
+      await flushPromises();
+
+      expect(wrapper.find('[data-testid="create-admin-modal"]').exists()).toBe(false);
+    });
+
+    it("opens modal when add button is clicked", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      const wrapper = mountTab();
+      await flushPromises();
+
+      await wrapper.find('[data-testid="cms-add-admin"]').trigger("click");
+
+      expect(wrapper.find('[data-testid="create-admin-modal"]').exists()).toBe(true);
+    });
+
+    it("closes modal on close emit", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      const wrapper = mountTab();
+      await flushPromises();
+
+      wrapper.vm.__test.openCreateModal();
+      await wrapper.vm.$nextTick();
+
+      await wrapper.find('[data-testid="modal-close"]').trigger("click");
+
+      expect(wrapper.find('[data-testid="create-admin-modal"]').exists()).toBe(false);
+    });
+
+    it("resets form on close", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      const wrapper = mountTab();
+      await flushPromises();
+
+      wrapper.vm.__test.setCreateUsername("alice");
+      wrapper.vm.__test.setCreatePassword("secret");
+      wrapper.vm.__test.closeCreateModal();
+
+      expect(wrapper.vm.__test.createForm.value.username).toBe("");
+      expect(wrapper.vm.__test.createForm.value.password).toBe("");
+    });
+
+    it("updates username via setter", async () => {
+      const wrapper = mountTab();
+      wrapper.vm.__test.setCreateUsername("bob");
+      expect(wrapper.vm.__test.createForm.value.username).toBe("bob");
+    });
+
+    it("updates password via setter", async () => {
+      const wrapper = mountTab();
+      wrapper.vm.__test.setCreatePassword("hunter2");
+      expect(wrapper.vm.__test.createForm.value.password).toBe("hunter2");
+    });
+
+    it("updates super via setter", async () => {
+      const wrapper = mountTab();
+      wrapper.vm.__test.setCreateSuper(true);
+      expect(wrapper.vm.__test.createForm.value.super).toBe(true);
+    });
+
+    it("updates username from modal emit", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      const wrapper = mountTab();
+      await flushPromises();
+
+      wrapper.vm.__test.openCreateModal();
+      await wrapper.vm.$nextTick();
+
+      await wrapper.find('[data-testid="modal-update-username"]').trigger("click");
+
+      expect(wrapper.vm.__test.createForm.value.username).toBe("alice");
+    });
+
+    it("updates password from modal emit", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      const wrapper = mountTab();
+      await flushPromises();
+
+      wrapper.vm.__test.openCreateModal();
+      await wrapper.vm.$nextTick();
+
+      await wrapper.find('[data-testid="modal-update-password"]').trigger("click");
+
+      expect(wrapper.vm.__test.createForm.value.password).toBe("secret");
+    });
+
+    it("updates super from modal emit", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      const wrapper = mountTab();
+      await flushPromises();
+
+      wrapper.vm.__test.openCreateModal();
+      await wrapper.vm.$nextTick();
+
+      await wrapper.find('[data-testid="modal-update-super"]').trigger("click");
+
+      expect(wrapper.vm.__test.createForm.value.super).toBe(true);
+    });
+
+    it("submits and reloads on success", async () => {
+      const getAllSpy = vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      vi.spyOn(auth, "createAdmin").mockResolvedValue({
+        id: 2,
+        username: "alice",
+        profile_picture: null,
+        super: false,
+      });
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      wrapper.vm.__test.setCreateUsername("alice");
+      wrapper.vm.__test.setCreatePassword("secret");
+      await wrapper.vm.__test.submitCreateAdmin();
+      await flushPromises();
+
+      // Called once on mount, once after create
+      expect(getAllSpy).toHaveBeenCalledTimes(2);
+      expect(wrapper.vm.__test.createModalOpen.value).toBe(false);
+    });
+
+    it("shows create error on submit failure", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      vi.spyOn(auth, "createAdmin").mockRejectedValue(new Error("Username taken"));
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      await wrapper.vm.__test.submitCreateAdmin();
+      await flushPromises();
+
+      expect(wrapper.vm.__test.createError.value).toMatch(/username taken/i);
+      expect(wrapper.vm.__test.createModalOpen.value).toBe(false);
+    });
+
+    it("sets isCreating during submission", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+
+      let resolve: Function;
+      const promise = new Promise((r) => (resolve = r));
+      vi.spyOn(auth, "createAdmin").mockReturnValue(promise as any);
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      const submitPromise = wrapper.vm.__test.submitCreateAdmin();
+      expect(wrapper.vm.__test.isCreating.value).toBe(true);
+
+      resolve!({ id: 2, username: "alice", profile_picture: null, super: false });
+      await submitPromise;
+      await flushPromises();
+
+      expect(wrapper.vm.__test.isCreating.value).toBe(false);
+    });
+
+    it("clears createError when modal is reopened", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      const wrapper = mountTab();
+      await flushPromises();
+
+      wrapper.vm.__test.createError.value = "some previous error";
+      wrapper.vm.__test.openCreateModal();
+
+      expect(wrapper.vm.__test.createError.value).toBeNull();
+    });
   });
 
   describe("unmount behavior", () => {
@@ -235,18 +437,12 @@ describe("CmsAdminsTab", () => {
       mockStoreAdmin = { ...superAdmin };
     });
 
-    it("persists grid state on unmount", async () => {
+    it("does not throw on unmount", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
       const wrapper = mountTab();
+      await flushPromises();
 
-      const spy = vi.spyOn(
-        wrapper.vm.__test,
-        "loadAdminsData",
-      );
-
-      wrapper.unmount();
-
-      // We can't directly spy persistGridState, but this ensures no crash
-      expect(spy).not.toThrow;
+      expect(() => wrapper.unmount()).not.toThrow();
     });
   });
 
