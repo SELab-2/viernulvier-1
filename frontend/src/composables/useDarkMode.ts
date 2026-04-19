@@ -26,7 +26,7 @@ const STORAGE_KEY = "viernulvier-dark";
  *
  * @returns `true` if dark mode should be active on first load.
  */
-function getInitialDark(): boolean {
+export function getInitialDark(): boolean {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored !== null) {
     return stored === "true";
