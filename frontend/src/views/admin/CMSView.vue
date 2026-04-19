@@ -15,9 +15,19 @@
             </p>
           </div>
 
-          <button type="button" class="cms-add-button" @click="openCreateModal">
-            {{ t("cms.actions.addProduction") }}
-          </button>
+          <div class="flex flex-col gap-2">
+            <button type="button" class="cms-add-button" @click="openCreateModal">
+              {{ t("cms.actions.addProduction") }}
+            </button>
+            <button
+              type="button"
+              class="cms-remove-button"
+              :disabled="selectedCount === 0"
+              @click="openRemoveProductionsConfirm"
+            >
+              {{ t("cms.actions.removeProduction") }}
+            </button>
+          </div>
         </header>
 
         <p class="text-xs text-ink-tertiary">
@@ -214,6 +224,57 @@
       @close="closeCreateEventModal"
       @submit="submitCreateEvent"
     />
+
+    <div v-if="removeConfirmOpen" class="cms-modal-overlay" @click.self="closeRemoveProductionsConfirm">
+      <section class="cms-modal cms-remove-modal" role="dialog" aria-modal="true">
+        <header class="cms-modal-header">
+          <h2 class="text-xl font-bold text-ink-primary">
+            {{ t("cms.actions.confirmRemoveTitle") }}
+          </h2>
+          <button type="button" class="cms-side-close" @click="closeRemoveProductionsConfirm">
+            {{ t("cms.panel.close") }}
+          </button>
+        </header>
+
+        <div class="cms-modal-body">
+          <p class="text-sm text-ink-secondary">
+            {{ t("cms.actions.confirmRemoveBody", { count: removeConfirmCount }) }}
+          </p>
+          <p v-if="removeConfirmError" class="text-sm text-red-700">
+            {{ removeConfirmError }}
+          </p>
+        </div>
+
+        <footer class="cms-modal-footer">
+          <button type="button" class="cms-side-close" :disabled="removeConfirmLoading" @click="closeRemoveProductionsConfirm">
+            {{ t("cms.actions.confirmRemoveCancel") }}
+          </button>
+          <button type="button" class="cms-side-save" :disabled="removeConfirmLoading" @click="confirmRemoveProductions">
+            {{ removeConfirmLoading ? t("cms.panel.saving") : t("cms.actions.confirmRemoveSubmit") }}
+          </button>
+        </footer>
+      </section>
+    </div>
+
+    <div v-if="mediaPreview" class="cms-modal-overlay" @click.self="closeMediaPreview">
+      <section class="cms-modal cms-media-modal" role="dialog" aria-modal="true">
+        <header class="cms-modal-header">
+          <h2 class="text-xl font-bold text-ink-primary">
+            {{ t("cms.columns.media") }}
+          </h2>
+          <button type="button" class="cms-side-close" @click="closeMediaPreview">
+            {{ t("cms.panel.close") }}
+          </button>
+        </header>
+
+        <div class="cms-modal-body cms-media-preview-body">
+          <img v-if="mediaPreview.kind === 'image'" :src="mediaPreview.url" :alt="mediaPreview.label" class="cms-media-preview-large" />
+          <video v-else controls playsinline class="cms-media-preview-large">
+            <source :src="mediaPreview.url" />
+          </video>
+        </div>
+      </section>
+    </div>
   </div>
 </template>
 
@@ -253,6 +314,7 @@ import { useCmsProductionGrid } from "@/composables/useCmsProductionGrid";
 import { i18n, SUPPORTED_LANGS, type SupportedLang } from "@/i18n";
 import {
   createProduction,
+  deleteProduction,
   getProductions,
   extractProductionTagIds,
   updateProduction,
@@ -330,6 +392,10 @@ const rowData = ref<CmsProductionGridRow[]>([]);
 const editorPanel = ref<EditorPanelState | null>(null);
 const createModalOpen = ref(false);
 const createEventModalOpen = ref(false);
+const removeConfirmOpen = ref(false);
+const removeConfirmLoading = ref(false);
+const removeConfirmError = ref<string | null>(null);
+const mediaPreview = ref<{ url: string; kind: "image" | "video"; label: string } | null>(null);
 const languages = SUPPORTED_LANGS as ReadonlyArray<SupportedLang>;
 const createExtraLangs = ref({ en: false, fr: false });
 const visibleCreateLangs = computed<SupportedLang[]>(() => {
@@ -505,6 +571,36 @@ function setCreateExtraLang(lang: "en" | "fr", value: boolean): void {
     ...createExtraLangs.value,
     [lang]: value,
   };
+}
+
+function isImagePreviewUrl(url: string): boolean {
+  const value = url.trim().toLowerCase();
+  return /^(data:image\/|https?:\/\/.*\.(?:png|jpe?g|gif|webp|bmp|svg)(?:\?.*)?$)/.test(value);
+}
+
+function isVideoPreviewUrl(url: string): boolean {
+  const value = url.trim().toLowerCase();
+  return /^(data:video\/|https?:\/\/.*\.(?:mp4|webm|ogg|mov)(?:\?.*)?$)/.test(value);
+}
+
+function openMediaPreview(url: string, label: string): void {
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return;
+  }
+
+  if (isImagePreviewUrl(trimmed)) {
+    mediaPreview.value = { url: trimmed, kind: "image", label };
+    return;
+  }
+
+  if (isVideoPreviewUrl(trimmed)) {
+    mediaPreview.value = { url: trimmed, kind: "video", label };
+  }
+}
+
+function closeMediaPreview(): void {
+  mediaPreview.value = null;
 }
 
 /** Loads all linked events and required hall records for one production. */
@@ -721,6 +817,48 @@ function closeCreateModal(): void {
   createModalOpen.value = false;
   createError.value = null;
   resetCreateForm();
+}
+
+function openRemoveProductionsConfirm(): void {
+  if (selectedCount.value === 0) {
+    return;
+  }
+
+  removeConfirmError.value = null;
+  removeConfirmOpen.value = true;
+}
+
+function closeRemoveProductionsConfirm(): void {
+  removeConfirmOpen.value = false;
+  removeConfirmError.value = null;
+}
+
+const removeConfirmCount = computed(() => gridApi.value?.getSelectedRows().length ?? selectedCount.value);
+
+async function confirmRemoveProductions(): Promise<void> {
+  const selectedRows = gridApi.value?.getSelectedRows() ?? [];
+  if (selectedRows.length === 0) {
+    closeRemoveProductionsConfirm();
+    return;
+  }
+
+  removeConfirmLoading.value = true;
+  removeConfirmError.value = null;
+
+  try {
+    await Promise.all(selectedRows.map((row) => deleteProduction(row.id)));
+    selectedCount.value = 0;
+    gridApi.value?.deselectAll();
+    await loadCmsData();
+    closeRemoveProductionsConfirm();
+  } catch (error) {
+    removeConfirmError.value =
+      error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+  } finally {
+    removeConfirmLoading.value = false;
+  }
 }
 
 /** Converts chosen image file to data URL for create form. */
@@ -944,6 +1082,25 @@ function onCellClicked(event: CellClickedEvent<CmsProductionGridRow>): void {
 
   if (event.colDef.field === "tags") {
     openTagEditorPanel(event.data);
+    return;
+  }
+
+  if (event.colDef.field === "media") {
+    const label = event.data.title || event.data.performer || t("cms.columns.media");
+    const mediaUrl = event.data.media;
+    if (mediaUrl) {
+      openMediaPreview(mediaUrl, label);
+      if (mediaPreview.value) {
+        return;
+      }
+    }
+
+    editorPanel.value = {
+      rowId: event.data.id,
+      apiField: "video_1",
+      label: event.colDef.headerName ?? t("cms.panel.text"),
+      values: makeEditorValues(event.data.source.video_1 as LanguageMap | null | undefined),
+    };
     return;
   }
 
@@ -1220,9 +1377,15 @@ function getInitialDark(): boolean {
 defineExpose({
   __test: {
     rowData,
+    selectedCount,
+    gridApi,
     createForm,
     createModalOpen,
     createEventModalOpen,
+    removeConfirmOpen,
+    removeConfirmLoading,
+    removeConfirmError,
+    mediaPreview,
     createError,
     eventsPanelError,
     editorPanel,
@@ -1238,6 +1401,9 @@ defineExpose({
     resetCreateLinkedEventForm,
     openCreateModal,
     closeCreateModal,
+    openRemoveProductionsConfirm,
+    closeRemoveProductionsConfirm,
+    confirmRemoveProductions,
     submitCreateProduction,
     showEventsForProduction,
     refreshEventsPanelForSelectedProduction,
@@ -1256,6 +1422,8 @@ defineExpose({
     onCellEditingStopped,
     onImageFileChange,
     onVideoFileChange,
+    openMediaPreview,
+    closeMediaPreview,
     closeEventsPanel,
     closeEditorPanel,
     closeTagEditorPanel,

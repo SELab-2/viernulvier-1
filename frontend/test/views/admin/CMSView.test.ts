@@ -26,6 +26,7 @@ vi.mock("@/services/productions", async (importOriginal) => {
     getProductions: vi.fn(),
     createProduction: vi.fn(),
     updateProduction: vi.fn(),
+    deleteProduction: vi.fn(),
   };
 });
 
@@ -166,6 +167,7 @@ describe("CMSView", () => {
     });
     vi.spyOn(productionsService, "createProduction").mockResolvedValue(mockProduction);
     vi.spyOn(productionsService, "updateProduction").mockResolvedValue(mockProduction);
+    vi.spyOn(productionsService, "deleteProduction").mockResolvedValue(undefined);
     vi.spyOn(tagsService, "getAllTags").mockResolvedValue([mockPublicTag, mockHiddenTag, mockGenreTagTwo]);
     vi.spyOn(tagsService, "getTagTypes").mockResolvedValue(mockTagTypes);
     vi.spyOn(hallsService, "getHalls").mockResolvedValue([mockHall]);
@@ -273,6 +275,29 @@ describe("CMSView", () => {
     expect(api.createModalOpen.value).toBe(false);
   });
 
+  it("opens the remove confirmation popup and deletes selected productions", async () => {
+    const wrapper = await mountCMSView();
+    const api = (wrapper.vm as any).__test;
+    const deselectAll = vi.fn();
+
+    api.gridApi.value = {
+      getSelectedRows: () => [api.rowData.value[0]],
+      deselectAll,
+    } as never;
+    api.selectedCount.value = 1;
+    await nextTick();
+
+    await wrapper.get(".cms-remove-button").trigger("click");
+    expect(api.removeConfirmOpen.value).toBe(true);
+
+    await wrapper.get(".cms-remove-modal .cms-side-save").trigger("click");
+    await flushPromises();
+
+    expect(productionsService.deleteProduction).toHaveBeenCalledWith(mockProduction.id);
+    expect(deselectAll).toHaveBeenCalled();
+    expect(api.removeConfirmOpen.value).toBe(false);
+  });
+
   it("opens editor panel when clicking long-text cells and saves", async () => {
     const wrapper = await mountCMSView();
     const api = (wrapper.vm as any).__test;
@@ -287,6 +312,51 @@ describe("CMSView", () => {
     await api.saveEditorPanel();
     expect(productionsService.updateProduction).toHaveBeenCalled();
     expect(api.editorPanel.value).toBeNull();
+  });
+
+  it("opens a media preview when clicking a previewable media cell", async () => {
+    vi.spyOn(productionsService, "getProductions").mockResolvedValueOnce({
+      items: [
+        {
+          ...mockProduction,
+          video_1: { en: "https://example.com/preview.jpg" },
+        },
+      ],
+      total: 1,
+    });
+
+    const wrapper = await mountCMSView();
+    const api = (wrapper.vm as any).__test;
+    const row = api.rowData.value[0];
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "media", headerName: "Video 1" },
+    });
+
+    expect(api.mediaPreview.value).toMatchObject({ kind: "image", url: "https://example.com/preview.jpg" });
+    await nextTick();
+    expect(wrapper.find(".cms-media-modal").exists()).toBe(true);
+  });
+
+  it("falls back to the editor when media is not previewable and ignores empty deletes", async () => {
+    const wrapper = await mountCMSView();
+    const api = (wrapper.vm as any).__test;
+    const row = api.rowData.value[0];
+
+    row.media = "plain text url";
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "media", headerName: "Video 1" },
+    });
+
+    expect(api.mediaPreview.value).toBeNull();
+    expect(api.editorPanel.value).toBeTruthy();
+
+    api.selectedCount.value = 0;
+    await nextTick();
+    api.openRemoveProductionsConfirm();
+    expect(api.removeConfirmOpen.value).toBe(false);
   });
 
   it("opens tag editor panel when clicking additional tags and saves tag changes", async () => {

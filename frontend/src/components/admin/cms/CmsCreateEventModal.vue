@@ -48,9 +48,8 @@
           <label class="cms-form-lang-field">
             <span class="cms-lang-label">Hall</span>
             <select
-              :value="createLinkedEventForm.hallId"
+              v-model.number="selectedHallId"
               class="cms-text-input"
-              @change="onHallChange"
             >
               <option v-for="hall in hallsData" :key="`create-event-hall-${hall.id}`" :value="hall.id">
                 {{ localizeValue(hall.name) || `Hall #${hall.id}` }}
@@ -87,6 +86,7 @@
 
 <script setup lang="ts">
 import type { Hall } from "@viernulvier/shared";
+import { computed, watchEffect } from "vue";
 import { useI18n } from "vue-i18n";
 import type { LanguageMap } from "@/utils/i18n";
 import type { CmsCreateLinkedEventForm, CmsProductionGridRow } from "@/services/cms";
@@ -94,7 +94,7 @@ import type { CmsCreateLinkedEventForm, CmsProductionGridRow } from "@/services/
 /**
  * Modal used to create and link a new event to the currently selected production.
  */
-defineProps<{
+const props = defineProps<{
   open: boolean;
   selectedProduction: CmsProductionGridRow | null;
   createLinkedEventForm: CmsCreateLinkedEventForm;
@@ -115,17 +115,30 @@ const emit = defineEmits<{
   ];
 }>();
 
+const selectedHallId = computed({
+  get: () => props.createLinkedEventForm.hallId,
+  set: (value: number) => {
+    emit("update-form-field", "hallId", Number(value));
+  },
+});
+
+watchEffect(() => {
+  if (props.hallsData.length === 0) {
+    return;
+  }
+
+  const hasSelectedHall = props.hallsData.some((hall) => hall.id === props.createLinkedEventForm.hallId);
+  if (!hasSelectedHall) {
+    emit("update-form-field", "hallId", props.hallsData[0].id);
+  }
+});
+
 /** Emits text/date input updates to the parent form state. */
 function onTextInput(field: "startsAt" | "endsAt" | "doorsAt" | "infoNl", event: Event): void {
   const target = event.target as HTMLInputElement;
   emit("update-form-field", field, target.value);
 }
 
-/** Emits hall selection changes as a numeric hall ID. */
-function onHallChange(event: Event): void {
-  const target = event.target as HTMLSelectElement;
-  emit("update-form-field", "hallId", Number(target.value));
-}
 </script>
 
 <style scoped>

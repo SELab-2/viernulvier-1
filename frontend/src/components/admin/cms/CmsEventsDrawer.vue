@@ -80,9 +80,9 @@
                     type="button"
                     class="cms-side-close"
                     :disabled="eventsPanelLoading"
-                    @click="$emit('remove-linked-event', eventRow)"
+                    @click="openRemoveConfirm(eventRow)"
                   >
-                    Remove
+                    {{ t("cms.events.remove") }}
                   </button>
                 </div>
               </td>
@@ -90,12 +90,42 @@
           </tbody>
         </table>
       </div>
+
+      <div v-if="removeConfirmEvent" class="cms-modal-overlay" @click.self="closeRemoveConfirm">
+        <section class="cms-modal" role="dialog" aria-modal="true">
+          <header class="cms-modal-header">
+            <h4 class="text-base font-semibold text-ink-primary">Remove Event</h4>
+            <button type="button" class="cms-side-close" :disabled="eventsPanelLoading" @click="closeRemoveConfirm">
+              {{ t("cms.panel.close") }}
+            </button>
+          </header>
+
+          <div class="cms-modal-body">
+            <p class="text-sm text-ink-secondary">
+              Are you sure you want to remove this event?
+            </p>
+            <p class="text-xs text-ink-tertiary">
+              {{ removeConfirmEvent.startsAt }}
+            </p>
+          </div>
+
+          <footer class="cms-modal-footer">
+            <button type="button" class="cms-side-close" :disabled="eventsPanelLoading" @click="closeRemoveConfirm">
+              Cancel
+            </button>
+            <button type="button" class="cms-side-save" :disabled="eventsPanelLoading" @click="confirmRemoveEvent">
+              {{ eventsPanelLoading ? t("cms.panel.saving") : t("cms.events.removeEvent") }}
+            </button>
+          </footer>
+        </section>
+      </div>
     </aside>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { Hall } from "@viernulvier/shared";
+import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import type { LanguageMap } from "@/utils/i18n";
 import type { CmsEventGridRow, CmsProductionGridRow } from "@/services/cms";
@@ -115,7 +145,7 @@ defineProps<{
   localizeValue: (map: LanguageMap | null | undefined) => string;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   close: [];
   "open-create-event": [];
   "save-linked-event": [eventRow: CmsEventGridRow];
@@ -125,6 +155,26 @@ defineEmits<{
 }>();
 
 const { t } = useI18n();
+
+const removeConfirmEvent = ref<CmsEventGridRow | null>(null);
+
+function openRemoveConfirm(eventRow: CmsEventGridRow): void {
+  removeConfirmEvent.value = eventRow;
+}
+
+function closeRemoveConfirm(): void {
+  removeConfirmEvent.value = null;
+}
+
+function confirmRemoveEvent(): void {
+  if (!removeConfirmEvent.value) {
+    return;
+  }
+
+  const eventRow = removeConfirmEvent.value;
+  removeConfirmEvent.value = null;
+  emit("remove-linked-event", eventRow);
+}
 </script>
 
 <style scoped>
@@ -172,5 +222,25 @@ const { t } = useI18n();
 
 .cms-text-input {
   @apply rounded-md border border-surface-3 bg-surface-0 px-3 py-2 text-sm text-ink-primary;
+}
+
+.cms-modal-overlay {
+  @apply fixed inset-0 z-10 flex items-center justify-center bg-black/40 p-4;
+}
+
+.cms-modal {
+  @apply w-full max-w-md rounded-xl border border-surface-3 bg-surface-0;
+}
+
+.cms-modal-header {
+  @apply flex items-center justify-between border-b border-surface-3 px-4 py-3;
+}
+
+.cms-modal-body {
+  @apply space-y-2 px-4 py-4;
+}
+
+.cms-modal-footer {
+  @apply flex justify-end gap-2 border-t border-surface-3 px-4 py-3;
 }
 </style>

@@ -65,48 +65,6 @@
         </fieldset>
 
         <fieldset class="cms-form-block">
-          <legend class="cms-form-legend">{{ t("cms.create.media.title") }}</legend>
-
-          <div class="cms-upload-controls">
-            <label class="cms-form-lang-field">
-              <span class="cms-lang-label">{{ t("cms.create.media.uploadImage") }}</span>
-              <input type="file" accept="image/*" class="cms-text-input" @change="emit('image-file-change', $event)" />
-            </label>
-
-            <label class="cms-form-lang-field">
-              <span class="cms-lang-label">{{ t("cms.create.media.uploadVideo") }}</span>
-              <input type="file" accept="video/*" class="cms-text-input" @change="emit('video-file-change', $event)" />
-            </label>
-          </div>
-
-          <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-            <label class="cms-form-lang-field">
-              <span class="cms-lang-label">{{ t("cms.create.fields.imagePrimary") }}</span>
-              <input
-                :value="createForm.video_1.nl"
-                type="text"
-                class="cms-text-input"
-                @input="emit('update-form-field', 'video_1', 'nl', ($event.target as HTMLInputElement).value)"
-              />
-            </label>
-
-            <label class="cms-form-lang-field">
-              <span class="cms-lang-label">{{ t("cms.create.fields.imageSecondary") }}</span>
-              <input
-                :value="createForm.video_2.nl"
-                type="text"
-                class="cms-text-input"
-                @input="emit('update-form-field', 'video_2', 'nl', ($event.target as HTMLInputElement).value)"
-              />
-            </label>
-          </div>
-
-          <p class="mt-2 text-xs text-ink-tertiary">
-            {{ t("cms.create.media.hint") }}
-          </p>
-        </fieldset>
-
-        <fieldset class="cms-form-block">
           <legend class="cms-form-legend">{{ t("cms.create.tags.title") }}</legend>
 
           <div class="cms-tag-selector-grid">
@@ -149,6 +107,48 @@
               </label>
             </div>
           </details>
+        </fieldset>
+
+        <fieldset class="cms-form-block">
+          <legend class="cms-form-legend">{{ t("cms.create.media.title") }}</legend>
+
+          <div class="cms-upload-controls">
+            <label class="cms-form-lang-field">
+              <span class="cms-lang-label">{{ t("cms.create.media.uploadImage") }}</span>
+              <input type="file" accept="image/*" class="cms-text-input" @change="emit('image-file-change', $event)" />
+            </label>
+
+            <label class="cms-form-lang-field">
+              <span class="cms-lang-label">{{ t("cms.create.media.uploadVideo") }}</span>
+              <input type="file" accept="video/*" class="cms-text-input" @change="emit('video-file-change', $event)" />
+            </label>
+          </div>
+
+          <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+            <label class="cms-form-lang-field">
+              <span class="cms-lang-label">{{ t("cms.create.fields.imagePrimary") }}</span>
+              <input
+                :value="createForm.video_1.nl"
+                type="text"
+                class="cms-text-input"
+                @input="emit('update-form-field', 'video_1', 'nl', ($event.target as HTMLInputElement).value)"
+              />
+            </label>
+
+            <label class="cms-form-lang-field">
+              <span class="cms-lang-label">{{ t("cms.create.fields.imageSecondary") }}</span>
+              <input
+                :value="createForm.video_2.nl"
+                type="text"
+                class="cms-text-input"
+                @input="emit('update-form-field', 'video_2', 'nl', ($event.target as HTMLInputElement).value)"
+              />
+            </label>
+          </div>
+
+          <p class="mt-2 text-xs text-ink-tertiary">
+            {{ t("cms.create.media.hint") }}
+          </p>
         </fieldset>
 
         <p v-if="createError" class="text-sm text-red-700">

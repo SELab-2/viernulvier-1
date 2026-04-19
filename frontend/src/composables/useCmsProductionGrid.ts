@@ -53,6 +53,7 @@ import {
   ValidationModule,
   ValueCacheModule,
 } from "ag-grid-community";
+import type { ICellRendererParams } from "ag-grid-community";
 import type { CmsProductionGridRow } from "@/services/cms";
 
 type TranslateFunction = (key: string, params?: Record<string, unknown>) => string;
@@ -125,6 +126,36 @@ function truncateValue(value: string, maxLength = 48): string {
   }
 
   return `${value.slice(0, maxLength - 1)}...`;
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => {
+    switch (character) {
+    case "&":
+      return "&amp;";
+    case "<":
+      return "&lt;";
+    case ">":
+      return "&gt;";
+    case '"':
+      return "&quot;";
+    case "'":
+      return "&#39;";
+    default:
+      return character;
+    }
+  });
+}
+
+function renderMediaCell(value: unknown): string {
+  const url = String(value ?? "").trim();
+  if (url.length === 0) {
+    return "";
+  }
+
+  const label = escapeHtml(truncateValue(url, 54));
+
+  return `<span class="cms-media-text">${label}</span>`;
 }
 
 /**
@@ -261,7 +292,7 @@ export function useCmsProductionGrid(options: {
       editable: false,
       minWidth: 220,
       cellClass: "cms-truncate-cell",
-      valueFormatter: ({ value }) => truncateValue(String(value ?? "")),
+      cellRenderer: (params: ICellRendererParams<CmsProductionGridRow, unknown>) => renderMediaCell(params.value),
     },
   ]);
 

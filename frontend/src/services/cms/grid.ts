@@ -51,8 +51,8 @@ export function buildEventGridRows(
         location: hall ? localize(hall.name) : `Hall #${hallId}`,
         price: naLabel,
         startsAt: toLocalDateTimeInput(event.starts_at),
-        endsAt: toLocalDateTimeInput(event.ends_at),
-        doorsAt: toLocalDateTimeInput(event.doors_at),
+        endsAt: toLocalDateTimeInput(event.ends_at ?? ""),
+        doorsAt: toLocalDateTimeInput(event.doors_at ?? ""),
         hallId,
         infoNl: event.info?.nl ?? "",
       };
@@ -93,7 +93,7 @@ export function buildProductionGridRow(
     tags: additionalLabels.join(", ") || "-",
     descriptionOne: localize(production.description) || "",
     descriptionTwo: localize(production.description_2) || "",
-    media: localize(production.video_1) || "",
+    media: localize(production.video_1) || localize(production.video_2) || "",
     events: eventIds,
   };
 }
@@ -134,7 +134,7 @@ export function applyUpdatedProductionToRow(
   row.teaser = localize(updated.teaser) || "";
   row.descriptionOne = localize(updated.description) || "";
   row.descriptionTwo = localize(updated.description_2) || "";
-  row.media = localize(updated.video_1) || "";
+  row.media = localize(updated.video_1) || localize(updated.video_2) || "";
 }
 
 /**

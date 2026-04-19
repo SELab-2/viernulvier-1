@@ -56,10 +56,12 @@ describe("useCmsProductionGrid", () => {
       | undefined;
     expect(descriptionFormatter?.({ value: null })).toBe("");
 
-    const mediaFormatter = defs.find((d) => d.field === "media")?.valueFormatter as
+    const mediaRenderer = defs.find((d) => d.field === "media")?.cellRenderer as
       | ((params: { value: unknown }) => string)
       | undefined;
-    expect(mediaFormatter?.({ value: "m".repeat(80) })).toBe(`${"m".repeat(47)}...`);
+    expect(mediaRenderer?.({ value: "https://example.com/cover.jpg" } as never)).toContain("cms-media-text");
+    expect(mediaRenderer?.({ value: "https://example.com/trailer.mp4" } as never)).toContain("cms-media-text");
+    expect(mediaRenderer?.({ value: "plain text" } as never)).toContain("cms-media-text");
   });
 
   it("returns dark and light theme variables", () => {
@@ -93,6 +95,23 @@ describe("useCmsProductionGrid", () => {
       | (() => { values: string[] })
       | undefined;
     expect(withoutLabelsParams?.().values).toEqual([]);
+  });
+
+  it("renders media values as text and escapes html safely", () => {
+    const grid = useCmsProductionGrid({
+      isDark: ref(false),
+      t: (key) => key,
+    });
+
+    const mediaRenderer = grid.columnDefs.value.find((col) => col.field === "media")?.cellRenderer as
+      | ((params: { value: unknown }) => string)
+      | undefined;
+
+    const rendered = mediaRenderer?.({ value: `https://example.com/a & b<'">.jpg` } as never) ?? "";
+    expect(rendered).toContain("https://example.com/a &amp; b&lt;&#39;&quot;&gt;.jpg");
+    expect(rendered).toContain("cms-media-text");
+
+    expect(mediaRenderer?.({ value: "plain text" } as never)).toContain("plain text");
   });
 
   it("restores state on grid ready when persisted state is present", () => {

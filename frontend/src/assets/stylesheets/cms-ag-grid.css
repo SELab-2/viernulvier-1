@@ -201,6 +201,35 @@ html.dark .cms-grid .ag-pinned-right-header {
   white-space: nowrap;
 }
 
+.cms-media-cell .ag-cell-value {
+  display: flex;
+  width: 100%;
+}
+
+.cms-media-cell-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.cms-media-preview-thumb {
+  width: 100%;
+  max-height: 4.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--surface-3) 80%, transparent);
+  object-fit: cover;
+  background: var(--surface-1);
+}
+
+.cms-media-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: var(--ink-secondary);
+}
+
 .cms-events-action-cell .ag-cell-value {
   @apply cursor-pointer font-semibold text-ink-primary underline decoration-1 underline-offset-2;
 }

@@ -8,6 +8,10 @@
   @apply inline-flex w-fit items-center rounded-full border border-transparent bg-surface-inv px-5 py-2.5 text-sm font-semibold text-ink-on-inv transition hover:bg-surface-inv-raised;
 }
 
+.cms-remove-button {
+  @apply inline-flex w-fit items-center rounded-full border border-red-500/30 bg-red-500/10 px-5 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50;
+}
+
 .cms-side-panel {
   @apply fixed right-0 top-0 z-50 flex h-screen w-full max-w-xl flex-col border-l border-surface-3 bg-surface-0 p-5 shadow-2xl;
 }
@@ -66,4 +70,40 @@
 
 .cms-side-save {
   @apply inline-flex w-full items-center justify-center rounded-md bg-surface-inv px-4 py-3 text-sm font-semibold text-ink-on-inv shadow-sm transition hover:bg-surface-inv-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ink-primary disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+.cms-modal-overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4;
+}
+
+.cms-modal {
+  @apply flex w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-surface-3 bg-surface-0;
+}
+
+.cms-modal-header {
+  @apply flex items-center justify-between border-b border-surface-3 px-5 py-4;
+}
+
+.cms-modal-body {
+  @apply flex-1 space-y-5 overflow-y-auto px-5 py-4;
+}
+
+.cms-modal-footer {
+  @apply flex justify-end gap-2 border-t border-surface-3 px-5 py-4;
+}
+
+.cms-remove-modal {
+  @apply max-w-2xl;
+}
+
+.cms-media-modal {
+  @apply max-w-4xl;
+}
+
+.cms-media-preview-body {
+  @apply items-center;
+}
+
+.cms-media-preview-large {
+  @apply max-h-[70vh] w-full rounded-lg border border-surface-3 bg-surface-0 object-contain;
 }
