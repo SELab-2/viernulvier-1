@@ -6,7 +6,7 @@ import { getProductionsByIds } from "./fetch.js";
 import { PartialProductionBodySchema, ProductionIdSchema } from "./body-schema.js";
 import { getFieldValue, getNullableFieldValue, hasOwn } from "./field-utils.js";
 
-const BulkEditProductionsBodySchema = z.object({
+export const BulkEditProductionsBodySchema = z.object({
   ids: z.array(ProductionIdSchema).min(1),
   data: PartialProductionBodySchema,
 });
