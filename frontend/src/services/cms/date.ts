@@ -4,6 +4,10 @@
  * Returns an empty string when the value cannot be parsed as a valid date.
  */
 export function toLocalDateTimeInput(value: Date | string): string {
+export function toLocalDateTimeInput(value: Date | string | null | undefined): string {
+  if (value === null || value === undefined) {
+    return "";
+  }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return "";

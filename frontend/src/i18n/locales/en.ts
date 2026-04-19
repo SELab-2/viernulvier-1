@@ -44,6 +44,14 @@ export default {
     title: "Edit Data",
     subtitle:
       "In this overview you can edit values directly, just like in Excel. Click a field to change it and press Enter to save; if you leave without pressing Enter, the change is discarded.",
+    tabs: {
+      ariaLabel: "CMS sections",
+      productions: "Productions",
+      tags: "Tags",
+      admins: "Admins",
+      tagsPlaceholder: "Tag management coming soon.",
+      adminsPlaceholder: "Admin management coming soon.",
+    },
     columns: {
       performer: "Artist",
       title: "Title",

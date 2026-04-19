@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import { i18n } from "@/i18n";
 import type { CreateFormState } from "@/services/cms";
-import CmsCreateProductionModal from "@/components/admin/cms/CmsCreateProductionModal.vue";
+import CmsCreateProductionModal from "@/components/admin/cms/productions/CmsCreateProductionModal.vue";
 
 const tagGroups = [
   {

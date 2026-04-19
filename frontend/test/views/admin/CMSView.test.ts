@@ -8,6 +8,8 @@ import { useAuthStore } from "@/stores/auth";
 import { RouteNames } from "@/router/routeNames";
 import { i18n } from "@/i18n";
 import CMSView from "@/views/admin/CMSView.vue";
+import CmsProductionsTab from "@/components/admin/cms/tabs/CmsProductionsTab.vue";
+import { getInitialDark } from "@/composables/useDarkMode";
 import * as productionsService from "@/services/productions";
 import * as tagsService from "@/services/tags";
 import * as hallsService from "@/services/halls";
@@ -215,6 +217,34 @@ describe("CMSView", () => {
     expect(wrapper.exists()).toBe(true);
   });
 
+  it("shows the productions tab by default", async () => {
+    const wrapper = await mountCMSView();
+    expect(wrapper.findComponent(CmsProductionsTab).exists()).toBe(true);
+    expect(wrapper.get('[data-testid="cms-tab-productions"]').attributes("aria-selected")).toBe("true");
+  });
+
+  it("switches to the tags tab and unmounts productions", async () => {
+    const wrapper = await mountCMSView();
+    await wrapper.get('[data-testid="cms-tab-tags"]').trigger("click");
+    expect(wrapper.findComponent(CmsProductionsTab).exists()).toBe(false);
+    expect(wrapper.find(".cms-tab-placeholder").exists()).toBe(true);
+  });
+
+  it("switches to the admins tab", async () => {
+    const wrapper = await mountCMSView();
+    await wrapper.get('[data-testid="cms-tab-admins"]').trigger("click");
+    expect(wrapper.findComponent(CmsProductionsTab).exists()).toBe(false);
+    expect(wrapper.find(".cms-tab-placeholder").exists()).toBe(true);
+  });
+
+  it("switches back to productions after visiting another tab", async () => {
+    const wrapper = await mountCMSView();
+    await wrapper.get('[data-testid="cms-tab-tags"]').trigger("click");
+    await wrapper.get('[data-testid="cms-tab-productions"]').trigger("click");
+    await flushPromises();
+    expect(wrapper.findComponent(CmsProductionsTab).exists()).toBe(true);
+  });
+
   it("renders the CMS text", async () => {
     const wrapper = await mountCMSView();
     expect(wrapper.text()).toMatch(/Gegevens bewerken|CMS \(admin only\)/);
@@ -246,7 +276,7 @@ describe("CMSView", () => {
 
   it("validates create modal fields before calling createProduction", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
 
     api.openCreateModal();
     await api.submitCreateProduction();
@@ -257,7 +287,7 @@ describe("CMSView", () => {
 
   it("submits create production with valid form data", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
 
     api.openCreateModal();
     api.createForm.value.title.nl = "Title";
@@ -300,7 +330,7 @@ describe("CMSView", () => {
 
   it("opens editor panel when clicking long-text cells and saves", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
     const row = api.rowData.value[0];
 
     api.onCellClicked({
@@ -402,7 +432,7 @@ describe("CMSView", () => {
 
   it("handles create event modal open/close and no-selection submit", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
 
     api.openCreateEventModal();
     expect(api.createEventModalOpen.value).toBe(true);
@@ -416,7 +446,7 @@ describe("CMSView", () => {
 
   it("closes event panel and ignores unrelated cell edit events", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
 
     api.selectedEventsProductionId.value = 42;
     api.selectedEventRows.value = [{ id: 1 }];
@@ -432,7 +462,7 @@ describe("CMSView", () => {
 
   it("covers helper mappers and reset helpers", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
 
     expect(api.localizeValue(undefined)).toBe("");
     expect(api.setCurrentLanguageValue({ en: "old" }, "new")).toMatchObject({ nl: "new" });
@@ -452,7 +482,7 @@ describe("CMSView", () => {
 
   it("covers createAndLinkEvent validation and success branches", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
 
     api.selectedEventsProductionId.value = mockProduction.id;
     api.createLinkedEventForm.value.hallId = 0;
@@ -470,7 +500,7 @@ describe("CMSView", () => {
 
   it("covers save/remove linked event branches", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
 
     const eventRow = {
       id: 100,
@@ -495,7 +525,7 @@ describe("CMSView", () => {
 
   it("covers click/edit handlers and event-row focus behavior", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
     const row = api.rowData.value[0];
 
     api.onCellClicked({ data: row, colDef: { colId: "eventsAction" } });
@@ -556,7 +586,7 @@ describe("CMSView", () => {
 
   it("covers showEventsForProduction success and error branches", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
     const row = api.rowData.value[0];
 
     row.source.events = [100];
@@ -572,7 +602,7 @@ describe("CMSView", () => {
 
   it("covers refreshEventsPanelForSelectedProduction missing-row branch", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
 
     api.selectedEventsProductionId.value = 9999;
     await api.refreshEventsPanelForSelectedProduction();
@@ -582,7 +612,7 @@ describe("CMSView", () => {
 
   it("covers onCellEditingStopped non-inline and revert branches", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
     const row = api.rowData.value[0];
     const setDataValue = vi.fn();
 
@@ -607,7 +637,7 @@ describe("CMSView", () => {
 
   it("covers committed inline edit no-change and error branches", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
     const row = api.rowData.value[0];
     const setDataValue = vi.fn();
 
@@ -635,7 +665,7 @@ describe("CMSView", () => {
 
   it("covers helper branches for language checks and loadCmsData direct call", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
 
     expect(hasAnyLanguageValue({ nl: "", en: "", fr: "" })).toBe(false);
     expect(hasAnyLanguageValue({ nl: "x", en: "", fr: "" })).toBe(true);
@@ -646,7 +676,7 @@ describe("CMSView", () => {
 
   it("covers template interaction handlers and key/file branches", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
 
     const addButton = wrapper.find(".cms-add-button");
     await addButton.trigger("click");
@@ -739,7 +769,7 @@ describe("CMSView", () => {
 
   it("covers additional CMS error and utility branches", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
 
     vi.spyOn(eventsService, "createEvent").mockRejectedValueOnce(new Error("create fail"));
     api.selectedEventsProductionId.value = mockProduction.id;
@@ -781,18 +811,18 @@ describe("CMSView", () => {
     expect(api.eventsPanelError.value).toBeTruthy();
 
     localStorage.setItem("viernulvier-dark", "false");
-    expect(api.getInitialDark()).toBe(false);
+    expect(getInitialDark()).toBe(false);
     localStorage.setItem("viernulvier-dark", "true");
-    expect(api.getInitialDark()).toBe(true);
+    expect(getInitialDark()).toBe(true);
     localStorage.removeItem("viernulvier-dark");
-    expect(typeof api.getInitialDark()).toBe("boolean");
+    expect(typeof getInitialDark()).toBe("boolean");
 
     expect(wrapper.exists()).toBe(true);
   });
 
   it("keeps create-event modal open when submitCreateEvent hits validation error", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
 
     api.selectedEventsProductionId.value = mockProduction.id;
     api.createEventModalOpen.value = true;
@@ -832,7 +862,7 @@ describe("CMSView", () => {
       await cancelBtn.trigger("click");
     }
 
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
     api.selectedEventsProductionId.value = mockProduction.id;
     api.createEventModalOpen.value = true;
     await nextTick();
@@ -855,7 +885,7 @@ describe("CMSView", () => {
 
   it("covers column chooser checkbox, editor textarea model, locale watch and unmount", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
 
     await wrapper.findAll(".cms-grid-actions .cms-mini-btn").at(-1)?.trigger("click");
     const chooserCheckbox = wrapper.find(".cms-column-chooser input[type='checkbox']");
@@ -883,7 +913,7 @@ describe("CMSView", () => {
 
   it("covers remaining event-panel branch paths", async () => {
     const wrapper = await mountCMSView();
-    const api = (wrapper.vm as any).__test;
+    const api = (wrapper.findComponent(CmsProductionsTab).vm as any).$.exposed.__test;
     const row = api.rowData.value[0];
 
     row.source.events = [];

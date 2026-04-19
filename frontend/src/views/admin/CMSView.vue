@@ -1,9 +1,8 @@
-
 <template>
-  <div class="min-h-screen bg-surface-0">
+  <div class="flex min-h-screen flex-col bg-surface-0">
     <AdminNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
 
-    <main class="bg-surface-1 px-6 py-10 lg:px-10">
+    <main class="flex-1 bg-surface-1 px-6 py-10 lg:px-10">
       <div class="mx-auto flex max-w-[1400px] flex-col gap-6">
         <header class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -105,28 +104,9 @@
           @set-column-visibility="setGridColumnVisibility"
         />
 
-        <CmsEventsDrawer
-          :show="selectedEventsProduction !== null"
-          :selected-production="selectedEventsProduction"
-          :selected-event-rows="selectedEventRows"
-          :halls-data="hallsData"
-          :events-panel-loading="eventsPanelLoading"
-          :events-panel-error="eventsPanelError"
-          :localize-value="localizeValue"
-          @close="closeEventsPanel"
-          @open-create-event="openCreateEventModal"
-          @save-linked-event="saveLinkedEvent"
-          @remove-linked-event="removeLinkedEvent"
-          @event-row-focus-out="onEventRowFocusOut"
-          @event-row-enter="onEventRowEnter"
-        />
-
-        <p
-          v-if="!isLoading && !loadError && rowData.length === 0"
-          class="rounded-md border border-surface-3 bg-surface-0 px-4 py-3 text-sm text-ink-secondary"
-        >
-          {{ t("cms.actions.noRows") }}
-        </p>
+        <CmsProductionsTab v-if="activeTab === 'productions'" />
+        <CmsTagsTab v-else-if="activeTab === 'tags'" />
+        <CmsAdminsTab v-else-if="activeTab === 'admins'" />
       </div>
     </main>
 
