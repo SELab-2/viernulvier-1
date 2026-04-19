@@ -1,15 +1,24 @@
 import type { FastifyInstance } from "fastify";
 
 import { replyHandler } from "@/routes/helpers.js";
-import { 
+import {
   createEventPrice,
-  deleteEventPrice,   
-  fetchEventPrice, 
-  fetchEventPrices, 
-  fetchEventPriceWithMeta, 
-  replaceEventPrice, 
+  deleteEventPrice,
+  fetchEventPrice,
+  fetchEventPrices,
+  fetchEventPriceWithMeta,
+  replaceEventPrice,
   editEventPrice,
 } from "./handlers/index.js";
+import {
+  fetchEventPriceDocs,
+  fetchEventPriceWithMetaDocs,
+  fetchAllEventPricesDocs,
+  createEventPriceDocs,
+  replaceEventPriceDocs,
+  editEventPriceDocs,
+  deleteEventPriceDocs,
+} from "./docs/index.js";
 
 /**
  * Registers event price routes on the Fastify instance.
@@ -27,11 +36,39 @@ import {
  */
 export default function eventPriceRoutes(server: FastifyInstance) {
   const protect = { preHandler: [server.authorize()] };
-  server.get("/api/v1/event/price/:id", replyHandler(server, fetchEventPrice));
-  server.get("/api/v1/event/price/:id/meta", protect, replyHandler(server, fetchEventPriceWithMeta));
-  server.get("/api/v1/event/price", replyHandler(server, fetchEventPrices));
-  server.post("/api/v1/event/price", protect, replyHandler(server, createEventPrice));
-  server.put("/api/v1/event/price/:id", protect, replyHandler(server, replaceEventPrice));
-  server.patch("/api/v1/event/price/:id", protect, replyHandler(server, editEventPrice));
-  server.delete("/api/v1/event/price/:id", protect, replyHandler(server, deleteEventPrice));
+  server.get(
+    "/api/v1/event/price/:id",
+    {schema: fetchEventPriceDocs},
+    replyHandler(server, fetchEventPrice),
+  );
+  server.get(
+    "/api/v1/event/price/:id/meta", {...protect, schema: fetchEventPriceWithMetaDocs},
+    replyHandler(server, fetchEventPriceWithMeta),
+  );
+  server.get(
+    "/api/v1/event/price",
+    {schema: fetchAllEventPricesDocs},
+    replyHandler(server, fetchEventPrices,
+
+    ));
+  server.post(
+    "/api/v1/event/price",
+    {...protect, schema: createEventPriceDocs},
+    replyHandler(server, createEventPrice),
+  );
+  server.put(
+    "/api/v1/event/price/:id",
+    {...protect, schema: replaceEventPriceDocs},
+    replyHandler(server, replaceEventPrice),
+  );
+  server.patch(
+    "/api/v1/event/price/:id",
+    {...protect, schema: editEventPriceDocs},
+    replyHandler(server, editEventPrice),
+  );
+  server.delete(
+    "/api/v1/event/price/:id",
+    {...protect, schema: deleteEventPriceDocs},
+    replyHandler(server, deleteEventPrice),
+  );
 }

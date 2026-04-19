@@ -8,7 +8,7 @@ import { EventPriceCreateSchema, updateEventPrice } from "./helper.js";
 import type { EventPriceCreate } from "./helper.js";
 import { fetchEventPrice } from "./index.js";
 
-const EventPriceUpdateSchema = EventPriceCreateSchema.partial();
+export const EventPriceUpdateSchema = EventPriceCreateSchema.partial();
 
 /**
  * Updates certain fields from a single event price by ID in the database.
