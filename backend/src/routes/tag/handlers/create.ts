@@ -4,7 +4,7 @@ import { TagSchema } from "@viernulvier/shared/index.js";
 import { getMetadata, parseSchema, buildQuery } from "@/routes/helpers.js";
 import z from "zod";
 
-const CreateTagBodySchema = TagSchema.omit({ id: true, productions: true });
+export const CreateTagBodySchema = TagSchema.omit({ id: true, productions: true });
 
 const insertTag = (server: FastifyInstance) =>
   buildQuery(

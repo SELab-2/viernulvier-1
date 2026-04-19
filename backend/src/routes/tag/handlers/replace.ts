@@ -4,7 +4,7 @@ import { TagSchema, stringToInt } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, parseSchema, ParseContext } from "@/routes/helpers.js";
 import { z } from "zod";
 
-const ReplaceTagBodySchema = TagSchema.pick({
+export const ReplaceTagBodySchema = TagSchema.pick({
   old_id: true,
   name: true,
   tag_type: true,

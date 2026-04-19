@@ -4,7 +4,7 @@ import { TagSchema, stringToInt } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, parseSchema, ParseContext } from "@/routes/helpers.js";
 import { z } from "zod";
 
-const EditTagBodySchema = TagSchema.pick({
+export const EditTagBodySchema = TagSchema.pick({
   old_id: true,
   name: true,
   tag_type: true,
@@ -50,7 +50,7 @@ export async function editTag(
     fields.push(`public = $${i++}`);
     values.push(body.public);
   }
-  
+
 
   fields.push(`updated_by = $${i++}`, `updated_at = $${i++}`);
   values.push(admin, current_time, id);

@@ -13,7 +13,7 @@ FROM tag
 const TagDbRowSchema = TagSchema.omit({ productions: true });
 const TagDbRowWithMetaSchema = TagSchema.withMeta().omit({ productions: true });
 
-const TagsListQuerySchema = z
+export const TagsListQuerySchema = z
   .object({
     production: stringToInt.optional(),
     old_id: stringToInt.optional(),
