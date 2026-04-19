@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { replyHandler } from "@/routes/helpers.js";
 import { fetchBlogPosts, fetchBlogPost, fetchBlogPostWithMeta, createBlogPost, replaceBlogPost, editBlogPost, deleteBlogPost } from "./handlers/index.js";
+import { replaceBlogPostDocs, fetchBlogPostDocs, fetchBlogPostsDocs, fetchBlogPostWithMetaDocs, createBlogPostDocs, deleteBlogPostDocs, editBlogPostDocs } from "./docs/index.js";
 
 /**
  * Registers blogpost routes on the Fastify instance.
@@ -19,11 +20,37 @@ import { fetchBlogPosts, fetchBlogPost, fetchBlogPostWithMeta, createBlogPost, r
 export default function blogPostRoutes(server: FastifyInstance) {
   const protect = { preHandler: [server.authorize()] };
 
-  server.get("/api/v1/blog/post", replyHandler(server, fetchBlogPosts));
-  server.get("/api/v1/blog/post/:id", replyHandler(server, fetchBlogPost));
-  server.get("/api/v1/blog/post/:id/meta", protect, replyHandler(server, fetchBlogPostWithMeta));
-  server.post("/api/v1/blog/post", protect, replyHandler(server, createBlogPost));
-  server.put("/api/v1/blog/post/:id", protect, replyHandler(server, replaceBlogPost));
-  server.patch("/api/v1/blog/post/:id", protect, replyHandler(server, editBlogPost));
-  server.delete("/api/v1/blog/post/:id", protect, replyHandler(server, deleteBlogPost));
+  server.get(
+    "/api/v1/blog/post",
+    {schema: fetchBlogPostsDocs },
+    replyHandler(server, fetchBlogPosts),
+  );
+  server.get(
+    "/api/v1/blog/post/:id", {schema: fetchBlogPostDocs },
+    replyHandler(server, fetchBlogPost),
+  );
+  server.get(
+    "/api/v1/blog/post/:id/meta", { ...protect, schema: fetchBlogPostWithMetaDocs },
+    replyHandler(server, fetchBlogPostWithMeta),
+  );
+  server.post(
+    "/api/v1/blog/post",
+    {...protect, schema: createBlogPostDocs },
+    replyHandler(server, createBlogPost),
+  );
+  server.put(
+    "/api/v1/blog/post/:id",
+    { ...protect, schema: replaceBlogPostDocs },
+    replyHandler(server, replaceBlogPost),
+  );
+  server.patch(
+    "/api/v1/blog/post/:id",
+    { ...protect, schema: editBlogPostDocs },
+    replyHandler(server, editBlogPost),
+  );
+  server.delete(
+    "/api/v1/blog/post/:id",
+    { ...protect, schema: deleteBlogPostDocs },
+    replyHandler(server, deleteBlogPost),
+  );
 }
