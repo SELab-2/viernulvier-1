@@ -62,6 +62,11 @@ export default {
       descriptionOne: "Beschrijving",
       descriptionTwo: "Beschrijving 2",
       media: "Video 1",
+      admin: {
+        username: "Gebruikersnaam",
+        profilePicture: "Profielfoto",
+        super: "Super admin",
+      },
     },
     events: {
       date: "Datum",
@@ -87,6 +92,9 @@ export default {
       clearSelection: "Wis selectie",
       expandAllEvents: "Toon alle events",
       collapseAllEvents: "Verberg events",
+      admin: {
+        noAdmins: "Geen admins gevonden.",
+      },
     },
     create: {
       title: "Nieuwe productie",
@@ -130,6 +138,9 @@ export default {
       loadGeneric: "Kon CMS-gegevens niet laden.",
       saveFailed: "Opslaan mislukt: {message}",
       saveGeneric: "Opslaan mislukt.",
+    },
+    admin: {
+      noPermission: "Je hebt geen rechten om admins te beheren.",
     },
   },
   productionsPage: {

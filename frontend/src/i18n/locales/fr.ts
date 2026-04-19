@@ -62,6 +62,11 @@ export default {
       descriptionOne: "Description",
       descriptionTwo: "Description 2",
       media: "Video 1",
+      admin: {
+        username: "Nom d'utilisateur",
+        profilePicture: "Photo de profil",
+        super: "Super admin",
+      },
     },
     events: {
       date: "Date",
@@ -87,6 +92,9 @@ export default {
       clearSelection: "Effacer la selection",
       expandAllEvents: "Afficher tous les evenements",
       collapseAllEvents: "Masquer les evenements",
+      admin: {
+        noAdmins: "Aucun admin trouvé",
+      },
     },
     create: {
       title: "Nouvelle production",
@@ -130,6 +138,9 @@ export default {
       loadGeneric: "Impossible de charger les donnees CMS.",
       saveFailed: "Echec de l'enregistrement: {message}",
       saveGeneric: "Echec de l'enregistrement.",
+    },
+    admin: {
+      noPermission: "Vous n'avez pas la permission de administrer les admins.",
     },
   },
   productionsPage: {

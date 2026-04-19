@@ -62,6 +62,11 @@ export default {
       descriptionOne: "Description",
       descriptionTwo: "Description 2",
       media: "Video 1",
+      admin: {
+        username: "Username",
+        profilePicture: "Profile picture",
+        super: "Super admin",
+      },
     },
     events: {
       date: "Date",
@@ -87,6 +92,9 @@ export default {
       clearSelection: "Clear selection",
       expandAllEvents: "Show all events",
       collapseAllEvents: "Hide events",
+      admin: {
+        noAdmins: "No admins found.",
+      },
     },
     create: {
       title: "New production",
@@ -130,6 +138,9 @@ export default {
       loadGeneric: "Could not load CMS data.",
       saveFailed: "Save failed: {message}",
       saveGeneric: "Save failed.",
+    },
+    admin: {
+      noPermission: "You don't have permissions to manage admins.",
     },
   },
   productionsPage: {

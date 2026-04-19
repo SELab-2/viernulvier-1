@@ -1,9 +1,9 @@
-import type { Event as ArchiveEvent, ProductionWithBackwardsRefs, Tag } from "@viernulvier/shared";
+import type { Admin, Event as ArchiveEvent, ProductionWithBackwardsRefs, Tag } from "@viernulvier/shared";
 import { collectProductionTagsByIdMap } from "@/services/productions";
 import type { LanguageMap } from "@/utils/i18n";
 import { toLocalDateTimeInput } from "./date";
 import { extractEventIds } from "./helpers";
-import type { CmsEventGridRow, CmsProductionGridRow } from "./types";
+import type { CmsAdminGridRow, CmsEventGridRow, CmsProductionGridRow } from "./types";
 
 export function buildEventGridRows(
   events: ArchiveEvent[],
@@ -101,3 +101,29 @@ export function getBulkTargetRows(
 
   return [primaryRow];
 }
+ 
+export function buildAdminGridRow(admin: Admin): CmsAdminGridRow {
+  return {
+    id: admin.id,
+    source: admin,
+    username: admin.username,
+    profilePicture: admin.profile_picture ?? null,
+    super: admin.super,
+  };
+}
+ 
+export function buildAdminGridRows(admins: Admin[]): CmsAdminGridRow[] {
+  return admins.map(buildAdminGridRow);
+}
+ 
+export function applyUpdatedAdminToRow(
+  row: CmsAdminGridRow,
+  updated: Admin,
+): void {
+  row.source = updated;
+  row.username = updated.username;
+  row.profilePicture = updated.profile_picture ?? null;
+  row.super = updated.super;
+}
+ 
+ 

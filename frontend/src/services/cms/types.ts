@@ -1,4 +1,4 @@
-import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
+import type { Admin, ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import type { SupportedLang } from "@/i18n";
 
 export interface CmsEventGridRow {
@@ -35,6 +35,14 @@ export interface CmsProductionGridRow {
   descriptionTwo: string;
   media: string;
   events: number[];
+}
+
+export interface CmsAdminGridRow {
+  id: number;
+  source: Admin;
+  username: string;
+  profilePicture: string | null;
+  super: boolean;
 }
 
 export type InlineEditableField = "performer" | "title" | "producer" | "teaser";
