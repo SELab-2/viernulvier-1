@@ -119,18 +119,6 @@ describe("parseAndSanitizeContent", () => {
     expect(result).not.toContain("iframe");
   });
 
-  it("adds sandbox and referrerpolicy to allowed iframes", () => {
-    const input =
-    '<iframe src="https://www.youtube.com/embed/abc123"></iframe>';
-
-    const result = parseAndSanitizeContent(input);
-
-    expect(result).toContain('sandbox="allow-scripts allow-presentation"');
-    expect(result).toContain(
-      'referrerpolicy="strict-origin-when-cross-origin"',
-    );
-  });
-
   it("blocks tricky hostname like youtube.com.evil.com", () => {
     const input =
     '<iframe src="https://www.youtube.com.evil.com/embed/abc123"></iframe>';

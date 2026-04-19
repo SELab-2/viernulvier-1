@@ -29,12 +29,6 @@ DOMPurify.addHook("uponSanitizeElement", (node, data) => {
         node.remove();
         return;
       }
-
-      node.setAttribute("sandbox", "allow-scripts allow-presentation");
-      node.setAttribute(
-        "referrerpolicy",
-        "strict-origin-when-cross-origin",
-      );
     } catch {
       node.remove();
     }
@@ -52,8 +46,6 @@ function sanitizeHtml(input: string): string {
       "width",
       "height",
       "title",
-      "sandbox",
-      "referrerpolicy",
     ],
     USE_PROFILES: { html: true },
   });
