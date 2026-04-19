@@ -493,10 +493,10 @@ describe("importEventsLegacy", () => {
       if (sql.includes("FROM legacy_production_import_map")) {
         return Promise.resolve({ rows: [{ legacy_id: "p9", production_id: 7 }] });
       }
-      if (sql.includes("name->>'nl' AS name") && sql.includes("FROM hall")) {
+      if (sql.includes("SELECT id, name FROM hall")) {
         return Promise.resolve({ rows: [] });
       }
-      if (sql.includes("WHERE lower(name->>'nl') = lower($1)")) {
+      if (sql.includes("jsonb_each_text(name)") && sql.includes("FROM hall")) {
         return Promise.resolve({ rows: [{ id: 10, address: null }] });
       }
       if (sql.includes("UPDATE hall SET address")) {

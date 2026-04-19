@@ -54,12 +54,13 @@ Events use `legacy_production_import_map` to resolve production foreign keys, so
 
 - Each row needs a non-empty **`ID`** (CSV column `ID`) as the **legacy production id**, and a non-empty **`Titel`**.
 - Duplicate **`ID`** in the same file is skipped; rows whose legacy id is **already in the idempotency map** for this import source are skipped.
-- A new row is inserted into **`production`** (titles/descriptions mapped into the JSON `jsonb` language fields as Dutch `nl` where applicable).
+- If the database already has a production whose **`title`** and **`artist`** (CSV **`Titel`** / **`Ondertitel`**) match **any** language in the JSON `title` / `artist` columns (case-insensitive, trimmed) no new `production` row is inserted; only a **`legacy_production_import_map`** row is written so legacy ids still resolve for events. If **`Ondertitel`** is empty, “match” requires the existing row to have no non-empty **`artist`** text in any language.
+- Otherwise a new row is inserted into **`production`** (titles/descriptions mapped into the JSON `jsonb` language fields as Dutch `nl` where applicable).
 
 **Genres → `tag` + `production_tag`**
 
 - The **`Genre`** column may list **several genres separated by commas**. Each part is trimmed and deduplicated.
-- For each genre name, the script looks for an existing **`tag`** with that **`name->>'nl'`** (case-insensitive) and **`tag_type`** = the Genre tag type.
+- For each genre name, the script looks for an existing **`tag`** with that name in **any** language field on **`name`** (case-insensitive) and **`tag_type`** = the Genre tag type.
   - If **found**, that tag id is reused.
   - If **not found**, a new **`tag`** is created (`tag_type` = Genre, `public` = true) and cached for the rest of the run.
 - Each production is linked with **`INSERT INTO production_tag (production, tag) … ON CONFLICT DO NOTHING`** so duplicate links are harmless.
@@ -84,7 +85,7 @@ Events use `legacy_production_import_map` to resolve production foreign keys, so
 **Halls**
 
 - **`Hall`** is parsed as **`name`** and optional **`address`**: if there is a comma, text before the first comma is the name and the rest is the address; otherwise the whole value is the name and address is empty.
-- Halls are matched by **`lower(name->>'nl')`**. If a hall exists, it is reused; if the CSV has a non-empty address and the DB row had an empty address, the address may be **updated**.
+- Halls are matched if the CSV hall name equals **any** language string on **`hall.name`** (case-insensitive). If a hall exists, it is reused; if the CSV has a non-empty address and the DB row had an empty address, the address may be **updated**.
 - If no hall exists, a new **`hall`** row is inserted (`name` as JSON `nl`, plain `address` column).
 
 **Link to production**

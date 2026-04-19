@@ -3,6 +3,10 @@ import fs from "node:fs";
 import pg from "pg";
 import { parse } from "csv-parse";
 import {
+  indexLanguageMapValues,
+  SQL_FIND_HALL_ID_BY_ANY_LANG_NAME,
+} from "./jsonb-name-match.js";
+import {
   cleanValue,
   LEGACY_IMPORT_PROGRESS_EVERY,
   legacyCsvParseOptions,
@@ -118,12 +122,11 @@ async function loadProductionMap(client: pg.Client): Promise<Map<string, number>
 
 async function loadHallCache(client: pg.Client): Promise<Map<string, number>> {
   const map = new Map<string, number>();
-  const rows = await client.query<{ id: number; name: string }>(
-    `SELECT id, name->>'nl' AS name
-     FROM hall`,
+  const rows = await client.query<{ id: number; name: unknown }>(
+    `SELECT id, name FROM hall`,
   );
   for (const row of rows.rows) {
-    map.set(hallKey(row.name), row.id);
+    indexLanguageMapValues(map, row.id, row.name, hallKey);
   }
   return map;
 }
@@ -139,10 +142,7 @@ async function getOrCreateHallId(
   if (cached) return { id: cached, created: false };
 
   const existing = await client.query<{ id: number; address: string | null }>(
-    `SELECT id, address
-     FROM hall
-     WHERE lower(name->>'nl') = lower($1)
-     LIMIT 1`,
+    SQL_FIND_HALL_ID_BY_ANY_LANG_NAME,
     [hall.name],
   );
   const existingHall = existing.rows[0];

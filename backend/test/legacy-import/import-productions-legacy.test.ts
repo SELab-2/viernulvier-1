@@ -83,16 +83,19 @@ describe("importProductionsLegacy", () => {
       if (sql.includes("SELECT legacy_id") && sql.includes("legacy_production_import_map")) {
         return Promise.resolve({ rows: [] });
       }
+      if (sql.includes("FROM production p")) {
+        return Promise.resolve({ rows: [] });
+      }
       if (sql.includes("FROM tag_type")) {
         const name = params?.[0];
         if (name === "Tag") return Promise.resolve({ rows: [{ id: 10 }] });
         if (name === "Genre") return Promise.resolve({ rows: [{ id: 20 }] });
         return Promise.resolve({ rows: [] });
       }
-      if (sql.includes("FROM tag") && sql.includes("tag_type = $1") && !sql.includes("lower(name")) {
+      if (sql.includes("FROM tag") && sql.includes("tag_type = $1") && !sql.includes("jsonb_each_text(name)")) {
         return Promise.resolve({ rows: [] });
       }
-      if (sql.includes("FROM tag") && sql.includes("lower(name->>'nl')")) {
+      if (sql.includes("FROM tag") && sql.includes("jsonb_each_text(name)")) {
         return Promise.resolve({ rows: [] });
       }
       if (sql.trimStart().startsWith("INSERT INTO tag (")) {
@@ -124,6 +127,50 @@ describe("importProductionsLegacy", () => {
     fs.rmSync(dir, { recursive: true });
   });
 
+  it("write mode maps legacy id to existing production when title and artist match, without inserting production", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-dedupe-"));
+    const csvPath = path.join(dir, "p.csv");
+    fs.writeFileSync(csvPath, "Titel,ID,Genre\nSame Show,501,Drama\n", "utf8");
+
+    const query = vi.fn().mockImplementation((sql: string, params?: unknown[]) => {
+      if (sql.includes("CREATE TABLE IF NOT EXISTS legacy_production_import_map")) {
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("SELECT legacy_id") && sql.includes("legacy_production_import_map")) {
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("FROM production p")) {
+        return Promise.resolve({ rows: [{ id: 777 }] });
+      }
+      if (sql.includes("FROM tag_type")) {
+        const name = params?.[0];
+        if (name === "Tag") return Promise.resolve({ rows: [{ id: 10 }] });
+        if (name === "Genre") return Promise.resolve({ rows: [{ id: 20 }] });
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("FROM tag") && sql.includes("tag_type = $1") && !sql.includes("jsonb_each_text(name)")) {
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("INSERT INTO legacy_production_import_map")) {
+        return Promise.resolve({ rows: [] });
+      }
+      return Promise.resolve({ rows: [] });
+    });
+
+    await importProductionsLegacy(makeClient(query), {
+      filePath: csvPath,
+      dryRun: false,
+      limit: null,
+    });
+
+    const prodInserts = query.mock.calls.filter((c) => String(c[0]).includes("INSERT INTO production"));
+    expect(prodInserts.length).toBe(0);
+    const mapInsert = query.mock.calls.find((c) => String(c[0]).includes("INSERT INTO legacy_production_import_map"));
+    expect(mapInsert).toBeDefined();
+    expect(mapInsert?.[1]).toEqual(expect.arrayContaining(["productions-output-csv", "501", 777]));
+    fs.rmSync(dir, { recursive: true });
+  });
+
   it("rolls back and counts failed row on production insert error", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-fail-"));
     const csvPath = path.join(dir, "p.csv");
@@ -136,13 +183,19 @@ describe("importProductionsLegacy", () => {
       if (sql.includes("SELECT legacy_id") && sql.includes("legacy_production_import_map")) {
         return Promise.resolve({ rows: [] });
       }
+      if (sql.includes("FROM production p")) {
+        return Promise.resolve({ rows: [] });
+      }
       if (sql.includes("FROM tag_type")) {
         const name = params?.[0];
         if (name === "Tag") return Promise.resolve({ rows: [{ id: 10 }] });
         if (name === "Genre") return Promise.resolve({ rows: [{ id: 20 }] });
         return Promise.resolve({ rows: [] });
       }
-      if (sql.includes("FROM tag") && sql.includes("tag_type = $1") && !sql.includes("lower(name")) {
+      if (sql.includes("FROM tag") && sql.includes("tag_type = $1") && !sql.includes("jsonb_each_text(name)")) {
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("FROM tag") && sql.includes("jsonb_each_text(name)")) {
         return Promise.resolve({ rows: [] });
       }
       if (sql.trimStart().startsWith("BEGIN")) return Promise.resolve({ rows: [] });
@@ -236,13 +289,19 @@ describe("importProductionsLegacy", () => {
       if (sql.includes("SELECT legacy_id") && sql.includes("legacy_production_import_map")) {
         return Promise.resolve({ rows: [] });
       }
+      if (sql.includes("FROM production p")) {
+        return Promise.resolve({ rows: [] });
+      }
       if (sql.includes("FROM tag_type")) {
         const name = params?.[0];
         if (name === "Tag") return Promise.resolve({ rows: [{ id: 10 }] });
         if (name === "Genre") return Promise.resolve({ rows: [{ id: 20 }] });
         return Promise.resolve({ rows: [] });
       }
-      if (sql.includes("FROM tag") && sql.includes("tag_type = $1") && !sql.includes("lower(name")) {
+      if (sql.includes("FROM tag") && sql.includes("tag_type = $1") && !sql.includes("jsonb_each_text(name)")) {
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("FROM tag") && sql.includes("jsonb_each_text(name)")) {
         return Promise.resolve({ rows: [] });
       }
       if (sql.trimStart().startsWith("BEGIN")) return Promise.resolve({ rows: [] });
@@ -294,7 +353,13 @@ describe("importProductionsLegacy", () => {
         const id = parsed.nl === "Tag" ? 10 : 20;
         return Promise.resolve({ rows: [{ id }] });
       }
-      if (sql.includes("FROM tag") && sql.includes("tag_type = $1") && !sql.includes("lower(name")) {
+      if (sql.includes("FROM production p")) {
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("FROM tag") && sql.includes("tag_type = $1") && !sql.includes("jsonb_each_text(name)")) {
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("FROM tag") && sql.includes("jsonb_each_text(name)")) {
         return Promise.resolve({ rows: [] });
       }
       if (sql.trimStart().startsWith("BEGIN")) return Promise.resolve({ rows: [] });
