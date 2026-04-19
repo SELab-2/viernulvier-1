@@ -1,5 +1,5 @@
 <template>
-  <div ref="dateFilterRoot" class="relative inline-block">
+  <div ref="dateFilterRoot" class="productions-date-filter relative inline-block">
     <button
       type="button"
       class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-surface-3 bg-surface-0 px-4 py-2 text-sm font-medium text-ink-primary transition hover:bg-surface-2 disabled:opacity-100 dark:bg-surface-1"
@@ -431,12 +431,14 @@ onUnmounted(() => {
 .year-range-thumb-high {
   z-index: 3;
 }
+</style>
 
-:global(.dark) .year-range-thumb::-webkit-slider-thumb {
+<style>
+html.dark .productions-date-filter .year-range-thumb::-webkit-slider-thumb {
   background: var(--color-surface-1, #1e293b);
 }
 
-:global(.dark) .year-range-thumb::-moz-range-thumb {
+html.dark .productions-date-filter .year-range-thumb::-moz-range-thumb {
   background: var(--color-surface-1, #1e293b);
 }
 </style>
