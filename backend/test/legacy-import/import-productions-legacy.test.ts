@@ -127,6 +127,61 @@ describe("importProductionsLegacy", () => {
     fs.rmSync(dir, { recursive: true });
   });
 
+  it("write mode inserts new production when multiple rows match title and artist (ambiguous)", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-amb-"));
+    const csvPath = path.join(dir, "p.csv");
+    fs.writeFileSync(csvPath, "Titel,Ondertitel,ID,Genre\nAmbiguous,A,900,Drama\n", "utf8");
+
+    const query = vi.fn().mockImplementation((sql: string, params?: unknown[]) => {
+      if (sql.includes("CREATE TABLE IF NOT EXISTS legacy_production_import_map")) {
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("SELECT legacy_id") && sql.includes("legacy_production_import_map")) {
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("FROM production p")) {
+        return Promise.resolve({ rows: [{ id: 10 }, { id: 11 }] });
+      }
+      if (sql.includes("FROM tag_type")) {
+        const name = params?.[0];
+        if (name === "Tag") return Promise.resolve({ rows: [{ id: 10 }] });
+        if (name === "Genre") return Promise.resolve({ rows: [{ id: 20 }] });
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("FROM tag") && sql.includes("tag_type = $1") && !sql.includes("jsonb_each_text(name)")) {
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("FROM tag") && sql.includes("jsonb_each_text(name)")) {
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.trimStart().startsWith("BEGIN")) return Promise.resolve({ rows: [] });
+      if (sql.trimStart().startsWith("COMMIT")) return Promise.resolve({ rows: [] });
+      if (sql.trimStart().startsWith("ROLLBACK")) return Promise.resolve({ rows: [] });
+      if (sql.includes("INSERT INTO production")) {
+        return Promise.resolve({ rows: [{ id: 1001 }] });
+      }
+      if (sql.includes("INSERT INTO production_tag")) {
+        return Promise.resolve({ rowCount: 0, rows: [] });
+      }
+      if (sql.includes("INSERT INTO legacy_production_import_map")) {
+        expect(String(sql)).toContain("created_new_production");
+        expect(String(sql)).toContain("true");
+        expect(params).toEqual(["productions-output-csv", "900", 1001]);
+        return Promise.resolve({ rows: [] });
+      }
+      return Promise.resolve({ rows: [] });
+    });
+
+    await importProductionsLegacy(makeClient(query), {
+      filePath: csvPath,
+      dryRun: false,
+      limit: null,
+    });
+
+    expect(query.mock.calls.some((c) => String(c[0]).includes("INSERT INTO production"))).toBe(true);
+    fs.rmSync(dir, { recursive: true });
+  });
+
   it("write mode maps legacy id to existing production when title and artist match, without inserting production", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-dedupe-"));
     const csvPath = path.join(dir, "p.csv");
@@ -152,6 +207,8 @@ describe("importProductionsLegacy", () => {
         return Promise.resolve({ rows: [] });
       }
       if (sql.includes("INSERT INTO legacy_production_import_map")) {
+        expect(String(sql)).toContain("false");
+        expect(params).toEqual(["productions-output-csv", "501", 777]);
         return Promise.resolve({ rows: [] });
       }
       return Promise.resolve({ rows: [] });
@@ -167,7 +224,7 @@ describe("importProductionsLegacy", () => {
     expect(prodInserts.length).toBe(0);
     const mapInsert = query.mock.calls.find((c) => String(c[0]).includes("INSERT INTO legacy_production_import_map"));
     expect(mapInsert).toBeDefined();
-    expect(mapInsert?.[1]).toEqual(expect.arrayContaining(["productions-output-csv", "501", 777]));
+    expect(mapInsert?.[1]).toEqual(["productions-output-csv", "501", 777]);
     fs.rmSync(dir, { recursive: true });
   });
 
