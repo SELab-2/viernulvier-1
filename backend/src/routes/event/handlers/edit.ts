@@ -8,7 +8,7 @@ import { fetchEvent } from "./fetch.js";
 import { normalizePartialEventDates, EventCreateSchema, updateEvent } from "./helper.js";
 import type { EventCreate } from "./helper.js";
 
-const EventUpdateSchema = EventCreateSchema.partial();
+export const EventUpdateSchema = EventCreateSchema.partial();
 
 /**
  * Updates certain fields from a single event by ID in the database.

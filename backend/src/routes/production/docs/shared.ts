@@ -12,7 +12,7 @@ export const returnsProduction = new RequestResponse(
   true,
 );
 
-export const returnsProductions = new RequestResponse(
+export const returnsProductionArray = new RequestResponse(
   HttpSuccess.OK,
   ProductionSchemaWithBackwardsRefs.array(),
   true,

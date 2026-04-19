@@ -1,16 +1,26 @@
 import type { FastifyInstance } from "fastify";
 
 import { replyHandler } from "@/routes/helpers.js";
-import { 
+import {
   createEvent,
-  deleteEvent,   
-  fetchEvent, 
-  fetchEvents, 
-  fetchEventWithMeta, 
-  replaceEvent, 
+  deleteEvent,
+  fetchEvent,
+  fetchEvents,
+  fetchEventWithMeta,
+  replaceEvent,
   editEvent,
   editEvents,
 } from "./handlers/index.js";
+import {
+  fetchEventDocs,
+  fetchEventWithMetaDocs,
+  fetchEventsDocs,
+  createEventDocs,
+  deleteEventDocs,
+  replaceEventDocs,
+  editEventDocs,
+  editEventsDocs,
+} from "./docs/index.js";
 
 /**
  * Registers event routes on the Fastify instance.
@@ -30,12 +40,44 @@ import {
 export default function eventRoutes(server: FastifyInstance) {
   const protect = { preHandler: [server.authorize()] };
 
-  server.get("/api/v1/event/:id", replyHandler(server, fetchEvent));
-  server.get("/api/v1/event/:id/meta", protect, replyHandler(server, fetchEventWithMeta));
-  server.get("/api/v1/event", replyHandler(server, fetchEvents));
-  server.post("/api/v1/event", protect, replyHandler(server, createEvent));
-  server.delete("/api/v1/event/:id", protect, replyHandler(server, deleteEvent));
-  server.put("/api/v1/event/:id", protect, replyHandler(server, replaceEvent));
-  server.patch("/api/v1/event/:id", protect, replyHandler(server, editEvent));
-  server.patch("/api/v1/event", protect, replyHandler(server, editEvents));
+  server.get(
+    "/api/v1/event/:id",
+    { schema: fetchEventDocs },
+    replyHandler(server, fetchEvent),
+  );
+  server.get(
+    "/api/v1/event/:id/meta",
+    { ...protect, schema: fetchEventWithMetaDocs },
+    replyHandler(server, fetchEventWithMeta),
+  );
+  server.get(
+    "/api/v1/event",
+    { schema: fetchEventsDocs },
+    replyHandler(server, fetchEvents),
+  );
+  server.post(
+    "/api/v1/event",
+    { ...protect, schema: createEventDocs },
+    replyHandler(server, createEvent),
+  );
+  server.delete(
+    "/api/v1/event/:id",
+    { ...protect, schema: deleteEventDocs },
+    replyHandler(server, deleteEvent),
+  );
+  server.put(
+    "/api/v1/event/:id",
+    { ...protect, schema: replaceEventDocs },
+    replyHandler(server, replaceEvent),
+  );
+  server.patch(
+    "/api/v1/event/:id",
+    { ...protect, schema: editEventDocs },
+    replyHandler(server, editEvent),
+  );
+  server.patch(
+    "/api/v1/event",
+    { ...protect, schema: editEventsDocs },
+    replyHandler(server, editEvents),
+  );
 }

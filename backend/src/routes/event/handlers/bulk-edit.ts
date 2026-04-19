@@ -7,7 +7,7 @@ import { fetchEvent } from "./fetch.js";
 import { EventCreateSchema, normalizePartialEventDates, updateEvent } from "./helper.js";
 
 // Define schema with explicit types to avoid ForeignKey issues
-const EventBulkUpdateSchema = EventCreateSchema.partial().extend({
+export const EventBulkUpdateSchema = EventCreateSchema.partial().extend({
   ids: z.array(z.number().nonnegative()).nonempty(),
 });
 

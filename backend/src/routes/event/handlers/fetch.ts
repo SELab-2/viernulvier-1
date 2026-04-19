@@ -81,7 +81,7 @@ function parseProductionIdsFromQuery(
   return { ok: true, ids: unique };
 }
 
-const EventsListQuerySchema = z
+export const EventsListQuerySchema = z
   .object({
     production: z.union([z.string(), z.array(z.string())]).optional(),
     old_id: stringToInt.optional(),
