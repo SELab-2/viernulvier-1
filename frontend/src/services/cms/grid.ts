@@ -3,7 +3,7 @@ import { collectProductionTagsByIdMap } from "@/services/productions";
 import type { LanguageMap } from "@/utils/i18n";
 import { toLocalDateTimeInput } from "./date";
 import { extractEventIds } from "./helpers";
-import type { CmsAdminGridRow, CmsEventGridRow, CmsProductionGridRow } from "./types";
+import type { CmsAdminGridRow, CmsEventGridRow, CmsProductionGridRow, CreateAdminFormState } from "./types";
 
 export function buildEventGridRows(
   events: ArchiveEvent[],
@@ -124,6 +124,14 @@ export function applyUpdatedAdminToRow(
   row.username = updated.username;
   row.profilePicture = updated.profile_picture ?? null;
   row.super = updated.super;
+}
+
+export function buildEmptyAdminForm(): CreateAdminFormState {
+  return {
+    username: "",
+    password: "",
+    super: false,
+  };
 }
  
  

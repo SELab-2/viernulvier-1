@@ -94,6 +94,7 @@ export default {
       collapseAllEvents: "Hide events",
       admin: {
         noAdmins: "No admins found.",
+        addAdmin: "+ Add Admin",
       },
     },
     create: {
@@ -124,6 +125,12 @@ export default {
       validation: {
         requiredOneLanguage: "Fill at least 1 language for: {field}",
         imageRequired: "Fill at least one image URL (in any language).",
+      },
+      admin: {
+        adminTitle: "New admin",
+        adminPassword: "Password",
+        // TODO: adminPasswordHint: "The new admin can change their password after logging in via their profile.",
+        submitAdmin: "Add admin",
       },
     },
     panel: {

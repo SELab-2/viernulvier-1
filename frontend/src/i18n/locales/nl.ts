@@ -94,6 +94,7 @@ export default {
       collapseAllEvents: "Verberg events",
       admin: {
         noAdmins: "Geen admins gevonden.",
+        addAdmin: "+ Admin toevoegen",
       },
     },
     create: {
@@ -124,6 +125,12 @@ export default {
       validation: {
         requiredOneLanguage: "Vul minstens 1 taal in voor: {field}",
         imageRequired: "Vul minstens een afbeelding URL in (in eender welke taal).",
+      },
+      admin: {
+        adminTitle: "Nieuwe admin",
+        adminPassword: "Wachtwoord",
+        // TODO: adminPasswordHint: "De nieuwe admin kan zijn wachtwoord na het inloggen wijzigen via zijn profiel.",
+        submitAdmin: "Admin toevoegen",
       },
     },
     panel: {

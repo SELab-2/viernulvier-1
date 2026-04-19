@@ -73,6 +73,12 @@ export interface CreateFormState {
   video_2: Record<SupportedLang, string>;
 }
 
+export interface CreateAdminFormState {
+  username: string;
+  password: string;
+  super: boolean;
+}
+
 export interface EditorPanelState {
   rowId: number;
   apiField: LongField;
