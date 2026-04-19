@@ -101,6 +101,7 @@ describe("CmsEventsDrawer.vue", () => {
     const actionButtons = wrapper.findAll(".cms-events-inline-action button");
     await actionButtons[0]?.trigger("click");
     await actionButtons[1]?.trigger("click");
+    await wrapper.get(".cms-modal-footer .cms-side-save").trigger("click");
 
     expect(wrapper.emitted("close")?.length).toBe(1);
     expect(wrapper.emitted("open-create-event")?.length).toBe(1);

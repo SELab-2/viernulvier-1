@@ -25,6 +25,25 @@ function isGenreTagType(name: LanguageMap | null | undefined): boolean {
   return Object.values(name).some((value) => isGenreLabel(String(value ?? "")));
 }
 
+/** Localizes with fallback to any available translation when current locale is empty. */
+function localizeWithFallback(
+  map: LanguageMap | null | undefined,
+  localize: (value: LanguageMap | null | undefined) => string,
+): string {
+  const localized = localize(map);
+  if (localized.length > 0) {
+    return localized;
+  }
+
+  if (!map) {
+    return "";
+  }
+
+  return [map.nl, map.en, map.fr]
+    .map((value) => String(value ?? "").trim())
+    .find((value) => value.length > 0) ?? "";
+}
+
 /**
  * Maps archive events to rows used by the CMS events drawer.
  */
@@ -75,11 +94,11 @@ export function buildProductionGridRow(
   const productionTags = collectProductionTagsByIdMap(production, tagById);
   const genreLabels = productionTags
     .filter((tag) => genreTagTypeIds.has(Number(tag.tag_type)))
-    .map((tag) => localize(tag.name))
+    .map((tag) => localizeWithFallback(tag.name, localize))
     .filter((label) => label.length > 0);
   const additionalLabels = productionTags
     .filter((tag) => !genreTagTypeIds.has(Number(tag.tag_type)))
-    .map((tag) => localize(tag.name))
+    .map((tag) => localizeWithFallback(tag.name, localize))
     .filter((label) => label.length > 0);
 
   return {

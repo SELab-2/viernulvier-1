@@ -314,4 +314,22 @@ describe("useCmsProductionGrid", () => {
     expect(grid.getProductionRowStyle({ data: { source: { finalized: true } } } as never)).toBeUndefined();
     expect(grid.getProductionRowStyle({ data: undefined } as never)).toBeUndefined();
   });
+
+  it("styles empty cells and leaves non-empty cells untouched", () => {
+    const grid = useCmsProductionGrid({
+      isDark: ref(false),
+      t: (key) => key,
+    });
+
+    const cellStyle = grid.defaultColDef.cellStyle as ((params: { value: unknown }) => Record<string, string> | null) | undefined;
+    const emptyStyle = cellStyle?.({ value: "   " });
+    const nonEmptyStyle = cellStyle?.({ value: "filled" });
+
+    expect(emptyStyle).toEqual({
+      backgroundColor: "rgba(249, 115, 22, 0.05)",
+      color: "rgba(120, 113, 108, 0.6)",
+      fontStyle: "italic",
+    });
+    expect(nonEmptyStyle).toBeNull();
+  });
 });
