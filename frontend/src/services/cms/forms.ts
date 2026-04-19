@@ -1,7 +1,7 @@
 import type { SupportedLang } from "@/i18n";
 import type { LanguageMap } from "@/utils/i18n";
 import { emptyLangRecord } from "./helpers";
-import type { CmsCreateFieldConfig, CreateFormState } from "./types";
+import type { CmsCreateFieldConfig, CreateFormState, CreateTagFormState } from "./types";
 
 export const createProductionFields: CmsCreateFieldConfig[] = [
   { key: "title", labelKey: "cms.create.fields.title", required: true, multiline: false },
@@ -58,6 +58,29 @@ export function mediaToLanguageMap(values: Record<SupportedLang, string>): Langu
     return null;
   }
   return { nl: nlValue };
+}
+
+export function buildEmptyTagForm(): CreateTagFormState {
+  return {
+    name: emptyLangRecord(),
+    tagTypeId: null,
+    public: true,
+  };
+}
+
+export function validateCreateTagForm(
+  form: CreateTagFormState,
+  t: (key: string, params?: Record<string, unknown>) => string,
+): string | null {
+  if (!hasAnyLanguageValue(form.name)) {
+    return t("cms.create.validation.requiredOneLanguage", {
+      field: t("cms.columns.tagName"),
+    });
+  }
+  if (form.tagTypeId === null || form.tagTypeId <= 0) {
+    return t("cms.create.validation.tagTypeRequired");
+  }
+  return null;
 }
 
 export function validateCreateProductionForm(

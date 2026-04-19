@@ -76,6 +76,7 @@ export default {
     },
     actions: {
       addProduction: "+ Add Production",
+      addTag: "+ Add Tag",
       searchPlaceholder: "Search across all columns...",
       selectedCount: "Selected: {count}",
       loadedCount: "Rows loaded: {count}",
@@ -96,6 +97,9 @@ export default {
     },
     create: {
       title: "New production",
+      tagTitle: "New tag",
+      submitTag: "Add tag",
+      selectTagType: "Choose a type...",
       finalized: "Mark as finalized",
       languages: "Extra languages",
       cancel: "Cancel",
@@ -122,6 +126,7 @@ export default {
       validation: {
         requiredOneLanguage: "Fill at least 1 language for: {field}",
         imageRequired: "Fill at least one image URL (in any language).",
+        tagTypeRequired: "Select a tag type.",
       },
     },
     panel: {

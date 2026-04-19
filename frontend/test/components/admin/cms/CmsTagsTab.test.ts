@@ -11,6 +11,7 @@ vi.mock("@/services/tags", () => ({
   getAllTags: vi.fn(),
   getTagTypes: vi.fn(),
   updateTag: vi.fn(),
+  createTag: vi.fn(),
 }));
 
 const gridStub = defineComponent({
@@ -58,6 +59,7 @@ describe("CmsTagsTab", () => {
     vi.spyOn(tagsService, "getAllTags").mockResolvedValue([mockPublicTag, mockHiddenTag]);
     vi.spyOn(tagsService, "getTagTypes").mockResolvedValue([mockTagType]);
     vi.spyOn(tagsService, "updateTag").mockResolvedValue({ ...mockPublicTag, public: false });
+    vi.spyOn(tagsService, "createTag").mockResolvedValue({ ...mockPublicTag, id: 42 } as never);
   });
 
   it("loads tags and tag types on mount", async () => {
@@ -247,6 +249,106 @@ describe("CmsTagsTab", () => {
     await flushPromises();
 
     expect(controls.exists()).toBe(true);
+  });
+
+  it("opens the create modal with a default tag-type from loaded data", async () => {
+    const wrapper = mountTab();
+    await flushPromises();
+    const api = (wrapper.vm as any).__test;
+
+    api.openCreateModal();
+    expect(api.createModalOpen.value).toBe(true);
+    expect(api.createForm.value.tagTypeId).toBe(mockTagType.id);
+  });
+
+  it("rejects the form when name is empty", async () => {
+    const wrapper = mountTab();
+    await flushPromises();
+    const api = (wrapper.vm as any).__test;
+
+    api.openCreateModal();
+    await api.submitCreateTag();
+
+    expect(api.createError.value).toBeTruthy();
+    expect(tagsService.createTag).not.toHaveBeenCalled();
+  });
+
+  it("rejects the form when no tag type is selected", async () => {
+    const wrapper = mountTab();
+    await flushPromises();
+    const api = (wrapper.vm as any).__test;
+
+    api.openCreateModal();
+    api.setCreateName("nl", "Comedy");
+    api.setCreateTagType(null);
+    await api.submitCreateTag();
+
+    expect(api.createError.value).toBeTruthy();
+    expect(tagsService.createTag).not.toHaveBeenCalled();
+  });
+
+  it("submits a valid form and reloads data", async () => {
+    const wrapper = mountTab();
+    await flushPromises();
+    const api = (wrapper.vm as any).__test;
+    (tagsService.getAllTags as any).mockClear();
+
+    api.openCreateModal();
+    api.setCreateName("nl", "Comedy");
+    api.setCreatePublic(false);
+    api.setCreateExtraLang("en", true);
+    await api.submitCreateTag();
+    await flushPromises();
+
+    expect(tagsService.createTag).toHaveBeenCalledWith({
+      name: { nl: "Comedy" },
+      tag_type: mockTagType.id,
+      public: false,
+    });
+    expect(tagsService.getAllTags).toHaveBeenCalled();
+    expect(api.createModalOpen.value).toBe(false);
+  });
+
+  it("surfaces a create error when createTag rejects", async () => {
+    vi.spyOn(tagsService, "createTag").mockRejectedValueOnce(new Error("nope"));
+    const wrapper = mountTab();
+    await flushPromises();
+    const api = (wrapper.vm as any).__test;
+
+    api.openCreateModal();
+    api.setCreateName("nl", "Comedy");
+    await api.submitCreateTag();
+
+    expect(api.createError.value).toMatch(/nope|fail|fout/i);
+    expect(api.createModalOpen.value).toBe(true);
+  });
+
+  it("create error uses generic message for non-Error rejections", async () => {
+    vi.spyOn(tagsService, "createTag").mockRejectedValueOnce("bad");
+    const wrapper = mountTab();
+    await flushPromises();
+    const api = (wrapper.vm as any).__test;
+
+    api.openCreateModal();
+    api.setCreateName("nl", "Comedy");
+    await api.submitCreateTag();
+
+    expect(api.createError.value).toBeTruthy();
+  });
+
+  it("closeCreateModal resets the form", async () => {
+    const wrapper = mountTab();
+    await flushPromises();
+    const api = (wrapper.vm as any).__test;
+
+    api.openCreateModal();
+    api.setCreateName("nl", "x");
+    api.setCreateExtraLang("en", true);
+    api.closeCreateModal();
+
+    expect(api.createModalOpen.value).toBe(false);
+    expect(api.createForm.value.name.nl).toBe("");
+    expect(api.createExtraLangs.value.en).toBe(false);
   });
 
   it("save-error path uses a generic message when update rejects with a non-Error", async () => {

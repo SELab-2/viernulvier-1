@@ -76,6 +76,7 @@ export default {
     },
     actions: {
       addProduction: "+ Ajouter une production",
+      addTag: "+ Ajouter un tag",
       searchPlaceholder: "Rechercher dans toutes les colonnes...",
       selectedCount: "Selectionne: {count}",
       loadedCount: "Lignes chargees: {count}",
@@ -96,6 +97,9 @@ export default {
     },
     create: {
       title: "Nouvelle production",
+      tagTitle: "Nouveau tag",
+      submitTag: "Ajouter le tag",
+      selectTagType: "Choisissez un type...",
       finalized: "Marquer comme finalisee",
       languages: "Langues supplementaires",
       cancel: "Annuler",
@@ -122,6 +126,7 @@ export default {
       validation: {
         requiredOneLanguage: "Remplissez au moins 1 langue pour: {field}",
         imageRequired: "Remplissez au moins une URL d'image (dans n'importe quelle langue).",
+        tagTypeRequired: "Sélectionnez un type de tag.",
       },
     },
     panel: {

@@ -76,6 +76,7 @@ export default {
     },
     actions: {
       addProduction: "+ Voeg Productie Toe",
+      addTag: "+ Voeg Tag Toe",
       searchPlaceholder: "Zoek in alle kolommen...",
       selectedCount: "Geselecteerd: {count}",
       loadedCount: "Rijen geladen: {count}",
@@ -96,6 +97,9 @@ export default {
     },
     create: {
       title: "Nieuwe productie",
+      tagTitle: "Nieuwe tag",
+      submitTag: "Tag toevoegen",
+      selectTagType: "Kies een type...",
       finalized: "Markeer als gefinaliseerd",
       languages: "Extra talen",
       cancel: "Annuleer",
@@ -122,6 +126,7 @@ export default {
       validation: {
         requiredOneLanguage: "Vul minstens 1 taal in voor: {field}",
         imageRequired: "Vul minstens een afbeelding URL in (in eender welke taal).",
+        tagTypeRequired: "Selecteer een tag-type.",
       },
     },
     panel: {

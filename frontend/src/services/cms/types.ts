@@ -51,6 +51,12 @@ export type InlineEditableField = "performer" | "title" | "producer" | "teaser";
 
 export type TagInlineEditableField = "name" | "tagType" | "public";
 
+export interface CreateTagFormState {
+  name: Record<SupportedLang, string>;
+  tagTypeId: number | null;
+  public: boolean;
+}
+
 export type LongField = "teaser" | "description" | "description_2" | "video_1";
 
 export type CreateFieldKey =
