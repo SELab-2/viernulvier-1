@@ -22,6 +22,15 @@ export default fp(async (server: FastifyInstance) => {
         version: "1.0.0",
       },
       servers: [],
+      components: {
+        securitySchemes: {
+          "Login Session": {
+            type: "http",
+            scheme: "bearer",
+            bearerFormat: "JWT",
+          },
+        },
+      },
     },
     transform: jsonSchemaTransform,
     transformObject: jsonSchemaTransformObject,
