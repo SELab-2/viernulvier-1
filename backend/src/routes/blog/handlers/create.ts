@@ -4,7 +4,7 @@ import { BlogSchema } from "@viernulvier/shared/index.js";
 import { getMetadata, parseSchema, buildQuery } from "@/routes/helpers.js";
 import { z } from "zod";
 
-const CreateBlogBodySchema = BlogSchema.omit({ id: true });
+export const CreateBlogBodySchema = BlogSchema.omit({ id: true });
 
 const insertBlog = (server: FastifyInstance) =>
   buildQuery(

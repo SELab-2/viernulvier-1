@@ -4,7 +4,7 @@ import { BlogSchema, stringToInt } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, parseSchema, HttpError, HttpClientError, ParseContext } from "@/routes/helpers.js";
 import { z } from "zod";
 
-const EditBlogBodySchema = BlogSchema.omit({ id: true }).partial();
+export const EditBlogBodySchema = BlogSchema.omit({ id: true }).partial();
 
 /**
  * Updates an existing blog and returns the updated record.

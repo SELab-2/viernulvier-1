@@ -4,7 +4,7 @@ import { BlogSchema, stringToInt } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, buildQuery, parseSchema } from "@/routes/helpers.js";
 import { z } from "zod";
 
-const ReplaceBlogBodySchema = BlogSchema.omit({ id: true });
+export const ReplaceBlogBodySchema = BlogSchema.omit({ id: true });
 
 const replaceBlogQuery = (server: FastifyInstance) =>
   buildQuery(
