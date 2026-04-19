@@ -156,6 +156,8 @@ export default {
     noFilterResults: "No productions match these filters.",
     genreFiltersHeading: "Genre",
     tagFiltersHeading: "Tags",
+    viewMoreTagFilters: "Show more",
+    viewLessTagFilters: "Show less",
     selectDates: "Select dates",
     filterByYearRange: "Filter by years",
     yearRangeIntro:

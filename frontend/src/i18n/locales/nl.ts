@@ -157,6 +157,8 @@ export default {
     noFilterResults: "Geen producties gevonden met deze filters.",
     genreFiltersHeading: "Genre",
     tagFiltersHeading: "Tags",
+    viewMoreTagFilters: "Meer tonen",
+    viewLessTagFilters: "Minder tonen",
     selectDates: "Selecteer datums",
     filterByYearRange: "Filter op jaren",
     yearRangeIntro:

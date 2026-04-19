@@ -99,21 +99,37 @@
             >
               {{ t("productionsPage.genreFiltersHeading") }}
             </p>
-            <div class="flex flex-wrap gap-2">
+            <div class="flex items-start gap-3">
+              <div class="flex min-w-0 flex-1 flex-wrap gap-2">
+                <button
+                  v-for="g in visibleGenreTagsForFilter"
+                  :key="g.id"
+                  type="button"
+                  class="rounded-full border px-3 py-1 text-sm transition disabled:opacity-100"
+                  :class="
+                    selectedTagIds.includes(g.id)
+                      ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
+                      : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
+                  "
+                  :disabled="listLoading || loadError"
+                  @click="toggleTag(g.id)"
+                >
+                  {{ g.label }}
+                </button>
+              </div>
               <button
-                v-for="g in genreTagsForFilter"
-                :key="g.id"
+                v-if="showGenreTagFilterExpandToggle"
                 type="button"
-                class="rounded-full border px-3 py-1 text-sm transition disabled:opacity-100"
-                :class="
-                  selectedTagIds.includes(g.id)
-                    ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
-                    : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
-                "
+                class="shrink-0 cursor-pointer pt-0.5 text-sm font-medium leading-snug text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100"
                 :disabled="listLoading || loadError"
-                @click="toggleTag(g.id)"
+                :aria-expanded="genreTagFiltersExpanded"
+                @click="genreTagFiltersExpanded = !genreTagFiltersExpanded"
               >
-                {{ g.label }}
+                {{
+                  genreTagFiltersExpanded
+                    ? t("productionsPage.viewLessTagFilters")
+                    : t("productionsPage.viewMoreTagFilters")
+                }}
               </button>
             </div>
           </div>
@@ -127,21 +143,37 @@
             >
               {{ t("productionsPage.tagFiltersHeading") }}
             </p>
-            <div class="flex flex-wrap gap-2">
+            <div class="flex items-start gap-3">
+              <div class="flex min-w-0 flex-1 flex-wrap gap-2">
+                <button
+                  v-for="g in visibleNonGenreTagsForFilter"
+                  :key="g.id"
+                  type="button"
+                  class="rounded-full border px-3 py-1 text-sm transition disabled:opacity-100"
+                  :class="
+                    selectedTagIds.includes(g.id)
+                      ? 'border-accent-outline bg-surface-2 text-ink-primary'
+                      : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
+                  "
+                  :disabled="listLoading || loadError"
+                  @click="toggleTag(g.id)"
+                >
+                  {{ g.label }}
+                </button>
+              </div>
               <button
-                v-for="g in nonGenreTagsForFilter"
-                :key="g.id"
+                v-if="showNonGenreTagFilterExpandToggle"
                 type="button"
-                class="rounded-full border px-3 py-1 text-sm transition disabled:opacity-100"
-                :class="
-                  selectedTagIds.includes(g.id)
-                    ? 'border-accent-outline bg-surface-2 text-ink-primary'
-                    : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
-                "
+                class="shrink-0 cursor-pointer pt-0.5 text-sm font-medium leading-snug text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100"
                 :disabled="listLoading || loadError"
-                @click="toggleTag(g.id)"
+                :aria-expanded="nonGenreTagFiltersExpanded"
+                @click="nonGenreTagFiltersExpanded = !nonGenreTagFiltersExpanded"
               >
-                {{ g.label }}
+                {{
+                  nonGenreTagFiltersExpanded
+                    ? t("productionsPage.viewLessTagFilters")
+                    : t("productionsPage.viewMoreTagFilters")
+                }}
               </button>
             </div>
           </div>
@@ -377,6 +409,25 @@ const PAGE_SIZE = 20;
 /** Same cap as the list API, extra terms are ignored client-side. */
 const MAX_SEARCH_TERMS = 20;
 
+/** How many genre/tag filter chips to show before "Show more". Selected tags are always included. */
+const GENRE_FILTER_COLLAPSED_MAX = 7;
+
+const NON_GENRE_FILTER_COLLAPSED_MAX = 5;
+
+function collapsedTagFilterList(
+  all: { id: number; label: string }[],
+  selectedIds: readonly number[],
+  max: number,
+  expanded: boolean,
+): { id: number; label: string }[] {
+  if (expanded || all.length <= max) return all;
+  const sel = new Set(selectedIds);
+  const must = all.filter((t) => sel.has(t.id));
+  const rest = all.filter((t) => !sel.has(t.id));
+  if (must.length >= max) return must;
+  return [...must, ...rest.slice(0, max - must.length)];
+}
+
 /** Keep in sync with `PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE` in backend `pagination.ts`. */
 const PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE =
   "`from` must be on or before `to`" as const;
@@ -403,6 +454,8 @@ const pageTopAnchor = useTemplateRef<HTMLElement>("pageTopAnchor");
 
 /** Tag IDs for list filtering — genres and non-genres share `tags=` / `tagIds` (IDs are unique). */
 const selectedTagIds = ref<number[]>([]);
+const genreTagFiltersExpanded = ref(false);
+const nonGenreTagFiltersExpanded = ref(false);
 /** `null` = all years in the archive slider span; otherwise inclusive calendar-year range. */
 const explicitYearRange = ref<{ from: number; to: number } | null>(null);
 const filterDateFrom = ref<string | null>(null);
@@ -967,10 +1020,36 @@ const nonGenreTagsForFilter = computed(() => {
   return items;
 });
 
+const visibleGenreTagsForFilter = computed(() =>
+  collapsedTagFilterList(
+    genreTagsForFilter.value,
+    selectedTagIds.value,
+    GENRE_FILTER_COLLAPSED_MAX,
+    genreTagFiltersExpanded.value,
+  ),
+);
+
+const visibleNonGenreTagsForFilter = computed(() =>
+  collapsedTagFilterList(
+    nonGenreTagsForFilter.value,
+    selectedTagIds.value,
+    NON_GENRE_FILTER_COLLAPSED_MAX,
+    nonGenreTagFiltersExpanded.value,
+  ),
+);
+
+const showGenreTagFilterExpandToggle = computed(
+  () => genreTagsForFilter.value.length > GENRE_FILTER_COLLAPSED_MAX,
+);
+
+const showNonGenreTagFilterExpandToggle = computed(
+  () => nonGenreTagsForFilter.value.length > NON_GENRE_FILTER_COLLAPSED_MAX,
+);
+
 /** Matches backend `yearMin`/`yearMax` bounds; not derived from loaded events (list loads events per page only). */
 const filterYearBounds = computed(() => {
   const current = new Date().getFullYear();
-  return { minYear: 1900, maxYear: Math.max(1900, current) };
+  return { minYear: 2006, maxYear: Math.max(2006, current) };
 });
 
 /** `YYYY-MM-DD` → `dd/mm/yyyy` for filter chips (fixed order for every locale). */
