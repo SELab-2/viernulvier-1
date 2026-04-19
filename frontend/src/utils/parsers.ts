@@ -13,26 +13,48 @@ function isHtml(input: string): boolean {
   return /<\/?[a-z][\s\S]*>/i.test(input);
 }
 
-DOMPurify.addHook('uponSanitizeElement', (node, data) => {
-  if (node instanceof Element && data.tagName === 'iframe') {
-    const src = node.getAttribute('src') || '';
-        
-    const isYouTube = src.startsWith('https://www.youtube.com/embed/') || 
-                      src.startsWith('https://www.youtube-nocookie.com/embed/');
+DOMPurify.addHook("uponSanitizeElement", (node, data) => {
+  if (node instanceof Element && data.tagName === "iframe") {
+    const src = node.getAttribute("src") || "";
 
-    if (!isYouTube) {
-      return node.parentNode?.removeChild(node);
+    try {
+      const url = new URL(src);
+
+      const isYouTube =
+        (url.hostname === "www.youtube.com" ||
+         url.hostname === "www.youtube-nocookie.com") &&
+        url.pathname.startsWith("/embed/");
+
+      if (!isYouTube) {
+        node.remove();
+        return;
+      }
+
+      node.setAttribute("sandbox", "allow-scripts allow-presentation");
+      node.setAttribute(
+        "referrerpolicy",
+        "strict-origin-when-cross-origin",
+      );
+    } catch {
+      node.remove();
     }
-
-    node.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-    node.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
   }
 });
 
 function sanitizeHtml(input: string): string {
   return DOMPurify.sanitize(input, {
     ADD_TAGS: ["iframe"],
-    ADD_ATTR: ["src", "allow", "allowfullscreen", "frameborder", "width", "height", "title"],
+    ADD_ATTR: [
+      "src",
+      "allow",
+      "allowfullscreen",
+      "frameborder",
+      "width",
+      "height",
+      "title",
+      "sandbox",
+      "referrerpolicy",
+    ],
     USE_PROFILES: { html: true },
   });
 }

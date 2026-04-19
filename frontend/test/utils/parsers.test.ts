@@ -81,6 +81,86 @@ describe("parseAndSanitizeContent", () => {
     expect(result).toContain("<b>");
     expect(result).toContain("Hello\nWorld");
   });
+
+  it("allows YouTube embed iframes", () => {
+    const input =
+    '<iframe src="https://www.youtube.com/embed/abc123" width="560" height="315"></iframe>';
+
+    const result = parseAndSanitizeContent(input);
+
+    expect(result).toContain("iframe");
+    expect(result).toContain("youtube.com/embed/abc123");
+  });
+
+  it("allows YouTube nocookie embed iframes", () => {
+    const input =
+    '<iframe src="https://www.youtube-nocookie.com/embed/xyz456"></iframe>';
+
+    const result = parseAndSanitizeContent(input);
+
+    expect(result).toContain("youtube-nocookie.com/embed/xyz456");
+  });
+
+  it("removes non-YouTube iframes", () => {
+    const input =
+    '<iframe src="https://evil.com/embed/hack"></iframe>';
+
+    const result = parseAndSanitizeContent(input);
+
+    expect(result).not.toContain("iframe");
+  });
+
+  it("removes iframe with invalid src URL", () => {
+    const input =
+    '<iframe src="not-a-valid-url"></iframe>';
+
+    const result = parseAndSanitizeContent(input);
+
+    expect(result).not.toContain("iframe");
+  });
+
+  it("adds sandbox and referrerpolicy to allowed iframes", () => {
+    const input =
+    '<iframe src="https://www.youtube.com/embed/abc123"></iframe>';
+
+    const result = parseAndSanitizeContent(input);
+
+    expect(result).toContain('sandbox="allow-scripts allow-presentation"');
+    expect(result).toContain(
+      'referrerpolicy="strict-origin-when-cross-origin"',
+    );
+  });
+
+  it("blocks tricky hostname like youtube.com.evil.com", () => {
+    const input =
+    '<iframe src="https://www.youtube.com.evil.com/embed/abc123"></iframe>';
+
+    const result = parseAndSanitizeContent(input);
+
+    expect(result).not.toContain("iframe");
+  });
+
+  it("removes disallowed attributes from iframe", () => {
+    const input = `
+    <iframe 
+      src="https://www.youtube.com/embed/abc123"
+      onclick="alert(1)"
+    ></iframe>
+  `;
+
+    const result = parseAndSanitizeContent(input);
+
+    expect(result).toContain("iframe");
+    expect(result).not.toContain("onclick");
+  });
+
+  it("removes iframe without src", () => {
+    const input = "<iframe></iframe>";
+
+    const result = parseAndSanitizeContent(input);
+
+    expect(result).not.toContain("iframe");
+  });
 });
 
 // ─────────────────────────────────────────────────────────────
