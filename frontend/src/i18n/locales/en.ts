@@ -168,8 +168,7 @@ export default {
     filterByDateRange: "Filter by day / period",
     dateFrom: "From",
     dateTo: "To",
-    dateRangeHint:
-      "Pick a start date then an end date (or set both fields).",
+    dateRangeHint: "Pick a start and end date.",
     clearDateRange: "Clear dates",
     removeGenreFilter: "Remove genre filter",
     removeTagFilter: "Remove tag filter",

@@ -169,8 +169,7 @@ export default {
     filterByDateRange: "Filtrer par jour / période",
     dateFrom: "Du",
     dateTo: "Au",
-    dateRangeHint:
-      "Choisissez une date de début et de fin (ou remplissez les deux champs).",
+    dateRangeHint: "Choisissez une date de début et de fin.",
     clearDateRange: "Effacer les dates",
     removeGenreFilter: "Retirer le filtre genre",
     removeTagFilter: "Retirer le filtre par tag",

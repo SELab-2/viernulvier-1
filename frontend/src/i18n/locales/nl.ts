@@ -169,8 +169,7 @@ export default {
     filterByDateRange: "Filter op dag / periode",
     dateFrom: "Van",
     dateTo: "Tot",
-    dateRangeHint:
-      "Kies een start- en einddatum (of vul beide velden in).",
+    dateRangeHint: "Kies een start- en einddatum.",
     clearDateRange: "Datums wissen",
     removeGenreFilter: "Genrefilter verwijderen",
     removeTagFilter: "Tagfilter verwijderen",
