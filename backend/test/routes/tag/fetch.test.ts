@@ -230,6 +230,26 @@ describe("Fetch tags", () => {
     server.pg.query = prev;
   });
 
+  test("GET /api/v1/tag/all?includeProductionCount=true returns [] when no tags exist", async () => {
+    const prev = server.pg.query;
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      if (query.includes("COUNT(DISTINCT production)")) {
+        throw new Error("unexpected COUNT with zero tag ids");
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const response = await server.inject({
+      method: "GET",
+      cookies: { session: sessionCookie },
+      url: `/api/v1/tag/all?includeProductionCount=true`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual([]);
+    server.pg.query = prev;
+  });
+
   test("GET /api/v1/tag/all (productions omitted by default)", async () => {
     const response = await server.inject({
       method: "GET",
@@ -272,6 +292,23 @@ describe("Fetch tags", () => {
 
     expect(response.statusCode).toBe(200);
     expect(TagSchema.array().parse(response.json())).toEqual(mockTags);
+  });
+
+  test("GET /api/v1/tag/all?includeProductionCount=true adds production_count", async () => {
+    const response = await server.inject({
+      method: "GET",
+      cookies: { session: sessionCookie },
+      url: `/api/v1/tag/all?includeProductionCount=true`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const parsed = TagSchema.array().parse(response.json());
+    expect(parsed).toHaveLength(mockTags.length);
+    for (const t of parsed) {
+      const expected = mockTags.find((x) => x.id === t.id);
+      expect(expected).toBeDefined();
+      expect(t.production_count).toBe((expected!.productions ?? []).length);
+    }
   });
 });
 
