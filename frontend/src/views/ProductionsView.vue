@@ -207,7 +207,7 @@
                 v-for="tid in filterBannerTagIds"
                 :key="'tag-' + tid"
                 type="button"
-                class="inline-flex max-w-full cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary hover:bg-surface-2 disabled:opacity-100"
+                :class="['max-w-full', ACTIVE_FILTER_CHIP_CLASS]"
                 :disabled="listLoading"
                 :aria-label="t('productionsPage.removeTagFilter')"
                 @click="removeTag(tid)"
@@ -218,7 +218,7 @@
               <button
                 v-if="filterBannerYearRange"
                 type="button"
-                class="inline-flex cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm tabular-nums text-ink-primary hover:bg-surface-2 disabled:opacity-100"
+                :class="[ACTIVE_FILTER_CHIP_CLASS, 'tabular-nums']"
                 :disabled="listLoading"
                 :aria-label="t('productionsPage.removeYearRangeFilter')"
                 @click="clearYearRangeFilter"
@@ -229,7 +229,7 @@
               <button
                 v-if="filterBannerDateFrom && filterBannerDateTo"
                 type="button"
-                class="inline-flex max-w-full cursor-pointer items-center gap-1 rounded-full border border-accent-outline bg-surface-1 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary hover:bg-surface-2 disabled:opacity-100"
+                :class="['max-w-full', ACTIVE_FILTER_CHIP_CLASS]"
                 :disabled="listLoading"
                 :aria-label="t('productionsPage.removeDateRangeFilter')"
                 @click="clearDateRange"
@@ -449,6 +449,10 @@ const TO_QUERY_KEY = "to";
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
+
+/** Removable chips in the “Active filters” row */
+const ACTIVE_FILTER_CHIP_CLASS =
+  "inline-flex cursor-pointer items-center gap-1 rounded-full border border-surface-3 bg-surface-0 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary shadow-sm ring-1 ring-inset ring-accent-outline/25 transition hover:bg-surface-2 dark:bg-surface-1 disabled:opacity-100";
 
 const pageTopAnchor = useTemplateRef<HTMLElement>("pageTopAnchor");
 
