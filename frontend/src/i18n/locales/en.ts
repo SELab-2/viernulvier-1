@@ -165,6 +165,9 @@ export default {
     yearRangeFrom: "Earliest year",
     yearRangeTo: "Latest year",
     yearRangeChip: "{from}–{to}",
+    dateFilterOrDivider: "or",
+    dateFilterOrDividerAria:
+      "Choose either a year range or a calendar date range. Only one of these filters applies at a time.",
     filterByDateRange: "Filter by day / period",
     dateFrom: "From",
     dateTo: "To",

@@ -166,6 +166,9 @@ export default {
     yearRangeFrom: "Vroegste jaar",
     yearRangeTo: "Laatste jaar",
     yearRangeChip: "{from}–{to}",
+    dateFilterOrDivider: "of",
+    dateFilterOrDividerAria:
+      "Kies óf een jaarbereik óf een kalenderperiode. Slechts één van deze filters is tegelijk actief.",
     filterByDateRange: "Filter op dag / periode",
     dateFrom: "Van",
     dateTo: "Tot",

@@ -108,7 +108,27 @@
         </div>
       </section>
 
-      <hr class="my-4 border-surface-3" />
+      <div
+        class="my-4 flex items-center gap-0"
+        role="separator"
+        aria-orientation="horizontal"
+        :aria-label="t('productionsPage.dateFilterOrDividerAria')"
+      >
+        <div
+          class="h-px min-w-0 flex-1 bg-ink-secondary/25 dark:bg-ink-secondary/30"
+          aria-hidden="true"
+        />
+        <span
+          class="shrink-0 px-3 text-xs font-bold uppercase tracking-wide text-ink-secondary select-none"
+          aria-hidden="true"
+        >
+          {{ t("productionsPage.dateFilterOrDivider") }}
+        </span>
+        <div
+          class="h-px min-w-0 flex-1 bg-ink-secondary/25 dark:bg-ink-secondary/30"
+          aria-hidden="true"
+        />
+      </div>
 
       <section class="space-y-3">
         <h3 class="text-sm font-semibold text-ink-primary">

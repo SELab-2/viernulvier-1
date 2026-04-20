@@ -166,6 +166,9 @@ export default {
     yearRangeFrom: "Année la plus ancienne",
     yearRangeTo: "Année la plus récente",
     yearRangeChip: "{from}–{to}",
+    dateFilterOrDivider: "ou",
+    dateFilterOrDividerAria:
+      "Choisissez soit une plage d'années, soit des dates au calendrier. Un seul de ces filtres s'applique à la fois.",
     filterByDateRange: "Filtrer par jour / période",
     dateFrom: "Du",
     dateTo: "Au",
