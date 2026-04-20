@@ -25,6 +25,7 @@
           :event-stats="eventStats"
         />
         <DetailsSection 
+          v-if="hasDetails"
           :production="production" 
           :tag-groups="tagGroups" 
           :total-tags="totalTags" 
@@ -57,6 +58,7 @@ import { useDarkMode } from "@/composables/useDarkMode";
 import { ApiError } from "@/services/api";
 import { useTagGroups } from "@/composables/useTagGroups";
 import { useProductionEvents } from "@/composables/useProductionEvents";
+import type { LanguageMap } from "@/utils/i18n";
 
 const { isDark } = useDarkMode();
 
@@ -113,6 +115,28 @@ const eventStats = computed(() => {
     durationMinutes,
     hasMultipleDays: firstDate.toDateString() !== lastDate.toDateString(),
   };
+});
+
+const hasDetails = computed(() => {
+  if (!production.value) return false;
+
+  const p = production.value;
+  
+  const hasText = (field: LanguageMap | null | undefined): boolean => {
+    if (!field) return false;
+    return Object.values(field).some(val => typeof val === 'string' && val.trim() !== '');
+  };
+
+  return (
+    hasText(p.teaser) ||
+    hasText(p.description) ||
+    hasText(p.description_2) ||
+    hasText(p.description_extra) ||
+    hasText(p.quote) ||
+    hasText(p.programme) ||
+    hasText(p.info) ||
+    (tagGroups.value && tagGroups.value.length > 0)
+  );
 });
 
 </script>

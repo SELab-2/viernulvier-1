@@ -131,7 +131,9 @@ describe("ProductionDetail", () => {
   // ── Success state ────────────────────────────────────────────────────────────
   describe("success state", () => {
     it("renders all production sections when data is loaded", async () => {
-      mockGetProduction.mockResolvedValue(makeProduction());
+      mockGetProduction.mockResolvedValue(makeProduction({
+        description: { nl: "Iets van tekst" },
+      }));
       const wrapper = mountComponent();
       await flushPromises();
 
@@ -140,6 +142,15 @@ describe("ProductionDetail", () => {
       expect(wrapper.find('[data-testid="events-section"]').exists()).toBe(true);
       expect(wrapper.find('[data-testid="gallery-section"]').exists()).toBe(true);
       expect(wrapper.find('[data-testid="blog-section"]').exists()).toBe(true);
+    });
+
+    it("does not render details-section when all fields are empty", async () => {
+      mockGetProduction.mockResolvedValue(makeProduction());
+
+      const wrapper = mountComponent();
+      await flushPromises();
+
+      expect(wrapper.find('[data-testid="details-section"]').exists()).toBe(false);
     });
 
     it("calls getProduction with the numeric id from the route", async () => {
