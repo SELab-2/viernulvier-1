@@ -69,7 +69,7 @@
                 v-for="(term, idx) in searchBannerTerms"
                 :key="`${idx}-${term}`"
                 type="button"
-                class="inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-full border border-accent-outline bg-surface-1 py-1 pl-3 pr-2 text-sm text-ink-primary transition hover:bg-surface-2 disabled:opacity-100"
+                :class="['max-w-full', ACTIVE_FILTER_CHIP_CLASS]"
                 :disabled="listLoading"
                 :aria-label="
                   t('productionsPage.removeSearchTerm', { term })
@@ -450,7 +450,7 @@ const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 
-/** Removable chips in the “Active filters” row */
+/** Removable applied-filter chips: active search terms, tag/year/date summary row */
 const ACTIVE_FILTER_CHIP_CLASS =
   "inline-flex cursor-pointer items-center gap-1 rounded-full border border-surface-3 bg-surface-0 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary shadow-sm ring-1 ring-inset ring-accent-outline/25 transition hover:bg-surface-2 dark:bg-surface-1 disabled:opacity-100";
 
