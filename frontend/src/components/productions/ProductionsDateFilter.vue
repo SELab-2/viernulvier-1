@@ -2,7 +2,12 @@
   <div ref="dateFilterRoot" class="productions-date-filter relative inline-block">
     <button
       type="button"
-      class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-surface-3 bg-surface-0 px-4 py-2 text-sm font-medium text-ink-primary transition hover:bg-surface-2 disabled:opacity-100 dark:bg-surface-1"
+      :class="[
+        'inline-flex cursor-pointer items-center gap-2 rounded-full border border-surface-3 px-4 py-2 text-sm font-medium text-ink-primary transition disabled:opacity-100',
+        hasActiveDateFilter
+          ? 'bg-surface-2 ring-1 ring-inset ring-accent-outline/40 hover:bg-surface-2 dark:bg-surface-2 dark:hover:bg-surface-2'
+          : 'bg-surface-0 hover:bg-surface-2 dark:bg-surface-1',
+      ]"
       :disabled="disabled"
       :aria-expanded="panelOpen"
       aria-haspopup="dialog"
@@ -184,6 +189,12 @@ watch(
     }
   },
   { immediate: true },
+);
+
+const hasActiveDateFilter = computed(
+  () =>
+    yearRange.value !== null ||
+    !!(dateFrom.value && dateTo.value),
 );
 
 const { t } = useI18n();
