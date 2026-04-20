@@ -97,7 +97,7 @@
               v-model:year-range="explicitYearRange"
               v-model:date-from="filterDateFrom"
               v-model:date-to="filterDateTo"
-              :disabled="listLoading || loadError"
+              :disabled="loadError"
               :min-year="filterYearBounds.minYear"
               :max-year="filterYearBounds.maxYear"
             />
