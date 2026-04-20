@@ -165,7 +165,7 @@
                   class="rounded-full border px-3 py-1 text-sm transition disabled:opacity-100"
                   :class="
                     selectedTagIds.includes(g.id)
-                      ? 'border-accent-outline bg-surface-2 text-ink-primary'
+                      ? 'border-accent-outline bg-surface-1 text-ink-primary'
                       : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
                   "
                   :disabled="listLoading || loadError"
