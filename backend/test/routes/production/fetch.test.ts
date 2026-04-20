@@ -2,12 +2,14 @@ import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import {
+  PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE,
+  PRODUCTION_LIST_ERROR_CODE,
+  PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE,
   ProductionSchema,
   ProductionSchemaWithBackwardsRefs,
   type ProductionWithBackwardsRefs,
 } from "@viernulvier/shared/index.js";
 import { getProductionsByIds } from "@/routes/production/handlers/fetch.js";
-import { PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE } from "@/routes/production/helpers/pagination.js";
 import { productionRowWithRefs, productionRowWithRefsAlt } from "./fixtures.js";
 
 let server: FastifyInstance;
@@ -277,8 +279,9 @@ describe("Production fetch routes", () => {
     });
 
     expect(response.statusCode).toBe(400);
-    const body = response.json() as { error?: string };
+    const body = response.json() as { error?: string; code?: string };
     expect(body.error).toBe(PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE);
+    expect(body.code).toBe(PRODUCTION_LIST_ERROR_CODE.DATE_RANGE_ORDER);
   });
 
   test("GET /api/v1/production?yearMin=…&yearMax=… -> 200", async () => {
@@ -311,6 +314,9 @@ describe("Production fetch routes", () => {
     });
 
     expect(response.statusCode).toBe(400);
+    const body = response.json() as { error?: string; code?: string };
+    expect(body.error).toBe(PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE);
+    expect(body.code).toBe(PRODUCTION_LIST_ERROR_CODE.YEAR_RANGE_ORDER);
   });
 
   test("GET /api/v1/production?limit=5 -> total 0 when COUNT returns no row", async () => {

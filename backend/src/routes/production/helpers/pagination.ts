@@ -1,15 +1,16 @@
 import z from "zod";
+import {
+  PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE,
+  PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE,
+} from "@viernulvier/shared/index.js";
 import { SearchParamSchema } from "./search.js";
 
 export const MAX_PAGE_SIZE = 100;
 
-/** Zod refine message for `from` / `to` order; also used in API responses and client copy mapping. */
-export const PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE =
-  "`from` must be on or before `to`";
-
-/** Year-span filter must use min ≤ max (calendar years). */
-export const PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE =
-  "`yearMin` must be on or before `yearMax`";
+export {
+  PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE,
+  PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE,
+};
 
 /** Parsed query for `GET /production` (pagination, search, filters, optional `old_id`). */
 export const ProductionListQuerySchema = z

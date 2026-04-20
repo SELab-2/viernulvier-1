@@ -379,12 +379,15 @@ import {
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import type { LocationQuery, LocationQueryRaw } from "vue-router";
-import type {
-  Event as ProductionEvent,
-  Hall,
-  ProductionWithBackwardsRefs,
-  Tag,
-  TagType,
+import {
+  type Event as ProductionEvent,
+  type Hall,
+  type ProductionWithBackwardsRefs,
+  type Tag,
+  type TagType,
+  PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE,
+  PRODUCTION_LIST_ERROR_CODE,
+  PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE,
 } from "@viernulvier/shared";
 import AppFooter from "@/components/AppFooter.vue";
 import AppNavbar from "@/components/AppNavbar.vue";
@@ -430,13 +433,6 @@ function collapsedTagFilterList(
   if (must.length >= max) return must;
   return [...must, ...rest.slice(0, max - must.length)];
 }
-
-/** Keep in sync with `PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE` in backend `pagination.ts`. */
-const PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE =
-  "`from` must be on or before `to`" as const;
-/** Keep in sync with `PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE` in backend `pagination.ts`. */
-const PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE =
-  "`yearMin` must be on or before `yearMax`" as const;
 
 /** 1-based page index in the URL (`?page=1` is normalized away). */
 const PAGE_QUERY_KEY = "page";
@@ -820,12 +816,24 @@ function beginListAttempt() {
 function failListAttempt(err: unknown) {
   loadError.value = true;
   if (err instanceof ApiError && err.status === 400) {
-    loadErrorDetail.value =
-      err.message === PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE
-        ? t("productionsPage.invalidListDateRange")
-        : err.message === PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE
-          ? t("productionsPage.invalidListYearRange")
-          : err.message;
+    const code = err.code;
+    if (code === PRODUCTION_LIST_ERROR_CODE.DATE_RANGE_ORDER) {
+      loadErrorDetail.value = t("productionsPage.invalidListDateRange");
+      return;
+    }
+    if (code === PRODUCTION_LIST_ERROR_CODE.YEAR_RANGE_ORDER) {
+      loadErrorDetail.value = t("productionsPage.invalidListYearRange");
+      return;
+    }
+    if (err.message === PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE) {
+      loadErrorDetail.value = t("productionsPage.invalidListDateRange");
+      return;
+    }
+    if (err.message === PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE) {
+      loadErrorDetail.value = t("productionsPage.invalidListYearRange");
+      return;
+    }
+    loadErrorDetail.value = err.message;
     return;
   }
   loadErrorDetail.value = null;

@@ -1,7 +1,12 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { QueryResult } from "pg";
 import type {ProductionWithBackwardsRefs, ProductionWithMeta} from "@viernulvier/shared/index.js";
-import {ProductionSchema, ProductionSchemaWithBackwardsRefs, stringToInt} from "@viernulvier/shared/index.js";
+import {
+  ProductionSchema,
+  ProductionSchemaWithBackwardsRefs,
+  productionListErrorCodeForMessage,
+  stringToInt,
+} from "@viernulvier/shared/index.js";
 import {
   HttpClientError,
   HttpError,
@@ -170,7 +175,8 @@ export async function fetchProductions(
     server.log.error(parsedQuery.error);
     const msg =
       parsedQuery.error.issues[0]?.message ?? "Invalid request data";
-    throw new HttpError(HttpClientError.BadRequest, msg);
+    const code = productionListErrorCodeForMessage(msg);
+    throw new HttpError(HttpClientError.BadRequest, msg, code);
   }
   const query = parsedQuery.data;
   const limit = query.limit;
