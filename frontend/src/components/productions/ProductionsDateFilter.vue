@@ -98,7 +98,7 @@
             class="mt-2 text-center text-sm font-medium tabular-nums text-ink-primary"
             aria-live="polite"
           >
-            {{ localFrom }} – {{ localTo }}
+            {{ yearRangeDisplayLabel }}
           </p>
         </div>
       </section>
@@ -198,6 +198,12 @@ const yearThumbsCoincide = computed(
   () =>
     props.minYear < props.maxYear && localFrom.value === localTo.value,
 );
+
+/** Single year when range collapses to one year */
+const yearRangeDisplayLabel = computed(() => {
+  if (localFrom.value === localTo.value) return String(localFrom.value);
+  return `${localFrom.value} – ${localTo.value}`;
+});
 
 const collapsedDragActive = ref(false);
 let collapsedDragPointerId: number | null = null;

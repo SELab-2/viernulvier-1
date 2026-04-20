@@ -1076,6 +1076,7 @@ const dateRangeSummary = computed(() => {
 const yearRangeChipSummary = computed(() => {
   const r = filterBannerYearRange.value;
   if (!r) return "";
+  if (r.from === r.to) return String(r.from);
   return t("productionsPage.yearRangeChip", { from: r.from, to: r.to });
 });
 
