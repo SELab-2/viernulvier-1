@@ -176,8 +176,11 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-
-type YearSpan = { from: number; to: number };
+import {
+  committedYearRangeFromThumbs,
+  orderIsoDatePairIfReversed,
+  type YearSpan,
+} from "./productionsDateFilterModel";
 
 const props = withDefaults(
   defineProps<{
@@ -368,11 +371,12 @@ function onToInput(e: Event): void {
 }
 
 function commitYearRange(): void {
-  if (localFrom.value === props.minYear && localTo.value === props.maxYear) {
-    yearRange.value = null;
-  } else {
-    yearRange.value = { from: localFrom.value, to: localTo.value };
-  }
+  yearRange.value = committedYearRangeFromThumbs(
+    localFrom.value,
+    localTo.value,
+    props.minYear,
+    props.maxYear,
+  );
 }
 
 function clearDates(): void {
@@ -381,10 +385,10 @@ function clearDates(): void {
 }
 
 function onDateInputsChange(): void {
-  if (dateFrom.value && dateTo.value && dateFrom.value > dateTo.value) {
-    const swap = dateTo.value;
-    dateTo.value = dateFrom.value;
-    dateFrom.value = swap;
+  const ordered = orderIsoDatePairIfReversed(dateFrom.value, dateTo.value);
+  if (ordered.from !== dateFrom.value || ordered.to !== dateTo.value) {
+    dateFrom.value = ordered.from;
+    dateTo.value = ordered.to;
   }
 }
 
