@@ -4,7 +4,6 @@ import { getMetadata, parseSchema } from "@/routes/helpers.js";
 import { getProductionById } from "./fetch.js";
 import { CreateProductionBodySchema } from "./body-schema.js";
 import { getFieldValue, getNullableFieldValue } from "./field-utils.js";
-import { syncProductionTags } from "./tags.js";
 
 const RequiredCreateColumns = [
   "title",
@@ -74,8 +73,6 @@ export async function createProduction(
 
   const row = insertResult.rows[0];
   if (!row) return null;
-
-  await syncProductionTags(server, row.id, body.tags);
 
   return await getProductionById(server, row.id);
 }

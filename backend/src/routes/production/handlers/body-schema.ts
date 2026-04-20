@@ -1,8 +1,6 @@
 import { ProductionSchema } from "@viernulvier/shared/index.js";
 import z from "zod";
 
-const ProductionTagIdsSchema = z.array(z.int().positive()).optional();
-
 export const ProductionBodySchema = ProductionSchema.pick({
   old_id: true,
   finalized: true,
@@ -21,7 +19,6 @@ export const ProductionBodySchema = ProductionSchema.pick({
   programme: true,
   info: true,
 }).extend({
-  tags: ProductionTagIdsSchema,
 });
 
 export const CreateProductionBodySchema = ProductionSchema.pick({
@@ -45,7 +42,6 @@ export const CreateProductionBodySchema = ProductionSchema.pick({
     info: true,
   }).partial().shape,
 ).extend({
-  tags: ProductionTagIdsSchema,
 });
 
 export const PartialProductionBodySchema = ProductionBodySchema.partial();

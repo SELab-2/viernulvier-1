@@ -5,7 +5,6 @@ import { getMetadata, parseParams, parseSchema } from "@/routes/helpers.js";
 import { getProductionById } from "./fetch.js";
 import { ProductionBodySchema } from "./body-schema.js";
 import { getFieldValue } from "./field-utils.js";
-import { syncProductionTags } from "./tags.js";
 import z from "zod";
 
 const ReplaceColumns = [
@@ -60,8 +59,6 @@ export async function replaceProduction(
      RETURNING id`,
     values,
   );
-
-  await syncProductionTags(server, id, body.tags);
 
   return await getProductionById(server, id);
 }
