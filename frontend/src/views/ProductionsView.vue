@@ -267,7 +267,10 @@
         <div v-else>
           <p
             v-if="displayedFilteredTotal !== null"
-            class="mb-2 text-sm leading-normal text-ink-secondary tabular-nums"
+            :class="[
+              'mb-2 text-sm leading-normal text-ink-secondary tabular-nums',
+              !filterBannerHasNonSearchChips() && 'mt-6',
+            ]"
             aria-live="polite"
           >
             {{ filteredResultsCountLabel }}
