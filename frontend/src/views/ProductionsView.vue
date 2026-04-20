@@ -197,7 +197,7 @@
               filterBannerYearRange !== null ||
               (filterBannerDateFrom && filterBannerDateTo)
             "
-            class="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-2 border-t border-surface-3 pt-4"
+            class="mb-4 mt-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-2 border-t border-surface-3 pt-5"
           >
             <div class="flex min-w-0 flex-wrap items-center gap-2">
               <span class="text-sm text-ink-secondary">{{
