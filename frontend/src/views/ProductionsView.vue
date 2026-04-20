@@ -91,6 +91,19 @@
           </div>
 
           <div
+            class="mt-4 flex flex-wrap items-center gap-2 border-t border-surface-3 pt-4"
+          >
+            <ProductionsDateFilter
+              v-model:year-range="explicitYearRange"
+              v-model:date-from="filterDateFrom"
+              v-model:date-to="filterDateTo"
+              :disabled="listLoading || loadError"
+              :min-year="filterYearBounds.minYear"
+              :max-year="filterYearBounds.maxYear"
+            />
+          </div>
+
+          <div
             v-if="genreTagsForFilter.length > 0"
             class="mt-4 space-y-3 border-t border-surface-3 pt-4"
           >
@@ -176,19 +189,6 @@
                 }}
               </button>
             </div>
-          </div>
-
-          <div
-            class="mt-4 flex flex-wrap items-center gap-2 border-t border-surface-3 pt-4"
-          >
-            <ProductionsDateFilter
-              v-model:year-range="explicitYearRange"
-              v-model:date-from="filterDateFrom"
-              v-model:date-to="filterDateTo"
-              :disabled="listLoading || loadError"
-              :min-year="filterYearBounds.minYear"
-              :max-year="filterYearBounds.maxYear"
-            />
           </div>
 
           <div
