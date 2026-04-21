@@ -49,7 +49,7 @@ services:
     depends_on:
       - backend
     environment:
-     - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_USEPOLLING=true
 networks:
   viernulvier-network:
     driver: bridge

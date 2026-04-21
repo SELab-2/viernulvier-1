@@ -94,6 +94,8 @@ export class HttpError extends Error {
   constructor(
     public status: HTTPErrorCode,
     message: string,
+    /** Optional machine-readable code included in JSON error responses when set. */
+    public readonly code?: string,
   ) {
     super(message);
     this.name = "HttpError";
@@ -296,7 +298,11 @@ export function replyHandler<Z extends z.ZodType>(
         return await reply.status(err.status).send({ error: err.message, details: err.details });
       }
       if (err instanceof HttpError) {
-        return await reply.status(err.status).send({ error: err.message });
+        const payload =
+          err.code !== undefined
+            ? { error: err.message, code: err.code }
+            : { error: err.message };
+        return await reply.status(err.status).send(payload);
       }
       throw err;
     }
