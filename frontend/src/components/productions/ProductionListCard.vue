@@ -4,7 +4,8 @@
       name: RouteNames.PRODUCTION_DETAIL,
       params: { lang: locale, id: production.id },
     }"
-    class="group -mx-3 flex items-stretch gap-4 border-b border-surface-3 px-3 py-8 transition-colors last:border-b-0 hover:bg-surface-1/60 sm:-mx-4 sm:gap-6 sm:px-4 md:-mx-5 md:gap-8 md:px-5"
+    class="production-list-card group -mx-3 flex items-stretch gap-4 border-b border-surface-3 px-3 py-8 transition-colors last:border-b-0 hover:bg-surface-1/60 sm:-mx-4 sm:gap-6 sm:px-4 md:-mx-5 md:gap-8 md:px-5"
+    :style="{ '--production-list-stagger': `${staggerDelayMs}ms` }"
   >
     <div
       class="relative h-28 w-24 shrink-0 overflow-hidden rounded-md bg-surface-2 sm:h-32 sm:w-28 md:h-36 md:w-32"
@@ -101,14 +102,24 @@ import { localizeOrEmpty } from "@/utils/i18n";
 import type { ProductionDateSummary } from "@/utils/productionsOverview";
 import type { ProductionTagChip } from "@/utils/tagDisplay";
 
-const props = defineProps<{
-  production: ProductionWithBackwardsRefs;
-  dateSummary: ProductionDateSummary;
-  tagChips: ProductionTagChip[];
-  hallsText: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    production: ProductionWithBackwardsRefs;
+    dateSummary: ProductionDateSummary;
+    tagChips: ProductionTagChip[];
+    hallsText: string;
+    /** Used to stagger the row entrance animation on the productions list. */
+    rowIndex?: number;
+  }>(),
+  { rowIndex: 0 },
+);
 
 const { t, locale } = useI18n();
+
+/** Cap delay so long pages do not stretch the sequence too far. */
+const staggerDelayMs = computed(() =>
+  Math.min((props.rowIndex ?? 0) * 52, 650),
+);
 
 const title = computed(() =>
   localizeOrEmpty(props.production.title, locale.value as SupportedLang),
@@ -117,3 +128,28 @@ const artist = computed(() =>
   localizeOrEmpty(props.production.artist, locale.value as SupportedLang),
 );
 </script>
+
+<style scoped>
+.production-list-card {
+  animation: production-list-card-in 0.42s ease-out both;
+  animation-delay: var(--production-list-stagger, 0ms);
+}
+
+@keyframes production-list-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .production-list-card {
+    animation: none;
+    opacity: 1;
+  }
+}
+</style>

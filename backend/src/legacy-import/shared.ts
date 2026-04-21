@@ -71,6 +71,11 @@ export type ImportArgs = {
   filePath: string;
   dryRun: boolean;
   limit: number | null;
+  /**
+   * Events import only: productions CSV (`Titel`, `Ondertitel`, `ID`) used for title/artist + calendar-day dedupe.
+   * Set by `parseLegacyImportCli` when `eventsProductionsDefault` is provided.
+   */
+  productionsFilePath?: string;
 };
 
 /**
@@ -123,6 +128,10 @@ export type LegacyImportCliOptions = {
   scriptForUsage: string;
   /** One-line summary for `--help`. */
   description: string;
+  /**
+   * When set (events importer): enables `--productions-file` and defaults `ImportArgs.productionsFilePath` to this path.
+   */
+  eventsProductionsDefault?: string;
 };
 
 /**
@@ -140,6 +149,7 @@ export function argvForLegacyImportYargs(hideBinResult: readonly string[], fromT
 /**
  * Shared yargs CLI for legacy CSV importers: positional path, `--file`, `--dry-run`, `--limit`, `--help` / `-h`.
  * `--file` overrides a positional path; if multiple positionals are given without `--file`, the last wins.
+ * Events importer may also set `eventsProductionsDefault` to enable `--productions-file`.
  *
  * @param argv - Optional argv slice for unit tests. When set, yargs does not call `process.exit` on errors or `--help`.
  */
@@ -152,12 +162,17 @@ export function parseLegacyImportCli(
     ? argvForLegacyImportYargs(argv, true)
     : argvForLegacyImportYargs(hideBin(process.argv), false);
 
-  const parsed = yargs(input)
+  const defaultFilesHelp =
+    options.eventsProductionsDefault !== undefined
+      ? `Default events CSV:\n  ${options.defaultFile}\n\nDefault productions CSV (title/artist for event dedupe):\n  ${options.eventsProductionsDefault}`
+      : `Default CSV:\n  ${options.defaultFile}`;
+
+  let y = yargs(input)
     .locale("en")
     .exitProcess(!fromTest)
     .scriptName(`pnpm run ${options.scriptForUsage}`)
     .usage(
-      `${options.description}\n\nUsage:\n  pnpm run ${options.scriptForUsage} -- [path/to/file.csv] [options]\n  pnpm run ${options.scriptForUsage} -- --file <path> [options]\n\nDefault CSV:\n  ${options.defaultFile}`,
+      `${options.description}\n\nUsage:\n  pnpm run ${options.scriptForUsage} -- [path/to/file.csv] [options]\n  pnpm run ${options.scriptForUsage} -- --file <path> [options]\n\n${defaultFilesHelp}`,
     )
     .option("file", {
       type: "string",
@@ -173,10 +188,26 @@ export function parseLegacyImportCli(
       type: "number",
       requiresArg: true,
       describe: "Stop after reading n data rows from the CSV",
-    })
+    });
+
+  if (options.eventsProductionsDefault !== undefined) {
+    y = y.option("productions-file", {
+      type: "string",
+      describe: "Productions CSV path (Titel, Ondertitel, ID); overrides default for event dedupe",
+    });
+  }
+
+  const parsed = y
     .check((argv) => {
       if (argv.file !== undefined && String(argv.file).trim() === "") {
         throw new Error("Missing value for --file");
+      }
+      if (
+        argv["productionsFile"] !== undefined &&
+        options.eventsProductionsDefault !== undefined &&
+        String(argv["productionsFile"]).trim() === ""
+      ) {
+        throw new Error("Missing value for --productions-file");
       }
       if (argv.limit !== undefined) {
         const n = argv.limit;
@@ -205,6 +236,15 @@ export function parseLegacyImportCli(
 
   const dryRun = parsed.dryRun === true;
   const limit = parsed.limit === undefined ? null : parsed.limit;
+
+  if (options.eventsProductionsDefault !== undefined) {
+    const pfRaw = parsed["productionsFile"];
+    const productionsFilePath =
+      pfRaw !== undefined && String(pfRaw).trim() !== ""
+        ? path.resolve(process.cwd(), String(pfRaw))
+        : options.eventsProductionsDefault;
+    return { filePath, dryRun, limit, productionsFilePath };
+  }
 
   return { filePath, dryRun, limit };
 }
