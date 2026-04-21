@@ -61,12 +61,12 @@ export function buildProductionListWhere(
     params.push(pattern);
   }
 
-  for (const id of tagIds) {
+  if (tagIds.length > 0) {
     const idx = params.length + 1;
     parts.push(
-      `EXISTS (SELECT 1 FROM production_tag pt WHERE pt.production = p.id AND pt.tag = $${idx})`,
+      `EXISTS (SELECT 1 FROM production_tag pt WHERE pt.production = p.id AND pt.tag = ANY($${idx}::int[]))`,
     );
-    params.push(id);
+    params.push(tagIds);
   }
 
   if (yearRange !== undefined) {

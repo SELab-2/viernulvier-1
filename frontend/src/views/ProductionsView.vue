@@ -194,8 +194,8 @@
           <div
             v-if="
               filterBannerTagIds.length > 0 ||
-              filterBannerYearRange !== null ||
-              (filterBannerDateFrom && filterBannerDateTo)
+                filterBannerYearRange !== null ||
+                (filterBannerDateFrom && filterBannerDateTo)
             "
             class="mb-4 mt-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-2 border-t border-surface-3 pt-5"
           >
@@ -401,7 +401,11 @@ import { ApiError } from "@/services/api";
 import { getProductions } from "@/services/productions";
 import { getTags, getTagTypes } from "@/services/tags";
 import { localizeOrEmpty } from "@/utils/i18n";
-import { tagTypeIsGenre, type ProductionTagChip } from "@/utils/tagDisplay";
+import {
+  sortProductionTagChipsGenresFirst,
+  tagTypeIsGenre,
+  type ProductionTagChip,
+} from "@/utils/tagDisplay";
 import {
   distinctHallNames,
   groupEventsByProductionId,
@@ -757,20 +761,21 @@ function productionsListArgs(page: number) {
 
 async function fetchProductionsPageData(page0: number) {
   const { items, total } = await getProductions(productionsListArgs(page0));
+  const ids = items.map((p) => p.id);
+  const eventsMap =
+    ids.length === 0
+      ? new Map<number, ProductionEvent[]>()
+      : groupEventsByProductionId(await getEventsForProductions(ids));
+
+  // Apply list + events together so cards never render with new productions but
+  // stale/empty per-production events (avoids layout shift on title vs date/hall lines).
   productions.value = items;
   totalCount.value = total;
   currentPage.value = page0;
   displayedFilteredTotal.value = hasActiveListFilters.value ? total : null;
   searchBannerTerms.value = [...appliedSearchTerms.value];
   syncFilterBannerFromApplied();
-
-  const ids = items.map((p) => p.id);
-  if (ids.length === 0) {
-    eventsByProduction.value = new Map();
-  } else {
-    const events = await getEventsForProductions(ids);
-    eventsByProduction.value = groupEventsByProductionId(events);
-  }
+  eventsByProduction.value = eventsMap;
 }
 
 function toggleTag(id: number) {
@@ -1263,6 +1268,6 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
       isGenre: tagTypeIsGenre(tagType),
     });
   }
-  return chips;
+  return sortProductionTagChipsGenresFirst(chips);
 }
 </script>

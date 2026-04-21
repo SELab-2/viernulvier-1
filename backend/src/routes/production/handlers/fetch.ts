@@ -157,7 +157,7 @@ export type PaginatedProductions = {
  * - With `limit`: returns a page `{ items, total }` where `total` is the matching row count.
  * - Optional `search`: comma-separated terms (`search=a,b`), AND semantics (same encoding style
  *   as `tags`). Repeating the `search` key is still accepted for older clients.
- * - Optional `tags`: comma-separated tag IDs — production must include **every** tag.
+ * - Optional `tags`: comma-separated tag IDs — production must include at least one of these tags.
  * - Optional `yearMin` / `yearMax` (inclusive) — event year must fall in that span.
  * - Optional `from` / `to` (`YYYY-MM-DD`) — production must have an event in that range (venue TZ).
  * - Optional `old_id` — legacy id; when set, only `p.old_id` (same as staging; other filters ignored).

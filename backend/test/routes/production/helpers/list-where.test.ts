@@ -45,7 +45,7 @@ describe("buildProductionListWhere", () => {
     expect(r.whereSql).toContain("ILIKE $1");
   });
 
-  test("AND-merges search, tags, year span, and date span", () => {
+  test("AND-merges search, year span, and date span; tags match any id (OR)", () => {
     const r = buildProductionListWhere(
       ["ham"],
       [5, 7],
@@ -55,16 +55,15 @@ describe("buildProductionListWhere", () => {
     );
     expect(r.params).toEqual([
       "%ham%",
-      5,
-      7,
+      [5, 7],
       2015,
       2020,
       "2024-01-01",
       "2024-12-31",
     ]);
     expect(r.whereSql.startsWith(" WHERE ")).toBe(true);
-    // Inner EXISTS clauses also use "AND"; do not split naïvely on " AND ".
     expect(r.whereSql).toContain("production_tag pt");
+    expect(r.whereSql).toContain("ANY($2::int[])");
     expect(r.whereSql).toContain("EXTRACT(YEAR FROM");
     expect(r.whereSql).toContain("::date >=");
   });
