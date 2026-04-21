@@ -401,7 +401,11 @@ import { ApiError } from "@/services/api";
 import { getProductions } from "@/services/productions";
 import { getTags, getTagTypes } from "@/services/tags";
 import { localizeOrEmpty } from "@/utils/i18n";
-import { tagTypeIsGenre, type ProductionTagChip } from "@/utils/tagDisplay";
+import {
+  sortProductionTagChipsGenresFirst,
+  tagTypeIsGenre,
+  type ProductionTagChip,
+} from "@/utils/tagDisplay";
 import {
   distinctHallNames,
   groupEventsByProductionId,
@@ -1264,6 +1268,6 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
       isGenre: tagTypeIsGenre(tagType),
     });
   }
-  return chips;
+  return sortProductionTagChipsGenresFirst(chips);
 }
 </script>

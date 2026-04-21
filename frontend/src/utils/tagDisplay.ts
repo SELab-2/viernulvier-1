@@ -22,3 +22,12 @@ export function tagTypeIsGenre(tagType: TagType | undefined): boolean {
   }
   return false;
 }
+
+/** Genres first; order within each group follows the input (stable sort). */
+export function sortProductionTagChipsGenresFirst(
+  chips: readonly ProductionTagChip[],
+): ProductionTagChip[] {
+  return [...chips].sort(
+    (a, b) => Number(b.isGenre) - Number(a.isGenre),
+  );
+}
