@@ -20,6 +20,8 @@ const TagsListQuerySchema = z
     tag_type: stringToInt.optional(),
     /** When `includeProductions=true`, each tag includes a `productions` id list; otherwise the field is omitted. */
     includeProductions: z.literal("true").optional(),
+    /** When `includeProductionCount=true`, each tag includes `production_count` (distinct productions); cheaper than `includeProductions`. */
+    includeProductionCount: z.literal("true").optional(),
   })
   .refine(
     (q) =>
@@ -34,6 +36,17 @@ const TagsListQuerySchema = z
     {
       message:
         "Query parameter production cannot be combined with old_id / tag_type",
+    },
+  )
+  .refine(
+    (q) =>
+      !(
+        q.includeProductions === "true" &&
+        q.includeProductionCount === "true"
+      ),
+    {
+      message:
+        "Query parameters includeProductions and includeProductionCount cannot be combined",
     },
   );
 
@@ -70,19 +83,47 @@ async function fetchProductionIdsByTagIds(
   return map;
 }
 
+async function fetchProductionCountsByTagIds(
+  server: FastifyInstance,
+  tagIds: number[],
+): Promise<Map<number, number>> {
+  if (tagIds.length === 0) {
+    return new Map();
+  }
+  const res = await server.pg.query<{ tag: number; cnt: number }>(
+    `SELECT tag, COUNT(DISTINCT production)::int AS cnt
+     FROM production_tag
+     WHERE tag = ANY($1::int[])
+     GROUP BY tag`,
+    [tagIds],
+  );
+  const map = new Map<number, number>();
+  for (const row of res.rows) {
+    map.set(row.tag, row.cnt);
+  }
+  return map;
+}
+
 function tagsFromDbRows(
   rows: z.infer<typeof TagDbRowSchema>[],
   byTag: Map<number, number[]>,
   includeProductions: boolean,
+  countsByTag?: Map<number, number>,
 ): Tag[] {
   return rows.map((row) => {
-    if (!includeProductions) {
-      return { ...row };
+    if (includeProductions) {
+      return {
+        ...row,
+        productions: byTag.get(row.id) ?? [],
+      };
     }
-    return {
-      ...row,
-      productions: byTag.get(row.id) ?? [],
-    };
+    if (countsByTag !== undefined) {
+      return {
+        ...row,
+        production_count: countsByTag.get(row.id) ?? 0,
+      };
+    }
+    return { ...row };
   });
 }
 
@@ -237,11 +278,8 @@ async function fetchTags(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Tag[] | null> {
-  const { production, old_id, tag_type, includeProductions } = parseSchema(
-    server,
-    TagsListQuerySchema,
-    request.query,
-  );
+  const { production, old_id, tag_type, includeProductions, includeProductionCount } =
+    parseSchema(server, TagsListQuerySchema, request.query);
   const rows =
     old_id !== undefined && tag_type !== undefined
       ? await fetchTagsByOldIdAndTypeQuery(server)(old_id, tag_type)
@@ -255,7 +293,19 @@ async function fetchTags(
         rows.map((r) => r.id),
       )
       : new Map<number, number[]>();
-  const merged = tagsFromDbRows(rows, byTag, includeProductions !== undefined);
+  const countsByTag =
+    includeProductionCount !== undefined
+      ? await fetchProductionCountsByTagIds(
+        server,
+        rows.map((r) => r.id),
+      )
+      : undefined;
+  const merged = tagsFromDbRows(
+    rows,
+    byTag,
+    includeProductions !== undefined,
+    countsByTag,
+  );
   return parseSchema(server, z.array(TagSchema), merged, ParseContext.Database);
 }
 
@@ -270,11 +320,8 @@ async function fetchTagsVisible(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Tag[] | null> {
-  const { production, old_id, tag_type, includeProductions } = parseSchema(
-    server,
-    TagsListQuerySchema,
-    request.query,
-  );
+  const { production, old_id, tag_type, includeProductions, includeProductionCount } =
+    parseSchema(server, TagsListQuerySchema, request.query);
   const rows =
     old_id !== undefined && tag_type !== undefined
       ? await fetchTagsVisibleByOldIdAndTypeQuery(server)(old_id, tag_type)
@@ -288,7 +335,19 @@ async function fetchTagsVisible(
         rows.map((r) => r.id),
       )
       : new Map<number, number[]>();
-  const merged = tagsFromDbRows(rows, byTag, includeProductions !== undefined);
+  const countsByTag =
+    includeProductionCount !== undefined
+      ? await fetchProductionCountsByTagIds(
+        server,
+        rows.map((r) => r.id),
+      )
+      : undefined;
+  const merged = tagsFromDbRows(
+    rows,
+    byTag,
+    includeProductions !== undefined,
+    countsByTag,
+  );
   return parseSchema(server, z.array(TagSchema), merged, ParseContext.Database);
 }
 
