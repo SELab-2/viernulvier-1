@@ -40,6 +40,8 @@ import type { LanguageMap } from "@/utils/i18n";
 
 /** Payload for creating a new tag. */
 export interface CreateTagInput {
+  /** Legacy identifier from the old system, or `null` for fresh tags. */
+  old_id: number | null;
   /** Localised display name of the tag. */
   name: LanguageMap;
   /** ID of the tag type this tag belongs to. */
@@ -87,15 +89,24 @@ export type UpdateTagTypeInput = Partial<CreateTagTypeInput>;
 // ---------------------------------------------------------------------------
 
 /**
- * Fetches publicly visible tags. 
+ * Fetches publicly visible tags.
  * Can be filtered by production ID.
+ *
  * @param productionId - Optional ID to get tags for a specific production.
+ * @param options.includeProductionCount - When true, each tag includes `production_count` (distinct linked productions).
  * @example
  * const tags = await getTags(45); // Get public tags for production 45
+ * const tagsWithCounts = await getTags(undefined, { includeProductionCount: true });
  */
-export async function getTags(productionId?: number): Promise<Tag[]> {
-  const url = productionId ? `/tag?production=${productionId}` : "/tag";
-  return await apiFetch<Tag[]>(url);
+export async function getTags(
+  productionId?: number,
+  options?: { includeProductionCount?: boolean },
+): Promise<Tag[]> {
+  const params = new URLSearchParams();
+  if (productionId !== undefined) params.set("production", String(productionId));
+  if (options?.includeProductionCount) params.set("includeProductionCount", "true");
+  const qs = params.toString();
+  return await apiFetch<Tag[]>(qs ? `/tag?${qs}` : "/tag");
 }
 
 /**

@@ -16,6 +16,11 @@ import {
   legacyProductionRowToCreateBody,
   LegacyTagCreateBodySchema,
 } from "./validate-legacy-inserts.js";
+import {
+  indexLanguageMapValues,
+  SQL_FIND_GENRE_TAG_ID_BY_ANY_LANG_NAME,
+  SQL_LIST_PRODUCTION_IDS_BY_TITLE_AND_ARTIST,
+} from "./jsonb-name-match.js";
 
 export const LEGACY_PRODUCTION_IMPORT_SOURCE = "productions-output-csv";
 
@@ -48,8 +53,13 @@ async function ensureIdempotencyTable(client: pg.Client): Promise<void> {
       legacy_id TEXT NOT NULL,
       production_id INT NOT NULL REFERENCES production(id) ON DELETE CASCADE,
       imported_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      created_new_production BOOLEAN NOT NULL DEFAULT false,
       PRIMARY KEY (source, legacy_id)
     )
+  `);
+  await client.query(`
+    ALTER TABLE legacy_production_import_map
+    ADD COLUMN IF NOT EXISTS created_new_production BOOLEAN NOT NULL DEFAULT false
   `);
 }
 
@@ -82,15 +92,15 @@ async function getOrCreateTagTypeId(
 
 async function loadGenreTagCache(client: pg.Client, genreTagTypeId: number): Promise<Map<string, number>> {
   const map = new Map<string, number>();
-  const existingTags = await client.query<{ id: number; name: string }>(
-    `SELECT id, name->>'nl' AS name
+  const existingTags = await client.query<{ id: number; name: unknown }>(
+    `SELECT id, name
      FROM tag
      WHERE tag_type = $1`,
     [genreTagTypeId],
   );
 
   for (const tag of existingTags.rows) {
-    map.set(genreKey(tag.name), tag.id);
+    indexLanguageMapValues(map, tag.id, tag.name, genreKey);
   }
   return map;
 }
@@ -106,14 +116,10 @@ async function getOrCreateGenreTagId(
   const cached = cache.get(key);
   if (cached) return { id: cached, created: false };
 
-  const existing = await client.query<{ id: number }>(
-    `SELECT id
-     FROM tag
-     WHERE tag_type = $1
-       AND lower(name->>'nl') = lower($2)
-     LIMIT 1`,
-    [genreTagTypeId, genreName],
-  );
+  const existing = await client.query<{ id: number }>(SQL_FIND_GENRE_TAG_ID_BY_ANY_LANG_NAME, [
+    genreTagTypeId,
+    genreName,
+  ]);
   const existingId = existing.rows[0]?.id;
   if (existingId) {
     cache.set(key, existingId);
@@ -135,6 +141,22 @@ async function getOrCreateGenreTagId(
   return { id: insertedId, created: true };
 }
 
+/**
+ * Lists production ids with the same title and artist as the legacy row (any language in JSONB).
+ * Empty legacy `ondertitel` matches DB rows whose `artist` has no non-empty language value.
+ */
+async function listProductionIdsByTitleAndArtist(
+  client: pg.Client,
+  titel: string,
+  ondertitel: string,
+): Promise<number[]> {
+  const t = titel.trim();
+  if (t.length === 0) return [];
+  const a = ondertitel.trim();
+  const result = await client.query<{ id: number }>(SQL_LIST_PRODUCTION_IDS_BY_TITLE_AND_ARTIST, [t, a]);
+  return result.rows.map((r) => r.id);
+}
+
 type ImportStats = {
   totalRows: number;
   skippedNoLegacyId: number;
@@ -143,6 +165,8 @@ type ImportStats = {
   skippedNoTitle: number;
   skippedValidationFailed: number;
   importedProductions: number;
+  mappedLegacyIdsToExistingProductions: number;
+  insertedNewProductionAmbiguousOrNoMatch: number;
   createdGenreTags: number;
   linkedProductionTags: number;
   failedRows: number;
@@ -188,6 +212,8 @@ export async function importProductionsLegacy(client: pg.Client, args: ImportArg
     skippedNoTitle: 0,
     skippedValidationFailed: 0,
     importedProductions: 0,
+    mappedLegacyIdsToExistingProductions: 0,
+    insertedNewProductionAmbiguousOrNoMatch: 0,
     createdGenreTags: 0,
     linkedProductionTags: 0,
     failedRows: 0,
@@ -261,6 +287,32 @@ export async function importProductionsLegacy(client: pg.Client, args: ImportArg
       continue;
     }
 
+    const ondertitel = row["ondertitel"] ?? "";
+    const matchingProductionIds = await listProductionIdsByTitleAndArtist(client, title, ondertitel);
+    if (matchingProductionIds.length === 1) {
+      const existingProductionId = matchingProductionIds[0]!;
+      if (args.dryRun) {
+        stats.mappedLegacyIdsToExistingProductions++;
+        continue;
+      }
+      try {
+        await client.query(
+          `INSERT INTO legacy_production_import_map (source, legacy_id, production_id, created_new_production)
+           VALUES ($1, $2, $3, false)
+           ON CONFLICT (source, legacy_id) DO NOTHING`,
+          [LEGACY_PRODUCTION_IMPORT_SOURCE, legacyId, existingProductionId],
+        );
+        existingImported.add(legacyId);
+        stats.mappedLegacyIdsToExistingProductions++;
+      } catch (error) {
+        stats.failedRows++;
+        console.error(`Failed to map legacy ID ${legacyId} to existing production ${existingProductionId}:`, error);
+      }
+      continue;
+    }
+
+    stats.insertedNewProductionAmbiguousOrNoMatch++;
+
     if (args.dryRun) {
       for (const genre of genres) {
         const key = genreKey(genre);
@@ -332,8 +384,8 @@ export async function importProductionsLegacy(client: pg.Client, args: ImportArg
       }
 
       await client.query(
-        `INSERT INTO legacy_production_import_map (source, legacy_id, production_id)
-         VALUES ($1, $2, $3)`,
+        `INSERT INTO legacy_production_import_map (source, legacy_id, production_id, created_new_production)
+         VALUES ($1, $2, $3, true)`,
         [LEGACY_PRODUCTION_IMPORT_SOURCE, legacyId, productionId],
       );
 
@@ -358,5 +410,11 @@ export async function importProductionsLegacy(client: pg.Client, args: ImportArg
   console.log(`  Skipped (duplicate legacy ID in file): ${stats.skippedDuplicateLegacyIdInFile}`);
   console.log(`  Skipped (missing title): ${stats.skippedNoTitle}`);
   console.log(`  Skipped (Zod validation failed): ${stats.skippedValidationFailed}`);
+  console.log(
+    `  Legacy IDs mapped to existing productions (exactly one title+artist match, no new row): ${stats.mappedLegacyIdsToExistingProductions}`,
+  );
+  console.log(
+    `  New production rows (zero or multiple title+artist matches): ${stats.insertedNewProductionAmbiguousOrNoMatch}`,
+  );
   console.log(`  Failed rows: ${stats.failedRows}`);
 }

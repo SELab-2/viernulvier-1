@@ -36,6 +36,8 @@ vi.mock("@/services/productions", async (importOriginal) => {
 vi.mock("@/services/tags", () => ({
   getAllTags: vi.fn(),
   getTagsForProduction: vi.fn(),
+  getTagTypes: vi.fn().mockResolvedValue([]),
+  updateTag: vi.fn(),
 }));
 
 vi.mock("@/services/halls", () => ({
