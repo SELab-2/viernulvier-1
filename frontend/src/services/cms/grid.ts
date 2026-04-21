@@ -6,6 +6,18 @@ import { toLocalDateTimeInput } from "./date";
 import { extractEventIds } from "./helpers";
 import type { CmsEventGridRow, CmsProductionGridRow } from "./types";
 
+function filterProductionTagLabels(
+  productionTags: Tag[],
+  genreTagTypeIds: Set<number>,
+  includeGenre: boolean,
+  localize: (map: LanguageMap | null | undefined) => string,
+): string[] {
+  return productionTags
+    .filter((tag) => genreTagTypeIds.has(Number(tag.tag_type)) === includeGenre)
+    .map((tag) => localizeWithFallback(tag.name, localize))
+    .filter((label) => label.length > 0);
+}
+
 /**
  * Maps archive events to rows used by the CMS events drawer.
  */
@@ -54,14 +66,8 @@ export function buildProductionGridRow(
   const eventIds = extractEventIds(production.events as unknown[]);
 
   const productionTags = collectProductionTagsByIdMap(production, tagById);
-  const genreLabels = productionTags
-    .filter((tag) => genreTagTypeIds.has(Number(tag.tag_type)))
-    .map((tag) => localizeWithFallback(tag.name, localize))
-    .filter((label) => label.length > 0);
-  const additionalLabels = productionTags
-    .filter((tag) => !genreTagTypeIds.has(Number(tag.tag_type)))
-    .map((tag) => localizeWithFallback(tag.name, localize))
-    .filter((label) => label.length > 0);
+  const genreLabels = filterProductionTagLabels(productionTags, genreTagTypeIds, true, localize);
+  const additionalLabels = filterProductionTagLabels(productionTags, genreTagTypeIds, false, localize);
 
   return {
     id: production.id,

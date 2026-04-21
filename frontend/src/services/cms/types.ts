@@ -1,13 +1,8 @@
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import type { SupportedLang } from "@/i18n";
 
-/** Editable event row model used in the CMS events drawer. */
-export interface CmsEventGridRow {
-  id: number;
-  date: string;
-  time: string;
-  location: string;
-  price: string;
+/** Shared timing/location fields for CMS linked-event forms and rows. */
+export interface CmsEventTimingFields {
   startsAt: string;
   endsAt: string;
   doorsAt: string;
@@ -15,14 +10,17 @@ export interface CmsEventGridRow {
   infoNl: string;
 }
 
-/** Form model used by the "create linked event" modal. */
-export interface CmsCreateLinkedEventForm {
-  startsAt: string;
-  endsAt: string;
-  doorsAt: string;
-  hallId: number;
-  infoNl: string;
+/** Editable event row model used in the CMS events drawer. */
+export interface CmsEventGridRow extends CmsEventTimingFields {
+  id: number;
+  date: string;
+  time: string;
+  location: string;
+  price: string;
 }
+
+/** Form model used by the "create linked event" modal. */
+export interface CmsCreateLinkedEventForm extends CmsEventTimingFields {}
 
 /** AG Grid row model for the CMS production table. */
 export interface CmsProductionGridRow {
