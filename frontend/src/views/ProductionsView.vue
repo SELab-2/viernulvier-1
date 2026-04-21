@@ -194,8 +194,8 @@
           <div
             v-if="
               filterBannerTagIds.length > 0 ||
-              filterBannerYearRange !== null ||
-              (filterBannerDateFrom && filterBannerDateTo)
+                filterBannerYearRange !== null ||
+                (filterBannerDateFrom && filterBannerDateTo)
             "
             class="mb-4 mt-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-2 border-t border-surface-3 pt-5"
           >
