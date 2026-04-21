@@ -293,6 +293,7 @@
             <ProductionListCard
               v-for="(p, idx) in productions"
               :key="`${currentPage}-${idx}-${p.id}`"
+              :row-index="idx"
               :production="p"
               :date-summary="dateSummaryFor(p.id)"
               :tag-chips="tagChipsFor(p)"
