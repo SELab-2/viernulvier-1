@@ -41,7 +41,7 @@ export interface CmsAdminGridRow {
   id: number;
   source: Admin;
   username: string;
-  profilePicture: string | null;
+  // profilePicture: string | null;
   super: boolean;
 }
 

@@ -107,7 +107,7 @@ export function buildAdminGridRow(admin: Admin): CmsAdminGridRow {
     id: admin.id,
     source: admin,
     username: admin.username,
-    profilePicture: admin.profile_picture ?? null,
+    // profilePicture: admin.profile_picture ?? null,
     super: admin.super,
   };
 }
@@ -122,7 +122,7 @@ export function applyUpdatedAdminToRow(
 ): void {
   row.source = updated;
   row.username = updated.username;
-  row.profilePicture = updated.profile_picture ?? null;
+  // row.profilePicture = updated.profile_picture ?? null;
   row.super = updated.super;
 }
 

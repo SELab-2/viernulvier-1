@@ -13,7 +13,7 @@ type TranslateFunction = (key: string, params?: Record<string, unknown>) => stri
 const cmsAdminGridStateStorageKey = "viernulvier-cms-admin-grid-state";
 const cmsAdminGridColumnIds = [
   "username",
-  "profilePicture",
+  // "profilePicture",
   "super",
 ] as const;
 
@@ -55,7 +55,7 @@ export function useCmsAdminGrid(options: {
 
   const gridColumnOptions = computed(() => [
     { colId: "username", label: options.t("cms.columns.admin.username") },
-    { colId: "profilePicture", label: options.t("cms.columns.admin.profilePicture") },
+    // { colId: "profilePicture", label: options.t("cms.columns.admin.profilePicture") },
     { colId: "super", label: options.t("cms.columns.admin.super") },
   ] as const);
 
@@ -67,17 +67,17 @@ export function useCmsAdminGrid(options: {
       minWidth: 200,
       flex: 1,
     },
-    {
-      headerName: options.t("cms.columns.admin.profilePicture"),
-      field: "profilePicture",
-      editable: false,
-      minWidth: 240,
-      flex: 2,
-      cellRenderer: (params: { value: string | null }) => {
-        if (!params.value) return "-";
-        return `<a href="${params.value}" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline truncate">${params.value}</a>`;
-      },
-    },
+    // {
+    //   headerName: options.t("cms.columns.admin.profilePicture"),
+    //   field: "profilePicture",
+    //   editable: false,
+    //   minWidth: 240,
+    //   flex: 2,
+    //   cellRenderer: (params: { value: string | null }) => {
+    //     if (!params.value) return "-";
+    //     return `<a href="${params.value}" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline truncate">${params.value}</a>`;
+    //   },
+    // },
     {
       headerName: options.t("cms.columns.admin.super"),
       field: "super",

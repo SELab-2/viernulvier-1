@@ -16,7 +16,7 @@ function createGridApiMock() {
     setState: vi.fn(),
     getColumnState: vi.fn(() => [
       { colId: "username", hide: false },
-      { colId: "profilePicture", hide: true },
+      // { colId: "profilePicture", hide: true },
       { colId: "super", hide: false },
     ]),
     applyColumnState: vi.fn(),
@@ -55,7 +55,7 @@ describe("useCmsAdminGrid", () => {
       expect(columnChooserOpen.value).toBe(false);
       expect(columnVisibility.value).toEqual({
         username: true,
-        profilePicture: true,
+        // profilePicture: true,
         super: true,
       });
     });
@@ -65,14 +65,14 @@ describe("useCmsAdminGrid", () => {
     it("defines correct columns", () => {
       const { columnDefs } = makeComposable();
 
-      expect(columnDefs.value).toHaveLength(3);
+      expect(columnDefs.value).toHaveLength(2);
 
       const username = columnDefs.value.find(c => c.field === "username");
-      const profile = columnDefs.value.find(c => c.field === "profilePicture");
+      // const profile = columnDefs.value.find(c => c.field === "profilePicture");
       const superField = columnDefs.value.find(c => c.field === "super");
 
       expect(username?.editable).toBe(true);
-      expect(profile?.editable).toBe(false);
+      // expect(profile?.editable).toBe(false);
       expect(superField?.editable).toBe(true);
       expect(superField?.cellEditor).toBe("agCheckboxCellEditor");
       expect(superField?.cellRenderer).toBe("agCheckboxCellRenderer");
@@ -83,30 +83,30 @@ describe("useCmsAdminGrid", () => {
 
       expect(gridColumnOptions.value).toEqual([
         { colId: "username", label: "cms.columns.admin.username" },
-        { colId: "profilePicture", label: "cms.columns.admin.profilePicture" },
+        // { colId: "profilePicture", label: "cms.columns.admin.profilePicture" },
         { colId: "super", label: "cms.columns.admin.super" },
       ]);
     });
 
-    it("renders profile picture link when value exists", () => {
-      const { columnDefs } = makeComposable();
+    // it("renders profile picture link when value exists", () => {
+    //   const { columnDefs } = makeComposable();
 
-      const col = columnDefs.value.find(c => c.field === "profilePicture");
-      const renderer = col?.cellRenderer as Function;
+    //   const col = columnDefs.value.find(c => c.field === "profilePicture");
+    //   const renderer = col?.cellRenderer as Function;
 
-      const result = renderer({ value: "https://example.com/pic.jpg" });
+    //   const result = renderer({ value: "https://example.com/pic.jpg" });
 
-      expect(result).toContain('<a href="https://example.com/pic.jpg"');
-    });
+    //   expect(result).toContain('<a href="https://example.com/pic.jpg"');
+    // });
 
-    it("renders dash when no profile picture", () => {
-      const { columnDefs } = makeComposable();
+    // it("renders dash when no profile picture", () => {
+    //   const { columnDefs } = makeComposable();
 
-      const col = columnDefs.value.find(c => c.field === "profilePicture");
-      const renderer = col?.cellRenderer as Function;
+    //   const col = columnDefs.value.find(c => c.field === "profilePicture");
+    //   const renderer = col?.cellRenderer as Function;
 
-      expect(renderer({ value: null })).toBe("-");
-    });
+    //   expect(renderer({ value: null })).toBe("-");
+    // });
   });
 
   describe("grid lifecycle", () => {
@@ -190,7 +190,7 @@ describe("useCmsAdminGrid", () => {
 
       expect(columnVisibility.value).toEqual({
         username: true,
-        profilePicture: false,
+        // profilePicture: false,
         super: true,
       });
     });
@@ -203,7 +203,7 @@ describe("useCmsAdminGrid", () => {
 
       expect(columnVisibility.value).toEqual({
         username: true,
-        profilePicture: true,
+        // profilePicture: true,
         super: true,
       });
     });
@@ -228,13 +228,13 @@ describe("useCmsAdminGrid", () => {
       const { exportGridCsv, columnVisibility, gridApi } = makeComposable();
 
       gridApi.value = asGridApi(api);
-      columnVisibility.value.profilePicture = false;
+      columnVisibility.value.username = false;
 
       exportGridCsv();
 
       expect(api.exportDataAsCsv).toHaveBeenCalledWith(
         expect.objectContaining({
-          columnKeys: ["username", "super"],
+          columnKeys: ["super"],
         }),
       );
     });
@@ -266,7 +266,7 @@ describe("useCmsAdminGrid", () => {
       expect(columnChooserOpen.value).toBe(false);
       expect(columnVisibility.value).toEqual({
         username: true,
-        profilePicture: true,
+        // profilePicture: true,
         super: true,
       });
 
