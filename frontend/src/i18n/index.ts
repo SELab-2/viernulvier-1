@@ -18,11 +18,15 @@ const STORAGE_KEY = "preferred-lang";
 export function detectLanguage(): SupportedLang {
   // 1. localStorage (saved user preference)
   const stored = localStorage.getItem(STORAGE_KEY) as SupportedLang;
-  if (stored && SUPPORTED_LANGS.includes(stored)) return stored;
+  if (stored && SUPPORTED_LANGS.includes(stored as SupportedLang)) {
+    return stored as SupportedLang;
+  }
 
   // 2. browser language
-  const browserLang = navigator.language.split("-")[0] as SupportedLang;
-  if (SUPPORTED_LANGS.includes(browserLang)) return browserLang;
+  const browserLang = navigator.language.split("-")[0];
+  if (SUPPORTED_LANGS.includes(browserLang as SupportedLang)) {
+    return browserLang as SupportedLang;
+  }
 
   // 3. fallback default language
   return DEFAULT_LANG;

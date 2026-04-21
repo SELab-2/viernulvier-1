@@ -189,6 +189,35 @@ export default {
     activeFiltersLabel: "Actieve filters:",
     dateRangeChip: "{from} – {to}",
   },
+  production: {
+    hero: {
+      dateRange: "Speelperiode",
+      runningTime: "Speelduur",
+    },
+    details: {
+      tags: "Labels",
+      extraInfo: "Extra info",
+    },
+    events: {
+      title: "Voorstellings\u00adgeschiedenis",
+      body: "Waar en wanneer vond deze productie plaats? Hier vind je een overzicht van alle speelmomenten en locaties. Misschien herken je wel een datum of plek die je is bijgebleven.",
+      show_all: "Toon alle evenementen",
+      show_less: "Toon minder",
+      remaining_more: "(+ {count} meer)",
+      none_found: "Er zijn geen speeldata voor deze productie gevonden in ons archief.",
+      error_title: "Fout bij laden",
+      error_body: "We konden de gegevens over de voorstellingen niet ophalen uit het archief.",
+      retry: "Opnieuw proberen",
+    },
+    notFound: {
+      title: "Productie niet gevonden",
+      description: "Deze productie konden we niet voor je vinden. Gelukkig valt er nog genoeg anders te ontdekken: keer terug naar het overzicht en duik opnieuw in onze volledige historiek van producties.",
+      buttonLabel: "Terug naar producties",
+      helpTitle: "Hulp nodig?",
+      helpText: "Vind je niet meteen wat je zoekt in onze historiek? Voor vragen over ons archief of specifieke producties kun je altijd een mailtje sturen naar info{'@'}viernulvier.gent. We helpen je graag verder.",
+      contactLabel: "Contacteer ons",
+    },
+  },
   blogpost: {
     loading: "Blogpost laden…",
     notFound: "Blogpost niet gevonden",
@@ -216,5 +245,10 @@ export default {
       openCms: "CMS openen",
       logout: "Uitloggen",
     },
+  },
+  time: {
+    minutes: "{m} min",
+    hours: "{h} u",
+    hoursMinutes: "{h} u {m} min",
   },
 };

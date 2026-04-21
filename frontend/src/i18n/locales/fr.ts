@@ -189,6 +189,35 @@ export default {
     activeFiltersLabel: "Filtres actifs :",
     dateRangeChip: "{from} – {to}",
   },
+  production: {
+    hero: {
+      dateRange: "Période",
+      runningTime: "Durée",
+    },
+    details: {
+      tags: "Étiquettes",
+      extraInfo: "Infos complémentaires",
+    },
+    events: {
+      title: "Historique des représentations",
+      body: "Où et quand cette production a-t-elle eu lieu ? Vous trouverez ici un aperçu de toutes les dates et des lieux de représentation. Peut-être reconnaîtrez-vous une date ou un endroit qui vous est resté en mémoire.",
+      show_all: "Afficher tous les événements",
+      show_less: "Afficher moins",
+      remaining_more: "(+ {count} de plus)",
+      none_found: "Aucune date de représentation n'a été trouvée dans nos archives pour cette production.",
+      error_title: "Erreur de chargement",
+      error_body: "Nous n'avons pas pu récupérer les données des représentations dans les archives.",
+      retry: "Réessayer",
+    },
+    notFound: {
+      title: "Production introuvable",
+      description: "Nous n'avons pas pu trouver cette production. Heureusement, il reste encore beaucoup à découvrir : revenez à la vue d'ensemble et replongez dans l'historique complet de nos productions.",
+      buttonLabel: "Retour aux productions",
+      helpTitle: "Besoin d'aide ?",
+      helpText: "Vous ne trouvez pas immédiatement ce que vous cherchez dans nos archives ? Pour toute question sur notre historique ou sur une production spécifique, envoyez-nous un e-mail à info{'@'}viernulvier.gent. Nous vous aiderons avec plaisir.",
+      contactLabel: "Contactez-nous",
+    },
+  },
   blogpost: {
     loading: "Chargement de l'article…",
     notFound: "Article introuvable",
@@ -216,5 +245,10 @@ export default {
       openCms: "Ouvrir le CMS",
       logout: "Se déconnecter",
     },
+  },
+  time: {
+    minutes: "{m} min",
+    hours: "{h} h",
+    hoursMinutes: "{h} h {m} min",
   },
 };

@@ -188,6 +188,35 @@ export default {
     activeFiltersLabel: "Active filters:",
     dateRangeChip: "{from} – {to}",
   },
+  production: {
+    hero: {
+      dateRange: "Run",
+      runningTime: "Running Time",
+    },
+    details: {
+      tags: "Tags",
+      extraInfo: "Extra Info",
+    },
+    events: {
+      title: "Performance History",
+      body: "Where and when did this production take place? Here you'll find an overview of all the performance dates and locations. You might recognize a date or place that stayed with you.",
+      show_all: "Show All Events",
+      show_less: "Show Less",
+      remaining_more: "(+ {count} more)",
+      none_found: "No performance dates for this production were found in our archive.",
+      error_title: "Loading error",
+      error_body: "We couldn't retrieve the performance data from the archive.",
+      retry: "Try again",
+    },
+    notFound: {
+      title: "Production not found",
+      description: "We couldn't find this specific production for you. Luckily, there's plenty more to discover: return to the overview and dive back into our full history of productions.",
+      buttonLabel: "Back to productions",
+      helpTitle: "Need help?",
+      helpText: "Can't find what you're looking for in our records? For questions about our archives or specific productions, feel free to email info{'@'}viernulvier.gent. We're happy to help.",
+      contactLabel: "Contact us",
+    },
+  },
   blogpost: {
     loading: "Loading blogpost…",
     notFound: "Blogpost not found",
@@ -215,5 +244,10 @@ export default {
       openCms: "Open CMS",
       logout: "Logout",
     },
+  },
+  time: {
+    minutes: "{m} min",
+    hours: "{h}h",
+    hoursMinutes: "{h}h {m}m",
   },
 };
