@@ -1,5 +1,6 @@
 import type { Tag, TagType } from "@viernulvier/shared";
-import type { LanguageMap } from "@/utils/i18n";
+import { localizeWithFallback, type LanguageMap } from "@/utils/i18n";
+import { tagTypeIsGenre } from "@/utils/tagDisplay";
 
 /** Tag choice shown in CMS selectors. */
 export interface CmsTagChoice {
@@ -13,47 +14,6 @@ export interface CmsTagGroup {
   label: string;
   isGenre: boolean;
   tags: CmsTagChoice[];
-}
-
-/** Normalizes a label for case-insensitive comparisons. */
-function normalizeLabel(value: string): string {
-  return value.trim().toLowerCase();
-}
-
-/** Returns true when a label is recognized as the genre tag type. */
-function isGenreLabel(value: string): boolean {
-  const normalized = normalizeLabel(value);
-  return normalized === "genre" || normalized === "genres";
-}
-
-/**
- * Determines whether a tag type should be treated as genre.
- *
- * Uses both the localized label and all translations to avoid locale-specific mismatches.
- */
-function isGenreTagType(
-  label: string,
-  name: LanguageMap | null | undefined,
-): boolean {
-  if (isGenreLabel(label)) {
-    return true;
-  }
-
-  if (!name) {
-    return false;
-  }
-
-  return Object.values(name).some((value) => isGenreLabel(String(value ?? "")));
-}
-
-/** Localizes a label and falls back to a readable placeholder when empty. */
-function localizeLabel(
-  label: LanguageMap | null | undefined,
-  localize: (map: LanguageMap | null | undefined) => string,
-  fallback: string,
-): string {
-  const localized = localize(label);
-  return localized.length > 0 ? localized : fallback;
 }
 
 /**
@@ -86,7 +46,7 @@ export function buildCmsTagGroups(
 
   return [...tagTypeById.values()]
     .map((tagType) => {
-      const label = localizeLabel(tagType.name, localize, `Tag type #${tagType.id}`);
+      const label = localizeWithFallback(tagType.name, localize) || `Tag type #${tagType.id}`;
       const groupedTags = (tagsByType.get(tagType.id) ?? [])
         .slice()
         .sort((left, right) => {
@@ -96,13 +56,13 @@ export function buildCmsTagGroups(
         })
         .map((tag) => ({
           id: tag.id,
-          label: localizeLabel(tag.name, localize, `Tag #${tag.id}`),
+          label: localizeWithFallback(tag.name, localize) || `Tag #${tag.id}`,
         }));
 
       return {
         tagTypeId: tagType.id,
         label,
-        isGenre: isGenreTagType(label, tagType.name),
+        isGenre: tagTypeIsGenre(tagType),
         tags: groupedTags,
       };
     })

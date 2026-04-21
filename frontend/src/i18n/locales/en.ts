@@ -75,7 +75,7 @@ export default {
     actions: {
       addProduction: "+ Add Production",
       removeProduction: "Remove selected productions",
-      confirmRemoveTitle: "Remove productions?",
+      confirmRemoveDialogTitle: "Remove productions?",
       confirmRemoveBody: "This will permanently delete {count} selected productions. This cannot be undone.",
       confirmRemoveCancel: "Cancel",
       confirmRemoveSubmit: "Remove permanently",

@@ -75,7 +75,7 @@ export default {
     actions: {
       addProduction: "+ Voeg Productie Toe",
       removeProduction: "Geselecteerde producties verwijderen",
-      confirmRemoveTitle: "Producties verwijderen?",
+      confirmRemoveDialogTitle: "Producties verwijderen?",
       confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde producties. Dit kan niet ongedaan worden gemaakt.",
       confirmRemoveCancel: "Annuleer",
       confirmRemoveSubmit: "Definitief verwijderen",

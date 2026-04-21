@@ -217,7 +217,7 @@
       <section class="cms-modal cms-remove-modal" role="dialog" aria-modal="true">
         <header class="cms-modal-header">
           <h2 class="text-xl font-bold text-ink-primary">
-            {{ t("cms.actions.confirmRemoveTitle") }}
+            {{ t("cms.actions.confirmRemoveDialogTitle") }}
           </h2>
           <button type="button" class="cms-side-close" @click="closeRemoveProductionsConfirm">
             {{ t("cms.panel.close") }}
@@ -297,7 +297,7 @@ import {
 import { createEvent, deleteEvent, getEvent, updateEvent } from "@/services/events";
 import { getHall, getHalls } from "@/services/halls";
 import { getAllTags, getTagTypes } from "@/services/tags";
-import { localizeOrEmpty, type LanguageMap } from "@/utils/i18n";
+import { localizeOrEmpty, localizeWithFallback, type LanguageMap } from "@/utils/i18n";
 import {
   buildEventGridRows,
   buildProductionGridRows,
@@ -462,17 +462,6 @@ const genreTagTypeIds = computed(
   () => new Set(createTagGroups.value.filter((group) => group.isGenre).map((group) => group.tagTypeId)),
 );
 
-function localizeTagLabel(map: LanguageMap | null | undefined): string {
-  const localized = localizeValue(map);
-  if (localized.length > 0) {
-    return localized;
-  }
-
-  return [map?.nl, map?.en, map?.fr]
-    .map((value) => String(value ?? "").trim())
-    .find((value) => value.length > 0) ?? "";
-}
-
 function findGenreTagIdByLabel(label: string): number | null {
   const normalized = label.trim().toLowerCase();
   if (!normalized) {
@@ -485,7 +474,7 @@ function findGenreTagIdByLabel(label: string): number | null {
     if (!genreTypeIds.has(tagTypeId)) {
       return false;
     }
-    return localizeTagLabel(tag.name).trim().toLowerCase() === normalized;
+    return localizeWithFallback(tag.name, localizeValue).trim().toLowerCase() === normalized;
   });
 
   return match?.id ?? null;

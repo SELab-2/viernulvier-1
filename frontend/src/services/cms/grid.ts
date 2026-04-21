@@ -1,48 +1,10 @@
 import type { Event as ArchiveEvent, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
 import { collectProductionTagsByIdMap } from "@/services/productions";
-import type { LanguageMap } from "@/utils/i18n";
+import { tagTypeIsGenre } from "@/utils/tagDisplay";
+import { localizeWithFallback, type LanguageMap } from "@/utils/i18n";
 import { toLocalDateTimeInput } from "./date";
 import { extractEventIds } from "./helpers";
 import type { CmsEventGridRow, CmsProductionGridRow } from "./types";
-
-/** Normalizes labels for case-insensitive checks. */
-function normalizeLabel(value: string): string {
-  return value.trim().toLowerCase();
-}
-
-/** Checks whether a label is the genre tag type. */
-function isGenreLabel(value: string): boolean {
-  const normalized = normalizeLabel(value);
-  return normalized === "genre" || normalized === "genres";
-}
-
-/** Detects genre tag types based on any available translation. */
-function isGenreTagType(name: LanguageMap | null | undefined): boolean {
-  if (!name) {
-    return false;
-  }
-
-  return Object.values(name).some((value) => isGenreLabel(String(value ?? "")));
-}
-
-/** Localizes with fallback to any available translation when current locale is empty. */
-function localizeWithFallback(
-  map: LanguageMap | null | undefined,
-  localize: (value: LanguageMap | null | undefined) => string,
-): string {
-  const localized = localize(map);
-  if (localized.length > 0) {
-    return localized;
-  }
-
-  if (!map) {
-    return "";
-  }
-
-  return [map.nl, map.en, map.fr]
-    .map((value) => String(value ?? "").trim())
-    .find((value) => value.length > 0) ?? "";
-}
 
 /**
  * Maps archive events to rows used by the CMS events drawer.
@@ -129,7 +91,7 @@ export function buildProductionGridRows(
   const tagById = new Map(tags.map((tag) => [tag.id, tag]));
   const genreTagTypeIds = new Set(
     tagTypes
-      .filter((tagType) => isGenreTagType(tagType.name))
+      .filter((tagType) => tagTypeIsGenre(tagType))
       .map((tagType) => tagType.id),
   );
 

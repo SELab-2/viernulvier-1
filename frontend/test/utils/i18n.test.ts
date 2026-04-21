@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   localize,
   localizeOrEmpty,
+  localizeWithFallback,
   fillLanguageMap,
   emptyLanguageMap,
   hasLanguage,
@@ -73,6 +74,32 @@ describe("localizeOrEmpty", () => {
 
   it("returns empty string when map is empty", () => {
     expect(localizeOrEmpty({}, "nl")).toBe("");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// localizeWithFallback
+// ---------------------------------------------------------------------------
+
+describe("localizeWithFallback", () => {
+  it("returns localized value when it is non-empty", () => {
+    const map = { nl: "Titel", en: "Title" };
+    expect(localizeWithFallback(map, (value) => value?.nl ?? "")).toBe("Titel");
+  });
+
+  it("falls back to first non-empty translation when localized value is empty", () => {
+    const map = { nl: "", en: "Title", fr: "Titre" };
+    expect(localizeWithFallback(map, (value) => value?.nl ?? "")).toBe("Title");
+  });
+
+  it("trims fallback values and skips blank entries", () => {
+    const map = { nl: "   ", en: "  ", fr: "  Titre  " };
+    expect(localizeWithFallback(map, () => "")).toBe("Titre");
+  });
+
+  it("returns empty string when map is null or has no non-empty values", () => {
+    expect(localizeWithFallback(null, () => "")).toBe("");
+    expect(localizeWithFallback({ nl: "", en: " ", fr: "" }, () => "")).toBe("");
   });
 });
 

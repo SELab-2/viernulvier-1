@@ -50,6 +50,17 @@ describe("buildCmsTagGroups", () => {
       label: "Tag type #3",
       isGenre: false,
     });
+    expect(groups[0]?.tags).toEqual([{ id: 5, label: "Hidden" }]);
+  });
+
+  it("falls back to tag id when tag translations are empty", () => {
+    const groups = buildCmsTagGroups(
+      [buildTag(5, 3, "")],
+      [buildTagType(3, "Theme")],
+      () => "",
+    );
+
+    expect(groups).toHaveLength(1);
     expect(groups[0]?.tags).toEqual([{ id: 5, label: "Tag #5" }]);
   });
 
@@ -90,5 +101,20 @@ describe("buildCmsTagGroups", () => {
       label: "Thema",
       isGenre: true,
     });
+  });
+
+  it("sorts groups by label when genre flags are equal", () => {
+    const groups = buildCmsTagGroups(
+      [
+        buildTag(10, 2, "Beta tag"),
+        buildTag(11, 1, "Alpha tag"),
+      ],
+      [buildTagType(2, "Zulu"), buildTagType(1, "Alpha")],
+      (map) => map?.nl ?? "",
+    );
+
+    expect(groups).toHaveLength(2);
+    expect(groups.map((group) => group.label)).toEqual(["Alpha", "Zulu"]);
+    expect(groups.every((group) => !group.isGenre)).toBe(true);
   });
 });
