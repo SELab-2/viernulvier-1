@@ -757,20 +757,21 @@ function productionsListArgs(page: number) {
 
 async function fetchProductionsPageData(page0: number) {
   const { items, total } = await getProductions(productionsListArgs(page0));
+  const ids = items.map((p) => p.id);
+  const eventsMap =
+    ids.length === 0
+      ? new Map<number, ProductionEvent[]>()
+      : groupEventsByProductionId(await getEventsForProductions(ids));
+
+  // Apply list + events together so cards never render with new productions but
+  // stale/empty per-production events (avoids layout shift on title vs date/hall lines).
   productions.value = items;
   totalCount.value = total;
   currentPage.value = page0;
   displayedFilteredTotal.value = hasActiveListFilters.value ? total : null;
   searchBannerTerms.value = [...appliedSearchTerms.value];
   syncFilterBannerFromApplied();
-
-  const ids = items.map((p) => p.id);
-  if (ids.length === 0) {
-    eventsByProduction.value = new Map();
-  } else {
-    const events = await getEventsForProductions(ids);
-    eventsByProduction.value = groupEventsByProductionId(events);
-  }
+  eventsByProduction.value = eventsMap;
 }
 
 function toggleTag(id: number) {
