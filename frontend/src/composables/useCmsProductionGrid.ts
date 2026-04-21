@@ -58,7 +58,7 @@ import type { CmsProductionGridRow } from "@/services/cms";
 
 type TranslateFunction = (key: string, params?: Record<string, unknown>) => string;
 
-const cmsGridStateStorageKey = "viernulvier-cms-grid-state";
+const cmsGridStateStorageKey = "viernulvier-cms-grid-state-v2";
 const cmsGridColumnIds = [
   "eventsAction",
   "performer",

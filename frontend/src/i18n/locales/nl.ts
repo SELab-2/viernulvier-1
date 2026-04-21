@@ -62,7 +62,6 @@ export default {
       descriptionOne: "Beschrijving",
       descriptionTwo: "Beschrijving 2",
       media: "Media",
-      media: "Video 1",
       tagName: "Naam",
       tagType: "Type",
       public: "Publiek",

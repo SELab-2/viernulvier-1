@@ -52,8 +52,6 @@ export interface CmsTagGridRow {
   productionCount: number;
 }
 
-export type InlineEditableField = "performer" | "title" | "producer" | "teaser";
-
 export type TagInlineEditableField = "name" | "tagType" | "public";
 
 export interface CreateTagFormState {

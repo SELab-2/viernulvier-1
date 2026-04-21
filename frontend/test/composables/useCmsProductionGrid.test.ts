@@ -23,6 +23,8 @@ function createGridApiMock() {
 }
 
 describe("useCmsProductionGrid", () => {
+  const storageKey = "viernulvier-cms-grid-state-v2";
+
   beforeEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();
@@ -116,7 +118,7 @@ describe("useCmsProductionGrid", () => {
 
   it("restores state on grid ready when persisted state is present", () => {
     const api = createGridApiMock();
-    localStorage.setItem("viernulvier-cms-grid-state", JSON.stringify({ columns: [] }));
+    localStorage.setItem(storageKey, JSON.stringify({ columns: [] }));
 
     const grid = useCmsProductionGrid({
       isDark: ref(false),
@@ -144,7 +146,7 @@ describe("useCmsProductionGrid", () => {
 
   it("falls back to fit when persisted state is invalid JSON", () => {
     const api = createGridApiMock();
-    localStorage.setItem("viernulvier-cms-grid-state", "{bad-json");
+    localStorage.setItem(storageKey, "{bad-json");
 
     const grid = useCmsProductionGrid({
       isDark: ref(false),
@@ -169,7 +171,7 @@ describe("useCmsProductionGrid", () => {
 
     expect(api.applyColumnState).toHaveBeenCalledWith({ state: [{ colId: "tags", hide: true }] });
     expect(grid.columnVisibility.value.tags).toBe(false);
-    expect(localStorage.getItem("viernulvier-cms-grid-state")).toContain("foo");
+    expect(localStorage.getItem(storageKey)).toContain("foo");
   });
 
   it("can re-show a hidden column", () => {
@@ -287,7 +289,7 @@ describe("useCmsProductionGrid", () => {
   });
 
   it("resets local state even without a grid api", () => {
-    localStorage.setItem("viernulvier-cms-grid-state", JSON.stringify({ a: 1 }));
+    localStorage.setItem(storageKey, JSON.stringify({ a: 1 }));
     const grid = useCmsProductionGrid({
       isDark: ref(false),
       t: (key) => key,
@@ -299,7 +301,7 @@ describe("useCmsProductionGrid", () => {
 
     expect(grid.quickFilterText.value).toBe("");
     expect(grid.columnChooserOpen.value).toBe(false);
-    expect(localStorage.getItem("viernulvier-cms-grid-state")).toBeNull();
+    expect(localStorage.getItem(storageKey)).toBeNull();
   });
 
   it("returns row style for unfinalized productions", () => {
