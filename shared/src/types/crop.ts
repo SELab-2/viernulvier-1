@@ -6,9 +6,13 @@ import { primaryKey, foreignKey } from "./helpers.js";
 export const CropSchema = createSchema({
   id: primaryKey(),
 
+  old_id: z.int().nonnegative().nullable(),
+ 
   image: foreignKey(() => ImageSchema),
 
-  url: z.url().min(1).max(2048),
+  url: z.string().min(1).max(2048).regex(/^\/media\/crops\/.+$/),
+
+  type: z.string().max(32),
 });
 
 export type Crop = z.infer<typeof CropSchema>;

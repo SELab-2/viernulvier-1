@@ -15,7 +15,7 @@ services:
       - "${DB_PORT}:${DB_PORT}"
     command: -p ${DB_PORT}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -p ${DB_PORT}"]
       interval: 5s
       retries: 5
   backend:
@@ -26,6 +26,8 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    volumes:
+      - ./garage-credentials:/garage-credentials:ro
     networks:
       - viernulvier-network
     ports:
@@ -33,6 +35,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      garage-init:
+        condition: service_completed_successfully
+
   frontend:
     env_file:
       - .env
@@ -49,7 +54,56 @@ services:
     depends_on:
       - backend
     environment:
-      - CHOKIDAR_USEPOLLING=true
+     - CHOKIDAR_USEPOLLING=true
+
+  garage:
+    image: dxflrs/garage:v2.1.0
+    container_name: viernulvier-garage
+    restart: always
+    entrypoint: ["/garage"] 
+    command: ["-c", "/etc/garage.toml", "server"]
+    environment:
+      - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}
+      - GARAGE_ADMIN_TOKEN=${GARAGE_ADMIN_TOKEN}
+    ports:
+      - "3900:3900"  # S3 API
+      - "3901:3901"  # RPC
+      - "3903:3903"  # Admin API
+    volumes:
+      - object-store:/var/lib/garage
+      - ./garage.toml:/etc/garage.toml:ro
+    networks:
+      - viernulvier-network
+    healthcheck:
+      test: ["CMD", "/garage", "-c", "/etc/garage.toml", "status"]
+      interval: 5s
+      retries: 10
+      start_period: 10s
+
+  garage-init:
+    image: docker:27-cli
+    container_name: viernulvier-garage-init
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["tr -d '\\r' < /garage-init.sh | sh"]
+    volumes:
+      - ./garage-init.sh:/garage-init.sh:ro
+      - ./garage-credentials:/garage-credentials
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - viernulvier-network
+    depends_on:
+      garage:
+        condition: service_healthy
+    restart: "no"
+
+volumes:
+  database-data:
+    external: false
+    name: viernulvier-database-data
+  object-store:
+    external: false
+    name: viernulvier-object-store    
+   
 networks:
   viernulvier-network:
     driver: bridge
