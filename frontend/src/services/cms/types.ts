@@ -1,4 +1,4 @@
-import type { ProductionWithBackwardsRefs, Tag } from "@viernulvier/shared";
+import type { Admin, ProductionWithBackwardsRefs, Tag } from "@viernulvier/shared";
 import type { SupportedLang } from "@/i18n";
 
 /** Shared timing/location fields for CMS linked-event forms and rows. */
@@ -42,6 +42,14 @@ export interface CmsProductionGridRow {
 export type InlineEditableField = "performer" | "title" | "producer" | "teaser";
 
 /** Long-form fields edited via side panel. */
+export interface CmsAdminGridRow {
+  id: number;
+  source: Admin;
+  username: string;
+  // profilePicture: string | null;
+  super: boolean;
+}
+
 export interface CmsTagGridRow {
   id: number;
   source: Tag;
@@ -87,7 +95,14 @@ export interface CreateFormState {
   video_2: Record<SupportedLang, string>;
 }
 
+export interface CreateAdminFormState {
+  username: string;
+  password: string;
+  super: boolean;
+}
+
 /** Side panel editor state for long-form multilingual content. */
+
 export interface EditorPanelState {
   rowId: number;
   apiField: LongField;

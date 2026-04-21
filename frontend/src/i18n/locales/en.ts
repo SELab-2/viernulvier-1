@@ -66,6 +66,11 @@ export default {
       tagType: "Type",
       public: "Public",
       productionCount: "Productions",
+      admin: {
+        username: "Username",
+        profilePicture: "Profile picture",
+        super: "Super admin",
+      },
     },
     events: {
       date: "Date",
@@ -101,6 +106,10 @@ export default {
       clearSelection: "Clear selection",
       expandAllEvents: "Show all events",
       collapseAllEvents: "Hide events",
+      admin: {
+        noAdmins: "No admins found.",
+        addAdmin: "+ Add Admin",
+      },
     },
     create: {
       title: "New production",
@@ -141,6 +150,12 @@ export default {
         imageRequired: "Fill at least one image URL (in any language).",
         tagTypeRequired: "Select a tag type.",
       },
+      admin: {
+        adminTitle: "New admin",
+        adminPassword: "Password",
+        // TODO: adminPasswordHint: "The new admin can change their password after logging in via their profile.",
+        submitAdmin: "Add admin",
+      },
     },
     panel: {
       close: "Close",
@@ -160,6 +175,8 @@ export default {
     feedback: {
       saveSuccess: "Changes saved successfully",
       removeSuccess: "Production removed successfully",
+    admin: {
+      noPermission: "You don't have permissions to manage admins.",
     },
   },
   productionsPage: {

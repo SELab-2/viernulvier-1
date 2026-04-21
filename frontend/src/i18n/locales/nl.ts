@@ -66,6 +66,11 @@ export default {
       tagType: "Type",
       public: "Publiek",
       productionCount: "Aantal producties",
+      admin: {
+        username: "Gebruikersnaam",
+        profilePicture: "Profielfoto",
+        super: "Super admin",
+      },
     },
     events: {
       date: "Datum",
@@ -101,6 +106,10 @@ export default {
       clearSelection: "Wis selectie",
       expandAllEvents: "Toon alle events",
       collapseAllEvents: "Verberg events",
+      admin: {
+        noAdmins: "Geen admins gevonden.",
+        addAdmin: "+ Admin toevoegen",
+      },
     },
     create: {
       title: "Nieuwe productie",
@@ -141,6 +150,12 @@ export default {
         imageRequired: "Vul minstens een afbeelding URL in (in eender welke taal).",
         tagTypeRequired: "Selecteer een tag-type.",
       },
+      admin: {
+        adminTitle: "Nieuwe admin",
+        adminPassword: "Wachtwoord",
+        // TODO: adminPasswordHint: "De nieuwe admin kan zijn wachtwoord na het inloggen wijzigen via zijn profiel.",
+        submitAdmin: "Admin toevoegen",
+      },
     },
     panel: {
       close: "Sluit",
@@ -160,6 +175,8 @@ export default {
     feedback: {
       saveSuccess: "Wijzigingen opgeslagen",
       removeSuccess: "Productie verwijderd",
+    admin: {
+      noPermission: "Je hebt geen toestemming om admins te beheren.",
     },
   },
   productionsPage: {
