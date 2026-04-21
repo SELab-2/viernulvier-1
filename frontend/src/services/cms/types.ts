@@ -1,4 +1,4 @@
-import type { ProductionWithBackwardsRefs, Tag } from "@viernulvier/shared";
+import type { Admin, ProductionWithBackwardsRefs, Tag } from "@viernulvier/shared";
 import type { SupportedLang } from "@/i18n";
 
 export interface CmsEventGridRow {
@@ -35,6 +35,14 @@ export interface CmsProductionGridRow {
   descriptionTwo: string;
   media: string;
   events: number[];
+}
+
+export interface CmsAdminGridRow {
+  id: number;
+  source: Admin;
+  username: string;
+  // profilePicture: string | null;
+  super: boolean;
 }
 
 export interface CmsTagGridRow {
@@ -81,6 +89,12 @@ export interface CreateFormState {
   description_2: Record<SupportedLang, string>;
   video_1: Record<SupportedLang, string>;
   video_2: Record<SupportedLang, string>;
+}
+
+export interface CreateAdminFormState {
+  username: string;
+  password: string;
+  super: boolean;
 }
 
 export interface EditorPanelState {

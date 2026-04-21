@@ -66,6 +66,11 @@ export default {
       tagType: "Type",
       public: "Public",
       productionCount: "Productions",
+      admin: {
+        username: "Nom d'utilisateur",
+        profilePicture: "Photo de profil",
+        super: "Super admin",
+      },
     },
     events: {
       date: "Date",
@@ -94,6 +99,10 @@ export default {
       clearSelection: "Effacer la selection",
       expandAllEvents: "Afficher tous les evenements",
       collapseAllEvents: "Masquer les evenements",
+      admin: {
+        noAdmins: "Aucun admin trouvé",
+        addAdmin: "+ Ajouter un Admin",
+      },
     },
     create: {
       title: "Nouvelle production",
@@ -128,6 +137,12 @@ export default {
         imageRequired: "Remplissez au moins une URL d'image (dans n'importe quelle langue).",
         tagTypeRequired: "Sélectionnez un type de tag.",
       },
+      admin: {
+        adminTitle: "Nouvel admin",
+        adminPassword: "Mot de passe",
+        // TODO: adminPasswordHint: "Le nouvel admin peut modifier son mot de passe après connexion via son profil.",
+        submitAdmin: "Ajouter l'admin",
+      },
     },
     panel: {
       close: "Fermer",
@@ -141,6 +156,9 @@ export default {
       loadGeneric: "Impossible de charger les donnees CMS.",
       saveFailed: "Echec de l'enregistrement: {message}",
       saveGeneric: "Echec de l'enregistrement.",
+    },
+    admin: {
+      noPermission: "Vous n'avez pas la permission de administrer les admins.",
     },
   },
   productionsPage: {

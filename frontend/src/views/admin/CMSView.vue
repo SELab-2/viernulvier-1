@@ -41,7 +41,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import AdminNavbar from "@/components/admin/AdminNavbar.vue";
 import AppFooter from "@/components/AppFooter.vue";
@@ -52,6 +53,8 @@ import { useDarkMode } from "@/composables/useDarkMode";
 
 type CmsTabId = "productions" | "tags" | "admins";
 
+const route = useRoute();
+const router = useRouter();
 const { t } = useI18n();
 const { isDark, toggleDark } = useDarkMode();
 
@@ -61,7 +64,20 @@ const tabs: ReadonlyArray<{ id: CmsTabId; labelKey: string }> = [
   { id: "admins", labelKey: "cms.tabs.admins" },
 ];
 
-const activeTab = ref<CmsTabId>("productions");
+const validTabs = ["productions", "tags", "admins"] as const;
+
+const activeTab = computed({
+  get(): CmsTabId {
+    const tab = route.query.tab;
+    if (typeof tab === "string" && validTabs.includes(tab as CmsTabId)) {
+      return tab as CmsTabId;
+    }
+    return "productions";
+  },
+  set(tab: CmsTabId) {
+    void router.replace({ query: { ...route.query, tab } });
+  },
+});
 
 defineExpose({ activeTab });
 </script>
