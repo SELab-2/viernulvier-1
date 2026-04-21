@@ -62,6 +62,12 @@ describe("getTags", () => {
     await getTags(42);
     expect(lastCall()[0]).toBe("/api/v1/tag?production=42");
   });
+
+  it("GETs /api/v1/tag?includeProductionCount=true when requested", async () => {
+    vi.stubGlobal("fetch", mockOk([tagPayload]));
+    await getTags(undefined, { includeProductionCount: true });
+    expect(lastCall()[0]).toBe("/api/v1/tag?includeProductionCount=true");
+  });
 });
 
 describe("getTagsForProduction", () => {

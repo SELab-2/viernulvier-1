@@ -1,13 +1,31 @@
-// shared/tsconfig.json
 {
-  "extends": "../backend/tsconfig.json",
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
+    "module": "nodenext",
+    "target": "esnext",
+    "lib": ["esnext"],
+    "types": ["node"],
+    "strict": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedSideEffectImports": true,
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
     "paths": {
       "@/*": ["./src/*"]
-    },
-    "types": ["node"],
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

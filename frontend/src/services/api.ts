@@ -55,17 +55,22 @@ export class ApiError extends Error {
    */
   readonly details?: { path: (string | number)[]; message: string }[];
 
+  /** Optional machine-readable code from JSON `code` (e.g. production list query errors). */
+  readonly code?: string;
+
   constructor(
     status: number,
     message: string,
     fields?: Record<string, string[]>,
     details?: { path: (string | number)[]; message: string }[],
+    code?: string,
   ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.fields = fields;
     this.details = details;
+    this.code = code;
   }
 
   /** `true` when the session is missing or expired (HTTP 401). */
@@ -165,11 +170,15 @@ export async function apiFetch<T>(
         message?: string;
         fields?: Record<string, string[]>;
         details?: { path: (string | number)[]; message: string }[];
+        code?: string;
       };
       message = errorBody.error ?? errorBody.message ?? message;
       fields = errorBody.fields;
       details = errorBody.details;
-    } catch {
+      const code = errorBody.code;
+      throw new ApiError(response.status, message, fields, details, code);
+    } catch (err) {
+      if (err instanceof ApiError) throw err;
       // JSON parsing failed — keep the statusText as the message.
     }
 
