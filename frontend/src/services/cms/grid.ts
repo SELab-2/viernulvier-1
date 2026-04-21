@@ -1,9 +1,9 @@
-import type { Event as ArchiveEvent, ProductionWithBackwardsRefs, Tag } from "@viernulvier/shared";
+import type { Event as ArchiveEvent, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
 import { collectProductionTagsByIdMap } from "@/services/productions";
 import type { LanguageMap } from "@/utils/i18n";
 import { toLocalDateTimeInput } from "./date";
 import { extractEventIds } from "./helpers";
-import type { CmsEventGridRow, CmsProductionGridRow } from "./types";
+import type { CmsEventGridRow, CmsProductionGridRow, CmsTagGridRow } from "./types";
 
 export function buildEventGridRows(
   events: ArchiveEvent[],
@@ -86,6 +86,49 @@ export function applyUpdatedProductionToRow(
   row.descriptionOne = localize(updated.description) || "";
   row.descriptionTwo = localize(updated.description_2) || "";
   row.media = localize(updated.video_1) || "";
+}
+
+export function buildTagGridRow(
+  tag: Tag,
+  tagTypeById: Map<number, TagType>,
+  localize: (map: LanguageMap | null | undefined) => string,
+): CmsTagGridRow {
+  const tagTypeId = Number(tag.tag_type);
+  const tagType = tagTypeById.get(tagTypeId);
+  const productionIds = Array.isArray(tag.productions) ? tag.productions : [];
+
+  return {
+    id: tag.id,
+    source: tag,
+    name: localize(tag.name) || "",
+    tagTypeId,
+    tagType: tagType ? localize(tagType.name) || `#${tagTypeId}` : `#${tagTypeId}`,
+    public: tag.public,
+    productionCount: productionIds.length,
+  };
+}
+
+export function buildTagGridRows(
+  tags: Tag[],
+  tagTypes: TagType[],
+  localize: (map: LanguageMap | null | undefined) => string,
+): CmsTagGridRow[] {
+  const tagTypeById = new Map<number, TagType>(tagTypes.map((type) => [type.id, type]));
+  return tags.map((tag) => buildTagGridRow(tag, tagTypeById, localize));
+}
+
+export function applyUpdatedTagToRow(
+  row: CmsTagGridRow,
+  updated: Tag,
+  tagTypeById: Map<number, TagType>,
+  localize: (map: LanguageMap | null | undefined) => string,
+): void {
+  row.source = updated;
+  row.name = localize(updated.name) || "";
+  row.tagTypeId = Number(updated.tag_type);
+  const tagType = tagTypeById.get(row.tagTypeId);
+  row.tagType = tagType ? localize(tagType.name) || `#${row.tagTypeId}` : `#${row.tagTypeId}`;
+  row.public = updated.public;
 }
 
 export function getBulkTargetRows(

@@ -121,7 +121,7 @@ describe("getTagWithMeta", () => {
 
 describe("createTag", () => {
   it("POSTs to /api/v1/tag", async () => {
-    const input = { name: { nl: "Drama" }, tag_type: 1, public: true };
+    const input = { old_id: null, name: { nl: "Drama" }, tag_type: 1, public: true };
     await createTag(input);
     expect(lastCall()[0]).toBe("/api/v1/tag");
     expect(lastCall()[1].method).toBe("POST");
@@ -131,7 +131,7 @@ describe("createTag", () => {
 
 describe("replaceTag", () => {
   it("PUTs to /api/v1/tag/:id", async () => {
-    await replaceTag(1, { name: { nl: "Komedie" }, tag_type: 1, public: true });
+    await replaceTag(1, { old_id: null, name: { nl: "Komedie" }, tag_type: 1, public: true });
     expect(lastCall()[0]).toBe("/api/v1/tag/1");
     expect(lastCall()[1].method).toBe("PUT");
   });

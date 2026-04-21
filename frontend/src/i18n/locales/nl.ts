@@ -62,6 +62,10 @@ export default {
       descriptionOne: "Beschrijving",
       descriptionTwo: "Beschrijving 2",
       media: "Video 1",
+      tagName: "Naam",
+      tagType: "Type",
+      public: "Publiek",
+      productionCount: "Aantal producties",
     },
     events: {
       date: "Datum",
@@ -72,9 +76,12 @@ export default {
     },
     actions: {
       addProduction: "+ Voeg Productie Toe",
+      addTag: "+ Voeg Tag Toe",
       searchPlaceholder: "Zoek in alle kolommen...",
       selectedCount: "Geselecteerd: {count}",
       loadedCount: "Rijen geladen: {count}",
+      loadedTagsCount: "Tags geladen: {count}",
+      noTags: "Geen tags gevonden voor de huidige filters.",
       fitColumns: "Kolommen passend maken",
       autoSize: "Automatisch schalen",
       resetFilters: "Filters resetten",
@@ -90,6 +97,9 @@ export default {
     },
     create: {
       title: "Nieuwe productie",
+      tagTitle: "Nieuwe tag",
+      submitTag: "Tag toevoegen",
+      selectTagType: "Kies een type...",
       finalized: "Markeer als gefinaliseerd",
       languages: "Extra talen",
       cancel: "Annuleer",
@@ -116,6 +126,7 @@ export default {
       validation: {
         requiredOneLanguage: "Vul minstens 1 taal in voor: {field}",
         imageRequired: "Vul minstens een afbeelding URL in (in eender welke taal).",
+        tagTypeRequired: "Selecteer een tag-type.",
       },
     },
     panel: {

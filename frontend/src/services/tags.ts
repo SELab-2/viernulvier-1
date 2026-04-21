@@ -40,6 +40,8 @@ import type { LanguageMap } from "@/utils/i18n";
 
 /** Payload for creating a new tag. */
 export interface CreateTagInput {
+  /** Legacy identifier from the old system, or `null` for fresh tags. */
+  old_id: number | null;
   /** Localised display name of the tag. */
   name: LanguageMap;
   /** ID of the tag type this tag belongs to. */

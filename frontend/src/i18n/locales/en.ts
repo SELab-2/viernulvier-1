@@ -62,6 +62,10 @@ export default {
       descriptionOne: "Description",
       descriptionTwo: "Description 2",
       media: "Video 1",
+      tagName: "Name",
+      tagType: "Type",
+      public: "Public",
+      productionCount: "Productions",
     },
     events: {
       date: "Date",
@@ -72,9 +76,12 @@ export default {
     },
     actions: {
       addProduction: "+ Add Production",
+      addTag: "+ Add Tag",
       searchPlaceholder: "Search across all columns...",
       selectedCount: "Selected: {count}",
       loadedCount: "Rows loaded: {count}",
+      loadedTagsCount: "Tags loaded: {count}",
+      noTags: "No tags found for the current filters.",
       fitColumns: "Fit columns",
       autoSize: "Auto-size",
       resetFilters: "Reset filters",
@@ -90,6 +97,9 @@ export default {
     },
     create: {
       title: "New production",
+      tagTitle: "New tag",
+      submitTag: "Add tag",
+      selectTagType: "Choose a type...",
       finalized: "Mark as finalized",
       languages: "Extra languages",
       cancel: "Cancel",
@@ -116,6 +126,7 @@ export default {
       validation: {
         requiredOneLanguage: "Fill at least 1 language for: {field}",
         imageRequired: "Fill at least one image URL (in any language).",
+        tagTypeRequired: "Select a tag type.",
       },
     },
     panel: {

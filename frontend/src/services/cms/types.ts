@@ -1,4 +1,4 @@
-import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
+import type { ProductionWithBackwardsRefs, Tag } from "@viernulvier/shared";
 import type { SupportedLang } from "@/i18n";
 
 export interface CmsEventGridRow {
@@ -37,7 +37,25 @@ export interface CmsProductionGridRow {
   events: number[];
 }
 
+export interface CmsTagGridRow {
+  id: number;
+  source: Tag;
+  name: string;
+  tagTypeId: number;
+  tagType: string;
+  public: boolean;
+  productionCount: number;
+}
+
 export type InlineEditableField = "performer" | "title" | "producer" | "teaser";
+
+export type TagInlineEditableField = "name" | "tagType" | "public";
+
+export interface CreateTagFormState {
+  name: Record<SupportedLang, string>;
+  tagTypeId: number | null;
+  public: boolean;
+}
 
 export type LongField = "teaser" | "description" | "description_2" | "video_1";
 

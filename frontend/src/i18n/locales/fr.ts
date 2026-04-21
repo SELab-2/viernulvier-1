@@ -62,6 +62,10 @@ export default {
       descriptionOne: "Description",
       descriptionTwo: "Description 2",
       media: "Video 1",
+      tagName: "Nom",
+      tagType: "Type",
+      public: "Public",
+      productionCount: "Productions",
     },
     events: {
       date: "Date",
@@ -72,9 +76,12 @@ export default {
     },
     actions: {
       addProduction: "+ Ajouter une production",
+      addTag: "+ Ajouter un tag",
       searchPlaceholder: "Rechercher dans toutes les colonnes...",
       selectedCount: "Selectionne: {count}",
       loadedCount: "Lignes chargees: {count}",
+      loadedTagsCount: "Tags chargés: {count}",
+      noTags: "Aucun tag trouvé pour les filtres actuels.",
       fitColumns: "Ajuster les colonnes",
       autoSize: "Taille automatique",
       resetFilters: "Reinitialiser les filtres",
@@ -90,6 +97,9 @@ export default {
     },
     create: {
       title: "Nouvelle production",
+      tagTitle: "Nouveau tag",
+      submitTag: "Ajouter le tag",
+      selectTagType: "Choisissez un type...",
       finalized: "Marquer comme finalisee",
       languages: "Langues supplementaires",
       cancel: "Annuler",
@@ -116,6 +126,7 @@ export default {
       validation: {
         requiredOneLanguage: "Remplissez au moins 1 langue pour: {field}",
         imageRequired: "Remplissez au moins une URL d'image (dans n'importe quelle langue).",
+        tagTypeRequired: "Sélectionnez un type de tag.",
       },
     },
     panel: {
