@@ -70,21 +70,12 @@ import CmsProductionsTab from "@/components/admin/cms/tabs/CmsProductionsTab.vue
 import CmsTagsTab from "@/components/admin/cms/tabs/CmsTagsTab.vue";
 import { useDarkMode } from "@/composables/useDarkMode";
 
-const { t } = useI18n();
-const { isDark, toggleDark } = useDarkMode();
-const activeTab = ref<"productions" | "tags" | "admins">("productions");
 type CmsTabId = "productions" | "tags" | "admins";
 
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 const { isDark, toggleDark } = useDarkMode();
-
-const tabs: ReadonlyArray<{ id: CmsTabId; labelKey: string }> = [
-  { id: "productions", labelKey: "cms.tabs.productions" },
-  { id: "tags", labelKey: "cms.tabs.tags" },
-  { id: "admins", labelKey: "cms.tabs.admins" },
-];
 
 const validTabs = ["productions", "tags", "admins"] as const;
 

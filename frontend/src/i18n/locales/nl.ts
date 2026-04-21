@@ -175,6 +175,7 @@ export default {
     feedback: {
       saveSuccess: "Wijzigingen opgeslagen",
       removeSuccess: "Productie verwijderd",
+    },
     admin: {
       noPermission: "Je hebt geen toestemming om admins te beheren.",
     },

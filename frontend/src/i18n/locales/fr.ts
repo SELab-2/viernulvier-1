@@ -175,6 +175,7 @@ export default {
     feedback: {
       saveSuccess: "Modifications enregistrees",
       removeSuccess: "Production supprimee",
+    },
     admin: {
       noPermission: "Vous n'avez pas la permission de administrer les admins.",
     },
