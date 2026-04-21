@@ -297,6 +297,7 @@ async function submitCreateTag(): Promise<void> {
   createError.value = null;
   try {
     await createTag({
+      old_id: null,
       name: toLanguageMap(createForm.value.name),
       tag_type: createForm.value.tagTypeId as number,
       public: createForm.value.public,

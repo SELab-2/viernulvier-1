@@ -301,6 +301,7 @@ describe("CmsTagsTab", () => {
     await flushPromises();
 
     expect(tagsService.createTag).toHaveBeenCalledWith({
+      old_id: null,
       name: { nl: "Comedy" },
       tag_type: mockTagType.id,
       public: false,
