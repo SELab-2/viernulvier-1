@@ -23,6 +23,8 @@ function createGridApiMock() {
 }
 
 describe("useCmsProductionGrid", () => {
+  const storageKey = "viernulvier-cms-grid-state-v2";
+
   beforeEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();
@@ -56,10 +58,12 @@ describe("useCmsProductionGrid", () => {
       | undefined;
     expect(descriptionFormatter?.({ value: null })).toBe("");
 
-    const mediaFormatter = defs.find((d) => d.field === "media")?.valueFormatter as
+    const mediaRenderer = defs.find((d) => d.field === "media")?.cellRenderer as
       | ((params: { value: unknown }) => string)
       | undefined;
-    expect(mediaFormatter?.({ value: "m".repeat(80) })).toBe(`${"m".repeat(47)}...`);
+    expect(mediaRenderer?.({ value: "https://example.com/cover.jpg" } as never)).toContain("cms-media-text");
+    expect(mediaRenderer?.({ value: "https://example.com/trailer.mp4" } as never)).toContain("cms-media-text");
+    expect(mediaRenderer?.({ value: "plain text" } as never)).toContain("cms-media-text");
   });
 
   it("returns dark and light theme variables", () => {
@@ -74,9 +78,47 @@ describe("useCmsProductionGrid", () => {
     expect(grid.agThemeVars.value["--cms-header-fg"]).toBe("var(--ink-on-inv)");
   });
 
+  it("builds genre editor values from primary tag labels with safe fallback", () => {
+    const withLabels = useCmsProductionGrid({
+      isDark: ref(false),
+      t: (key) => key,
+      getPrimaryTagLabels: () => ["Genre A", "Genre B"],
+    });
+    const withLabelsGenresCol = withLabels.columnDefs.value.find((col) => col.field === "genres");
+    const withLabelsParams = withLabelsGenresCol?.cellEditorParams as (() => { values: string[] }) | undefined;
+    expect(withLabelsParams?.().values).toEqual(["Genre A", "Genre B"]);
+
+    const withoutLabels = useCmsProductionGrid({
+      isDark: ref(false),
+      t: (key) => key,
+    });
+    const withoutLabelsGenresCol = withoutLabels.columnDefs.value.find((col) => col.field === "genres");
+    const withoutLabelsParams = withoutLabelsGenresCol?.cellEditorParams as
+      | (() => { values: string[] })
+      | undefined;
+    expect(withoutLabelsParams?.().values).toEqual([]);
+  });
+
+  it("renders media values as text and escapes html safely", () => {
+    const grid = useCmsProductionGrid({
+      isDark: ref(false),
+      t: (key) => key,
+    });
+
+    const mediaRenderer = grid.columnDefs.value.find((col) => col.field === "media")?.cellRenderer as
+      | ((params: { value: unknown }) => string)
+      | undefined;
+
+    const rendered = mediaRenderer?.({ value: `https://example.com/a & b<'">.jpg` } as never) ?? "";
+    expect(rendered).toContain("https://example.com/a &amp; b&lt;&#39;&quot;&gt;.jpg");
+    expect(rendered).toContain("cms-media-text");
+
+    expect(mediaRenderer?.({ value: "plain text" } as never)).toContain("plain text");
+  });
+
   it("restores state on grid ready when persisted state is present", () => {
     const api = createGridApiMock();
-    localStorage.setItem("viernulvier-cms-grid-state", JSON.stringify({ columns: [] }));
+    localStorage.setItem(storageKey, JSON.stringify({ columns: [] }));
 
     const grid = useCmsProductionGrid({
       isDark: ref(false),
@@ -104,7 +146,7 @@ describe("useCmsProductionGrid", () => {
 
   it("falls back to fit when persisted state is invalid JSON", () => {
     const api = createGridApiMock();
-    localStorage.setItem("viernulvier-cms-grid-state", "{bad-json");
+    localStorage.setItem(storageKey, "{bad-json");
 
     const grid = useCmsProductionGrid({
       isDark: ref(false),
@@ -129,7 +171,7 @@ describe("useCmsProductionGrid", () => {
 
     expect(api.applyColumnState).toHaveBeenCalledWith({ state: [{ colId: "tags", hide: true }] });
     expect(grid.columnVisibility.value.tags).toBe(false);
-    expect(localStorage.getItem("viernulvier-cms-grid-state")).toContain("foo");
+    expect(localStorage.getItem(storageKey)).toContain("foo");
   });
 
   it("can re-show a hidden column", () => {
@@ -247,7 +289,7 @@ describe("useCmsProductionGrid", () => {
   });
 
   it("resets local state even without a grid api", () => {
-    localStorage.setItem("viernulvier-cms-grid-state", JSON.stringify({ a: 1 }));
+    localStorage.setItem(storageKey, JSON.stringify({ a: 1 }));
     const grid = useCmsProductionGrid({
       isDark: ref(false),
       t: (key) => key,
@@ -259,7 +301,7 @@ describe("useCmsProductionGrid", () => {
 
     expect(grid.quickFilterText.value).toBe("");
     expect(grid.columnChooserOpen.value).toBe(false);
-    expect(localStorage.getItem("viernulvier-cms-grid-state")).toBeNull();
+    expect(localStorage.getItem(storageKey)).toBeNull();
   });
 
   it("returns row style for unfinalized productions", () => {
@@ -273,5 +315,23 @@ describe("useCmsProductionGrid", () => {
     });
     expect(grid.getProductionRowStyle({ data: { source: { finalized: true } } } as never)).toBeUndefined();
     expect(grid.getProductionRowStyle({ data: undefined } as never)).toBeUndefined();
+  });
+
+  it("styles empty cells and leaves non-empty cells untouched", () => {
+    const grid = useCmsProductionGrid({
+      isDark: ref(false),
+      t: (key) => key,
+    });
+
+    const cellStyle = grid.defaultColDef.cellStyle as ((params: { value: unknown }) => Record<string, string> | null) | undefined;
+    const emptyStyle = cellStyle?.({ value: "   " });
+    const nonEmptyStyle = cellStyle?.({ value: "filled" });
+
+    expect(emptyStyle).toEqual({
+      backgroundColor: "rgba(249, 115, 22, 0.05)",
+      color: "rgba(120, 113, 108, 0.6)",
+      fontStyle: "italic",
+    });
+    expect(nonEmptyStyle).toBeNull();
   });
 });

@@ -1,3 +1,8 @@
+/**
+ * Converts a Date/ISO value to a `datetime-local` compatible string.
+ *
+ * Returns an empty string when the value cannot be parsed as a valid date.
+ */
 export function toLocalDateTimeInput(value: Date | string | null | undefined): string {
   if (value === null || value === undefined) {
     return "";
@@ -11,6 +16,9 @@ export function toLocalDateTimeInput(value: Date | string | null | undefined): s
   return local.toISOString().slice(0, 16);
 }
 
+/**
+ * Converts a `datetime-local` input value to an ISO timestamp.
+ */
 export function toIsoStringFromLocalInput(value: string): string {
   return new Date(value).toISOString();
 }

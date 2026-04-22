@@ -5,7 +5,7 @@ import { i18n } from "@/i18n";
 import type { CreateTagFormState } from "@/services/cms";
 import { buildEmptyTagForm } from "@/services/cms";
 import CmsCreateTagModal from "@/components/admin/cms/tags/CmsCreateTagModal.vue";
-import type { LanguageMap } from "@/utils/i18n";
+import type { LanguageMap } from "@/utils/language-utils";
 
 const tagTypes: TagType[] = [
   { id: 1, old_id: null, name: { en: "Genre" } } as TagType,

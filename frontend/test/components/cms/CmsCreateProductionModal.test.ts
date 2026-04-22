@@ -4,6 +4,21 @@ import { i18n } from "@/i18n";
 import type { CreateFormState } from "@/services/cms";
 import CmsCreateProductionModal from "@/components/admin/cms/productions/CmsCreateProductionModal.vue";
 
+const tagGroups = [
+  {
+    tagTypeId: 1,
+    label: "Genre",
+    isGenre: true,
+    tags: [{ id: 10, label: "Drama" }],
+  },
+  {
+    tagTypeId: 2,
+    label: "Theme",
+    isGenre: false,
+    tags: [{ id: 20, label: "Classic" }],
+  },
+];
+
 function buildForm(overrides: Partial<CreateFormState> = {}): CreateFormState {
   return {
     finalized: false,
@@ -32,6 +47,9 @@ function mountModal(overrides: Partial<InstanceType<typeof CmsCreateProductionMo
         { key: "title", labelKey: "cms.create.fields.title", required: true, multiline: false },
         { key: "teaser", labelKey: "cms.create.fields.teaser", required: true, multiline: true },
       ],
+      tagGroups,
+      selectedPrimaryTagId: 10,
+      selectedTagIds: [20],
       createError: null,
       isCreating: false,
       ...overrides,
@@ -55,23 +73,24 @@ describe("CmsCreateProductionModal.vue", () => {
     await wrapper.get(".cms-language-pill:not(.active)").trigger("click");
     await wrapper.get('input[type="text"]').setValue("New title");
     await wrapper.get('textarea').setValue("New teaser");
+    await wrapper.get("select").setValue("10");
+    await wrapper.get(".cms-tag-group input[type='checkbox']").setValue(true);
 
     expect(wrapper.emitted("update-finalized")?.[0]).toEqual([true]);
     expect(wrapper.emitted("update-extra-lang")?.[0]).toEqual(["en", true]);
     expect(wrapper.emitted("update-form-field")?.some((payload) => payload[0] === "title")).toBe(true);
     expect(wrapper.emitted("update-form-field")?.some((payload) => payload[0] === "teaser")).toBe(true);
+    expect(wrapper.emitted("update-primary-tag")?.[0]).toEqual([10]);
   });
 
   it("emits file change, close and submit events", async () => {
     const wrapper = mountModal();
 
     await wrapper.get('input[type="file"][accept="image/*"]').trigger("change");
-    await wrapper.get('input[type="file"][accept="video/*"]').trigger("change");
     await wrapper.get(".cms-modal-overlay").trigger("click.self");
     await wrapper.get(".cms-side-save").trigger("click");
 
     expect(wrapper.emitted("image-file-change")?.length).toBe(1);
-    expect(wrapper.emitted("video-file-change")?.length).toBe(1);
     expect(wrapper.emitted("close")?.length).toBeGreaterThan(0);
     expect(wrapper.emitted("submit")?.length).toBe(1);
   });
@@ -85,5 +104,42 @@ describe("CmsCreateProductionModal.vue", () => {
     expect(wrapper.text()).toContain("Could not save");
     expect(wrapper.text()).toContain(i18n.global.t("cms.create.saving"));
     expect(wrapper.get(".cms-side-save").attributes("disabled")).toBeDefined();
+  });
+
+  it("handles empty primary tag and unchecked additional tag branch", async () => {
+    const wrapper = mountModal({
+      tagGroups: [{ tagTypeId: 2, label: "Theme", isGenre: false, tags: [{ id: 20, label: "Classic" }] }],
+      selectedPrimaryTagId: null,
+      selectedTagIds: [20],
+    });
+
+    const select = wrapper.get("select");
+    expect(select.attributes("disabled")).toBeDefined();
+
+    const checkbox = wrapper.get(".cms-tag-group input[type='checkbox']");
+    await checkbox.setValue(false);
+
+    expect(wrapper.emitted("toggle-tag")?.[0]).toEqual([20, false]);
+  });
+
+  it("covers fr language toggle, media url inputs and both close buttons", async () => {
+    const wrapper = mountModal({ createExtraLangs: { en: true, fr: false } });
+
+    await wrapper.findAll(".cms-language-pill")[2]?.trigger("click");
+    await wrapper.get('input[placeholder="https://example.com/image.jpg"]').setValue("https://example.com/primary.jpg");
+    await wrapper
+      .findAll('input[placeholder="https://example.com/image.jpg"]')[1]
+      ?.setValue("https://example.com/secondary.jpg");
+    await wrapper
+      .get('input[placeholder="https://www.youtube.com/watch?v=..."]')
+      .setValue("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+
+    await wrapper.findAll(".cms-side-close")[0]?.trigger("click");
+    await wrapper.findAll(".cms-side-close")[1]?.trigger("click");
+
+    expect(wrapper.emitted("update-extra-lang")?.some((payload) => payload[0] === "fr")).toBe(true);
+    expect(wrapper.emitted("update-form-field")?.some((payload) => payload[0] === "video_1")).toBe(true);
+    expect(wrapper.emitted("update-form-field")?.some((payload) => payload[0] === "video_2")).toBe(true);
+    expect(wrapper.emitted("close")?.length).toBeGreaterThanOrEqual(2);
   });
 });

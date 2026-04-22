@@ -401,7 +401,7 @@ import { getHalls } from "@/services/halls";
 import { ApiError } from "@/services/api";
 import { getProductions } from "@/services/productions";
 import { getTags, getTagTypes } from "@/services/tags";
-import { localizeOrEmpty } from "@/utils/i18n";
+import { localizeOrEmpty } from "@/utils/language-utils";
 import {
   sortProductionTagChipsGenresFirst,
   tagTypeIsGenre,

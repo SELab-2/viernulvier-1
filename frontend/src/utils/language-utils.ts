@@ -97,6 +97,30 @@ export function localizeOrEmpty(
 }
 
 /**
+ * Returns a localized value and falls back to the first non-empty translation
+ * (`nl`, `en`, `fr`) when the localized result is an empty string.
+ *
+ * Useful for datasets where the preferred locale key exists but is blank.
+ */
+export function localizeWithFallback(
+  map: LanguageMap | null | undefined,
+  localizeValue: (value: LanguageMap | null | undefined) => string,
+): string {
+  const localized = localizeValue(map);
+  if (localized.length > 0) {
+    return localized;
+  }
+
+  if (!map) {
+    return "";
+  }
+
+  return [map.nl, map.en, map.fr]
+    .map((value) => String(value ?? "").trim())
+    .find((value) => value.length > 0) ?? "";
+}
+
+/**
  * Creates a {@link LanguageMap} with the same string set for all three
  * languages. Useful for initialising multilingual form fields with a default
  * or copied value.

@@ -53,11 +53,12 @@ import {
   ValidationModule,
   ValueCacheModule,
 } from "ag-grid-community";
+import type { ICellRendererParams } from "ag-grid-community";
 import type { CmsProductionGridRow } from "@/services/cms";
 
 type TranslateFunction = (key: string, params?: Record<string, unknown>) => string;
 
-const cmsGridStateStorageKey = "viernulvier-cms-grid-state";
+const cmsGridStateStorageKey = "viernulvier-cms-grid-state-v2";
 const cmsGridColumnIds = [
   "eventsAction",
   "performer",
@@ -118,6 +119,7 @@ const agModules: Module[] = [
 
 ModuleRegistry.registerModules(agModules);
 
+/** Truncates long cell values for compact grid rendering. */
 function truncateValue(value: string, maxLength = 48): string {
   if (value.length <= maxLength) {
     return value;
@@ -126,9 +128,49 @@ function truncateValue(value: string, maxLength = 48): string {
   return `${value.slice(0, maxLength - 1)}...`;
 }
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => {
+    switch (character) {
+    case "&":
+      return "&amp;";
+    case "<":
+      return "&lt;";
+    case ">":
+      return "&gt;";
+    case '"':
+      return "&quot;";
+    case "'":
+      return "&#39;";
+    default:
+      return character;
+    }
+  });
+}
+
+function renderMediaCell(value: unknown): string {
+  const url = String(value ?? "").trim();
+  if (url.length === 0) {
+    return "";
+  }
+
+  const label = escapeHtml(truncateValue(url, 54));
+
+  return `<span class="cms-media-text">${label}</span>`;
+}
+
+/**
+ * Encapsulates CMS AG Grid configuration, state, and utility actions.
+ *
+ * Responsibilities:
+ * - define column config and editor behavior
+ * - persist/restore grid state to localStorage
+ * - expose actions for filtering, exporting, and sizing
+ * - expose theme variables compatible with light/dark modes
+ */
 export function useCmsProductionGrid(options: {
   isDark: Ref<boolean>;
   t: TranslateFunction;
+  getPrimaryTagLabels?: () => string[];
 }) {
   const gridApi = ref<GridApi<CmsProductionGridRow> | null>(null);
   const quickFilterText = ref("");
@@ -152,6 +194,18 @@ export function useCmsProductionGrid(options: {
     floatingFilter: true,
     resizable: true,
     minWidth: 120,
+    cellStyle: (params) => {
+      const value = params.value;
+      const isEmpty = !value || (typeof value === 'string' && value.trim() === '');
+      if (isEmpty) {
+        return {
+          backgroundColor: 'rgba(249, 115, 22, 0.05)',
+          color: 'rgba(120, 113, 108, 0.6)',
+          fontStyle: 'italic',
+        };
+      }
+      return null;
+    },
   };
 
   const gridColumnOptions = computed(() => [
@@ -211,6 +265,12 @@ export function useCmsProductionGrid(options: {
     {
       headerName: options.t("cms.columns.genres"),
       field: "genres",
+      editable: true,
+      singleClickEdit: true,
+      cellEditor: "agSelectCellEditor",
+      cellEditorParams: () => ({
+        values: options.getPrimaryTagLabels?.() ?? [],
+      }),
       minWidth: 120,
     },
     {
@@ -244,7 +304,7 @@ export function useCmsProductionGrid(options: {
       editable: false,
       minWidth: 220,
       cellClass: "cms-truncate-cell",
-      valueFormatter: ({ value }) => truncateValue(String(value ?? "")),
+      cellRenderer: (params: ICellRendererParams<CmsProductionGridRow, unknown>) => renderMediaCell(params.value),
     },
   ]);
 

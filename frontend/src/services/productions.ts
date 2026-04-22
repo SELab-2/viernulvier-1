@@ -20,7 +20,7 @@
 
 import type { ProductionWithBackwardsRefs, ProductionWithMeta, Tag } from "@viernulvier/shared";
 import { apiFetch } from "./api";
-import type { LanguageMap } from "@/utils/i18n";
+import type { LanguageMap } from "@/utils/language-utils";
 
 type LinkedEntityReference = number | string | { id: unknown };
 
@@ -47,6 +47,8 @@ export interface CreateProductionInput {
   vendor_id: number;
   box_office_id: number;
   finalized?: boolean;
+  /** Tag IDs to link to the new production. */
+  tags?: number[];
   /** Main title of the production (at least one language required). */
   title: LanguageMap;
   /** Performing artist or company. */

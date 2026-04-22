@@ -4,35 +4,54 @@
 
     <main class="flex-1 bg-surface-1 px-6 py-10 lg:px-10">
       <div class="mx-auto flex max-w-[1400px] flex-col gap-6">
-        <header class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h1 class="text-3xl font-black tracking-tight text-ink-primary">
-              {{ t("cms.title") }}
-            </h1>
-            <p class="mt-2 max-w-3xl text-sm leading-relaxed text-ink-secondary">
-              {{ t("cms.subtitle") }}
-            </p>
-          </div>
+        <header>
+          <h1 class="text-3xl font-black tracking-tight text-ink-primary">
+            {{ t("cms.title") }}
+          </h1>
+          <p class="mt-2 max-w-3xl text-sm leading-relaxed text-ink-secondary">
+            {{ t("cms.subtitle") }}
+          </p>
         </header>
 
-        <nav class="cms-tabs" role="tablist" :aria-label="t('cms.tabs.ariaLabel')">
+        <div class="cms-tabs" role="tablist" :aria-label="t('cms.tabs.ariaLabel')">
           <button
-            v-for="tab in tabs"
-            :key="tab.id"
             type="button"
+            class="cms-tab"
+            :class="{ 'cms-tab-active': activeTab === 'productions' }"
             role="tab"
-            :aria-selected="activeTab === tab.id"
-            :class="['cms-tab', { 'cms-tab-active': activeTab === tab.id }]"
-            :data-testid="`cms-tab-${tab.id}`"
-            @click="activeTab = tab.id"
+            data-testid="cms-tab-productions"
+            :aria-selected="activeTab === 'productions'"
+            @click="activeTab = 'productions'"
           >
-            {{ t(tab.labelKey) }}
+            {{ t("cms.tabs.productions") }}
           </button>
-        </nav>
+          <button
+            type="button"
+            class="cms-tab"
+            :class="{ 'cms-tab-active': activeTab === 'tags' }"
+            role="tab"
+            data-testid="cms-tab-tags"
+            :aria-selected="activeTab === 'tags'"
+            @click="activeTab = 'tags'"
+          >
+            {{ t("cms.tabs.tags") }}
+          </button>
+          <button
+            type="button"
+            class="cms-tab"
+            :class="{ 'cms-tab-active': activeTab === 'admins' }"
+            role="tab"
+            data-testid="cms-tab-admins"
+            :aria-selected="activeTab === 'admins'"
+            @click="activeTab = 'admins'"
+          >
+            {{ t("cms.tabs.admins") }}
+          </button>
+        </div>
 
         <CmsProductionsTab v-if="activeTab === 'productions'" />
         <CmsTagsTab v-else-if="activeTab === 'tags'" />
-        <CmsAdminsTab v-else-if="activeTab === 'admins'" />
+        <CmsAdminsTab v-else />
       </div>
     </main>
 
@@ -44,11 +63,11 @@
 import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import AdminNavbar from "@/components/admin/AdminNavbar.vue";
 import AppFooter from "@/components/AppFooter.vue";
+import AdminNavbar from "@/components/admin/AdminNavbar.vue";
+import CmsAdminsTab from "@/components/admin/cms/tabs/CmsAdminsTab.vue";
 import CmsProductionsTab from "@/components/admin/cms/tabs/CmsProductionsTab.vue";
 import CmsTagsTab from "@/components/admin/cms/tabs/CmsTagsTab.vue";
-import CmsAdminsTab from "@/components/admin/cms/tabs/CmsAdminsTab.vue";
 import { useDarkMode } from "@/composables/useDarkMode";
 
 type CmsTabId = "productions" | "tags" | "admins";
@@ -57,12 +76,6 @@ const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 const { isDark, toggleDark } = useDarkMode();
-
-const tabs: ReadonlyArray<{ id: CmsTabId; labelKey: string }> = [
-  { id: "productions", labelKey: "cms.tabs.productions" },
-  { id: "tags", labelKey: "cms.tabs.tags" },
-  { id: "admins", labelKey: "cms.tabs.admins" },
-];
 
 const validTabs = ["productions", "tags", "admins"] as const;
 

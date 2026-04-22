@@ -1,8 +1,11 @@
 import type { SupportedLang } from "@/i18n";
-import type { LanguageMap } from "@/utils/i18n";
+import type { LanguageMap } from "@/utils/language-utils";
 import { emptyLangRecord } from "./helpers";
 import type { CmsCreateFieldConfig, CreateFormState, CreateTagFormState } from "./types";
 
+/**
+ * Field definitions used to render the create-production modal dynamically.
+ */
 export const createProductionFields: CmsCreateFieldConfig[] = [
   { key: "title", labelKey: "cms.create.fields.title", required: true, multiline: false },
   { key: "artist", labelKey: "cms.create.fields.artist", required: true, multiline: false },
@@ -13,6 +16,9 @@ export const createProductionFields: CmsCreateFieldConfig[] = [
   { key: "description_2", labelKey: "cms.create.fields.descriptionTwo", required: false, multiline: true },
 ];
 
+/**
+ * Creates a clean initial state for the production-create form.
+ */
 export function buildEmptyCreateForm(): CreateFormState {
   return {
     finalized: false,
@@ -28,10 +34,16 @@ export function buildEmptyCreateForm(): CreateFormState {
   };
 }
 
+/**
+ * Returns true if at least one language value contains non-whitespace text.
+ */
 export function hasAnyLanguageValue(values: Record<SupportedLang, string>): boolean {
   return Object.values(values).some((value) => value.trim().length > 0);
 }
 
+/**
+ * Trims values and returns a sparse language map, or null when all values are empty.
+ */
 export function toLanguageMapOrNull(
   values: Record<SupportedLang, string>,
 ): LanguageMap | null {
@@ -46,12 +58,21 @@ export function toLanguageMapOrNull(
   return Object.keys(next).length > 0 ? next : null;
 }
 
+/**
+ * Trims values and returns a sparse language map.
+ * Empty input yields an empty object instead of null.
+ */
 export function toLanguageMap(
   values: Record<SupportedLang, string>,
 ): LanguageMap {
   return toLanguageMapOrNull(values) ?? {};
 }
 
+/**
+ * Converts media input to API payload shape.
+ *
+ * CMS currently stores only NL media URLs, so this helper returns `{ nl }` or null.
+ */
 export function mediaToLanguageMap(values: Record<SupportedLang, string>): LanguageMap | null {
   const nlValue = values.nl.trim();
   if (nlValue.length === 0) {

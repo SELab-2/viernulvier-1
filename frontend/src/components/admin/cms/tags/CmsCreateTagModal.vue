@@ -107,7 +107,7 @@ import { useI18n } from "vue-i18n";
 import type { TagType } from "@viernulvier/shared";
 import type { CreateTagFormState } from "@/services/cms";
 import type { SupportedLang } from "@/i18n";
-import type { LanguageMap } from "@/utils/i18n";
+import type { LanguageMap } from "@/utils/language-utils";
 
 defineProps<{
   open: boolean;
