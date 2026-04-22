@@ -21,13 +21,13 @@ COPY --from=deps /app /app
 COPY . .
 
 RUN pnpm install
-# RUN pnpm --filter shared build
 RUN pnpm --filter frontend build
 
 
 FROM nginx:stable-alpine
 
 COPY --from=build /app/frontend/dist /usr/share/nginx/html
+COPY frontend/nginx.conf /etc/nginx/templates/default.conf.template
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
