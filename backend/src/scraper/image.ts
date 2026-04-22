@@ -159,11 +159,13 @@ async function createImageWithCrops(
 
   const imageData = (await imageResponse.json()) as { id: number };
   const imageId = imageData.id;
+  console.log(`Created image id=${imageId} for old_id=${oldId}`);
   if (stats) stats.media_created = (stats.media_created ?? 0) + 1;
 
   // Hand off crop creation to crop module
   const crops = mediaItem.crops || [];
   if (crops.length > 0) {
+    console.log(`  Creating ${crops.length} crops for image ${imageId}...`);
     const cropsCreated = await createCropsForImage(crops, imageId, loginToken, stats);
     if (cropsCreated > 0) {
       console.log(`    Created image with ${cropsCreated} crop(s)`);
@@ -184,9 +186,11 @@ export async function processProductionMediaGallery(
   loginToken: string,
   stats?: ScrapeRunStats,
 ): Promise<void> {
+  console.log(`Processing media gallery for production ${productionId}: ${galleryIri}`);
   try {
     // Fetch gallery
     const galleryUrl = viernulvierApiUrl(galleryIri);
+    console.log(`Fetching gallery from: ${galleryUrl}`);
     const galleryResponse = await fetch(galleryUrl, {
       headers: {
         accept: "application/ld+json",
@@ -203,7 +207,7 @@ export async function processProductionMediaGallery(
     const itemIris = gallery.items || [];
 
     if (itemIris.length === 0) {
-      console.log(`    Gallery is empty`);
+      console.log(`    Gallery is empty (no items)`);
       return;
     }
 
