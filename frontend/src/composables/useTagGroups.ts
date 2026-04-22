@@ -1,7 +1,7 @@
 import { ref, computed, onMounted } from "vue";
 import type { Tag, TagType } from "@viernulvier/shared";
 import { getTags, getTagTypes } from "@/services/tags";
-import { localizeOrEmpty, type LanguageMap } from "@/utils/i18n";
+import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import { i18n, type SupportedLang } from "@/i18n";
 
 /**

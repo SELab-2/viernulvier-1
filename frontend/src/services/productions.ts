@@ -20,7 +20,7 @@
 
 import type { ProductionWithBackwardsRefs, ProductionWithMeta, Tag } from "@viernulvier/shared";
 import { apiFetch } from "./api";
-import type { LanguageMap } from "@/utils/i18n";
+import type { LanguageMap } from "@/utils/language-utils";
 
 type LinkedEntityReference = number | string | { id: unknown };
 

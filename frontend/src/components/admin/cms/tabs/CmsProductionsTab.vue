@@ -297,7 +297,7 @@ import {
 import { createEvent, deleteEvent, getEvent, updateEvent } from "@/services/events";
 import { getHall, getHalls } from "@/services/halls";
 import { getAllTags, getTagTypes } from "@/services/tags";
-import { localizeOrEmpty, localizeWithFallback, type LanguageMap } from "@/utils/i18n";
+import { localizeOrEmpty, localizeWithFallback, type LanguageMap } from "@/utils/language-utils";
 import {
   buildEventGridRows,
   buildProductionGridRows,

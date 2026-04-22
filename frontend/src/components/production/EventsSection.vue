@@ -155,7 +155,7 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { i18n, type SupportedLang } from '@/i18n';
 import { formatNumericDate, formatTime } from '@/utils/date';
-import { localizeOrEmpty, type LanguageMap } from '@/utils/i18n';
+import { localizeOrEmpty, type LanguageMap } from '@/utils/language-utils';
 import type { EnrichedEvent } from '@/composables/useProductionEvents';
 
 const props = defineProps<{

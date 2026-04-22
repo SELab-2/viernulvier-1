@@ -1,5 +1,5 @@
 import type { SupportedLang } from "@/i18n";
-import type { LanguageMap } from "@/utils/i18n";
+import type { LanguageMap } from "@/utils/language-utils";
 import { emptyLangRecord } from "./helpers";
 import type { CmsCreateFieldConfig, CreateFormState, CreateTagFormState } from "./types";
 

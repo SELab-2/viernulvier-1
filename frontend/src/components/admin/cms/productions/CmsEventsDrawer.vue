@@ -127,7 +127,7 @@
 import type { Hall } from "@viernulvier/shared";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
-import type { LanguageMap } from "@/utils/i18n";
+import type { LanguageMap } from "@/utils/language-utils";
 import type { CmsEventGridRow, CmsProductionGridRow } from "@/services/cms";
 
 /**

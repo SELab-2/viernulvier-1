@@ -88,7 +88,7 @@
 import type { Hall } from "@viernulvier/shared";
 import { computed, watchEffect } from "vue";
 import { useI18n } from "vue-i18n";
-import type { LanguageMap } from "@/utils/i18n";
+import type { LanguageMap } from "@/utils/language-utils";
 import type { CmsCreateLinkedEventForm, CmsProductionGridRow } from "@/services/cms";
 
 /**

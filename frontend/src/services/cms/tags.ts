@@ -1,5 +1,5 @@
 import type { Tag, TagType } from "@viernulvier/shared";
-import { localizeWithFallback, type LanguageMap } from "@/utils/i18n";
+import { localizeWithFallback, type LanguageMap } from "@/utils/language-utils";
 import { tagTypeIsGenre } from "@/utils/tagDisplay";
 
 /** Tag choice shown in CMS selectors. */

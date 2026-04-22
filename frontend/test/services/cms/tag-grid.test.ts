@@ -5,7 +5,7 @@ import {
   buildTagGridRow,
   buildTagGridRows,
 } from "@/services/cms";
-import type { LanguageMap } from "@/utils/i18n";
+import type { LanguageMap } from "@/utils/language-utils";
 
 const localize = (map: LanguageMap | null | undefined): string =>
   map ? (map.en ?? Object.values(map)[0] ?? "") : "";

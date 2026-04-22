@@ -1,5 +1,5 @@
 import type { SupportedLang } from "@/i18n";
-import type { LanguageMap } from "@/utils/i18n";
+import type { LanguageMap } from "@/utils/language-utils";
 
 /**
  * Returns an empty language record for NL/FR/EN used by CMS forms.

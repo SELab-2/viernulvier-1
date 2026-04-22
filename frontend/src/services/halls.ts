@@ -19,7 +19,7 @@
 
 import type { Hall, HallWithMeta } from "@viernulvier/shared";
 import { apiFetch } from "./api";
-import type { LanguageMap } from "@/utils/i18n";
+import type { LanguageMap } from "@/utils/language-utils";
 
 // ---------------------------------------------------------------------------
 // Input types

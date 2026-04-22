@@ -8,7 +8,7 @@ import {
   hasLanguage,
   availableLanguages,
   ALL_LANGUAGES,
-} from "@/utils/i18n";
+} from "@/utils/language-utils";
 
 // ---------------------------------------------------------------------------
 // localize

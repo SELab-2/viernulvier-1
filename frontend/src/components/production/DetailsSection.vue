@@ -114,7 +114,7 @@
 import { i18n, type SupportedLang } from "@/i18n";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { computed, ref } from "vue";
-import { localizeOrEmpty, type LanguageMap } from "@/utils/i18n";
+import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import { useI18n } from "vue-i18n";
 import { normalizeQuote, parseAndSanitizeContent } from "@/utils/parsers";
 

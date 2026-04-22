@@ -58,7 +58,7 @@ import { useDarkMode } from "@/composables/useDarkMode";
 import { ApiError } from "@/services/api";
 import { useTagGroups } from "@/composables/useTagGroups";
 import { useProductionEvents } from "@/composables/useProductionEvents";
-import type { LanguageMap } from "@/utils/i18n";
+import type { LanguageMap } from "@/utils/language-utils";
 
 const { isDark } = useDarkMode();
 

@@ -114,7 +114,7 @@ import { useCmsTagGrid } from "@/composables/useCmsTagGrid";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
 import { createTag, getAllTags, getTagTypes, updateTag } from "@/services/tags";
-import { localizeOrEmpty, type LanguageMap } from "@/utils/i18n";
+import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import {
   applyUpdatedTagToRow,
   buildEmptyTagForm,
