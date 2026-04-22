@@ -61,28 +61,27 @@ async function fetchLocalImageIdByOldId(
   oldId: number,
   loginToken: string,
 ): Promise<number | null> {
-  const response = await fetch(
-    localApiUrl(`/api/v1/image/by-old-id/${oldId}`),
-    {
-      headers: {
-        "Authorization": `Bearer ${loginToken}`,
-      },
-    },
-  );
+  const url = new URL(localApiUrl("/api/v1/image"));
+  url.searchParams.set("old_id", String(oldId));
 
-  if (response.status === 404) {
-    return null;
-  }
+  const response = await fetch(url.toString(), {
+    headers: {
+      "Authorization": `Bearer ${loginToken}`,
+    },
+  });
 
   if (!response.ok) {
-    console.warn(
-      `Failed to check local image old_id=${oldId}: ${response.status}`,
+    throw new Error(
+      `Failed to fetch image from local API: ${response.status} ${response.statusText}`,
     );
-    return null;
   }
 
-  const data = (await response.json()) as { id: number };
-  return data.id;
+  const data = (await response.json()) as { items: Array<{ id: number }>; total: number };
+  if (data.total === 0) return null;
+  if (data.total > 1) {
+    throw new Error(`Multiple images found with old_id ${oldId}`);
+  }
+  return data.items[0]!.id;
 }
 
 

@@ -32,7 +32,7 @@ interface MediaItemJSON {
 }
 
 /**
- * Create payload for local crop endpoint.
+ * Create payload for local crop endpoint (used for metadata-only creation).
  */
 export interface CreateCropBody {
   old_id: number;
@@ -41,12 +41,40 @@ export interface CreateCropBody {
 }
 
 /**
- * Extract ID from @id path (e.g., "/api/v1/media/crops/16" → 16).
+ * Payload for multipart crop upload.
+ */
+interface CreateCropsMultipartData {
+  crops: Array<{
+    filename: string;
+    type: string;
+  }>;
+}
+
+/**
+ * Extract ID from path (e.g., "/api/v1/media/crops/16" → 16).
  */
 function extractCropId(iri: string): number {
   const idSegment = iri.split("/").pop();
   const id = idSegment !== undefined ? parseInt(idSegment, 10) : Number.NaN;
   return id;
+}
+
+/**
+ * Downloads a file from a URL and returns the buffer.
+ */
+async function downloadFile(url: string): Promise<Buffer | null> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.warn(`Failed to download file ${url}: ${response.status}`);
+      return null;
+    }
+    const buffer = await response.arrayBuffer();
+    return Buffer.from(buffer);
+  } catch (err) {
+    console.warn(`Error downloading file ${url}:`, err);
+    return null;
+  }
 }
 
 /**
@@ -89,28 +117,27 @@ async function fetchLocalCropIdByOldId(
   oldId: number,
   loginToken: string,
 ): Promise<number | null> {
-  const response = await fetch(
-    localApiUrl(`/api/v1/crop/by-old-id/${oldId}`),
-    {
-      headers: {
-        "Authorization": `Bearer ${loginToken}`,
-      },
-    },
-  );
+  const url = new URL(localApiUrl("/api/v1/crop"));
+  url.searchParams.set("old_id", String(oldId));
 
-  if (response.status === 404) {
-    return null;
-  }
+  const response = await fetch(url.toString(), {
+    headers: {
+      "Authorization": `Bearer ${loginToken}`,
+    },
+  });
 
   if (!response.ok) {
-    console.warn(
-      `Failed to check local crop old_id=${oldId}: ${response.status}`,
+    throw new Error(
+      `Failed to fetch crop from local API: ${response.status} ${response.statusText}`,
     );
-    return null;
   }
 
-  const data = (await response.json()) as { id: number };
-  return data.id;
+  const data = (await response.json()) as { items: Array<{ id: number }>; total: number };
+  if (data.total === 0) return null;
+  if (data.total > 1) {
+    throw new Error(`Multiple crops found with old_id ${oldId}`);
+  }
+  return data.items[0]!.id;
 }
 
 /**
@@ -188,7 +215,7 @@ async function ensureCropImported(
     return existing;
   }
 
-  return createLocalCropFromViernulvierJson(
+  return await createLocalCropFromViernulvierJson(
     crop,
     imageId,
     loginToken,
@@ -198,6 +225,7 @@ async function ensureCropImported(
 
 /**
  * Creates crops for an image from an array of crop objects.
+ * Downloads the actual crop files and uploads them via multipart.
  * Called by image scraper after creating an image.
  */
 export async function createCropsForImage(
@@ -206,16 +234,106 @@ export async function createCropsForImage(
   loginToken: string,
   stats?: ScrapeRunStats,
 ): Promise<number> {
-  let cropsCreated = 0;
-
-  for (const crop of crops) {
-    const imported = await ensureCropImported(crop, imageId, loginToken, stats);
-    if (imported !== null) {
-      cropsCreated++;
-    }
+  if (crops.length === 0) {
+    return 0;
   }
 
-  return cropsCreated;
+  // Build multipart data with crop metadata and downloaded files
+  const cropMappings: CreateCropsMultipartData["crops"] = [];
+  const files = new Map<string, Buffer>();
+
+  for (let i = 0; i < crops.length; i++) {
+    const crop = crops[i]!;
+    if (!crop.url) {
+      console.warn(`Skipping crop "${crop.name}": no URL provided`);
+      if (stats) stats.crop_skipped = (stats.crop_skipped ?? 0) + 1;
+      continue;
+    }
+
+    const oldId = extractCropId(crop["@id"]);
+    if (!Number.isFinite(oldId)) {
+      console.warn(`Skipping crop: could not parse legacy id from ${crop["@id"]}`);
+      if (stats) stats.crop_skipped = (stats.crop_skipped ?? 0) + 1;
+      continue;
+    }
+
+    // Check if crop already exists
+    try {
+      const existing = await fetchLocalCropIdByOldId(oldId, loginToken);
+      if (existing !== null) {
+        console.log(`Crop old_id=${oldId} already exists, skipping`);
+        if (stats) stats.crop_existing = (stats.crop_existing ?? 0) + 1;
+        continue;
+      }
+    } catch (err) {
+      console.warn(`Error checking if crop exists ${oldId}:`, err);
+      if (stats) stats.crop_skipped = (stats.crop_skipped ?? 0) + 1;
+      continue;
+    }
+
+    // Download the file
+    const fileBuffer = await downloadFile(crop.url);
+    if (!fileBuffer) {
+      console.warn(`Failed to download crop file: ${crop.url}`);
+      if (stats) stats.crop_skipped = (stats.crop_skipped ?? 0) + 1;
+      continue;
+    }
+
+    // Generate filename from crop name
+    const filename = `crop-${i}`;
+    files.set(filename, fileBuffer);
+
+    cropMappings.push({
+      filename,
+      type: crop.name,
+    });
+  }
+
+  if (cropMappings.length === 0) {
+    console.log(`No crops to upload for image ${imageId}`);
+    return 0;
+  }
+
+  // Create FormData for multipart upload
+  const formData = new FormData();
+  formData.append("data", JSON.stringify({ crops: cropMappings }));
+
+  for (const [filename, buffer] of files) {
+    const blob = new Blob([buffer]);
+    formData.append(filename, blob, filename);
+  }
+
+  // Send multipart request
+  try {
+    const response = await fetch(
+      localApiUrl(`/api/v1/image/${imageId}/crop`),
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${loginToken}`,
+        },
+        body: formData,
+      },
+    );
+
+    if (!response.ok) {
+      const detail = await response.text();
+      console.warn(
+        `Failed to upload crops for image ${imageId}: ${response.status}${detail ? ` — ${detail}` : ""}`,
+      );
+      if (stats) stats.crop_skipped = (stats.crop_skipped ?? 0) + cropMappings.length;
+      return 0;
+    }
+
+    const uploaded = cropMappings.length;
+    if (stats) stats.crop_created = (stats.crop_created ?? 0) + uploaded;
+    console.log(`Uploaded ${uploaded} crop(s) for image ${imageId}`);
+    return uploaded;
+  } catch (err) {
+    console.error(`Error uploading crops for image ${imageId}:`, err);
+    if (stats) stats.errors = (stats.errors ?? 0) + 1;
+    return 0;
+  }
 }
 
 /**
