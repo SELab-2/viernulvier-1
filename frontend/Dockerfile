@@ -21,7 +21,6 @@ COPY --from=deps /app /app
 COPY . .
 
 RUN pnpm install
-# RUN pnpm --filter shared build
 RUN pnpm --filter frontend build
 
 
