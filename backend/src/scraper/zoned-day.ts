@@ -38,7 +38,7 @@ export function previousBrusselsDayBounds(): ViernulvierEventStartBounds {
   const before = startOfCalendarDayUtc(todayYmd, tz);
   const yesterdayYmd = formatYmdInTimeZone(
     new Date(before.getTime() - 1 * 24 * 60 * 60 * 1000),
-    tz
+    tz,
   );
   const after = startOfCalendarDayUtc(yesterdayYmd, tz);
   return { after, before };
