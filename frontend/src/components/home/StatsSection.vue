@@ -31,7 +31,7 @@ const { stats } = useArchiveStats();
  * Format a number with a locale-aware separator (e.g. 12.482 in NL, 12,482 in EN).
  */
 function formatNumber(n: number): string {
-  return n.toLocaleString("nl-BE");
+  return n.toLocaleString("nl-BE") + "+";
 }
 
 const displayStats = computed(() => [
