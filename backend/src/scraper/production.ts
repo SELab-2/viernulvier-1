@@ -13,6 +13,7 @@ import {
   syncProductionGenreTagsWithPayload,
 } from "./production-tags.js";
 import { createEmptyRunStats, type ScrapeRunStats } from "./scrape-stats.js";
+import { processProductionMediaGallery } from "./image.js";
 
 interface ProductionListMeta {
   totalItems: number;
@@ -47,6 +48,12 @@ export interface ProductionJSON {
   meta_title?: Record<string, string>;
   /** Genre/tag IRIs or embedded objects (`/api/v1/genres/...`). */
   genres?: unknown;
+  /** Media gallery IRI for images. */
+  media_gallery?: string;
+  /** Review gallery IRI (optional). */
+  review_gallery?: string;
+  /** Poster gallery IRI (optional). */
+  poster_gallery?: string;
 }
 
 interface ViernulvierProductionApiResponse {
@@ -240,6 +247,17 @@ async function ensureProductionImported(
       loginToken,
       stats,
     );
+    // Process media gallery for existing production
+    if (production.media_gallery) {
+      console.log(`Processing media gallery for existing production...`);
+      await processProductionMediaGallery(
+        production.media_gallery,
+        existing,
+        authToken,
+        loginToken,
+        stats,
+      );
+    }
     return existing;
   }
   if (!hasImportableProductionTitle(production)) {
@@ -257,6 +275,17 @@ async function ensureProductionImported(
       loginToken,
       stats,
     );
+    // Process media gallery for newly created production
+    if (production.media_gallery) {
+      console.log(`Processing media gallery for new production...`);
+      await processProductionMediaGallery(
+        production.media_gallery,
+        created,
+        authToken,
+        loginToken,
+        stats,
+      );
+    }
   }
   return created;
 }

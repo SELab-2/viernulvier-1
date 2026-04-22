@@ -41,11 +41,30 @@ export type EventSliceRunStats = {
   failed: number;
 };
 
+export type MediaRunStats = {
+  media_created: number;
+  media_existing: number;
+  media_skipped: number;
+};
+
+export type CropRunStats = {
+  crop_created: number;
+  crop_existing: number;
+  crop_skipped: number;
+};
+
 export type ScrapeRunStats = {
   events: EventSliceRunStats;
   halls: LazyEntityRunStats;
   productions: LazyEntityRunStats;
   tags: TagRunStats;
+  media_created?: number;
+  media_existing?: number;
+  media_skipped?: number;
+  crop_created?: number;
+  crop_existing?: number;
+  crop_skipped?: number;
+  errors?: number;
 };
 
 export function createEmptyRunStats(): ScrapeRunStats {
@@ -70,6 +89,13 @@ export function createEmptyRunStats(): ScrapeRunStats {
       tagTypesCreated: 0,
       genresSkipped: 0,
     },
+    media_created: 0,
+    media_existing: 0,
+    media_skipped: 0,
+    crop_created: 0,
+    crop_existing: 0,
+    crop_skipped: 0,
+    errors: 0,
   };
 }
 
