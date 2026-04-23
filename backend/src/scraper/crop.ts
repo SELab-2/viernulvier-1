@@ -346,7 +346,7 @@ export async function createCropsForImage(
       }
 
       if (stats) stats.crop_created = (stats.crop_created ?? 0) + cropMappings.length;
-      console.log(`Uploaded ${cropMappings.length} crop(s) for image ${imageId} (batch ${Math.ceil((batchStart + 1) / batchSize)}/${Math.ceil(cropsToUpload.length / batchSize)})`);
+      console.log(`    Uploaded ${cropMappings.length} crop(s) for image ${imageId} (batch ${Math.ceil((batchStart + 1) / batchSize)}/${Math.ceil(cropsToUpload.length / batchSize)})`);
       totalUploaded += cropMappings.length;
     } catch (err) {
       console.error(`Error uploading crop batch for image ${imageId}:`, err);

@@ -148,17 +148,14 @@ async function createImageWithCrops(
 
   const imageData = (await imageResponse.json()) as { id: number };
   const imageId = imageData.id;
-  console.log(`Created image id=${imageId} for old_id=${oldId}`);
+  console.log(`  Created image id=${imageId} for old_id=${oldId}`);
   if (stats) stats.media_created = (stats.media_created ?? 0) + 1;
 
   // Hand off crop creation to crop module
   const crops = mediaItem.crops || [];
   if (crops.length > 0) {
     console.log(`  Creating ${crops.length} crops for image ${imageId}...`);
-    const cropsCreated = await createCropsForImage(crops, imageId, loginToken, stats);
-    if (cropsCreated > 0) {
-      console.log(`    Created image with ${cropsCreated} crop(s)`);
-    }
+    await createCropsForImage(crops, imageId, loginToken, stats);
   }
 
   return imageId;
@@ -177,8 +174,6 @@ export async function processProductionMediaGallery(
   stats?: ScrapeRunStats,
 ): Promise<void> {
   try {
-    console.log(`Processing media gallery for production ${productionId}: ${galleryIri}`);
-
     // Fetch full gallery with complete crop data
     const galleryUrl = viernulvierApiUrl(galleryIri);
     const galleryResponse = await fetch(galleryUrl, {
@@ -200,7 +195,7 @@ export async function processProductionMediaGallery(
       return;
     }
 
-    console.log(`    Processing ${gallery.items.length} items from gallery...`);
+    console.log(`Processing ${gallery.items.length} items from gallery...`);
 
     for (const mediaItem of gallery.items) {
       // Create image and crops
