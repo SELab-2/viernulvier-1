@@ -21,6 +21,11 @@ beforeAll(async () => {
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
 
+    // ── All images (list) ──
+    if (upper.includes("FROM IMAGE I") && upper.includes("ORDER BY I.ID ASC") && !upper.includes("WHERE")) {
+      return Promise.resolve({ rows: [MOCK_IMAGE_1, MOCK_IMAGE_2], rowCount: 2 });
+    }
+
     // ── Single image by ID ──
     if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.ID = \$1")) {
       const id = Number(params?.[0]);
@@ -34,6 +39,29 @@ beforeAll(async () => {
         return Promise.resolve({ rows: [MOCK_IMAGE_2], rowCount: 1 });
       }
       return Promise.resolve({ rows: [], rowCount: 0 });
+    }
+
+    // ── Single image by oldId ──
+    if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.OLD_ID = \$1")) {
+      const oldId = Number(params?.[0]);
+      const img = [MOCK_IMAGE_1, MOCK_IMAGE_2].find((i) => i.old_id === oldId);
+      return Promise.resolve({
+        rows: img ? [img] : [],
+        rowCount: img ? 1 : 0,
+      });
+    }
+
+    // ── Images by production + oldId ──
+    if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.OLD_ID = \$1 AND I.PRODUCTION = \$2")) {
+      const oldId = Number(params?.[0]);
+      const prodId = Number(params?.[1]);
+      const img = [MOCK_IMAGE_1, MOCK_IMAGE_2].find(
+        (i) => i.old_id === oldId && i.production === prodId,
+      );
+      return Promise.resolve({
+        rows: img ? [img] : [],
+        rowCount: img ? 1 : 0,
+      });
     }
 
     // ── Images by production ──
@@ -52,6 +80,19 @@ beforeAll(async () => {
         ids.includes(c.image),
       );
       return Promise.resolve({ rows: crops, rowCount: crops.length });
+    }
+
+    // ── Crop by image + oldId ── CHECK THIS BEFORE IMAGE ONLY!
+    if (upper.includes("FROM CROP C") && upper.includes("WHERE C.IMAGE = \$1 AND C.OLD_ID = \$2")) {
+      const imgId = Number(params?.[0]);
+      const oldId = Number(params?.[1]);
+      const crop = [MOCK_CROP_1, MOCK_CROP_2, MOCK_CROP_3].find(
+        (c) => c.image === imgId && c.old_id === oldId,
+      );
+      return Promise.resolve({
+        rows: crop ? [crop] : [],
+        rowCount: crop ? 1 : 0,
+      });
     }
 
     // ── Crop by image + type ──
@@ -210,6 +251,42 @@ describe("Image fetch routes", () => {
 
     server.pg.query = originalQuery;
   });
+
+  test("GET /api/v1/image -> returns all images with crops", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/image",
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json();
+    expect(json).toEqual([
+      imageWithCrops(MOCK_IMAGE_1, [MOCK_CROP_1, MOCK_CROP_2]),
+      imageWithCrops(MOCK_IMAGE_2, [MOCK_CROP_3]),
+    ]);
+  });
+
+  test("GET /api/v1/image?oldId=X -> returns specific image by oldId with crops", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/image?oldId=${MOCK_IMAGE_1.old_id}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual([
+      imageWithCrops(MOCK_IMAGE_1, [MOCK_CROP_1, MOCK_CROP_2]),
+    ]);
+  });
+
+  test("GET /api/v1/image?oldId=X -> returns empty array when oldId not found", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/image?oldId=9999",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual([]);
+  });
 });
 
 describe("Crop fetch routes", () => {
@@ -260,5 +337,35 @@ describe("Crop fetch routes", () => {
     });
 
     expect(response.statusCode).toBe(404);
+  });
+
+  test("GET /api/v1/image/:imageId/crop?oldId=X -> returns specific crop by oldId", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/image/${MOCK_IMAGE_1.id}/crop?oldId=${MOCK_CROP_1.old_id}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual([MOCK_CROP_1]);
+  });
+
+  test("GET /api/v1/image/:imageId/crop?oldId=X -> returns empty when oldId not found", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/image/${MOCK_IMAGE_1.id}/crop?oldId=9999`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual([]);
+  });
+
+  test("GET /api/v1/image/:imageId/crop?oldId=X -> returns empty when oldId exists but wrong image", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/image/9999/crop?oldId=${MOCK_CROP_1.old_id}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual([]);
   });
 });

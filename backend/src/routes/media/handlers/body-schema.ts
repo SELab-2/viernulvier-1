@@ -1,5 +1,5 @@
 import z from "zod";
-import { ImageSchema } from "@viernulvier/shared/index.js";
+import { ImageSchema, stringToInt } from "@viernulvier/shared/index.js";
 import { CropSchema } from "@viernulvier/shared/index.js";
 
 // ── Crop-file mapping (used inside multipart "data" JSON field) ──
@@ -32,6 +32,11 @@ export const ReplaceImageBodySchema = ImageSchema.pick({
   crops: z.array(CropMappingSchema).optional(),
 });
 
+/** FETCH - search query for images*/
+export const ImageListQuerySchema = z.object({
+  oldId: stringToInt.optional(),
+});
+
 // ── Crop body schemas ──
 
 /** POST — upload one or more crops to an existing image */
@@ -47,4 +52,9 @@ export const PatchCropBodySchema = CropSchema.pick({
 /** PUT — replace crop type + file */
 export const ReplaceCropBodySchema = CropSchema.pick({
   type: true,
+});
+
+/** FETCH - search query for crops*/
+export const CropListQuerySchema = z.object({
+  oldId: stringToInt.optional(),
 });

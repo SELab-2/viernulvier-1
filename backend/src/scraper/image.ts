@@ -2,6 +2,7 @@ import { localApiUrl } from "./local-api.js";
 import type { ScrapeRunStats } from "./scrape-stats.js";
 import { viernulvierApiUrl } from "./viernulvier-api.js";
 import { createCropsForImage } from "./crop.js";
+import type { Crop, Image } from "@viernulvier/shared/types/index.js";
 
 /**
  * Raw media gallery from Viernulvier JSON-LD.
@@ -58,7 +59,7 @@ async function fetchLocalImageIdByOldId(
   loginToken: string,
 ): Promise<number | null> {
   const url = new URL(localApiUrl("/api/v1/image"));
-  url.searchParams.set("old_id", String(oldId));
+  url.searchParams.set("oldId", String(oldId));
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -66,23 +67,18 @@ async function fetchLocalImageIdByOldId(
     },
   });
 
-  // 404 means the image doesn't exist yet, which is expected - return null
-  if (response.status === 404) {
-    return null;
-  }
-
   if (!response.ok) {
     throw new Error(
       `Failed to fetch image from local API: ${response.status} ${response.statusText}`,
     );
   }
 
-  const data = (await response.json()) as { items: Array<{ id: number }>; total: number };
-  if (data.total === 0) return null;
-  if (data.total > 1) {
+  const data = (await response.json()) as Array<Image & { crops: Crop[] }>;
+  if (data.length === 0) return null;
+  if (data.length > 1) {
     throw new Error(`Multiple images found with old_id ${oldId}`);
   }
-  return data.items[0]!.id;
+  return data[0]!.id;
 }
 
 /**

@@ -3,6 +3,7 @@ import { totalPagesFromHydraView } from "./hydra-view.js";
 import { localApiUrl } from "./local-api.js";
 import type { ScrapeRunStats } from "./scrape-stats.js";
 import { viernulvierApiUrl } from "./viernulvier-api.js";
+import type { Crop } from "@viernulvier/shared/types/index.js";
 
 /**
  * Raw media item crop from Viernulvier JSON-LD.
@@ -115,9 +116,10 @@ async function fetchMediaItemWithCrops(
  */
 async function fetchLocalCropIdByOldId(
   oldId: number,
+  imageId: number,
   loginToken: string,
 ): Promise<number | null> {
-  const url = new URL(localApiUrl("/api/v1/crop"));
+  const url = new URL(localApiUrl(`/api/v1/image/${imageId}/crop`));
   url.searchParams.set("old_id", String(oldId));
 
   const response = await fetch(url.toString(), {
@@ -126,23 +128,18 @@ async function fetchLocalCropIdByOldId(
     },
   });
 
-  // 404 means the crop doesn't exist yet, which is expected - return null
-  if (response.status === 404) {
-    return null;
-  }
-
   if (!response.ok) {
     throw new Error(
       `Failed to fetch crop from local API: ${response.status} ${response.statusText}`,
     );
   }
 
-  const data = (await response.json()) as { items: Array<{ id: number }>; total: number };
-  if (data.total === 0) return null;
-  if (data.total > 1) {
+  const data = (await response.json()) as Crop[];
+  if (data.length === 0) return null;
+  if (data.length > 1) {
     throw new Error(`Multiple crops found with old_id ${oldId}`);
   }
-  return data.items[0]!.id;
+  return data[0]!.id;
 }
 
 /**
@@ -211,7 +208,7 @@ async function ensureCropImported(
     return null;
   }
 
-  const existing = await fetchLocalCropIdByOldId(oldId, loginToken);
+  const existing = await fetchLocalCropIdByOldId(oldId, imageId, loginToken);
   if (existing !== null) {
     console.log(
       `Crop old_id=${oldId} already exists locally (id=${existing}), skipping create`,
@@ -265,7 +262,7 @@ export async function createCropsForImage(
 
     // Check if crop already exists
     try {
-      const existing = await fetchLocalCropIdByOldId(oldId, loginToken);
+      const existing = await fetchLocalCropIdByOldId(oldId, imageId, loginToken);
       if (existing !== null) {
         console.log(`Crop old_id=${oldId} already exists, skipping`);
         if (stats) stats.crop_existing = (stats.crop_existing ?? 0) + 1;
@@ -305,6 +302,7 @@ export async function createCropsForImage(
     const files = new Map<string, Buffer>();
 
     for (let i = 0; i < batch.length; i++) {
+      // eslint-disable-next-line @typescript-eslint/detect-non-null-assertion
       const { crop, fileBuffer } = batch[i]!;
       const filename = `crop-${batchStart + i}`;
       files.set(filename, fileBuffer);

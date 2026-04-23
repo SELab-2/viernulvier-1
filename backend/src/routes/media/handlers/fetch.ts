@@ -3,6 +3,7 @@ import type { Crop, CropWithMeta, Image, ImageWithMeta } from "@viernulvier/shar
 import { ImageSchema, CropSchema, stringToInt } from "@viernulvier/shared/index.js";
 import { parseParams, parseSchema, ParseContext } from "@/routes/helpers.js";
 import z from "zod";
+import { CropListQuerySchema, ImageListQuerySchema } from "./body-schema.js";
 
 // ── SQL fragments ──
 
@@ -53,6 +54,58 @@ FROM crop c
 `;
 
 // ── Internal helpers ──
+
+/**
+ * Internal helper: fetches crops for a set of images and attaches them.
+ */
+async function attachCropsToImages(
+  server: FastifyInstance,
+  images: Image[],
+): Promise<(Image & { crops: Crop[] })[]> {
+  if (images.length === 0) return [];
+
+  const imageIds = images.map((img) => img.id);
+  const cropsResult = await server.pg.query(
+    `${CropSelect} WHERE c.image = ANY($1::int[]) ORDER BY c.image ASC, c.id ASC`,
+    [imageIds],
+  );
+  const allCrops = parseSchema(server, z.array(CropSchema), cropsResult.rows, ParseContext.Database);
+
+  const cropsByImage = new Map<number, Crop[]>();
+  for (const crop of allCrops) {
+    const imageId = crop.image as number;
+    const list = cropsByImage.get(imageId) ?? [];
+    list.push(crop);
+    cropsByImage.set(imageId, list);
+  }
+
+  return images.map((img) => ({
+    ...img,
+    crops: cropsByImage.get(img.id) ?? [],
+  }));
+}
+
+/**
+ * Fetches a single image by old_id (without metadata).
+ *
+ * @param server - The Fastify instance.
+ * @param oldId - The old_id from the external source.
+ * @returns The image with crops or `null` if not found.
+ */
+export async function getImageByOldId(
+  server: FastifyInstance,
+  oldId: number,
+): Promise<(Image & { crops: Crop[] }) | null> {
+  const imgResult = await server.pg.query(
+    `${ImageSelect} WHERE i.old_id = \$1`,
+    [oldId],
+  );
+  const images = parseSchema(server, z.array(ImageSchema), imgResult.rows, ParseContext.Database);
+  if (images.length === 0) return null;
+
+  const withCrops = await attachCropsToImages(server, images);
+  return withCrops[0] ?? null;
+}
 
 /**
  * Fetches a single image by ID (without metadata).
@@ -162,6 +215,32 @@ export async function fetchImagesByProduction(
 }
 
 /**
+ * GET /api/v1/image, can filter the image by old_id via query param (`?oldId=X`).
+ *
+ * If `oldId` is provided, returns an array with a single image or an empty array if not found.
+ * If `oldId` is not provided, returns all images as an array.
+ * @param server 
+ * @param request 
+ * @returns 
+ */
+export async function fetchAllImages(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<(Image & { crops: Crop[] })[]> {
+  const { oldId } = parseSchema(server, ImageListQuerySchema, request.query, ParseContext.Request);
+  if (oldId !== undefined) {
+    const image = await getImageByOldId(server, oldId);
+    return await attachCropsToImages(server, image ? [image] : []);
+  }
+  const imgResult = await server.pg.query(
+    `${ImageSelect} ORDER BY i.id ASC`,
+  );
+  const images = parseSchema(server, z.array(ImageSchema), imgResult.rows, ParseContext.Database);
+  return await attachCropsToImages(server, images);
+}
+
+
+/**
  * GET /api/v1/image/:id
  *
  * Fetches a single image with its crops.
@@ -214,14 +293,24 @@ export async function fetchImageWithMeta(
 
 /**
  * GET /api/v1/image/:imageId/crop
- *
- * Fetches all crops for a given image.
+ * Can filter by the old_id of the crop via query param (`?oldId=X`).
+ * If `oldId` is provided, returns an array with a single crop or an empty array if not found.
+ * If `oldId` is not provided, returns all crops for the given image.
  */
 export async function fetchCropsByImage(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Crop[] | null> {
   const { imageId } = parseParams(request, z.object({ imageId: stringToInt }));
+  const { oldId } = parseSchema(server, CropListQuerySchema, request.query, ParseContext.Request);
+  if (oldId !== undefined) {
+    const crop = await server.pg.query(
+      `${CropSelect} WHERE c.image = $1 AND c.old_id = $2`,
+      [imageId, oldId],
+    );
+    const crops = parseSchema(server, z.array(CropSchema), crop.rows, ParseContext.Database);
+    return crops;
+  }
   return await getCropsByImageId(server, imageId);
 }
 
