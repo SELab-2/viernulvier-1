@@ -16,6 +16,7 @@ import { ApiError } from "@/services/api";
 import { routes } from "@/router/routes";
 import { i18n } from "@/i18n";
 import { __reset as resetDarkMode } from "@/composables/useDarkMode";
+import * as mediaService from "@/services/media";
 import * as productionsService from "@/services/productions";
 import type { ProductionListPage } from "@/services/productions";
 import * as tagsService from "@/services/tags";
@@ -100,6 +101,7 @@ describe("ProductionsView.vue", () => {
       items: [mockProduction],
       total: 1,
     });
+    vi.spyOn(mediaService, "getImagesForProduction").mockResolvedValue([]);
     vi.spyOn(tagsService, "getTags").mockResolvedValue([mockTag]);
     vi.spyOn(tagsService, "getTagTypes").mockResolvedValue([mockTagTypeGenre]);
     vi.spyOn(eventsService, "getEventsForProductions").mockResolvedValue([

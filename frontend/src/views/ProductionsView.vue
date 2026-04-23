@@ -298,6 +298,7 @@
               :date-summary="dateSummaryFor(p.id)"
               :tag-chips="tagChipsFor(p)"
               :halls-text="hallsTextFor(p.id)"
+              :thumbnail-url="thumbnailFor(p.id)"
             />
 
             <nav
@@ -399,6 +400,7 @@ import { i18n, type SupportedLang } from "@/i18n";
 import { getEventsForProductions } from "@/services/events";
 import { getHalls } from "@/services/halls";
 import { ApiError } from "@/services/api";
+import { getImagesForProduction } from "@/services/media";
 import { getProductions } from "@/services/productions";
 import { getTags, getTagTypes } from "@/services/tags";
 import { localizeOrEmpty } from "@/utils/language-utils";
@@ -407,6 +409,7 @@ import {
   tagTypeIsGenre,
   type ProductionTagChip,
 } from "@/utils/tagDisplay";
+import { pickProductionListThumbnailUrl } from "@/utils/productionThumbnails";
 import {
   distinctHallNames,
   groupEventsByProductionId,
@@ -711,9 +714,40 @@ const hasActiveListFilters = computed(() => {
 });
 
 const eventsByProduction = ref(new Map<number, ProductionEvent[]>());
+/** Set after `GET /production/:id/image` for each row on the current list page. */
+const thumbnailUrlByProductionId = ref(
+  new Map<number, string | null>(),
+);
 const tagsById = ref(new Map<number, Tag>());
 const tagTypesById = ref(new Map<number, TagType>());
 const hallsById = ref(new Map<number, Hall>());
+
+function thumbnailFor(productionId: number): string | null {
+  const m = thumbnailUrlByProductionId.value;
+  if (!m.has(productionId)) {
+    return null;
+  }
+  return m.get(productionId) ?? null;
+}
+
+async function loadThumbnailsForProductionIds(ids: number[]): Promise<void> {
+  if (ids.length === 0) {
+    thumbnailUrlByProductionId.value = new Map();
+    return;
+  }
+  const next = new Map<number, string | null>();
+  await Promise.all(
+    ids.map(async (id) => {
+      try {
+        const images = await getImagesForProduction(id);
+        next.set(id, pickProductionListThumbnailUrl(images));
+      } catch {
+        next.set(id, null);
+      }
+    }),
+  );
+  thumbnailUrlByProductionId.value = next;
+}
 
 const locale = computed(() => i18n.global.locale.value as SupportedLang);
 
@@ -777,6 +811,8 @@ async function fetchProductionsPageData(page0: number) {
   searchBannerTerms.value = [...appliedSearchTerms.value];
   syncFilterBannerFromApplied();
   eventsByProduction.value = eventsMap;
+  thumbnailUrlByProductionId.value = new Map();
+  void loadThumbnailsForProductionIds(ids);
 }
 
 function toggleTag(id: number) {

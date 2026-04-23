@@ -10,7 +10,16 @@
     <div
       class="relative h-28 w-24 shrink-0 overflow-hidden rounded-md bg-surface-2 sm:h-32 sm:w-28 md:h-36 md:w-32"
       aria-hidden="true"
-    />
+    >
+      <img
+        v-if="thumbnailUrl"
+        :src="thumbnailUrl"
+        alt=""
+        class="h-full w-full object-cover"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
 
     <div class="relative flex min-h-0 min-w-0 flex-1 flex-col">
       <!--
@@ -108,10 +117,12 @@ const props = withDefaults(
     dateSummary: ProductionDateSummary;
     tagChips: ProductionTagChip[];
     hallsText: string;
+    /** Public crop URL (`/media/crops/…`) for the list thumbnail, if any. */
+    thumbnailUrl?: string | null;
     /** Used to stagger the row entrance animation on the productions list. */
     rowIndex?: number;
   }>(),
-  { rowIndex: 0 },
+  { rowIndex: 0, thumbnailUrl: null },
 );
 
 const { t, locale } = useI18n();
