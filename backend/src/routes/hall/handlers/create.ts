@@ -10,15 +10,15 @@ const CreateHallBodySchema = HallSchema.omit({ id: true });
 const insertHall = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `INSERT INTO hall (name, address, vendor_id, created_by, updated_by, created_at, updated_at)
+    `INSERT INTO hall (old_id, name, address, created_by, updated_by, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $4, $5, $5)
-     RETURNING id, name, address, vendor_id`,
+     RETURNING id, old_id, name, address`,
     z.tuple([
-      languageMap,            // name
-      z.string(),             // address
-      z.int().nonnegative(),  // vendor_id
-      z.int(),       // admin
-      z.date(),               // current_time
+      z.int().nonnegative().nullable(),
+      languageMap,
+      z.string().nullable(),
+      z.int(),
+      z.date(),
     ]),
     HallSchema,
   );
@@ -30,14 +30,17 @@ const insertHall = (server: FastifyInstance) =>
  * @param request - The Fastify request, expected to contain a hall body.
  * @returns The created hall, or `null` if the insert failed or parsing failed.
  */
-export async function createHall(server: FastifyInstance, request: FastifyRequest): Promise<Hall | null> {
+export async function createHall(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<Hall | null> {
   const body = parseSchema(server, CreateHallBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
 
   const rows = await insertHall(server)(
+    body["old_id"],
     body["name"],
     body["address"],
-    body["vendor_id"],
     admin,
     current_time,
   );

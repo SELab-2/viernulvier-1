@@ -12,29 +12,39 @@
     "test:watch": "vitest",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
-    "check": "pnpm run build && pnpm run test && pnpm run lint"
+    "check": "pnpm run build && pnpm run coverage && pnpm run lint"
   },
   "dependencies": {
-    "vue": "^3.5.25"
+    "@viernulvier/shared": "workspace:*",
+    "ag-grid-community": "^35.2.0",
+    "ag-grid-vue3": "^35.2.0",
+    "dompurify": "^3.4.0",
+    "easymde": "^2.18.0",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.30",
+    "vue-i18n": "^11.3.2",
+    "vue-router": "^5.0.4"
   },
   "devDependencies": {
-    "@eslint/js": "^9",
-    "@types/node": "^24.10.1",
-    "@vitejs/plugin-vue": "^6.0.2",
+    "@eslint/js": "^10",
+    "@tailwindcss/vite": "^4.2.2",
+    "@types/node": "^25.6.0",
+    "@vitejs/plugin-vue": "^6.0.5",
     "@vue/test-utils": "^2.4.6",
-    "@vue/tsconfig": "^0.8.1",
-    "eslint": "^9",
+    "@vue/tsconfig": "^0.9.1",
+    "eslint": "^10",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
-    "eslint-plugin-tsdoc": "^0.5.0",
+    "eslint-plugin-tsdoc": "^0.5.2",
     "eslint-plugin-vue": "^10.8.0",
     "globals": "^17.3.0",
-    "jsdom": "^28.1.0",
-    "typescript": "~5.9.3",
-    "typescript-eslint": "^8.56.0",
-    "vite": "^7.3.1",
-    "vitest": "^4.0.18",
-    "vue-tsc": "^3.1.5"
+    "jsdom": "^29.0.2",
+    "tailwindcss": "^4.2.2",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.58.0",
+    "vite": "^8.0.8",
+    "vitest": "4.1.4",
+    "vue-tsc": "^3.2.6"
   },
   "overrides": {
     "minimatch": "^10.2.1"

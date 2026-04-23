@@ -32,7 +32,7 @@ Media-opslag is opgesplitst in twee tabellen. `Image` is het originele beeld gek
 Een systeem voor dynamische extra velden op producties. Elk custom field heeft een type (`bool`, `number`, `string`, `json`) en de bijhorende waarde. Dit biedt flexibiliteit om later nieuwe velden toe te voegen zonder het schema aan te passen.
 
 #### Admin
-Een tabel voor CMS-gebruikers met inloggegevens. Het wachtwoord wordt gehashed opgeslagen. De `created_by` verwijzing in de metadata-partial koppelt elke wijziging in de databank aan de admin die ze uitvoerde.
+Een tabel voor CMS-gebruikers met inloggegevens. Het wachtwoord wordt gehashed opgeslagen. Het `super` veld wordt gebruikt voor de super admin, die andere admins kan opvragen, aanmaken, bewerken of verwijderen.. De `created_by` en `updated_by` verwijzingen in de metadata-partial koppelt elke wijziging in de databank aan de admin die ze uitvoerde.
 
 #### Blog en Blogpost
 De blogfunctionaliteit (nice to have) bestaat uit een `blog` als container en individuele `blogpost`s met JSON-content, koppelbaar aan producties en events uit het archief.
@@ -134,18 +134,18 @@ Table event_price {
 
 Table production_tag {
   ~metadata
-  tag_id int [ref: > tag.id]
-  production_id int [ref: > production.id]
+  tag int [ref: > tag.id]
+  production int [ref: > production.id]
 }
 
 Table tag {
   ~metadata
   "id" int [PK]
   "name" varchar(32) [not null]
-  "type" int [ref: > tag_type.id, not null]
+  "tag_type" int [ref: > tag_type.id, not null]
 
   indexes {
-    type
+    tag_type
   }
 }
 
@@ -187,7 +187,7 @@ Table custom_production_field_definition {
 Table production_custom_field {
   ~metadata
   "field_defenition_id" int [PK, ref: > custom_production_field_definition.id]
-  "production_id" int [PK, ref: > production.id]
+  "production" int [PK, ref: > production.id]
   "value_bool" bool [null]
   "value_number" numeric [null]
   "value_string" varchar(32) [null]
@@ -200,6 +200,7 @@ Table admin {
   "username" varchar(32)
   "password" varchar(64)
   "profile_picture" varchar(128) 
+  "super" bool
 }
 
 Table blog {
@@ -211,93 +212,7 @@ Table blog {
 Table blogpost {
   ~metadata
   "id" int [PK]
-  "blog_id" int [ref: > blog.id]
-  "content" json
-}
-  "event" int [PK, ref: > event.id]
-  "amount" varchar(32)
-  "box_office_id" int [null]
-  "available" int
-  "contingent_id" int
-  "expires_at" timestamp
-  "price" json
-  "rank" json
-}
-
-
-Table production_tag {
-  ~metadata
-  tag_id int [ref: > tag.id]
-  production_id int [ref: > production.id]
-}
-
-Table tag {
-  ~metadata
-  "id" int [PK]
-  "name" varchar(32) [not null]
-  "type" int [ref: > tag_type.id, not null]
-
-  indexes {
-    type
-  }
-}
-
-Table tag_type {
-  ~metadata
-  "id" int [PK]
-  "name" varchar(32)
-}
-
-Enum field_types {
-  "number"
-  "string"
-  "bool"
-  "json"
-}
-
-Table image {
-  ~metadata
-  "id" int [PK]
-  "prod_id" int [ref: > production.id]
-  "res" varchar(16)
-}
-
-Table crop {
-  ~metadata
-  "id" int [PK]
-  "image_id" int [ref: > image.id]
-  "url" varchar(128)
-}
-
-Table custom_production_field {
-  ~metadata
-  "id" int [PK]
-  "production_id" int [ref: > production.id]
-  "field_type" field_types
-  "value_bool" bool [null]
-  "value_number" numeric [null]
-  "value_string" varchar(32) [null]
-  "value_json" json [null]
-}
-
-Table admin {
-  ~metadata
-  "id" int [PK]
-  "username" varchar(32)
-  "password" varchar(64)
-  "profile_picture" varchar(128) 
-}
-
-Table blog {
-  ~metadata
-  "id" int [PK]
-  "name" varchar(32)
-}
-
-Table blogpost {
-  ~metadata
-  "id" int [PK]
-  "blog_id" int [ref: > blog.id]
+  "blog" int [ref: > blog.id]
   "content" json
 }
 ```

@@ -18,16 +18,23 @@ export type TagTypeWithMeta = z.infer<
   ReturnType<typeof TagTypeSchema.withMeta>
 >;
 
+type TagProductionsSchema = z.ZodOptional<
+  z.ZodArray<ForeignKey<typeof ProductionSchema>>
+>;
+
 export const TagSchema = createSchema({
   id: primaryKey(),
+  old_id: z.int().nonnegative().nullable(),
   name: languageMap,
-  get type(): ForeignKey<typeof TagTypeSchema> {
+  get tag_type(): ForeignKey<typeof TagTypeSchema> {
     return foreignKey(() => TagTypeSchema);
   },
   public: z.boolean(),
+  /** Distinct productions linked to this tag; set when `includeProductionCount=true` on list endpoints. */
+  production_count: z.number().int().nonnegative().optional(),
 
-  get productions(): z.ZodArray<ForeignKey<typeof ProductionSchema>> {
-    return z.array(foreignKey(() => ProductionSchema));
+  get productions(): TagProductionsSchema {
+    return z.array(foreignKey(() => ProductionSchema)).optional();
   },
 });
 

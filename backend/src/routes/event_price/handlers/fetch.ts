@@ -19,7 +19,7 @@ export async function fetchEventPrice(
 ): Promise<EventPrice | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const result = await buildQuery(server,
-    `SELECT id, event, amount
+    `SELECT id, event, amount::float
     FROM event_price WHERE id = $1`,
     z.tuple([z.int()]),
     EventPriceSchema,
@@ -43,7 +43,7 @@ export async function fetchEventPriceWithMeta(
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const result = await buildQuery(
     server,
-    `SELECT id, event, amount, created_at, updated_at, created_by, updated_by
+    `SELECT id, event, amount::float, created_at, updated_at, created_by, updated_by
     FROM event_price WHERE id = $1`,
     z.tuple([z.int()]),
     EventPriceSchema.withMeta(),
@@ -57,14 +57,16 @@ export async function fetchEventPriceWithMeta(
  * Returns an empty array when parsing fails.
  *
  * @param server - The Fastify instance, used for database access and logging.
+ * @param _request - The Fastify request.
  * @returns An array of parsed event prices.
  */
 export async function fetchEventPrices(
   server: FastifyInstance,
+  _request: FastifyRequest,
 ): Promise<EventPrice[]> {
   const result = await buildQuery(
     server,
-    `SELECT id, event, amount
+    `SELECT id, event, amount::float
     FROM event_price`,
     EventPriceSchema,
   )();

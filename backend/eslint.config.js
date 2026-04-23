@@ -102,6 +102,7 @@ export default defineConfig([
 
       // Prevent common API logic mistakes
       "@typescript-eslint/no-misused-promises": "error",
+      "@typescript-eslint/no-deprecated": "error",
 
       // Rely on the beter import resolver
       "n/no-missing-import": "off",
@@ -117,6 +118,35 @@ export default defineConfig([
       "indent": ["error", 2],
       "comma-dangle": ["error", "always-multiline"],
     }
+  },
+
+  // Legacy CSV import modules: fs paths are argv-driven (trusted CLI); rule is noise here.
+  {
+    files: ["src/legacy-import/**/*.ts"],
+    rules: {
+      "security/detect-non-literal-fs-filename": "off",
+    },
+  },
+
+  // Scraper: narrow suppressions to modules that need dynamic keys or non-literal report paths.
+  {
+    files: ["src/scraper/scrape-stats.ts"],
+    rules: {
+      "security/detect-non-literal-fs-filename": "off",
+      "security/detect-object-injection": "off",
+    },
+  },
+  {
+    files: ["src/scraper/language-map.ts"],
+    rules: {
+      "security/detect-object-injection": "off",
+    },
+  },
+  {
+    files: ["src/scraper/event.ts", "src/scraper/production-tags.ts"],
+    rules: {
+      "security/detect-object-injection": "off",
+    },
   },
 
   // --------------------------------------------------
@@ -137,6 +167,10 @@ export default defineConfig([
     rules: {
       "n/no-unpublished-import": "off",
       "@typescript-eslint/no-floating-promises": "off",
+      "@typescript-eslint/no-deprecated": "error",
+
+      // Tests use temp paths and fixtures; non-literal fs paths are intentional.
+      "security/detect-non-literal-fs-filename": "off",
 
       "@typescript-eslint/no-unused-vars": [
         "warn",

@@ -6,14 +6,17 @@ import { primaryKey, foreignKey } from "./helpers.js";
 export const ImageSchema = createSchema({
   id: primaryKey(),
 
-  production_id: foreignKey(() => ProductionSchema),
+  old_id: z.int().nonnegative().nullable(),
+
+  production: foreignKey(() => ProductionSchema),
 
   res: z
     .string()
-    .max(16),
-}).refine((img) => {
-  // resolution should not be empty or whitespace
-  return img.res.trim().length > 0;
+    .max(16)
+    .refine((val) => val.trim().length > 0, {
+      message: "Resolution must not be empty or whitespace",
+    })
+    .nullable(),
 });
 
 export type Image = z.infer<typeof ImageSchema>;

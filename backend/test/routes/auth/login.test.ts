@@ -20,7 +20,7 @@ afterAll(async () => {
 describe("Login on auth route", () => {
   test("POST /api/v1/auth/login — stores a cookie and returns success on valid credentials", async () => {
     const hashed = await hashPassword(mockPassword);
-    server.pg.query = vi.fn().mockResolvedValue({ rows: [{ id: 404, password: hashed }], rowCount: 1 });
+    server.pg.query = vi.fn().mockResolvedValue({ rows: [{ id: 404, password: hashed, super: true }], rowCount: 1 });
 
     const response = await server.inject({
       method: "POST",
@@ -29,7 +29,7 @@ describe("Login on auth route", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ success: true });
+    expect(response.json()).toEqual({ token: expect.any(String) });
     expect(response.cookies).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: "session", httpOnly: true }),
@@ -37,8 +37,21 @@ describe("Login on auth route", () => {
     );
   });
 
+  test("POST /api/v1/auth/login — also works with super = false", async () => {
+    const hashed = await hashPassword(mockPassword);
+    server.pg.query = vi.fn().mockResolvedValue({ rows: [{ id: 404, password: hashed, super: false }], rowCount: 1 });
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/auth/login",
+      payload: { username: mockUsername, password: mockPassword },
+    });
+
+    expect(response.statusCode).toBe(200);
+  });
+
   test("POST /api/v1/auth/login — returns 401 when username not found", async () => {
-    server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
+    server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0, super: false });
 
     const response = await server.inject({
       method: "POST",
@@ -51,7 +64,7 @@ describe("Login on auth route", () => {
 
   test("POST /api/v1/auth/login — returns 401 on wrong password", async () => {
     const hashed = await hashPassword(mockPassword);
-    server.pg.query = vi.fn().mockResolvedValue({ rows: [{ id: 404, password: hashed }], rowCount: 1 });
+    server.pg.query = vi.fn().mockResolvedValue({ rows: [{ id: 404, password: hashed, super: false }], rowCount: 1 });
 
     const response = await server.inject({
       method: "POST",

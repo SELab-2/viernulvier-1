@@ -2,8 +2,8 @@ import { ProductionSchema } from "@viernulvier/shared/index.js";
 import z from "zod";
 
 export const ProductionBodySchema = ProductionSchema.pick({
-  vendor_id: true,
-  box_office_id: true,
+  old_id: true,
+  finalized: true,
   supertitle: true,
   title: true,
   artist: true,
@@ -18,17 +18,18 @@ export const ProductionBodySchema = ProductionSchema.pick({
   quote_source: true,
   programme: true,
   info: true,
+}).extend({
 });
 
 export const CreateProductionBodySchema = ProductionSchema.pick({
-  vendor_id: true,
-  box_office_id: true,
   title: true,
-  artist: true,
-  tagline: true,
-  teaser: true,
 }).extend(
   ProductionSchema.pick({
+    artist: true,
+    tagline: true,
+    teaser: true,
+    old_id: true,
+    finalized: true,
     supertitle: true,
     description: true,
     description_extra: true,
@@ -40,9 +41,10 @@ export const CreateProductionBodySchema = ProductionSchema.pick({
     programme: true,
     info: true,
   }).partial().shape,
-);
+).extend({
+});
 
 export const PartialProductionBodySchema = ProductionBodySchema.partial();
-const ProductionIdObjectSchema = ProductionSchema.pick({ id: true }) as z.ZodObject<{ id: z.ZodTypeAny }>;
+const ProductionIdObjectSchema = ProductionSchema.pick({ id: true }) as z.ZodObject<{ id: z.ZodType }>;
 export const ProductionIdSchema = ProductionIdObjectSchema.shape["id"];
 

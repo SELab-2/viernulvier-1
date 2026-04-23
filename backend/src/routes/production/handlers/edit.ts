@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import type { Production } from "@viernulvier/shared/index.js";
+import type { ProductionWithBackwardsRefs } from "@viernulvier/shared/index.js";
 import { HttpClientError, HttpError, getMetadata, parseParams, parseSchema } from "@/routes/helpers.js";
 import { stringToInt } from "@viernulvier/shared/index.js";
 import { getProductionById } from "./fetch.js";
@@ -8,8 +8,6 @@ import { getFieldValue, getNullableFieldValue, hasOwn } from "./field-utils.js";
 import z from "zod";
 
 const DirectEditColumns = [
-  "vendor_id",
-  "box_office_id",
   "title",
   "artist",
   "tagline",
@@ -36,7 +34,10 @@ const NullableEditColumns = [
  * @param request - The Fastify request, expected to contain `id` in params and a partial production body.
  * @returns The updated production, or `null` if the update failed or parsing failed.
  */
-export async function editProduction(server: FastifyInstance, request: FastifyRequest): Promise<Production | null> {
+export async function editProduction(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<ProductionWithBackwardsRefs | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const body = parseSchema(server, PartialProductionBodySchema, request.body);
 
@@ -63,7 +64,7 @@ export async function editProduction(server: FastifyInstance, request: FastifyRe
     }
   }
 
-  if (fields.length === 0) {
+  if (fields.length === 0 && !hasOwn(body, "tags")) {
     throw new HttpError(HttpClientError.BadRequest, "No fields to update");
   }
 

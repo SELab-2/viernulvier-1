@@ -1,49 +1,16 @@
 import z from "zod";
 
-import { EventSchema, EventSchemaWithoutPrice } from "@viernulvier/shared/index.js";
+import { EventSchema, EventSchemaWithoutPrice, serial } from "@viernulvier/shared/index.js";
 import { buildQuery } from "@/routes/helpers.js";
 import type { FastifyInstance } from "fastify";
 
 /**
- * Normalizes all date fields in an event object to Date instances.
+ * Normalizes date fields on event create/replace/edit payloads to `Date` instances.
  *
- * Converts the date string fields (`starts_at`, `ends_at`, `doors_at`) to JavaScript Date objects.
- * Non-object inputs are returned unchanged. This function is used for complete event updates
- * where all date fields are provided.
+ * Treats `undefined` as “omit”, `null` as explicit null (for nullable `ends_at` / `doors_at`),
+ * and invalid date strings as `undefined`. Non-object inputs are returned unchanged.
  *
- * @param value - The value to normalize, typically an event object with date strings
- * @returns The normalized object with date fields converted to Date instances, or the original value if not an object
- *
- * @example
- * const event = \{
- *   starts_at: "2026-01-01T18:00:00.000Z",
- *   ends_at: "2026-01-01T20:00:00.000Z",
- *   doors_at: "2026-01-01T17:30:00.000Z",
- *   production: 10
- * \};
- * const normalized = normalizeEventDates(event);
- * // normalized.starts_at is now a Date object
- */
-
-export function normalizeEventDates(value: unknown): unknown {
-  if (!value || typeof value !== "object") return value;
-
-  const payload = value as Record<string, unknown>;
-  return {
-    ...payload,
-    starts_at: payload["starts_at"] instanceof Date ? payload["starts_at"] : new Date(String(payload["starts_at"])),
-    ends_at: payload["ends_at"] instanceof Date ? payload["ends_at"] : new Date(String(payload["ends_at"])),
-    doors_at: payload["doors_at"] instanceof Date ? payload["doors_at"] : new Date(String(payload["doors_at"])),
-  };
-}
-
-/**
- * Normalizes date fields in a partial event object to Date instances.
- *
- * Similar to {@link normalizeEventDates}, but safely handles partial updates where
- * date fields may be undefined. Only converts date fields that are explicitly provided,
- * leaving undefined fields as undefined. This function is used for partial event updates
- * (PATCH requests) where only some fields are being modified.
+ * Used for POST, PUT, PATCH, and bulk-edit handlers after JSON parsing.
  *
  * @param value - The value to normalize, typically a partial event object
  * @returns The normalized object with provided date fields converted to Date instances,
@@ -64,23 +31,27 @@ export function normalizePartialEventDates(value: unknown): unknown {
   if (!value || typeof value !== "object") return value;
 
   const payload = value as Record<string, unknown>;
+
+  const parseDate = (dateValue: unknown): Date | undefined | null => {
+    if (dateValue === undefined) {
+      return undefined;
+    }
+    if (dateValue === null) {
+      return null;
+    }
+    if (dateValue instanceof Date) {
+      return dateValue;
+    }
+    const parsed = new Date(String(dateValue));
+    // Return undefined if the date is invalid instead of an Invalid Date object
+    return isNaN(parsed.getTime()) ? undefined : parsed;
+  };
+
   return {
     ...payload,
-    starts_at: payload["starts_at"] === undefined
-      ? undefined
-      : payload["starts_at"] instanceof Date
-        ? payload["starts_at"]
-        : new Date(String(payload["starts_at"])),
-    ends_at: payload["ends_at"] === undefined
-      ? undefined
-      : payload["ends_at"] instanceof Date
-        ? payload["ends_at"]
-        : new Date(String(payload["ends_at"])),
-    doors_at: payload["doors_at"] === undefined
-      ? undefined
-      : payload["doors_at"] instanceof Date
-        ? payload["doors_at"]
-        : new Date(String(payload["doors_at"])),
+    starts_at: parseDate(payload["starts_at"]),
+    ends_at: parseDate(payload["ends_at"]),
+    doors_at: parseDate(payload["doors_at"]),
   };
 }
 
@@ -88,27 +59,27 @@ export function normalizePartialEventDates(value: unknown): unknown {
 export const EventCreateSchema = EventSchemaWithoutPrice.omit({ id: true });
 export type EventCreate = z.infer<typeof EventCreateSchema>;
 
-export const selectPriceSubquery = `(SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_prices ep WHERE ep.event = events.id) AS price`;
+export const selectPriceSubquery = `(SELECT COALESCE(ARRAY_AGG(ep.id), '{}') FROM event_price ep WHERE ep.event = event.id) AS price`;
 
 export function updateEvent(server: FastifyInstance) {
   return buildQuery(
     server,
-    `UPDATE events
-    SET starts_at = $1, ends_at = $2, production = $3, hall = $4, doors_at = $5, vendor_id = $6, info = $7,
+    `UPDATE event
+    SET old_id = $1, starts_at = $2, ends_at = $3, production = $4, hall = $5, doors_at = $6, info = $7,
         updated_at = $8, updated_by = $9
     WHERE id = $10
-    RETURNING id, starts_at, ends_at, production, hall, doors_at, vendor_id, info, ${selectPriceSubquery}`,
+    RETURNING id, old_id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}`,
     z.tuple([
+      EventCreateSchema.shape.old_id,
       EventCreateSchema.shape.starts_at,
       EventCreateSchema.shape.ends_at,
       EventCreateSchema.shape.production,
       EventCreateSchema.shape.hall,
       EventCreateSchema.shape.doors_at,
-      EventCreateSchema.shape.vendor_id,
       EventCreateSchema.shape.info,
       z.date(),
-      z.number().nonnegative(),
-      z.number().nonnegative(),
+      serial(),
+      serial(),
     ]),
     EventSchema,
   )};

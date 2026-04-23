@@ -34,7 +34,7 @@ async function waitForDB() {
  */
 export async function migrate(
   target: string | undefined = undefined,
-  migrationsPath: string | undefined = undefined
+  migrationsPath: string | undefined = undefined,
 ) {
   const client = new pg.Client({
     connectionString: process.env["DATABASE_URL"],
@@ -54,7 +54,7 @@ export async function migrate(
       throw Error("Database client wasn't properly instantiated.");
     }
     const postgrator = new Postgrator({
-      migrationPattern: path.join(resolvedMigrationsPath, "*"),
+      migrationPattern: path.join(resolvedMigrationsPath, "*").replace(/\\/g, "/"),
       driver: "pg",
       database: client.database,
       schemaTable: "migrations",

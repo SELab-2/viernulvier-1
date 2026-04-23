@@ -3,14 +3,15 @@ import { buildServer } from "@/server.js";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
 import { editProduction } from "@/routes/production/handlers/edit.js";
+import { productionRowWithRefs } from "./fixtures.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
 
 const originalProduction: Production = {
   id: 1,
-  vendor_id: 10,
-  box_office_id: 20,
+  old_id: 1111,
+  finalized: true,
   supertitle: null,
   title: { nl: "Oude titel" },
   artist: { nl: "Oude artiest" },
@@ -47,8 +48,6 @@ const updatedProductionB: Production = {
 
 const updatedProductionC: Production = {
   ...originalProduction,
-  vendor_id: 99,
-  box_office_id: 77,
   supertitle: { nl: "Supertitel C" },
   title: { nl: "Titel C" },
   artist: { nl: "Artiest C" },
@@ -88,7 +87,10 @@ describe("Edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [updatedProductionA], rowCount: 1 });
+        return Promise.resolve({
+          rows: [productionRowWithRefs(updatedProductionA)],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in edit tests: ${query}`);
@@ -99,8 +101,6 @@ describe("Edit on production route", () => {
       url: `/api/v1/production/${originalProduction['id']}`,
       cookies: { session: sessionCookie },
       payload: {
-        vendor_id: originalProduction["vendor_id"],
-        box_office_id: originalProduction["box_office_id"],
         supertitle: null,
         title: updatedProductionA["title"],
         artist: updatedProductionA["artist"],
@@ -126,7 +126,10 @@ describe("Edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [updatedProductionB], rowCount: 1 });
+        return Promise.resolve({
+          rows: [productionRowWithRefs(updatedProductionB)],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in edit tests: ${query}`);
@@ -187,7 +190,10 @@ describe("Edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [updatedProductionC], rowCount: 1 });
+        return Promise.resolve({
+          rows: [productionRowWithRefs(updatedProductionC)],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in edit tests: ${query}`);
@@ -198,8 +204,6 @@ describe("Edit on production route", () => {
       url: `/api/v1/production/${originalProduction["id"]}`,
       cookies: { session: sessionCookie },
       payload: {
-        vendor_id: updatedProductionC["vendor_id"],
-        box_office_id: updatedProductionC["box_office_id"],
         supertitle: updatedProductionC["supertitle"],
         title: updatedProductionC["title"],
         artist: updatedProductionC["artist"],
@@ -231,7 +235,10 @@ describe("Edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [originalProduction], rowCount: 1 });
+        return Promise.resolve({
+          rows: [productionRowWithRefs(originalProduction)],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in edit tests: ${query}`);
@@ -276,7 +283,10 @@ describe("Edit on production route", () => {
       }
 
       if (upper.startsWith("SELECT")) {
-        return Promise.resolve({ rows: [originalProduction], rowCount: 1 });
+        return Promise.resolve({
+          rows: [productionRowWithRefs(originalProduction)],
+          rowCount: 1,
+        });
       }
 
       throw new Error(`Unexpected query in edit tests: ${query}`);
@@ -285,7 +295,7 @@ describe("Edit on production route", () => {
     await expect(editProduction(server, {
       params: { id: String(originalProduction["id"]) },
       user: { id: 1 },
-      body: { vendor_id: undefined },
+      body: { title: undefined },
     } as unknown as FastifyRequest)).rejects.toMatchObject({ status: 400 });
   });
 });

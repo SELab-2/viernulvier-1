@@ -4,7 +4,7 @@ import z from "zod";
 import { getMetadata, ParseContext, parseParams, parseSchema } from "@/routes/helpers.js";
 import { stringToInt } from "@viernulvier/shared/index.js";
 import type { Event } from "@viernulvier/shared/index.js";
-import { normalizeEventDates, EventCreateSchema, updateEvent } from "./helper.js";
+import { EventCreateSchema, updateEvent, normalizePartialEventDates } from "./helper.js";
 
 
 /**
@@ -19,19 +19,19 @@ export async function replaceEvent(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Event | null> {
-  const normalizedBody = normalizeEventDates(request.body);
+  const normalizedBody = normalizePartialEventDates(request.body);
   const body = parseSchema(server, EventCreateSchema, normalizedBody, ParseContext.Request);
   const { id } = parseParams(request, z.object({ id: stringToInt }));
 
   const { admin, current_time } = getMetadata(request);
 
   const result = await updateEvent(server)(
+    body.old_id,
     body.starts_at,
     body.ends_at,
     body.production,
     body.hall,
     body.doors_at,
-    body.vendor_id,
     body.info,
     current_time,
     admin,
