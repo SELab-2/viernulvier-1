@@ -33,9 +33,14 @@ export const ReplaceImageBodySchema = ImageSchema.pick({
   crops: z.array(CropMappingSchema).optional(),
 });
 
-/** FETCH - search query for images*/
+/**
+ * `GET /api/v1/image` query: optional legacy id filter, or paginated list (`page` 1-based).
+ * When `page` is set, the handler returns `{ totalItems, member }` instead of a raw array.
+ */
 export const ImageListQuerySchema = z.object({
   oldId: stringToInt.optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(500).optional(),
 });
 
 // ── Crop body schemas ──

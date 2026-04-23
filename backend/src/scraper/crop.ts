@@ -1,5 +1,4 @@
 import { fetchScraperJwt } from "./auth.js";
-import { totalPagesFromHydraView } from "./hydra-view.js";
 import { localApiUrl } from "./local-api.js";
 import type { ScrapeRunStats } from "./scrape-stats.js";
 import { viernulvierApiUrl } from "./viernulvier-api.js";
@@ -33,15 +32,6 @@ interface MediaItemJSON {
 }
 
 /**
- * Create payload for local crop endpoint (used for metadata-only creation).
- */
-export interface CreateCropBody {
-  old_id: number;
-  name: string;
-  url?: string | null;
-}
-
-/**
  * Payload for multipart crop upload.
  */
 interface CreateCropsMultipartData {
@@ -63,10 +53,18 @@ function extractCropId(iri: string): number {
 
 /**
  * Downloads a file from a URL and returns the buffer.
+ * @param authToken - Same Viernulvier token as other scraper fetches, when the URL is not public.
  */
-async function downloadFile(url: string): Promise<Buffer | null> {
+async function downloadFile(
+  url: string,
+  authToken?: string,
+): Promise<Buffer | null> {
   try {
-    const response = await fetch(url);
+    const headers: Record<string, string> = { accept: "*/*" };
+    if (authToken) {
+      headers["X-AUTH-TOKEN"] = authToken;
+    }
+    const response = await fetch(url, { headers });
     if (!response.ok) {
       console.warn(`Failed to download file ${url}: ${response.status}`);
       return null;
@@ -144,89 +142,6 @@ async function fetchLocalCropIdByOldId(
 }
 
 /**
- * Creates crop locally and returns the created crop ID, or null on failure.
- */
-async function createLocalCropFromViernulvierJson(
-  crop: MediaItemCropJSON,
-  imageId: number,
-  loginToken: string,
-  stats?: ScrapeRunStats,
-): Promise<number | null> {
-  const oldId = extractCropId(crop["@id"]);
-
-  if (!Number.isFinite(oldId)) {
-    console.warn(`Skipping crop: could not parse legacy id from ${crop["@id"]}`);
-    if (stats) stats.crop_skipped = (stats.crop_skipped ?? 0) + 1;
-    return null;
-  }
-
-  const payload: CreateCropBody = {
-    old_id: oldId,
-    name: crop.name,
-    url: crop.url || null,
-  };
-
-  const response = await fetch(
-    localApiUrl(`/api/v1/image/${imageId}/crop`),
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${loginToken}`,
-      },
-      body: JSON.stringify(payload),
-    },
-  );
-
-  if (!response.ok) {
-    const detail = await response.text();
-    console.warn(
-      `Failed to create crop old_id=${oldId}: ${response.status}${detail ? ` — ${detail}` : ""}`,
-    );
-    if (stats) stats.crop_skipped = (stats.crop_skipped ?? 0) + 1;
-    return null;
-  }
-
-  const cropId = ((await response.json()) as { id: number }).id;
-  if (stats) stats.crop_created = (stats.crop_created ?? 0) + 1;
-  return cropId;
-}
-
-/**
- * Creates crop if not already present; returns the crop ID or null.
- */
-async function ensureCropImported(
-  crop: MediaItemCropJSON,
-  imageId: number,
-  loginToken: string,
-  stats?: ScrapeRunStats,
-): Promise<number | null> {
-  const oldId = extractCropId(crop["@id"]);
-
-  if (!Number.isFinite(oldId)) {
-    console.warn(`Skipping crop: could not parse legacy id from ${crop["@id"]}`);
-    if (stats) stats.crop_skipped = (stats.crop_skipped ?? 0) + 1;
-    return null;
-  }
-
-  const existing = await fetchLocalCropIdByOldId(oldId, imageId, loginToken);
-  if (existing !== null) {
-    console.log(
-      `Crop old_id=${oldId} already exists locally (id=${existing}), skipping create`,
-    );
-    if (stats) stats.crop_existing = (stats.crop_existing ?? 0) + 1;
-    return existing;
-  }
-
-  return await createLocalCropFromViernulvierJson(
-    crop,
-    imageId,
-    loginToken,
-    stats,
-  );
-}
-
-/**
  * Creates crops for an image from an array of crop objects.
  * Downloads the actual crop files and uploads them via multipart.
  * Called by image scraper after creating an image.
@@ -275,8 +190,8 @@ export async function createCropsForImage(
       continue;
     }
 
-    // Download the file
-    const fileBuffer = await downloadFile(crop.url);
+    // Download the file (Viernulvier may require the same X-AUTH-TOKEN as the API)
+    const fileBuffer = await downloadFile(crop.url, loginToken);
     if (!fileBuffer) {
       console.warn(`Failed to download crop file: ${crop.url}`);
       if (stats) stats.crop_skipped = (stats.crop_skipped ?? 0) + 1;
@@ -358,28 +273,23 @@ export async function createCropsForImage(
   return totalUploaded;
 }
 
-/**
- * Raw image collection response from local API.
- */
-interface LocalImageListJSON {
+/** Paged `GET /api/v1/image?page=&pageSize=` response (see media `fetchAllImages`). */
+interface LocalImagesPageJSON {
   totalItems: number;
   member: Array<{ id: number; old_id: number | null }>;
-  view?: {
-    first?: string;
-    last?: string;
-    next?: string;
-  };
 }
 
 /**
- * Fetches a page of local images that need crops imported.
+ * Fetches one page of local images (same contract as `GET /api/v1/image?page=&pageSize=`).
  */
 async function fetchLocalImagesPage(
-  page: number = 1,
+  page: number,
+  pageSize: number,
   loginToken: string,
-): Promise<LocalImageListJSON> {
+): Promise<LocalImagesPageJSON> {
   const url = new URL(localApiUrl("/api/v1/image"));
-  url.searchParams.append("page", page.toString());
+  url.searchParams.set("page", String(page));
+  url.searchParams.set("pageSize", String(pageSize));
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -391,7 +301,10 @@ async function fetchLocalImagesPage(
     throw new Error(`Local API returned status ${response.status}`);
   }
 
-  const data = (await response.json()) as LocalImageListJSON;
+  const data = (await response.json()) as LocalImagesPageJSON;
+  if (!Array.isArray(data.member)) {
+    throw new Error("Expected paged GET /api/v1/image response with { totalItems, member }");
+  }
   return data;
 }
 
@@ -407,37 +320,46 @@ export async function scrapeCrops(
   const authToken = await fetchScraperJwt();
   const loginToken = authToken;
 
-  // Fetch metadata to determine total pages
-  const meta = await fetchLocalImagesPage(1, loginToken);
-  const view = meta.view;
-
-  let totalPages = 1;
-  if (view) {
-    totalPages = totalPagesFromHydraView(view, meta.totalItems);
-  }
-
-  console.log(`Scraping crops for ${meta.totalItems} images across ~${totalPages} pages`);
-
-  // Parse page range from environment variables
-  const startPage = parseInt(
-    process.env["VIERNULVIER_SCRAPER_CROP_START_PAGE"] ?? "1",
-    10,
+  const pageSize = Math.min(
+    500,
+    Math.max(
+      1,
+      parseInt(process.env["VIERNULVIER_SCRAPER_CROP_PAGE_SIZE"] ?? "100", 10),
+    ),
   );
-  const stopBeforePage = parseInt(
-    process.env["VIERNULVIER_SCRAPER_CROP_STOP_BEFORE_PAGE"] ??
-      (totalPages + 1).toString(),
-    10,
+
+  const startPage = Math.max(
+    1,
+    parseInt(process.env["VIERNULVIER_SCRAPER_CROP_START_PAGE"] ?? "1", 10),
+  );
+
+  const firstPage = await fetchLocalImagesPage(1, pageSize, loginToken);
+  const totalItems = firstPage.totalItems;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+  const envStop = process.env["VIERNULVIER_SCRAPER_CROP_STOP_BEFORE_PAGE"];
+  const stopBeforePage = Math.min(
+    envStop !== undefined && envStop !== ""
+      ? parseInt(envStop, 10)
+      : totalPages + 1,
+    totalPages + 1,
   );
 
   console.log(
-    `Scraping crop pages ${startPage} to ${stopBeforePage - 1} (inclusive)`,
+    `Scraping crops for ${totalItems} images (~${totalPages} page(s) of ${pageSize})`,
+  );
+  console.log(
+    `Scraping crop pages ${startPage} to ${stopBeforePage - 1} (inclusive, exclusive end ${stopBeforePage})`,
   );
 
   for (let page = startPage; page < stopBeforePage; page++) {
-    console.log(`[Page ${page}/${totalPages - 1}] Scraping image crops...`);
+    console.log(`[Page ${page}/${totalPages}] Scraping image crops...`);
 
     try {
-      const imagesPage = await fetchLocalImagesPage(page, loginToken);
+      const imagesPage =
+        page === 1 && startPage === 1
+          ? firstPage
+          : await fetchLocalImagesPage(page, pageSize, loginToken);
 
       for (const image of imagesPage.member) {
         const imageId = image.id;
@@ -461,22 +383,15 @@ export async function scrapeCrops(
           continue;
         }
 
-        let importedCount = 0;
-        for (const crop of crops) {
-          const imported = await ensureCropImported(
-            crop,
-            imageId,
-            loginToken,
-            stats,
-          );
-          if (imported !== null) {
-            importedCount++;
-          }
-        }
-
+        const importedCount = await createCropsForImage(
+          crops,
+          imageId,
+          loginToken,
+          stats,
+        );
         if (importedCount > 0) {
           console.log(
-            `  → Imported ${importedCount} crops for image id=${imageId}`,
+            `  → Uploaded ${importedCount} crop(s) for image id=${imageId}`,
           );
         }
       }

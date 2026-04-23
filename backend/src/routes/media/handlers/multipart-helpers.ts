@@ -54,7 +54,7 @@ export async function parseMultipart(request: FastifyRequest): Promise<{
 export async function insertCrops(
   server: FastifyInstance,
   imageId: number,
-  mappings: { filename: string; type: string; oldId?: number }[],
+  mappings: { filename: string; type: string; oldId?: number | undefined }[],
   files: Map<string, { buffer: Buffer; mimetype: string }>,
   admin: number,
   currentTime: Date,
@@ -96,7 +96,7 @@ export async function insertCrops(
  * @throws HttpError if any mapping is missing a file.
  */
 export function validateCropFiles(
-  mappings: { filename: string; type: string; oldId?: number }[],
+  mappings: { filename: string; type: string; oldId?: number | undefined }[],
   files: Map<string, { buffer: Buffer; mimetype: string }>,
 ): void {
   for (const mapping of mappings) {
