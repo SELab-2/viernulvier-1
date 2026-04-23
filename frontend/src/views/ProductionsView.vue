@@ -20,7 +20,7 @@
         </div>
       </section>
 
-      <section class="mx-auto max-w-4xl px-6 pb-20 pt-8 lg:px-10">
+      <section class="mx-auto max-w-5xl px-6 pb-20 pt-8 lg:px-10">
         <div v-if="!loading" class="mb-4 space-y-3">
           <div
             class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-stretch sm:gap-3"
@@ -424,9 +424,9 @@ const PAGE_SIZE = 20;
 const MAX_SEARCH_TERMS = 20;
 
 /** How many genre/tag filter chips to show before "Show more". Selected tags are always included. */
-const GENRE_FILTER_COLLAPSED_MAX = 7;
+const GENRE_FILTER_COLLAPSED_MAX = 9;
 
-const NON_GENRE_FILTER_COLLAPSED_MAX = 5;
+const NON_GENRE_FILTER_COLLAPSED_MAX = 6;
 
 function collapsedTagFilterList(
   all: { id: number; label: string }[],

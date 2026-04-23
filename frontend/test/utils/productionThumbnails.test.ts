@@ -7,7 +7,35 @@ describe("pickProductionListThumbnailUrl", () => {
     expect(pickProductionListThumbnailUrl([])).toBeNull();
   });
 
-  it("prefers a thumbnail-like crop type", () => {
+  it("prefers type banner over thumbnail-like crops", () => {
+    const images: ImageWithCrops[] = [
+      {
+        id: 1,
+        old_id: null,
+        production: 1,
+        res: null,
+        crops: [
+          {
+            id: 1,
+            old_id: null,
+            image: 1,
+            type: "thumbnail",
+            url: "/media/crops/b.jpg",
+          },
+          {
+            id: 2,
+            old_id: null,
+            image: 1,
+            type: "banner",
+            url: "/media/crops/banner.jpg",
+          },
+        ],
+      },
+    ];
+    expect(pickProductionListThumbnailUrl(images)).toBe("/media/crops/banner.jpg");
+  });
+
+  it("prefers a thumbnail-like crop when no banner exists", () => {
     const images: ImageWithCrops[] = [
       {
         id: 1,
