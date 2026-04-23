@@ -10,7 +10,7 @@ export interface MediaGalleryJSON {
   "@id": string;
   "@type": string;
   name?: string;
-  items?: string[]; // Array of media item IRIs
+  items?: MediaItemJSON[];
   created_at?: string;
   updated_at?: string;
 }
@@ -50,10 +50,6 @@ export interface CreateImageBody {
   res?: string | null;
 }
 
-
-
-
-
 /**
  * Fetches local image ID by old_id to check if already imported.
  */
@@ -70,6 +66,11 @@ async function fetchLocalImageIdByOldId(
     },
   });
 
+  // 404 means the image doesn't exist yet, which is expected - return null
+  if (response.status === 404) {
+    return null;
+  }
+
   if (!response.ok) {
     throw new Error(
       `Failed to fetch image from local API: ${response.status} ${response.statusText}`,
@@ -83,18 +84,6 @@ async function fetchLocalImageIdByOldId(
   }
   return data.items[0]!.id;
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 /**
  * Helper to extract ID from IRI path.
@@ -176,7 +165,8 @@ async function createImageWithCrops(
 }
 
 /**
- * Processes a production's media gallery: fetches items and creates images + crops.
+ * Processes a production's media gallery: fetches the full gallery and creates images + crops.
+ * Accepts either an IRI string or an embedded gallery object (extracts IRI if needed).
  * This is called from the production scraper during production creation.
  */
 export async function processProductionMediaGallery(
@@ -186,11 +176,11 @@ export async function processProductionMediaGallery(
   loginToken: string,
   stats?: ScrapeRunStats,
 ): Promise<void> {
-  console.log(`Processing media gallery for production ${productionId}: ${galleryIri}`);
   try {
-    // Fetch gallery
+    console.log(`Processing media gallery for production ${productionId}: ${galleryIri}`);
+
+    // Fetch full gallery with complete crop data
     const galleryUrl = viernulvierApiUrl(galleryIri);
-    console.log(`Fetching gallery from: ${galleryUrl}`);
     const galleryResponse = await fetch(galleryUrl, {
       headers: {
         accept: "application/ld+json",
@@ -204,40 +194,20 @@ export async function processProductionMediaGallery(
     }
 
     const gallery = (await galleryResponse.json()) as MediaGalleryJSON;
-    const itemIris = gallery.items || [];
 
-    if (itemIris.length === 0) {
+    if (!gallery.items) {
       console.log(`    Gallery is empty (no items)`);
       return;
     }
 
-    console.log(`    Processing ${itemIris.length} items from gallery...`);
+    console.log(`    Processing ${gallery.items.length} items from gallery...`);
 
-    for (const itemIri of itemIris) {
-      const itemId = extractIdFromIri(itemIri);
-      if (!itemId) continue;
-
-      // Fetch media item with crops embedded
-      const itemUrl = viernulvierApiUrl(`/api/v1/media/items/${itemId}`);
-      const itemResponse = await fetch(itemUrl, {
-        headers: {
-          accept: "application/ld+json",
-          "X-AUTH-TOKEN": authToken,
-        },
-      });
-
-      if (!itemResponse.ok) {
-        console.warn(`Failed to fetch media item ${itemId}: ${itemResponse.status}`);
-        continue;
-      }
-
-      const mediaItem = (await itemResponse.json()) as MediaItemJSON;
-
+    for (const mediaItem of gallery.items) {
       // Create image and crops
       await createImageWithCrops(mediaItem, productionId, loginToken, stats);
     }
   } catch (err) {
-    console.warn(`Error processing media gallery ${galleryIri}:`, err);
+    console.warn(`Error processing media gallery for production ${productionId}:`, err);
     if (stats) stats.errors = (stats.errors ?? 0) + 1;
   }
 }

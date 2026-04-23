@@ -126,6 +126,11 @@ async function fetchLocalCropIdByOldId(
     },
   });
 
+  // 404 means the crop doesn't exist yet, which is expected - return null
+  if (response.status === 404) {
+    return null;
+  }
+
   if (!response.ok) {
     throw new Error(
       `Failed to fetch crop from local API: ${response.status} ${response.statusText}`,
@@ -238,12 +243,13 @@ export async function createCropsForImage(
     return 0;
   }
 
-  // Build multipart data with crop metadata and downloaded files
-  const cropMappings: CreateCropsMultipartData["crops"] = [];
-  const files = new Map<string, Buffer>();
+  // Prepare all crops - check which ones need to be uploaded
+  const cropsToUpload: Array<{
+    crop: MediaItemCropJSON;
+    fileBuffer: Buffer;
+  }> = [];
 
-  for (let i = 0; i < crops.length; i++) {
-    const crop = crops[i]!;
+  for (const crop of crops) {
     if (!crop.url) {
       console.warn(`Skipping crop "${crop.name}": no URL provided`);
       if (stats) stats.crop_skipped = (stats.crop_skipped ?? 0) + 1;
@@ -279,61 +285,76 @@ export async function createCropsForImage(
       continue;
     }
 
-    // Generate filename from crop name
-    const filename = `crop-${i}`;
-    files.set(filename, fileBuffer);
-
-    cropMappings.push({
-      filename,
-      type: crop.name,
-    });
+    cropsToUpload.push({ crop, fileBuffer });
   }
 
-  if (cropMappings.length === 0) {
+  if (cropsToUpload.length === 0) {
     console.log(`No crops to upload for image ${imageId}`);
     return 0;
   }
 
-  // Create FormData for multipart upload
-  const formData = new FormData();
-  formData.append("data", JSON.stringify({ crops: cropMappings }));
+  // Upload crops in batches to avoid exceeding payload size limits
+  const batchSize = 5;
+  let totalUploaded = 0;
 
-  for (const [filename, buffer] of files) {
-    const blob = new Blob([buffer]);
-    formData.append(filename, blob, filename);
-  }
+  for (let batchStart = 0; batchStart < cropsToUpload.length; batchStart += batchSize) {
+    const batchEnd = Math.min(batchStart + batchSize, cropsToUpload.length);
+    const batch = cropsToUpload.slice(batchStart, batchEnd);
 
-  // Send multipart request
-  try {
-    const response = await fetch(
-      localApiUrl(`/api/v1/image/${imageId}/crop`),
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${loginToken}`,
-        },
-        body: formData,
-      },
-    );
+    const cropMappings: CreateCropsMultipartData["crops"] = [];
+    const files = new Map<string, Buffer>();
 
-    if (!response.ok) {
-      const detail = await response.text();
-      console.warn(
-        `Failed to upload crops for image ${imageId}: ${response.status}${detail ? ` — ${detail}` : ""}`,
-      );
-      if (stats) stats.crop_skipped = (stats.crop_skipped ?? 0) + cropMappings.length;
-      return 0;
+    for (let i = 0; i < batch.length; i++) {
+      const { crop, fileBuffer } = batch[i]!;
+      const filename = `crop-${batchStart + i}`;
+      files.set(filename, fileBuffer);
+      cropMappings.push({
+        filename,
+        type: crop.name,
+      });
     }
 
-    const uploaded = cropMappings.length;
-    if (stats) stats.crop_created = (stats.crop_created ?? 0) + uploaded;
-    console.log(`Uploaded ${uploaded} crop(s) for image ${imageId}`);
-    return uploaded;
-  } catch (err) {
-    console.error(`Error uploading crops for image ${imageId}:`, err);
-    if (stats) stats.errors = (stats.errors ?? 0) + 1;
-    return 0;
+    // Create FormData for multipart upload
+    const formData = new FormData();
+    formData.append("data", JSON.stringify({ crops: cropMappings }));
+
+    for (const [filename, buffer] of files) {
+      const blob = new Blob([new Uint8Array(buffer)]);
+      formData.append(filename, blob, filename);
+    }
+
+    // Send multipart request for this batch
+    try {
+      const response = await fetch(
+        localApiUrl(`/api/v1/image/${imageId}/crop`),
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${loginToken}`,
+          },
+          body: formData,
+        },
+      );
+
+      if (!response.ok) {
+        const detail = await response.text();
+        console.warn(
+          `Failed to upload crop batch for image ${imageId}: ${response.status}${detail ? ` — ${detail}` : ""}`,
+        );
+        if (stats) stats.crop_skipped = (stats.crop_skipped ?? 0) + cropMappings.length;
+        continue;
+      }
+
+      if (stats) stats.crop_created = (stats.crop_created ?? 0) + cropMappings.length;
+      console.log(`Uploaded ${cropMappings.length} crop(s) for image ${imageId} (batch ${Math.ceil((batchStart + 1) / batchSize)}/${Math.ceil(cropsToUpload.length / batchSize)})`);
+      totalUploaded += cropMappings.length;
+    } catch (err) {
+      console.error(`Error uploading crop batch for image ${imageId}:`, err);
+      if (stats) stats.errors = (stats.errors ?? 0) + 1;
+    }
   }
+
+  return totalUploaded;
 }
 
 /**

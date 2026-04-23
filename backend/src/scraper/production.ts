@@ -48,12 +48,13 @@ export interface ProductionJSON {
   meta_title?: Record<string, string>;
   /** Genre/tag IRIs or embedded objects (`/api/v1/genres/...`). */
   genres?: unknown;
-  /** Media gallery IRI for images. */
-  media_gallery?: string;
-  /** Review gallery IRI (optional). */
-  review_gallery?: string;
-  /** Poster gallery IRI (optional). */
-  poster_gallery?: string;
+  /** Galleries are either IRI strings or embedded objects depending if a single production is fetched or a page of productions is fetched. */
+  /** Media gallery*/
+  media_gallery?: string | { "@id": string };
+  /** Review gallery*/
+  review_gallery?: string | { "@id": string };
+  /** Poster gallery*/
+  poster_gallery?: string | { "@id": string };
 }
 
 interface ViernulvierProductionApiResponse {
@@ -218,7 +219,49 @@ async function createLocalProductionFromViernulvierJson(
   }
 
   const productionId = (await response.json() as { id: number }).id;
+
   return productionId;
+}
+
+/**
+ * Extracts gallery IRI from either a string or an embedded object.
+ * Necessary as a single production fetch returns a full gallery object, but the productions list fetch returns only IRIs for galleries.
+ */
+function extractGalleryIri(gallery: string | { "@id": string } | undefined): string | null {
+  if (!gallery) return null;
+  if (typeof gallery === "string") return gallery;
+  if (typeof gallery === "object" && "@id" in gallery) return gallery["@id"];
+  return null;
+}
+
+/**
+ * Processes all three galleries (media, review, poster) for a production.
+ */
+async function processProductionGalleries(
+  production: ProductionJSON,
+  productionId: number,
+  authToken: string,
+  loginToken: string,
+  stats?: ScrapeRunStats,
+): Promise<void> {
+  const galleries = [
+    { type: "media", iri: extractGalleryIri(production.media_gallery) },
+    { type: "review", iri: extractGalleryIri(production.review_gallery) },
+    { type: "poster", iri: extractGalleryIri(production.poster_gallery) },
+  ];
+
+  for (const gallery of galleries) {
+    if (gallery.iri) {
+      console.log(`Processing ${gallery.type} gallery for production ${production["@id"]}...`);
+      await processProductionMediaGallery(
+        gallery.iri,
+        productionId,
+        authToken,
+        loginToken,
+        stats,
+      );
+    }
+  }
 }
 
 /**
@@ -247,17 +290,14 @@ async function ensureProductionImported(
       loginToken,
       stats,
     );
-    // Process media gallery for existing production
-    if (production.media_gallery) {
-      console.log(`Processing media gallery for existing production...`);
-      await processProductionMediaGallery(
-        production.media_gallery,
-        existing,
-        authToken,
-        loginToken,
-        stats,
-      );
-    }
+    // Process all galleries for existing production
+    await processProductionGalleries(
+      production,
+      existing,
+      authToken,
+      loginToken,
+      stats,
+    );
     return existing;
   }
   if (!hasImportableProductionTitle(production)) {
@@ -275,17 +315,14 @@ async function ensureProductionImported(
       loginToken,
       stats,
     );
-    // Process media gallery for newly created production
-    if (production.media_gallery) {
-      console.log(`Processing media gallery for new production...`);
-      await processProductionMediaGallery(
-        production.media_gallery,
-        created,
-        authToken,
-        loginToken,
-        stats,
-      );
-    }
+    // Process all galleries for newly created production
+    await processProductionGalleries(
+      production,
+      created,
+      authToken,
+      loginToken,
+      stats,
+    );
   }
   return created;
 }
@@ -355,6 +392,17 @@ export async function scrapeProductionById(
   }
   const jwt = loginToken ?? await fetchScraperJwt();
   const created = await createLocalProductionFromViernulvierJson(production, jwt);
-  if (created !== null && stats !== undefined) stats.productions.created++;
+  if (created !== null) {
+    if (stats !== undefined){
+      stats.productions.created++;
+    }
+    await processProductionGalleries(
+      production,
+      created,
+      authToken,
+      jwt,
+      stats,
+    );
+  }
   return created;
 }
