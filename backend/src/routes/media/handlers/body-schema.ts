@@ -6,6 +6,7 @@ import { CropSchema } from "@viernulvier/shared/index.js";
 
 export const CropMappingSchema = CropSchema.pick({ type: true }).extend({
   filename: z.string().min(1),
+  oldId: z.number().int().nonnegative().optional(),
 });
 
 // ── Image body schemas ──

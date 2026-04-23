@@ -48,6 +48,7 @@ interface CreateCropsMultipartData {
   crops: Array<{
     filename: string;
     type: string;
+    oldId?: number;
   }>;
 }
 
@@ -120,7 +121,7 @@ async function fetchLocalCropIdByOldId(
   loginToken: string,
 ): Promise<number | null> {
   const url = new URL(localApiUrl(`/api/v1/image/${imageId}/crop`));
-  url.searchParams.set("old_id", String(oldId));
+  url.searchParams.set("oldId", String(oldId));
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -306,9 +307,11 @@ export async function createCropsForImage(
       const { crop, fileBuffer } = batch[i]!;
       const filename = `crop-${batchStart + i}`;
       files.set(filename, fileBuffer);
+      const legacyCropId = extractCropId(crop["@id"]);
       cropMappings.push({
         filename,
         type: crop.name,
+        ...(Number.isFinite(legacyCropId) ? { oldId: legacyCropId } : {}),
       });
     }
 

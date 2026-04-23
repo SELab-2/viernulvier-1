@@ -201,7 +201,23 @@ describe("insertCrops", () => {
       expect(query).toContain("INSERT INTO CROP");
       const params = call[1] as unknown[];
       expect(params[0]).toBe(42); // imageId
+      expect(params[3]).toBeNull(); // old_id
     }
+  });
+
+  test("inserts old_id when mapping includes oldId", async () => {
+    const { server, pgQueryMock } = mockServer();
+
+    const files = new Map<string, { buffer: Buffer; mimetype: string }>([
+      ["a.jpg", { buffer: Buffer.from("a"), mimetype: "image/jpeg" }],
+    ]);
+    const mappings = [{ filename: "a.jpg", type: "general", oldId: 16 }];
+
+    await insertCrops(server, 42, mappings, files, 1, new Date());
+
+    expect(pgQueryMock).toHaveBeenCalledTimes(1);
+    const params = pgQueryMock.mock.calls[0]![1] as unknown[];
+    expect(params[3]).toBe(16);
   });
 
   test("skips mappings whose filename is not in the files map", async () => {
