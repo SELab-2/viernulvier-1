@@ -241,6 +241,7 @@ export default {
     hero: {
       dateRange: "Speelperiode",
       runningTime: "Speelduur",
+      bannerImageAlt: "Beeld bovenaan de pagina",
     },
     details: {
       tags: "Labels",

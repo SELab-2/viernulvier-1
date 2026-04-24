@@ -240,6 +240,7 @@ export default {
     hero: {
       dateRange: "Run",
       runningTime: "Running Time",
+      bannerImageAlt: "Page banner image",
     },
     details: {
       tags: "Tags",

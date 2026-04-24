@@ -19,10 +19,11 @@
       </div>
 
       <template v-else-if="production">
-        <HeroSection 
-          :production="production" 
-          :tag-groups="tagGroups" 
+        <HeroSection
+          :production="production"
+          :tag-groups="tagGroups"
           :event-stats="eventStats"
+          :banner-url="heroBannerUrl"
         />
         <DetailsSection 
           v-if="hasDetails"
@@ -51,8 +52,10 @@ import BlogSection from "@/components/production/BlogSection.vue";
 import NotFound from "@/components/NotFound.vue";
 import { ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
+import { getImagesForProduction } from "@/services/media";
 import { getProduction } from "@/services/productions";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
+import { pickProductionDetailBannerUrl } from "@/utils/productionThumbnails";
 
 import { useDarkMode } from "@/composables/useDarkMode";
 import { ApiError } from "@/services/api";
@@ -66,13 +69,19 @@ const route = useRoute();
 const id = Number(route.params.id);
 
 const production = ref<ProductionWithBackwardsRefs | null>(null);
+const heroBannerUrl = ref<string | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const notFound = ref(false);
 
 onMounted(async () => {
   try {
-    production.value = await getProduction(id);
+    const [fetched, images] = await Promise.all([
+      getProduction(id),
+      getImagesForProduction(id).catch(() => []),
+    ]);
+    production.value = fetched;
+    heroBannerUrl.value = pickProductionDetailBannerUrl(images);
   } catch (e: unknown) {
     if (e instanceof ApiError && e.status === 404) {
       notFound.value = true;

@@ -241,6 +241,7 @@ export default {
     hero: {
       dateRange: "Période",
       runningTime: "Durée",
+      bannerImageAlt: "Image bannière en tête de page",
     },
     details: {
       tags: "Étiquettes",

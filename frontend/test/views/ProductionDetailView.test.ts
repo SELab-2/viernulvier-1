@@ -56,8 +56,12 @@ vi.mock("vue-router", () => ({
 
 // ─── Mock service ─────────────────────────────────────────────────────────────
 const mockGetProduction = vi.fn();
+const mockGetImagesForProduction = vi.fn();
 vi.mock("@/services/productions", () => ({
   getProduction: (...args: any[]) => mockGetProduction(...args),
+}));
+vi.mock("@/services/media", () => ({
+  getImagesForProduction: (...args: any[]) => mockGetImagesForProduction(...args),
 }));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -82,6 +86,7 @@ describe("ProductionDetail", () => {
     mockEvents.value = [];
     mockTagGroups.value = [];
     mockTotalTags.value = 0;
+    mockGetImagesForProduction.mockResolvedValue([]);
   });
 
   // ── Layout ──────────────────────────────────────────────────────────────────
