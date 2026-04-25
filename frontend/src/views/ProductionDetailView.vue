@@ -32,7 +32,7 @@
           :total-tags="totalTags" 
         />
         <EventsSection :events="events" :loading="eventsLoading" :error="eventsError" @retry="eventsRetry" />
-        <GallerySection />
+        <GallerySection :slides="gallerySlides" />
         <BlogSection />
       </template>
     </main>
@@ -52,16 +52,21 @@ import BlogSection from "@/components/production/BlogSection.vue";
 import NotFound from "@/components/NotFound.vue";
 import { ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
+import type { ImageWithCrops } from "@/services/media";
 import { getImagesForProduction } from "@/services/media";
 import { getProduction } from "@/services/productions";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
-import { pickProductionDetailBannerUrl } from "@/utils/productionThumbnails";
+import {
+  pickHighQualityImageCropUrl,
+  pickProductionDetailBannerUrl,
+} from "@/utils/productionThumbnails";
+import { i18n, type SupportedLang } from "@/i18n";
 
 import { useDarkMode } from "@/composables/useDarkMode";
 import { ApiError } from "@/services/api";
 import { useTagGroups } from "@/composables/useTagGroups";
 import { useProductionEvents } from "@/composables/useProductionEvents";
-import type { LanguageMap } from "@/utils/language-utils";
+import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 
 const { isDark } = useDarkMode();
 
@@ -69,7 +74,7 @@ const route = useRoute();
 const id = Number(route.params.id);
 
 const production = ref<ProductionWithBackwardsRefs | null>(null);
-const heroBannerUrl = ref<string | null>(null);
+const productionImages = ref<ImageWithCrops[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const notFound = ref(false);
@@ -78,10 +83,10 @@ onMounted(async () => {
   try {
     const [fetched, images] = await Promise.all([
       getProduction(id),
-      getImagesForProduction(id).catch(() => []),
+      getImagesForProduction(id).catch(() => [] as ImageWithCrops[]),
     ]);
     production.value = fetched;
-    heroBannerUrl.value = pickProductionDetailBannerUrl(images);
+    productionImages.value = images;
   } catch (e: unknown) {
     if (e instanceof ApiError && e.status === 404) {
       notFound.value = true;
@@ -97,6 +102,27 @@ onMounted(async () => {
 
 const { tagGroups, totalTags } = useTagGroups(id);
 const { events, loading: eventsLoading, error: eventsError, retry: eventsRetry } = useProductionEvents(id);
+
+const heroBannerUrl = computed(() =>
+  pickProductionDetailBannerUrl(productionImages.value),
+);
+
+const gallerySlides = computed(() => {
+  if (!production.value) return [];
+  const lang = i18n.global.locale.value as SupportedLang;
+  const title = localizeOrEmpty(production.value.title ?? {}, lang).trim();
+  const out: { src: string; alt: string }[] = [];
+  for (let i = 0; i < productionImages.value.length; i++) {
+    const img = productionImages.value[i]!;
+    const src = pickHighQualityImageCropUrl(img);
+    if (!src) continue;
+    out.push({
+      src,
+      alt: title ? `${title} (${i + 1})` : `Image ${i + 1}`,
+    });
+  }
+  return out;
+});
 
 /**
  * Computed statistics derived from the events list.

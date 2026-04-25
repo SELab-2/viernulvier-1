@@ -242,6 +242,16 @@ export default {
       runningTime: "Running Time",
       bannerImageAlt: "Page banner image",
     },
+    gallery: {
+      title: "Images",
+      intro: "A selection from this production’s media archive.",
+      prev: "Previous image",
+      next: "Next image",
+      goToScreen: "Go to screen {n} of {total}",
+      screenDotsGroupLabel: "Scroll positions in the gallery",
+      carouselLabel: "Image gallery for this production",
+      carouselRegion: "carousel",
+    },
     details: {
       tags: "Tags",
       extraInfo: "Extra Info",

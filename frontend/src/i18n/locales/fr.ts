@@ -243,6 +243,16 @@ export default {
       runningTime: "Durée",
       bannerImageAlt: "Image bannière en tête de page",
     },
+    gallery: {
+      title: "Images",
+      intro: "Une sélection des médias de cette production.",
+      prev: "Image précédente",
+      next: "Image suivante",
+      goToScreen: "Aller à la vue {n} sur {total}",
+      screenDotsGroupLabel: "Vues de la galerie",
+      carouselLabel: "Galerie d’images de cette production",
+      carouselRegion: "Carrousel",
+    },
     details: {
       tags: "Étiquettes",
       extraInfo: "Infos complémentaires",

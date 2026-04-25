@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  pickHighQualityImageCropUrl,
   pickProductionDetailBannerUrl,
   pickProductionListThumbnailUrl,
 } from "@/utils/productionThumbnails";
@@ -183,5 +184,44 @@ describe("pickProductionDetailBannerUrl", () => {
       },
     ];
     expect(pickProductionDetailBannerUrl(images)).toBe("/media/crops/header.jpg");
+  });
+});
+
+describe("pickHighQualityImageCropUrl", () => {
+  it("prefers hd_ready over nb_header for a single image", () => {
+    const image = {
+      id: 1,
+      old_id: null,
+      production: 1,
+      res: null,
+      crops: [
+        {
+          id: 1,
+          old_id: null,
+          image: 1,
+          type: "nb_header",
+          url: "/media/crops/nb.jpg",
+        },
+        {
+          id: 2,
+          old_id: null,
+          image: 1,
+          type: "hd_ready",
+          url: "/media/crops/hd.jpg",
+        },
+      ],
+    };
+    expect(pickHighQualityImageCropUrl(image)).toBe("/media/crops/hd.jpg");
+  });
+
+  it("returns null when there are no crops", () => {
+    const image = {
+      id: 1,
+      old_id: null,
+      production: 1,
+      res: null,
+      crops: [],
+    };
+    expect(pickHighQualityImageCropUrl(image)).toBeNull();
   });
 });
