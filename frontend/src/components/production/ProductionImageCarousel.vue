@@ -87,7 +87,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  useTemplateRef,
+  watch,
+} from "vue";
 import { useI18n } from "vue-i18n";
 import CarouselArrowButton from "@/components/production/CarouselArrowButton.vue";
 
@@ -102,7 +110,7 @@ const props = defineProps<{
 
 const { t } = useI18n();
 
-const scrollerRef = ref<HTMLElement | null>(null);
+const scrollerRef = useTemplateRef<HTMLElement>("scrollerRef");
 const canGoPrev = ref(false);
 const canGoNext = ref(false);
 /** Scroll positions for each “screen” (same steps as prev/next, last = max). */
