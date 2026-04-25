@@ -52,19 +52,14 @@ function extractCropId(iri: string): number {
 }
 
 /**
- * Downloads a file from a URL and returns the buffer.
- * @param authToken - Same Viernulvier token as other scraper fetches, when the URL is not public.
+ * Downloads a file from a public asset URL and returns the buffer.
+ * (Crop URLs are typically CDN / static URLs, not the authenticated JSON API.)
  */
-async function downloadFile(
-  url: string,
-  authToken?: string,
-): Promise<Buffer | null> {
+async function downloadFile(url: string): Promise<Buffer | null> {
   try {
-    const headers: Record<string, string> = { accept: "*/*" };
-    if (authToken) {
-      headers["X-AUTH-TOKEN"] = authToken;
-    }
-    const response = await fetch(url, { headers });
+    const response = await fetch(url, {
+      headers: { accept: "*/*" },
+    });
     if (!response.ok) {
       console.warn(`Failed to download file ${url}: ${response.status}`);
       return null;
@@ -190,8 +185,7 @@ export async function createCropsForImage(
       continue;
     }
 
-    // Download the file (Viernulvier may require the same X-AUTH-TOKEN as the API)
-    const fileBuffer = await downloadFile(crop.url, loginToken);
+    const fileBuffer = await downloadFile(crop.url);
     if (!fileBuffer) {
       console.warn(`Failed to download crop file: ${crop.url}`);
       if (stats) stats.crop_skipped = (stats.crop_skipped ?? 0) + 1;
