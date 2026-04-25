@@ -138,6 +138,7 @@ function escapeHtml(value: string): string {
       return "&quot;";
     case "'":
       return "&#39;";
+    /* v8 ignore next 2 -- regex above matches only the cases handled here */
     default:
       return character;
     }

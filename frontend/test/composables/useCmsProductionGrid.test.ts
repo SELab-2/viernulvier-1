@@ -53,10 +53,16 @@ describe("useCmsProductionGrid", () => {
     expect(teaserFormatter?.({ value: "short" })).toBe("short");
     expect(teaserFormatter?.({ value: "x".repeat(80) })).toBe(`${"x".repeat(47)}...`);
 
-    const descriptionFormatter = defs.find((d) => d.field === "descriptionOne")?.valueFormatter as
+    const descriptionOneFormatter = defs.find((d) => d.field === "descriptionOne")?.valueFormatter as
       | ((params: { value: unknown }) => string)
       | undefined;
-    expect(descriptionFormatter?.({ value: null })).toBe("");
+    expect(descriptionOneFormatter?.({ value: null })).toBe("");
+
+    const descriptionTwoFormatter = defs.find((d) => d.field === "descriptionTwo")?.valueFormatter as
+      | ((params: { value: unknown }) => string)
+      | undefined;
+    expect(descriptionTwoFormatter?.({ value: null })).toBe("");
+    expect(descriptionTwoFormatter?.({ value: "x".repeat(80) })).toBe(`${"x".repeat(47)}...`);
 
     const mediaRenderer = defs.find((d) => d.field === "media")?.cellRenderer as
       | ((params: { value: unknown }) => string)
@@ -64,6 +70,9 @@ describe("useCmsProductionGrid", () => {
     expect(mediaRenderer?.({ value: "https://example.com/cover.jpg" } as never)).toContain("cms-media-text");
     expect(mediaRenderer?.({ value: "https://example.com/trailer.mp4" } as never)).toContain("cms-media-text");
     expect(mediaRenderer?.({ value: "plain text" } as never)).toContain("cms-media-text");
+    expect(mediaRenderer?.({ value: "" } as never)).toBe("");
+    expect(mediaRenderer?.({ value: "   " } as never)).toBe("");
+    expect(mediaRenderer?.({ value: null } as never)).toBe("");
   });
 
   it("returns dark and light theme variables", () => {
