@@ -1,10 +1,24 @@
 <template>
-  <div class="cms-tab-content">
-    <div class="flex items-center justify-between">
-      <p class="text-xs text-ink-tertiary">
-        {{ t("cms.actions.loadedCount", { count: rowData.length }) }}
-      </p>
-
+  <CmsTabShell
+    v-model:quick-filter-text="quickFilterText"
+    v-model:column-chooser-open="columnChooserOpen"
+    :row-count="rowData.length"
+    loaded-count-key="cms.actions.loadedCount"
+    empty-state-key="cms.actions.noRows"
+    :is-loading="isLoading"
+    :load-error="loadError"
+    :selected-count="selectedCount"
+    :column-options="gridColumnOptions"
+    :column-visibility="columnVisibility"
+    @apply-quick-filter="applyQuickFilter"
+    @fit-columns="fitGridColumns"
+    @auto-size-columns="autoSizeGridColumns"
+    @reset-filters="resetGridFilters"
+    @export-csv="exportGridCsv"
+    @reset-state="resetGridState"
+    @set-column-visibility="setGridColumnVisibility"
+  >
+    <template #header-actions>
       <div class="flex flex-col gap-2">
         <button type="button" class="cms-add-button" @click="openCreateModal">
           {{ t("cms.actions.addProduction") }}
@@ -18,41 +32,22 @@
           {{ t("cms.actions.removeProduction") }}
         </button>
       </div>
-    </div>
+    </template>
 
-    <CmsGridControls
-      :quick-filter-text="quickFilterText"
-      :selected-count="selectedCount"
-      :column-chooser-open="columnChooserOpen"
-      @update:quick-filter-text="quickFilterText = $event"
-      @apply-quick-filter="applyQuickFilter"
-      @fit-columns="fitGridColumns"
-      @auto-size-columns="autoSizeGridColumns"
-      @reset-filters="resetGridFilters"
-      @export-csv="exportGridCsv"
-      @reset-state="resetGridState"
-      @toggle-columns="columnChooserOpen = !columnChooserOpen"
-    />
+    <template #status-banner>
+      <div class="cms-status-slot" :class="{ 'is-open': !!saveSuccess }">
+        <Transition name="fade" appear>
+          <div
+            v-if="saveSuccess"
+            class="rounded-lg border border-green-400/40 bg-green-400/10 p-4 text-sm text-green-700"
+          >
+            ✓ {{ saveSuccess }}
+          </div>
+        </Transition>
+      </div>
+    </template>
 
-    <div
-      v-if="loadError"
-      class="rounded-lg border border-red-400/40 bg-red-400/10 p-4 text-sm text-red-700"
-    >
-      {{ loadError }}
-    </div>
-
-    <div class="cms-status-slot" :class="{ 'is-open': !!saveSuccess }">
-      <Transition name="fade" appear>
-        <div
-          v-if="saveSuccess"
-          class="rounded-lg border border-green-400/40 bg-green-400/10 p-4 text-sm text-green-700"
-        >
-          ✓ {{ saveSuccess }}
-        </div>
-      </Transition>
-    </div>
-
-    <div v-if="!loadError" class="cms-grid-shell">
+    <template #grid>
       <AgGridVue
         :class="['ag-theme-alpine', 'cms-grid']"
         :style="agThemeVars"
@@ -81,40 +76,26 @@
         @cell-editing-stopped="onCellEditingStopped"
         @cell-clicked="onCellClicked"
       />
-    </div>
+    </template>
 
-    <CmsColumnChooser
-      :show="columnChooserOpen && !loadError"
-      :column-options="gridColumnOptions"
-      :column-visibility="columnVisibility"
-      @close="columnChooserOpen = false"
-      @set-column-visibility="setGridColumnVisibility"
-    />
+    <template #modals>
+      <CmsEventsDrawer
+        :show="selectedEventsProduction !== null"
+        :selected-production="selectedEventsProduction"
+        :selected-event-rows="selectedEventRows"
+        :halls-data="hallsData"
+        :events-panel-loading="eventsPanelLoading"
+        :events-panel-error="eventsPanelError"
+        :localize-value="localizeValue"
+        @close="closeEventsPanel"
+        @open-create-event="openCreateEventModal"
+        @save-linked-event="saveLinkedEvent"
+        @remove-linked-event="removeLinkedEvent"
+        @event-row-focus-out="onEventRowFocusOut"
+        @event-row-enter="onEventRowEnter"
+      />
 
-    <CmsEventsDrawer
-      :show="selectedEventsProduction !== null"
-      :selected-production="selectedEventsProduction"
-      :selected-event-rows="selectedEventRows"
-      :halls-data="hallsData"
-      :events-panel-loading="eventsPanelLoading"
-      :events-panel-error="eventsPanelError"
-      :localize-value="localizeValue"
-      @close="closeEventsPanel"
-      @open-create-event="openCreateEventModal"
-      @save-linked-event="saveLinkedEvent"
-      @remove-linked-event="removeLinkedEvent"
-      @event-row-focus-out="onEventRowFocusOut"
-      @event-row-enter="onEventRowEnter"
-    />
-
-    <p
-      v-if="!isLoading && !loadError && rowData.length === 0"
-      class="rounded-md border border-surface-3 bg-surface-0 px-4 py-3 text-sm text-ink-secondary"
-    >
-      {{ t("cms.actions.noRows") }}
-    </p>
-
-    <aside v-if="editorPanel" class="cms-side-panel">
+      <aside v-if="editorPanel" class="cms-side-panel">
       <div class="cms-side-header">
         <h2 class="text-lg font-semibold text-ink-primary">
           {{ editorPanel.label }}
@@ -264,7 +245,8 @@
         </div>
       </section>
     </div>
-  </div>
+    </template>
+  </CmsTabShell>
 </template>
 
 <script setup lang="ts">
@@ -278,10 +260,9 @@ import type {
 } from "ag-grid-community";
 import { useI18n } from "vue-i18n";
 import type { Event as ArchiveEvent, Hall, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
-import CmsColumnChooser from "@/components/admin/cms/CmsColumnChooser.vue";
+import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
 import CmsCreateEventModal from "@/components/admin/cms/productions/CmsCreateEventModal.vue";
 import CmsEventsDrawer from "@/components/admin/cms/productions/CmsEventsDrawer.vue";
-import CmsGridControls from "@/components/admin/cms/CmsGridControls.vue";
 import CmsTagDrawer from "@/components/admin/cms/CmsTagDrawer.vue";
 import CmsCreateProductionModal from "@/components/admin/cms/productions/CmsCreateProductionModal.vue";
 import { useCmsProductionGrid } from "@/composables/useCmsProductionGrid";
