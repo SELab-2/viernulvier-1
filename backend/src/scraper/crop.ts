@@ -1,7 +1,5 @@
-import { fetchScraperJwt } from "./auth.js";
 import { localApiUrl } from "./local-api.js";
 import type { ScrapeRunStats } from "./scrape-stats.js";
-import { viernulvierApiUrl } from "./viernulvier-api.js";
 import type { Crop } from "@viernulvier/shared/types/index.js";
 
 /**
@@ -14,21 +12,6 @@ export interface MediaItemCropJSON {
   url?: string;
   created_at?: string;
   updated_at?: string;
-}
-
-/**
- * Raw media item from Viernulvier (minimal, crops from item detail).
- */
-interface MediaItemJSON {
-  "@id": string;
-  "@type": string;
-  type: "foto" | "video";
-  original_filename?: string;
-  position?: number;
-  width?: number;
-  height?: number;
-  format?: string;
-  crops: MediaItemCropJSON[];
 }
 
 /**
@@ -68,39 +51,6 @@ async function downloadFile(url: string): Promise<Buffer | null> {
     return Buffer.from(buffer);
   } catch (err) {
     console.warn(`Error downloading file ${url}:`, err);
-    return null;
-  }
-}
-
-/**
- * Fetches a media item detail from Viernulvier to get its crops.
- */
-async function fetchMediaItemWithCrops(
-  itemId: number,
-  authToken: string,
-): Promise<MediaItemJSON | null> {
-  try {
-    const itemUrl = viernulvierApiUrl(`/api/v1/media/items/${itemId}`);
-    const response = await fetch(itemUrl, {
-      headers: {
-        accept: "application/ld+json",
-        "X-AUTH-TOKEN": authToken,
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status !== 404) {
-        console.warn(
-          `Failed to fetch media item ${itemId}: ${response.status}`,
-        );
-      }
-      return null;
-    }
-
-    const data = (await response.json()) as MediaItemJSON;
-    return data;
-  } catch (err) {
-    console.warn(`Error fetching media item ${itemId}:`, err);
     return null;
   }
 }
@@ -265,135 +215,4 @@ export async function createCropsForImage(
   }
 
   return totalUploaded;
-}
-
-/** Paged `GET /api/v1/image?page=&pageSize=` response (see media `fetchAllImages`). */
-interface LocalImagesPageJSON {
-  totalItems: number;
-  member: Array<{ id: number; old_id: number | null }>;
-}
-
-/**
- * Fetches one page of local images (same contract as `GET /api/v1/image?page=&pageSize=`).
- */
-async function fetchLocalImagesPage(
-  page: number,
-  pageSize: number,
-  loginToken: string,
-): Promise<LocalImagesPageJSON> {
-  const url = new URL(localApiUrl("/api/v1/image"));
-  url.searchParams.set("page", String(page));
-  url.searchParams.set("pageSize", String(pageSize));
-
-  const response = await fetch(url.toString(), {
-    headers: {
-      "Authorization": `Bearer ${loginToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Local API returned status ${response.status}`);
-  }
-
-  const data = (await response.json()) as LocalImagesPageJSON;
-  if (!Array.isArray(data.member)) {
-    throw new Error("Expected paged GET /api/v1/image response with { totalItems, member }");
-  }
-  return data;
-}
-
-/**
- * Full crop scraper: scrapes crops for all images.
- * Requires images to already be imported into local DB.
- */
-export async function scrapeCrops(
-  stats?: ScrapeRunStats,
-): Promise<void> {
-  console.log("Starting crop scraper...");
-
-  const authToken = await fetchScraperJwt();
-  const loginToken = authToken;
-
-  const pageSize = Math.min(
-    500,
-    Math.max(
-      1,
-      parseInt(process.env["VIERNULVIER_SCRAPER_CROP_PAGE_SIZE"] ?? "100", 10),
-    ),
-  );
-
-  const startPage = Math.max(
-    1,
-    parseInt(process.env["VIERNULVIER_SCRAPER_CROP_START_PAGE"] ?? "1", 10),
-  );
-
-  const firstPage = await fetchLocalImagesPage(1, pageSize, loginToken);
-  const totalItems = firstPage.totalItems;
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-
-  const envStop = process.env["VIERNULVIER_SCRAPER_CROP_STOP_BEFORE_PAGE"];
-  const stopBeforePage = Math.min(
-    envStop !== undefined && envStop !== ""
-      ? parseInt(envStop, 10)
-      : totalPages + 1,
-    totalPages + 1,
-  );
-
-  console.log(
-    `Scraping crops for ${totalItems} images (~${totalPages} page(s) of ${pageSize})`,
-  );
-  console.log(
-    `Scraping crop pages ${startPage} to ${stopBeforePage - 1} (inclusive, exclusive end ${stopBeforePage})`,
-  );
-
-  for (let page = startPage; page < stopBeforePage; page++) {
-    console.log(`[Page ${page}/${totalPages}] Scraping image crops...`);
-
-    try {
-      const imagesPage =
-        page === 1 && startPage === 1
-          ? firstPage
-          : await fetchLocalImagesPage(page, pageSize, loginToken);
-
-      for (const image of imagesPage.member) {
-        const imageId = image.id;
-        const oldId = image.old_id;
-
-        if (!oldId || !Number.isFinite(oldId)) {
-          console.log(
-            `Image id=${imageId} has no valid old_id, skipping crop import`,
-          );
-          continue;
-        }
-
-        // Fetch media item detail from Viernulvier which includes crops array
-        const mediaItem = await fetchMediaItemWithCrops(oldId, authToken);
-        if (!mediaItem) {
-          continue;
-        }
-
-        const crops = mediaItem.crops || [];
-        if (crops.length === 0) {
-          continue;
-        }
-
-        const importedCount = await createCropsForImage(
-          crops,
-          imageId,
-          loginToken,
-          stats,
-        );
-        if (importedCount > 0) {
-          console.log(
-            `  → Uploaded ${importedCount} crop(s) for image id=${imageId}`,
-          );
-        }
-      }
-    } catch (err) {
-      console.error(`Failed to scrape crops page ${page}:`, err);
-      if (stats) stats.errors = (stats.errors ?? 0) + 1;
-    }
-  }
-
-  console.log("Crop scraper completed.");
 }
