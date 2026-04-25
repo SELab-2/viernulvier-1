@@ -214,6 +214,7 @@ function cancelSmoothScroll(): void {
  */
 function smoothScrollToTarget(targetLeft: number): void {
   const sc = scrollerRef.value;
+  /* v8 ignore next 1 */
   if (!sc) return;
   const max = Math.max(0, sc.scrollWidth - sc.clientWidth);
   const target = Math.max(0, Math.min(targetLeft, max));
@@ -253,12 +254,14 @@ function smoothScrollToTarget(targetLeft: number): void {
 
 function getScrollStepPx(): number {
   const sc = scrollerRef.value;
+  /* v8 ignore next 3 -- defensive: goPrev/Next only run when mounted */
   if (!sc) {
     return 120;
   }
   const first = sc.querySelector<HTMLElement>(
     '[data-testid="carousel-slide"]',
   );
+  /* v8 ignore next 3 -- template always renders slides when the scroller exists */
   if (!first) {
     return Math.max(80, sc.clientWidth * 0.35);
   }
@@ -286,6 +289,7 @@ function buildScreenScrollTargets(max: number, stepPx: number): number[] {
 }
 
 function nearestScreenIndex(scrollLeft: number, targets: number[]): number {
+  /* v8 ignore next 3 -- buildScreenScrollTargets always yields at least [0] */
   if (targets.length === 0) {
     return 0;
   }
@@ -303,6 +307,7 @@ function nearestScreenIndex(scrollLeft: number, targets: number[]): number {
 
 function updateScrollState(): void {
   const sc = scrollerRef.value;
+  /* v8 ignore start -- defensive: public handlers only use the scroller when mounted */
   if (!sc) {
     canGoPrev.value = false;
     canGoNext.value = false;
@@ -310,6 +315,7 @@ function updateScrollState(): void {
     activeScreenIndex.value = 0;
     return;
   }
+  /* v8 ignore stop */
   const { scrollLeft, clientWidth, scrollWidth } = sc;
   const max = Math.max(0, scrollWidth - clientWidth);
   canGoPrev.value = scrollLeft > 2;
@@ -349,10 +355,12 @@ watch(
 
 function goToScreen(index: number): void {
   const targets = screenScrollTargets.value;
+  /* v8 ignore next 3 -- dots only call with in-range indices */
   if (index < 0 || index >= targets.length) {
     return;
   }
   const target = targets[index];
+  /* v8 ignore next 3 -- bounded index implies a real array element */
   if (target === undefined) {
     return;
   }

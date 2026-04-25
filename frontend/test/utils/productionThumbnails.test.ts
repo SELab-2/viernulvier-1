@@ -11,6 +11,85 @@ describe("pickProductionListThumbnailUrl", () => {
     expect(pickProductionListThumbnailUrl([])).toBeNull();
   });
 
+  it("skips an image with no crops and uses the next", () => {
+    const images: ImageWithCrops[] = [
+      { id: 1, old_id: null, production: 1, res: null, crops: [] },
+      {
+        id: 2,
+        old_id: null,
+        production: 1,
+        res: null,
+        crops: [
+          {
+            id: 1,
+            old_id: null,
+            image: 2,
+            type: "x",
+            url: "/second.jpg",
+          },
+        ],
+      },
+    ];
+    expect(pickProductionListThumbnailUrl(images)).toBe("/second.jpg");
+  });
+
+  it("skips a row when the chosen crop has no url", () => {
+    const images: ImageWithCrops[] = [
+      {
+        id: 1,
+        old_id: null,
+        production: 1,
+        res: null,
+        crops: [
+          {
+            id: 1,
+            old_id: null,
+            image: 1,
+            type: "banner",
+            url: "",
+          },
+        ],
+      },
+      {
+        id: 2,
+        old_id: null,
+        production: 1,
+        res: null,
+        crops: [
+          {
+            id: 2,
+            old_id: null,
+            image: 2,
+            type: "y",
+            url: "/y.jpg",
+          },
+        ],
+      },
+    ];
+    expect(pickProductionListThumbnailUrl(images)).toBe("/y.jpg");
+  });
+
+  it("matches thumbnail-like type with locale-specific segments (Klein)", () => {
+    const images: ImageWithCrops[] = [
+      {
+        id: 1,
+        old_id: null,
+        production: 1,
+        res: null,
+        crops: [
+          {
+            id: 1,
+            old_id: null,
+            image: 1,
+            type: "KleinVoorstelling",
+            url: "/klein.jpg",
+          },
+        ],
+      },
+    ];
+    expect(pickProductionListThumbnailUrl(images)).toBe("/klein.jpg");
+  });
+
   it("prefers type banner over thumbnail-like crops", () => {
     const images: ImageWithCrops[] = [
       {
@@ -223,5 +302,41 @@ describe("pickHighQualityImageCropUrl", () => {
       crops: [],
     };
     expect(pickHighQualityImageCropUrl(image)).toBeNull();
+  });
+
+  it("treats missing crops as empty", () => {
+    const image = {
+      id: 1,
+      old_id: null,
+      production: 1,
+      res: null,
+    } as ImageWithCrops;
+    expect(pickHighQualityImageCropUrl(image)).toBeNull();
+  });
+
+  it("skips a high-priority crop with an empty url and uses the next type", () => {
+    const image: ImageWithCrops = {
+      id: 1,
+      old_id: null,
+      production: 1,
+      res: null,
+      crops: [
+        {
+          id: 1,
+          old_id: null,
+          image: 1,
+          type: "hd_ready",
+          url: "",
+        },
+        {
+          id: 2,
+          old_id: null,
+          image: 1,
+          type: "nbv4_header",
+          url: "/from-next.jpg",
+        },
+      ],
+    };
+    expect(pickHighQualityImageCropUrl(image)).toBe("/from-next.jpg");
   });
 });

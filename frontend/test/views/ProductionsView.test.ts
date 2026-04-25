@@ -755,7 +755,8 @@ describe("ProductionsView.vue", () => {
   });
 
   it("shows more genre tags after expanding the list", async () => {
-    const manyGenres: Tag[] = Array.from({ length: 8 }, (_, i) => ({
+    // Collapsed cap is GENRE_FILTER_COLLAPSED_MAX (9); need strictly more to show "Meer tonen".
+    const manyGenres: Tag[] = Array.from({ length: 10 }, (_, i) => ({
       id: 100 + i,
       old_id: null,
       name: { nl: `Genre ${i + 1}` },
@@ -771,13 +772,14 @@ describe("ProductionsView.vue", () => {
     expect(more).toBeDefined();
     await more!.trigger("click");
     await nextTick();
-    expect(wrapper.text()).toContain("Genre 8");
+    expect(wrapper.text()).toContain("Genre 10");
     wrapper.unmount();
   });
 
   it("shows more non-genre tags after expanding that list", async () => {
     const typeOther = { id: 2, name: { nl: "Leeftijd" } } as TagType;
-    const nonGenreTags: Tag[] = Array.from({ length: 6 }, (_, i) => ({
+    // Collapsed cap is NON_GENRE_FILTER_COLLAPSED_MAX (6); need 7+ tags for the expand control.
+    const nonGenreTags: Tag[] = Array.from({ length: 7 }, (_, i) => ({
       id: 300 + i,
       old_id: null,
       name: { nl: `Extra ${i + 1}` },
@@ -793,7 +795,7 @@ describe("ProductionsView.vue", () => {
     expect(more.length).toBeGreaterThanOrEqual(1);
     await more[more.length - 1]!.trigger("click");
     await nextTick();
-    expect(wrapper.text()).toContain("Extra 6");
+    expect(wrapper.text()).toContain("Extra 7");
     wrapper.unmount();
   });
 
