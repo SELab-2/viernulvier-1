@@ -166,7 +166,7 @@
 
       <footer class="cms-modal-footer">
         <button type="button" class="cms-side-close" @click="$emit('close')">
-          {{ t("cms.create.cancel") }}
+          {{ t("general.cancel") }}
         </button>
         <button type="button" class="cms-side-save" :disabled="isCreating" @click="$emit('submit')">
           {{ isCreating ? t("cms.create.saving") : t("cms.create.submit") }}

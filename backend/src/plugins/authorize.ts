@@ -24,7 +24,7 @@ export default fp(function authorizePlugin(server: FastifyInstance) {
         if (payload.jti && server.tokenDenylist.has(payload.jti)) {
           return await reply
             .status(401)
-            .header("WWW-Authenticate", 'Bearer realm="api", error="invalid_token", error_description="Token has been revoked"')
+            .header("WWW-Authenticate", 'Bearer realm="api", error_description="Token has been revoked"')
             .send({ error: "Token has been revoked" });
         }
 
@@ -34,7 +34,7 @@ export default fp(function authorizePlugin(server: FastifyInstance) {
       } catch {
         return await reply
           .status(401)
-          .header("WWW-Authenticate", 'Bearer realm="api", error="invalid_token"')
+          .header("WWW-Authenticate", 'Bearer realm="api"')
           .send({ error: "Unauthorized" });
       }
     };

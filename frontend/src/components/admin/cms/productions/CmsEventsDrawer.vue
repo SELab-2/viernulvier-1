@@ -22,7 +22,7 @@
       </div>
 
       <p v-if="eventsPanelLoading" class="text-sm text-ink-secondary">
-        {{ t("cms.panel.saving") }}
+        {{ t("general.saving") }}
       </p>
       <p v-else-if="eventsPanelError" class="text-sm text-red-700">
         {{ eventsPanelError }}
@@ -111,10 +111,10 @@
 
           <footer class="cms-modal-footer">
             <button type="button" class="cms-side-close" :disabled="eventsPanelLoading" @click="closeRemoveConfirm">
-              Cancel
+              {{ t("general.cancel") }}
             </button>
             <button type="button" class="cms-side-save" :disabled="eventsPanelLoading" @click="confirmRemoveEvent">
-              {{ eventsPanelLoading ? t("cms.panel.saving") : t("cms.events.removeEvent") }}
+              {{ eventsPanelLoading ? t("general.saving") : t("cms.events.removeEvent") }}
             </button>
           </footer>
         </section>

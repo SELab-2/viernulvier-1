@@ -160,7 +160,7 @@
           :disabled="isSaving"
           @click="saveEditorPanel"
         >
-          {{ isSaving ? t("cms.panel.saving") : t("cms.panel.save") }}
+          {{ isSaving ? t("general.saving") : t("cms.panel.save") }}
         </button>
       </div>
     </aside>
@@ -235,10 +235,10 @@
 
         <footer class="cms-modal-footer">
           <button type="button" class="cms-side-close" :disabled="removeConfirmLoading" @click="closeRemoveProductionsConfirm">
-            {{ t("cms.actions.confirmRemoveCancel") }}
+            {{ t("general.cancel") }}
           </button>
           <button type="button" class="cms-side-save" :disabled="removeConfirmLoading" @click="confirmRemoveProductions">
-            {{ removeConfirmLoading ? t("cms.panel.saving") : t("cms.actions.confirmRemoveSubmit") }}
+            {{ removeConfirmLoading ? t("general.saving") : t("cms.actions.confirmRemoveSubmit") }}
           </button>
         </footer>
       </section>

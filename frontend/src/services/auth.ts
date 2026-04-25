@@ -250,14 +250,30 @@ export async function replaceAdmin(
  * @throws {ApiError} 404 — admin not found.
  *
  * @example
- * // Only update the profile picture
- * await updateAdmin(1, { profile_picture: "https://example.com/avatar.jpg" });
+ * // Only update the super field
+ * await updateAdmin(1, { super: false });
  */
 export async function updateAdmin(
   id: number,
   data: UpdateAdminInput,
 ): Promise<Admin> {
   return await apiFetch<Admin>(`/auth/${id}`, { method: "PATCH", body: data });
+}
+
+/**
+ * Update your own password.
+ *
+ * @param password the new password.
+ * @throws {ApiError} 401 — unauthenticated.
+ * @throws {ApiError} 404 — admin not found.
+ *
+ * @example
+ * await updateOwnPassword("hello123");
+ */
+export async function updateOwnPassword(
+  password: string,
+): Promise<void> {
+  await apiFetch<Admin>(`/auth/me`, { method: "PATCH", body: { password: password } });
 }
 
 /**

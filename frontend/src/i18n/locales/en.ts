@@ -1,4 +1,8 @@
 export default {
+  general: {
+    cancel: "Cancel",
+    saving: "Saving...",
+  },
   nav: {
     home: "Home",
     archive: "Archive",
@@ -86,7 +90,6 @@ export default {
       removeProduction: "Remove selected productions",
       confirmRemoveDialogTitle: "Remove productions?",
       confirmRemoveBody: "This will permanently delete {count} selected productions. This cannot be undone.",
-      confirmRemoveCancel: "Cancel",
       confirmRemoveSubmit: "Remove permanently",
       addTag: "+ Add Tag",
       searchPlaceholder: "Search across all columns...",
@@ -118,7 +121,6 @@ export default {
       selectTagType: "Choose a type...",
       finalized: "Mark as finalized",
       languages: "Extra languages",
-      cancel: "Cancel",
       submit: "Add production",
       saving: "Adding...",
       tags: {
@@ -162,7 +164,6 @@ export default {
       save: "Save",
       saveAction: "Save Changes",
       saveHint: "Changes are only applied after clicking Save Changes.",
-      saving: "Saving...",
       text: "Text",
       bulkNotice: "Change will be applied to {count} selected productions.",
     },
@@ -291,6 +292,15 @@ export default {
       quickActions: "Quick actions",
       openCms: "Open CMS",
       logout: "Logout",
+      changePassword: "Change password",
+    },
+    changePassword: {
+      newPassword: "New password",
+      confirmPassword: "Confirm password",
+      update: "Update",
+      tooShortError: "Password must be at least 8 characters.",
+      dontMatchError: "Passwords do not match.",
+      failedToUpdate: "Failed to update password",
     },
   },
   time: {

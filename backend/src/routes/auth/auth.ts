@@ -37,7 +37,7 @@ export default function authRoutes(server: FastifyInstance) {
   server.post("/api/v1/auth", protectSuper, replyHandler(server, createAdmin));
   server.put("/api/v1/auth/:id", protectSuper, replyHandler(server, replaceAdmin));
   server.patch("/api/v1/auth/:id", protectSuper, replyHandler(server, editAdmin));
-  server.patch("/api/v1/auth/me", protectSuper, replyHandler(server, editOwnPassword));
+  server.patch("/api/v1/auth/me", protect, replyHandler(server, editOwnPassword));
   server.delete("/api/v1/auth/:id", protectSuper, replyHandler(server, deleteAdmin));
 
   server.post("/api/v1/auth/login", replyHandler(server, login));
