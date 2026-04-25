@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@viernulvier/shared": "workspace:*",
-    "ag-grid-community": "^35.2.0",
+    "ag-grid-community": "^35.2.1",
     "ag-grid-vue3": "^35.2.0",
     "dompurify": "^3.4.1",
     "easymde": "^2.18.0",
