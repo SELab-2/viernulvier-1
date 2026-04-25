@@ -134,6 +134,18 @@ describe("Auth routes — SQL integration", { sequential: true }, () => {
     expect(admin.super).toBe(false); // unchanged
   });
 
+  test("PATCH /api/v1/auth/me — updates own password", async () => {
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/auth/me`,
+      cookies: { session: sessionCookie },
+      payload: { password: "hello123" },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.NoContent);
+    expect(response.body).toEqual("");
+  });
+
   test("PUT /api/v1/auth/:id — replaces all fields of the admin", async () => {
     const response = await server.inject({
       method: "PUT",
@@ -1151,694 +1163,694 @@ describe("Tag & tag type routes — SQL integration", { sequential: true }, () =
       expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
     });
   });
-  describe("Media (image & crop) routes — SQL integration", { sequential: true }, () => {
-    let productionId: number;
+});
 
-    beforeAll(async () => {
-      // No real S3 bucket in this test suite — replace with a no-op mock
-      server.s3.client = {
-        send: vi.fn().mockResolvedValue({}),
-        destroy: vi.fn(),
-      } as unknown as import("@aws-sdk/client-s3").S3Client;
+describe("Media (image & crop) routes — SQL integration", { sequential: true }, () => {
+  let productionId: number;
 
+  beforeAll(async () => {
+    // No real S3 bucket in this test suite — replace with a no-op mock
+    server.s3.client = {
+      send: vi.fn().mockResolvedValue({}),
+      destroy: vi.fn(),
+    } as unknown as import("@aws-sdk/client-s3").S3Client;
+
+    const prodRes = await server.inject({
+      method: "POST",
+      url: "/api/v1/production",
+      cookies: { session: sessionCookie },
+      payload: {
+        title: { nl: "Media Test Productie" },
+        artist: { nl: "Test Artiest" },
+        tagline: { nl: "Tagline" },
+        teaser: { nl: "Teaser" },
+        finalized: false,
+      },
+    });
+    expect(prodRes.statusCode).toBe(HttpSuccess.OK);
+    productionId = prodRes.json().id;
+  });
+
+  describe("Image routes — SQL integration", { sequential: true }, () => {
+    let imageId: number;
+    let imageIdWithCrops: number;
+
+    test("POST /api/v1/production/:productionId/image — creates an image (JSON, no crops)", async () => {
+      const response = await server.inject({
+        method: "POST",
+        url: `/api/v1/production/${productionId}/image`,
+        cookies: { session: sessionCookie },
+        payload: { res: "1920x1080", old_id: null },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const json = response.json();
+      expect(json).toMatchObject({
+        production: productionId,
+        res: "1920x1080",
+        old_id: null,
+      });
+      expect(json.crops).toEqual([]);
+      imageId = json.id;
+    });
+
+    test("POST /api/v1/production/:productionId/image — creates an image with crops (multipart)", async () => {
+      const form = new FormData();
+      form.append(
+        "data",
+        JSON.stringify({
+          res: "3840x2160",
+          old_id: null,
+          crops: [{ filename: "hero.jpg", type: "hero" }],
+        }),
+      );
+      form.append("file", new Blob(["fake-img"], { type: "image/jpeg" }), "hero.jpg");
+
+      const response = await server.inject({
+        method: "POST",
+        url: `/api/v1/production/${productionId}/image`,
+        cookies: { session: sessionCookie },
+        payload: form,
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const json = response.json();
+      expect(json).toMatchObject({ production: productionId, res: "3840x2160" });
+      expect(json.crops).toHaveLength(1);
+      expect(json.crops[0]).toMatchObject({ type: "hero" });
+      imageIdWithCrops = json.id;
+    });
+
+    test("POST /api/v1/production/:productionId/image — rejects multipart with missing file for crop mapping", async () => {
+      const form = new FormData();
+      form.append(
+        "data",
+        JSON.stringify({
+          res: "1920x1080",
+          crops: [{ filename: "nonexistent.jpg", type: "general" }],
+        }),
+      );
+
+      const response = await server.inject({
+        method: "POST",
+        url: `/api/v1/production/${productionId}/image`,
+        cookies: { session: sessionCookie },
+        payload: form,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    test("POST /api/v1/production/:productionId/image — requires auth", async () => {
+      const response = await server.inject({
+        method: "POST",
+        url: `/api/v1/production/${productionId}/image`,
+        payload: { res: "1920x1080" },
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+
+    test("GET /api/v1/production/:productionId/image — lists images for the production", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/production/${productionId}/image`,
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const images = response.json<{ id: number }[]>();
+      expect(images.length).toBeGreaterThanOrEqual(2);
+      expect(images.some((i) => i.id === imageId)).toBe(true);
+      expect(images.some((i) => i.id === imageIdWithCrops)).toBe(true);
+    });
+
+    test("GET /api/v1/production/:productionId/image — returns empty array for production with no images", async () => {
       const prodRes = await server.inject({
         method: "POST",
         url: "/api/v1/production",
         cookies: { session: sessionCookie },
         payload: {
-          title: { nl: "Media Test Productie" },
-          artist: { nl: "Test Artiest" },
-          tagline: { nl: "Tagline" },
-          teaser: { nl: "Teaser" },
+          title: { nl: "Lege Productie" },
+          artist: { nl: "Artiest" },
+          tagline: { nl: "Tag" },
+          teaser: { nl: "Tease" },
           finalized: false,
         },
       });
-      expect(prodRes.statusCode).toBe(HttpSuccess.OK);
-      productionId = prodRes.json().id;
+      const emptyProdId = prodRes.json().id;
+
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/production/${emptyProdId}/image`,
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(response.json()).toEqual([]);
     });
 
-    describe("Image routes — SQL integration", { sequential: true }, () => {
-      let imageId: number;
-      let imageIdWithCrops: number;
+    test("GET /api/v1/image/:id — returns the image with its crops", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/image/${imageIdWithCrops}`,
+      });
 
-      test("POST /api/v1/production/:productionId/image — creates an image (JSON, no crops)", async () => {
-        const response = await server.inject({
-          method: "POST",
-          url: `/api/v1/production/${productionId}/image`,
-          cookies: { session: sessionCookie },
-          payload: { res: "1920x1080", old_id: null },
-        });
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const json = response.json();
+      expect(json).toMatchObject({ id: imageIdWithCrops, production: productionId });
+      expect(json.crops).toHaveLength(1);
+    });
 
-        expect(response.statusCode).toBe(HttpSuccess.OK);
-        const json = response.json();
-        expect(json).toMatchObject({
-          production: productionId,
+    test("GET /api/v1/image/:id — returns 404 for non-existent image", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/image/999999",
+      });
+
+      expect(response.statusCode).not.toBe(HttpSuccess.OK);
+    });
+
+    test("GET /api/v1/image/:id/meta — returns image with metadata", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/image/${imageId}/meta`,
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const json = response.json();
+      expect(json).toMatchObject({ id: imageId });
+      expect(json.created_at).toBeDefined();
+      expect(json.updated_at).toBeDefined();
+      expect(json.created_by).toBeDefined();
+      expect(json.updated_by).toBeDefined();
+    });
+
+    test("PATCH /api/v1/image/:id — updates only the supplied fields", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/image/${imageId}`,
+        cookies: { session: sessionCookie },
+        payload: { res: "2560x1440" },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const json = response.json();
+      expect(json).toMatchObject({ id: imageId, res: "2560x1440" });
+      expect(json.old_id).toBeNull(); // unchanged
+    });
+
+    test("PATCH /api/v1/image/:id — rejects empty body", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/image/${imageId}`,
+        cookies: { session: sessionCookie },
+        payload: {},
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    test("PATCH /api/v1/image/:id — returns 404 for non-existent image", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: "/api/v1/image/999999",
+        cookies: { session: sessionCookie },
+        payload: { res: "640x480" },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    test("PATCH /api/v1/image/:id — requires auth", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/image/${imageId}`,
+        payload: { res: "640x480" },
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+
+    test("PUT /api/v1/image/:id — replaces image fields (JSON, no crops)", async () => {
+      const response = await server.inject({
+        method: "PUT",
+        url: `/api/v1/image/${imageId}`,
+        cookies: { session: sessionCookie },
+        payload: { res: "4096x2160", old_id: 42 },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const json = response.json();
+      expect(json).toMatchObject({ id: imageId, res: "4096x2160", old_id: 42 });
+    });
+
+    test("PUT /api/v1/image/:id — replaces image with new crops (multipart)", async () => {
+      const form = new FormData();
+      form.append(
+        "data",
+        JSON.stringify({
+          res: "7680x4320",
+          old_id: null,
+          crops: [{ filename: "thumb.png", type: "thumbnail" }],
+        }),
+      );
+      form.append("file", new Blob(["thumb-data"], { type: "image/png" }), "thumb.png");
+
+      const response = await server.inject({
+        method: "PUT",
+        url: `/api/v1/image/${imageIdWithCrops}`,
+        cookies: { session: sessionCookie },
+        payload: form,
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const json = response.json();
+      expect(json).toMatchObject({ id: imageIdWithCrops, res: "7680x4320" });
+      expect(json.crops).toHaveLength(1);
+      expect(json.crops[0]).toMatchObject({ type: "thumbnail" });
+    });
+
+    test("PUT /api/v1/image/:id — rejects multipart when crop mapping references missing file", async () => {
+      const form = new FormData();
+      form.append(
+        "data",
+        JSON.stringify({
           res: "1920x1080",
           old_id: null,
-        });
-        expect(json.crops).toEqual([]);
-        imageId = json.id;
+          crops: [{ filename: "ghost.jpg", type: "general" }],
+        }),
+      );
+
+      const response = await server.inject({
+        method: "PUT",
+        url: `/api/v1/image/${imageIdWithCrops}`,
+        cookies: { session: sessionCookie },
+        payload: form,
       });
 
-      test("POST /api/v1/production/:productionId/image — creates an image with crops (multipart)", async () => {
-        const form = new FormData();
-        form.append(
-          "data",
-          JSON.stringify({
-            res: "3840x2160",
-            old_id: null,
-            crops: [{ filename: "hero.jpg", type: "hero" }],
-          }),
-        );
-        form.append("file", new Blob(["fake-img"], { type: "image/jpeg" }), "hero.jpg");
-
-        const response = await server.inject({
-          method: "POST",
-          url: `/api/v1/production/${productionId}/image`,
-          cookies: { session: sessionCookie },
-          payload: form,
-        });
-
-        expect(response.statusCode).toBe(HttpSuccess.OK);
-        const json = response.json();
-        expect(json).toMatchObject({ production: productionId, res: "3840x2160" });
-        expect(json.crops).toHaveLength(1);
-        expect(json.crops[0]).toMatchObject({ type: "hero" });
-        imageIdWithCrops = json.id;
-      });
-
-      test("POST /api/v1/production/:productionId/image — rejects multipart with missing file for crop mapping", async () => {
-        const form = new FormData();
-        form.append(
-          "data",
-          JSON.stringify({
-            res: "1920x1080",
-            crops: [{ filename: "nonexistent.jpg", type: "general" }],
-          }),
-        );
-
-        const response = await server.inject({
-          method: "POST",
-          url: `/api/v1/production/${productionId}/image`,
-          cookies: { session: sessionCookie },
-          payload: form,
-        });
-
-        expect(response.statusCode).toBe(400);
-      });
-
-      test("POST /api/v1/production/:productionId/image — requires auth", async () => {
-        const response = await server.inject({
-          method: "POST",
-          url: `/api/v1/production/${productionId}/image`,
-          payload: { res: "1920x1080" },
-        });
-
-        expect(response.statusCode).toBe(401);
-      });
-
-      test("GET /api/v1/production/:productionId/image — lists images for the production", async () => {
-        const response = await server.inject({
-          method: "GET",
-          url: `/api/v1/production/${productionId}/image`,
-        });
-
-        expect(response.statusCode).toBe(HttpSuccess.OK);
-        const images = response.json<{ id: number }[]>();
-        expect(images.length).toBeGreaterThanOrEqual(2);
-        expect(images.some((i) => i.id === imageId)).toBe(true);
-        expect(images.some((i) => i.id === imageIdWithCrops)).toBe(true);
-      });
-
-      test("GET /api/v1/production/:productionId/image — returns empty array for production with no images", async () => {
-        const prodRes = await server.inject({
-          method: "POST",
-          url: "/api/v1/production",
-          cookies: { session: sessionCookie },
-          payload: {
-            title: { nl: "Lege Productie" },
-            artist: { nl: "Artiest" },
-            tagline: { nl: "Tag" },
-            teaser: { nl: "Tease" },
-            finalized: false,
-          },
-        });
-        const emptyProdId = prodRes.json().id;
-
-        const response = await server.inject({
-          method: "GET",
-          url: `/api/v1/production/${emptyProdId}/image`,
-        });
-
-        expect(response.statusCode).toBe(HttpSuccess.OK);
-        expect(response.json()).toEqual([]);
-      });
-
-      test("GET /api/v1/image/:id — returns the image with its crops", async () => {
-        const response = await server.inject({
-          method: "GET",
-          url: `/api/v1/image/${imageIdWithCrops}`,
-        });
-
-        expect(response.statusCode).toBe(HttpSuccess.OK);
-        const json = response.json();
-        expect(json).toMatchObject({ id: imageIdWithCrops, production: productionId });
-        expect(json.crops).toHaveLength(1);
-      });
-
-      test("GET /api/v1/image/:id — returns 404 for non-existent image", async () => {
-        const response = await server.inject({
-          method: "GET",
-          url: "/api/v1/image/999999",
-        });
-
-        expect(response.statusCode).not.toBe(HttpSuccess.OK);
-      });
-
-      test("GET /api/v1/image/:id/meta — returns image with metadata", async () => {
-        const response = await server.inject({
-          method: "GET",
-          url: `/api/v1/image/${imageId}/meta`,
-          cookies: { session: sessionCookie },
-        });
-
-        expect(response.statusCode).toBe(HttpSuccess.OK);
-        const json = response.json();
-        expect(json).toMatchObject({ id: imageId });
-        expect(json.created_at).toBeDefined();
-        expect(json.updated_at).toBeDefined();
-        expect(json.created_by).toBeDefined();
-        expect(json.updated_by).toBeDefined();
-      });
-
-      test("PATCH /api/v1/image/:id — updates only the supplied fields", async () => {
-        const response = await server.inject({
-          method: "PATCH",
-          url: `/api/v1/image/${imageId}`,
-          cookies: { session: sessionCookie },
-          payload: { res: "2560x1440" },
-        });
-
-        expect(response.statusCode).toBe(HttpSuccess.OK);
-        const json = response.json();
-        expect(json).toMatchObject({ id: imageId, res: "2560x1440" });
-        expect(json.old_id).toBeNull(); // unchanged
-      });
-
-      test("PATCH /api/v1/image/:id — rejects empty body", async () => {
-        const response = await server.inject({
-          method: "PATCH",
-          url: `/api/v1/image/${imageId}`,
-          cookies: { session: sessionCookie },
-          payload: {},
-        });
-
-        expect(response.statusCode).toBe(400);
-      });
-
-      test("PATCH /api/v1/image/:id — returns 404 for non-existent image", async () => {
-        const response = await server.inject({
-          method: "PATCH",
-          url: "/api/v1/image/999999",
-          cookies: { session: sessionCookie },
-          payload: { res: "640x480" },
-        });
-
-        expect(response.statusCode).toBe(404);
-      });
-
-      test("PATCH /api/v1/image/:id — requires auth", async () => {
-        const response = await server.inject({
-          method: "PATCH",
-          url: `/api/v1/image/${imageId}`,
-          payload: { res: "640x480" },
-        });
-
-        expect(response.statusCode).toBe(401);
-      });
-
-      test("PUT /api/v1/image/:id — replaces image fields (JSON, no crops)", async () => {
-        const response = await server.inject({
-          method: "PUT",
-          url: `/api/v1/image/${imageId}`,
-          cookies: { session: sessionCookie },
-          payload: { res: "4096x2160", old_id: 42 },
-        });
-
-        expect(response.statusCode).toBe(HttpSuccess.OK);
-        const json = response.json();
-        expect(json).toMatchObject({ id: imageId, res: "4096x2160", old_id: 42 });
-      });
-
-      test("PUT /api/v1/image/:id — replaces image with new crops (multipart)", async () => {
-        const form = new FormData();
-        form.append(
-          "data",
-          JSON.stringify({
-            res: "7680x4320",
-            old_id: null,
-            crops: [{ filename: "thumb.png", type: "thumbnail" }],
-          }),
-        );
-        form.append("file", new Blob(["thumb-data"], { type: "image/png" }), "thumb.png");
-
-        const response = await server.inject({
-          method: "PUT",
-          url: `/api/v1/image/${imageIdWithCrops}`,
-          cookies: { session: sessionCookie },
-          payload: form,
-        });
-
-        expect(response.statusCode).toBe(HttpSuccess.OK);
-        const json = response.json();
-        expect(json).toMatchObject({ id: imageIdWithCrops, res: "7680x4320" });
-        expect(json.crops).toHaveLength(1);
-        expect(json.crops[0]).toMatchObject({ type: "thumbnail" });
-      });
-
-      test("PUT /api/v1/image/:id — rejects multipart when crop mapping references missing file", async () => {
-        const form = new FormData();
-        form.append(
-          "data",
-          JSON.stringify({
-            res: "1920x1080",
-            old_id: null,
-            crops: [{ filename: "ghost.jpg", type: "general" }],
-          }),
-        );
-
-        const response = await server.inject({
-          method: "PUT",
-          url: `/api/v1/image/${imageIdWithCrops}`,
-          cookies: { session: sessionCookie },
-          payload: form,
-        });
-
-        expect(response.statusCode).toBe(400);
-      });
-
-      test("PUT /api/v1/image/:id — returns 404 for non-existent image", async () => {
-        const response = await server.inject({
-          method: "PUT",
-          url: "/api/v1/image/999999",
-          cookies: { session: sessionCookie },
-          payload: { res: "1920x1080", old_id: null },
-        });
-
-        expect(response.statusCode).toBe(404);
-      });
-
-      test("PUT /api/v1/image/:id — requires auth", async () => {
-        const response = await server.inject({
-          method: "PUT",
-          url: `/api/v1/image/${imageId}`,
-          payload: { res: "1920x1080", old_id: null },
-        });
-
-        expect(response.statusCode).toBe(401);
-      });
-
-      test("DELETE /api/v1/image/:id — removes the image and its crops", async () => {
-        const delRes = await server.inject({
-          method: "DELETE",
-          url: `/api/v1/image/${imageIdWithCrops}`,
-          cookies: { session: sessionCookie },
-        });
-        expect(delRes.statusCode).toBe(HttpSuccess.OK);
-
-        const fetchRes = await server.inject({
-          method: "GET",
-          url: `/api/v1/image/${imageIdWithCrops}`,
-        });
-        expect(fetchRes.statusCode).not.toBe(HttpSuccess.OK);
-      });
-
-      test("DELETE /api/v1/image/:id — returns 404 for non-existent image", async () => {
-        const response = await server.inject({
-          method: "DELETE",
-          url: "/api/v1/image/999999",
-          cookies: { session: sessionCookie },
-        });
-
-        expect(response.statusCode).toBe(404);
-      });
-
-      test("DELETE /api/v1/image/:id — requires auth", async () => {
-        const response = await server.inject({
-          method: "DELETE",
-          url: `/api/v1/image/${imageId}`,
-        });
-
-        expect(response.statusCode).toBe(401);
-      });
+      expect(response.statusCode).toBe(400);
     });
 
-    describe("Crop routes — SQL integration", { sequential: true }, () => {
-      let imageId: number;
-      let cropId: number;
-
-      beforeAll(async () => {
-        // Seed an image for crop tests
-        const res = await server.inject({
-          method: "POST",
-          url: `/api/v1/production/${productionId}/image`,
-          cookies: { session: sessionCookie },
-          payload: { res: "1920x1080" },
-        });
-        expect(res.statusCode).toBe(HttpSuccess.OK);
-        imageId = res.json().id;
+    test("PUT /api/v1/image/:id — returns 404 for non-existent image", async () => {
+      const response = await server.inject({
+        method: "PUT",
+        url: "/api/v1/image/999999",
+        cookies: { session: sessionCookie },
+        payload: { res: "1920x1080", old_id: null },
       });
 
-      test("POST /api/v1/image/:imageId/crop — uploads crops to an existing image", async () => {
-        const form = new FormData();
-        form.append(
-          "data",
-          JSON.stringify({
-            crops: [{ filename: "banner.jpg", type: "banner" }],
-          }),
-        );
-        form.append("file", new Blob(["banner-data"], { type: "image/jpeg" }), "banner.jpg");
+      expect(response.statusCode).toBe(404);
+    });
 
-        const response = await server.inject({
-          method: "POST",
-          url: `/api/v1/image/${imageId}/crop`,
-          cookies: { session: sessionCookie },
-          payload: form,
-        });
-
-        expect(response.statusCode).toBe(HttpSuccess.OK);
-        const crops = response.json<{ id: number; type: string }[]>();
-        expect(crops).toHaveLength(1);
-        expect(crops[0]!.type).toBe("banner");
-        cropId = crops[0]!.id;
+    test("PUT /api/v1/image/:id — requires auth", async () => {
+      const response = await server.inject({
+        method: "PUT",
+        url: `/api/v1/image/${imageId}`,
+        payload: { res: "1920x1080", old_id: null },
       });
 
-      test("POST /api/v1/image/:imageId/crop — rejects non-multipart request", async () => {
-        const response = await server.inject({
-          method: "POST",
-          url: `/api/v1/image/${imageId}/crop`,
-          cookies: { session: sessionCookie },
-          payload: { crops: [{ filename: "x.jpg", type: "general" }] },
-        });
+      expect(response.statusCode).toBe(401);
+    });
 
-        expect(response.statusCode).toBe(400);
+    test("DELETE /api/v1/image/:id — removes the image and its crops", async () => {
+      const delRes = await server.inject({
+        method: "DELETE",
+        url: `/api/v1/image/${imageIdWithCrops}`,
+        cookies: { session: sessionCookie },
+      });
+      expect(delRes.statusCode).toBe(HttpSuccess.OK);
+
+      const fetchRes = await server.inject({
+        method: "GET",
+        url: `/api/v1/image/${imageIdWithCrops}`,
+      });
+      expect(fetchRes.statusCode).not.toBe(HttpSuccess.OK);
+    });
+
+    test("DELETE /api/v1/image/:id — returns 404 for non-existent image", async () => {
+      const response = await server.inject({
+        method: "DELETE",
+        url: "/api/v1/image/999999",
+        cookies: { session: sessionCookie },
       });
 
-      test("POST /api/v1/image/:imageId/crop — rejects when file is missing for mapping", async () => {
-        const form = new FormData();
-        form.append(
-          "data",
-          JSON.stringify({
-            crops: [{ filename: "missing.jpg", type: "general" }],
-          }),
-        );
+      expect(response.statusCode).toBe(404);
+    });
 
-        const response = await server.inject({
-          method: "POST",
-          url: `/api/v1/image/${imageId}/crop`,
-          cookies: { session: sessionCookie },
-          payload: form,
-        });
-
-        expect(response.statusCode).toBe(400);
+    test("DELETE /api/v1/image/:id — requires auth", async () => {
+      const response = await server.inject({
+        method: "DELETE",
+        url: `/api/v1/image/${imageId}`,
       });
 
-      test("POST /api/v1/image/:imageId/crop — returns 404 for non-existent image", async () => {
-        const form = new FormData();
-        form.append(
-          "data",
-          JSON.stringify({
-            crops: [{ filename: "x.jpg", type: "general" }],
-          }),
-        );
-        form.append("file", new Blob(["data"], { type: "image/jpeg" }), "x.jpg");
-
-        const response = await server.inject({
-          method: "POST",
-          url: "/api/v1/image/999999/crop",
-          cookies: { session: sessionCookie },
-          payload: form,
-        });
-
-        expect(response.statusCode).toBe(404);
-      });
-
-      test("POST /api/v1/image/:imageId/crop — requires auth", async () => {
-        const form = new FormData();
-        form.append("data", JSON.stringify({ crops: [{ filename: "x.jpg", type: "general" }] }));
-        form.append("file", new Blob(["data"], { type: "image/jpeg" }), "x.jpg");
-
-        const response = await server.inject({
-          method: "POST",
-          url: `/api/v1/image/${imageId}/crop`,
-          payload: form,
-        });
-
-        expect(response.statusCode).toBe(401);
-      });
-
-      test("GET /api/v1/image/:imageId/crop — lists crops for the image", async () => {
-        const response = await server.inject({
-          method: "GET",
-          url: `/api/v1/image/${imageId}/crop`,
-        });
-
-        expect(response.statusCode).toBe(HttpSuccess.OK);
-        const crops = response.json<{ id: number }[]>();
-        expect(crops.some((c) => c.id === cropId)).toBe(true);
-      });
-
-      test("GET /api/v1/image/:imageId/crop/:type — returns crop by type", async () => {
-        const response = await server.inject({
-          method: "GET",
-          url: `/api/v1/image/${imageId}/crop/banner`,
-        });
-
-        expect(response.statusCode).toBe(HttpSuccess.OK);
-        expect(response.json()).toMatchObject({ id: cropId, type: "banner" });
-      });
-
-      test("GET /api/v1/image/:imageId/crop/:type — returns 404 for unknown type", async () => {
-        const response = await server.inject({
-          method: "GET",
-          url: `/api/v1/image/${imageId}/crop/nonexistent`,
-        });
-
-        expect(response.statusCode).not.toBe(HttpSuccess.OK);
-      });
-
-      test("PATCH /api/v1/crop/:id — updates crop type (JSON)", async () => {
-        const response = await server.inject({
-          method: "PATCH",
-          url: `/api/v1/crop/${cropId}`,
-          cookies: { session: sessionCookie },
-          payload: { type: "hero" },
-        });
-
-        expect(response.statusCode).toBe(HttpSuccess.OK);
-        expect(response.json()).toMatchObject({ id: cropId, type: "hero" });
-      });
-
-      test("PATCH /api/v1/crop/:id — updates type and replaces file (multipart)", async () => {
-        const form = new FormData();
-        form.append("data", JSON.stringify({ type: "updated" }));
-        form.append("file", new Blob(["new-data"], { type: "image/png" }), "new.png");
-
-        const response = await server.inject({
-          method: "PATCH",
-          url: `/api/v1/crop/${cropId}`,
-          cookies: { session: sessionCookie },
-          payload: form,
-        });
-
-        expect(response.statusCode).toBe(HttpSuccess.OK);
-        expect(response.json()).toMatchObject({ id: cropId, type: "updated" });
-      });
-
-      test("PATCH /api/v1/crop/:id — replaces file only via multipart (no type change)", async () => {
-        const form = new FormData();
-        form.append("data", JSON.stringify({}));
-        form.append("file", new Blob(["file-only"], { type: "image/jpeg" }), "file.jpg");
-
-        const response = await server.inject({
-          method: "PATCH",
-          url: `/api/v1/crop/${cropId}`,
-          cookies: { session: sessionCookie },
-          payload: form,
-        });
-
-        expect(response.statusCode).toBe(HttpSuccess.OK);
-        expect(response.json()).toMatchObject({ id: cropId });
-      });
-
-      test("PATCH /api/v1/crop/:id — multipart with type only (no file)", async () => {
-        const form = new FormData();
-        form.append("data", JSON.stringify({ type: "type_only" }));
-
-        const response = await server.inject({
-          method: "PATCH",
-          url: `/api/v1/crop/${cropId}`,
-          cookies: { session: sessionCookie },
-          payload: form,
-        });
-
-        expect(response.statusCode).toBe(HttpSuccess.OK);
-        expect(response.json()).toMatchObject({ id: cropId, type: "type_only" });
-      });
-
-      test("PATCH /api/v1/crop/:id — rejects empty body (no type, no file)", async () => {
-        const response = await server.inject({
-          method: "PATCH",
-          url: `/api/v1/crop/${cropId}`,
-          cookies: { session: sessionCookie },
-          payload: {},
-        });
-
-        expect(response.statusCode).toBe(400);
-      });
-
-      test("PATCH /api/v1/crop/:id — multipart with no type and no file returns 400", async () => {
-        const form = new FormData();
-        form.append("data", JSON.stringify({}));
-
-        const response = await server.inject({
-          method: "PATCH",
-          url: `/api/v1/crop/${cropId}`,
-          cookies: { session: sessionCookie },
-          payload: form,
-        });
-
-        expect(response.statusCode).toBe(400);
-      });
-
-      test("PATCH /api/v1/crop/:id — returns 404 for non-existent crop", async () => {
-        const response = await server.inject({
-          method: "PATCH",
-          url: "/api/v1/crop/999999",
-          cookies: { session: sessionCookie },
-          payload: { type: "nope" },
-        });
-
-        expect(response.statusCode).toBe(404);
-      });
-
-      test("PATCH /api/v1/crop/:id — requires auth", async () => {
-        const response = await server.inject({
-          method: "PATCH",
-          url: `/api/v1/crop/${cropId}`,
-          payload: { type: "nope" },
-        });
-
-        expect(response.statusCode).toBe(401);
-      });
-
-      test("PUT /api/v1/crop/:id — replaces crop entirely (multipart)", async () => {
-        const form = new FormData();
-        form.append("data", JSON.stringify({ type: "replaced" }));
-        form.append("file", new Blob(["replaced-data"], { type: "image/jpeg" }), "replaced.jpg");
-
-        const response = await server.inject({
-          method: "PUT",
-          url: `/api/v1/crop/${cropId}`,
-          cookies: { session: sessionCookie },
-          payload: form,
-        });
-
-        expect(response.statusCode).toBe(HttpSuccess.OK);
-        expect(response.json()).toMatchObject({ id: cropId, type: "replaced" });
-      });
-
-      test("PUT /api/v1/crop/:id — rejects non-multipart request", async () => {
-        const response = await server.inject({
-          method: "PUT",
-          url: `/api/v1/crop/${cropId}`,
-          cookies: { session: sessionCookie },
-          payload: { type: "nope" },
-        });
-
-        expect(response.statusCode).toBe(400);
-      });
-
-      test("PUT /api/v1/crop/:id — rejects multipart without file", async () => {
-        const form = new FormData();
-        form.append("data", JSON.stringify({ type: "nope" }));
-
-        const response = await server.inject({
-          method: "PUT",
-          url: `/api/v1/crop/${cropId}`,
-          cookies: { session: sessionCookie },
-          payload: form,
-        });
-
-        expect(response.statusCode).toBe(400);
-      });
-
-      test("PUT /api/v1/crop/:id — returns 404 for non-existent crop", async () => {
-        const form = new FormData();
-        form.append("data", JSON.stringify({ type: "nope" }));
-        form.append("file", new Blob(["data"], { type: "image/jpeg" }), "x.jpg");
-
-        const response = await server.inject({
-          method: "PUT",
-          url: "/api/v1/crop/999999",
-          cookies: { session: sessionCookie },
-          payload: form,
-        });
-
-        expect(response.statusCode).toBe(404);
-      });
-
-      test("PUT /api/v1/crop/:id — requires auth", async () => {
-        const form = new FormData();
-        form.append("data", JSON.stringify({ type: "nope" }));
-        form.append("file", new Blob(["data"], { type: "image/jpeg" }), "x.jpg");
-
-        const response = await server.inject({
-          method: "PUT",
-          url: `/api/v1/crop/${cropId}`,
-          payload: form,
-        });
-
-        expect(response.statusCode).toBe(401);
-      });
-
-      test("DELETE /api/v1/crop/:id — removes the crop from the database", async () => {
-        const delRes = await server.inject({
-          method: "DELETE",
-          url: `/api/v1/crop/${cropId}`,
-          cookies: { session: sessionCookie },
-        });
-        expect(delRes.statusCode).toBe(HttpSuccess.OK);
-        expect(delRes.json()).toMatchObject({ id: cropId });
-
-        // Verify it's gone
-        const listRes = await server.inject({
-          method: "GET",
-          url: `/api/v1/image/${imageId}/crop`,
-        });
-        expect(listRes.statusCode).toBe(HttpSuccess.OK);
-        expect(listRes.json<{ id: number }[]>().some((c) => c.id === cropId)).toBe(false);
-      });
-
-      test("DELETE /api/v1/crop/:id — returns 404 for non-existent crop", async () => {
-        const response = await server.inject({
-          method: "DELETE",
-          url: "/api/v1/crop/999999",
-          cookies: { session: sessionCookie },
-        });
-
-        expect(response.statusCode).toBe(404);
-      });
-
-      test("DELETE /api/v1/crop/:id — requires auth", async () => {
-        const response = await server.inject({
-          method: "DELETE",
-          url: `/api/v1/crop/${cropId}`,
-        });
-
-        expect(response.statusCode).toBe(401);
-      });
+      expect(response.statusCode).toBe(401);
     });
   });
-  
+
+  describe("Crop routes — SQL integration", { sequential: true }, () => {
+    let imageId: number;
+    let cropId: number;
+
+    beforeAll(async () => {
+      // Seed an image for crop tests
+      const res = await server.inject({
+        method: "POST",
+        url: `/api/v1/production/${productionId}/image`,
+        cookies: { session: sessionCookie },
+        payload: { res: "1920x1080" },
+      });
+      expect(res.statusCode).toBe(HttpSuccess.OK);
+      imageId = res.json().id;
+    });
+
+    test("POST /api/v1/image/:imageId/crop — uploads crops to an existing image", async () => {
+      const form = new FormData();
+      form.append(
+        "data",
+        JSON.stringify({
+          crops: [{ filename: "banner.jpg", type: "banner" }],
+        }),
+      );
+      form.append("file", new Blob(["banner-data"], { type: "image/jpeg" }), "banner.jpg");
+
+      const response = await server.inject({
+        method: "POST",
+        url: `/api/v1/image/${imageId}/crop`,
+        cookies: { session: sessionCookie },
+        payload: form,
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const crops = response.json<{ id: number; type: string }[]>();
+      expect(crops).toHaveLength(1);
+      expect(crops[0]!.type).toBe("banner");
+      cropId = crops[0]!.id;
+    });
+
+    test("POST /api/v1/image/:imageId/crop — rejects non-multipart request", async () => {
+      const response = await server.inject({
+        method: "POST",
+        url: `/api/v1/image/${imageId}/crop`,
+        cookies: { session: sessionCookie },
+        payload: { crops: [{ filename: "x.jpg", type: "general" }] },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    test("POST /api/v1/image/:imageId/crop — rejects when file is missing for mapping", async () => {
+      const form = new FormData();
+      form.append(
+        "data",
+        JSON.stringify({
+          crops: [{ filename: "missing.jpg", type: "general" }],
+        }),
+      );
+
+      const response = await server.inject({
+        method: "POST",
+        url: `/api/v1/image/${imageId}/crop`,
+        cookies: { session: sessionCookie },
+        payload: form,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    test("POST /api/v1/image/:imageId/crop — returns 404 for non-existent image", async () => {
+      const form = new FormData();
+      form.append(
+        "data",
+        JSON.stringify({
+          crops: [{ filename: "x.jpg", type: "general" }],
+        }),
+      );
+      form.append("file", new Blob(["data"], { type: "image/jpeg" }), "x.jpg");
+
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/v1/image/999999/crop",
+        cookies: { session: sessionCookie },
+        payload: form,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    test("POST /api/v1/image/:imageId/crop — requires auth", async () => {
+      const form = new FormData();
+      form.append("data", JSON.stringify({ crops: [{ filename: "x.jpg", type: "general" }] }));
+      form.append("file", new Blob(["data"], { type: "image/jpeg" }), "x.jpg");
+
+      const response = await server.inject({
+        method: "POST",
+        url: `/api/v1/image/${imageId}/crop`,
+        payload: form,
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+
+    test("GET /api/v1/image/:imageId/crop — lists crops for the image", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/image/${imageId}/crop`,
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const crops = response.json<{ id: number }[]>();
+      expect(crops.some((c) => c.id === cropId)).toBe(true);
+    });
+
+    test("GET /api/v1/image/:imageId/crop/:type — returns crop by type", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/image/${imageId}/crop/banner`,
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(response.json()).toMatchObject({ id: cropId, type: "banner" });
+    });
+
+    test("GET /api/v1/image/:imageId/crop/:type — returns 404 for unknown type", async () => {
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/image/${imageId}/crop/nonexistent`,
+      });
+
+      expect(response.statusCode).not.toBe(HttpSuccess.OK);
+    });
+
+    test("PATCH /api/v1/crop/:id — updates crop type (JSON)", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/crop/${cropId}`,
+        cookies: { session: sessionCookie },
+        payload: { type: "hero" },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(response.json()).toMatchObject({ id: cropId, type: "hero" });
+    });
+
+    test("PATCH /api/v1/crop/:id — updates type and replaces file (multipart)", async () => {
+      const form = new FormData();
+      form.append("data", JSON.stringify({ type: "updated" }));
+      form.append("file", new Blob(["new-data"], { type: "image/png" }), "new.png");
+
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/crop/${cropId}`,
+        cookies: { session: sessionCookie },
+        payload: form,
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(response.json()).toMatchObject({ id: cropId, type: "updated" });
+    });
+
+    test("PATCH /api/v1/crop/:id — replaces file only via multipart (no type change)", async () => {
+      const form = new FormData();
+      form.append("data", JSON.stringify({}));
+      form.append("file", new Blob(["file-only"], { type: "image/jpeg" }), "file.jpg");
+
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/crop/${cropId}`,
+        cookies: { session: sessionCookie },
+        payload: form,
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(response.json()).toMatchObject({ id: cropId });
+    });
+
+    test("PATCH /api/v1/crop/:id — multipart with type only (no file)", async () => {
+      const form = new FormData();
+      form.append("data", JSON.stringify({ type: "type_only" }));
+
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/crop/${cropId}`,
+        cookies: { session: sessionCookie },
+        payload: form,
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(response.json()).toMatchObject({ id: cropId, type: "type_only" });
+    });
+
+    test("PATCH /api/v1/crop/:id — rejects empty body (no type, no file)", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/crop/${cropId}`,
+        cookies: { session: sessionCookie },
+        payload: {},
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    test("PATCH /api/v1/crop/:id — multipart with no type and no file returns 400", async () => {
+      const form = new FormData();
+      form.append("data", JSON.stringify({}));
+
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/crop/${cropId}`,
+        cookies: { session: sessionCookie },
+        payload: form,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    test("PATCH /api/v1/crop/:id — returns 404 for non-existent crop", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: "/api/v1/crop/999999",
+        cookies: { session: sessionCookie },
+        payload: { type: "nope" },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    test("PATCH /api/v1/crop/:id — requires auth", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/crop/${cropId}`,
+        payload: { type: "nope" },
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+
+    test("PUT /api/v1/crop/:id — replaces crop entirely (multipart)", async () => {
+      const form = new FormData();
+      form.append("data", JSON.stringify({ type: "replaced" }));
+      form.append("file", new Blob(["replaced-data"], { type: "image/jpeg" }), "replaced.jpg");
+
+      const response = await server.inject({
+        method: "PUT",
+        url: `/api/v1/crop/${cropId}`,
+        cookies: { session: sessionCookie },
+        payload: form,
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      expect(response.json()).toMatchObject({ id: cropId, type: "replaced" });
+    });
+
+    test("PUT /api/v1/crop/:id — rejects non-multipart request", async () => {
+      const response = await server.inject({
+        method: "PUT",
+        url: `/api/v1/crop/${cropId}`,
+        cookies: { session: sessionCookie },
+        payload: { type: "nope" },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    test("PUT /api/v1/crop/:id — rejects multipart without file", async () => {
+      const form = new FormData();
+      form.append("data", JSON.stringify({ type: "nope" }));
+
+      const response = await server.inject({
+        method: "PUT",
+        url: `/api/v1/crop/${cropId}`,
+        cookies: { session: sessionCookie },
+        payload: form,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    test("PUT /api/v1/crop/:id — returns 404 for non-existent crop", async () => {
+      const form = new FormData();
+      form.append("data", JSON.stringify({ type: "nope" }));
+      form.append("file", new Blob(["data"], { type: "image/jpeg" }), "x.jpg");
+
+      const response = await server.inject({
+        method: "PUT",
+        url: "/api/v1/crop/999999",
+        cookies: { session: sessionCookie },
+        payload: form,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    test("PUT /api/v1/crop/:id — requires auth", async () => {
+      const form = new FormData();
+      form.append("data", JSON.stringify({ type: "nope" }));
+      form.append("file", new Blob(["data"], { type: "image/jpeg" }), "x.jpg");
+
+      const response = await server.inject({
+        method: "PUT",
+        url: `/api/v1/crop/${cropId}`,
+        payload: form,
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+
+    test("DELETE /api/v1/crop/:id — removes the crop from the database", async () => {
+      const delRes = await server.inject({
+        method: "DELETE",
+        url: `/api/v1/crop/${cropId}`,
+        cookies: { session: sessionCookie },
+      });
+      expect(delRes.statusCode).toBe(HttpSuccess.OK);
+      expect(delRes.json()).toMatchObject({ id: cropId });
+
+      // Verify it's gone
+      const listRes = await server.inject({
+        method: "GET",
+        url: `/api/v1/image/${imageId}/crop`,
+      });
+      expect(listRes.statusCode).toBe(HttpSuccess.OK);
+      expect(listRes.json<{ id: number }[]>().some((c) => c.id === cropId)).toBe(false);
+    });
+
+    test("DELETE /api/v1/crop/:id — returns 404 for non-existent crop", async () => {
+      const response = await server.inject({
+        method: "DELETE",
+        url: "/api/v1/crop/999999",
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    test("DELETE /api/v1/crop/:id — requires auth", async () => {
+      const response = await server.inject({
+        method: "DELETE",
+        url: `/api/v1/crop/${cropId}`,
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+  });
 });
