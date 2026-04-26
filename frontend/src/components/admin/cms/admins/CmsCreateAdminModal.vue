@@ -71,7 +71,7 @@
           data-testid="cms-create-admin-submit"
           @click="emit('submit')"
         >
-          {{ isCreating ? t("cms.create.saving") : t("cms.create.admin.submitAdmin") }}
+          {{ isCreating ? t("general.saving") : t("cms.create.admin.submitAdmin") }}
         </button>
       </footer>
     </section>

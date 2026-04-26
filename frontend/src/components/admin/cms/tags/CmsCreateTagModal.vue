@@ -95,7 +95,7 @@
           :disabled="isCreating"
           @click="emit('submit')"
         >
-          {{ isCreating ? t("cms.create.saving") : t("cms.create.submitTag") }}
+          {{ isCreating ? t("general.saving") : t("cms.create.submitTag") }}
         </button>
       </footer>
     </section>
