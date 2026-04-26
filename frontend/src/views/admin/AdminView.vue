@@ -38,7 +38,7 @@
             </svg>
           </RouterLink>
 
-          <button class="action-card" @click="showPasswordModal = true">
+          <button id="show-password-modal-button" class="action-card" @click="showPasswordModal = true">
             <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="11" width="18" height="10" rx="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
@@ -53,6 +53,7 @@
     </main>
 
     <ChangePasswordModal
+      id="change-password-modal"
       v-if="showPasswordModal"
       @close="showPasswordModal = false"
     />

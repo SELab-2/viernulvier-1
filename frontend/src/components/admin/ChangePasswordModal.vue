@@ -21,8 +21,8 @@
         <p v-if="error" class="error">{{ error }}</p>
 
         <div class="actions">
-          <button type="button" @click="close" class="btn secondary">{{ t('general.cancel') }}</button>
-          <button type="submit" class="btn primary" :disabled="loading">
+          <button id="close-btn" type="button" @click="close" class="btn secondary">{{ t('general.cancel') }}</button>
+          <button id="close-btn" type="submit" class="btn primary" :disabled="loading">
             {{ loading ? t('general.saving') : t('admin.changePassword.update') }}
           </button>
         </div>
