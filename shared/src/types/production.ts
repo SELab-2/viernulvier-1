@@ -3,7 +3,7 @@ import { EventSchema } from "./event.js";
 import { createSchema } from "./metadata.js";
 import { TagSchema } from "./tag.js";
 import { foreignKey, primaryKey, languageMap, ForeignKey } from "./helpers.js";
-import { BlogSchema, BlogPostSchema } from "./blog.js";
+import { BlogPostSchema } from "./blog.js";
 
 export const ProductionSchema = createSchema({
   id: primaryKey(),
