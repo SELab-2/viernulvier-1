@@ -47,7 +47,7 @@ export const ProductionSchemaWithBackwardsRefs = createSchema({
   },
   get blogposts(): z.ZodArray<ForeignKey<typeof BlogPostSchema>> {
     return z.array(foreignKey(() => BlogPostSchema));
-  }
+  },
 });
 
 export const FieldTypeSchema = z.enum(["number", "string", "bool", "json"]);

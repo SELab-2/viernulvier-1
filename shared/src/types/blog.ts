@@ -25,7 +25,7 @@ export const BlogPostWithBackwardsRefsSchema = createSchema({
   ...BlogPostSchema.shape,
   get productions(): z.ZodArray<ForeignKey<typeof ProductionSchema>> {
     return z.array(foreignKey(() => ProductionSchema));
-  }
+  },
 });
 
 export type BlogPost = z.infer<typeof BlogPostSchema>;
