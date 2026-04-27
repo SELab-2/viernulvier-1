@@ -96,155 +96,155 @@
       />
 
       <aside v-if="editorPanel" class="cms-side-panel">
-      <div class="cms-side-header">
-        <h2 class="text-lg font-semibold text-ink-primary">
-          {{ editorPanel.label }}
-        </h2>
-        <button
-          type="button"
-          class="cms-side-close"
-          @click="closeEditorPanel"
-        >
-          {{ t("cms.panel.close") }}
-        </button>
-      </div>
-
-      <div class="cms-side-body">
-        <p v-if="editorBulkCount > 1" class="text-xs text-ink-secondary">
-          {{ t("cms.panel.bulkNotice", { count: editorBulkCount }) }}
-        </p>
-
-        <label
-          v-for="lang in languages"
-          :key="lang"
-          class="cms-side-field"
-        >
-          <span class="text-xs font-semibold uppercase tracking-wide text-ink-secondary">
-            {{ lang.toUpperCase() }}
-          </span>
-          <textarea
-            v-model="editorPanel.values[lang]"
-            class="cms-side-textarea"
-            rows="5"
-          />
-        </label>
-
-        <p v-if="saveError" class="text-sm text-red-700">
-          {{ saveError }}
-        </p>
-      </div>
-
-      <div class="cms-side-footer">
-        <button
-          type="button"
-          class="cms-side-save"
-          :disabled="isSaving"
-          @click="saveEditorPanel"
-        >
-          {{ isSaving ? t("cms.panel.saving") : t("cms.panel.save") }}
-        </button>
-      </div>
-    </aside>
-
-    <CmsTagDrawer
-      :show="tagEditorPanel !== null"
-      :panel="tagEditorPanel"
-      :additional-tag-groups="additionalTagGroups"
-      :bulk-count="0"
-      :save-error="saveError"
-      :is-saving="isSaving"
-      @close="closeTagEditorPanel"
-      @save="saveTagEditorPanel"
-      @toggle-tag="toggleTagEditorTag"
-    />
-
-    <CmsCreateProductionModal
-      :open="createModalOpen"
-      :create-form="createForm"
-      :create-extra-langs="createExtraLangs"
-      :visible-create-langs="visibleCreateLangs"
-      :lang-grid-class="langGridClass"
-      :create-fields="createFields"
-      :tag-groups="createTagGroups"
-      :selected-primary-tag-id="selectedPrimaryTagId"
-      :selected-tag-ids="selectedTagIds"
-      :create-error="createError"
-      :is-creating="isCreating"
-      @update-finalized="createForm.finalized = $event"
-      @update-extra-lang="setCreateExtraLang"
-      @update-form-field="setCreateFormField"
-      @update-primary-tag="setSelectedPrimaryTag"
-      @toggle-tag="toggleCreateTag"
-      @image-file-change="onImageFileChange"
-      @video-file-change="onVideoFileChange"
-      @close="closeCreateModal"
-      @submit="submitCreateProduction"
-    />
-
-    <CmsCreateEventModal
-      :open="createEventModalOpen"
-      :selected-production="selectedEventsProduction"
-      :create-linked-event-form="createLinkedEventForm"
-      :halls-data="hallsData"
-      :events-panel-loading="eventsPanelLoading"
-      :events-panel-error="eventsPanelError"
-      :localize-value="localizeValue"
-      @update-form-field="setCreateLinkedEventField"
-      @close="closeCreateEventModal"
-      @submit="submitCreateEvent"
-    />
-
-    <div v-if="removeConfirmOpen" class="cms-modal-overlay" @click.self="closeRemoveProductionsConfirm">
-      <section class="cms-modal cms-remove-modal" role="dialog" aria-modal="true">
-        <header class="cms-modal-header">
-          <h2 class="text-xl font-bold text-ink-primary">
-            {{ t("cms.actions.confirmRemoveDialogTitle") }}
+        <div class="cms-side-header">
+          <h2 class="text-lg font-semibold text-ink-primary">
+            {{ editorPanel.label }}
           </h2>
-          <button type="button" class="cms-side-close" @click="closeRemoveProductionsConfirm">
+          <button
+            type="button"
+            class="cms-side-close"
+            @click="closeEditorPanel"
+          >
             {{ t("cms.panel.close") }}
           </button>
-        </header>
+        </div>
 
-        <div class="cms-modal-body">
-          <p class="text-sm text-ink-secondary">
-            {{ t("cms.actions.confirmRemoveBody", { count: removeConfirmCount }) }}
+        <div class="cms-side-body">
+          <p v-if="editorBulkCount > 1" class="text-xs text-ink-secondary">
+            {{ t("cms.panel.bulkNotice", { count: editorBulkCount }) }}
           </p>
-          <p v-if="removeConfirmError" class="text-sm text-red-700">
-            {{ removeConfirmError }}
+
+          <label
+            v-for="lang in languages"
+            :key="lang"
+            class="cms-side-field"
+          >
+            <span class="text-xs font-semibold uppercase tracking-wide text-ink-secondary">
+              {{ lang.toUpperCase() }}
+            </span>
+            <textarea
+              v-model="editorPanel.values[lang]"
+              class="cms-side-textarea"
+              rows="5"
+            />
+          </label>
+
+          <p v-if="saveError" class="text-sm text-red-700">
+            {{ saveError }}
           </p>
         </div>
 
-        <footer class="cms-modal-footer">
-          <button type="button" class="cms-side-close" :disabled="removeConfirmLoading" @click="closeRemoveProductionsConfirm">
-            {{ t("cms.actions.confirmRemoveCancel") }}
+        <div class="cms-side-footer">
+          <button
+            type="button"
+            class="cms-side-save"
+            :disabled="isSaving"
+            @click="saveEditorPanel"
+          >
+            {{ isSaving ? t("cms.panel.saving") : t("cms.panel.save") }}
           </button>
-          <button type="button" class="cms-side-save" :disabled="removeConfirmLoading" @click="confirmRemoveProductions">
-            {{ removeConfirmLoading ? t("cms.panel.saving") : t("cms.actions.confirmRemoveSubmit") }}
-          </button>
-        </footer>
-      </section>
-    </div>
-
-    <div v-if="mediaPreview" class="cms-modal-overlay" @click.self="closeMediaPreview">
-      <section class="cms-modal cms-media-modal" role="dialog" aria-modal="true">
-        <header class="cms-modal-header">
-          <h2 class="text-xl font-bold text-ink-primary">
-            {{ t("cms.columns.media") }}
-          </h2>
-          <button type="button" class="cms-side-close" @click="closeMediaPreview">
-            {{ t("cms.panel.close") }}
-          </button>
-        </header>
-
-        <div class="cms-modal-body cms-media-preview-body">
-          <img v-if="mediaPreview.kind === 'image'" :src="mediaPreview.url" :alt="mediaPreview.label" class="cms-media-preview-large" />
-          <iframe v-else-if="mediaPreview.kind === 'youtube'" :src="mediaPreview.url" :title="mediaPreview.label" class="cms-media-preview-large" frameborder="0" allowfullscreen></iframe>
-          <video v-else controls playsinline class="cms-media-preview-large">
-            <source :src="mediaPreview.url" />
-          </video>
         </div>
-      </section>
-    </div>
+      </aside>
+
+      <CmsTagDrawer
+        :show="tagEditorPanel !== null"
+        :panel="tagEditorPanel"
+        :additional-tag-groups="additionalTagGroups"
+        :bulk-count="0"
+        :save-error="saveError"
+        :is-saving="isSaving"
+        @close="closeTagEditorPanel"
+        @save="saveTagEditorPanel"
+        @toggle-tag="toggleTagEditorTag"
+      />
+
+      <CmsCreateProductionModal
+        :open="createModalOpen"
+        :create-form="createForm"
+        :create-extra-langs="createExtraLangs"
+        :visible-create-langs="visibleCreateLangs"
+        :lang-grid-class="langGridClass"
+        :create-fields="createFields"
+        :tag-groups="createTagGroups"
+        :selected-primary-tag-id="selectedPrimaryTagId"
+        :selected-tag-ids="selectedTagIds"
+        :create-error="createError"
+        :is-creating="isCreating"
+        @update-finalized="createForm.finalized = $event"
+        @update-extra-lang="setCreateExtraLang"
+        @update-form-field="setCreateFormField"
+        @update-primary-tag="setSelectedPrimaryTag"
+        @toggle-tag="toggleCreateTag"
+        @image-file-change="onImageFileChange"
+        @video-file-change="onVideoFileChange"
+        @close="closeCreateModal"
+        @submit="submitCreateProduction"
+      />
+
+      <CmsCreateEventModal
+        :open="createEventModalOpen"
+        :selected-production="selectedEventsProduction"
+        :create-linked-event-form="createLinkedEventForm"
+        :halls-data="hallsData"
+        :events-panel-loading="eventsPanelLoading"
+        :events-panel-error="eventsPanelError"
+        :localize-value="localizeValue"
+        @update-form-field="setCreateLinkedEventField"
+        @close="closeCreateEventModal"
+        @submit="submitCreateEvent"
+      />
+
+      <div v-if="removeConfirmOpen" class="cms-modal-overlay" @click.self="closeRemoveProductionsConfirm">
+        <section class="cms-modal cms-remove-modal" role="dialog" aria-modal="true">
+          <header class="cms-modal-header">
+            <h2 class="text-xl font-bold text-ink-primary">
+              {{ t("cms.actions.confirmRemoveDialogTitle") }}
+            </h2>
+            <button type="button" class="cms-side-close" @click="closeRemoveProductionsConfirm">
+              {{ t("cms.panel.close") }}
+            </button>
+          </header>
+
+          <div class="cms-modal-body">
+            <p class="text-sm text-ink-secondary">
+              {{ t("cms.actions.confirmRemoveBody", { count: removeConfirmCount }) }}
+            </p>
+            <p v-if="removeConfirmError" class="text-sm text-red-700">
+              {{ removeConfirmError }}
+            </p>
+          </div>
+
+          <footer class="cms-modal-footer">
+            <button type="button" class="cms-side-close" :disabled="removeConfirmLoading" @click="closeRemoveProductionsConfirm">
+              {{ t("cms.actions.confirmRemoveCancel") }}
+            </button>
+            <button type="button" class="cms-side-save" :disabled="removeConfirmLoading" @click="confirmRemoveProductions">
+              {{ removeConfirmLoading ? t("cms.panel.saving") : t("cms.actions.confirmRemoveSubmit") }}
+            </button>
+          </footer>
+        </section>
+      </div>
+
+      <div v-if="mediaPreview" class="cms-modal-overlay" @click.self="closeMediaPreview">
+        <section class="cms-modal cms-media-modal" role="dialog" aria-modal="true">
+          <header class="cms-modal-header">
+            <h2 class="text-xl font-bold text-ink-primary">
+              {{ t("cms.columns.media") }}
+            </h2>
+            <button type="button" class="cms-side-close" @click="closeMediaPreview">
+              {{ t("cms.panel.close") }}
+            </button>
+          </header>
+
+          <div class="cms-modal-body cms-media-preview-body">
+            <img v-if="mediaPreview.kind === 'image'" :src="mediaPreview.url" :alt="mediaPreview.label" class="cms-media-preview-large" />
+            <iframe v-else-if="mediaPreview.kind === 'youtube'" :src="mediaPreview.url" :title="mediaPreview.label" class="cms-media-preview-large" frameborder="0" allowfullscreen></iframe>
+            <video v-else controls playsinline class="cms-media-preview-large">
+              <source :src="mediaPreview.url" />
+            </video>
+          </div>
+        </section>
+      </div>
     </template>
   </CmsTabShell>
 </template>

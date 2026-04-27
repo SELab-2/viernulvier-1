@@ -5,9 +5,9 @@ import { createPinia, setActivePinia } from "pinia";
 import CMSView from "@/views/admin/CMSView.vue";
 import { i18n } from "@/i18n";
 import { RouteNames } from "@/router/routeNames";
-import CmsProductionsTab from "@/components/admin/cms/tabs/CmsProductionsTab.vue";
-import CmsTagsTab from "@/components/admin/cms/tabs/CmsTagsTab.vue";
-import CmsAdminsTab from "@/components/admin/cms/tabs/CmsAdminsTab.vue";
+import CmsProductionsTab from "@/components/admin/cms/productions/CmsProductionsTab.vue";
+import CmsTagsTab from "@/components/admin/cms/tags/CmsTagsTab.vue";
+import CmsAdminsTab from "@/components/admin/cms/admins/CmsAdminsTab.vue";
 
 vi.mock("@/services/productions", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/services/productions")>();
