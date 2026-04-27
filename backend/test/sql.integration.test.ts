@@ -139,7 +139,7 @@ describe("Auth routes — SQL integration", { sequential: true }, () => {
       method: "PATCH",
       url: `/api/v1/auth/me`,
       cookies: { session: sessionCookie },
-      payload: { password: "hello123" },
+      payload: { oldPassword: "password", newPassword: "hello123" },
     });
 
     expect(response.statusCode).toBe(HttpSuccess.NoContent);
