@@ -66,7 +66,8 @@ export async function editAdmin(
  *
  * @param server - The Fastify instance, used for database access and logging.
  * @param request - The Fastify request, expected to contain a pbody with `password`.
- * @returns NO_CONTENT to send a 204 No Content response. TODO
+ * @returns NO_CONTENT to send a 204 No Content response.
+ * @throws `HttpError` With status 401 if the old password is incorrect.
  */
 export async function editOwnPassword(
   server: FastifyInstance,
