@@ -162,7 +162,7 @@ export async function createCropsForImage(
     const files = new Map<string, Buffer>();
 
     for (let i = 0; i < batch.length; i++) {
-      // eslint-disable-next-line @typescript-eslint/detect-non-null-assertion
+      // eslint-disable-next-line security/detect-object-injection
       const { crop, fileBuffer } = batch[i]!;
       const filename = `crop-${batchStart + i}`;
       files.set(filename, fileBuffer);
