@@ -3,6 +3,7 @@ import { EventSchema } from "./event.js";
 import { createSchema } from "./metadata.js";
 import { TagSchema } from "./tag.js";
 import { foreignKey, primaryKey, languageMap, ForeignKey } from "./helpers.js";
+import { BlogSchema, BlogPostSchema } from "./blog.js";
 
 export const ProductionSchema = createSchema({
   id: primaryKey(),
@@ -44,6 +45,9 @@ export const ProductionSchemaWithBackwardsRefs = createSchema({
   get events(): z.ZodArray<ForeignKey<typeof EventSchema>> {
     return z.array(foreignKey(() => EventSchema));
   },
+  get blogposts(): z.ZodArray<ForeignKey<typeof BlogPostSchema>> {
+    return z.array(foreignKey(() => BlogPostSchema));
+  }
 });
 
 export const FieldTypeSchema = z.enum(["number", "string", "bool", "json"]);

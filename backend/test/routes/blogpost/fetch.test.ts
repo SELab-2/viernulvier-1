@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-import { BlogPostSchema, type BlogPost, type BlogPostWithMeta } from "@viernulvier/shared/index.js";
+import { BlogPostSchema, BlogPostWithBackwardsRefsSchema, type BlogPost, type BlogPostWithMeta, type BlogPostWithBackwardsRefs } from "@viernulvier/shared/index.js";
 import { HttpSuccess, HttpClientError } from "@/routes/helpers.js";
 
 let server: FastifyInstance;
@@ -9,9 +9,9 @@ let sessionCookie: string;
 
 const mockTime = new Date();
 
-const mockBlogPosts: Array<BlogPost> = [
-  { id: 1, blog: 1, title: "First Post", content: { body: "Hello world" }, published_at: mockTime },
-  { id: 2, blog: 1, title: "Draft Post", content: { body: "Work in progress" }, published_at: null },
+const mockBlogPosts: Array<BlogPostWithBackwardsRefs> = [
+  { id: 1, blog: 1, title: "First Post", content: { body: "Hello world" }, published_at: mockTime, productions: [1, 2] },
+  { id: 2, blog: 1, title: "Draft Post", content: { body: "Work in progress" }, published_at: null, productions: [] },
 ];
 
 const mockBlogPostsWithMeta: Array<BlogPostWithMeta> = mockBlogPosts.map((post) => ({
@@ -61,7 +61,10 @@ describe("BlogPost fetch routes", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(response.json()).toHaveLength(mockBlogPosts.length);
+    const posts = response.json() as BlogPost[];
+    expect(posts).toHaveLength(mockBlogPosts.length);
+    expect(posts[0]?.productions).toEqual([1, 2]);
+    expect(posts[1]?.productions).toEqual([]);
   });
 
   test("GET /api/v1/blog/post/:id -> returns a single blogpost", async () => {
@@ -73,7 +76,9 @@ describe("BlogPost fetch routes", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(BlogPostSchema.parse(response.json())).toMatchObject({ id: post?.["id"], title: post?.["title"] });
+    const parsed = BlogPostWithBackwardsRefsSchema.parse(response.json());
+    expect(parsed).toMatchObject({ id: post?.["id"], title: post?.["title"] });
+    expect(parsed.productions).toEqual([1, 2]);
   });
 
   test("GET /api/v1/blog/post/:id -> returns a blogpost with null published_at", async () => {

@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-import { HallSchema, AdminSchema, BlogSchema, BlogPostSchema, ProductionSchema, ProductionSchemaWithBackwardsRefs, EventSchema, EventPriceSchema, TagSchema, TagTypeSchema } from "@viernulvier/shared/index.js";
+import { HallSchema, AdminSchema, BlogSchema, BlogPostSchema, BlogPostWithBackwardsRefsSchema, ProductionSchema, ProductionSchemaWithBackwardsRefs, EventSchema, EventPriceSchema, TagSchema, TagTypeSchema } from "@viernulvier/shared/index.js";
 import { HttpSuccess } from "@/routes/helpers.js";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { migrate } from "@/db/migrate.js";
@@ -391,7 +391,7 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
     const posts = response.json<unknown[]>();
-    expect(posts.some((p) => BlogPostSchema.parse(p).id === blogPostId)).toBe(true);
+    expect(posts.some((p) => BlogPostWithBackwardsRefsSchema.parse(p).id === blogPostId)).toBe(true);
   });
 
   test("GET /api/v1/blog/post — does not return draft posts (published_at IS NULL)", async () => {
@@ -412,7 +412,7 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
     const listResponse = await server.inject({ method: "GET", url: "/api/v1/blog/post" });
     expect(listResponse.statusCode).toBe(HttpSuccess.OK);
     const posts = listResponse.json<unknown[]>();
-    expect(posts.some((p) => BlogPostSchema.parse(p).id === draftId)).toBe(false);
+    expect(posts.some((p) => BlogPostWithBackwardsRefsSchema.parse(p).id === draftId)).toBe(false);
 
     await server.inject({
       method: "DELETE",
@@ -425,7 +425,7 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
     const response = await server.inject({ method: "GET", url: `/api/v1/blog/post/${blogPostId}` });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(BlogPostSchema.parse(response.json())).toMatchObject({ id: blogPostId, title: "Test Post" });
+    expect(BlogPostWithBackwardsRefsSchema.parse(response.json())).toMatchObject({ id: blogPostId, title: "Test Post" });
   });
 
   test("GET /api/v1/blog/post/:id/meta — returns the blogpost with metadata", async () => {

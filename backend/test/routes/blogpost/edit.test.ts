@@ -58,6 +58,69 @@ describe("Edit on blogpost route", () => {
     expect(BlogPostSchema.parse(response.json())).toMatchObject({ title: updatedTitle["title"] });
   });
 
+  test("PATCH /api/v1/blog/post/:id — updates productions array", async () => {
+    let callCount = 0;
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+      callCount++;
+
+      if (upper.startsWith("UPDATE")) {
+        return Promise.resolve({ rows: [updatedTitle], rowCount: 1 });
+      } else if (upper.startsWith("DELETE")) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      } else if (upper.startsWith("INSERT")) {
+        return Promise.resolve({ rows: [{}], rowCount: 1 });
+      }
+
+      throw new Error(`Unexpected query in edit tests: ${query}`);
+    });
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/blog/post/${originalBlogPost["id"]}`,
+      cookies: { session: sessionCookie },
+      payload: { productions: [1, 2, 3] },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    // Should have called pg.query 5 times: 1 UPDATE + 1 DELETE + 3 INSERT
+    expect(server.pg.query).toHaveBeenCalledTimes(5);
+  });
+
+  test("PATCH /api/v1/blog/post/:id — leaves productions untouched when not provided", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+
+      if (upper.startsWith("UPDATE")) {
+        return Promise.resolve({ rows: [updatedTitle], rowCount: 1 });
+      }
+
+      throw new Error(`Unexpected query - relations should not be touched: ${query}`);
+    });
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/blog/post/${originalBlogPost["id"]}`,
+      cookies: { session: sessionCookie },
+      payload: { title: "Updated Title Only" },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    // Should have called pg.query only once (UPDATE), no DELETE or INSERT
+    expect(server.pg.query).toHaveBeenCalledTimes(1);
+  });
+
+  test("PATCH /api/v1/blog/post/:id — rejects empty productions array", async () => {
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/blog/post/${originalBlogPost["id"]}`,
+      cookies: { session: sessionCookie },
+      payload: { productions: [] },
+    });
+
+    expect(response.statusCode).toBe(HttpClientError.BadRequest);
+  });
+
   test("PATCH /api/v1/blog/post/:id — updates content", async () => {
     server.pg.query = vi.fn().mockImplementation((query: string) => {
       const upper = query.trim().toUpperCase();
@@ -162,6 +225,17 @@ describe("Edit on blogpost route", () => {
       url: `/api/v1/blog/post/${originalBlogPost["id"]}`,
       cookies: { session: sessionCookie },
       payload: {},
+    });
+
+    expect(response.statusCode).toBe(HttpClientError.BadRequest);
+  });
+
+  test("PATCH /api/v1/blog/post/:id — rejects invalid productions (not an array)", async () => {
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/blog/post/${originalBlogPost["id"]}`,
+      cookies: { session: sessionCookie },
+      payload: { productions: "not-an-array" },
     });
 
     expect(response.statusCode).toBe(HttpClientError.BadRequest);

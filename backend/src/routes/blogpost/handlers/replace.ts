@@ -4,7 +4,9 @@ import { BlogPostSchema, stringToInt } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, buildQuery, parseSchema } from "@/routes/helpers.js";
 import { z } from "zod";
 
-const ReplaceBlogPostBodySchema = BlogPostSchema.omit({ id: true });
+const ReplaceBlogPostBodySchema = BlogPostSchema.omit({ id: true }).extend({
+  productions: z.array(z.int()).min(1, "Productions array must contain at least one production"),
+});
 
 const replaceBlogPostQuery = (server: FastifyInstance) =>
   buildQuery(
@@ -28,6 +30,7 @@ const replaceBlogPostQuery = (server: FastifyInstance) =>
 /**
  * Replaces an existing blogpost's data and returns the updated record.
  * Unlike `editBlogPost`, all fields are required and will be overwritten.
+ * Also updates the production_blogpost relations based on the provided productions array.
  *
  * @param server - The Fastify instance, used for database access and logging.
  * @param request - The Fastify request, expected to contain the full blogpost body.
@@ -40,6 +43,7 @@ export async function replaceBlogPost(
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const body = parseSchema(server, ReplaceBlogPostBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
+  const productions = body.productions;
 
   const rows = await replaceBlogPostQuery(server)(
     body["blog"],
@@ -51,5 +55,42 @@ export async function replaceBlogPost(
     id,
   );
 
-  return rows[0] ?? null;
+  const blogpost = rows[0];
+  if (!blogpost) {
+    return null;
+  }
+
+  // Delete existing relations and insert new ones
+  try {
+    await server.pg.query(
+      `DELETE FROM production_blogpost WHERE blogpost = $1`,
+      [id],
+    );
+  } catch (err) {
+    server.log.error(err);
+  }
+
+  // Insert new relations
+  for (const production of productions) {
+    try {
+      await buildQuery(
+        server,
+        `INSERT INTO production_blogpost (production, blogpost, created_by, updated_by, created_at, updated_at)
+         VALUES ($1, $2, $3, $3, $4, $4)
+         ON CONFLICT DO NOTHING`,
+        z.tuple([
+          z.int(),
+          z.int(),
+          z.int(),
+          z.date(),
+        ]),
+        z.object({}),
+      )(production, id, admin, current_time);
+    } catch (err) {
+      server.log.error(err);
+      // Log but don't fail - continue with other productions
+    }
+  }
+
+  return blogpost;
 }
