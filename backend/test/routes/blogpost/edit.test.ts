@@ -59,10 +59,8 @@ describe("Edit on blogpost route", () => {
   });
 
   test("PATCH /api/v1/blog/post/:id — updates productions array", async () => {
-    let callCount = 0;
     server.pg.query = vi.fn().mockImplementation((query: string) => {
       const upper = query.trim().toUpperCase();
-      callCount++;
 
       if (upper.startsWith("UPDATE")) {
         return Promise.resolve({ rows: [updatedTitle], rowCount: 1 });

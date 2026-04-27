@@ -32,10 +32,8 @@ beforeEach(() => {
 
 describe("Replace on blogpost route", () => {
   test("PUT /api/v1/blog/post/:id — replaces a blogpost with productions and returns it", async () => {
-    let callCount = 0;
     server.pg.query = vi.fn().mockImplementation((query: string) => {
       const upper = query.trim().toUpperCase();
-      callCount++;
 
       if (upper.startsWith("UPDATE")) {
         return Promise.resolve({ rows: [replacedBlogPost], rowCount: 1 });
