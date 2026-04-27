@@ -16,7 +16,11 @@ import {
   fetchProductionDocs,
   fetchProductionsDocs,
   fetchProductionWithMetaDocs,
+  createProductionDocs,
+  editProductionDocs,
+  deleteProductionDocs,
   linkTagToProductionDocs,
+  replaceProductionDocs,
 } from "./docs/index.js";
 
 /**
@@ -38,11 +42,13 @@ import {
 export default function productionRoutes(server: FastifyInstance) {
   const protect = { preHandler: [server.authorize()] };
 
-  server.get("/api/v1/production",
+  server.get(
+    "/api/v1/production",
     { schema: fetchProductionsDocs },
     replyHandler(server, fetchProductions),
   );
-  server.get("/api/v1/production/:id",
+  server.get(
+    "/api/v1/production/:id",
     { schema: fetchProductionDocs },
     replyHandler(server, fetchProduction),
   );
@@ -53,7 +59,7 @@ export default function productionRoutes(server: FastifyInstance) {
   );
   server.post(
     "/api/v1/production",
-    { ...protect, schema: fetchProductionDocs },
+    { ...protect, schema: createProductionDocs },
     replyHandler(server, createProduction),
   );
   server.post(
@@ -63,12 +69,12 @@ export default function productionRoutes(server: FastifyInstance) {
   );
   server.put(
     "/api/v1/production/:id",
-    { ...protect, schema: fetchProductionDocs },
+    { ...protect, schema: replaceProductionDocs },
     replyHandler(server, replaceProduction),
   );
   server.patch(
     "/api/v1/production/:id",
-    { ...protect, schema: fetchProductionDocs },
+    { ...protect, schema: editProductionDocs },
     replyHandler(server, editProduction),
   );
   server.patch(
@@ -78,7 +84,7 @@ export default function productionRoutes(server: FastifyInstance) {
   );
   server.delete(
     "/api/v1/production/:id",
-    { ...protect, schema: fetchProductionDocs },
+    { ...protect, schema: deleteProductionDocs },
     replyHandler(server, deleteProduction),
   );
 }

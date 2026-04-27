@@ -46,22 +46,22 @@ export default function tagRoutes(server: FastifyInstance) {
 
   server.get(
     "/api/v1/tag/all",
-    {...protect, schema: fetchTagsDocs},
+    { ...protect, schema: fetchTagsDocs },
     replyHandler(server, fetchTags),
   );
   server.get(
     "/api/v1/tag",
-    {schema: fetchTagVisibleDocs},
+    { schema: fetchTagsVisibleDocs },
     replyHandler(server, fetchTagsVisible),
   );
   server.get(
     "/api/v1/tag/:id/all",
-    {...protect, schema: fetchTagDocs},
+    { ...protect, schema: fetchTagDocs },
     replyHandler(server, fetchTag),
   );
   server.get(
     "/api/v1/tag/:id",
-    {schema: fetchTagVisibleDocs},
+    { schema: fetchTagVisibleDocs },
     replyHandler(server, fetchTagVisible),
   );
   server.get(
@@ -72,22 +72,22 @@ export default function tagRoutes(server: FastifyInstance) {
 
   server.post(
     "/api/v1/tag",
-    {...protect, schema: createTagDocs},
+    { ...protect, schema: createTagDocs },
     replyHandler(server, createTag),
   );
   server.put(
     "/api/v1/tag/:id",
-    {...protect, schema: replaceTagDocs},
+    { ...protect, schema: replaceTagDocs },
     replyHandler(server, replaceTag),
   );
   server.patch(
     "/api/v1/tag/:id",
-    {...protect, schema: editTagDocs},
+    { ...protect, schema: editTagDocs },
     replyHandler(server, editTag),
   );
   server.delete(
     "/api/v1/tag/:id",
-    {...protect, schema: deleteTagDocs},
+    { ...protect, schema: deleteTagDocs },
     replyHandler(server, deleteTag),
   );
 }
