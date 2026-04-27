@@ -1,7 +1,7 @@
 export default {
   general: {
     cancel: "Annuleer",
-    saving: "Toevoegen...",
+    saving: "Opslaan...",
   },
   nav: {
     home: "Home",
