@@ -294,10 +294,12 @@ export default {
       changePassword: "Wachtwoord wijzigen",
     },
     changePassword: {
+      oldPassword: "Oud wachtwoord",
       newPassword: "Nieuw wachtwoord",
       confirmPassword: "Bevestig wachtwoord",
       update: "Bijwerken",
       tooShortError: "Het wachtwoord moet minstens 8 tekens bevatten.",
+      wrongOldPasswordError: "Oud wachtwoord is verkeerd.",
       dontMatchError: "De wachtwoorden komen niet overeen.",
       failedToUpdate: "Wachtwoord bijwerken mislukt",
     },

@@ -271,9 +271,10 @@ export async function updateAdmin(
  * await updateOwnPassword("hello123");
  */
 export async function updateOwnPassword(
-  password: string,
+  oldPassword: string,
+  newPassword: string,
 ): Promise<void> {
-  await apiFetch<Admin>(`/auth/me`, { method: "PATCH", body: { password: password } });
+  await apiFetch<Admin>(`/auth/me`, { method: "PATCH", body: { oldPassword, newPassword } });
 }
 
 /**

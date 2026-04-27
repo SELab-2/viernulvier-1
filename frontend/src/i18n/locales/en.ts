@@ -295,10 +295,12 @@ export default {
       changePassword: "Change password",
     },
     changePassword: {
+      oldPassword: "Old password",
       newPassword: "New password",
       confirmPassword: "Confirm password",
       update: "Update",
       tooShortError: "Password must be at least 8 characters.",
+      wrongOldPasswordError: "Old password is wrong.",
       dontMatchError: "Passwords do not match.",
       failedToUpdate: "Failed to update password",
     },

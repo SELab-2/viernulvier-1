@@ -295,10 +295,12 @@ export default {
       changePassword: "Changer le mot de passe",
     },
     changePassword: {
+      oldPassword: "Ancien mot de passe",
       newPassword: "Nouveau mot de passe",
       confirmPassword: "Confirmer le mot de passe",
       update: "Mettre à jour",
       tooShortError: "Le mot de passe doit contenir au moins 8 caractères.",
+      wrongOldPasswordError: "Votre ancien mot de passe n'est pas correct.",
       dontMatchError: "Les mots de passe ne correspondent pas.",
       failedToUpdate: "Échec de la mise à jour du mot de passe",
     },

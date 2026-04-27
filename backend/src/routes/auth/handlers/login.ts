@@ -54,8 +54,8 @@ type AdminIdentifier =
 const fetchAdminCredentials = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `SELECT id, password, super FROM admin WHERE username = $1 OR id = $1`,
-    z.tuple([z.union([z.string(), z.number()])]),
+    `SELECT id, password, super FROM admin WHERE username = $1 OR id = $2`,
+    z.tuple([z.string().nullable(), z.number().nullable()]),
     LoginRowSchema,
   );
 
@@ -80,9 +80,11 @@ export async function checkCredentials(
   super: boolean;
   password: string;
 }> {
-  const value = "username" in identifier ? identifier.username : identifier.id;
+  const values: [string | null, number | null] = "username" in identifier
+    ? [identifier.username, null]
+    : [null, identifier.id];
 
-  const rows = await fetchAdminCredentials(server)(value);
+  const rows = await fetchAdminCredentials(server)(values[0], values[1]);
 
   const valid = await comparePassword(password, rows[0]?.password ?? DUMMY_HASH);
 
