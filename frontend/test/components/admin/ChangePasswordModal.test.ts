@@ -38,14 +38,14 @@ describe("ChangePasswordModal", () => {
     expect(wrapper.find('input[type="password"]').exists()).toBe(true);
     expect(wrapper.findAll('input[type="password"]').length).toBe(2);
 
-    expect(wrapper.find("button[type='submit']").exists()).toBe(true);
-    expect(wrapper.find("button[type='button']").exists()).toBe(true);
+    expect(wrapper.find("button[id='submit-btn']").exists()).toBe(true);
+    expect(wrapper.find("button[id='close-btn']").exists()).toBe(true);
   });
 
   it("emits close when cancel button is clicked", async () => {
     const wrapper = mountModal();
 
-    await wrapper.find("button[type='button']").trigger("click");
+    await wrapper.find("button[id='close-btn']").trigger("click");
 
     expect(wrapper.emitted("close")).toBeTruthy();
   });
@@ -117,7 +117,7 @@ describe("ChangePasswordModal", () => {
     await inputs[0].setValue("password123");
     await inputs[1].setValue("password123");
 
-    const submitBtn = wrapper.find("button[type='submit']");
+    const submitBtn = wrapper.find("button[id='submit-btn']");
     await wrapper.find("form").trigger("submit.prevent");
 
     expect(submitBtn.attributes("disabled")).toBeDefined();

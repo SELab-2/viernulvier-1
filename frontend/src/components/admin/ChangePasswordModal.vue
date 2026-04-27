@@ -21,8 +21,8 @@
         <p v-if="error" class="error">{{ error }}</p>
 
         <div class="actions">
-          <button id="close-btn" type="button" @click="close" class="btn secondary">{{ t('general.cancel') }}</button>
-          <button id="close-btn" type="submit" class="btn primary" :disabled="loading">
+          <button id="close-btn" type="button" class="btn secondary" @click="close">{{ t('general.cancel') }}</button>
+          <button id="submit-btn" type="submit" class="btn primary" :disabled="loading">
             {{ loading ? t('general.saving') : t('admin.changePassword.update') }}
           </button>
         </div>
@@ -72,7 +72,7 @@ async function submit() {
       error.value = `${t('admin.changePassword.failedToUpdate')}: ${err.message}`;
     }
     else {
-        error.value = t('admin.changePassword.failedToUpdate') + ".";
+      error.value = t('admin.changePassword.failedToUpdate') + ".";
     }
   } finally {
     loading.value = false;
