@@ -71,7 +71,9 @@ async function submit() {
     if (err instanceof ApiError) {
       error.value = `${t('admin.changePassword.failedToUpdate')}: ${err.message}`;
     }
-    error.value = t('admin.changePassword.failedToUpdate') + ".";
+    else {
+        error.value = t('admin.changePassword.failedToUpdate') + ".";
+    }
   } finally {
     loading.value = false;
   }
