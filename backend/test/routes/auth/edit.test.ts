@@ -2,6 +2,7 @@ import { describe, test, expect, beforeAll, vi, afterAll } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import { AdminSchema, type Admin } from "@viernulvier/shared/index.js";
+import { hashPassword } from "@/routes/auth/handlers/hash.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
@@ -22,10 +23,32 @@ beforeAll(async () => {
   server = await buildServer();
   sessionCookie = server.jwt.sign({ id: 404, username: mockUsername, super: true });
 
-  server.pg.query = vi.fn().mockImplementation((query: string, values: unknown[]) => {
-    const isUpdate = query.trim().toUpperCase().startsWith("UPDATE");
+  const hashedPassword = await hashPassword(mockPassword);
 
-    if (isUpdate) {
+  server.pg.query = vi.fn().mockImplementation(async (query: string, values: unknown[]) => {
+    const upper = query.trim().toUpperCase();
+
+    if (upper.startsWith("SELECT")) {
+      const identifier = Number(values[0]);
+
+      // simulate "user not found"
+      if (identifier !== mockCreatedAdmin.id) {
+        return { rows: [], rowCount: 0 };
+      }
+
+      return {
+        rows: [
+          {
+            id: mockCreatedAdmin.id,
+            password: hashedPassword,
+            super: mockCreatedAdmin.super,
+          },
+        ],
+        rowCount: 1,
+      };
+    }
+
+    if (upper.startsWith("UPDATE")) {
       const row = { ...mockCreatedAdmin };
 
       // Extract SET clause assignments, e.g. ["username = $1", "password = $2"]
@@ -145,6 +168,9 @@ describe("Edit on auth route", () => {
     });
 
     test("returns 404 when update returns no rows", async () => {
+      // save original mock
+      const original = server.pg.query;
+
       server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
 
       const response = await server.inject({
@@ -155,6 +181,9 @@ describe("Edit on auth route", () => {
       });
 
       expect(response.statusCode).toBe(404);
+
+      // restore original mock
+      server.pg.query = original;
     });
   });
 
@@ -164,7 +193,10 @@ describe("Edit on auth route", () => {
         method: "PATCH",
         url: `/api/v1/auth/me`,
         cookies: { session: sessionCookie },
-        payload: { password: mockEditedPassword },
+        payload: {
+          oldPassword: mockPassword,
+          newPassword: mockEditedPassword,
+        },
       });
 
       expect(response.statusCode).toBe(204);
@@ -172,12 +204,29 @@ describe("Edit on auth route", () => {
       expect(response.body).toEqual("");
     });
 
+    test("rejects when old password is incorrect", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/auth/me`,
+        cookies: { session: sessionCookie },
+        payload: {
+          oldPassword: "wrongPassword",
+          newPassword: mockEditedPassword,
+        },
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+
     test("password too short", async () => {
       const response = await server.inject({
         method: "PATCH",
         url: `/api/v1/auth/me`,
         cookies: { session: sessionCookie },
-        payload: { password: "test" },
+        payload: {
+          oldPassword: "short",
+          newPassword: "alsoShort",
+        },
       });
 
       expect(response.statusCode).toBe(400);

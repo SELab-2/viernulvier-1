@@ -4,14 +4,16 @@ import { AdminSchema, stringToInt } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, parseSchema, ParseContext, NO_CONTENT } from "@/routes/helpers.js";
 import z from "zod";
 import { hashPassword } from "./hash.js";
+import { checkCredentials } from "./login.js";
 
-const passwordBase = {
-  password: z.string().min(8).max(72),
-}
+const zPassword = z.string().min(8).max(72);
 
-const EditAdminBodySchema = AdminSchema.pick({ username: true, super: true }).extend(passwordBase).partial();
+const EditAdminBodySchema = AdminSchema.pick({ username: true, super: true }).extend({ password: zPassword }).partial();
 
-const EditOwnPasswordSchema = z.object(passwordBase);
+const EditOwnPasswordSchema = z.object({
+  oldPassword: zPassword,
+  newPassword: zPassword,
+});
 
 /**
  * Updates an existing admin and returns the updated record.
@@ -64,7 +66,7 @@ export async function editAdmin(
  *
  * @param server - The Fastify instance, used for database access and logging.
  * @param request - The Fastify request, expected to contain a pbody with `password`.
- * @returns NO_CONTENT to send a 204 No Content response.
+ * @returns NO_CONTENT to send a 204 No Content response. TODO
  */
 export async function editOwnPassword(
   server: FastifyInstance,
@@ -73,7 +75,11 @@ export async function editOwnPassword(
   const body = parseSchema(server, EditOwnPasswordSchema, request.body);
   const { admin } = getMetadata(request);
 
-  const hashedPassword = await hashPassword(body.password);
+  // check if old password matches
+  await checkCredentials(server, { id: admin }, body.oldPassword);
+
+  // update with new password
+  const hashedPassword = await hashPassword(body.newPassword);
 
   // note: I won't update the updated by, since it doesn't change anything to the admin schema or any of the fields visible in the CMS.
 
