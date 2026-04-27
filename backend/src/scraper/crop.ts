@@ -15,21 +15,13 @@ export interface MediaItemCropJSON {
 }
 
 /**
- * Create payload for local crop endpoint (used for metadata-only creation).
- */
-export interface CreateCropBody {
-  old_id: number;
-  name: string;
-  url?: string | null;
-}
-
-/**
  * Payload for multipart crop upload.
  */
 interface CreateCropsMultipartData {
   crops: Array<{
     filename: string;
     type: string;
+    oldId?: number;
   }>;
 }
 
@@ -43,11 +35,14 @@ function extractCropId(iri: string): number {
 }
 
 /**
- * Downloads a file from a URL and returns the buffer.
+ * Downloads a file from a public asset URL and returns the buffer.
+ * (Crop URLs are typically CDN / static URLs, not the authenticated JSON API.)
  */
 async function downloadFile(url: string): Promise<Buffer | null> {
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: { accept: "*/*" },
+    });
     if (!response.ok) {
       console.warn(`Failed to download file ${url}: ${response.status}`);
       return null;
@@ -69,7 +64,7 @@ async function fetchLocalCropIdByOldId(
   loginToken: string,
 ): Promise<number | null> {
   const url = new URL(localApiUrl(`/api/v1/image/${imageId}/crop`));
-  url.searchParams.set("old_id", String(oldId));
+  url.searchParams.set("oldId", String(oldId));
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -140,7 +135,6 @@ export async function createCropsForImage(
       continue;
     }
 
-    // Download the file
     const fileBuffer = await downloadFile(crop.url);
     if (!fileBuffer) {
       console.warn(`Failed to download crop file: ${crop.url}`);
@@ -172,9 +166,11 @@ export async function createCropsForImage(
       const { crop, fileBuffer } = batch[i]!;
       const filename = `crop-${batchStart + i}`;
       files.set(filename, fileBuffer);
+      const legacyCropId = extractCropId(crop["@id"]);
       cropMappings.push({
         filename,
         type: crop.name,
+        ...(Number.isFinite(legacyCropId) ? { oldId: legacyCropId } : {}),
       });
     }
 

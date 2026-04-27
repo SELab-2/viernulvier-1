@@ -215,22 +215,57 @@ export async function fetchImagesByProduction(
 }
 
 /**
- * GET /api/v1/image, can filter the image by old_id via query param (`?oldId=X`).
+ * GET /api/v1/image
  *
- * If `oldId` is provided, returns an array with a single image or an empty array if not found.
- * If `oldId` is not provided, returns all images as an array.
- * @param server 
- * @param request 
- * @returns 
+ * Query modes (mutually exclusive; order of precedence: `oldId` → paged `page` → list all):
+ *
+ * - `?oldId=` (numeric): images whose `old_id` matches; returns an array of
+ *   length 0 or 1 (with crops on each item).
+ * - `?page=` (numeric) and optional `?pageSize=` (default page size `100` when
+ *   `page` is set) — paged list; returns `{ totalItems, member }`, where
+ *   `member` is the page slice of images with crops, ordered by image id.
+ * - No `oldId` and no `page`: every image in the table as an array (with crops)
+ *
+ * @param server - The Fastify instance.
+ * @param request - The incoming request; query parsed with {@link ImageListQuerySchema}.
+ * @returns Either a plain list of images with crops, or a Hydra-style paged object.
  */
 export async function fetchAllImages(
   server: FastifyInstance,
   request: FastifyRequest,
-): Promise<(Image & { crops: Crop[] })[]> {
-  const { oldId } = parseSchema(server, ImageListQuerySchema, request.query, ParseContext.Request);
+): Promise<
+  | (Image & { crops: Crop[] })[]
+  | { totalItems: number; member: (Image & { crops: Crop[] })[] }
+> {
+  const { oldId, page, pageSize: rawPageSize } = parseSchema(
+    server,
+    ImageListQuerySchema,
+    request.query,
+    ParseContext.Request,
+  );
   if (oldId !== undefined) {
     const image = await getImageByOldId(server, oldId);
     return await attachCropsToImages(server, image ? [image] : []);
+  }
+  if (page !== undefined) {
+    const pageSize = rawPageSize ?? 100;
+    const offset = (page - 1) * pageSize;
+    const countR = await server.pg.query<{ c: number }>(
+      "SELECT COUNT(*)::int AS c FROM image i",
+    );
+    const totalItems = countR.rows[0]?.c ?? 0;
+    const imgResult = await server.pg.query(
+      `${ImageSelect} ORDER BY i.id ASC LIMIT $1 OFFSET $2`,
+      [pageSize, offset],
+    );
+    const images = parseSchema(
+      server,
+      z.array(ImageSchema),
+      imgResult.rows,
+      ParseContext.Database,
+    );
+    const member = await attachCropsToImages(server, images);
+    return { totalItems, member };
   }
   const imgResult = await server.pg.query(
     `${ImageSelect} ORDER BY i.id ASC`,

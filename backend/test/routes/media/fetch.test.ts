@@ -21,7 +21,25 @@ beforeAll(async () => {
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
 
-    // ── All images (list) ──
+    // ── Image count (pagination) ──
+    if (upper.includes("COUNT(") && upper.includes("FROM IMAGE I") && !upper.includes("GROUP")) {
+      return Promise.resolve({ rows: [{ c: 2 }], rowCount: 1 });
+    }
+
+    // ── All images with LIMIT (paged list) ──
+    if (
+      upper.includes("FROM IMAGE I") &&
+      upper.includes("ORDER BY I.ID ASC") &&
+      upper.includes("LIMIT")
+    ) {
+      const limit = Number(params?.[0]);
+      const offset = Number(params?.[1] ?? 0);
+      const all = [MOCK_IMAGE_1, MOCK_IMAGE_2].sort((a, b) => a.id - b.id);
+      const rows = all.slice(offset, offset + limit);
+      return Promise.resolve({ rows, rowCount: rows.length });
+    }
+
+    // ── All images (list, no limit) ──
     if (upper.includes("FROM IMAGE I") && upper.includes("ORDER BY I.ID ASC") && !upper.includes("WHERE")) {
       return Promise.resolve({ rows: [MOCK_IMAGE_1, MOCK_IMAGE_2], rowCount: 2 });
     }
@@ -264,6 +282,21 @@ describe("Image fetch routes", () => {
       imageWithCrops(MOCK_IMAGE_1, [MOCK_CROP_1, MOCK_CROP_2]),
       imageWithCrops(MOCK_IMAGE_2, [MOCK_CROP_3]),
     ]);
+  });
+
+  test("GET /api/v1/image?page=1&pageSize=1 -> returns totalItems and one member", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/image?page=1&pageSize=1",
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { totalItems: number; member: unknown[] };
+    expect(json.totalItems).toBe(2);
+    expect(json.member).toHaveLength(1);
+    expect(json.member[0]).toEqual(
+      imageWithCrops(MOCK_IMAGE_1, [MOCK_CROP_1, MOCK_CROP_2]),
+    );
   });
 
   test("GET /api/v1/image?oldId=X -> returns specific image by oldId with crops", async () => {
