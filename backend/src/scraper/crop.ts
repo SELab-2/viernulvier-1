@@ -1,6 +1,7 @@
 import { localApiUrl } from "./local-api.js";
 import type { ScrapeRunStats } from "./scrape-stats.js";
 import type { Crop } from "@viernulvier/shared/types/index.js";
+import { filterCropsByAllowList, SCRAPER_CROP_NAMES } from "@/scraper/crop-types-config.js";
 
 /**
  * Raw media item crop from Viernulvier JSON-LD.
@@ -34,11 +35,26 @@ function extractCropId(iri: string): number {
   return id;
 }
 
+function isAbsoluteHttpUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Downloads a file from a public asset URL and returns the buffer.
  * (Crop URLs are typically CDN / static URLs, not the authenticated JSON API.)
  */
 async function downloadFile(url: string): Promise<Buffer | null> {
+  if (!isAbsoluteHttpUrl(url)) {
+    console.warn(
+      `Skipping crop download: need absolute http(s) URL, got ${JSON.stringify(url)}`,
+    );
+    return null;
+  }
   try {
     const response = await fetch(url, {
       headers: { accept: "*/*" },
@@ -97,7 +113,19 @@ export async function createCropsForImage(
   loginToken: string,
   stats?: ScrapeRunStats,
 ): Promise<number> {
-  if (crops.length === 0) {
+  const filtered = filterCropsByAllowList(crops, SCRAPER_CROP_NAMES);
+  if (filtered.length !== crops.length) {
+    console.log(
+      `  Crop allow-list: ${filtered.length}/${crops.length} crops kept (${[...SCRAPER_CROP_NAMES].join(", ")})`,
+    );
+  }
+
+  if (filtered.length === 0) {
+    if (crops.length > 0) {
+      console.log(
+        `  Crop allow-list: 0/${crops.length} crops matched (${[...SCRAPER_CROP_NAMES].join(", ")})`,
+      );
+    }
     return 0;
   }
 
@@ -107,7 +135,7 @@ export async function createCropsForImage(
     fileBuffer: Buffer;
   }> = [];
 
-  for (const crop of crops) {
+  for (const crop of filtered) {
     if (!crop.url) {
       console.warn(`Skipping crop "${crop.name}": no URL provided`);
       if (stats) stats.crop_skipped = (stats.crop_skipped ?? 0) + 1;

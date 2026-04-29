@@ -147,10 +147,12 @@ async function createImageWithCrops(
   console.log(`  Created image id=${imageId} for old_id=${oldId}`);
   if (stats) stats.media_created = (stats.media_created ?? 0) + 1;
 
-  // Hand off crop creation to crop module
+  // Hand off crop creation to crop module (allow-list in createCropsForImage only downloads matching types)
   const crops = mediaItem.crops || [];
   if (crops.length > 0) {
-    console.log(`  Creating ${crops.length} crops for image ${imageId}...`);
+    console.log(
+      `  Fetching crops for image ${imageId} (${crops.length} variant(s) in API payload; allow-list filters download)...`,
+    );
     await createCropsForImage(crops, imageId, loginToken, stats);
   }
 
