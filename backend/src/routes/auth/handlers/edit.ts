@@ -62,7 +62,7 @@ export async function editAdmin(
 }
 
 /**
- * Edits the current logged in admin's password and returns an empty 200 OK.
+ * Edits the current logged in admin's password and returns an empty 204 No Content.
  *
  * @param server - The Fastify instance, used for database access and logging.
  * @param request - The Fastify request, expected to contain a body with `oldPassword` and `newPassword`.
