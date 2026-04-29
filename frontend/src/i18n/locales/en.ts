@@ -251,6 +251,9 @@ export default {
       screenDotsGroupLabel: "Scroll positions in the gallery",
       carouselLabel: "Image gallery for this production",
       carouselRegion: "carousel",
+      openLightbox: "View larger image",
+      lightboxTitle: "Enlarged image",
+      closeLightbox: "Close enlarged image",
     },
     details: {
       tags: "Tags",

@@ -19,6 +19,9 @@ const i18n = createI18n({
           screenDotsGroupLabel: "Dots",
           carouselLabel: "Gallery",
           carouselRegion: "carousel",
+          openLightbox: "View larger",
+          lightboxTitle: "Enlarged image",
+          closeLightbox: "Close enlarged image",
         },
       },
     },
@@ -127,7 +130,9 @@ describe("ProductionImageCarousel.vue", () => {
 
   it("hides prev/next for a single slide", () => {
     const wrapper = mountAtWidth([slides4[0]!], 1280);
-    expect(wrapper.findAll("button")).toHaveLength(0);
+    expect(wrapper.findAll('button[aria-label="Previous"]')).toHaveLength(0);
+    expect(wrapper.findAll('button[aria-label="Next"]')).toHaveLength(0);
+    expect(wrapper.find('[data-testid="carousel-img-trigger"]').exists()).toBe(true);
     expect(wrapper.get("[data-testid=carousel-slide]").classes()).toContain(
       "carousel-slide--single",
     );
@@ -314,6 +319,53 @@ describe("ProductionImageCarousel.vue", () => {
     await wrapper.setProps({ slides: two });
     await nextTick();
     expect(wrapper.findAll("img").length).toBe(2);
+  });
+
+  it("opens lightbox with enlarged image and closes via backdrop", async () => {
+    const wrapper = mount(ProductionImageCarousel, {
+      props: { slides: slides4 },
+      global: { plugins: [i18n] },
+      attachTo: document.body,
+    });
+    await wrapper.get('[data-testid="carousel-img-trigger"]').trigger("click");
+    await nextTick();
+    expect(document.querySelector('[data-testid="lightbox-image"]')).toBeTruthy();
+    document
+      .querySelector('[data-testid="lightbox-backdrop"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await nextTick();
+    expect(document.querySelector('[data-testid="lightbox-image"]')).toBeNull();
+    wrapper.unmount();
+  });
+
+  it("closes lightbox on Escape", async () => {
+    const wrapper = mount(ProductionImageCarousel, {
+      props: { slides: slides4 },
+      global: { plugins: [i18n] },
+      attachTo: document.body,
+    });
+    await wrapper.get('[data-testid="carousel-img-trigger"]').trigger("click");
+    await nextTick();
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await nextTick();
+    expect(document.querySelector('[data-testid="lightbox-image"]')).toBeNull();
+    wrapper.unmount();
+  });
+
+  it("closes lightbox when clicking the close control", async () => {
+    const wrapper = mount(ProductionImageCarousel, {
+      props: { slides: slides4 },
+      global: { plugins: [i18n] },
+      attachTo: document.body,
+    });
+    await wrapper.get('[data-testid="carousel-img-trigger"]').trigger("click");
+    await nextTick();
+    document
+      .querySelector('[data-testid="lightbox-close"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await nextTick();
+    expect(document.querySelector('[data-testid="lightbox-image"]')).toBeNull();
+    wrapper.unmount();
   });
 });
 

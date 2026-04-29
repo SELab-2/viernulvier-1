@@ -6,8 +6,8 @@
     tabindex="0"
     :aria-label="t('production.gallery.carouselLabel')"
     :aria-roledescription="t('production.gallery.carouselRegion')"
-    @keydown.left.prevent="goPrev"
-    @keydown.right.prevent="goNext"
+    @keydown.left.prevent="onCarouselArrowLeft"
+    @keydown.right.prevent="onCarouselArrowRight"
   >
     <div class="relative">
       <CarouselArrowButton
@@ -35,19 +35,28 @@
           data-testid="carousel-slide"
           :class="['carousel-slide', slideSizeClass]"
         >
-          <img
-            :src="item.src"
-            :alt="item.alt"
-            :class="[
-              'carousel-img w-full object-contain',
-              slides.length >= 3
-                ? 'max-h-[min(46vh,24rem)] md:max-h-[min(54vh,28rem)]'
-                : 'max-h-[min(50vh,26rem)] md:max-h-[min(58vh,30rem)]',
-            ]"
-            loading="lazy"
-            decoding="async"
-            referrerpolicy="no-referrer"
-          />
+          <button
+            type="button"
+            data-testid="carousel-img-trigger"
+            class="carousel-img-trigger group flex h-full w-full min-h-0 cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent p-0 text-left transition-[filter] duration-200 hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-outline"
+            :aria-label="t('production.gallery.openLightbox')"
+            aria-haspopup="dialog"
+            @click="openLightbox(i)"
+          >
+            <img
+              :src="item.src"
+              :alt="item.alt"
+              :class="[
+                'carousel-img w-full object-contain',
+                slides.length >= 3
+                  ? 'max-h-[min(46vh,24rem)] md:max-h-[min(54vh,28rem)]'
+                  : 'max-h-[min(50vh,26rem)] md:max-h-[min(58vh,30rem)]',
+              ]"
+              loading="lazy"
+              decoding="async"
+              referrerpolicy="no-referrer"
+            />
+          </button>
         </div>
       </div>
 
@@ -83,6 +92,58 @@
         @click="goToScreen(i)"
       />
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="lightboxIndex !== null && lightboxSlide !== null"
+        class="fixed inset-0 z-[200] flex items-center justify-center px-6 py-12 sm:px-10 sm:py-14 md:px-16 md:py-20"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="t('production.gallery.lightboxTitle')"
+      >
+        <div
+          class="absolute inset-0 bg-black/30 backdrop-blur-sm"
+          aria-hidden="true"
+          data-testid="lightbox-backdrop"
+          @click="closeLightbox"
+        />
+        <div
+          class="relative z-[201] mx-auto flex w-full max-w-4xl items-center justify-center md:max-w-5xl"
+        >
+          <div class="relative inline-block max-w-full">
+            <button
+              type="button"
+              class="absolute right-1 top-1 z-10 flex size-8 items-center justify-center rounded-full border border-white/30 bg-black/45 text-white backdrop-blur-sm transition hover:bg-black/65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:right-2 md:top-2 md:size-9"
+              :aria-label="t('production.gallery.closeLightbox')"
+              data-testid="lightbox-close"
+              @click.stop="closeLightbox"
+            >
+              <svg
+                class="size-4 md:size-[1.125rem]"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                aria-hidden="true"
+              >
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+            <img
+              :src="lightboxSlide.src"
+              :alt="lightboxSlide.alt"
+              class="block max-h-[min(72vh,38rem)] w-auto max-w-full object-contain sm:max-h-[min(74vh,42rem)]"
+              decoding="async"
+              referrerpolicy="no-referrer"
+              data-testid="lightbox-image"
+              @click.stop
+            />
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -111,6 +172,14 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const scrollerRef = useTemplateRef<HTMLElement>("scrollerRef");
+/** Active slide index when lightbox open; `null` when closed */
+const lightboxIndex = ref<number | null>(null);
+const lightboxSlide = computed(() => {
+  const i = lightboxIndex.value;
+  if (i === null || i < 0 || i >= props.slides.length) return null;
+  return props.slides[i]!;
+});
+
 const canGoPrev = ref(false);
 const canGoNext = ref(false);
 /** Scroll positions for each “screen” (same steps as prev/next, last = max). */
@@ -134,16 +203,44 @@ function readWidthMode(): void {
   }
 }
 
+function openLightbox(index: number): void {
+  lightboxIndex.value = index;
+}
+
+function closeLightbox(): void {
+  lightboxIndex.value = null;
+}
+
+function onCarouselArrowLeft(): void {
+  if (lightboxIndex.value !== null) return;
+  goPrev();
+}
+
+function onCarouselArrowRight(): void {
+  if (lightboxIndex.value !== null) return;
+  goNext();
+}
+
+function onGlobalKeydown(e: KeyboardEvent): void {
+  if (e.key === "Escape" && lightboxIndex.value !== null) {
+    e.preventDefault();
+    closeLightbox();
+  }
+}
+
 onMounted(() => {
   readWidthMode();
   window.addEventListener("resize", onResize);
+  window.addEventListener("keydown", onGlobalKeydown);
   void nextTick(() => {
     updateScrollState();
   });
 });
 onUnmounted(() => {
   window.removeEventListener("resize", onResize);
+  window.removeEventListener("keydown", onGlobalKeydown);
   cancelSmoothScroll();
+  document.body.style.overflow = "";
 });
 
 function onResize(): void {
@@ -338,6 +435,13 @@ function updateScrollState(): void {
 watch(
   () => props.slides,
   () => {
+    const idx = lightboxIndex.value;
+    if (
+      idx !== null &&
+      (idx >= props.slides.length || props.slides[idx] === undefined)
+    ) {
+      closeLightbox();
+    }
     void nextTick(() => {
       if (scrollerRef.value) {
         scrollerRef.value.scrollTo({ left: 0, behavior: "auto" });
@@ -360,6 +464,10 @@ watch(
   },
   { immediate: true },
 );
+
+watch(lightboxIndex, (idx) => {
+  document.body.style.overflow = idx !== null ? "hidden" : "";
+});
 
 function goToScreen(index: number): void {
   const targets = screenScrollTargets.value;
@@ -411,6 +519,10 @@ function goNext(): void {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
+}
+
+.carousel-img-trigger {
+  max-height: 100%;
 }
 
 .carousel-img {

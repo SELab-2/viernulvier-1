@@ -252,6 +252,9 @@ export default {
       screenDotsGroupLabel: "Posities in de galerij",
       carouselLabel: "Beeldengalerij van deze productie",
       carouselRegion: "Carrousel",
+      openLightbox: "Afbeelding groter bekijken",
+      lightboxTitle: "Vergrote afbeelding",
+      closeLightbox: "Vergrote afbeelding sluiten",
     },
     details: {
       tags: "Labels",

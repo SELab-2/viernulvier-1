@@ -252,6 +252,9 @@ export default {
       screenDotsGroupLabel: "Vues de la galerie",
       carouselLabel: "Galerie d’images de cette production",
       carouselRegion: "Carrousel",
+      openLightbox: "Voir l’image en grand",
+      lightboxTitle: "Image agrandie",
+      closeLightbox: "Fermer l’image agrandie",
     },
     details: {
       tags: "Étiquettes",
