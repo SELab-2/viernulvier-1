@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-v-html -- All v-html bindings in this file render strings produced by parseAndSanitizeContent, which routes HTML through DOMPurify. -->
 <template>
   <div class="bg-surface-1 text-ink-primary">
     <div class="mx-auto max-w-7xl px-6 py-24 md:px-12">
