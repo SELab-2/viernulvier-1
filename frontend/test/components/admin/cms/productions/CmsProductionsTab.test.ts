@@ -3,7 +3,7 @@ import { flushPromises, mount } from "@vue/test-utils";
 import { defineComponent, nextTick } from "vue";
 import type { Hall, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
 import { i18n } from "@/i18n";
-import CmsProductionsTab from "@/components/admin/cms/tabs/CmsProductionsTab.vue";
+import CmsProductionsTab from "@/components/admin/cms/productions/CmsProductionsTab.vue";
 import * as productionsService from "@/services/productions";
 import * as tagsService from "@/services/tags";
 import * as hallsService from "@/services/halls";
@@ -382,23 +382,6 @@ describe("CmsProductionsTab", () => {
     expect(api.mediaPreview.value).toBeNull();
   });
 
-  it("covers quick filter and column chooser event branches", async () => {
-    const wrapper = await mountTab();
-
-    const controls = wrapper.findComponent({ name: "CmsGridControls" });
-    controls.vm.$emit("update:quick-filter-text", "needle");
-    controls.vm.$emit("apply-quick-filter");
-    controls.vm.$emit("toggle-columns");
-    await flushPromises();
-
-    const chooser = wrapper.findComponent({ name: "CmsColumnChooser" });
-    expect(chooser.props("show")).toBe(true);
-
-    controls.vm.$emit("toggle-columns");
-    await flushPromises();
-    expect(chooser.props("show")).toBe(false);
-  });
-
   it("covers guard branches for no-op paths", async () => {
     const wrapper = await mountTab();
     const api = (wrapper.vm as any).$?.exposed.__test;
@@ -548,7 +531,7 @@ describe("CmsProductionsTab", () => {
     expect(eventRow.startsAt).not.toBe(oldStartsAt);
   });
 
-  it("covers template event branches for modal and column chooser", async () => {
+  it("forwards create-modal events for finalized flag and extra languages", async () => {
     const wrapper = await mountTab();
     const api = (wrapper.vm as any).$?.exposed.__test;
 
@@ -568,15 +551,6 @@ describe("CmsProductionsTab", () => {
 
     expect(api.createForm.value.finalized).toBe(false);
     expect(api.createModalOpen.value).toBe(false);
-
-    const controls = wrapper.findComponent({ name: "CmsGridControls" });
-    controls.vm.$emit("toggle-columns");
-    await flushPromises();
-    const chooser = wrapper.findComponent({ name: "CmsColumnChooser" });
-    expect(chooser.props("show")).toBe(true);
-    chooser.vm.$emit("close");
-    await flushPromises();
-    expect(chooser.props("show")).toBe(false);
   });
 
   it("covers editor save branches for missing row and save error", async () => {

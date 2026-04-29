@@ -18,7 +18,7 @@
     "build-all": "pnpm i --frozen-lockfile && pnpm run --filter backend build && pnpm run --filter frontend build && pnpm run --filter shared build"
   },
   "dependencies": {
-    "ag-grid-community": "^35.2.0",
+    "ag-grid-community": "^35.2.1",
     "ag-grid-vue3": "^35.2.0"
   }
 }

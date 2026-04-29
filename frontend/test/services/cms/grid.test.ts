@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
-import type { ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
-import { buildProductionGridRow, buildProductionGridRows, getBulkTargetRows } from "@/services/cms/grid";
+import type { Event as ArchiveEvent, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
+import {
+  buildEventGridRows,
+  buildProductionGridRow,
+  buildProductionGridRows,
+  getBulkTargetRows,
+} from "@/services/cms/grid";
 import type { CmsProductionGridRow } from "@/services/cms";
 
 function buildProduction(tags: unknown[] = [1], events: unknown[] = []): ProductionWithBackwardsRefs {
@@ -78,5 +83,95 @@ describe("cms grid helpers", () => {
 
     expect(getBulkTargetRows([], primary)).toEqual([primary]);
     expect(getBulkTargetRows([other], primary)).toEqual([primary]);
+  });
+
+  it("builds production row with localized text and split tag labels", () => {
+    const tag1 = { id: 1, name: { nl: "Genre" }, tag_type: 1 } as unknown as Tag;
+    const tag2 = { id: 2, name: { nl: "Hidden" }, tag_type: 2 } as unknown as Tag;
+    const tagById = new Map<number, Tag>([
+      [1, tag1],
+      [2, tag2],
+    ]);
+
+    const production = {
+      id: 5,
+      artist: { nl: "Artist" },
+      title: { nl: "Title" },
+      supertitle: { nl: "Series" },
+      teaser: { nl: "Teaser" },
+      description: { nl: "Desc1" },
+      description_2: { nl: "Desc2" },
+      video_1: { nl: "Media" },
+      tags: [1, 2],
+      events: ["10", { id: 11 }],
+    } as unknown as ProductionWithBackwardsRefs;
+
+    const row = buildProductionGridRow(production, tagById, new Set([1]), (map) => map?.nl ?? "");
+
+    expect(row.id).toBe(5);
+    expect(row.performer).toBe("Artist");
+    expect(row.title).toBe("Title");
+    expect(row.producer).toBe("Series");
+    expect(row.genres).toBe("Genre");
+    expect(row.tags).toBe("Hidden");
+    expect(row.descriptionOne).toBe("Desc1");
+    expect(row.descriptionTwo).toBe("Desc2");
+    expect(row.media).toBe("Media");
+    expect(row.events).toEqual([10, 11]);
+  });
+
+  it("uses dash placeholders when production has no tags", () => {
+    const production = {
+      id: 9,
+      artist: null,
+      title: null,
+      supertitle: null,
+      teaser: null,
+      description: null,
+      description_2: null,
+      video_1: null,
+      tags: [],
+      events: [],
+    } as unknown as ProductionWithBackwardsRefs;
+
+    const row = buildProductionGridRow(production, new Map(), new Set([1]), () => "");
+
+    expect(row.genres).toBe("-");
+    expect(row.tags).toBe("-");
+  });
+
+  it("builds sorted event grid rows with hall localization and fallback", () => {
+    const events = [
+      {
+        id: 2,
+        starts_at: "2026-01-02T20:00:00.000Z",
+        ends_at: "2026-01-02T22:00:00.000Z",
+        doors_at: "2026-01-02T19:30:00.000Z",
+        hall: 99,
+        info: null,
+      },
+      {
+        id: 1,
+        starts_at: "2026-01-01T20:00:00.000Z",
+        ends_at: "2026-01-01T22:00:00.000Z",
+        doors_at: "2026-01-01T19:30:00.000Z",
+        hall: 1,
+        info: { nl: "info" },
+      },
+    ] as unknown as ArchiveEvent[];
+
+    const rows = buildEventGridRows(
+      events,
+      new Map([[1, { name: { nl: "Main Hall" } }]]),
+      (map) => map?.nl ?? "",
+      "N/A",
+    );
+
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.id).toBe(1);
+    expect(rows[0]?.location).toBe("Main Hall");
+    expect(rows[0]?.infoNl).toBe("info");
+    expect(rows[1]?.location).toBe("Hall #99");
+    expect(rows[0]?.price).toBe("N/A");
   });
 });
