@@ -269,6 +269,7 @@ import { useCmsProductionGrid } from "@/composables/useCmsProductionGrid";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, SUPPORTED_LANGS, type SupportedLang } from "@/i18n";
 import {
+  bulkUpdateProductions,
   createProduction,
   deleteProduction,
   extractProductionTagIds,
@@ -288,6 +289,7 @@ import {
   buildEmptyCreateForm,
   fileToDataUrl,
   mediaToLanguageMap,
+  mapEntitiesById,
   toLanguageMap,
   toLanguageMapOrNull,
   validateCreateProductionForm,
@@ -871,22 +873,44 @@ async function persistProductionPatch(
   }
 }
 
+async function persistBulkProductionPatch(
+  targetRows: CmsProductionGridRow[],
+  patch: Record<string, unknown>,
+): Promise<void> {
+  try {
+    const updatedRows = await bulkUpdateProductions({
+      ids: targetRows.map((row) => row.id),
+      data: patch,
+    });
+    const updatedById = mapEntitiesById(updatedRows);
+
+    for (const row of targetRows) {
+      const updated = updatedById.get(row.id);
+      if (updated) {
+        applyUpdatedProductionToRow(row, updated, localizeValue);
+      }
+    }
+  } catch (error) {
+    saveError.value =
+      error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+    throw error;
+  }
+}
+
 async function saveInlineBulkUpdate(
   primaryRow: CmsProductionGridRow,
   apiField: keyof ProductionWithBackwardsRefs,
   newValue: string,
 ): Promise<void> {
   const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], primaryRow);
+  const nextMap = { [currentLang.value]: newValue };
+
   isSaving.value = true;
   saveError.value = null;
   try {
-    await Promise.all(
-      targetRows.map(async (row) => {
-        const currentMap = row.source[apiField] as LanguageMap | null | undefined;
-        const nextMap = setCurrentLanguageValue(currentMap, newValue);
-        await persistProductionPatch(row, { [apiField]: nextMap });
-      }),
-    );
+    await persistBulkProductionPatch(targetRows, { [apiField]: nextMap });
   } finally {
     isSaving.value = false;
   }
@@ -1059,13 +1083,9 @@ async function saveEditorPanel(): Promise<void> {
   isSaving.value = true;
   saveError.value = null;
   try {
-    await Promise.all(
-      targetRows.map(async (target) => {
-        await persistProductionPatch(target, {
-          [editorPanel.value?.apiField as LongField]: payload,
-        });
-      }),
-    );
+    await persistBulkProductionPatch(targetRows, {
+      [editorPanel.value?.apiField as LongField]: payload,
+    });
   } finally {
     isSaving.value = false;
   }

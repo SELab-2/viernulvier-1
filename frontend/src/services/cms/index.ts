@@ -5,3 +5,4 @@ export * from "./forms";
 export * from "./tags";
 export * from "./grid";
 export * from "./files";
+export * from "./bulk-edit";

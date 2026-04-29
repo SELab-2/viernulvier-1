@@ -3,6 +3,7 @@ import { collectProductionTagsByIdMap } from "@/services/productions";
 import { tagTypeIsGenre } from "@/utils/tagDisplay";
 import { localizeWithFallback, type LanguageMap } from "@/utils/language-utils";
 import { toLocalDateTimeInput } from "./date";
+import { resolveBulkTargetRows } from "./bulk-edit";
 import { extractEventIds } from "./helpers";
 import type { CmsAdminGridRow, CmsEventGridRow, CmsProductionGridRow, CreateAdminFormState, CmsTagGridRow } from "./types";
 
@@ -177,14 +178,7 @@ export function getBulkTargetRows(
   selectedRows: CmsProductionGridRow[],
   primaryRow: CmsProductionGridRow,
 ): CmsProductionGridRow[] {
-  if (
-    selectedRows.length > 1
-    && selectedRows.some((row) => row.id === primaryRow.id)
-  ) {
-    return selectedRows;
-  }
-
-  return [primaryRow];
+  return resolveBulkTargetRows(selectedRows, primaryRow);
 }
  
 export function buildAdminGridRow(admin: Admin): CmsAdminGridRow {

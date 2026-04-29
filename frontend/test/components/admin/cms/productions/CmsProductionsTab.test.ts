@@ -15,6 +15,7 @@ vi.mock("@/services/productions", async (importOriginal) => {
     ...actual,
     getProductions: vi.fn(),
     createProduction: vi.fn(),
+    bulkUpdateProductions: vi.fn(),
     updateProduction: vi.fn(),
     deleteProduction: vi.fn(),
   };
@@ -103,6 +104,7 @@ describe("CmsProductionsTab", () => {
     vi.clearAllMocks();
     vi.spyOn(productionsService, "getProductions").mockResolvedValue({ items: [mockProduction], total: 1 });
     vi.spyOn(productionsService, "createProduction").mockResolvedValue(mockProduction);
+    vi.spyOn(productionsService, "bulkUpdateProductions").mockResolvedValue([mockProduction]);
     vi.spyOn(productionsService, "updateProduction").mockResolvedValue(mockProduction);
     vi.spyOn(productionsService, "deleteProduction").mockResolvedValue(undefined);
     vi.spyOn(tagsService, "getAllTags").mockResolvedValue([mockPublicTag, mockHiddenTag]);
@@ -184,7 +186,7 @@ describe("CmsProductionsTab", () => {
 
     expect(api.editorPanel.value).toBeTruthy();
     await api.saveEditorPanel();
-    expect(productionsService.updateProduction).toHaveBeenCalled();
+    expect(productionsService.bulkUpdateProductions).toHaveBeenCalled();
   });
 
   it("handles inline edit commit and revert branches", async () => {
@@ -215,7 +217,7 @@ describe("CmsProductionsTab", () => {
       colDef: { field: "performer" },
       node: { setDataValue: vi.fn() },
     });
-    expect(productionsService.updateProduction).toHaveBeenCalled();
+    expect(productionsService.bulkUpdateProductions).toHaveBeenCalled();
   });
 
   it("opens events panel and handles save/remove event", async () => {
@@ -566,7 +568,7 @@ describe("CmsProductionsTab", () => {
     };
     await api.saveEditorPanel();
 
-    vi.spyOn(productionsService, "updateProduction").mockRejectedValueOnce(new Error("cannot save"));
+    vi.spyOn(productionsService, "bulkUpdateProductions").mockRejectedValueOnce(new Error("cannot save"));
     api.onCellClicked({
       data: row,
       colDef: { field: "descriptionOne", headerName: "Description" },
@@ -593,7 +595,7 @@ describe("CmsProductionsTab", () => {
       node: { setDataValue },
     });
 
-    expect(productionsService.updateProduction).not.toHaveBeenCalledWith(row.id, expect.anything());
+    expect(productionsService.bulkUpdateProductions).not.toHaveBeenCalled();
     expect(setDataValue).not.toHaveBeenCalled();
   });
 
