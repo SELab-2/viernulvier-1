@@ -134,24 +134,30 @@ describe("ProductionImageCarousel.vue", () => {
     expect(wrapper.findAll('button[aria-label="Next"]')).toHaveLength(0);
     expect(wrapper.find('[data-testid="carousel-img-trigger"]').exists()).toBe(true);
     expect(wrapper.get("[data-testid=carousel-slide]").classes()).toContain(
-      "carousel-slide--single",
+      "carousel-slide",
     );
   });
 
-  it("uses pair slide sizing for two slides", () => {
+  it("renders two slides with shared carousel-slide class", () => {
     const wrapper = mountAtWidth([slides4[0]!, slides4[1]!], 1280);
     const slides = wrapper.findAll("[data-testid=carousel-slide]");
     expect(slides).toHaveLength(2);
     for (const s of slides) {
-      expect(s.classes()).toContain("carousel-slide--pair");
+      expect(s.classes()).toContain("carousel-slide");
     }
   });
 
-  it("picks widthMode multi-peek on wide viewports (3+ slides)", () => {
+  it("uses carousel-slide for each image when several slides are shown", () => {
     const wrapper = mountAtWidth(slides4, 1280);
     for (const s of wrapper.findAll("[data-testid=carousel-slide]")) {
-      expect(s.classes()).toContain("carousel-slide--multi-peek");
+      expect(s.classes()).toContain("carousel-slide");
     }
+  });
+
+  it("does not center the track for a single slide (narrow tier stays left-aligned)", () => {
+    const wrapper = mountAtWidth([slides4[0]!], 1280);
+    const cls = wrapper.get(".overflow-x-auto").classes().join(" ");
+    expect(cls).not.toContain("justify-center");
   });
 
   it("treats exactly three slides like the 3+ layout branch", () => {
@@ -159,25 +165,7 @@ describe("ProductionImageCarousel.vue", () => {
     const wrapper = mountAtWidth(three, 1280);
     expect(wrapper.findAll("[data-testid=carousel-slide]")).toHaveLength(3);
     const track = wrapper.get(".overflow-x-auto");
-    const cls = track.classes().join(" ");
-    expect(cls).toContain("min-h-[min(34vh,17rem)]");
-  });
-
-
-  it("picks widthMode mobile-peek below md breakpoint (3+ slides)", async () => {
-    const wrapper = mountAtWidth(slides4, 500);
-    await nextTick();
-    for (const s of wrapper.findAll("[data-testid=carousel-slide]")) {
-      expect(s.classes()).toContain("carousel-slide--mobile-peek");
-    }
-  });
-
-  it("picks widthMode tablet-peek in md range (3+ slides)", async () => {
-    const wrapper = mountAtWidth(slides4, 800);
-    await nextTick();
-    for (const s of wrapper.findAll("[data-testid=carousel-slide]")) {
-      expect(s.classes()).toContain("carousel-slide--tablet-peek");
-    }
+    expect(track.attributes("data-band")).toBe("compact");
   });
 
   it("moves the scroller on ArrowRight and ArrowLeft (reduced motion)", async () => {

@@ -9,88 +9,85 @@
     @keydown.left.prevent="onCarouselArrowLeft"
     @keydown.right.prevent="onCarouselArrowRight"
   >
-    <div class="relative">
-      <CarouselArrowButton
-        v-if="showNav"
-        direction="prev"
-        :disabled="!canGoPrev"
-        :ariaLabel="t('production.gallery.prev')"
-        @click="goPrev"
-      />
+    <div data-testid="carousel-viewport" :class="carouselViewportWidthClass">
+      <div class="relative">
+        <CarouselArrowButton
+          v-if="showNav"
+          direction="prev"
+          :disabled="!canGoPrev"
+          :ariaLabel="t('production.gallery.prev')"
+          @click="goPrev"
+        />
 
-      <div
-        ref="scrollerRef"
-        :class="[
-          'carousel-track flex gap-3 overflow-x-auto overflow-y-hidden bg-black py-1 md:gap-4',
-          hideScrollbarClass,
-          slides.length >= 3
-            ? 'min-h-[min(34vh,17rem)] md:min-h-[min(40vh,20rem)]'
-            : 'min-h-[min(44vh,22rem)] md:min-h-[min(52vh,26rem)]',
-        ]"
-        @scroll="onScrollThrottled"
-      >
         <div
-          v-for="(item, i) in slides"
-          :key="`${i}-${item.src}`"
-          data-testid="carousel-slide"
-          :class="['carousel-slide', slideSizeClass]"
+          ref="scrollerRef"
+          :data-band="slides.length >= 3 ? 'compact' : 'comfort'"
+          :class="[
+            'carousel-track flex items-center gap-5 overflow-x-auto overflow-y-hidden md:gap-6',
+            hideScrollbarClass,
+            centerCarouselRowWhenWideNoOverflow ? 'justify-center' : 'justify-start',
+          ]"
+          @scroll="onScrollThrottled"
         >
-          <button
-            type="button"
-            data-testid="carousel-img-trigger"
-            class="carousel-img-trigger group flex h-full w-full min-h-0 cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent p-0 text-left transition-[filter] duration-200 hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-outline"
-            :aria-label="t('production.gallery.openLightbox')"
-            aria-haspopup="dialog"
-            @click="openLightbox(i)"
+          <div
+            v-for="(item, i) in slides"
+            :key="`${i}-${item.src}`"
+            data-testid="carousel-slide"
+            class="carousel-slide"
           >
-            <img
-              :src="item.src"
-              :alt="item.alt"
-              :class="[
-                'carousel-img w-full object-contain',
-                slides.length >= 3
-                  ? 'max-h-[min(46vh,24rem)] md:max-h-[min(54vh,28rem)]'
-                  : 'max-h-[min(50vh,26rem)] md:max-h-[min(58vh,30rem)]',
-              ]"
-              loading="lazy"
-              decoding="async"
-              referrerpolicy="no-referrer"
-            />
-          </button>
+            <button
+              type="button"
+              data-testid="carousel-img-trigger"
+              class="carousel-img-trigger group block cursor-pointer overflow-hidden rounded-md border-0 bg-transparent p-0 text-left transition-[filter] duration-200 hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-outline"
+              :aria-label="t('production.gallery.openLightbox')"
+              aria-haspopup="dialog"
+              @click="openLightbox(i)"
+            >
+              <img
+                :src="item.src"
+                :alt="item.alt"
+                class="carousel-img"
+                loading="lazy"
+                decoding="async"
+                referrerpolicy="no-referrer"
+                @load="scheduleLayoutMetrics"
+              />
+            </button>
+          </div>
         </div>
+
+        <CarouselArrowButton
+          v-if="showNav"
+          direction="next"
+          :disabled="!canGoNext"
+          :ariaLabel="t('production.gallery.next')"
+          @click="goNext"
+        />
       </div>
 
-      <CarouselArrowButton
-        v-if="showNav"
-        direction="next"
-        :disabled="!canGoNext"
-        :ariaLabel="t('production.gallery.next')"
-        @click="goNext"
-      />
-    </div>
-
-    <div
-      v-if="showScreenPager"
-      class="mt-4 flex flex-wrap items-center justify-center gap-2"
-      role="group"
-      :aria-label="t('production.gallery.screenDotsGroupLabel')"
-    >
-      <button
-        v-for="(_, i) in screenScrollTargets"
-        :key="i"
-        type="button"
-        class="h-2.5 w-2.5 rounded-full transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-outline"
-        :class="
-          i === activeScreenIndex
-            ? 'scale-110 bg-ink-primary'
-            : 'bg-ink-secondary/35 hover:bg-ink-secondary/55'
-        "
-        :aria-label="
-          t('production.gallery.goToScreen', { n: i + 1, total: screenCount })
-        "
-        :aria-current="i === activeScreenIndex ? 'true' : undefined"
-        @click="goToScreen(i)"
-      />
+      <div
+        v-if="showScreenPager"
+        class="mt-4 flex flex-wrap items-center justify-center gap-2"
+        role="group"
+        :aria-label="t('production.gallery.screenDotsGroupLabel')"
+      >
+        <button
+          v-for="(_, i) in screenScrollTargets"
+          :key="i"
+          type="button"
+          class="h-2.5 w-2.5 rounded-full transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-outline"
+          :class="
+            i === activeScreenIndex
+              ? 'scale-110 bg-ink-primary'
+              : 'bg-ink-secondary/35 hover:bg-ink-secondary/55'
+          "
+          :aria-label="
+            t('production.gallery.goToScreen', { n: i + 1, total: screenCount })
+          "
+          :aria-current="i === activeScreenIndex ? 'true' : undefined"
+          @click="goToScreen(i)"
+        />
+      </div>
     </div>
 
     <Teleport to="body">
@@ -185,23 +182,8 @@ const canGoNext = ref(false);
 /** Scroll positions for each “screen” (same steps as prev/next, last = max). */
 const screenScrollTargets = ref<number[]>([0]);
 const activeScreenIndex = ref(0);
-/** Desktop: 2.5 across; tablet: ~1.5; phone: ~1.2 (peek) */
-const widthMode = ref<"multi-peek" | "one-half" | "pair">("multi-peek");
-
 const hideScrollbarClass =
   "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
-
-function readWidthMode(): void {
-  if (typeof window === "undefined") return;
-  const w = window.innerWidth;
-  if (w < 768) {
-    widthMode.value = "one-half";
-  } else if (w < 1024) {
-    widthMode.value = "pair";
-  } else {
-    widthMode.value = "multi-peek";
-  }
-}
 
 function openLightbox(index: number): void {
   lightboxIndex.value = index;
@@ -229,58 +211,40 @@ function onGlobalKeydown(e: KeyboardEvent): void {
 }
 
 onMounted(() => {
-  readWidthMode();
   window.addEventListener("resize", onResize);
   window.addEventListener("keydown", onGlobalKeydown);
   void nextTick(() => {
-    updateScrollState();
+    applyLayoutMetrics();
+    const sc = scrollerRef.value;
+    if (typeof ResizeObserver !== "undefined" && sc) {
+      carouselResizeObserver = new ResizeObserver(() => {
+        scheduleLayoutMetrics();
+      });
+      carouselResizeObserver.observe(sc);
+    }
   });
 });
 onUnmounted(() => {
   window.removeEventListener("resize", onResize);
   window.removeEventListener("keydown", onGlobalKeydown);
+  carouselResizeObserver?.disconnect();
+  carouselResizeObserver = null;
   cancelSmoothScroll();
   document.body.style.overflow = "";
 });
 
 function onResize(): void {
-  readWidthMode();
-  void nextTick(() => {
-    updateScrollState();
-  });
+  scheduleLayoutMetrics();
 }
 
 const len = computed(() => props.slides.length);
 
-/**
- * Widths live in scoped CSS: Tailwind `calc(100%-2rem)` is invalid in CSS
- * (operators in calc need spaces), so old rules were dropped; flex then used
- * min-width: auto and image intrinsic width — only ~1 slide visible.
- */
-const slideSizeClass = computed(() => {
-  const n = len.value;
-  if (n === 0) {
-    return "";
-  }
-  if (n === 1) {
-    return "carousel-slide--single";
-  }
-  if (n === 2) {
-    return "carousel-slide--pair";
-  }
-  if (n >= 3) {
-    if (widthMode.value === "multi-peek") {
-      return "carousel-slide--multi-peek";
-    }
-    if (widthMode.value === "pair") {
-      return "carousel-slide--tablet-peek";
-    }
-    return "carousel-slide--mobile-peek";
-  }
-  return "";
-});
+/** Horizontal scroll is possible (then we show arrows / screen dots). */
+const trackOverflowsHorizontally = ref(false);
 
-const showNav = computed(() => len.value > 1);
+const showNav = computed(
+  () => len.value > 1 && trackOverflowsHorizontally.value,
+);
 
 const screenCount = computed(() => screenScrollTargets.value.length);
 
@@ -418,10 +382,12 @@ function updateScrollState(): void {
     canGoNext.value = false;
     screenScrollTargets.value = [0];
     activeScreenIndex.value = 0;
+    trackOverflowsHorizontally.value = false;
     return;
   }
   /* v8 ignore stop */
   const { scrollLeft, clientWidth, scrollWidth } = sc;
+  trackOverflowsHorizontally.value = scrollWidth > clientWidth + 2;
   const max = Math.max(0, scrollWidth - clientWidth);
   canGoPrev.value = scrollLeft > 2;
   canGoNext.value = scrollLeft < max - 2;
@@ -430,6 +396,76 @@ function updateScrollState(): void {
   const targets = buildScreenScrollTargets(max, step);
   screenScrollTargets.value = targets;
   activeScreenIndex.value = nearestScreenIndex(scrollLeft, targets);
+}
+
+/**
+ * Inner width available for slides in the narrow (`max-w-7xl`) strip, matches viewport padding
+ * (`px-6` / `md:px-12`). If total `scrollWidth` fits here, we stay narrow (left-aligned, no arrows).
+ * Otherwise we switch to the wide strip (`max-w-[min(100vw,105rem)]`); arrows appear only when the
+ * track still overflows after layout (`scrollWidth > clientWidth`).
+ */
+const OUTER_MAX_NARROW_REM = 80;
+const SCROLL_LAYOUT_EPS_PX = 2;
+
+function pxFromRem(rem: number): number {
+  const fs =
+    typeof document !== "undefined"
+      ? Number.parseFloat(getComputedStyle(document.documentElement).fontSize) ||
+        16
+      : 16;
+  return rem * fs;
+}
+
+function narrowScrollerInnerPx(): number {
+  const vw =
+    typeof window !== "undefined"
+      ? window.innerWidth
+      : pxFromRem(OUTER_MAX_NARROW_REM);
+  const outer = Math.min(vw, pxFromRem(OUTER_MAX_NARROW_REM));
+  const padEach = vw >= 768 ? pxFromRem(3) : pxFromRem(1.5);
+  return Math.max(0, outer - 2 * padEach);
+}
+
+type WidthTier = "narrow" | "wide";
+
+const widthTier = ref<WidthTier>("narrow");
+
+let carouselResizeObserver: ResizeObserver | null = null;
+
+function resolveWidthTier(scrollW: number): WidthTier {
+  if (scrollW <= narrowScrollerInnerPx() + SCROLL_LAYOUT_EPS_PX) {
+    return "narrow";
+  }
+  return "wide";
+}
+
+const carouselViewportWidthClass = computed(() => {
+  if (widthTier.value === "narrow") {
+    return "mx-auto w-full max-w-7xl px-6 md:px-12";
+  }
+  return "mx-auto w-full max-w-[min(100vw,105rem)] px-4 sm:px-6 md:px-8 lg:px-12";
+});
+
+/** Wide viewport but nothing scrolls. Center carousel row so empty space isn’t all on one side. */
+const centerCarouselRowWhenWideNoOverflow = computed(
+  () => widthTier.value === "wide" && !trackOverflowsHorizontally.value,
+);
+
+function applyLayoutMetrics(): void {
+  const sc = scrollerRef.value;
+  if (!sc) {
+    return;
+  }
+  widthTier.value = resolveWidthTier(sc.scrollWidth);
+  void nextTick(() => {
+    updateScrollState();
+  });
+}
+
+function scheduleLayoutMetrics(): void {
+  void nextTick(() => {
+    applyLayoutMetrics();
+  });
 }
 
 watch(
@@ -446,23 +482,10 @@ watch(
       if (scrollerRef.value) {
         scrollerRef.value.scrollTo({ left: 0, behavior: "auto" });
       }
-      updateScrollState();
+      scheduleLayoutMetrics();
     });
   },
   { deep: true },
-);
-
-watch(
-  [widthMode, len],
-  () => {
-    void nextTick(() => {
-      if (scrollerRef.value) {
-        scrollerRef.value.scrollTo({ left: 0, behavior: "auto" });
-      }
-      updateScrollState();
-    });
-  },
-  { immediate: true },
 );
 
 watch(lightboxIndex, (idx) => {
@@ -498,9 +521,8 @@ function goNext(): void {
 
 <style scoped>
 /**
- * 100% = scroll track (flex container) width. `calc(100% - x)` must use spaces
- * around `-` or the declaration is invalid in browsers.
- * --g matches .gap-3 (0.75rem) and md:.gap-4 (1rem).
+ * Fixed band height `--slide-h`; each image uses that height and `width: auto` so aspect ratio
+ * matches the file. Slide width follows intrinsic dimensions (`flex: 0 0 auto`).
  */
 .carousel-track {
   --g: 0.75rem;
@@ -512,51 +534,52 @@ function goNext(): void {
   }
 }
 
+.carousel-track[data-band="compact"] {
+  --slide-h: min(42vh, 22rem);
+  min-height: var(--slide-h);
+}
+
+@media (min-width: 768px) {
+  .carousel-track[data-band="compact"] {
+    --slide-h: min(48vh, 25rem);
+    min-height: var(--slide-h);
+  }
+}
+
+.carousel-track[data-band="comfort"] {
+  --slide-h: min(46vh, 24rem);
+  min-height: var(--slide-h);
+}
+
+@media (min-width: 768px) {
+  .carousel-track[data-band="comfort"] {
+    --slide-h: min(52vh, 27rem);
+    min-height: var(--slide-h);
+  }
+}
+
 .carousel-slide {
   box-sizing: border-box;
   display: flex;
-  min-width: 0;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
+  flex: 0 0 auto;
+  height: var(--slide-h);
+  align-items: stretch;
 }
 
 .carousel-img-trigger {
-  max-height: 100%;
+  box-sizing: border-box;
+  display: block;
+  height: var(--slide-h);
+  width: fit-content;
+  max-width: none;
+  padding: 0;
 }
 
 .carousel-img {
-  height: auto;
-  max-width: 100%;
-}
-
-/* Single image: full width of track */
-.carousel-slide--single {
-  width: 100%;
-  flex: 0 0 100%;
-}
-
-/* Two images: 50% minus half the single gap */
-.carousel-slide--pair {
-  flex: 0 0 calc((100% - var(--g)) * 0.5);
-  width: calc((100% - var(--g)) * 0.5);
-}
-
-/* 3+ on large: ~2.5 across — 2.5 * slide + 2 * gap = 100% */
-.carousel-slide--multi-peek {
-  flex: 0 0 calc((100% - 2 * var(--g)) / 2.5);
-  width: calc((100% - 2 * var(--g)) / 2.5);
-}
-
-/* Tablet: ~1.5 visible */
-.carousel-slide--tablet-peek {
-  flex: 0 0 calc((100% - var(--g)) / 1.5);
-  width: calc((100% - var(--g)) / 1.5);
-}
-
-/* Narrow phone: more peek, smaller tiles */
-.carousel-slide--mobile-peek {
-  flex: 0 0 calc((100% - var(--g)) / 1.2);
-  width: calc((100% - var(--g)) / 1.2);
+  display: block;
+  box-sizing: border-box;
+  height: var(--slide-h);
+  width: auto;
+  max-height: var(--slide-h);
 }
 </style>

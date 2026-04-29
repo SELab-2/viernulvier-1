@@ -1,5 +1,8 @@
 <template>
-  <section v-if="slides.length > 0" class="border-t border-surface-3 bg-surface-2 py-20 md:py-24">
+  <section
+    v-if="slides.length > 0"
+    class="overflow-x-clip border-t border-surface-3 bg-surface-2 py-20 md:py-24"
+  >
     <div class="mx-auto max-w-7xl px-6 md:px-12">
       <div class="mb-10 md:mb-12">
         <h2 class="text-3xl font-black uppercase tracking-tighter text-ink-primary md:text-4xl">
@@ -9,9 +12,9 @@
           {{ t("production.gallery.intro") }}
         </p>
       </div>
-
-      <ProductionImageCarousel :slides="slides" />
     </div>
+
+    <ProductionImageCarousel :slides="slides" />
   </section>
 </template>
 
