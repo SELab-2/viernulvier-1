@@ -263,12 +263,13 @@ export async function updateAdmin(
 /**
  * Update your own password.
  *
- * @param password the new password.
- * @throws {ApiError} 401 — unauthenticated.
- * @throws {ApiError} 404 — admin not found.
+ * @param oldPassword the old password to verify.
+ * @param newPassword the new password.
+ * @throws {ApiError} 400 — bad request. (password length is too short)
+ * @throws {ApiError} 401 — invalid credentials. (when the old password is wrong)
  *
  * @example
- * await updateOwnPassword("hello123");
+ * await updateOwnPassword("password", "hello123"); // password is the old password and hello123 is the new one
  */
 export async function updateOwnPassword(
   oldPassword: string,
