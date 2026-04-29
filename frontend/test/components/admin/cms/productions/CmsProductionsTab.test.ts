@@ -337,7 +337,7 @@ describe("CmsProductionsTab", () => {
     const wrapper = await mountTab();
     const api = (wrapper.vm as any).$?.exposed.__test;
 
-    api.openRemoveProductionsConfirm();
+    api.openConfirm();
     expect(api.removeConfirmOpen.value).toBe(false);
     expect(api.removeConfirmError.value).toBeNull();
 
@@ -348,10 +348,10 @@ describe("CmsProductionsTab", () => {
       deselectAll,
     };
 
-    api.openRemoveProductionsConfirm();
+    api.openConfirm();
     expect(api.removeConfirmOpen.value).toBe(true);
 
-    await api.confirmRemoveProductions();
+    await api.confirmRemove();
     expect(productionsService.deleteProduction).toHaveBeenCalledWith(mockProduction.id);
     expect(deselectAll).toHaveBeenCalled();
     expect(api.removeConfirmOpen.value).toBe(false);
@@ -448,8 +448,8 @@ describe("CmsProductionsTab", () => {
       getSelectedRows: () => [{ id: mockProduction.id }],
       deselectAll: vi.fn(),
     };
-    api.openRemoveProductionsConfirm();
-    await api.confirmRemoveProductions();
+    api.openConfirm();
+    await api.confirmRemove();
     expect(api.removeConfirmError.value).toBeTruthy();
   });
 
@@ -503,7 +503,7 @@ describe("CmsProductionsTab", () => {
       getSelectedRows: () => [],
       deselectAll: vi.fn(),
     };
-    await api.confirmRemoveProductions();
+    await api.confirmRemove();
     expect(api.removeConfirmOpen.value).toBe(false);
 
     await api.refreshEventsPanelForSelectedProduction();
@@ -626,7 +626,7 @@ describe("CmsProductionsTab", () => {
     await api.showEventsForProduction(row);
     expect(vi.mocked(eventsService.getEvent).mock.calls.length).toBe(getEventCallsAfterFirstLoad);
 
-    api.openRemoveProductionsConfirm();
+    api.openConfirm();
     expect(api.removeConfirmOpen.value).toBe(false);
 
     vi.spyOn(productionsService, "createProduction").mockRejectedValueOnce("boom" as never);

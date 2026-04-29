@@ -84,11 +84,18 @@ export default {
     actions: {
       addProduction: "+ Voeg Productie Toe",
       removeProduction: "Geselecteerde producties verwijderen",
-      confirmRemoveDialogTitle: "Producties verwijderen?",
-      confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde producties. Dit kan niet ongedaan worden gemaakt.",
       confirmRemoveCancel: "Annuleer",
       confirmRemoveSubmit: "Definitief verwijderen",
+      production: {
+        confirmRemoveDialogTitle: "Producties verwijderen?",
+        confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde producties. Dit kan niet ongedaan worden gemaakt.",
+      },
       addTag: "+ Voeg Tag Toe",
+      removeTag: "Geselecteerde tags verwijderen",
+      tag: {
+        confirmRemoveDialogTitle: "Tags verwijderen?",
+        confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde tags. Dit kan niet ongedaan worden gemaakt.",
+      },
       searchPlaceholder: "Zoek in alle kolommen...",
       selectedCount: "Geselecteerd: {count}",
       loadedCount: "Rijen geladen: {count}",
@@ -175,6 +182,7 @@ export default {
     feedback: {
       saveSuccess: "Wijzigingen opgeslagen",
       removeSuccess: "Productie verwijderd",
+      removeTagSuccess: "Tag verwijderd",
     },
     admin: {
       noPermission: "Je hebt geen toestemming om admins te beheren.",

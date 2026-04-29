@@ -27,7 +27,7 @@
           type="button"
           class="cms-remove-button"
           :disabled="selectedCount === 0"
-          @click="openRemoveProductionsConfirm"
+          @click="openConfirm"
         >
           {{ t("cms.actions.removeProduction") }}
         </button>
@@ -194,36 +194,16 @@
         @submit="submitCreateEvent"
       />
 
-      <div v-if="removeConfirmOpen" class="cms-modal-overlay" @click.self="closeRemoveProductionsConfirm">
-        <section class="cms-modal cms-remove-modal" role="dialog" aria-modal="true">
-          <header class="cms-modal-header">
-            <h2 class="text-xl font-bold text-ink-primary">
-              {{ t("cms.actions.confirmRemoveDialogTitle") }}
-            </h2>
-            <button type="button" class="cms-side-close" @click="closeRemoveProductionsConfirm">
-              {{ t("cms.panel.close") }}
-            </button>
-          </header>
-
-          <div class="cms-modal-body">
-            <p class="text-sm text-ink-secondary">
-              {{ t("cms.actions.confirmRemoveBody", { count: removeConfirmCount }) }}
-            </p>
-            <p v-if="removeConfirmError" class="text-sm text-red-700">
-              {{ removeConfirmError }}
-            </p>
-          </div>
-
-          <footer class="cms-modal-footer">
-            <button type="button" class="cms-side-close" :disabled="removeConfirmLoading" @click="closeRemoveProductionsConfirm">
-              {{ t("cms.actions.confirmRemoveCancel") }}
-            </button>
-            <button type="button" class="cms-side-save" :disabled="removeConfirmLoading" @click="confirmRemoveProductions">
-              {{ removeConfirmLoading ? t("cms.panel.saving") : t("cms.actions.confirmRemoveSubmit") }}
-            </button>
-          </footer>
-        </section>
-      </div>
+      <CmsRemoveConfirmModal
+        v-if="removeConfirmOpen"
+        :is-loading="removeConfirmLoading"
+        :error="removeConfirmError"
+        :count="selectedCount"
+        title-key="cms.actions.production.confirmRemoveDialogTitle"
+        body-key="cms.actions.production.confirmRemoveBody"
+        @close="closeConfirm"
+        @confirm="confirmRemove"
+      />
 
       <div v-if="mediaPreview" class="cms-modal-overlay" @click.self="closeMediaPreview">
         <section class="cms-modal cms-media-modal" role="dialog" aria-modal="true">
@@ -260,12 +240,14 @@ import type {
 } from "ag-grid-community";
 import { useI18n } from "vue-i18n";
 import type { Event as ArchiveEvent, Hall, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
+import CmsRemoveConfirmModal from "@/components/admin/cms/CmsRemoveConfirmModal.vue";
 import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
 import CmsCreateEventModal from "@/components/admin/cms/productions/CmsCreateEventModal.vue";
 import CmsEventsDrawer from "@/components/admin/cms/productions/CmsEventsDrawer.vue";
 import CmsTagDrawer from "@/components/admin/cms/CmsTagDrawer.vue";
 import CmsCreateProductionModal from "@/components/admin/cms/productions/CmsCreateProductionModal.vue";
 import { useCmsProductionGrid } from "@/composables/useCmsProductionGrid";
+import { useCmsRemove } from "@/composables/useCmsRemove";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, SUPPORTED_LANGS, type SupportedLang } from "@/i18n";
 import {
@@ -351,9 +333,6 @@ const rowData = ref<CmsProductionGridRow[]>([]);
 const editorPanel = ref<EditorPanelState | null>(null);
 const createModalOpen = ref(false);
 const createEventModalOpen = ref(false);
-const removeConfirmOpen = ref(false);
-const removeConfirmLoading = ref(false);
-const removeConfirmError = ref<string | null>(null);
 const mediaPreview = ref<{ url: string; kind: "image" | "video" | "youtube"; label: string } | null>(null);
 const languages = SUPPORTED_LANGS as ReadonlyArray<SupportedLang>;
 const createExtraLangs = ref({ en: false, fr: false });
@@ -411,7 +390,27 @@ const selectedEventsProduction = computed(() => {
   }
   return rowData.value.find((row) => row.id === selectedEventsProductionId.value) ?? null;
 });
-const removeConfirmCount = computed(() => selectedCount.value);
+
+const {
+  removeConfirmOpen,
+  removeConfirmLoading,
+  removeConfirmError,
+  openConfirm,
+  closeConfirm,
+  confirmRemove,
+} = useCmsRemove<CmsProductionGridRow>({
+  selectedCount,
+  getSelectedRows: () => gridApi.value?.getSelectedRows() ?? [],
+  rowToId: (row) => row.id,
+  deleteFn: deleteProduction,
+  t,
+  onSuccess: async () => {
+    selectedCount.value = 0;
+    gridApi.value?.deselectAll();
+    await loadCmsData();
+    showSaveSuccess(t("cms.feedback.removeSuccess"));
+  },
+});
 
 const createFields = createProductionFields;
 
@@ -681,46 +680,6 @@ async function loadDetailRowsForProduction(
 function closeEditorPanel(): void {
   editorPanel.value = null;
   saveError.value = null;
-}
-
-function openRemoveProductionsConfirm(): void {
-  if (selectedCount.value === 0) {
-    return;
-  }
-  removeConfirmError.value = null;
-  removeConfirmOpen.value = true;
-}
-
-function closeRemoveProductionsConfirm(): void {
-  removeConfirmOpen.value = false;
-  removeConfirmError.value = null;
-}
-
-async function confirmRemoveProductions(): Promise<void> {
-  const selectedRows = gridApi.value?.getSelectedRows() ?? [];
-  if (selectedRows.length === 0) {
-    closeRemoveProductionsConfirm();
-    return;
-  }
-
-  removeConfirmLoading.value = true;
-  removeConfirmError.value = null;
-
-  try {
-    await Promise.all(selectedRows.map((row) => deleteProduction(row.id)));
-    selectedCount.value = 0;
-    gridApi.value?.deselectAll();
-    await loadCmsData();
-    closeRemoveProductionsConfirm();
-    showSaveSuccess(t("cms.feedback.removeSuccess"));
-  } catch (error) {
-    removeConfirmError.value =
-      error instanceof Error
-        ? t("cms.errors.saveFailed", { message: error.message })
-        : t("cms.errors.saveGeneric");
-  } finally {
-    removeConfirmLoading.value = false;
-  }
 }
 
 function showSaveSuccess(message: string): void {
@@ -1303,9 +1262,9 @@ defineExpose({
     resetCreateLinkedEventForm,
     openCreateModal,
     closeCreateModal,
-    openRemoveProductionsConfirm,
-    closeRemoveProductionsConfirm,
-    confirmRemoveProductions,
+    openConfirm,
+    closeConfirm,
+    confirmRemove,
     submitCreateProduction,
     showEventsForProduction,
     refreshEventsPanelForSelectedProduction,

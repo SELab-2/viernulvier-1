@@ -20,9 +20,20 @@
     @set-column-visibility="setGridColumnVisibility"
   >
     <template #header-actions>
-      <button type="button" class="cms-add-button" data-testid="cms-add-tag" @click="openCreateModal">
-        {{ t("cms.actions.addTag") }}
-      </button>
+      <div class="flex flex-col gap-2">
+        <button type="button" class="cms-add-button" data-testid="cms-add-tag" @click="openCreateModal">
+          {{ t("cms.actions.addTag") }}
+        </button>
+        <button
+          type="button"
+          class="cms-remove-button"
+          data-testid="cms-remove-tags"
+          :disabled="selectedCount === 0"
+          @click="openConfirm"
+        >
+          {{ t("cms.actions.removeTag") }}
+        </button>
+      </div>
     </template>
 
     <template #grid>
@@ -54,6 +65,17 @@
     </template>
 
     <template #modals>
+      <CmsRemoveConfirmModal
+        v-if="removeConfirmOpen"
+        :is-loading="removeConfirmLoading"
+        :error="removeConfirmError"
+        :count="selectedCount"
+        title-key="cms.actions.tag.confirmRemoveDialogTitle"
+        body-key="cms.actions.tag.confirmRemoveBody"
+        @close="closeConfirm"
+        @confirm="confirmRemove"
+      />
+
       <CmsCreateTagModal
         :open="createModalOpen"
         :create-form="createForm"
@@ -81,12 +103,14 @@ import { AgGridVue } from "ag-grid-vue3";
 import type { CellEditingStoppedEvent } from "ag-grid-community";
 import { useI18n } from "vue-i18n";
 import type { Tag, TagType } from "@viernulvier/shared";
+import CmsRemoveConfirmModal from "@/components/admin/cms/CmsRemoveConfirmModal.vue";
 import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
 import CmsCreateTagModal from "@/components/admin/cms/tags/CmsCreateTagModal.vue";
+import { useCmsRemove } from "@/composables/useCmsRemove";
 import { useCmsTagGrid } from "@/composables/useCmsTagGrid";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
-import { createTag, getAllTags, getTagTypes, updateTag } from "@/services/tags";
+import { createTag, deleteTag, getAllTags, getTagTypes, updateTag } from "@/services/tags";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import {
   applyUpdatedTagToRow,
@@ -122,6 +146,7 @@ const {
   setGridColumnVisibility,
   applyQuickFilter,
   persistGridState,
+  gridApi,
 } = useCmsTagGrid({ isDark, t });
 
 const isLoading = ref(false);
@@ -162,6 +187,26 @@ function localizeValue(map: LanguageMap | null | undefined): string {
 function tagTypeMap(): Map<number, TagType> {
   return new Map(tagTypesData.value.map((type) => [type.id, type]));
 }
+
+const {
+  removeConfirmOpen,
+  removeConfirmLoading,
+  removeConfirmError,
+  openConfirm,
+  closeConfirm,
+  confirmRemove,
+} = useCmsRemove<CmsTagGridRow>({
+  selectedCount,
+  getSelectedRows: () => gridApi.value?.getSelectedRows() ?? [],
+  rowToId: (row) => row.id,
+  deleteFn: deleteTag,
+  t,
+  onSuccess: async () => {
+    selectedCount.value = 0;
+    gridApi.value?.deselectAll();
+    await loadTagsData();
+  },
+});
 
 function rebuildRows(): void {
   rowData.value = buildTagGridRows(tagsData.value, tagTypesData.value, localizeValue);
@@ -332,6 +377,14 @@ defineExpose({
     setCreateTagType,
     setCreatePublic,
     setCreateExtraLang,
+    removeConfirmOpen,
+    removeConfirmLoading,
+    removeConfirmError,
+    openConfirm,
+    closeConfirm,
+    confirmRemove,
+    selectedCount,
+    gridApi,
   },
 });
 

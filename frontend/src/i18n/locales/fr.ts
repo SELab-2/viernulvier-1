@@ -84,11 +84,18 @@ export default {
     actions: {
       addProduction: "+ Ajouter une production",
       removeProduction: "Supprimer les productions sélectionnées",
-      confirmRemoveDialogTitle: "Supprimer les productions ?",
-      confirmRemoveBody: "Cette action supprimera définitivement {count} productions sélectionnées. Cette opération est irréversible.",
       confirmRemoveCancel: "Annuler",
       confirmRemoveSubmit: "Supprimer définitivement",
+      production: {
+        confirmRemoveDialogTitle: "Supprimer les productions ?",
+        confirmRemoveBody: "Cette action supprimera définitivement {count} productions sélectionnées. Cette opération est irréversible.",
+      },
       addTag: "+ Ajouter un tag",
+      removeTag: "Supprimer les tags sélectionnés",
+      tag: {
+        confirmRemoveDialogTitle: "Supprimer les tags ?",
+        confirmRemoveBody: "Cette action supprimera définitivement {count} tags sélectionnés. Cette opération est irréversible.",
+      },
       searchPlaceholder: "Rechercher dans toutes les colonnes...",
       selectedCount: "Selectionne: {count}",
       loadedCount: "Lignes chargees: {count}",
@@ -175,6 +182,7 @@ export default {
     feedback: {
       saveSuccess: "Modifications enregistrees",
       removeSuccess: "Production supprimee",
+      removeTagSuccess: "Tag supprimé",
     },
     admin: {
       noPermission: "Vous n'avez pas la permission de administrer les admins.",
