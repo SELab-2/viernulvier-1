@@ -33,7 +33,7 @@ export async function login(
   const { id, super: superValue } = await checkCredentials(server, { username }, password);
 
   const token = server.jwt.sign(
-    { id: id, username, super: superValue, jti: server.generateJti() },
+    { id, username, super: superValue, jti: server.generateJti() },
     { expiresIn: "24h" },
   );
 
@@ -51,11 +51,19 @@ type AdminIdentifier =
   | { username: string }
   | { id: number };
 
-const fetchAdminCredentials = (server: FastifyInstance) =>
+const fetchByUsername = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `SELECT id, password, super FROM admin WHERE username = $1 OR id = $2`,
-    z.tuple([z.string().nullable(), z.number().nullable()]),
+    `SELECT id, password, super FROM admin WHERE username = $1`,
+    z.tuple([z.string()]),
+    LoginRowSchema,
+  );
+
+const fetchById = (server: FastifyInstance) =>
+  buildQuery(
+    server,
+    `SELECT id, password, super FROM admin WHERE id = $1`,
+    z.tuple([z.number()]),
     LoginRowSchema,
   );
 
@@ -80,11 +88,11 @@ export async function checkCredentials(
   super: boolean;
   password: string;
 }> {
-  const values: [string | null, number | null] = "username" in identifier
-    ? [identifier.username, null]
-    : [null, identifier.id];
-
-  const rows = await fetchAdminCredentials(server)(values[0], values[1]);
+  const rows = await (
+    "username" in identifier
+      ? fetchByUsername(server)(identifier.username)
+      : fetchById(server)(identifier.id)
+  );
 
   const valid = await comparePassword(password, rows[0]?.password ?? DUMMY_HASH);
 

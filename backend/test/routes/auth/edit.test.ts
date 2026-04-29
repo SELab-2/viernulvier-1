@@ -29,7 +29,7 @@ beforeAll(async () => {
     const upper = query.trim().toUpperCase();
 
     if (upper.startsWith("SELECT")) {
-      const identifier = values[1];
+      const identifier = values[0];
 
       // simulate "user not found"
       if (identifier !== mockCreatedAdmin.id) {
