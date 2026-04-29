@@ -275,7 +275,7 @@ export async function updateOwnPassword(
   oldPassword: string,
   newPassword: string,
 ): Promise<void> {
-  await apiFetch<Admin>(`/auth/me`, { method: "PATCH", body: { oldPassword, newPassword } });
+  await apiFetch<void>(`/auth/me`, { method: "PATCH", body: { oldPassword, newPassword } });
 }
 
 /**
