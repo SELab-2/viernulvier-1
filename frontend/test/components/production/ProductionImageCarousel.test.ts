@@ -355,6 +355,70 @@ describe("ProductionImageCarousel.vue", () => {
     expect(document.querySelector('[data-testid="lightbox-image"]')).toBeNull();
     wrapper.unmount();
   });
+
+  it("uses narrow viewport class when measured scroll width fits the heading column", async () => {
+    const wrapper = mountAtWidth(slides4, 1280);
+    await nextTick();
+    const sc = wrapper.get(".overflow-x-auto").element as HTMLElement;
+    Object.defineProperty(sc, "scrollWidth", { value: 400, configurable: true });
+    window.dispatchEvent(new Event("resize"));
+    await nextTick();
+    expect(wrapper.get('[data-testid="carousel-viewport"]').classes().join(" ")).toContain(
+      "max-w-7xl",
+    );
+  });
+
+  it("uses wide viewport class when measured scroll width exceeds narrow inner width", async () => {
+    const wrapper = mountAtWidth(slides4, 1280);
+    await nextTick();
+    const sc = wrapper.get(".overflow-x-auto").element as HTMLElement;
+    Object.defineProperty(sc, "scrollWidth", {
+      configurable: true,
+      get: () => 6000,
+    });
+    window.dispatchEvent(new Event("resize"));
+    await nextTick();
+    await nextTick();
+    expect(wrapper.get('[data-testid="carousel-viewport"]').classes().join(" ")).toContain(
+      "105rem",
+    );
+  });
+
+  it("schedules layout when an image emits load", async () => {
+    const wrapper = mountAtWidth(slides4, 1280);
+    await nextTick();
+    await wrapper.findAll("img")[0]!.element.dispatchEvent(new Event("load"));
+    await nextTick();
+    expect(wrapper.findAll("img")).toHaveLength(4);
+  });
+
+  it("does not paginate carousel keyboard while lightbox is open", async () => {
+    const wrapper = mount(ProductionImageCarousel, {
+      props: { slides: slides4 },
+      global: { plugins: [i18n] },
+      attachTo: document.body,
+    });
+    await wrapper.get('[data-testid="carousel-img-trigger"]').trigger("click");
+    await nextTick();
+    await wrapper.get('[role="region"]').trigger("keydown", { key: "ArrowRight" });
+    await nextTick();
+    expect(document.querySelector('[data-testid="lightbox-image"]')).toBeTruthy();
+    wrapper.unmount();
+  });
+
+  it("closes lightbox when slides prop shrinks past selected index", async () => {
+    const wrapper = mount(ProductionImageCarousel, {
+      props: { slides: slides4 },
+      global: { plugins: [i18n] },
+      attachTo: document.body,
+    });
+    await wrapper.findAll('[data-testid="carousel-img-trigger"]')[3]!.trigger("click");
+    await nextTick();
+    await wrapper.setProps({ slides: slides4.slice(0, 2) });
+    await nextTick();
+    expect(document.querySelector('[data-testid="lightbox-image"]')).toBeNull();
+    wrapper.unmount();
+  });
 });
 
 describe("ProductionImageCarousel.vue — full-motion ease (not reduced motion)", () => {
