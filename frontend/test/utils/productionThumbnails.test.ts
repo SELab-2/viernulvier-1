@@ -3,15 +3,28 @@ import {
   pickHighQualityImageCropUrl,
   pickProductionDetailBannerUrl,
   pickProductionListThumbnailUrl,
+  PRODUCTION_DETAIL_BANNER_CROP_TYPE,
+  PRODUCTION_GALLERY_SLIDE_CROP_TYPE,
+  PRODUCTION_LIST_THUMB_CROP_TYPE,
 } from "@/utils/productionThumbnails";
 import type { ImageWithCrops } from "@/services/media";
+
+function crop(type: string, url: string, imageId = 1, cropId = 1) {
+  return {
+    id: cropId,
+    old_id: null,
+    image: imageId,
+    type,
+    url,
+  };
+}
 
 describe("pickProductionListThumbnailUrl", () => {
   it("returns null for empty list", () => {
     expect(pickProductionListThumbnailUrl([])).toBeNull();
   });
 
-  it("skips an image with no crops and uses the next", () => {
+  it("skips an image with no crops and uses the next when it has FE3_header", () => {
     const images: ImageWithCrops[] = [
       { id: 1, old_id: null, production: 1, res: null, crops: [] },
       {
@@ -19,21 +32,65 @@ describe("pickProductionListThumbnailUrl", () => {
         old_id: null,
         production: 1,
         res: null,
+        crops: [crop(PRODUCTION_LIST_THUMB_CROP_TYPE, "/header.jpg", 2)],
+      },
+    ];
+    expect(pickProductionListThumbnailUrl(images)).toBe("/header.jpg");
+  });
+
+  it("does not fall back to other crop types when FE3_header is missing", () => {
+    const images: ImageWithCrops[] = [
+      {
+        id: 1,
+        old_id: null,
+        production: 1,
+        res: null,
         crops: [
-          {
-            id: 1,
-            old_id: null,
-            image: 2,
-            type: "x",
-            url: "/second.jpg",
-          },
+          crop(PRODUCTION_DETAIL_BANNER_CROP_TYPE, "/wide.jpg", 1),
+          crop(PRODUCTION_GALLERY_SLIDE_CROP_TYPE, "/boxed.jpg", 1),
+        ],
+      },
+      {
+        id: 2,
+        old_id: null,
+        production: 1,
+        res: null,
+        crops: [crop(PRODUCTION_LIST_THUMB_CROP_TYPE, "/thumb.jpg", 2)],
+      },
+    ];
+    expect(pickProductionListThumbnailUrl(images)).toBe("/thumb.jpg");
+  });
+
+  it("returns FE3_header when present alongside other crops", () => {
+    const images: ImageWithCrops[] = [
+      {
+        id: 1,
+        old_id: null,
+        production: 1,
+        res: null,
+        crops: [
+          crop(PRODUCTION_GALLERY_SLIDE_CROP_TYPE, "/boxed.jpg", 1, 1),
+          crop(PRODUCTION_LIST_THUMB_CROP_TYPE, "/header.jpg", 1, 2),
         ],
       },
     ];
-    expect(pickProductionListThumbnailUrl(images)).toBe("/second.jpg");
+    expect(pickProductionListThumbnailUrl(images)).toBe("/header.jpg");
   });
 
-  it("skips a row when the chosen crop has no url", () => {
+  it("returns null when no image has FE3_header", () => {
+    const images: ImageWithCrops[] = [
+      {
+        id: 1,
+        old_id: null,
+        production: 1,
+        res: null,
+        crops: [crop(PRODUCTION_DETAIL_BANNER_CROP_TYPE, "/wide.jpg", 1)],
+      },
+    ];
+    expect(pickProductionListThumbnailUrl(images)).toBeNull();
+  });
+
+  it("skips FE3_header with empty url and tries later images", () => {
     const images: ImageWithCrops[] = [
       {
         id: 1,
@@ -45,7 +102,7 @@ describe("pickProductionListThumbnailUrl", () => {
             id: 1,
             old_id: null,
             image: 1,
-            type: "banner",
+            type: PRODUCTION_LIST_THUMB_CROP_TYPE,
             url: "",
           },
         ],
@@ -55,116 +112,10 @@ describe("pickProductionListThumbnailUrl", () => {
         old_id: null,
         production: 1,
         res: null,
-        crops: [
-          {
-            id: 2,
-            old_id: null,
-            image: 2,
-            type: "y",
-            url: "/y.jpg",
-          },
-        ],
+        crops: [crop(PRODUCTION_LIST_THUMB_CROP_TYPE, "/ok.jpg", 2)],
       },
     ];
-    expect(pickProductionListThumbnailUrl(images)).toBe("/y.jpg");
-  });
-
-  it("matches thumbnail-like type with locale-specific segments (Klein)", () => {
-    const images: ImageWithCrops[] = [
-      {
-        id: 1,
-        old_id: null,
-        production: 1,
-        res: null,
-        crops: [
-          {
-            id: 1,
-            old_id: null,
-            image: 1,
-            type: "KleinVoorstelling",
-            url: "/klein.jpg",
-          },
-        ],
-      },
-    ];
-    expect(pickProductionListThumbnailUrl(images)).toBe("/klein.jpg");
-  });
-
-  it("prefers type banner over thumbnail-like crops", () => {
-    const images: ImageWithCrops[] = [
-      {
-        id: 1,
-        old_id: null,
-        production: 1,
-        res: null,
-        crops: [
-          {
-            id: 1,
-            old_id: null,
-            image: 1,
-            type: "thumbnail",
-            url: "/media/crops/b.jpg",
-          },
-          {
-            id: 2,
-            old_id: null,
-            image: 1,
-            type: "banner",
-            url: "/media/crops/banner.jpg",
-          },
-        ],
-      },
-    ];
-    expect(pickProductionListThumbnailUrl(images)).toBe("/media/crops/banner.jpg");
-  });
-
-  it("prefers a thumbnail-like crop when no banner exists", () => {
-    const images: ImageWithCrops[] = [
-      {
-        id: 1,
-        old_id: null,
-        production: 1,
-        res: null,
-        crops: [
-          {
-            id: 1,
-            old_id: null,
-            image: 1,
-            type: "full",
-            url: "/media/crops/a.jpg",
-          },
-          {
-            id: 2,
-            old_id: null,
-            image: 1,
-            type: "thumbnail",
-            url: "/media/crops/b.jpg",
-          },
-        ],
-      },
-    ];
-    expect(pickProductionListThumbnailUrl(images)).toBe("/media/crops/b.jpg");
-  });
-
-  it("falls back to the first crop", () => {
-    const images: ImageWithCrops[] = [
-      {
-        id: 1,
-        old_id: null,
-        production: 1,
-        res: "1920x1080",
-        crops: [
-          {
-            id: 1,
-            old_id: null,
-            image: 1,
-            type: "default",
-            url: "/media/crops/c.jpg",
-          },
-        ],
-      },
-    ];
-    expect(pickProductionListThumbnailUrl(images)).toBe("/media/crops/c.jpg");
+    expect(pickProductionListThumbnailUrl(images)).toBe("/ok.jpg");
   });
 });
 
@@ -180,7 +131,7 @@ describe("pickProductionDetailBannerUrl", () => {
     expect(pickProductionDetailBannerUrl(images)).toBeNull();
   });
 
-  it("prefers hd_ready on the first gallery image (full-res master)", () => {
+  it("returns FE3_home_featuredWide from the first image only", () => {
     const images: ImageWithCrops[] = [
       {
         id: 1,
@@ -188,63 +139,35 @@ describe("pickProductionDetailBannerUrl", () => {
         production: 1,
         res: null,
         crops: [
-          {
-            id: 1,
-            old_id: null,
-            image: 1,
-            type: "nb_header",
-            url: "/media/crops/nbh.jpg",
-          },
-          {
-            id: 2,
-            old_id: null,
-            image: 1,
-            type: "hd_ready",
-            url: "/media/crops/hd.jpg",
-          },
+          crop(PRODUCTION_DETAIL_BANNER_CROP_TYPE, "/featured.jpg", 1),
+          crop(PRODUCTION_LIST_THUMB_CROP_TYPE, "/header.jpg", 1, 2),
         ],
       },
     ];
-    expect(pickProductionDetailBannerUrl(images)).toBe("/media/crops/hd.jpg");
+    expect(pickProductionDetailBannerUrl(images)).toBe("/featured.jpg");
   });
 
-  it("uses the first image only, not a later one with a better type", () => {
+  it("does not use a later image when the first lacks FE3_home_featuredWide", () => {
     const images: ImageWithCrops[] = [
       {
         id: 1,
         old_id: null,
         production: 1,
         res: null,
-        crops: [
-          {
-            id: 1,
-            old_id: null,
-            image: 1,
-            type: "cms",
-            url: "/media/crops/cms.jpg",
-          },
-        ],
+        crops: [crop(PRODUCTION_LIST_THUMB_CROP_TYPE, "/header.jpg", 1)],
       },
       {
         id: 2,
         old_id: null,
         production: 1,
         res: null,
-        crops: [
-          {
-            id: 2,
-            old_id: null,
-            image: 2,
-            type: "hd_ready",
-            url: "/media/crops/hd2.jpg",
-          },
-        ],
+        crops: [crop(PRODUCTION_DETAIL_BANNER_CROP_TYPE, "/featured2.jpg", 2)],
       },
     ];
-    expect(pickProductionDetailBannerUrl(images)).toBe("/media/crops/cms.jpg");
+    expect(pickProductionDetailBannerUrl(images)).toBeNull();
   });
 
-  it("falls back to nb_header when the first image has no higher-priority type", () => {
+  it("returns null when first image has crops but not FE3_home_featuredWide", () => {
     const images: ImageWithCrops[] = [
       {
         id: 1,
@@ -252,45 +175,42 @@ describe("pickProductionDetailBannerUrl", () => {
         production: 1,
         res: null,
         crops: [
-          {
-            id: 1,
-            old_id: null,
-            image: 1,
-            type: "nb_header",
-            url: "/media/crops/header.jpg",
-          },
+          crop("hd_ready", "/hd.jpg", 1),
+          crop(PRODUCTION_GALLERY_SLIDE_CROP_TYPE, "/boxed.jpg", 1, 2),
         ],
       },
     ];
-    expect(pickProductionDetailBannerUrl(images)).toBe("/media/crops/header.jpg");
+    expect(pickProductionDetailBannerUrl(images)).toBeNull();
   });
 });
 
 describe("pickHighQualityImageCropUrl", () => {
-  it("prefers hd_ready over nb_header for a single image", () => {
-    const image = {
+  it("returns FE3_boxed only", () => {
+    const image: ImageWithCrops = {
       id: 1,
       old_id: null,
       production: 1,
       res: null,
       crops: [
-        {
-          id: 1,
-          old_id: null,
-          image: 1,
-          type: "nb_header",
-          url: "/media/crops/nb.jpg",
-        },
-        {
-          id: 2,
-          old_id: null,
-          image: 1,
-          type: "hd_ready",
-          url: "/media/crops/hd.jpg",
-        },
+        crop("hd_ready", "/hd.jpg", 1, 1),
+        crop(PRODUCTION_GALLERY_SLIDE_CROP_TYPE, "/boxed.jpg", 1, 2),
       ],
     };
-    expect(pickHighQualityImageCropUrl(image)).toBe("/media/crops/hd.jpg");
+    expect(pickHighQualityImageCropUrl(image)).toBe("/boxed.jpg");
+  });
+
+  it("returns null when FE3_boxed is absent even if other types exist", () => {
+    const image: ImageWithCrops = {
+      id: 1,
+      old_id: null,
+      production: 1,
+      res: null,
+      crops: [
+        crop("hd_ready", "/hd.jpg", 1),
+        crop(PRODUCTION_LIST_THUMB_CROP_TYPE, "/header.jpg", 1, 2),
+      ],
+    };
+    expect(pickHighQualityImageCropUrl(image)).toBeNull();
   });
 
   it("returns null when there are no crops", () => {
@@ -314,7 +234,7 @@ describe("pickHighQualityImageCropUrl", () => {
     expect(pickHighQualityImageCropUrl(image)).toBeNull();
   });
 
-  it("skips a high-priority crop with an empty url and uses the next type", () => {
+  it("returns null when FE3_boxed url is empty", () => {
     const image: ImageWithCrops = {
       id: 1,
       old_id: null,
@@ -325,18 +245,12 @@ describe("pickHighQualityImageCropUrl", () => {
           id: 1,
           old_id: null,
           image: 1,
-          type: "hd_ready",
+          type: PRODUCTION_GALLERY_SLIDE_CROP_TYPE,
           url: "",
         },
-        {
-          id: 2,
-          old_id: null,
-          image: 1,
-          type: "nbv4_header",
-          url: "/from-next.jpg",
-        },
+        crop("hd_ready", "/hd.jpg", 1, 2),
       ],
     };
-    expect(pickHighQualityImageCropUrl(image)).toBe("/from-next.jpg");
+    expect(pickHighQualityImageCropUrl(image)).toBeNull();
   });
 });

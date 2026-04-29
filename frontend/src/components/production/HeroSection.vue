@@ -1,19 +1,24 @@
 <template>
-  <section class="relative flex min-h-[70vh] w-full items-end overflow-hidden">
+  <!-- Min height matches ~1920×600 banners; flex + justify-end grows the section when overlay text needs more room -->
+  <section
+    class="relative flex w-full min-h-[max(280px,calc(100vw*600/1920))] flex-col justify-end overflow-hidden"
+  >
     <div class="absolute inset-0 z-0 bg-black">
       <img
         v-if="bannerUrl"
         :src="bannerUrl"
         :alt="heroImageAlt"
-        class="h-full w-full object-cover"
+        class="h-full w-full object-cover object-center"
         loading="eager"
         decoding="async"
         referrerPolicy="no-referrer"
       />
       <div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent"></div>
     </div>
-    
-    <div class="relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-between gap-12 px-6 pb-20 md:flex-row md:items-end md:px-12">
+
+    <div
+      class="relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-between gap-12 px-6 pb-12 pt-8 md:flex-row md:items-end md:px-12 md:pb-20 md:pt-12"
+    >
       <div class="opacity-0 animate-fade-up max-w-4xl">
         <div class="mb-4 flex flex-col gap-2">
           <span class="text-sm font-bold uppercase tracking-[0.3em] text-ink-on-inv opacity-70">
@@ -97,7 +102,7 @@ interface Props {
     durationMinutes: number | null;
     hasMultipleDays: boolean;
   } | null;
-  /** First gallery image, preferring high-res (`hd_ready`, etc.); when null, solid black hero. */
+  /** First gallery image (`FE3_home_featuredWide` crop); when null, solid black hero. */
   bannerUrl?: string | null;
 }
 

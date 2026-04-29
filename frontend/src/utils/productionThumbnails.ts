@@ -1,64 +1,46 @@
 import type { ImageWithCrops } from "@/services/media";
 import type { Crop } from "@viernulvier/shared";
 
-/**
- * High-res / wide crop names (Viernulvier archive). Used for the detail hero, gallery, etc.
- * Order is tried per image until a match exists.
- */
-export const HIGH_QUALITY_CROP_TYPE_PRIORITY: readonly string[] = [
-  "hd_ready",
-  "nbv4_header",
-  "FE3_2by1",
-  "FE3_header",
-  "FE3_boxed",
-  "FE3_home_featuredWide",
-  "FE3_sponsor",
-  "banner",
-  "nb_header",
-];
+/** List/card thumbnails */
+export const PRODUCTION_LIST_THUMB_CROP_TYPE = "FE3_header" as const;
 
-function pickUrlFromCrops(crops: Crop[]): string | null {
-  if (crops.length === 0) return null;
-  for (const type of HIGH_QUALITY_CROP_TYPE_PRIORITY) {
-    const found = crops.find((c) => c.type === type);
-    if (found?.url) return found.url;
-  }
-  return crops[0]!.url;
+/** Detail hero banner (first gallery image) */
+export const PRODUCTION_DETAIL_BANNER_CROP_TYPE = "FE3_home_featuredWide" as const;
+
+/** Carousel / gallery slides */
+export const PRODUCTION_GALLERY_SLIDE_CROP_TYPE = "FE3_boxed" as const;
+
+function cropUrlForType(crops: Crop[], type: string): string | null {
+  const crop = crops.find((c) => c.type === type);
+  const url = crop?.url?.trim();
+  return url ? url : null;
 }
 
 /**
- * Picks the best available crop URL for one gallery image (same quality preference as the hero).
+ * Picks the carousel crop URL for one gallery image (`FE3_boxed` only).
  */
 export function pickHighQualityImageCropUrl(image: ImageWithCrops): string | null {
-  return pickUrlFromCrops(image.crops ?? []);
+  return cropUrlForType(image.crops ?? [], PRODUCTION_GALLERY_SLIDE_CROP_TYPE);
 }
 
 /**
- * Picks a single crop URL for a compact list preview: first image with a usable
- * crop, preferring the `banner` type (Viernulvier’s wide list-style crop), then
- * thumbnail-like names, otherwise the first crop.
+ * Picks the list/card thumbnail URL: first image that has `FE3_header`.
  */
 export function pickProductionListThumbnailUrl(
   images: ImageWithCrops[],
 ): string | null {
   for (const image of images) {
-    const crops = image.crops ?? [];
-    if (crops.length === 0) continue;
-    const banner = crops.find((c) => c.type === "banner");
-    const thumbLike = crops.find((c) =>
-      /thumb|small|mini|preview|klein/i.test(c.type),
-    );
-    const chosen = banner ?? thumbLike ?? crops[0];
-    if (chosen?.url) return chosen.url;
+    const url = cropUrlForType(image.crops ?? [], PRODUCTION_LIST_THUMB_CROP_TYPE);
+    if (url) return url;
   }
   return null;
 }
 
 /**
- * Picks a URL for the production detail hero from the first gallery image.
+ * Hero banner URL from the first gallery image (`FE3_home_featuredWide` only).
  */
 export function pickProductionDetailBannerUrl(images: ImageWithCrops[]): string | null {
   const first = images[0];
   if (!first) return null;
-  return pickUrlFromCrops(first.crops ?? []);
+  return cropUrlForType(first.crops ?? [], PRODUCTION_DETAIL_BANNER_CROP_TYPE);
 }
