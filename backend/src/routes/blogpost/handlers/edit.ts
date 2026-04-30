@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { BlogPost } from "@viernulvier/shared/index.js";
 import { BlogPostSchema, stringToInt } from "@viernulvier/shared/index.js";
-import { getMetadata, parseParams, parseSchema, HttpError, HttpClientError, ParseContext, buildQuery } from "@/routes/helpers.js";
+import { getMetadata, parseParams, parseSchema, HttpError, HttpClientError, ParseContext } from "@/routes/helpers.js";
 import { z } from "zod";
 
 const EditBlogPostBodySchema = BlogPostSchema.omit({ id: true }).partial().extend({
@@ -11,6 +11,8 @@ const EditBlogPostBodySchema = BlogPostSchema.omit({ id: true }).partial().exten
 /**
  * Updates an existing blogpost and returns the updated record.
  * If productions array is provided, updates the production_blogpost relations.
+ * All operations are wrapped in a transaction — if any part fails, the entire
+ * operation is rolled back and nothing is persisted.
  *
  * @param server - The Fastify instance, used for database access and logging.
  * @param request - The Fastify request, expected to contain `id` in params and a partial blogpost body.
@@ -44,54 +46,53 @@ export async function editBlogPost(
     throw new HttpError(HttpClientError.BadRequest, "No fields to update");
   }
 
-  fields.push(`updated_by = $${i++}`, `updated_at = $${i++}`);
-  values.push(admin, current_time, id);
+  const client = await server.pg.connect();
 
-  const result = await server.pg.query<BlogPost>(
-    `UPDATE blogpost SET ${fields.join(", ")} WHERE id = $${i}
-     RETURNING id, blog, title, content, published_at`,
-    values,
-  );
+  try {
+    await client.query("BEGIN");
 
-  const blogpost = parseSchema(server, z.array(BlogPostSchema), result.rows, ParseContext.Database)[0];
-  if (!blogpost) {
-    return null;
-  }
+    // Update blogpost fields within transaction
+    fields.push(`updated_by = $${i++}`, `updated_at = $${i++}`);
+    values.push(admin, current_time, id);
 
-  // Update production_blogpost relations if productions array is provided
-  if (productions !== undefined) {
-    // Delete existing relations
-    try {
-      await server.pg.query(
+    const result = await client.query<BlogPost>(
+      `UPDATE blogpost SET ${fields.join(", ")} WHERE id = $${i}
+       RETURNING id, blog, title, content, published_at`,
+      values,
+    );
+
+    const blogpost = parseSchema(server, z.array(BlogPostSchema), result.rows, ParseContext.Database)[0];
+    if (!blogpost) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    // Update production_blogpost relations if productions array is provided
+    if (productions !== undefined) {
+      // Delete existing relations
+      await client.query(
         `DELETE FROM production_blogpost WHERE blogpost = $1`,
         [id],
       );
-    } catch (err) {
-      server.log.error(err);
-    }
 
-    // Insert new relations
-    for (const production of productions) {
-      try {
-        await buildQuery(
-          server,
+      // Insert new relations
+      for (const production of productions) {
+        await client.query(
           `INSERT INTO production_blogpost (production, blogpost, created_by, updated_by, created_at, updated_at)
            VALUES ($1, $2, $3, $3, $4, $4)
            ON CONFLICT DO NOTHING`,
-          z.tuple([
-            z.int(),
-            z.int(),
-            z.int(),
-            z.date(),
-          ]),
-          z.object({}),
-        )(production, id, admin, current_time);
-      } catch (err) {
-        server.log.error(err);
-        // Log but don't fail - continue with other productions
+          [production, id, admin, current_time],
+        );
       }
     }
-  }
 
-  return blogpost;
+    await client.query("COMMIT");
+    return blogpost;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    server.log.error(err);
+    throw err;
+  } finally {
+    client.release();
+  }
 }
