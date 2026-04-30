@@ -105,9 +105,17 @@
           @click="closeLightbox"
         />
         <div
-          class="relative z-[201] mx-auto flex w-full max-w-4xl items-center justify-center md:max-w-5xl"
+          class="relative z-[201] mx-auto flex w-full items-center justify-center transition-[max-width] duration-200 ease-out"
+          :class="
+            lightboxExpanded
+              ? 'max-w-[min(96vw,86rem)]'
+              : 'max-w-5xl md:max-w-6xl'
+          "
         >
-          <div class="relative inline-block max-w-full">
+          <div
+            class="relative inline-block max-w-full"
+            :data-lightbox-zoom="lightboxExpanded ? 'expanded' : 'standard'"
+          >
             <button
               type="button"
               class="absolute right-1 top-1 z-10 flex size-8 items-center justify-center rounded-full border border-white/30 bg-black/45 text-white backdrop-blur-sm transition hover:bg-black/65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:right-2 md:top-2 md:size-9"
@@ -128,15 +136,32 @@
                 <path d="m6 6 12 12" />
               </svg>
             </button>
-            <img
-              :src="lightboxSlide.src"
-              :alt="lightboxSlide.alt"
-              class="block max-h-[min(72vh,38rem)] w-auto max-w-full object-contain sm:max-h-[min(74vh,42rem)]"
-              decoding="async"
-              referrerpolicy="no-referrer"
-              data-testid="lightbox-image"
-              @click.stop
-            />
+            <button
+              type="button"
+              class="inline-block max-w-full touch-manipulation border-0 bg-transparent p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              :class="lightboxExpanded ? 'cursor-zoom-out' : 'cursor-zoom-in'"
+              :aria-label="
+                lightboxExpanded
+                  ? t('production.gallery.lightboxShrinkView')
+                  : t('production.gallery.lightboxExpandMore')
+              "
+              data-testid="lightbox-zoom-toggle"
+              @click.stop="toggleLightboxExpanded"
+            >
+              <img
+                :src="lightboxSlide.src"
+                :alt="lightboxSlide.alt"
+                class="pointer-events-none block w-auto max-w-full object-contain transition-[max-height] duration-200 ease-out"
+                :class="
+                  lightboxExpanded
+                    ? 'max-h-[min(94vh,56rem)] sm:max-h-[min(94vh,68rem)]'
+                    : 'max-h-[min(72vh,38rem)] sm:max-h-[min(74vh,42rem)]'
+                "
+                decoding="async"
+                referrerpolicy="no-referrer"
+                data-testid="lightbox-image"
+              />
+            </button>
           </div>
         </div>
       </div>
@@ -171,6 +196,8 @@ const { t } = useI18n();
 const scrollerRef = useTemplateRef<HTMLElement>("scrollerRef");
 /** Active slide index when lightbox open; `null` when closed */
 const lightboxIndex = ref<number | null>(null);
+/** Second-step zoom inside the lightbox (click image again). */
+const lightboxExpanded = ref(false);
 const lightboxSlide = computed(() => {
   const i = lightboxIndex.value;
   if (i === null || i < 0 || i >= props.slides.length) return null;
@@ -186,11 +213,17 @@ const hideScrollbarClass =
   "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 
 function openLightbox(index: number): void {
+  lightboxExpanded.value = false;
   lightboxIndex.value = index;
 }
 
 function closeLightbox(): void {
+  lightboxExpanded.value = false;
   lightboxIndex.value = null;
+}
+
+function toggleLightboxExpanded(): void {
+  lightboxExpanded.value = !lightboxExpanded.value;
 }
 
 function onCarouselArrowLeft(): void {

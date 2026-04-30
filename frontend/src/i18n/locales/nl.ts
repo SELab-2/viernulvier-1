@@ -255,6 +255,8 @@ export default {
       openLightbox: "Afbeelding groter bekijken",
       lightboxTitle: "Vergrote afbeelding",
       closeLightbox: "Vergrote afbeelding sluiten",
+      lightboxExpandMore: "Extra groot tonen",
+      lightboxShrinkView: "Normaal vergroot tonen",
     },
     details: {
       tags: "Labels",

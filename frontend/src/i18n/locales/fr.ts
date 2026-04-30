@@ -255,6 +255,8 @@ export default {
       openLightbox: "Voir l’image en grand",
       lightboxTitle: "Image agrandie",
       closeLightbox: "Fermer l’image agrandie",
+      lightboxExpandMore: "Afficher encore plus grand",
+      lightboxShrinkView: "Revenir à la vue agrandie standard",
     },
     details: {
       tags: "Étiquettes",

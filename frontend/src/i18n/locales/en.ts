@@ -254,6 +254,8 @@ export default {
       openLightbox: "View larger image",
       lightboxTitle: "Enlarged image",
       closeLightbox: "Close enlarged image",
+      lightboxExpandMore: "Show extra-large view",
+      lightboxShrinkView: "Show standard enlarged view",
     },
     details: {
       tags: "Tags",

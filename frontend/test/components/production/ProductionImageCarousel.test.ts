@@ -22,6 +22,8 @@ const i18n = createI18n({
           openLightbox: "View larger",
           lightboxTitle: "Enlarged image",
           closeLightbox: "Close enlarged image",
+          lightboxExpandMore: "Show extra-large view",
+          lightboxShrinkView: "Show standard enlarged view",
         },
       },
     },
@@ -353,6 +355,28 @@ describe("ProductionImageCarousel.vue", () => {
       .dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await nextTick();
     expect(document.querySelector('[data-testid="lightbox-image"]')).toBeNull();
+    wrapper.unmount();
+  });
+
+  it("toggles extra-large lightbox zoom when clicking the image control", async () => {
+    const wrapper = mount(ProductionImageCarousel, {
+      props: { slides: slides4 },
+      global: { plugins: [i18n] },
+      attachTo: document.body,
+    });
+    await wrapper.get('[data-testid="carousel-img-trigger"]').trigger("click");
+    await nextTick();
+    expect(document.querySelector('[data-lightbox-zoom="standard"]')).toBeTruthy();
+    document
+      .querySelector('[data-testid="lightbox-zoom-toggle"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await nextTick();
+    expect(document.querySelector('[data-lightbox-zoom="expanded"]')).toBeTruthy();
+    document
+      .querySelector('[data-testid="lightbox-zoom-toggle"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await nextTick();
+    expect(document.querySelector('[data-lightbox-zoom="standard"]')).toBeTruthy();
     wrapper.unmount();
   });
 
