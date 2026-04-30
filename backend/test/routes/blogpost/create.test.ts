@@ -2,7 +2,7 @@ import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vit
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import { BlogPostSchema, type BlogPost } from "@viernulvier/shared/index.js";
-import { HttpSuccess, HttpClientError } from "@/routes/helpers.js";
+import { HttpSuccess, HttpClientError, HttpServerError } from "@/routes/helpers.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
@@ -40,17 +40,27 @@ beforeEach(() => {
 
 describe("Create on blogpost route", () => {
   test("POST /api/v1/blog/post — creates a blogpost with productions and returns it", async () => {
-    let callCount = 0;
-    server.pg.query = vi.fn().mockImplementation(() => {
-      callCount++;
-      if (callCount === 1) {
-        // First call: INSERT into blogpost
-        return Promise.resolve({ rows: [mockBlogPost], rowCount: 1 });
-      } else {
-        // Subsequent calls: INSERT into production_blogpost
-        return Promise.resolve({ rows: [{}], rowCount: 1 });
-      }
-    });
+    // Create a proper mock for the client returned by connect()
+    const mockClient = {
+      query: vi.fn(async (query: string) => {
+        const upper = query.trim().toUpperCase();
+        
+        if (upper === "BEGIN" || upper === "COMMIT" || upper === "ROLLBACK") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("INSERT INTO BLOGPOST") && upper.includes("RETURNING")) {
+          return Promise.resolve({ rows: [mockBlogPost], rowCount: 1 });
+        }
+        if (upper.startsWith("INSERT INTO PRODUCTION_BLOGPOST")) {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        // Fallback - return empty
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
 
     const response = await server.inject({
       method: "POST",
@@ -67,8 +77,9 @@ describe("Create on blogpost route", () => {
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
     expect(BlogPostSchema.parse(response.json())).toMatchObject({ id: mockBlogPost["id"], title: mockBlogPost["title"] });
-    // Should have called pg.query 4 times: 1 for blogpost insert + 3 for production relations
-    expect(server.pg.query).toHaveBeenCalledTimes(4);
+    // Verify transaction flow: BEGIN + INSERT blogpost + 3x INSERT production_blogpost + COMMIT
+    expect(mockClient.query).toHaveBeenCalledTimes(6);
+    expect(mockClient.release).toHaveBeenCalled();
   });
 
   test("POST /api/v1/blog/post — rejects empty productions array", async () => {
@@ -89,15 +100,24 @@ describe("Create on blogpost route", () => {
   });
 
   test("POST /api/v1/blog/post — creates a draft blogpost with productions (null published_at)", async () => {
-    let callCount = 0;
-    server.pg.query = vi.fn().mockImplementation(() => {
-      callCount++;
-      if (callCount === 1) {
-        return Promise.resolve({ rows: [mockDraftBlogPost], rowCount: 1 });
-      } else {
-        return Promise.resolve({ rows: [{}], rowCount: 1 });
-      }
-    });
+    const mockClient = {
+      query: vi.fn(async (query: string) => {
+        const upper = query.trim().toUpperCase();
+        if (upper === "BEGIN" || upper === "COMMIT" || upper === "ROLLBACK") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("INSERT INTO BLOGPOST") && upper.includes("RETURNING")) {
+          return Promise.resolve({ rows: [mockDraftBlogPost], rowCount: 1 });
+        }
+        if (upper.startsWith("INSERT INTO PRODUCTION_BLOGPOST")) {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
 
     const response = await server.inject({
       method: "POST",
@@ -114,12 +134,28 @@ describe("Create on blogpost route", () => {
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
     expect(response.json()["published_at"]).toBeNull();
-    // Should have called pg.query twice: 1 for blogpost insert + 1 for production relation
-    expect(server.pg.query).toHaveBeenCalledTimes(2);
+    // Should have called client.query: 1 BEGIN + 1 INSERT blogpost + 1 INSERT production_blogpost + 1 COMMIT
+    expect(mockClient.query).toHaveBeenCalledTimes(4);
+    expect(mockClient.release).toHaveBeenCalled();
   });
 
   test("POST /api/v1/blog/post — returns 404 when insert returns no row", async () => {
-    server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string) => {
+        const upper = query.trim().toUpperCase();
+        if (upper === "BEGIN" || upper === "ROLLBACK") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("INSERT INTO blogpost")) {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        console.error(`Unexpected query: ${query}`);
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
 
     const response = await server.inject({
       method: "POST",
@@ -211,5 +247,51 @@ describe("Create on blogpost route", () => {
     });
 
     expect(response.statusCode).toBe(HttpClientError.Unauthorized);
+  });
+
+  test("POST /api/v1/blog/post — handles transaction errors and rolls back", async () => {
+    const mockClient = {
+      query: vi.fn(async (query: string) => {
+        const upper = query.trim().toUpperCase();
+        if (upper === "BEGIN") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        // Simulate error on INSERT blogpost
+        if (upper.startsWith("INSERT INTO BLOGPOST")) {
+          throw new Error("Database error");
+        }
+        if (upper === "ROLLBACK") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/blog/post",
+      cookies: { session: sessionCookie },
+      payload: {
+        blog: mockBlogPost["blog"],
+        title: mockBlogPost["title"],
+        content: mockBlogPost["content"],
+        published_at: mockBlogPost["published_at"],
+        productions: [1],
+      },
+    });
+
+    expect(response.statusCode).toBe(HttpServerError.InternalServerError);
+    // Should have called: BEGIN + failed INSERT blogpost + ROLLBACK
+    expect(mockClient.query).toHaveBeenCalledTimes(3);
+    // Verify ROLLBACK was called
+    const rollbackCall = mockClient.query.mock.calls.find((call) =>
+      call[0].toUpperCase().includes("ROLLBACK")
+    );
+    expect(rollbackCall).toBeDefined();
+    // Verify client was released in finally block
+    expect(mockClient.release).toHaveBeenCalled();
   });
 });

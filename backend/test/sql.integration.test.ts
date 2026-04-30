@@ -345,29 +345,76 @@ describe("Blog routes — SQL integration", { sequential: true }, () => {
 describe("BlogPost routes — SQL integration", { sequential: true }, () => {
   let blogId: number;
   let blogPostId: number;
+  let productionId1: number;
+  let productionId2: number;
 
   beforeAll(async () => {
-    const response = await server.inject({
+    // Create blog
+    const blogResponse = await server.inject({
       method: "POST",
       url: "/api/v1/blog",
       cookies: { session: sessionCookie },
       payload: { name: "BlogPost Test Blog", description: null },
     });
 
-    expect(response.statusCode).toBe(HttpSuccess.OK);
-    blogId = BlogSchema.parse(response.json()).id;
+    expect(blogResponse.statusCode).toBe(HttpSuccess.OK);
+    blogId = BlogSchema.parse(blogResponse.json()).id;
+
+    // Create test productions for blogpost to link to
+    const prod1Response = await server.inject({
+      method: "POST",
+      url: "/api/v1/production",
+      cookies: { session: sessionCookie },
+      payload: {
+        title: { nl: "BlogPost Test Production 1" },
+        artist: { nl: "Test Artist" },
+        tagline: { nl: "Test tagline" },
+        teaser: { nl: "Test teaser" },
+        finalized: false,
+      },
+    });
+    expect(prod1Response.statusCode).toBe(HttpSuccess.OK);
+    productionId1 = prod1Response.json().id;
+
+    const prod2Response = await server.inject({
+      method: "POST",
+      url: "/api/v1/production",
+      cookies: { session: sessionCookie },
+      payload: {
+        title: { nl: "BlogPost Test Production 2" },
+        artist: { nl: "Test Artist" },
+        tagline: { nl: "Test tagline" },
+        teaser: { nl: "Test teaser" },
+        finalized: false,
+      },
+    });
+    expect(prod2Response.statusCode).toBe(HttpSuccess.OK);
+    productionId2 = prod2Response.json().id;
   });
 
   afterAll(async () => {
+    // Clean up blog (blogpost cascade deletes)
     const response = await server.inject({
       method: "DELETE",
       url: `/api/v1/blog/${blogId}`,
       cookies: { session: sessionCookie },
     });
     expect(response.statusCode).toBe(HttpSuccess.OK);
+
+    // Clean up productions
+    await server.inject({
+      method: "DELETE",
+      url: `/api/v1/production/${productionId1}`,
+      cookies: { session: sessionCookie },
+    });
+    await server.inject({
+      method: "DELETE",
+      url: `/api/v1/production/${productionId2}`,
+      cookies: { session: sessionCookie },
+    });
   });
 
-  test("POST /api/v1/blog/post — inserts and returns a new blogpost", async () => {
+  test("POST /api/v1/blog/post — inserts and returns a new blogpost with productions", async () => {
     const response = await server.inject({
       method: "POST",
       url: "/api/v1/blog/post",
@@ -377,6 +424,7 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
         title: "Test Post",
         content: { body: "Hello world" },
         published_at: new Date().toISOString(),
+        productions: [productionId1, productionId2],
       },
     });
 
@@ -404,6 +452,7 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
         title: "Draft Post",
         content: { body: "Not yet published" },
         published_at: null,
+        productions: [productionId1],
       },
     });
     expect(draftResponse.statusCode).toBe(HttpSuccess.OK);
@@ -444,7 +493,10 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
       method: "PATCH",
       url: `/api/v1/blog/post/${blogPostId}`,
       cookies: { session: sessionCookie },
-      payload: { title: "Updated Title" },
+      payload: { 
+        title: "Updated Title",
+        productions: [productionId1],
+      },
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
@@ -463,6 +515,7 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
         title: "Replaced Title",
         content: { body: "Replaced content" },
         published_at: null,
+        productions: [productionId2],
       },
     });
 
@@ -484,6 +537,47 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
 
     const fetchResponse = await server.inject({ method: "GET", url: `/api/v1/blog/post/${blogPostId}` });
     expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
+  });
+
+  test("GET /api/v1/production/:id — returns production with linked blogposts", async () => {
+    // Create a fresh blogpost to verify the production backwards reference
+    const postResponse = await server.inject({
+      method: "POST",
+      url: "/api/v1/blog/post",
+      cookies: { session: sessionCookie },
+      payload: {
+        blog: blogId,
+        title: "Verification Post",
+        content: { body: "Verify backwards refs" },
+        published_at: new Date().toISOString(),
+        productions: [productionId1],
+      },
+    });
+
+    expect(postResponse.statusCode).toBe(HttpSuccess.OK);
+    const verificationPostId = BlogPostSchema.parse(postResponse.json()).id;
+
+    // Fetch production and verify it includes the linked blogpost
+    const prodResponse = await server.inject({
+      method: "GET",
+      url: `/api/v1/production/${productionId1}`,
+    });
+
+    expect(prodResponse.statusCode).toBe(HttpSuccess.OK);
+    const production = ProductionSchemaWithBackwardsRefs.parse(prodResponse.json());
+    expect(production.blogposts).toBeDefined();
+    expect(Array.isArray(production.blogposts)).toBe(true);
+    expect(production.blogposts.some((bp) => {
+      const bpId = typeof bp === "object" && bp !== null && "id" in bp ? (bp as { id: number }).id : bp;
+      return bpId === verificationPostId;
+    })).toBe(true);
+
+    // Clean up verification post
+    await server.inject({
+      method: "DELETE",
+      url: `/api/v1/blog/post/${verificationPostId}`,
+      cookies: { session: sessionCookie },
+    });
   });
 });
 

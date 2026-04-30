@@ -46,12 +46,29 @@ describe("Create on production route", () => {
       const upper = query.trim().toUpperCase();
 
       if (upper.startsWith("INSERT")) {
-        return Promise.resolve({ rows: [{ id: createdProduction["id"] }], rowCount: 1 });
-      }
-
-      if (upper.startsWith("SELECT")) {
+        // Return all RETURNING fields from the INSERT statement
         return Promise.resolve({
-          rows: [productionRowWithRefs(createdProduction)],
+          rows: [
+            {
+              id: createdProduction.id,
+              old_id: createdProduction.old_id,
+              finalized: createdProduction.finalized,
+              supertitle: createdProduction.supertitle,
+              title: createdProduction.title,
+              artist: createdProduction.artist,
+              tagline: createdProduction.tagline,
+              teaser: createdProduction.teaser,
+              description: createdProduction.description,
+              description_extra: createdProduction.description_extra,
+              description_2: createdProduction.description_2,
+              video_1: createdProduction.video_1,
+              video_2: createdProduction.video_2,
+              quote: createdProduction.quote,
+              quote_source: createdProduction.quote_source,
+              programme: createdProduction.programme,
+              info: createdProduction.info,
+            },
+          ],
           rowCount: 1,
         });
       }

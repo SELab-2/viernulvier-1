@@ -2,7 +2,7 @@ import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vit
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import { BlogPostSchema, type BlogPost } from "@viernulvier/shared/index.js";
-import { HttpSuccess, HttpClientError } from "@/routes/helpers.js";
+import { HttpSuccess, HttpClientError, HttpServerError } from "@/routes/helpers.js";
 
 let server: FastifyInstance;
 let sessionCookie: string;
@@ -37,15 +37,23 @@ beforeEach(() => {
 
 describe("Edit on blogpost route", () => {
   test("PATCH /api/v1/blog/post/:id — updates title", async () => {
-    server.pg.query = vi.fn().mockImplementation((query: string) => {
-      const upper = query.trim().toUpperCase();
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string) => {
+        const upper = query.trim().toUpperCase();
 
-      if (upper.startsWith("UPDATE")) {
-        return Promise.resolve({ rows: [updatedTitle], rowCount: 1 });
-      }
+        if (upper === "BEGIN" || upper === "COMMIT") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("UPDATE")) {
+          return Promise.resolve({ rows: [updatedTitle], rowCount: 1 });
+        }
 
-      throw new Error(`Unexpected query in edit tests: ${query}`);
-    });
+        throw new Error(`Unexpected query in edit tests: ${query}`);
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
 
     const response = await server.inject({
       method: "PATCH",
@@ -59,19 +67,27 @@ describe("Edit on blogpost route", () => {
   });
 
   test("PATCH /api/v1/blog/post/:id — updates productions array", async () => {
-    server.pg.query = vi.fn().mockImplementation((query: string) => {
-      const upper = query.trim().toUpperCase();
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string) => {
+        const upper = query.trim().toUpperCase();
 
-      if (upper.startsWith("UPDATE")) {
-        return Promise.resolve({ rows: [updatedTitle], rowCount: 1 });
-      } else if (upper.startsWith("DELETE")) {
-        return Promise.resolve({ rows: [], rowCount: 0 });
-      } else if (upper.startsWith("INSERT")) {
-        return Promise.resolve({ rows: [{}], rowCount: 1 });
-      }
+        if (upper === "BEGIN" || upper === "COMMIT") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("UPDATE")) {
+          return Promise.resolve({ rows: [updatedTitle], rowCount: 1 });
+        } else if (upper.startsWith("DELETE")) {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        } else if (upper.startsWith("INSERT")) {
+          return Promise.resolve({ rows: [{}], rowCount: 1 });
+        }
 
-      throw new Error(`Unexpected query in edit tests: ${query}`);
-    });
+        throw new Error(`Unexpected query in edit tests: ${query}`);
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
 
     const response = await server.inject({
       method: "PATCH",
@@ -81,20 +97,28 @@ describe("Edit on blogpost route", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    // Should have called pg.query 5 times: 1 UPDATE + 1 DELETE + 3 INSERT
-    expect(server.pg.query).toHaveBeenCalledTimes(5);
+    // Should have called client.query: 1 BEGIN + 1 UPDATE + 1 DELETE + 3 INSERT + 1 COMMIT = 7 times
+    expect(mockClient.query).toHaveBeenCalledTimes(7);
   });
 
   test("PATCH /api/v1/blog/post/:id — leaves productions untouched when not provided", async () => {
-    server.pg.query = vi.fn().mockImplementation((query: string) => {
-      const upper = query.trim().toUpperCase();
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string) => {
+        const upper = query.trim().toUpperCase();
 
-      if (upper.startsWith("UPDATE")) {
-        return Promise.resolve({ rows: [updatedTitle], rowCount: 1 });
-      }
+        if (upper === "BEGIN" || upper === "COMMIT") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("UPDATE")) {
+          return Promise.resolve({ rows: [updatedTitle], rowCount: 1 });
+        }
 
-      throw new Error(`Unexpected query - relations should not be touched: ${query}`);
-    });
+        throw new Error(`Unexpected query - relations should not be touched: ${query}`);
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
 
     const response = await server.inject({
       method: "PATCH",
@@ -104,8 +128,8 @@ describe("Edit on blogpost route", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    // Should have called pg.query only once (UPDATE), no DELETE or INSERT
-    expect(server.pg.query).toHaveBeenCalledTimes(1);
+    // Should have called client.query: 1 BEGIN + 1 UPDATE + 1 COMMIT = 3 times
+    expect(mockClient.query).toHaveBeenCalledTimes(3);
   });
 
   test("PATCH /api/v1/blog/post/:id — rejects empty productions array", async () => {
@@ -120,15 +144,23 @@ describe("Edit on blogpost route", () => {
   });
 
   test("PATCH /api/v1/blog/post/:id — updates content", async () => {
-    server.pg.query = vi.fn().mockImplementation((query: string) => {
-      const upper = query.trim().toUpperCase();
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string) => {
+        const upper = query.trim().toUpperCase();
 
-      if (upper.startsWith("UPDATE")) {
-        return Promise.resolve({ rows: [updatedContent], rowCount: 1 });
-      }
+        if (upper === "BEGIN" || upper === "COMMIT") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("UPDATE")) {
+          return Promise.resolve({ rows: [updatedContent], rowCount: 1 });
+        }
 
-      throw new Error(`Unexpected query in edit tests: ${query}`);
-    });
+        throw new Error(`Unexpected query in edit tests: ${query}`);
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
 
     const response = await server.inject({
       method: "PATCH",
@@ -142,15 +174,23 @@ describe("Edit on blogpost route", () => {
   });
 
   test("PATCH /api/v1/blog/post/:id — publishes a draft (sets published_at)", async () => {
-    server.pg.query = vi.fn().mockImplementation((query: string) => {
-      const upper = query.trim().toUpperCase();
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string) => {
+        const upper = query.trim().toUpperCase();
 
-      if (upper.startsWith("UPDATE")) {
-        return Promise.resolve({ rows: [publishedPost], rowCount: 1 });
-      }
+        if (upper === "BEGIN" || upper === "COMMIT") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("UPDATE")) {
+          return Promise.resolve({ rows: [publishedPost], rowCount: 1 });
+        }
 
-      throw new Error(`Unexpected query in edit tests: ${query}`);
-    });
+        throw new Error(`Unexpected query in edit tests: ${query}`);
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
 
     const response = await server.inject({
       method: "PATCH",
@@ -164,15 +204,23 @@ describe("Edit on blogpost route", () => {
   });
 
   test("PATCH /api/v1/blog/post/:id — reverts to draft (clears published_at)", async () => {
-    server.pg.query = vi.fn().mockImplementation((query: string) => {
-      const upper = query.trim().toUpperCase();
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string) => {
+        const upper = query.trim().toUpperCase();
 
-      if (upper.startsWith("UPDATE")) {
-        return Promise.resolve({ rows: [draftPost], rowCount: 1 });
-      }
+        if (upper === "BEGIN" || upper === "COMMIT") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("UPDATE")) {
+          return Promise.resolve({ rows: [draftPost], rowCount: 1 });
+        }
 
-      throw new Error(`Unexpected query in edit tests: ${query}`);
-    });
+        throw new Error(`Unexpected query in edit tests: ${query}`);
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
 
     const response = await server.inject({
       method: "PATCH",
@@ -186,15 +234,23 @@ describe("Edit on blogpost route", () => {
   });
 
   test("PATCH /api/v1/blog/post/:id — returns 404 when blogpost not found", async () => {
-    server.pg.query = vi.fn().mockImplementation((query: string) => {
-      const upper = query.trim().toUpperCase();
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string) => {
+        const upper = query.trim().toUpperCase();
 
-      if (upper.startsWith("UPDATE")) {
-        return Promise.resolve({ rows: [], rowCount: 0 });
-      }
+        if (upper === "BEGIN" || upper === "ROLLBACK") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("UPDATE")) {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
 
-      throw new Error(`Unexpected query in edit tests: ${query}`);
-    });
+        throw new Error(`Unexpected query in edit tests: ${query}`);
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
 
     const response = await server.inject({
       method: "PATCH",
@@ -247,5 +303,45 @@ describe("Edit on blogpost route", () => {
     });
 
     expect(response.statusCode).toBe(HttpClientError.Unauthorized);
+  });
+
+  test("PATCH /api/v1/blog/post/:id — handles transaction errors and rolls back", async () => {
+    const mockClient = {
+      query: vi.fn(async (query: string) => {
+        const upper = query.trim().toUpperCase();
+        if (upper === "BEGIN") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        // Simulate error on UPDATE
+        if (upper.startsWith("UPDATE")) {
+          throw new Error("Database error during update");
+        }
+        if (upper === "ROLLBACK") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/blog/post/${originalBlogPost["id"]}`,
+      cookies: { session: sessionCookie },
+      payload: { title: "New title" },
+    });
+
+    expect(response.statusCode).toBe(HttpServerError.InternalServerError);
+    // Should have called: BEGIN + failed UPDATE + ROLLBACK
+    expect(mockClient.query).toHaveBeenCalledTimes(3);
+    // Verify ROLLBACK was called
+    const rollbackCall = mockClient.query.mock.calls.find((call) =>
+      call[0].toUpperCase().includes("ROLLBACK")
+    );
+    expect(rollbackCall).toBeDefined();
+    // Verify client was released in finally block
+    expect(mockClient.release).toHaveBeenCalled();
   });
 });

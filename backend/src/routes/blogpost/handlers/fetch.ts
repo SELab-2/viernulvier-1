@@ -11,7 +11,7 @@ SELECT
   bp.title,
   bp.content,
   bp.published_at,
-  (SELECT COALESCE(ARRAY_AGG(pb.production), '{}') FROM production_blog pb WHERE pb.blogpost = bp.id) AS productions
+  (SELECT COALESCE(ARRAY_AGG(pb.production), '{}') FROM production_blogpost pb WHERE pb.blogpost = bp.id) AS productions
 FROM blogpost bp
 `;
 
