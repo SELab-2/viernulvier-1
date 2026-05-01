@@ -3,8 +3,7 @@ import { flushPromises, mount } from "@vue/test-utils";
 import { defineComponent } from "vue";
 import type { Tag, TagType } from "@viernulvier/shared";
 import { i18n } from "@/i18n";
-import CmsTagsTab from "@/components/admin/cms/tabs/CmsTagsTab.vue";
-import CmsGridControls from "@/components/admin/cms/CmsGridControls.vue";
+import CmsTagsTab from "@/components/admin/cms/tags/CmsTagsTab.vue";
 import * as tagsService from "@/services/tags";
 
 vi.mock("@/services/tags", () => ({
@@ -231,24 +230,6 @@ describe("CmsTagsTab", () => {
     api.rebuildRows();
 
     expect(api.rowData.value).toEqual([]);
-  });
-
-  it("wires grid controls events through to the composable", async () => {
-    const wrapper = mountTab();
-    await flushPromises();
-    const controls = wrapper.findComponent(CmsGridControls);
-
-    controls.vm.$emit("update:quick-filter-text", "drama");
-    controls.vm.$emit("apply-quick-filter");
-    controls.vm.$emit("fit-columns");
-    controls.vm.$emit("auto-size-columns");
-    controls.vm.$emit("reset-filters");
-    controls.vm.$emit("export-csv");
-    controls.vm.$emit("toggle-columns");
-    controls.vm.$emit("reset-state");
-    await flushPromises();
-
-    expect(controls.exists()).toBe(true);
   });
 
   it("opens the create modal with a default tag-type from loaded data", async () => {

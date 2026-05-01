@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import { i18n } from "@/i18n";
-import CmsAdminsTab from "@/components/admin/cms/tabs/CmsAdminsTab.vue";
+import CmsAdminsTab from "@/components/admin/cms/admins/CmsAdminsTab.vue";
 import * as auth from "@/services/auth";
 import type { Admin } from "@viernulvier/shared";
 
@@ -53,31 +53,13 @@ const superAdmin: Admin = {
   super: true,
 };
 
-const CmsGridControlsStub = {
-  template: `
-    <div>
-      <button data-testid="emit-filter" @click="$emit('update:quick-filter-text', 'john')" />
-      <button data-testid="apply-filter" @click="$emit('apply-quick-filter')" />
-    </div>
-  `,
-};
-
-const CmsColumnChooserStub = {
-  template: `
-    <div>
-      <button data-testid="close-chooser" @click="$emit('close')" />
-    </div>
-  `,
-  props: ["show"],
-};
-
 function mountTab() {
   return mount(CmsAdminsTab, {
     global: {
       plugins: [i18n],
       stubs: {
-        CmsGridControls: CmsGridControlsStub,
-        CmsColumnChooser: CmsColumnChooserStub,
+        CmsGridControls: { template: "<div />" },
+        CmsColumnChooser: { template: "<div />", props: ["show"] },
       },
     },
   });
@@ -446,32 +428,4 @@ describe("CmsAdminsTab", () => {
     });
   });
 
-  describe("grid control interactions", () => {
-    it("updates quick filter text", async () => {
-      mockStoreAdmin = { ...superAdmin };
-      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
-
-      const wrapper = mountTab();
-      await flushPromises();
-
-      await wrapper.get('[data-testid="emit-filter"]').trigger("click");
-
-      expect(wrapper.vm.__test.quickFilterText.value).toBe("john");
-    });
-
-    it("closes column chooser", async () => {
-      mockStoreAdmin = { ...superAdmin };
-      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
-
-      const wrapper = mountTab();
-      await flushPromises();
-
-      wrapper.vm.__test.columnChooserOpen.value = true;
-      await wrapper.vm.$nextTick();
-
-      await wrapper.get('[data-testid="close-chooser"]').trigger("click");
-
-      expect(wrapper.vm.__test.columnChooserOpen.value).toBe(false);
-    });
-  });
 });

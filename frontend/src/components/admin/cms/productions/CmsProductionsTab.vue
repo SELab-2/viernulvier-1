@@ -1,10 +1,24 @@
 <template>
-  <div class="cms-tab-content">
-    <div class="flex items-center justify-between">
-      <p class="text-xs text-ink-tertiary">
-        {{ t("cms.actions.loadedCount", { count: rowData.length }) }}
-      </p>
-
+  <CmsTabShell
+    v-model:quick-filter-text="quickFilterText"
+    v-model:column-chooser-open="columnChooserOpen"
+    :row-count="rowData.length"
+    loaded-count-key="cms.actions.loadedCount"
+    empty-state-key="cms.actions.noRows"
+    :is-loading="isLoading"
+    :load-error="loadError"
+    :selected-count="selectedCount"
+    :column-options="gridColumnOptions"
+    :column-visibility="columnVisibility"
+    @apply-quick-filter="applyQuickFilter"
+    @fit-columns="fitGridColumns"
+    @auto-size-columns="autoSizeGridColumns"
+    @reset-filters="resetGridFilters"
+    @export-csv="exportGridCsv"
+    @reset-state="resetGridState"
+    @set-column-visibility="setGridColumnVisibility"
+  >
+    <template #header-actions>
       <div class="flex flex-col gap-2">
         <button type="button" class="cms-add-button" @click="openCreateModal">
           {{ t("cms.actions.addProduction") }}
@@ -18,41 +32,22 @@
           {{ t("cms.actions.removeProduction") }}
         </button>
       </div>
-    </div>
+    </template>
 
-    <CmsGridControls
-      :quick-filter-text="quickFilterText"
-      :selected-count="selectedCount"
-      :column-chooser-open="columnChooserOpen"
-      @update:quick-filter-text="quickFilterText = $event"
-      @apply-quick-filter="applyQuickFilter"
-      @fit-columns="fitGridColumns"
-      @auto-size-columns="autoSizeGridColumns"
-      @reset-filters="resetGridFilters"
-      @export-csv="exportGridCsv"
-      @reset-state="resetGridState"
-      @toggle-columns="columnChooserOpen = !columnChooserOpen"
-    />
+    <template #status-banner>
+      <div class="cms-status-slot" :class="{ 'is-open': !!saveSuccess }">
+        <Transition name="fade" appear>
+          <div
+            v-if="saveSuccess"
+            class="rounded-lg border border-green-400/40 bg-green-400/10 p-4 text-sm text-green-700"
+          >
+            ✓ {{ saveSuccess }}
+          </div>
+        </Transition>
+      </div>
+    </template>
 
-    <div
-      v-if="loadError"
-      class="rounded-lg border border-red-400/40 bg-red-400/10 p-4 text-sm text-red-700"
-    >
-      {{ loadError }}
-    </div>
-
-    <div class="cms-status-slot" :class="{ 'is-open': !!saveSuccess }">
-      <Transition name="fade" appear>
-        <div
-          v-if="saveSuccess"
-          class="rounded-lg border border-green-400/40 bg-green-400/10 p-4 text-sm text-green-700"
-        >
-          ✓ {{ saveSuccess }}
-        </div>
-      </Transition>
-    </div>
-
-    <div v-if="!loadError" class="cms-grid-shell">
+    <template #grid>
       <AgGridVue
         :class="['ag-theme-alpine', 'cms-grid']"
         :style="agThemeVars"
@@ -81,190 +76,177 @@
         @cell-editing-stopped="onCellEditingStopped"
         @cell-clicked="onCellClicked"
       />
-    </div>
+    </template>
 
-    <CmsColumnChooser
-      :show="columnChooserOpen && !loadError"
-      :column-options="gridColumnOptions"
-      :column-visibility="columnVisibility"
-      @close="columnChooserOpen = false"
-      @set-column-visibility="setGridColumnVisibility"
-    />
+    <template #modals>
+      <CmsEventsDrawer
+        :show="selectedEventsProduction !== null"
+        :selected-production="selectedEventsProduction"
+        :selected-event-rows="selectedEventRows"
+        :halls-data="hallsData"
+        :events-panel-loading="eventsPanelLoading"
+        :events-panel-error="eventsPanelError"
+        :localize-value="localizeValue"
+        @close="closeEventsPanel"
+        @open-create-event="openCreateEventModal"
+        @save-linked-event="saveLinkedEvent"
+        @remove-linked-event="removeLinkedEvent"
+        @event-row-focus-out="onEventRowFocusOut"
+        @event-row-enter="onEventRowEnter"
+      />
 
-    <CmsEventsDrawer
-      :show="selectedEventsProduction !== null"
-      :selected-production="selectedEventsProduction"
-      :selected-event-rows="selectedEventRows"
-      :halls-data="hallsData"
-      :events-panel-loading="eventsPanelLoading"
-      :events-panel-error="eventsPanelError"
-      :localize-value="localizeValue"
-      @close="closeEventsPanel"
-      @open-create-event="openCreateEventModal"
-      @save-linked-event="saveLinkedEvent"
-      @remove-linked-event="removeLinkedEvent"
-      @event-row-focus-out="onEventRowFocusOut"
-      @event-row-enter="onEventRowEnter"
-    />
-
-    <p
-      v-if="!isLoading && !loadError && rowData.length === 0"
-      class="rounded-md border border-surface-3 bg-surface-0 px-4 py-3 text-sm text-ink-secondary"
-    >
-      {{ t("cms.actions.noRows") }}
-    </p>
-
-    <aside v-if="editorPanel" class="cms-side-panel">
-      <div class="cms-side-header">
-        <h2 class="text-lg font-semibold text-ink-primary">
-          {{ editorPanel.label }}
-        </h2>
-        <button
-          type="button"
-          class="cms-side-close"
-          @click="closeEditorPanel"
-        >
-          {{ t("cms.panel.close") }}
-        </button>
-      </div>
-
-      <div class="cms-side-body">
-        <p v-if="editorBulkCount > 1" class="text-xs text-ink-secondary">
-          {{ t("cms.panel.bulkNotice", { count: editorBulkCount }) }}
-        </p>
-
-        <label
-          v-for="lang in languages"
-          :key="lang"
-          class="cms-side-field"
-        >
-          <span class="text-xs font-semibold uppercase tracking-wide text-ink-secondary">
-            {{ lang.toUpperCase() }}
-          </span>
-          <textarea
-            v-model="editorPanel.values[lang]"
-            class="cms-side-textarea"
-            rows="5"
-          />
-        </label>
-
-        <p v-if="saveError" class="text-sm text-red-700">
-          {{ saveError }}
-        </p>
-      </div>
-
-      <div class="cms-side-footer">
-        <button
-          type="button"
-          class="cms-side-save"
-          :disabled="isSaving"
-          @click="saveEditorPanel"
-        >
-          {{ isSaving ? t("cms.panel.saving") : t("cms.panel.save") }}
-        </button>
-      </div>
-    </aside>
-
-    <CmsTagDrawer
-      :show="tagEditorPanel !== null"
-      :panel="tagEditorPanel"
-      :additional-tag-groups="additionalTagGroups"
-      :bulk-count="0"
-      :save-error="saveError"
-      :is-saving="isSaving"
-      @close="closeTagEditorPanel"
-      @save="saveTagEditorPanel"
-      @toggle-tag="toggleTagEditorTag"
-    />
-
-    <CmsCreateProductionModal
-      :open="createModalOpen"
-      :create-form="createForm"
-      :create-extra-langs="createExtraLangs"
-      :visible-create-langs="visibleCreateLangs"
-      :lang-grid-class="langGridClass"
-      :create-fields="createFields"
-      :tag-groups="createTagGroups"
-      :selected-primary-tag-id="selectedPrimaryTagId"
-      :selected-tag-ids="selectedTagIds"
-      :create-error="createError"
-      :is-creating="isCreating"
-      @update-finalized="createForm.finalized = $event"
-      @update-extra-lang="setCreateExtraLang"
-      @update-form-field="setCreateFormField"
-      @update-primary-tag="setSelectedPrimaryTag"
-      @toggle-tag="toggleCreateTag"
-      @image-file-change="onImageFileChange"
-      @video-file-change="onVideoFileChange"
-      @close="closeCreateModal"
-      @submit="submitCreateProduction"
-    />
-
-    <CmsCreateEventModal
-      :open="createEventModalOpen"
-      :selected-production="selectedEventsProduction"
-      :create-linked-event-form="createLinkedEventForm"
-      :halls-data="hallsData"
-      :events-panel-loading="eventsPanelLoading"
-      :events-panel-error="eventsPanelError"
-      :localize-value="localizeValue"
-      @update-form-field="setCreateLinkedEventField"
-      @close="closeCreateEventModal"
-      @submit="submitCreateEvent"
-    />
-
-    <div v-if="removeConfirmOpen" class="cms-modal-overlay" @click.self="closeRemoveProductionsConfirm">
-      <section class="cms-modal cms-remove-modal" role="dialog" aria-modal="true">
-        <header class="cms-modal-header">
-          <h2 class="text-xl font-bold text-ink-primary">
-            {{ t("cms.actions.confirmRemoveDialogTitle") }}
+      <aside v-if="editorPanel" class="cms-side-panel">
+        <div class="cms-side-header">
+          <h2 class="text-lg font-semibold text-ink-primary">
+            {{ editorPanel.label }}
           </h2>
-          <button type="button" class="cms-side-close" @click="closeRemoveProductionsConfirm">
+          <button
+            type="button"
+            class="cms-side-close"
+            @click="closeEditorPanel"
+          >
             {{ t("cms.panel.close") }}
           </button>
-        </header>
+        </div>
 
-        <div class="cms-modal-body">
-          <p class="text-sm text-ink-secondary">
-            {{ t("cms.actions.confirmRemoveBody", { count: removeConfirmCount }) }}
+        <div class="cms-side-body">
+          <p v-if="editorBulkCount > 1" class="text-xs text-ink-secondary">
+            {{ t("cms.panel.bulkNotice", { count: editorBulkCount }) }}
           </p>
-          <p v-if="removeConfirmError" class="text-sm text-red-700">
-            {{ removeConfirmError }}
+
+          <label
+            v-for="lang in languages"
+            :key="lang"
+            class="cms-side-field"
+          >
+            <span class="text-xs font-semibold uppercase tracking-wide text-ink-secondary">
+              {{ lang.toUpperCase() }}
+            </span>
+            <textarea
+              v-model="editorPanel.values[lang]"
+              class="cms-side-textarea"
+              rows="5"
+            />
+          </label>
+
+          <p v-if="saveError" class="text-sm text-red-700">
+            {{ saveError }}
           </p>
         </div>
 
-        <footer class="cms-modal-footer">
-          <button type="button" class="cms-side-close" :disabled="removeConfirmLoading" @click="closeRemoveProductionsConfirm">
-            {{ t("cms.actions.confirmRemoveCancel") }}
+        <div class="cms-side-footer">
+          <button
+            type="button"
+            class="cms-side-save"
+            :disabled="isSaving"
+            @click="saveEditorPanel"
+          >
+            {{ isSaving ? t("cms.panel.saving") : t("cms.panel.save") }}
           </button>
-          <button type="button" class="cms-side-save" :disabled="removeConfirmLoading" @click="confirmRemoveProductions">
-            {{ removeConfirmLoading ? t("cms.panel.saving") : t("cms.actions.confirmRemoveSubmit") }}
-          </button>
-        </footer>
-      </section>
-    </div>
-
-    <div v-if="mediaPreview" class="cms-modal-overlay" @click.self="closeMediaPreview">
-      <section class="cms-modal cms-media-modal" role="dialog" aria-modal="true">
-        <header class="cms-modal-header">
-          <h2 class="text-xl font-bold text-ink-primary">
-            {{ t("cms.columns.media") }}
-          </h2>
-          <button type="button" class="cms-side-close" @click="closeMediaPreview">
-            {{ t("cms.panel.close") }}
-          </button>
-        </header>
-
-        <div class="cms-modal-body cms-media-preview-body">
-          <img v-if="mediaPreview.kind === 'image'" :src="mediaPreview.url" :alt="mediaPreview.label" class="cms-media-preview-large" />
-          <iframe v-else-if="mediaPreview.kind === 'youtube'" :src="mediaPreview.url" :title="mediaPreview.label" class="cms-media-preview-large" frameborder="0" allowfullscreen></iframe>
-          <video v-else controls playsinline class="cms-media-preview-large">
-            <source :src="mediaPreview.url" />
-          </video>
         </div>
-      </section>
-    </div>
-  </div>
+      </aside>
+
+      <CmsTagDrawer
+        :show="tagEditorPanel !== null"
+        :panel="tagEditorPanel"
+        :additional-tag-groups="additionalTagGroups"
+        :bulk-count="0"
+        :save-error="saveError"
+        :is-saving="isSaving"
+        @close="closeTagEditorPanel"
+        @save="saveTagEditorPanel"
+        @toggle-tag="toggleTagEditorTag"
+      />
+
+      <CmsCreateProductionModal
+        :open="createModalOpen"
+        :create-form="createForm"
+        :create-extra-langs="createExtraLangs"
+        :visible-create-langs="visibleCreateLangs"
+        :lang-grid-class="langGridClass"
+        :create-fields="createFields"
+        :tag-groups="createTagGroups"
+        :selected-primary-tag-id="selectedPrimaryTagId"
+        :selected-tag-ids="selectedTagIds"
+        :create-error="createError"
+        :is-creating="isCreating"
+        @update-finalized="createForm.finalized = $event"
+        @update-extra-lang="setCreateExtraLang"
+        @update-form-field="setCreateFormField"
+        @update-primary-tag="setSelectedPrimaryTag"
+        @toggle-tag="toggleCreateTag"
+        @image-file-change="onImageFileChange"
+        @video-file-change="onVideoFileChange"
+        @close="closeCreateModal"
+        @submit="submitCreateProduction"
+      />
+
+      <CmsCreateEventModal
+        :open="createEventModalOpen"
+        :selected-production="selectedEventsProduction"
+        :create-linked-event-form="createLinkedEventForm"
+        :halls-data="hallsData"
+        :events-panel-loading="eventsPanelLoading"
+        :events-panel-error="eventsPanelError"
+        :localize-value="localizeValue"
+        @update-form-field="setCreateLinkedEventField"
+        @close="closeCreateEventModal"
+        @submit="submitCreateEvent"
+      />
+
+      <div v-if="removeConfirmOpen" class="cms-modal-overlay" @click.self="closeRemoveProductionsConfirm">
+        <section class="cms-modal cms-remove-modal" role="dialog" aria-modal="true">
+          <header class="cms-modal-header">
+            <h2 class="text-xl font-bold text-ink-primary">
+              {{ t("cms.actions.confirmRemoveDialogTitle") }}
+            </h2>
+            <button type="button" class="cms-side-close" @click="closeRemoveProductionsConfirm">
+              {{ t("cms.panel.close") }}
+            </button>
+          </header>
+
+          <div class="cms-modal-body">
+            <p class="text-sm text-ink-secondary">
+              {{ t("cms.actions.confirmRemoveBody", { count: removeConfirmCount }) }}
+            </p>
+            <p v-if="removeConfirmError" class="text-sm text-red-700">
+              {{ removeConfirmError }}
+            </p>
+          </div>
+
+          <footer class="cms-modal-footer">
+            <button type="button" class="cms-side-close" :disabled="removeConfirmLoading" @click="closeRemoveProductionsConfirm">
+              {{ t("cms.actions.confirmRemoveCancel") }}
+            </button>
+            <button type="button" class="cms-side-save" :disabled="removeConfirmLoading" @click="confirmRemoveProductions">
+              {{ removeConfirmLoading ? t("cms.panel.saving") : t("cms.actions.confirmRemoveSubmit") }}
+            </button>
+          </footer>
+        </section>
+      </div>
+
+      <div v-if="mediaPreview" class="cms-modal-overlay" @click.self="closeMediaPreview">
+        <section class="cms-modal cms-media-modal" role="dialog" aria-modal="true">
+          <header class="cms-modal-header">
+            <h2 class="text-xl font-bold text-ink-primary">
+              {{ t("cms.columns.media") }}
+            </h2>
+            <button type="button" class="cms-side-close" @click="closeMediaPreview">
+              {{ t("cms.panel.close") }}
+            </button>
+          </header>
+
+          <div class="cms-modal-body cms-media-preview-body">
+            <img v-if="mediaPreview.kind === 'image'" :src="mediaPreview.url" :alt="mediaPreview.label" class="cms-media-preview-large" />
+            <iframe v-else-if="mediaPreview.kind === 'youtube'" :src="mediaPreview.url" :title="mediaPreview.label" class="cms-media-preview-large" frameborder="0" allowfullscreen></iframe>
+            <video v-else controls playsinline class="cms-media-preview-large">
+              <source :src="mediaPreview.url" />
+            </video>
+          </div>
+        </section>
+      </div>
+    </template>
+  </CmsTabShell>
 </template>
 
 <script setup lang="ts">
@@ -278,10 +260,9 @@ import type {
 } from "ag-grid-community";
 import { useI18n } from "vue-i18n";
 import type { Event as ArchiveEvent, Hall, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
-import CmsColumnChooser from "@/components/admin/cms/CmsColumnChooser.vue";
+import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
 import CmsCreateEventModal from "@/components/admin/cms/productions/CmsCreateEventModal.vue";
 import CmsEventsDrawer from "@/components/admin/cms/productions/CmsEventsDrawer.vue";
-import CmsGridControls from "@/components/admin/cms/CmsGridControls.vue";
 import CmsTagDrawer from "@/components/admin/cms/CmsTagDrawer.vue";
 import CmsCreateProductionModal from "@/components/admin/cms/productions/CmsCreateProductionModal.vue";
 import { useCmsProductionGrid } from "@/composables/useCmsProductionGrid";

@@ -174,7 +174,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import {
   committedYearRangeFromThumbs,
@@ -221,8 +221,8 @@ const hasActiveDateFilter = computed(
 );
 
 const { t } = useI18n();
-const dateFilterRoot = ref<HTMLElement | null>(null);
-const yearTrackRef = ref<HTMLElement | null>(null);
+const dateFilterRoot = useTemplateRef<HTMLElement>("dateFilterRoot");
+const yearTrackRef = useTemplateRef<HTMLElement>("yearTrackRef");
 const panelOpen = ref(false);
 
 const localFrom = ref(props.minYear);

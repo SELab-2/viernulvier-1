@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   validate:
-    runs-on: [self-hosted, linux]
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         project: [frontend, backend, shared]

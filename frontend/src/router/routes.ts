@@ -47,7 +47,7 @@ export const routes: RouteRecordRaw[] = [
           {
             path: "cms",
             name: RouteNames.CMS,
-            component: () => import("../views/admin/CMSView.vue"),
+            component: () => import("../views/admin/CmsView.vue"),
             meta: { requiresAdmin: true },
           },
           {
