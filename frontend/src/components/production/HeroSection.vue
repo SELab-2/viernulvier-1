@@ -1,88 +1,69 @@
 <template>
-  <!-- Min height matches ~1920×600 banners; flex + justify-end grows the section when overlay text needs more room -->
-  <section
-    class="relative flex w-full min-h-[max(280px,calc(100vw*600/1920))] flex-col justify-end overflow-hidden"
-  >
-    <div class="absolute inset-0 z-0 bg-black">
+  <!--
+    Article-style header for a production page.
+
+    Image at the top (grayscale, ~40vh, no dramatic gradient overlay),
+    followed by a centred editorial header below: a kicker line
+    (department · genre · year), a serif headline, an italic deck and
+    a small byline. The previous "ticket info" column (date range,
+    running time, genre chips) is intentionally absent here — those
+    facts belong to EventsSection / DetailsSection where the reader
+    expects them.
+  -->
+  <article class="bg-surface-0">
+    <!-- Banner photograph -->
+    <div
+      class="relative w-full overflow-hidden bg-surface-inv h-[40vh] md:h-[50vh]"
+    >
       <img
         v-if="bannerUrl"
         :src="bannerUrl"
         :alt="heroImageAlt"
-        class="h-full w-full object-cover object-center"
+        class="h-full w-full object-cover object-center grayscale contrast-125"
         loading="eager"
         decoding="async"
         referrerPolicy="no-referrer"
       />
-      <div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent"></div>
     </div>
 
-    <div
-      class="relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-between gap-12 px-6 pb-12 pt-8 md:flex-row md:items-end md:px-12 md:pb-20 md:pt-12"
+    <!-- Article header -->
+    <header
+      class="mx-auto max-w-3xl px-6 pb-8 pt-12 text-center opacity-0 animate-fade-up md:px-8 md:pb-12 md:pt-16"
     >
-      <div class="opacity-0 animate-fade-up max-w-4xl">
-        <div class="mb-4 flex flex-col gap-2">
-          <span class="text-sm font-bold uppercase tracking-[0.3em] text-ink-on-inv opacity-70">
-            {{ content.supertitle }}
-          </span>
-          <span class="italic text-3xl font-bold tracking-tighter text-ink-on-inv md:text-4xl">
-            {{ content.artist }}
-          </span>
-        </div>
-        
-        <div class="space-y-4">
-          <h1 class="text-[clamp(2.5rem,8vw,8rem)] font-black uppercase leading-[0.9] tracking-tighter text-ink-on-inv wrap-break-word">
-            {{ content.title }}
-          </h1>
-          <p class="italic text-xl font-light leading-tight text-ink-on-inv opacity-90 md:text-2xl">
-            {{ content.tagline }}
-          </p>
-        </div>
+      <!-- Kicker: thin rule on each side, small caps in the middle -->
+      <div
+        v-if="kicker"
+        class="mb-6 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
+      >
+        <span class="h-px w-8 bg-ink-tertiary opacity-50" aria-hidden="true" />
+        <span class="whitespace-nowrap">{{ kicker }}</span>
+        <span class="h-px w-8 bg-ink-tertiary opacity-50" aria-hidden="true" />
       </div>
 
-      <div class="opacity-0 animate-fade-in flex flex-col gap-6 text-ink-on-inv md:items-end">
-        <div class="flex flex-col gap-1 items-start md:items-end">
-  
-          <span class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">
-            {{ t("production.hero.dateRange") }}
-          </span>
-  
-          <div class="flex flex-col items-start md:items-end text-xl font-bold tracking-tight leading-tight">
-            <template v-if="showDateRange">
-              <span>{{ dateLabels.start }}</span>
-              <span>—</span>
-              <span>{{ dateLabels.end }}</span>
-            </template>
+      <!-- Headline -->
+      <h1
+        class="font-serif text-4xl font-semibold leading-[1.1] tracking-tight text-ink-primary md:text-5xl"
+      >
+        {{ content.title }}
+      </h1>
 
-            <template v-else>
-              <span>{{ dateLabels.start }}</span>
-            </template>
-          </div>
+      <!-- Deck / tagline -->
+      <p
+        v-if="content.tagline"
+        class="mt-6 font-serif text-xl font-light italic leading-snug text-ink-secondary md:text-2xl"
+      >
+        {{ content.tagline }}
+      </p>
 
-        </div>
-        
-        <div class="flex flex-col gap-1 md:items-end">
-          <span class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">
-            {{ t("production.hero.runningTime") }}
-          </span>
-          <span class="text-xl font-bold tracking-tight">
-            {{ formatDurationMinutesI18n(eventStats?.durationMinutes, t) }}
-          </span>
-        </div>
-        
-        <div class="flex flex-wrap gap-3 pt-4 md:justify-end">
-          <template v-if="genreTags.length > 0">
-            <span 
-              v-for="tag in genreTags" 
-              :key="tag"
-              class="border border-surface-0 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-ink-on-inv"
-            >
-              {{ tag }}
-            </span>
-          </template>
-        </div>
-      </div>
-    </div>
-  </section>
+      <!-- Byline -->
+      <p
+        v-if="content.artist"
+        class="mt-8 text-sm uppercase tracking-[0.2em] text-ink-tertiary"
+      >
+        {{ content.artist }}
+      </p>
+    </header>
+  </article>
 </template>
 
 <script setup lang="ts">
@@ -91,7 +72,6 @@ import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { computed } from "vue";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import { useI18n } from "vue-i18n";
-import { formatDurationMinutesI18n, formatNumericDate } from "@/utils/date";
 
 interface Props {
   production: ProductionWithBackwardsRefs;
@@ -102,7 +82,7 @@ interface Props {
     durationMinutes: number | null;
     hasMultipleDays: boolean;
   } | null;
-  /** First gallery image (`FE3_home_featuredWide` crop); when null, solid black hero. */
+  /** First gallery image (`FE3_home_featuredWide` crop); when null, solid dark hero. */
   bannerUrl?: string | null;
 }
 
@@ -121,7 +101,8 @@ const heroImageAlt = computed(() => {
 
 const content = computed(() => {
   const lang = locale.value as SupportedLang;
-  const translate = (map?: LanguageMap | null) => localizeOrEmpty(map ?? {}, lang);
+  const translate = (map?: LanguageMap | null) =>
+    localizeOrEmpty(map ?? {}, lang);
 
   return {
     artist: translate(props.production.artist),
@@ -131,21 +112,41 @@ const content = computed(() => {
   };
 });
 
-const genreTags = computed(() => {
-  const genreGroup = props.tagGroups.find(group => {
-    return group.label.toLowerCase().includes('genre'); 
-  });
-  
-  return genreGroup ? genreGroup.tags : [];
+/** Primary genre tag, when one is available. */
+const primaryGenre = computed(() => {
+  const genreGroup = props.tagGroups.find((g) =>
+    g.label.toLowerCase().includes("genre"),
+  );
+  return genreGroup?.tags[0] ?? "";
 });
 
-const showDateRange = computed(() =>
-  props.eventStats?.hasMultipleDays ?? false,
-);
+/** Year of the first event, used as the dateline in the kicker. */
+const year = computed(() => {
+  const first = props.eventStats?.firstDate;
+  if (!first) return "";
+  return String(first.getFullYear());
+});
 
-const dateLabels = computed(() => ({
-  start: props.eventStats?.firstDate ? formatNumericDate(props.eventStats.firstDate, locale.value) : "",
-  end: props.eventStats?.lastDate ? formatNumericDate(props.eventStats.lastDate, locale.value) : "",
-}));
+/** Compose the dateline-style kicker from supertitle, genre and year.
+ *  Empty parts are skipped; duplicates are collapsed so we never print
+ *  e.g. "Theater · Theater · 1987". */
+const kicker = computed(() => {
+  const parts: string[] = [];
+  const seen = new Set<string>();
 
+  for (const part of [
+    content.value.supertitle,
+    primaryGenre.value,
+    year.value,
+  ]) {
+    const trimmed = part?.trim();
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    parts.push(trimmed);
+  }
+
+  return parts.join(" · ");
+});
 </script>
