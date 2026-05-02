@@ -54,6 +54,6 @@ export default defineConfig({
         perFile: true,
       },
     },
-    silent: true,
+    //silent: true,
   },
 });

@@ -146,16 +146,16 @@ export function parseParams<
   return parsed.data;
 }
 
-const UserPayloadSchema = AdminSchema.pick({ id: true, username: true });
+const UserPayloadSchema = AdminSchema.pick({ id: true });
 type UserPayload = z.infer<typeof UserPayloadSchema>;
 
 /**
- * Extracts and validates the JWT payload from the request, returning only `id` and `username`.
+ * Extracts and validates the JWT payload from the request, returning only `id`.
  *
  * Example: `const { id } = parseUser(request);`
  *
  * @param request - The Fastify request to extract the user payload from.
- * @returns A type-safe object containing only `id` and `username`.
+ * @returns A type-safe object containing only `id`.
  * @throws `HttpError` If the payload doesn't match the expected shape.
  */
 export function parseUser(request: FastifyRequest): UserPayload {
