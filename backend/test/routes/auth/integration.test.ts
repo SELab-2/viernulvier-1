@@ -326,7 +326,6 @@ describe("Auth route integration", () => {
       cookies: { session: sessionCookie },
     });
 
-  console.log(response.json());
     expect(response.statusCode).toBe(200);
 
     const body = AdminSchema.parse(response.json());
