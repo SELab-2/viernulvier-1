@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-import { BlogPostSchema, BlogPostWithBackwardsRefsSchema, type BlogPost, type BlogPostWithMeta, type BlogPostWithBackwardsRefs } from "@viernulvier/shared/index.js";
+import { BlogPostSchema, BlogPostWithBackwardsRefsSchema, type BlogPostWithMeta, type BlogPostWithBackwardsRefs } from "@viernulvier/shared/index.js";
 import { HttpSuccess, HttpClientError } from "@/routes/helpers.js";
 
 let server: FastifyInstance;
@@ -61,7 +61,7 @@ describe("BlogPost fetch routes", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    const posts = response.json() as BlogPost[];
+    const posts = response.json() as BlogPostWithBackwardsRefs[];
     expect(posts).toHaveLength(mockBlogPosts.length);
     expect(posts[0]?.productions).toEqual([1, 2]);
     expect(posts[1]?.productions).toEqual([]);
