@@ -29,7 +29,7 @@
           class="cms-remove-button"
           data-testid="cms-remove-tags"
           :disabled="selectedCount === 0"
-          @click="openConfirm"
+          @click="openRemoveConfirm"
         >
           {{ t("cms.actions.removeTag") }}
         </button>
@@ -72,7 +72,7 @@
         :count="selectedCount"
         title-key="cms.actions.tag.confirmRemoveDialogTitle"
         body-key="cms.actions.tag.confirmRemoveBody"
-        @close="closeConfirm"
+        @close="closeRemoveConfirm"
         @confirm="confirmRemove"
       />
 
@@ -192,8 +192,8 @@ const {
   removeConfirmOpen,
   removeConfirmLoading,
   removeConfirmError,
-  openConfirm,
-  closeConfirm,
+  openRemoveConfirm,
+  closeRemoveConfirm,
   confirmRemove,
 } = useCmsRemove<CmsTagGridRow>({
   selectedCount,
@@ -380,8 +380,8 @@ defineExpose({
     removeConfirmOpen,
     removeConfirmLoading,
     removeConfirmError,
-    openConfirm,
-    closeConfirm,
+    openRemoveConfirm,
+    closeRemoveConfirm,
     confirmRemove,
     selectedCount,
     gridApi,

@@ -26,11 +26,11 @@ function makeRemove(overrides: Partial<Parameters<typeof useCmsRemove<Row>>[0]> 
 }
 
 describe("useCmsRemove", () => {
-  describe("openConfirm", () => {
+  describe("openRemoveConfirm", () => {
     it("opens the modal when at least one row is selected", () => {
       const { remove } = makeRemove();
 
-      remove.openConfirm();
+      remove.openRemoveConfirm();
 
       expect(remove.removeConfirmOpen.value).toBe(true);
       expect(remove.removeConfirmError.value).toBeNull();
@@ -39,7 +39,7 @@ describe("useCmsRemove", () => {
     it("is a no-op when nothing is selected", () => {
       const { remove } = makeRemove({ selectedCount: ref(0) });
 
-      remove.openConfirm();
+      remove.openRemoveConfirm();
 
       expect(remove.removeConfirmOpen.value).toBe(false);
     });
@@ -48,19 +48,19 @@ describe("useCmsRemove", () => {
       const { remove } = makeRemove();
       remove.removeConfirmError.value = "old error";
 
-      remove.openConfirm();
+      remove.openRemoveConfirm();
 
       expect(remove.removeConfirmError.value).toBeNull();
     });
   });
 
-  describe("closeConfirm", () => {
+  describe("closeRemoveConfirm", () => {
     it("closes the modal and clears the error", () => {
       const { remove } = makeRemove();
       remove.removeConfirmOpen.value = true;
       remove.removeConfirmError.value = "boom";
 
-      remove.closeConfirm();
+      remove.closeRemoveConfirm();
 
       expect(remove.removeConfirmOpen.value).toBe(false);
       expect(remove.removeConfirmError.value).toBeNull();
@@ -70,7 +70,7 @@ describe("useCmsRemove", () => {
   describe("confirmRemove", () => {
     it("deletes each selected row in parallel and runs onSuccess", async () => {
       const { remove, deleteFn, onSuccess } = makeRemove();
-      remove.openConfirm();
+      remove.openRemoveConfirm();
 
       await remove.confirmRemove();
 
@@ -83,7 +83,7 @@ describe("useCmsRemove", () => {
 
     it("works without an onSuccess callback", async () => {
       const { remove, deleteFn } = makeRemove({ onSuccess: undefined });
-      remove.openConfirm();
+      remove.openRemoveConfirm();
 
       await remove.confirmRemove();
 
@@ -110,7 +110,7 @@ describe("useCmsRemove", () => {
         selectedCount: ref(1),
         getSelectedRows: () => [{ id: 1 }],
       });
-      remove.openConfirm();
+      remove.openRemoveConfirm();
 
       const pending = remove.confirmRemove();
 
@@ -124,7 +124,7 @@ describe("useCmsRemove", () => {
     it("surfaces an Error rejection via the saveFailed key and keeps the modal open", async () => {
       const deleteFn = vi.fn().mockRejectedValue(new Error("boom"));
       const { remove, onSuccess } = makeRemove({ deleteFn });
-      remove.openConfirm();
+      remove.openRemoveConfirm();
 
       await remove.confirmRemove();
 
@@ -137,7 +137,7 @@ describe("useCmsRemove", () => {
     it("uses the generic key for non-Error rejections", async () => {
       const deleteFn = vi.fn().mockRejectedValue("nope");
       const { remove } = makeRemove({ deleteFn });
-      remove.openConfirm();
+      remove.openRemoveConfirm();
 
       await remove.confirmRemove();
 

@@ -27,7 +27,7 @@
           type="button"
           class="cms-remove-button"
           :disabled="selectedCount === 0"
-          @click="openConfirm"
+          @click="openRemoveConfirm"
         >
           {{ t("cms.actions.removeProduction") }}
         </button>
@@ -201,7 +201,7 @@
         :count="selectedCount"
         title-key="cms.actions.production.confirmRemoveDialogTitle"
         body-key="cms.actions.production.confirmRemoveBody"
-        @close="closeConfirm"
+        @close="closeRemoveConfirm"
         @confirm="confirmRemove"
       />
 
@@ -395,8 +395,8 @@ const {
   removeConfirmOpen,
   removeConfirmLoading,
   removeConfirmError,
-  openConfirm,
-  closeConfirm,
+  openRemoveConfirm,
+  closeRemoveConfirm,
   confirmRemove,
 } = useCmsRemove<CmsProductionGridRow>({
   selectedCount,
@@ -1262,8 +1262,8 @@ defineExpose({
     resetCreateLinkedEventForm,
     openCreateModal,
     closeCreateModal,
-    openConfirm,
-    closeConfirm,
+    openRemoveConfirm,
+    closeRemoveConfirm,
     confirmRemove,
     submitCreateProduction,
     showEventsForProduction,

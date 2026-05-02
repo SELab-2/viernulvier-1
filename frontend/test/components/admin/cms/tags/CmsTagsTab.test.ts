@@ -359,7 +359,7 @@ describe("CmsTagsTab", () => {
       await flushPromises();
       const api = (wrapper.vm as any).__test;
 
-      api.openConfirm();
+      api.openRemoveConfirm();
 
       expect(api.removeConfirmOpen.value).toBe(false);
     });
@@ -370,13 +370,13 @@ describe("CmsTagsTab", () => {
       const api = (wrapper.vm as any).__test;
 
       api.selectedCount.value = 2;
-      api.openConfirm();
+      api.openRemoveConfirm();
 
       expect(api.removeConfirmOpen.value).toBe(true);
       expect(api.removeConfirmError.value).toBeNull();
     });
 
-    it("closeConfirm resets state", async () => {
+    it("closeRemoveConfirm resets state", async () => {
       const wrapper = mountTab();
       await flushPromises();
       const api = (wrapper.vm as any).__test;
@@ -384,7 +384,7 @@ describe("CmsTagsTab", () => {
       api.removeConfirmOpen.value = true;
       api.removeConfirmError.value = "boom";
 
-      api.closeConfirm();
+      api.closeRemoveConfirm();
 
       expect(api.removeConfirmOpen.value).toBe(false);
       expect(api.removeConfirmError.value).toBeNull();
@@ -403,7 +403,7 @@ describe("CmsTagsTab", () => {
         deselectAll,
       };
 
-      api.openConfirm();
+      api.openRemoveConfirm();
       (tagsService.getAllTags as any).mockClear();
       await api.confirmRemove();
       await flushPromises();
@@ -441,7 +441,7 @@ describe("CmsTagsTab", () => {
         getSelectedRows: () => [row],
         deselectAll: vi.fn(),
       };
-      api.openConfirm();
+      api.openRemoveConfirm();
       await api.confirmRemove();
 
       expect(api.removeConfirmError.value).toMatch(/boom|fail|fout/i);
@@ -460,7 +460,7 @@ describe("CmsTagsTab", () => {
         getSelectedRows: () => [row],
         deselectAll: vi.fn(),
       };
-      api.openConfirm();
+      api.openRemoveConfirm();
       await api.confirmRemove();
 
       expect(api.removeConfirmError.value).toBeTruthy();

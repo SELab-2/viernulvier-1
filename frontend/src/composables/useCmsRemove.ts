@@ -25,7 +25,7 @@ export function useCmsRemove<TRow>(options: UseCmsRemoveOptions<TRow>) {
   const removeConfirmLoading = ref(false);
   const removeConfirmError = ref<string | null>(null);
 
-  function openConfirm(): void {
+  function openRemoveConfirm(): void {
     if (options.selectedCount.value === 0) {
       return;
     }
@@ -33,7 +33,7 @@ export function useCmsRemove<TRow>(options: UseCmsRemoveOptions<TRow>) {
     removeConfirmOpen.value = true;
   }
 
-  function closeConfirm(): void {
+  function closeRemoveConfirm(): void {
     removeConfirmOpen.value = false;
     removeConfirmError.value = null;
   }
@@ -41,7 +41,7 @@ export function useCmsRemove<TRow>(options: UseCmsRemoveOptions<TRow>) {
   async function confirmRemove(): Promise<void> {
     const selectedRows = options.getSelectedRows();
     if (selectedRows.length === 0) {
-      closeConfirm();
+      closeRemoveConfirm();
       return;
     }
 
@@ -51,7 +51,7 @@ export function useCmsRemove<TRow>(options: UseCmsRemoveOptions<TRow>) {
     try {
       await Promise.all(selectedRows.map((row) => options.deleteFn(options.rowToId(row))));
       await options.onSuccess?.();
-      closeConfirm();
+      closeRemoveConfirm();
     } catch (error) {
       removeConfirmError.value =
         error instanceof Error
@@ -66,8 +66,8 @@ export function useCmsRemove<TRow>(options: UseCmsRemoveOptions<TRow>) {
     removeConfirmOpen,
     removeConfirmLoading,
     removeConfirmError,
-    openConfirm,
-    closeConfirm,
+    openRemoveConfirm,
+    closeRemoveConfirm,
     confirmRemove,
   };
 }
