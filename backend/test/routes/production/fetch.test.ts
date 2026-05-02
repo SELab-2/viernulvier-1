@@ -409,7 +409,7 @@ describe("Production fetch helpers", () => {
 
   test("getProductionsByIds -> fetches with ANY(ids) in one query", async () => {
     const ids = [2, 1];
-    const { tags: _t, events: _e, blogs: _b, ...productionCore } = baseProduction;
+    const { tags: _t, events: _e, blogposts: _b, ...productionCore } = baseProduction;
     const secondProduction: ProductionWithBackwardsRefs = productionRowWithRefsAlt({
       ...productionCore,
       id: 2,
