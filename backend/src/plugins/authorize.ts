@@ -1,5 +1,6 @@
 import fp from "fastify-plugin";
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import { fetchAdminById } from "@/routes/auth/handlers/fetch.js";
 
 interface AuthorizeOptions {
   super?: boolean;
@@ -19,13 +20,21 @@ export default fp(function authorizePlugin(server: FastifyInstance) {
       try {
         await request.jwtVerify();
 
-        const payload = request.user as { jti?: string; super?: boolean };
+        const payload = request.user as { id?: number, jti?: string };
 
         if (payload.jti && server.tokenDenylist.has(payload.jti)) {
           return await reply.status(401).send({ error: "Token has been revoked" });
         }
 
-        if (options.super && !payload.super) {
+        if (!payload.id) throw Error();
+
+        const rows = await fetchAdminById(server)(payload.id!);
+
+        if (rows.length == 0 || !rows[0]) throw Error();
+
+        const admin = rows[0]!;
+
+        if (options.super && !admin.super) {
           return await reply.status(403).send({ error: "Forbidden" });
         }
       } catch {

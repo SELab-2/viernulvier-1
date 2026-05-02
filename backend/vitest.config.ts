@@ -29,6 +29,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "@viernulvier/shared": path.resolve(__dirname, "../shared/src"),
+      "@mocks": path.resolve(__dirname, "./test/__mocks__"),
     },
   },
   test: {
