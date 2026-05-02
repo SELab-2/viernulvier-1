@@ -1,10 +1,8 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared/index.js";
-import { ProductionSchemaWithBackwardsRefs } from "@viernulvier/shared/index.js";
-import { getMetadata, parseSchema, buildQuery } from "@/routes/helpers.js";
+import { getMetadata, parseSchema } from "@/routes/helpers.js";
 import { CreateProductionBodySchema } from "./body-schema.js";
 import { getFieldValue, getNullableFieldValue } from "./field-utils.js";
-import z from "zod";
 
 const RequiredCreateColumns = [
   "title",

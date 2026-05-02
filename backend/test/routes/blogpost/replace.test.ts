@@ -292,7 +292,7 @@ describe("Replace on blogpost route", () => {
     expect(mockClient.query).toHaveBeenCalledTimes(3);
     // Verify ROLLBACK was called
     const rollbackCall = mockClient.query.mock.calls.find((call) =>
-      call[0].toUpperCase().includes("ROLLBACK")
+      call[0].toUpperCase().includes("ROLLBACK"),
     );
     expect(rollbackCall).toBeDefined();
     // Verify client was released in finally block
