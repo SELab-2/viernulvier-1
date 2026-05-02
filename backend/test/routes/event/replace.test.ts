@@ -3,6 +3,8 @@ import type { FastifyInstance } from "fastify";
 
 import { buildServer } from "@/server.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let storedEvents: Array<{ id: number; [key: string]: unknown }>;
 let sessionCookie: string;

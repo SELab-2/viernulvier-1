@@ -4,6 +4,8 @@ import type { FastifyInstance } from "fastify";
 import { buildServer } from "@/server.js";
 import type { EventPrice } from "@viernulvier/shared/index.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let storedEventPrices: EventPrice[];
 let sessionCookie: string;
