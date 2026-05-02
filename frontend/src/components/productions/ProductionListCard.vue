@@ -98,7 +98,7 @@ import { useI18n } from "vue-i18n";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import type { SupportedLang } from "@/i18n";
 import { RouteNames } from "@/router/routeNames";
-import { localizeOrEmpty } from "@/utils/i18n";
+import { localizeOrEmpty } from "@/utils/language-utils";
 import type { ProductionDateSummary } from "@/utils/productionsOverview";
 import type { ProductionTagChip } from "@/utils/tagDisplay";
 

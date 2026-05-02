@@ -201,6 +201,35 @@ html.dark .cms-grid .ag-pinned-right-header {
   white-space: nowrap;
 }
 
+.cms-media-cell .ag-cell-value {
+  display: flex;
+  width: 100%;
+}
+
+.cms-media-cell-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.cms-media-preview-thumb {
+  width: 100%;
+  max-height: 4.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--surface-3) 80%, transparent);
+  object-fit: cover;
+  background: var(--surface-1);
+}
+
+.cms-media-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: var(--ink-secondary);
+}
+
 .cms-events-action-cell .ag-cell-value {
   @apply cursor-pointer font-semibold text-ink-primary underline decoration-1 underline-offset-2;
 }
@@ -375,4 +404,9 @@ html:not(.dark) .cms-grid .ag-header-cell-filter-button .ag-icon {
 
 .ag-input-field-input.ag-text-field-input {
   padding-left: 28px !important; /* Adjust based on the actual icon size and desired spacing */
+}
+
+html.dark .cms-grid .ag-cell-inline-editing, .cms-grid .ag-cell-inline-editing .ag-cell-wrapper, .cms-grid .ag-cell-inline-editing .ag-cell-edit-wrapper {
+  background-color: inherit !important;
+  color: black !important;
 }

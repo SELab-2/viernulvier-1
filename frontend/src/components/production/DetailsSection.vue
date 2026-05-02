@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-v-html -- All v-html bindings in this file render strings produced by parseAndSanitizeContent, which routes HTML through DOMPurify. -->
 <template>
   <div class="bg-surface-1 text-ink-primary">
     <div class="mx-auto max-w-7xl px-6 py-24 md:px-12">
@@ -114,7 +115,7 @@
 import { i18n, type SupportedLang } from "@/i18n";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { computed, ref } from "vue";
-import { localizeOrEmpty, type LanguageMap } from "@/utils/i18n";
+import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import { useI18n } from "vue-i18n";
 import { normalizeQuote, parseAndSanitizeContent } from "@/utils/parsers";
 

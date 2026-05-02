@@ -1,10 +1,26 @@
 import type { Admin, Event as ArchiveEvent, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
 import { collectProductionTagsByIdMap } from "@/services/productions";
-import type { LanguageMap } from "@/utils/i18n";
+import { tagTypeIsGenre } from "@/utils/tagDisplay";
+import { localizeWithFallback, type LanguageMap } from "@/utils/language-utils";
 import { toLocalDateTimeInput } from "./date";
 import { extractEventIds } from "./helpers";
 import type { CmsAdminGridRow, CmsEventGridRow, CmsProductionGridRow, CreateAdminFormState, CmsTagGridRow } from "./types";
 
+function filterProductionTagLabels(
+  productionTags: Tag[],
+  genreTagTypeIds: Set<number>,
+  includeGenre: boolean,
+  localize: (map: LanguageMap | null | undefined) => string,
+): string[] {
+  return productionTags
+    .filter((tag) => genreTagTypeIds.has(Number(tag.tag_type)) === includeGenre)
+    .map((tag) => localizeWithFallback(tag.name, localize))
+    .filter((label) => label.length > 0);
+}
+
+/**
+ * Maps archive events to rows used by the CMS events drawer.
+ */
 export function buildEventGridRows(
   events: ArchiveEvent[],
   hallById: Map<number, { name: LanguageMap }>,
@@ -28,24 +44,30 @@ export function buildEventGridRows(
         location: hall ? localize(hall.name) : `Hall #${hallId}`,
         price: naLabel,
         startsAt: toLocalDateTimeInput(event.starts_at),
-        endsAt: toLocalDateTimeInput(event.ends_at),
-        doorsAt: toLocalDateTimeInput(event.doors_at),
+        endsAt: toLocalDateTimeInput(event.ends_at ?? ""),
+        doorsAt: toLocalDateTimeInput(event.doors_at ?? ""),
         hallId,
         infoNl: event.info?.nl ?? "",
       };
     });
 }
 
+/**
+ * Builds one CMS production grid row from API production data.
+ *
+ * The primary genre is derived by tag type (genre), not by tag array position.
+ */
 export function buildProductionGridRow(
   production: ProductionWithBackwardsRefs,
   tagById: Map<number, Tag>,
+  genreTagTypeIds: Set<number>,
   localize: (map: LanguageMap | null | undefined) => string,
 ): CmsProductionGridRow {
   const eventIds = extractEventIds(production.events as unknown[]);
 
-  const tagLabels = collectProductionTagsByIdMap(production, tagById)
-    .map((tag) => localize(tag.name))
-    .filter((label) => label.length > 0);
+  const productionTags = collectProductionTagsByIdMap(production, tagById);
+  const genreLabels = filterProductionTagLabels(productionTags, genreTagTypeIds, true, localize);
+  const additionalLabels = filterProductionTagLabels(productionTags, genreTagTypeIds, false, localize);
 
   return {
     id: production.id,
@@ -54,25 +76,39 @@ export function buildProductionGridRow(
     title: localize(production.title) || "",
     producer: localize(production.supertitle) || "",
     teaser: localize(production.teaser) || "",
-    genres: tagLabels.slice(0, 1).join(", ") || "-",
-    tags: tagLabels.slice(1).join(", ") || "-",
+    genres: genreLabels.slice(0, 1).join(", ") || "-",
+    tags: additionalLabels.join(", ") || "-",
     descriptionOne: localize(production.description) || "",
     descriptionTwo: localize(production.description_2) || "",
-    media: localize(production.video_1) || "",
+    media: localize(production.video_1) || localize(production.video_2) || "",
     events: eventIds,
   };
 }
 
+/**
+ * Builds all CMS production grid rows and precomputes genre tag-type IDs.
+ */
 export function buildProductionGridRows(
   productions: ProductionWithBackwardsRefs[],
   tags: Tag[],
+  tagTypes: TagType[],
   localize: (map: LanguageMap | null | undefined) => string,
 ): CmsProductionGridRow[] {
   const tagById = new Map(tags.map((tag) => [tag.id, tag]));
+  const genreTagTypeIds = new Set(
+    tagTypes
+      .filter((tagType) => tagTypeIsGenre(tagType))
+      .map((tagType) => tagType.id),
+  );
 
-  return productions.map((production) => buildProductionGridRow(production, tagById, localize));
+  return productions.map((production) => buildProductionGridRow(production, tagById, genreTagTypeIds, localize));
 }
 
+/**
+ * Applies inline-updated production fields back into an existing grid row.
+ *
+ * Used for optimistic-ish UI refresh after PATCH requests.
+ */
 export function applyUpdatedProductionToRow(
   row: CmsProductionGridRow,
   updated: ProductionWithBackwardsRefs,
@@ -85,9 +121,15 @@ export function applyUpdatedProductionToRow(
   row.teaser = localize(updated.teaser) || "";
   row.descriptionOne = localize(updated.description) || "";
   row.descriptionTwo = localize(updated.description_2) || "";
-  row.media = localize(updated.video_1) || "";
+  row.media = localize(updated.video_1) || localize(updated.video_2) || "";
 }
 
+/**
+ * Returns bulk-edit targets.
+ *
+ * If multiple rows are selected and include the clicked row, all selected rows are updated.
+ * Otherwise only the clicked row is targeted.
+ */
 export function buildTagGridRow(
   tag: Tag,
   tagTypeById: Map<number, TagType>,

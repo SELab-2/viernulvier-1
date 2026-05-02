@@ -81,7 +81,7 @@
 import { type SupportedLang } from "@/i18n";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { computed } from "vue";
-import { localizeOrEmpty, type LanguageMap } from "@/utils/i18n";
+import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import { useI18n } from "vue-i18n";
 import { formatDurationMinutesI18n, formatNumericDate } from "@/utils/date";
 

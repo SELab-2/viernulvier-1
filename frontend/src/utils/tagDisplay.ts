@@ -1,5 +1,5 @@
 import type { TagType } from "@viernulvier/shared";
-import { ALL_LANGUAGES, localize, type Language } from "@/utils/i18n";
+import { ALL_LANGUAGES, localize, type Language } from "@/utils/language-utils";
 
 /** Resolved tag for production list / detail chips. */
 export type ProductionTagChip = {

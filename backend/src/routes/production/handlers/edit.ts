@@ -64,7 +64,7 @@ export async function editProduction(
     }
   }
 
-  if (fields.length === 0) {
+  if (fields.length === 0 && !hasOwn(body, "tags")) {
     throw new HttpError(HttpClientError.BadRequest, "No fields to update");
   }
 

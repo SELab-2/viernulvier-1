@@ -18,6 +18,7 @@ export const ProductionBodySchema = ProductionSchema.pick({
   quote_source: true,
   programme: true,
   info: true,
+}).extend({
 });
 
 export const CreateProductionBodySchema = ProductionSchema.pick({
@@ -40,7 +41,8 @@ export const CreateProductionBodySchema = ProductionSchema.pick({
     programme: true,
     info: true,
   }).partial().shape,
-);
+).extend({
+});
 
 export const PartialProductionBodySchema = ProductionBodySchema.partial();
 const ProductionIdObjectSchema = ProductionSchema.pick({ id: true }) as z.ZodObject<{ id: z.ZodType }>;

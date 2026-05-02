@@ -1,27 +1,28 @@
 import type { Admin, ProductionWithBackwardsRefs, Tag } from "@viernulvier/shared";
 import type { SupportedLang } from "@/i18n";
 
-export interface CmsEventGridRow {
+/** Shared timing/location fields for CMS linked-event forms and rows. */
+export interface CmsEventTimingFields {
+  startsAt: string;
+  endsAt: string;
+  doorsAt: string;
+  hallId: number;
+  infoNl: string;
+}
+
+/** Editable event row model used in the CMS events drawer. */
+export interface CmsEventGridRow extends CmsEventTimingFields {
   id: number;
   date: string;
   time: string;
   location: string;
   price: string;
-  startsAt: string;
-  endsAt: string;
-  doorsAt: string;
-  hallId: number;
-  infoNl: string;
 }
 
-export interface CmsCreateLinkedEventForm {
-  startsAt: string;
-  endsAt: string;
-  doorsAt: string;
-  hallId: number;
-  infoNl: string;
-}
+/** Form model used by the "create linked event" modal. */
+export interface CmsCreateLinkedEventForm extends CmsEventTimingFields {}
 
+/** AG Grid row model for the CMS production table. */
 export interface CmsProductionGridRow {
   id: number;
   source: ProductionWithBackwardsRefs;
@@ -37,6 +38,10 @@ export interface CmsProductionGridRow {
   events: number[];
 }
 
+/** Inline-editable short text columns in AG Grid. */
+export type InlineEditableField = "performer" | "title" | "producer" | "teaser";
+
+/** Long-form fields edited via side panel. */
 export interface CmsAdminGridRow {
   id: number;
   source: Admin;
@@ -54,8 +59,6 @@ export interface CmsTagGridRow {
   public: boolean;
   productionCount: number;
 }
-
-export type InlineEditableField = "performer" | "title" | "producer" | "teaser";
 
 export type TagInlineEditableField = "name" | "tagType" | "public";
 
@@ -78,6 +81,7 @@ export type CreateFieldKey =
   | "video_1"
   | "video_2";
 
+/** Create-production modal form state. */
 export interface CreateFormState {
   finalized: boolean;
   title: Record<SupportedLang, string>;
@@ -97,6 +101,8 @@ export interface CreateAdminFormState {
   super: boolean;
 }
 
+/** Side panel editor state for long-form multilingual content. */
+
 export interface EditorPanelState {
   rowId: number;
   apiField: LongField;
@@ -104,6 +110,7 @@ export interface EditorPanelState {
   values: Record<SupportedLang, string>;
 }
 
+/** Declarative config for rendering create modal field blocks. */
 export interface CmsCreateFieldConfig {
   key: CreateFieldKey;
   labelKey: string;
