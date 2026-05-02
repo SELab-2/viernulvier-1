@@ -1,6 +1,12 @@
 import fp from "fastify-plugin";
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 
+/**
+ * authorize plugin without the database connection for the super variable
+ * 
+ * the super variable can instead be set by importing authorizeMock and setting authorizeMock.super
+ */
+
 export const authorizeMock = {
   super: false,
 };
