@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-import { BlogPostSchema, type BlogPost } from "@viernulvier/shared/index.js";
+import { BlogPostWithBackwardsRefsSchema, type BlogPost } from "@viernulvier/shared/index.js";
 import { HttpSuccess, HttpClientError, HttpServerError } from "@/routes/helpers.js";
 
 let server: FastifyInstance;
@@ -45,6 +45,8 @@ describe("Replace on blogpost route", () => {
           return Promise.resolve({ rows: [], rowCount: 0 });
         } else if (upper.startsWith("INSERT")) {
           return Promise.resolve({ rows: [{}], rowCount: 1 });
+        } else if (upper.startsWith("SELECT PRODUCTION FROM PRODUCTION_BLOGPOST")) {
+          return Promise.resolve({ rows: [{ production: 1 }, { production: 2 }], rowCount: 2 });
         }
 
         throw new Error(`Unexpected query in replace tests: ${query}`);
@@ -68,9 +70,11 @@ describe("Replace on blogpost route", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(BlogPostSchema.parse(response.json())).toMatchObject({ id: replacedBlogPost["id"], title: replacedBlogPost["title"] });
-    // Should have called client.query: 1 BEGIN + 1 UPDATE + 1 DELETE + 2 INSERT + 1 COMMIT = 6 times
-    expect(mockClient.query).toHaveBeenCalledTimes(6);
+    const parsed = BlogPostWithBackwardsRefsSchema.parse(response.json());
+    expect(parsed).toMatchObject({ id: replacedBlogPost["id"], title: replacedBlogPost["title"] });
+    expect(parsed.productions).toEqual([1, 2]);
+    // Should have called client.query: 1 BEGIN + 1 UPDATE + 1 DELETE + 2 INSERT + 1 SELECT productions + 1 COMMIT = 7 times
+    expect(mockClient.query).toHaveBeenCalledTimes(7);
   });
 
   test("PUT /api/v1/blog/post/:id — replaces a blogpost and returns it", async () => {
@@ -87,6 +91,8 @@ describe("Replace on blogpost route", () => {
           return Promise.resolve({ rows: [], rowCount: 0 });
         } else if (upper.startsWith("INSERT")) {
           return Promise.resolve({ rows: [{}], rowCount: 1 });
+        } else if (upper.startsWith("SELECT PRODUCTION FROM PRODUCTION_BLOGPOST")) {
+          return Promise.resolve({ rows: [{ production: 1 }], rowCount: 1 });
         }
 
         throw new Error(`Unexpected query in replace tests: ${query}`);
@@ -110,7 +116,9 @@ describe("Replace on blogpost route", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(BlogPostSchema.parse(response.json())).toMatchObject({ id: replacedBlogPost["id"], title: replacedBlogPost["title"] });
+    const parsed = BlogPostWithBackwardsRefsSchema.parse(response.json());
+    expect(parsed).toMatchObject({ id: replacedBlogPost["id"], title: replacedBlogPost["title"] });
+    expect(parsed.productions).toEqual([1]);
   });
 
   test("PUT /api/v1/blog/post/:id — rejects empty productions array", async () => {
@@ -145,6 +153,8 @@ describe("Replace on blogpost route", () => {
           return Promise.resolve({ rows: [], rowCount: 0 });
         } else if (upper.startsWith("INSERT")) {
           return Promise.resolve({ rows: [{}], rowCount: 1 });
+        } else if (upper.startsWith("SELECT PRODUCTION FROM PRODUCTION_BLOGPOST")) {
+          return Promise.resolve({ rows: [{ production: 1 }], rowCount: 1 });
         }
 
         throw new Error(`Unexpected query in replace tests: ${query}`);

@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-import { BlogPostSchema, type BlogPost } from "@viernulvier/shared/index.js";
+import { BlogPostWithBackwardsRefsSchema, type BlogPost } from "@viernulvier/shared/index.js";
 import { HttpSuccess, HttpClientError, HttpServerError } from "@/routes/helpers.js";
 
 let server: FastifyInstance;
@@ -54,6 +54,11 @@ describe("Create on blogpost route", () => {
         if (upper.startsWith("INSERT INTO PRODUCTION_BLOGPOST")) {
           return Promise.resolve({ rows: [], rowCount: 0 });
         }
+        if (upper.startsWith("SELECT PRODUCTION FROM PRODUCTION_BLOGPOST")) {
+          // Return the production IDs that were inserted
+          const productionIds = [1, 2, 3].map((production) => ({ production }));
+          return Promise.resolve({ rows: productionIds, rowCount: productionIds.length });
+        }
         // Fallback - return empty
         return Promise.resolve({ rows: [], rowCount: 0 });
       }),
@@ -76,9 +81,11 @@ describe("Create on blogpost route", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(BlogPostSchema.parse(response.json())).toMatchObject({ id: mockBlogPost["id"], title: mockBlogPost["title"] });
-    // Verify transaction flow: BEGIN + INSERT blogpost + 3x INSERT production_blogpost + COMMIT
-    expect(mockClient.query).toHaveBeenCalledTimes(6);
+    const parsedResponse = BlogPostWithBackwardsRefsSchema.parse(response.json());
+    expect(parsedResponse).toMatchObject({ id: mockBlogPost["id"], title: mockBlogPost["title"] });
+    expect(parsedResponse.productions).toEqual([1, 2, 3]);
+    // Verify transaction flow: BEGIN + INSERT blogpost + 3x INSERT production_blogpost + SELECT productions + COMMIT
+    expect(mockClient.query).toHaveBeenCalledTimes(7);
     expect(mockClient.release).toHaveBeenCalled();
   });
 
@@ -112,6 +119,9 @@ describe("Create on blogpost route", () => {
         if (upper.startsWith("INSERT INTO PRODUCTION_BLOGPOST")) {
           return Promise.resolve({ rows: [], rowCount: 0 });
         }
+        if (upper.startsWith("SELECT PRODUCTION FROM PRODUCTION_BLOGPOST")) {
+          return Promise.resolve({ rows: [{ production: 1 }], rowCount: 1 });
+        }
         return Promise.resolve({ rows: [], rowCount: 0 });
       }),
       release: vi.fn(),
@@ -134,8 +144,10 @@ describe("Create on blogpost route", () => {
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
     expect(response.json()["published_at"]).toBeNull();
-    // Should have called client.query: 1 BEGIN + 1 INSERT blogpost + 1 INSERT production_blogpost + 1 COMMIT
-    expect(mockClient.query).toHaveBeenCalledTimes(4);
+    const parsedResponse = BlogPostWithBackwardsRefsSchema.parse(response.json());
+    expect(parsedResponse.productions).toEqual([1]);
+    // Should have called client.query: 1 BEGIN + 1 INSERT blogpost + 1 INSERT production_blogpost + 1 SELECT productions + 1 COMMIT
+    expect(mockClient.query).toHaveBeenCalledTimes(5);
     expect(mockClient.release).toHaveBeenCalled();
   });
 

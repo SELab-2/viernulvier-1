@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import type { BlogPost } from "@viernulvier/shared/index.js";
+import type { BlogPostWithBackwardsRefs } from "@viernulvier/shared/index.js";
 import { BlogPostSchema } from "@viernulvier/shared/index.js";
 import { getMetadata, parseSchema } from "@/routes/helpers.js";
 import { z } from "zod";
@@ -21,7 +21,7 @@ const CreateBlogPostInputSchema = BlogPostSchema.omit({ id: true }).extend({
 export async function createBlogPost(
   server: FastifyInstance,
   request: FastifyRequest,
-): Promise<BlogPost | null> {
+): Promise<BlogPostWithBackwardsRefs | null> {
   const body = parseSchema(server, CreateBlogPostInputSchema, request.body);
   const { admin, current_time } = getMetadata(request);
   const productions = body.productions;
@@ -55,8 +55,15 @@ export async function createBlogPost(
       );
     }
 
+    // Fetch production IDs for the created blogpost
+    const productionsResult = await client.query<{ production: number }>(
+      `SELECT production FROM production_blogpost WHERE blogpost = $1`,
+      [blogpost.id],
+    );
+    const productionIds = productionsResult.rows.map((row) => row.production);
+
     await client.query("COMMIT");
-    return blogpost;
+    return { ...blogpost, productions: productionIds };
   } catch (err) {
     await client.query("ROLLBACK");
     server.log.error(err);

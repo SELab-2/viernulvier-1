@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import type { BlogPost } from "@viernulvier/shared/index.js";
+import type { BlogPost, BlogPostWithBackwardsRefs } from "@viernulvier/shared/index.js";
 import { BlogPostSchema, stringToInt } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, parseSchema } from "@/routes/helpers.js";
 import { z } from "zod";
@@ -22,7 +22,7 @@ const ReplaceBlogPostBodySchema = BlogPostSchema.omit({ id: true }).extend({
 export async function replaceBlogPost(
   server: FastifyInstance,
   request: FastifyRequest,
-): Promise<BlogPost | null> {
+): Promise<BlogPostWithBackwardsRefs | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   const body = parseSchema(server, ReplaceBlogPostBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
@@ -64,8 +64,15 @@ export async function replaceBlogPost(
       );
     }
 
+    // Fetch production IDs for the replaced blogpost
+    const productionsResult = await client.query<{ production: number }>(
+      `SELECT production FROM production_blogpost WHERE blogpost = $1`,
+      [id],
+    );
+    const productionIds = productionsResult.rows.map((row) => row.production);
+
     await client.query("COMMIT");
-    return blogpost;
+    return { ...blogpost, productions: productionIds };
   } catch (err) {
     await client.query("ROLLBACK");
     server.log.error(err);

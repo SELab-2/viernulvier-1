@@ -429,8 +429,9 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    const post = BlogPostSchema.parse(response.json());
+    const post = BlogPostWithBackwardsRefsSchema.parse(response.json());
     expect(post).toMatchObject({ blog: blogId, title: "Test Post" });
+    expect(post.productions).toEqual([productionId1, productionId2]);
     blogPostId = post.id;
   });
 
@@ -456,7 +457,9 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
       },
     });
     expect(draftResponse.statusCode).toBe(HttpSuccess.OK);
-    const draftId = BlogPostSchema.parse(draftResponse.json()).id;
+    const draftPost = BlogPostWithBackwardsRefsSchema.parse(draftResponse.json());
+    expect(draftPost.productions).toEqual([productionId1]);
+    const draftId = draftPost.id;
 
     const listResponse = await server.inject({ method: "GET", url: "/api/v1/blog/post" });
     expect(listResponse.statusCode).toBe(HttpSuccess.OK);
@@ -500,9 +503,10 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    const post = BlogPostSchema.parse(response.json());
+    const post = BlogPostWithBackwardsRefsSchema.parse(response.json());
     expect(post.title).toBe("Updated Title");
     expect(post.content).toEqual({ body: "Hello world" }); // unchanged
+    expect(post.productions).toEqual([productionId1]);
   });
 
   test("PUT /api/v1/blog/post/:id — replaces all fields of the blogpost", async () => {
@@ -520,11 +524,13 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(BlogPostSchema.parse(response.json())).toMatchObject({
+    const post = BlogPostWithBackwardsRefsSchema.parse(response.json());
+    expect(post).toMatchObject({
       id: blogPostId,
       title: "Replaced Title",
       published_at: null,
     });
+    expect(post.productions).toEqual([productionId2]);
   });
 
   test("DELETE /api/v1/blog/post/:id — removes the blogpost from the database", async () => {
@@ -555,7 +561,9 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
     });
 
     expect(postResponse.statusCode).toBe(HttpSuccess.OK);
-    const verificationPostId = BlogPostSchema.parse(postResponse.json()).id;
+    const verificationPost = BlogPostWithBackwardsRefsSchema.parse(postResponse.json());
+    expect(verificationPost.productions).toEqual([productionId1]);
+    const verificationPostId = verificationPost.id;
 
     // Fetch production and verify it includes the linked blogpost
     const prodResponse = await server.inject({

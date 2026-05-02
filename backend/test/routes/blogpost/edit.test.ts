@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-import { BlogPostSchema, type BlogPost } from "@viernulvier/shared/index.js";
+import { BlogPostWithBackwardsRefsSchema, type BlogPost } from "@viernulvier/shared/index.js";
 import { HttpSuccess, HttpClientError, HttpServerError } from "@/routes/helpers.js";
 
 let server: FastifyInstance;
@@ -47,6 +47,9 @@ describe("Edit on blogpost route", () => {
         if (upper.startsWith("UPDATE")) {
           return Promise.resolve({ rows: [updatedTitle], rowCount: 1 });
         }
+        if (upper.startsWith("SELECT PRODUCTION FROM PRODUCTION_BLOGPOST")) {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
 
         throw new Error(`Unexpected query in edit tests: ${query}`);
       }),
@@ -63,7 +66,9 @@ describe("Edit on blogpost route", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(BlogPostSchema.parse(response.json())).toMatchObject({ title: updatedTitle["title"] });
+    const parsed = BlogPostWithBackwardsRefsSchema.parse(response.json());
+    expect(parsed).toMatchObject({ title: updatedTitle["title"] });
+    expect(parsed.productions).toEqual([]);
   });
 
   test("PATCH /api/v1/blog/post/:id — updates productions array", async () => {
@@ -80,6 +85,8 @@ describe("Edit on blogpost route", () => {
           return Promise.resolve({ rows: [], rowCount: 0 });
         } else if (upper.startsWith("INSERT")) {
           return Promise.resolve({ rows: [{}], rowCount: 1 });
+        } else if (upper.startsWith("SELECT PRODUCTION FROM PRODUCTION_BLOGPOST")) {
+          return Promise.resolve({ rows: [{ production: 1 }, { production: 2 }, { production: 3 }], rowCount: 3 });
         }
 
         throw new Error(`Unexpected query in edit tests: ${query}`);
@@ -97,8 +104,8 @@ describe("Edit on blogpost route", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    // Should have called client.query: 1 BEGIN + 1 UPDATE + 1 DELETE + 3 INSERT + 1 COMMIT = 7 times
-    expect(mockClient.query).toHaveBeenCalledTimes(7);
+    // Should have called client.query: 1 BEGIN + 1 UPDATE + 1 DELETE + 3 INSERT + 1 SELECT productions + 1 COMMIT = 8 times
+    expect(mockClient.query).toHaveBeenCalledTimes(8);
   });
 
   test("PATCH /api/v1/blog/post/:id — leaves productions untouched when not provided", async () => {
@@ -111,6 +118,9 @@ describe("Edit on blogpost route", () => {
         }
         if (upper.startsWith("UPDATE")) {
           return Promise.resolve({ rows: [updatedTitle], rowCount: 1 });
+        }
+        if (upper.startsWith("SELECT PRODUCTION FROM PRODUCTION_BLOGPOST")) {
+          return Promise.resolve({ rows: [], rowCount: 0 });
         }
 
         throw new Error(`Unexpected query - relations should not be touched: ${query}`);
@@ -128,8 +138,8 @@ describe("Edit on blogpost route", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    // Should have called client.query: 1 BEGIN + 1 UPDATE + 1 COMMIT = 3 times
-    expect(mockClient.query).toHaveBeenCalledTimes(3);
+    // Should have called client.query: 1 BEGIN + 1 UPDATE + 1 SELECT productions + 1 COMMIT = 4 times
+    expect(mockClient.query).toHaveBeenCalledTimes(4);
   });
 
   test("PATCH /api/v1/blog/post/:id — rejects empty productions array", async () => {
@@ -153,6 +163,9 @@ describe("Edit on blogpost route", () => {
         }
         if (upper.startsWith("UPDATE")) {
           return Promise.resolve({ rows: [updatedContent], rowCount: 1 });
+        }
+        if (upper.startsWith("SELECT PRODUCTION FROM PRODUCTION_BLOGPOST")) {
+          return Promise.resolve({ rows: [], rowCount: 0 });
         }
 
         throw new Error(`Unexpected query in edit tests: ${query}`);
@@ -184,6 +197,9 @@ describe("Edit on blogpost route", () => {
         if (upper.startsWith("UPDATE")) {
           return Promise.resolve({ rows: [publishedPost], rowCount: 1 });
         }
+        if (upper.startsWith("SELECT PRODUCTION FROM PRODUCTION_BLOGPOST")) {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
 
         throw new Error(`Unexpected query in edit tests: ${query}`);
       }),
@@ -213,6 +229,9 @@ describe("Edit on blogpost route", () => {
         }
         if (upper.startsWith("UPDATE")) {
           return Promise.resolve({ rows: [draftPost], rowCount: 1 });
+        }
+        if (upper.startsWith("SELECT PRODUCTION FROM PRODUCTION_BLOGPOST")) {
+          return Promise.resolve({ rows: [], rowCount: 0 });
         }
 
         throw new Error(`Unexpected query in edit tests: ${query}`);
