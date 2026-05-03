@@ -2,7 +2,6 @@ import { useRoute, useRouter } from "vue-router";
 import {
   i18n,
   saveLanguagePreference,
-  SUPPORTED_LANGS,
   type SupportedLang,
 } from "@/i18n";
 
@@ -29,15 +28,26 @@ export function useLocale() {
     saveLanguagePreference(lang);
     i18n.global.locale.value = lang;
 
-    // replace current path with same path but new lang prefix
-    const currentLang = SUPPORTED_LANGS.find((l) =>
-      route.path.startsWith(`/${l}`),
-    );
-    const pathWithoutLang = currentLang
-      ? route.path.substring(currentLang.length + 1) // "/nl/productions" → "/productions"
-      : ""; // only reachable from "/", always results in "/[lang]"
+    const routeLang = typeof route.params.lang === "string" ? route.params.lang : null;
 
-    void router.push(`/${lang}${pathWithoutLang}`);
+    // Preferred path: preserve current route record + params/query/hash, only swap `lang`.
+    if (route.name && routeLang) {
+      void router.push({
+        name: route.name,
+        params: { ...route.params, lang },
+        query: route.query,
+        hash: route.hash,
+      });
+      return;
+    }
+
+    // Fallback for routes without a `lang` param (e.g. "/" before guard redirect).
+    const path = route.path === "/" ? `/${lang}` : `/${lang}${route.path}`;
+    void router.push({
+      path,
+      query: route.query,
+      hash: route.hash,
+    });
   }
 
   return { setLocale };
