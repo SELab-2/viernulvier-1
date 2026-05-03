@@ -176,7 +176,7 @@ describe("ProductionsView.vue", () => {
     wrapper.unmount();
   });
 
-  it("shows loading then empty state when the API returns no productions", async () => {
+  it("shows skeleton state then empty state when the API returns no productions", async () => {
     let finishFetch!: (value: ProductionListPage) => void;
     const deferred = new Promise<ProductionListPage>((resolve) => {
       finishFetch = resolve;
@@ -193,12 +193,14 @@ describe("ProductionsView.vue", () => {
     });
 
     await nextTick();
-    expect(wrapper.text()).toContain("laden");
+    
+    expect(wrapper.find(".animate-pulse").exists()).toBe(true);
 
     finishFetch({ items: [], total: 0 });
     await flushPromises();
 
     expect(wrapper.text()).toContain("nog geen producties");
+    
     wrapper.unmount();
     document.body.innerHTML = "";
   });

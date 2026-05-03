@@ -986,7 +986,7 @@ async function commitPageNumberInput() {
     return;
   }
 
-  pageTopAnchor.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+  scrollProductionsPageToTop();
 
   await goToPage(pageOneBased - 1);
   pageNumberInput.value = String(currentPage.value + 1);
@@ -1230,10 +1230,7 @@ watch(
 async function goToPage(page: number) {
   if (page < 0 || page >= totalPages.value) return;
 
-  const el = pageTopAnchor.value;
-  if (el) {
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
+  scrollProductionsPageToTop();
 
   listLoading.value = true;
   beginListAttempt();
