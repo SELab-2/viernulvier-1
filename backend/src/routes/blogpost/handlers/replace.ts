@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { BlogPost, BlogPostWithBackwardsRefs } from "@viernulvier/shared/index.js";
-import { BlogPostSchema, stringToInt } from "@viernulvier/shared/index.js";
-import { getMetadata, parseParams, parseSchema } from "@/routes/helpers.js";
+import { BlogPostSchema, BlogPostWithBackwardsRefsSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { getMetadata, ParseContext, parseParams, parseSchema } from "@/routes/helpers.js";
 import { z } from "zod";
 
 const ReplaceBlogPostBodySchema = BlogPostSchema.omit({ id: true }).extend({
@@ -42,12 +42,8 @@ export async function replaceBlogPost(
       [body["blog"], body["title"], body["content"], body["published_at"], admin, current_time, id],
     );
 
-    const blogpost = result.rows[0];
-    if (!blogpost) {
-      await client.query("ROLLBACK");
-      return null;
-    }
-
+    const blogpost = parseSchema(server, BlogPostSchema, result.rows[0], ParseContext.Database);
+    
     // Delete existing relations
     await client.query(
       `DELETE FROM production_blogpost WHERE blogpost = $1`,
@@ -72,7 +68,7 @@ export async function replaceBlogPost(
     const productionIds = productionsResult.rows.map((row) => row.production);
 
     await client.query("COMMIT");
-    return { ...blogpost, productions: productionIds };
+    return parseSchema(server, BlogPostWithBackwardsRefsSchema, { ...blogpost, productions: productionIds }, ParseContext.Database);
   } catch (err) {
     await client.query("ROLLBACK");
     server.log.error(err);

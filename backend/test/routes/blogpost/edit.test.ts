@@ -252,7 +252,7 @@ describe("Edit on blogpost route", () => {
     expect(response.json()["published_at"]).toBeNull();
   });
 
-  test("PATCH /api/v1/blog/post/:id — returns 404 when blogpost not found", async () => {
+  test("PATCH /api/v1/blog/post/:id — returns 500 when blogpost not found", async () => {
     const mockClient = {
       query: vi.fn().mockImplementation((query: string) => {
         const upper = query.trim().toUpperCase();
@@ -278,7 +278,7 @@ describe("Edit on blogpost route", () => {
       payload: { title: "Nonexistent post" },
     });
 
-    expect(response.statusCode).toBe(HttpClientError.NotFound);
+    expect(response.statusCode).toBe(HttpServerError.InternalServerError);
   });
 
   test("PATCH /api/v1/blog/post/:id — rejects invalid body (wrong type)", async () => {

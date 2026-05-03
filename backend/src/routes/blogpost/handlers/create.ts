@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { BlogPostWithBackwardsRefs } from "@viernulvier/shared/index.js";
-import { BlogPostSchema } from "@viernulvier/shared/index.js";
-import { getMetadata, parseSchema } from "@/routes/helpers.js";
+import { BlogPostSchema, BlogPostWithBackwardsRefsSchema } from "@viernulvier/shared/index.js";
+import { getMetadata, ParseContext, parseSchema } from "@/routes/helpers.js";
 import { z } from "zod";
 
 const CreateBlogPostInputSchema = BlogPostSchema.omit({ id: true }).extend({
@@ -39,11 +39,7 @@ export async function createBlogPost(
       [body["blog"], body["title"], body["content"], body["published_at"], admin, current_time],
     );
 
-    const blogpost = blogpostResult.rows[0];
-    if (!blogpost) {
-      await client.query("ROLLBACK");
-      return null;
-    }
+    const blogpost = parseSchema(server, BlogPostSchema, blogpostResult.rows[0], ParseContext.Database);
 
     // Insert all production_blogpost relations within same transaction
     for (const production of productions) {
@@ -63,7 +59,7 @@ export async function createBlogPost(
     const productionIds = productionsResult.rows.map((row) => row.production);
 
     await client.query("COMMIT");
-    return { ...blogpost, productions: productionIds };
+    return parseSchema(server, BlogPostWithBackwardsRefsSchema, { ...blogpost, productions: productionIds }, ParseContext.Database);
   } catch (err) {
     await client.query("ROLLBACK");
     server.log.error(err);

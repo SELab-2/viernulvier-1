@@ -181,7 +181,7 @@ describe("Replace on blogpost route", () => {
     expect(response.json()["published_at"]).toBeNull();
   });
 
-  test("PUT /api/v1/blog/post/:id — returns 404 when blogpost not found", async () => {
+  test("PUT /api/v1/blog/post/:id — returns 500 when blogpost not found", async () => {
     const mockClient = {
       query: vi.fn().mockImplementation((query: string) => {
         const upper = query.trim().toUpperCase();
@@ -213,7 +213,7 @@ describe("Replace on blogpost route", () => {
       },
     });
 
-    expect(response.statusCode).toBe(HttpClientError.NotFound);
+    expect(response.statusCode).toBe(HttpServerError.InternalServerError);
   });
 
   test("PUT /api/v1/blog/post/:id — rejects invalid body (missing productions)", async () => {

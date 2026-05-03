@@ -151,7 +151,7 @@ describe("Create on blogpost route", () => {
     expect(mockClient.release).toHaveBeenCalled();
   });
 
-  test("POST /api/v1/blog/post — returns 404 when insert returns no row", async () => {
+  test("POST /api/v1/blog/post — returns 500 when insert returns no row", async () => {
     const mockClient = {
       query: vi.fn().mockImplementation((query: string) => {
         const upper = query.trim().toUpperCase();
@@ -182,7 +182,7 @@ describe("Create on blogpost route", () => {
       },
     });
 
-    expect(response.statusCode).toBe(HttpClientError.NotFound);
+    expect(response.statusCode).toBe(HttpServerError.InternalServerError);
   });
 
   test("POST /api/v1/blog/post — rejects invalid body (missing title)", async () => {

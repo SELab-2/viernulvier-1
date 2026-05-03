@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { BlogPost, BlogPostWithBackwardsRefs } from "@viernulvier/shared/index.js";
-import { BlogPostSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { BlogPostSchema, BlogPostWithBackwardsRefsSchema, stringToInt } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, parseSchema, HttpError, HttpClientError, ParseContext } from "@/routes/helpers.js";
 import { z } from "zod";
 
@@ -61,11 +61,7 @@ export async function editBlogPost(
       values,
     );
 
-    const blogpost = parseSchema(server, z.array(BlogPostSchema), result.rows, ParseContext.Database)[0];
-    if (!blogpost) {
-      await client.query("ROLLBACK");
-      return null;
-    }
+    const blogpost = parseSchema(server, BlogPostSchema, result.rows[0], ParseContext.Database);
 
     // Update production_blogpost relations if productions array is provided
     if (productions !== undefined) {
@@ -94,7 +90,7 @@ export async function editBlogPost(
     const productionIds = productionsResult.rows.map((row) => row.production);
 
     await client.query("COMMIT");
-    return { ...blogpost, productions: productionIds };
+    return parseSchema(server, BlogPostWithBackwardsRefsSchema, { ...blogpost, productions: productionIds }, ParseContext.Database);
   } catch (err) {
     await client.query("ROLLBACK");
     server.log.error(err);
