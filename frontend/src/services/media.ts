@@ -50,7 +50,7 @@ function handleProductionImagesFetchError(
 export async function getImagesForProductionOrEmpty(
   productionId: number,
 ): Promise<ImageWithCrops[]> {
-  return getImagesForProduction(productionId).catch((err: unknown) =>
+  return await getImagesForProduction(productionId).catch((err: unknown) =>
     handleProductionImagesFetchError(productionId, err),
   );
 }
