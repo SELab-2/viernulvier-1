@@ -3,7 +3,7 @@
   <section
     class="relative flex w-full min-h-[max(280px,calc(100vw*600/1920))] flex-col justify-end overflow-hidden"
   >
-    <div class="absolute inset-0 z-0 bg-black">
+    <div class="absolute inset-0 z-0 bg-surface-inv">
       <img
         v-if="bannerUrl"
         :src="bannerUrl"
