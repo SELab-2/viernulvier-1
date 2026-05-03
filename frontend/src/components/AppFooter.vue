@@ -48,7 +48,7 @@
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
             </a>
             <a href="https://www.tiktok.com/@viernulvier.gent" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="TikTok">
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.17-2.86-.6-4.12-1.31a8.6 8.6 0 01-1.87-1.42v5.14c0 3.01-.44 5.85-2.64 7.82-2.13 1.92-5.23 2.51-7.89 1.74-3.41-1.01-5.69-4.57-5.18-8.06.39-2.71 2.37-5.22 5.03-5.91 1.32-.34 2.75-.33 4.07.03V11.23c-1.31-.41-2.8-.29-3.93.53-1.42.98-1.93 3.12-1.04 4.58.9 1.48 2.81 1.95 4.31 1.14 1.05-.57 1.59-1.83 1.61-2.99.03-3.23.01-6.46.02-9.69.01-.01.01-.01.03-.03z"/></svg>
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.17-2.86-.6-4.12-1.31a8.6 8.6 0 01-1.87-1.42v5.14c0 3.01-.44 5.85-2.64 7.82-2.13 1.92-5.23 2.51-7.89 1.74-3.41-1.01-5.69-4.57-5.18-8.06.39-2.71 2.37-5.22 5.03-5.91 1.32-.34 2.75-.33 4.07.03V11.23c-1.31-.41-2.8-.29-3.93.53-1.42.98-1.93 3.12-1.04 4.58.9 1.48 2.81 1.95 4.31 1.14 1.05-.57 1.59-1.83 1.61-2.99.03-3.23.01-6.46.02-9.69.01-.01.01-.01.03-.03z" /></svg>
             </a>
             <a href="https://www.facebook.com/VIERNULVIER.gent/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Facebook">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
@@ -72,7 +72,7 @@
 
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
-const { t } = useI18n();
+useI18n();
 </script>
 
 <style scoped>
