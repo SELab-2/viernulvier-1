@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { mount } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
@@ -92,5 +92,23 @@ describe("AdminView", () => {
     authStore.admin = null;
     const wrapper = mountAdminView();
     expect(wrapper.find(".profile-avatar-fallback").text()).toBe("??");
+  });
+
+  // ── Clicking ───────────────────────────────────────────────────────────────
+
+  it("opens and closes change password modal on click", async () => {
+    const wrapper = mountAdminView();
+
+    expect(wrapper.find('[id="change-password-modal"]').exists()).toBe(false);
+
+    await wrapper.get('[id="show-password-modal-button"]').trigger("click");
+    await flushPromises();
+
+    expect(wrapper.find('[id="change-password-modal"]').exists()).toBe(true);
+
+    await wrapper.get('[id="close-btn"]').trigger("click");
+    await flushPromises();
+
+    expect(wrapper.find('[id="change-password-modal"]').exists()).toBe(false);
   });
 });

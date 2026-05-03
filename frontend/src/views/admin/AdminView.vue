@@ -37,26 +37,46 @@
               <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
             </svg>
           </RouterLink>
+
+          <button id="show-password-modal-button" class="action-card" @click="showPasswordModal = true">
+            <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="10" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <span class="action-label">{{ t("admin.dashboard.changePassword") }}</span>
+            <svg class="action-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+            </svg>
+          </button>
         </div>
       </section>
     </main>
+
+    <ChangePasswordModal
+      v-if="showPasswordModal"
+      id="change-password-modal"
+      @close="showPasswordModal = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { useDarkMode } from "@/composables/useDarkMode";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { RouterLink } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/stores/auth";
 import { RouteNames } from "@/router/routeNames";
 import AdminNavbar from "@/components/admin/AdminNavbar.vue";
+import ChangePasswordModal from "@/components/admin/ChangePasswordModal.vue";
 import { i18n, type SupportedLang } from "@/i18n";
 
 const { isDark, toggleDark } = useDarkMode();
 
 const { t } = useI18n();
 const { admin } = useAuthStore();
+
+const showPasswordModal = ref(false);
 
 const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 const initials = computed(() => admin?.username?.slice(0, 2).toUpperCase() ?? "??");
@@ -85,6 +105,6 @@ const initials = computed(() => admin?.username?.slice(0, 2).toUpperCase() ?? "?
 .actions-grid { @apply grid grid-cols-1 gap-3 sm:grid-cols-2; }
 .action-card { @apply flex items-center gap-4 rounded-xl border border-surface-3 bg-surface-2 px-5 py-4 no-underline transition hover:bg-surface-3; }
 .action-icon { @apply h-5 w-5 shrink-0 text-ink-secondary; }
-.action-label { @apply flex-1 text-sm font-medium text-ink-primary; }
+.action-label { @apply flex-1 text-left text-sm font-medium text-ink-primary; }
 .action-arrow { @apply h-4 w-4 shrink-0 text-ink-tertiary; }
 </style>

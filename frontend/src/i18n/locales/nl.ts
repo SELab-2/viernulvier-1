@@ -1,4 +1,8 @@
 export default {
+  general: {
+    cancel: "Annuleer",
+    saving: "Opslaan...",
+  },
   nav: {
     home: "Home",
     archive: "Archief",
@@ -86,7 +90,6 @@ export default {
       removeProduction: "Geselecteerde producties verwijderen",
       confirmRemoveDialogTitle: "Producties verwijderen?",
       confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde producties. Dit kan niet ongedaan worden gemaakt.",
-      confirmRemoveCancel: "Annuleer",
       confirmRemoveSubmit: "Definitief verwijderen",
       addTag: "+ Voeg Tag Toe",
       searchPlaceholder: "Zoek in alle kolommen...",
@@ -118,9 +121,7 @@ export default {
       selectTagType: "Kies een type...",
       finalized: "Markeer als gefinaliseerd",
       languages: "Extra talen",
-      cancel: "Annuleer",
       submit: "Productie toevoegen",
-      saving: "Toevoegen...",
       tags: {
         title: "Tags",
         primary: "Primaire tag",
@@ -162,7 +163,6 @@ export default {
       save: "Opslaan",
       saveAction: "Wijzigingen Opslaan",
       saveHint: "Wijzigingen worden pas toegepast nadat je op Wijzigingen Opslaan klikt.",
-      saving: "Opslaan...",
       text: "Tekst",
       bulkNotice: "Wijziging wordt toegepast op {count} geselecteerde producties.",
     },
@@ -291,7 +291,17 @@ export default {
       superAdmin: "Super admin",
       quickActions: "Snelle acties",
       openCms: "CMS openen",
-      logout: "Uitloggen",
+      changePassword: "Wachtwoord wijzigen",
+    },
+    changePassword: {
+      oldPassword: "Oud wachtwoord",
+      newPassword: "Nieuw wachtwoord",
+      confirmPassword: "Bevestig wachtwoord",
+      update: "Bijwerken",
+      tooShortError: "Het wachtwoord moet minstens 8 tekens bevatten.",
+      wrongOldPasswordError: "Oud wachtwoord is verkeerd.",
+      dontMatchError: "De wachtwoorden komen niet overeen.",
+      failedToUpdate: "Wachtwoord bijwerken mislukt",
     },
   },
   time: {

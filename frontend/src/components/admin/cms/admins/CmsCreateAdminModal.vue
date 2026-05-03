@@ -62,7 +62,7 @@
 
       <footer class="cms-modal-footer">
         <button type="button" class="cms-side-close" @click="emit('close')">
-          {{ t("cms.create.cancel") }}
+          {{ t("general.cancel") }}
         </button>
         <button
           type="button"
@@ -71,7 +71,7 @@
           data-testid="cms-create-admin-submit"
           @click="emit('submit')"
         >
-          {{ isCreating ? t("cms.create.saving") : t("cms.create.admin.submitAdmin") }}
+          {{ isCreating ? t("general.saving") : t("cms.create.admin.submitAdmin") }}
         </button>
       </footer>
     </section>
