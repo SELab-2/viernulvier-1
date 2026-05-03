@@ -21,7 +21,7 @@
       </section>
 
       <section class="mx-auto max-w-4xl px-6 pb-20 pt-8 lg:px-10">
-        <div v-if="!loading" class="mb-4 space-y-3">
+        <div class="mb-4 space-y-3">
           <div
             class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-stretch sm:gap-3"
           >
@@ -257,12 +257,6 @@
           {{ loadErrorDetail ?? t("productionsPage.error") }}
         </p>
 
-        <p
-          v-else-if="loading"
-          class="py-16 text-center text-sm text-ink-secondary"
-        >
-          {{ t("productionsPage.loading") }}
-        </p>
 
         <div v-else>
           <p
@@ -277,28 +271,30 @@
           </p>
 
           <p
-            v-if="totalCount === 0 && listLoading"
-            class="py-16 text-center text-sm text-ink-secondary"
-          >
-            {{ t("productionsPage.loading") }}
-          </p>
-          <p
-            v-else-if="totalCount === 0"
+            v-else-if="totalCount === 0 && !loading"
             class="py-16 text-center text-sm text-ink-secondary"
           >
             {{ emptyStateMessage }}
           </p>
 
           <div v-else>
-            <ProductionListCard
-              v-for="(p, idx) in productions"
-              :key="`${currentPage}-${idx}-${p.id}`"
-              :row-index="idx"
-              :production="p"
-              :date-summary="dateSummaryFor(p.id)"
-              :tag-chips="tagChipsFor(p)"
-              :halls-text="hallsTextFor(p.id)"
-            />
+            <div class="production-list-wrapper">
+              <template v-if="loading || listLoading">
+                <ProductionListCardSkeleton v-for="i in 5" :key="i" />
+              </template>
+    
+              <template v-else>
+                <ProductionListCard
+                  v-for="(p, idx) in productions"
+                  :key="`${currentPage}-${idx}-${p.id}`"
+                  :row-index="idx"
+                  :production="p"
+                  :date-summary="dateSummaryFor(p.id)"
+                  :tag-chips="tagChipsFor(p)"
+                  :halls-text="hallsTextFor(p.id)"
+                />
+              </template>
+            </div>
 
             <nav
               v-if="totalPages > 1"
@@ -393,6 +389,7 @@ import {
 import AppFooter from "@/components/AppFooter.vue";
 import AppNavbar from "@/components/AppNavbar.vue";
 import ProductionListCard from "@/components/productions/ProductionListCard.vue";
+import ProductionListCardSkeleton from "@/components/productions/ProductionListCardSkeleton.vue";
 import ProductionsDateFilter from "@/components/productions/ProductionsDateFilter.vue";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
@@ -989,6 +986,8 @@ async function commitPageNumberInput() {
     return;
   }
 
+  pageTopAnchor.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+
   await goToPage(pageOneBased - 1);
   pageNumberInput.value = String(currentPage.value + 1);
 }
@@ -1230,12 +1229,17 @@ watch(
 
 async function goToPage(page: number) {
   if (page < 0 || page >= totalPages.value) return;
+
+  const el = pageTopAnchor.value;
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   listLoading.value = true;
   beginListAttempt();
   try {
     await fetchProductionsPageData(page);
     await replaceRouteForPage0(page);
-    scrollAfterPageChange();
   } catch (err) {
     failListAttempt(err);
   } finally {
