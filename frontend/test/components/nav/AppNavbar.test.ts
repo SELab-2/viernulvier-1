@@ -3,9 +3,7 @@ import { mount } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { routes } from "@/router/routes";
 import { i18n } from "@/i18n";
-import AppNavbar from "@/components/AppNavbar.vue";
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
+import AppNavbar from "@/components/nav/AppNavbar.vue";
 
 async function mountNavbar(isDark = false) {
   const router = createRouter({ history: createMemoryHistory(), routes });
@@ -20,8 +18,6 @@ async function mountNavbar(isDark = false) {
 
   return { wrapper, router };
 }
-
-// ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe("AppNavbar.vue", () => {
   let wrapper: Awaited<ReturnType<typeof mountNavbar>>["wrapper"];
@@ -55,7 +51,6 @@ describe("AppNavbar.vue", () => {
     });
 
     it("renders the Productions nav link", () => {
-      // The label is translated — just verify at least 2 links exist
       const links = wrapper.findAll("a.nav-link");
       expect(links.length).toBeGreaterThanOrEqual(2);
     });
@@ -75,13 +70,56 @@ describe("AppNavbar.vue", () => {
   describe("dark mode toggle", () => {
     it("emits toggle-dark when the dark mode button is clicked", async () => {
       const buttons = wrapper.findAll("button.icon-btn");
-      // The dark mode button is the second icon-btn (after language)
       const darkBtn = buttons.find((b) =>
         b.attributes("aria-label")?.toLowerCase().includes("dark"),
       );
       expect(darkBtn).toBeDefined();
       await darkBtn!.trigger("click");
       expect(wrapper.emitted("toggle-dark")).toBeTruthy();
+    });
+  });
+
+  // ── Hamburger ──────────────────────────────────────────────────────────────
+
+  describe("hamburger menu", () => {
+    it("renders the hamburger button", () => {
+      expect(wrapper.find("button.hamburger").exists()).toBe(true);
+    });
+
+    it("drawer is hidden by default", () => {
+      expect(wrapper.find(".mobile-drawer").exists()).toBe(false);
+    });
+
+    it("opens the drawer when hamburger is clicked", async () => {
+      await wrapper.find("button.hamburger").trigger("click");
+      expect(wrapper.find(".mobile-drawer").exists()).toBe(true);
+    });
+
+    it("closes the drawer when hamburger is clicked again", async () => {
+      await wrapper.find("button.hamburger").trigger("click");
+      await wrapper.find("button.hamburger").trigger("click");
+      expect(wrapper.find(".mobile-drawer").exists()).toBe(false);
+    });
+
+    it("renders drawer nav links when open", async () => {
+      await wrapper.find("button.hamburger").trigger("click");
+      const drawerLinks = wrapper.find(".mobile-drawer").findAll("a.drawer-link");
+      expect(drawerLinks.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("closes the drawer when a drawer link is clicked", async () => {
+      await wrapper.find("button.hamburger").trigger("click");
+      await wrapper.find(".mobile-drawer a.drawer-link").trigger("click");
+      expect(wrapper.find(".mobile-drawer").exists()).toBe(false);
+    });
+
+    it("sets aria-expanded to true when open", async () => {
+      await wrapper.find("button.hamburger").trigger("click");
+      expect(wrapper.find("button.hamburger").attributes("aria-expanded")).toBe("true");
+    });
+
+    it("sets aria-expanded to false when closed", async () => {
+      expect(wrapper.find("button.hamburger").attributes("aria-expanded")).toBe("false");
     });
   });
 });

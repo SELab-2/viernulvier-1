@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import AppNavbar from "@/components/AppNavbar.vue";
+import AppNavbar from "@/components/nav/AppNavbar.vue";
 import AppFooter from "@/components/AppFooter.vue";
 import HeroSection from "@/components/production/HeroSection.vue";
 import DetailsSection from "@/components/production/DetailsSection.vue";

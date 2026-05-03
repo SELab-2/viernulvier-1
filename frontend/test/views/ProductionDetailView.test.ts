@@ -5,7 +5,7 @@ import ProductionDetailView from "@/views/ProductionDetailView.vue";
 import { ApiError } from "@/services/api";
 
 // ─── Mock child components ────────────────────────────────────────────────────
-vi.mock("@/components/AppNavbar.vue", () => ({
+vi.mock("@/components/nav/AppNavbar.vue", () => ({
   default: defineComponent({
     template: `<div data-testid="app-navbar"><button data-testid="navbar-toggle" @click="$emit('toggle-dark')" /></div>`,
     emits: ["toggle-dark"],
