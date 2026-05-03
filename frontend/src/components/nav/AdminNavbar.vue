@@ -1,10 +1,7 @@
 <template>
   <nav class="navbar">
-    <!-- Left: hamburger (mobile) + nav links (desktop) -->
     <div class="nav-left">
-      <button class="hamburger" :aria-expanded="menuOpen" aria-label="Toggle menu" @click="menuOpen = !menuOpen">
-        <span /><span /><span />
-      </button>
+      <NavHamburger :open="menuOpen" @click="menuOpen = !menuOpen" />
       <div class="nav-links">
         <RouterLink :to="{ name: RouteNames.ADMIN, params: { lang: currentLang } }" class="nav-link">
           {{ t("nav.admin.dashboard") }}
@@ -15,14 +12,12 @@
       </div>
     </div>
 
-    <!-- Center: logo -->
     <RouterLink :to="{ name: RouteNames.ADMIN, params: { lang: currentLang } }" class="brand">
       <img src="@/assets/images/logo.svg" alt="VierNulVier" width="80" height="25" class="logo" />
       <span class="brand-divider" />
       <span class="brand-label">Admin</span>
     </RouterLink>
 
-    <!-- Right: controls + profile (desktop only) -->
     <div class="nav-right">
       <div class="hidden sm:flex items-center gap-2">
         <NavControls :is-dark="isDark" @toggle-dark="$emit('toggle-dark')" />
@@ -41,32 +36,29 @@
     </div>
   </nav>
 
-  <!-- Mobile drawer -->
-  <Transition name="drawer">
-    <div v-if="menuOpen" class="mobile-drawer">
-      <RouterLink
-        :to="{ name: RouteNames.ADMIN, params: { lang: currentLang } }"
-        class="drawer-link"
-        @click="menuOpen = false"
-      >{{ t("nav.admin.dashboard") }}</RouterLink>
-      <RouterLink
-        :to="{ name: RouteNames.CMS, params: { lang: currentLang } }"
-        class="drawer-link"
-        @click="menuOpen = false"
-      >{{ t("nav.admin.cms") }}</RouterLink>
-      <div class="drawer-divider" />
-      <NavControls :is-dark="isDark" @toggle-dark="$emit('toggle-dark')" />
-      <div class="drawer-divider" />
-      <div class="drawer-profile">
-        <img v-if="admin?.profile_picture" :src="admin.profile_picture" class="drawer-avatar-img" alt="" />
-        <span v-else class="drawer-avatar-fallback">{{ initials }}</span>
-        <span class="drawer-username">{{ admin?.username }}</span>
-      </div>
-      <button class="drawer-link drawer-signout" @click="handleLogout">
-        {{ t("nav.admin.signOut") }}
-      </button>
+  <NavDrawer :open="menuOpen">
+    <RouterLink
+      :to="{ name: RouteNames.ADMIN, params: { lang: currentLang } }"
+      class="drawer-link"
+      @click="menuOpen = false"
+    >{{ t("nav.admin.dashboard") }}</RouterLink>
+    <RouterLink
+      :to="{ name: RouteNames.CMS, params: { lang: currentLang } }"
+      class="drawer-link"
+      @click="menuOpen = false"
+    >{{ t("nav.admin.cms") }}</RouterLink>
+    <div class="drawer-divider" />
+    <NavControls :is-dark="isDark" @toggle-dark="$emit('toggle-dark')" />
+    <div class="drawer-divider" />
+    <div class="drawer-profile">
+      <img v-if="admin?.profile_picture" :src="admin.profile_picture" class="drawer-avatar-img" alt="" />
+      <span v-else class="drawer-avatar-fallback">{{ initials }}</span>
+      <span class="drawer-username">{{ admin?.username }}</span>
     </div>
-  </Transition>
+    <button class="drawer-link drawer-signout" @click="handleLogout">
+      {{ t("nav.admin.signOut") }}
+    </button>
+  </NavDrawer>
 </template>
 
 <script setup lang="ts">
@@ -77,7 +69,9 @@ import { i18n, type SupportedLang } from "@/i18n";
 import { RouteNames } from "@/router/routeNames";
 import { useAuthStore } from "@/stores/auth";
 import { logout } from "@/services/auth";
-import NavControls from "@/components/NavControls.vue";
+import NavControls from "@/components/nav/NavControls.vue";
+import NavHamburger from "@/components/nav/NavHamburger.vue";
+import NavDrawer from "@/components/nav/NavDrawer.vue";
 import "@/assets/stylesheets/navbar.css";
 
 defineProps<{ isDark: boolean }>();
@@ -114,13 +108,10 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 <style scoped>
 @reference "@/style.css";
 
-.logo { @apply h-6 w-auto; }
-.nav-left { @apply flex items-center; }
-.nav-links { @apply hidden sm:flex items-center gap-6; }
-
 .brand { @apply flex min-w-[140px] items-end gap-3 no-underline absolute left-1/2 -translate-x-1/2; }
 .brand-divider { @apply block h-4 w-px shrink-0 bg-surface-inv-border; }
 .brand-label { @apply text-xs font-semibold uppercase tracking-widest text-ink-on-inv-tertiary; }
+
 .nav-right { @apply flex items-center justify-end; }
 
 .profile-btn {
@@ -143,13 +134,6 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
   background: none;
   border: none;
 }
-
-.drawer-profile { @apply flex items-center gap-3 px-3 py-2; }
-.drawer-avatar-img { @apply h-9 w-9 rounded-full object-cover ring-1 ring-surface-inv-border; }
-.drawer-avatar-fallback {
-  @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-inv-raised text-xs font-semibold text-ink-on-inv ring-1 ring-surface-inv-border;
-}
-.drawer-username { @apply text-sm font-medium text-ink-on-inv truncate; }
 
 .drawer-signout { @apply text-red-400 hover:text-red-300; }
 </style>

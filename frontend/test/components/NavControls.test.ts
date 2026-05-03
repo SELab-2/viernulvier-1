@@ -3,7 +3,7 @@ import { mount } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { i18n } from "@/i18n";
 import { routes } from "@/router/routes";
-import NavControls from "@/components/NavControls.vue";
+import NavControls from "@/components/nav/NavControls.vue";
 
 async function mountNavControls(isDark = false) {
   const router = createRouter({ history: createMemoryHistory(), routes });
