@@ -400,7 +400,7 @@ import { i18n, type SupportedLang } from "@/i18n";
 import { getEventsForProductions } from "@/services/events";
 import { getHalls } from "@/services/halls";
 import { ApiError } from "@/services/api";
-import { getImagesForProduction } from "@/services/media";
+import { getImagesForProductionOrEmpty } from "@/services/media";
 import { getProductions } from "@/services/productions";
 import { getTags, getTagTypes } from "@/services/tags";
 import { localizeOrEmpty } from "@/utils/language-utils";
@@ -741,12 +741,8 @@ async function loadThumbnailsForProductionIds(ids: number[]): Promise<void> {
   const next = new Map<number, string | null>();
   await Promise.all(
     ids.map(async (id) => {
-      try {
-        const images = await getImagesForProduction(id);
-        next.set(id, pickProductionListThumbnailUrl(images));
-      } catch {
-        next.set(id, null);
-      }
+      const images = await getImagesForProductionOrEmpty(id);
+      next.set(id, pickProductionListThumbnailUrl(images));
     }),
   );
   if (gen !== thumbnailLoadGeneration) {

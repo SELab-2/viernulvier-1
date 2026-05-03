@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { getImagesForProduction } from "@/services/media";
+import {
+  getImagesForProduction,
+  getImagesForProductionOrEmpty,
+} from "@/services/media";
 import type { ImageWithCrops } from "@/services/media";
 
 function mockJsonFetch(body: unknown) {
@@ -34,5 +37,45 @@ describe("getImagesForProduction", () => {
     const out = await getImagesForProduction(9);
     expect(out).toEqual(payload);
     expect(lastFetchUrl()).toBe("/api/v1/production/9/image");
+  });
+});
+
+function mockErrorFetch(status: number, body: unknown) {
+  return vi.fn().mockResolvedValue({
+    ok: false,
+    status,
+    statusText: "Error",
+    json: vi.fn().mockResolvedValue(body),
+  });
+}
+
+describe("getImagesForProductionOrEmpty", () => {
+  it("returns [] on HTTP 404 without console.warn", async () => {
+    vi.stubGlobal("fetch", mockErrorFetch(404, { error: "Not found" }));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const out = await getImagesForProductionOrEmpty(9);
+    expect(out).toEqual([]);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it("returns [] and warns on non-404 HTTP errors (e.g. 503)", async () => {
+    vi.stubGlobal("fetch", mockErrorFetch(503, { error: "Unavailable" }));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const out = await getImagesForProductionOrEmpty(9);
+    expect(out).toEqual([]);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0]![0])).toContain("[production 9]");
+    expect(String(warn.mock.calls[0]![0])).toContain("503");
+    warn.mockRestore();
+  });
+
+  it("returns [] and warns on non-ApiError failures", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network")));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const out = await getImagesForProductionOrEmpty(9);
+    expect(out).toEqual([]);
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
   });
 });
