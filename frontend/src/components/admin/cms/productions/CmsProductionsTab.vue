@@ -315,12 +315,10 @@ import {
   buildEventGridRows,
   buildProductionGridRows,
   buildCmsTagGroups,
-  applyUpdatedProductionToRow,
   createProductionFields,
   buildEmptyCreateForm,
   fileToDataUrl,
   mediaToLanguageMap,
-  mapEntitiesById,
   toLanguageMap,
   toLanguageMapOrNull,
   validateCreateProductionForm,
@@ -920,22 +918,6 @@ async function submitCreateProduction(): Promise<void> {
   }
 }
 
-async function persistProductionPatch(
-  row: CmsProductionGridRow,
-  patch: Record<string, unknown>,
-): Promise<void> {
-  try {
-    const updated = await updateProduction(row.id, patch as never);
-    applyUpdatedProductionToRow(row, updated, localizeValue);
-  } catch (error) {
-    saveError.value =
-      error instanceof Error
-        ? t("cms.errors.saveFailed", { message: error.message })
-        : t("cms.errors.saveGeneric");
-    throw error;
-  }
-}
-
 async function persistBulkProductionPatch(
   targetRows: CmsProductionGridRow[],
   patch: Record<string, unknown>,
@@ -1448,6 +1430,7 @@ defineExpose({
     loadCmsData,
     bulkEditConfirmOpen,
     bulkEditConfirmCount,
+    bulkEditConfirmLoading,
     openBulkEditConfirm,
     closeBulkEditConfirm,
     confirmBulkEdit,

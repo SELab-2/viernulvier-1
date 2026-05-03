@@ -789,4 +789,32 @@ describe("CmsProductionsTab", () => {
 
     wrapper.unmount();
   });
+
+  it("bulk edit confirm helpers and confirmBulkEdit branches", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    // close when no pending action
+    api.openBulkEditConfirm(0, null as any);
+    expect(api.bulkEditConfirmOpen.value).toBe(true);
+    await api.confirmBulkEdit();
+    expect(api.bulkEditConfirmOpen.value).toBe(false);
+
+    // success path: pending action runs
+    let ran = false;
+    api.openBulkEditConfirm(2, async () => {
+      ran = true;
+    });
+    expect(api.bulkEditConfirmOpen.value).toBe(true);
+    await api.confirmBulkEdit();
+    expect(ran).toBe(true);
+
+    // failure path: action throws, loading flag resets
+    api.openBulkEditConfirm(2, async () => {
+      throw new Error("fail");
+    });
+    expect(api.bulkEditConfirmOpen.value).toBe(true);
+    await api.confirmBulkEdit();
+    expect(api.bulkEditConfirmLoading.value).toBe(false);
+  });
 });

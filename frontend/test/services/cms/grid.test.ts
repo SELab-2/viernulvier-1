@@ -6,6 +6,7 @@ import {
   buildProductionGridRows,
   getBulkTargetRows,
 } from "@/services/cms/grid";
+import { buildTagGridRow, buildTagGridRows, applyUpdatedTagToRow, applyUpdatedProductionToRow } from "@/services/cms/grid";
 import type { CmsProductionGridRow } from "@/services/cms";
 
 function buildProduction(tags: unknown[] = [1], events: unknown[] = []): ProductionWithBackwardsRefs {
@@ -173,5 +174,45 @@ describe("cms grid helpers", () => {
     expect(rows[0]?.infoNl).toBe("info");
     expect(rows[1]?.location).toBe("Hall #99");
     expect(rows[0]?.price).toBe("N/A");
+  });
+
+  it("builds tag grid rows and applies tag updates", () => {
+    const tag = { id: 3, name: { nl: "TagName" }, tag_type: 7, public: true, productions: [1, 2] } as unknown as Tag;
+    const tagType = { id: 7, name: { nl: "TagTypeName" } } as unknown as TagType;
+    const row = buildTagGridRow(tag, new Map(), (m) => m?.nl ?? "");
+    expect(row.tagType).toBe("#7");
+    expect(row.productionCount).toBe(2);
+
+    const rows = buildTagGridRows([tag], [tagType], (m) => m?.nl ?? "");
+    expect(rows[0].tagType).toBe("TagTypeName");
+
+    const updatedTag = { id: 3, name: { nl: "NewName" }, tag_type: 7, public: false } as unknown as Tag;
+    const map = new Map<number, TagType>([[7, tagType]]);
+    const mutable = { ...row };
+    applyUpdatedTagToRow(mutable as any, updatedTag, map, (m) => m?.nl ?? "");
+    expect(mutable.name).toBe("NewName");
+    expect(mutable.public).toBe(false);
+  });
+
+  it("applyUpdatedProductionToRow updates production row fields", () => {
+    const prod = {
+      id: 20,
+      artist: { nl: "A" },
+      title: { nl: "T" },
+      supertitle: { nl: "S" },
+      teaser: { nl: "Te" },
+      description: { nl: "D1" },
+      description_2: { nl: "D2" },
+      video_1: { nl: "V1" },
+      video_2: { nl: "V2" },
+      events: [],
+      tags: [],
+    } as unknown as ProductionWithBackwardsRefs;
+
+    const row = buildProductionGridRow(prod, new Map(), new Set(), (m) => m?.nl ?? "");
+    const updated = { ...prod, title: { nl: "T2" }, supertitle: { nl: "S2" } } as unknown as ProductionWithBackwardsRefs;
+    applyUpdatedProductionToRow(row as any, updated as any, (m) => m?.nl ?? "");
+    expect(row.title).toBe("T2");
+    expect(row.producer).toBe("S2");
   });
 });
