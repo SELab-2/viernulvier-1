@@ -5,7 +5,8 @@
       params: { lang: locale, id: production.id },
     }"
     class="production-list-card group -mx-3 flex items-stretch gap-4 border-b border-surface-3 px-3 py-8 transition-colors last:border-b-0 hover:bg-surface-1/60 sm:-mx-4 sm:gap-6 sm:px-4 md:-mx-5 md:gap-8 md:px-5"
-    :style="{ '--production-list-stagger': `${staggerDelayMs}ms` }"
+    :class="{ 'is-animated': animate }"
+    :style="animate ? { '--production-list-stagger': `${staggerDelayMs}ms` } : undefined"
   >
     <div
       class="relative h-28 w-24 shrink-0 overflow-hidden rounded-md bg-surface-2 sm:h-32 sm:w-28 md:h-36 md:w-32"
@@ -108,10 +109,13 @@ const props = withDefaults(
     dateSummary: ProductionDateSummary;
     tagChips: ProductionTagChip[];
     hallsText: string;
-    /** Used to stagger the row entrance animation on the productions list. */
     rowIndex?: number;
+    animate?: boolean;
   }>(),
-  { rowIndex: 0 },
+  {
+    rowIndex: 0,
+    animate: true,
+  },
 );
 
 const { t, locale } = useI18n();
@@ -130,7 +134,7 @@ const artist = computed(() =>
 </script>
 
 <style scoped>
-.production-list-card {
+.production-list-card.is-animated {
   animation: production-list-card-in 0.42s ease-out both;
   animation-delay: var(--production-list-stagger, 0ms);
 }

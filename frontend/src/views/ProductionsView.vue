@@ -295,6 +295,7 @@
                 :date-summary="dateSummaryFor(p.id)"
                 :tag-chips="tagChipsFor(p)"
                 :halls-text="hallsTextFor(p.id)"
+                :animate="false"
               />
             </template>
           </div>
