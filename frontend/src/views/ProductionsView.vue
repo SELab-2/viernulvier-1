@@ -271,7 +271,7 @@
           </p>
 
           <p
-            v-else-if="totalCount === 0 && !loading"
+            v-if="totalCount === 0 && !loading"
             class="py-16 text-center text-sm text-ink-secondary"
           >
             {{ emptyStateMessage }}
