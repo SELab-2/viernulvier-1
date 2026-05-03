@@ -199,6 +199,7 @@ const { t } = useI18n();
 const scrollerRef = useTemplateRef<HTMLElement>("scrollerRef");
 const lightboxRootRef = useTemplateRef<HTMLElement>("lightboxRootRef");
 let lightboxFocusTrap: FocusTrap | null = null;
+let previousBodyOverflow: string | null = null;
 
 function deactivateLightboxFocusTrap(): void {
   if (!lightboxFocusTrap) return;
@@ -222,6 +223,20 @@ function activateLightboxFocusTrap(): void {
     returnFocusOnDeactivate: true,
   });
   lightboxFocusTrap.activate();
+}
+
+function applyBodyScrollLock(locked: boolean): void {
+  if (locked) {
+    if (previousBodyOverflow === null) {
+      previousBodyOverflow = document.body.style.overflow;
+    }
+    document.body.style.overflow = "hidden";
+    return;
+  }
+  if (previousBodyOverflow !== null) {
+    document.body.style.overflow = previousBodyOverflow;
+    previousBodyOverflow = null;
+  }
 }
 
 /** Active slide index when lightbox open; `null` when closed */
@@ -290,12 +305,12 @@ onMounted(() => {
 });
 onUnmounted(() => {
   deactivateLightboxFocusTrap();
+  applyBodyScrollLock(false);
   window.removeEventListener("resize", onResize);
   window.removeEventListener("keydown", onGlobalKeydown);
   carouselResizeObserver?.disconnect();
   carouselResizeObserver = null;
   cancelSmoothScroll();
-  document.body.style.overflow = "";
 });
 
 function onResize(): void {
@@ -554,7 +569,7 @@ watch(
 );
 
 watch(lightboxIndex, async (idx) => {
-  document.body.style.overflow = idx !== null ? "hidden" : "";
+  applyBodyScrollLock(idx !== null);
   if (idx === null) return;
   await nextTick();
   activateLightboxFocusTrap();
