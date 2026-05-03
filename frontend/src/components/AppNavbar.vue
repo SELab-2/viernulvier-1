@@ -1,42 +1,52 @@
 <template>
   <nav class="navbar">
-    <!-- Left: nav links -->
-    <div class="flex items-center gap-6">
-      <RouterLink
-        :to="{ name: RouteNames.HOME, params: { lang: currentLang } }"
-        class="nav-link"
-      >
-        {{ t("nav.home") }}
-      </RouterLink>
-      <RouterLink
-        :to="{ name: RouteNames.PRODUCTIONS, params: { lang: currentLang } }"
-        class="nav-link"
-      >
-        {{ t("nav.productions") }}
-      </RouterLink>
+    <!-- Left: hamburger (mobile) + nav links (desktop) -->
+    <div class="nav-left">
+      <button class="hamburger" :aria-expanded="menuOpen" aria-label="Toggle menu" @click="menuOpen = !menuOpen">
+        <span /><span /><span />
+      </button>
+      <div class="nav-links">
+        <RouterLink :to="{ name: RouteNames.HOME, params: { lang: currentLang } }" class="nav-link">
+          {{ t("nav.home") }}
+        </RouterLink>
+        <RouterLink :to="{ name: RouteNames.PRODUCTIONS, params: { lang: currentLang } }" class="nav-link">
+          {{ t("nav.productions") }}
+        </RouterLink>
+      </div>
     </div>
 
     <!-- Center: logo -->
-    <RouterLink
-      :to="{ name: RouteNames.HOME, params: { lang: currentLang } }"
-      class="navbar-center"
-    >
-      <img
-        src="@/assets/images/logo.svg"
-        alt="VierNulVier"
-        width="102"
-        height="32"
-        class="logo"
-      />
+    <RouterLink :to="{ name: RouteNames.HOME, params: { lang: currentLang } }" class="navbar-center">
+      <img src="@/assets/images/logo.svg" alt="VierNulVier" width="102" height="32" class="logo" />
     </RouterLink>
 
-    <!-- Right: controls -->
-    <NavControls :is-dark="isDark" @toggle-dark="$emit('toggle-dark')" />
+    <!-- Right: controls (desktop only) -->
+    <div class="hidden sm:block">
+      <NavControls :is-dark="isDark" @toggle-dark="$emit('toggle-dark')" />
+    </div>
   </nav>
+
+  <!-- Mobile drawer -->
+  <Transition name="drawer">
+    <div v-if="menuOpen" class="mobile-drawer">
+      <RouterLink
+        :to="{ name: RouteNames.HOME, params: { lang: currentLang } }"
+        class="drawer-link"
+        @click="menuOpen = false"
+      >{{ t("nav.home") }}</RouterLink>
+      <RouterLink
+        :to="{ name: RouteNames.PRODUCTIONS, params: { lang: currentLang } }"
+        class="drawer-link"
+        @click="menuOpen = false"
+      >{{ t("nav.productions") }}</RouterLink>
+      <div class="drawer-divider" />
+      <NavControls :is-dark="isDark" @toggle-dark="$emit('toggle-dark')" />
+    </div>
+  </Transition>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { ref, computed } from "vue";
 import { RouterLink } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { i18n, type SupportedLang } from "@/i18n";
@@ -49,10 +59,13 @@ defineEmits<{ "toggle-dark": [] }>();
 
 const { t } = useI18n();
 const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
+const menuOpen = ref(false);
 </script>
 
 <style scoped>
 @reference "@/style.css";
 
 .logo { @apply h-6 w-auto; }
+.nav-left { @apply flex items-center; }
+.nav-links { @apply hidden sm:flex items-center gap-6; }
 </style>
