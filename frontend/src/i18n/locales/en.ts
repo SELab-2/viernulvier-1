@@ -36,10 +36,24 @@ export default {
     },
   },
   footer: {
-    copyright: "© {year} VierNulVier / De Vooruit. All rights reserved.",
-    privacy: "Privacy Policy",
-    terms: "Terms of Use",
-    contact: "Contact",
+    titles: {
+      organization: "Organization",
+      contact: "Contact",
+      navigation: "Navigation",
+      connect: "Follow us",
+    },
+    address: {
+      city: "9000 Ghent",
+      country: "Belgium",
+    },
+    contact: {
+      phone: "+32 (0)9 267 28 20",
+    },
+    nav: {
+      home: "Index",
+      productions: "Productions",
+      blog: "Blog posts",
+    },
   },
   date: {
     doorsOpen: "Doors open at",

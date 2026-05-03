@@ -36,10 +36,24 @@ export default {
     },
   },
   footer: {
-    copyright: "© {year} VierNulVier / De Vooruit. Alle rechten voorbehouden.",
-    privacy: "Privacybeleid",
-    terms: "Gebruiksvoorwaarden",
-    contact: "Contact",
+    titles: {
+      organization: "Organisatie",
+      contact: "Contact",
+      navigation: "Navigatie",
+      connect: "Volg ons",
+    },
+    address: {
+      city: "9000 Gent",
+      country: "België",
+    },
+    contact: {
+      phone: "09 267 28 20",
+    },
+    nav: {
+      home: "Index",
+      productions: "Producties",
+      blog: "Blogposts",
+    },
   },
   date: {
     doorsOpen: "Deuren open om",

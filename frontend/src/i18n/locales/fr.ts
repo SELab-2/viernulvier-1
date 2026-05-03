@@ -36,10 +36,24 @@ export default {
     },
   },
   footer: {
-    copyright: "© {year} VierNulVier / De Vooruit. Tous droits réservés.",
-    privacy: "Politique de confidentialité",
-    terms: "Conditions d'utilisation",
-    contact: "Contact",
+    titles: {
+      organization: "Organisation",
+      contact: "Contact",
+      navigation: "Navigation",
+      connect: "Nous suivre",
+    },
+    address: {
+      city: "9000 Gand",
+      country: "Belgique",
+    },
+    contact: {
+      phone: "+32 (0)9 267 28 20",
+    },
+    nav: {
+      home: "Index",
+      productions: "Productions",
+      blog: "Articles de blog",
+    },
   },
   date: {
     doorsOpen: "Portes ouvertes à",
