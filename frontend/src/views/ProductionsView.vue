@@ -270,93 +270,96 @@
             {{ filteredResultsCountLabel }}
           </p>
 
-          <p
-            v-if="totalCount === 0 && !loading"
-            class="py-16 text-center text-sm text-ink-secondary"
+          <div 
+            class="production-list-wrapper transition-opacity duration-200"
+            :class="{ 'opacity-50 pointer-events-none': listLoading }"
           >
-            {{ emptyStateMessage }}
-          </p>
+          
+            <template v-if="(loading || listLoading) && productions.length === 0">
+              <ProductionListCardSkeleton v-for="i in 5" :key="i" />
+            </template>
 
-          <div v-else>
-            <div class="production-list-wrapper">
-              <template v-if="loading || listLoading">
-                <ProductionListCardSkeleton v-for="i in 5" :key="i" />
-              </template>
-    
-              <template v-else>
-                <ProductionListCard
-                  v-for="(p, idx) in productions"
-                  :key="`${currentPage}-${idx}-${p.id}`"
-                  :row-index="idx"
-                  :production="p"
-                  :date-summary="dateSummaryFor(p.id)"
-                  :tag-chips="tagChipsFor(p)"
-                  :halls-text="hallsTextFor(p.id)"
-                />
-              </template>
-            </div>
-
-            <nav
-              v-if="totalPages > 1"
-              class="mt-10 grid grid-cols-1 justify-items-center gap-y-6 border-t border-surface-3 pt-8 sm:grid-cols-[1fr_auto] sm:items-center sm:justify-items-start sm:gap-x-12 sm:gap-y-0"
-              aria-label="Pagination"
+            <p
+              v-else-if="!listLoading && totalCount === 0"
+              class="py-16 text-center text-sm text-ink-secondary"
             >
-              <p class="text-center text-sm text-ink-secondary sm:text-left">
-                {{
-                  t("productionsPage.showingRange", {
-                    from: rangeFrom,
-                    to: rangeTo,
-                    total: totalCount,
-                  })
-                }}
-              </p>
-              <div
-                class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:justify-self-end"
-                role="group"
-                :aria-label="t('productionsPage.goToPage')"
-              >
-                <button
-                  type="button"
-                  class="cursor-pointer rounded-md border border-accent-outline bg-surface-0 px-3 py-1.5 text-sm font-medium text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
-                  :disabled="currentPage <= 0 || listLoading"
-                  @click="goToPage(currentPage - 1)"
-                >
-                  {{ t("productionsPage.prevPage") }}
-                </button>
-                <div
-                  class="flex items-center gap-2 text-sm tabular-nums text-ink-secondary"
-                >
-                  <span class="whitespace-nowrap">{{
-                    t("productionsPage.pageWord")
-                  }}</span>
-                  <input
-                    :value="pageNumberInput"
-                    type="text"
-                    inputmode="numeric"
-                    autocomplete="off"
-                    maxlength="6"
-                    :disabled="listLoading"
-                    :aria-label="t('productionsPage.goToPage')"
-                    class="min-w-6 max-w-8 shrink-0 border-0 border-b border-surface-3 bg-transparent px-0 pb-px text-center text-sm tabular-nums text-ink-secondary focus:border-ink-primary focus:text-ink-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
-                    @input="onPageNumberInput"
-                    @keydown.enter.prevent="commitPageNumberInput"
-                    @blur="commitPageNumberInput"
-                  />
-                  <span class="whitespace-nowrap">{{
-                    t("productionsPage.pageOfTotal", { total: totalPages })
-                  }}</span>
-                </div>
-                <button
-                  type="button"
-                  class="cursor-pointer rounded-md border border-accent-outline bg-surface-0 px-3 py-1.5 text-sm font-medium text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
-                  :disabled="currentPage >= totalPages - 1 || listLoading"
-                  @click="goToPage(currentPage + 1)"
-                >
-                  {{ t("productionsPage.nextPage") }}
-                </button>
-              </div>
-            </nav>
+              {{ emptyStateMessage }}
+            </p>
+
+            <template v-else>
+              <ProductionListCard
+                v-for="(p, idx) in productions"
+                :key="`${currentPage}-${idx}-${p.id}`"
+                :row-index="idx"
+                :production="p"
+                :date-summary="dateSummaryFor(p.id)"
+                :tag-chips="tagChipsFor(p)"
+                :halls-text="hallsTextFor(p.id)"
+              />
+            </template>
           </div>
+
+          <nav
+            v-if="totalPages > 1"
+            class="mt-10 grid grid-cols-1 justify-items-center gap-y-6 border-t border-surface-3 pt-8 sm:grid-cols-[1fr_auto] sm:items-center sm:justify-items-start sm:gap-x-12 sm:gap-y-0"
+            aria-label="Pagination"
+          >
+            <p class="text-center text-sm text-ink-secondary sm:text-left">
+              {{
+                t("productionsPage.showingRange", {
+                  from: rangeFrom,
+                  to: rangeTo,
+                  total: totalCount,
+                })
+              }}
+            </p>
+            <div
+              class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:justify-self-end"
+              role="group"
+              :aria-label="t('productionsPage.goToPage')"
+            >
+              <button
+                type="button"
+                class="cursor-pointer rounded-md border border-accent-outline bg-surface-0 px-3 py-1.5 text-sm font-medium text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="currentPage <= 0 || listLoading"
+                @click="goToPage(currentPage - 1)"
+              >
+                {{ t("productionsPage.prevPage") }}
+              </button>
+              <div
+                class="flex items-center gap-2 text-sm tabular-nums text-ink-secondary"
+              >
+                <span class="whitespace-nowrap">{{
+                  t("productionsPage.pageWord")
+                }}</span>
+                <input
+                  :value="pageNumberInput"
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  maxlength="6"
+                  :disabled="listLoading"
+                  :aria-label="t('productionsPage.goToPage')"
+                  class="min-w-6 max-w-8 shrink-0 border-0 border-b border-surface-3 bg-transparent px-0 pb-px text-center text-sm tabular-nums text-ink-secondary focus:border-ink-primary focus:text-ink-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                  @input="onPageNumberInput"
+                  @keydown.enter.prevent="commitPageNumberInput"
+                  @blur="commitPageNumberInput"
+                />
+                <span class="whitespace-nowrap">{{
+                  t("productionsPage.pageOfTotal", { total: totalPages })
+                }}</span>
+              </div>
+              <button
+                type="button"
+                class="cursor-pointer rounded-md border border-accent-outline bg-surface-0 px-3 py-1.5 text-sm font-medium text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="currentPage >= totalPages - 1 || listLoading"
+                @click="goToPage(currentPage + 1)"
+              >
+                {{ t("productionsPage.nextPage") }}
+              </button>
+            </div>
+          </nav>
+
         </div>
       </section>
     </main>
