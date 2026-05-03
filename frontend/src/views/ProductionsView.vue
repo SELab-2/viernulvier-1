@@ -364,7 +364,7 @@
         </div>
       </section>
     </main>
-    <AppFooter />
+    <AppFooter v-if="!loading" />
   </div>
 </template>
 
