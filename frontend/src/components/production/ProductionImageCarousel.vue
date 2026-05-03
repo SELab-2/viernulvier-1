@@ -93,9 +93,11 @@
     <Teleport to="body">
       <div
         v-if="lightboxIndex !== null && lightboxSlide !== null"
+        ref="lightboxRootRef"
         class="fixed inset-0 z-[200] flex items-center justify-center px-6 py-12 sm:px-10 sm:py-14 md:px-16 md:py-20"
         role="dialog"
         aria-modal="true"
+        tabindex="-1"
         :aria-label="t('production.gallery.lightboxTitle')"
       >
         <div
@@ -180,6 +182,7 @@ import {
   watch,
 } from "vue";
 import { useI18n } from "vue-i18n";
+import { createFocusTrap, type FocusTrap } from "focus-trap";
 import CarouselArrowButton from "@/components/production/CarouselArrowButton.vue";
 
 export interface CarouselSlide {
@@ -194,6 +197,33 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const scrollerRef = useTemplateRef<HTMLElement>("scrollerRef");
+const lightboxRootRef = useTemplateRef<HTMLElement>("lightboxRootRef");
+let lightboxFocusTrap: FocusTrap | null = null;
+
+function deactivateLightboxFocusTrap(): void {
+  if (!lightboxFocusTrap) return;
+  lightboxFocusTrap.deactivate();
+  lightboxFocusTrap = null;
+}
+
+function activateLightboxFocusTrap(): void {
+  const root = lightboxRootRef.value;
+  if (!root) return;
+
+  deactivateLightboxFocusTrap();
+  const closeBtn = root.querySelector<HTMLElement>(
+    '[data-testid="lightbox-close"]',
+  );
+  lightboxFocusTrap = createFocusTrap(root, {
+    initialFocus: () => closeBtn ?? root,
+    // JSDOM often reports zero tabbable nodes; `tabindex="-1"` makes this a valid fallback.
+    fallbackFocus: () => root,
+    escapeDeactivates: false,
+    returnFocusOnDeactivate: true,
+  });
+  lightboxFocusTrap.activate();
+}
+
 /** Active slide index when lightbox open; `null` when closed */
 const lightboxIndex = ref<number | null>(null);
 /** Second-step zoom inside the lightbox (click image again). */
@@ -219,6 +249,7 @@ function openLightbox(index: number): void {
 
 function closeLightbox(): void {
   lightboxExpanded.value = false;
+  deactivateLightboxFocusTrap();
   lightboxIndex.value = null;
 }
 
@@ -258,6 +289,7 @@ onMounted(() => {
   });
 });
 onUnmounted(() => {
+  deactivateLightboxFocusTrap();
   window.removeEventListener("resize", onResize);
   window.removeEventListener("keydown", onGlobalKeydown);
   carouselResizeObserver?.disconnect();
@@ -521,8 +553,11 @@ watch(
   { deep: true },
 );
 
-watch(lightboxIndex, (idx) => {
+watch(lightboxIndex, async (idx) => {
   document.body.style.overflow = idx !== null ? "hidden" : "";
+  if (idx === null) return;
+  await nextTick();
+  activateLightboxFocusTrap();
 });
 
 function goToScreen(index: number): void {
