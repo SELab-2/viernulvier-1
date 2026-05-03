@@ -60,7 +60,7 @@
         :row-height="42"
         :loading="isLoading"
         :row-selection="rowSelection"
-        :suppress-row-click-selection="false"
+        :suppress-row-click-selection="true"
         :column-hover-highlight="true"
         :enable-cell-text-selection="true"
         :ensure-dom-order="true"
@@ -225,6 +225,37 @@
         </section>
       </div>
 
+      <div v-if="bulkEditConfirmOpen" class="cms-modal-overlay" @click.self="closeBulkEditConfirm">
+        <section class="cms-modal cms-remove-modal" role="dialog" aria-modal="true">
+          <header class="cms-modal-header">
+            <h2 class="text-xl font-bold text-ink-primary">
+              {{ t("cms.actions.confirmBulkEditDialogTitle") }}
+            </h2>
+            <button type="button" class="cms-side-close" @click="closeBulkEditConfirm">
+              {{ t("cms.panel.close") }}
+            </button>
+          </header>
+
+          <div class="cms-modal-body">
+            <p class="text-sm text-ink-secondary">
+              {{ t("cms.actions.confirmBulkEditBody", { count: bulkEditConfirmCount }) }}
+            </p>
+            <p class="text-xs text-ink-secondary/70 mt-3">
+              {{ t("cms.actions.confirmBulkEditCancelInfo") }}
+            </p>
+          </div>
+
+          <footer class="cms-modal-footer">
+            <button type="button" class="cms-side-close" :disabled="bulkEditConfirmLoading" @click="closeBulkEditConfirm">
+              {{ t("cms.panel.close") }}
+            </button>
+            <button type="button" class="cms-side-save" :disabled="bulkEditConfirmLoading" @click="confirmBulkEdit">
+              {{ bulkEditConfirmLoading ? t("cms.panel.saving") : t("cms.actions.confirmBulkEditSubmit") }}
+            </button>
+          </footer>
+        </section>
+      </div>
+
       <div v-if="mediaPreview" class="cms-modal-overlay" @click.self="closeMediaPreview">
         <section class="cms-modal cms-media-modal" role="dialog" aria-modal="true">
           <header class="cms-modal-header">
@@ -356,6 +387,10 @@ const createEventModalOpen = ref(false);
 const removeConfirmOpen = ref(false);
 const removeConfirmLoading = ref(false);
 const removeConfirmError = ref<string | null>(null);
+const bulkEditConfirmOpen = ref(false);
+const bulkEditConfirmLoading = ref(false);
+const bulkEditConfirmCount = ref(0);
+const pendingBulkEditAction = ref<(() => Promise<void>) | null>(null);
 const mediaPreview = ref<{ url: string; kind: "image" | "video" | "youtube"; label: string } | null>(null);
 const languages = SUPPORTED_LANGS as ReadonlyArray<SupportedLang>;
 const createExtraLangs = ref({ en: false, fr: false });
@@ -698,6 +733,34 @@ function closeRemoveProductionsConfirm(): void {
   removeConfirmError.value = null;
 }
 
+function openBulkEditConfirm(count: number, action: () => Promise<void>): void {
+  bulkEditConfirmCount.value = count;
+  pendingBulkEditAction.value = action;
+  bulkEditConfirmOpen.value = true;
+}
+
+function closeBulkEditConfirm(): void {
+  bulkEditConfirmOpen.value = false;
+  bulkEditConfirmLoading.value = false;
+  pendingBulkEditAction.value = null;
+}
+
+async function confirmBulkEdit(): Promise<void> {
+  if (!pendingBulkEditAction.value) {
+    closeBulkEditConfirm();
+    return;
+  }
+
+  bulkEditConfirmLoading.value = true;
+  try {
+    await pendingBulkEditAction.value();
+    closeBulkEditConfirm();
+  } catch {
+    // Error is already handled in the action
+    bulkEditConfirmLoading.value = false;
+  }
+}
+
 async function confirmRemoveProductions(): Promise<void> {
   const selectedRows = gridApi.value?.getSelectedRows() ?? [];
   if (selectedRows.length === 0) {
@@ -878,18 +941,12 @@ async function persistBulkProductionPatch(
   patch: Record<string, unknown>,
 ): Promise<void> {
   try {
-    const updatedRows = await bulkUpdateProductions({
+    await bulkUpdateProductions({
       ids: targetRows.map((row) => row.id),
       data: patch,
     });
-    const updatedById = mapEntitiesById(updatedRows);
-
-    for (const row of targetRows) {
-      const updated = updatedById.get(row.id);
-      if (updated) {
-        applyUpdatedProductionToRow(row, updated, localizeValue);
-      }
-    }
+    // Reload all data to ensure grid styling is fully refreshed
+    await loadCmsData();
   } catch (error) {
     saveError.value =
       error instanceof Error
@@ -907,10 +964,26 @@ async function saveInlineBulkUpdate(
   const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], primaryRow);
   const nextMap = { [currentLang.value]: newValue };
 
+  // Show confirmation if editing multiple rows
+  if (targetRows.length > 1) {
+    openBulkEditConfirm(targetRows.length, async () => {
+      isSaving.value = true;
+      saveError.value = null;
+      try {
+        await persistBulkProductionPatch(targetRows, { [apiField]: nextMap });
+        showSaveSuccess(t("cms.feedback.saveSuccess"));
+      } finally {
+        isSaving.value = false;
+      }
+    });
+    return;
+  }
+
   isSaving.value = true;
   saveError.value = null;
   try {
     await persistBulkProductionPatch(targetRows, { [apiField]: nextMap });
+    showSaveSuccess(t("cms.feedback.saveSuccess"));
   } finally {
     isSaving.value = false;
   }
@@ -1079,6 +1152,24 @@ async function saveEditorPanel(): Promise<void> {
 
   const payload = toLanguageMapOrNull(editorPanel.value.values);
   const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], row);
+
+  // Show confirmation if editing multiple rows
+  if (targetRows.length > 1) {
+    openBulkEditConfirm(targetRows.length, async () => {
+      isSaving.value = true;
+      saveError.value = null;
+      try {
+        await persistBulkProductionPatch(targetRows, {
+          [editorPanel.value?.apiField as LongField]: payload,
+        });
+        closeEditorPanel();
+        showSaveSuccess(t("cms.feedback.saveSuccess"));
+      } finally {
+        isSaving.value = false;
+      }
+    });
+    return;
+  }
 
   isSaving.value = true;
   saveError.value = null;
@@ -1355,6 +1446,11 @@ defineExpose({
     saveEditorPanel,
     rebuildRows,
     loadCmsData,
+    bulkEditConfirmOpen,
+    bulkEditConfirmCount,
+    openBulkEditConfirm,
+    closeBulkEditConfirm,
+    confirmBulkEdit,
   },
 });
 
