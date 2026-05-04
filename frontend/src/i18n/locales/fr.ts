@@ -241,6 +241,22 @@ export default {
     hero: {
       dateRange: "Période",
       runningTime: "Durée",
+      bannerImageAlt: "Image bannière en tête de page",
+    },
+    gallery: {
+      title: "Images",
+      intro: "Une sélection des médias de cette production.",
+      prev: "Image précédente",
+      next: "Image suivante",
+      goToScreen: "Aller à la vue {n} sur {total}",
+      screenDotsGroupLabel: "Vues de la galerie",
+      carouselLabel: "Galerie d’images de cette production",
+      carouselRegion: "Carrousel",
+      openLightbox: "Voir l’image en grand",
+      lightboxTitle: "Image agrandie",
+      closeLightbox: "Fermer l’image agrandie",
+      lightboxExpandMore: "Afficher encore plus grand",
+      lightboxShrinkView: "Revenir à la vue agrandie standard",
     },
     details: {
       tags: "Étiquettes",

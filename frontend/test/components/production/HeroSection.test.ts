@@ -14,6 +14,7 @@ const i18n = createI18n({
         hero: {
           dateRange: "Datum",
           runningTime: "Speelduur",
+          bannerImageAlt: "Banner",
         },
       },
       time: {
@@ -56,12 +57,14 @@ function mountHero(props: Partial<{
   production: ProductionWithBackwardsRefs;
   tagGroups: { label: string; tags: string[] }[];
   eventStats: any;
+  bannerUrl: string | null;
 }> = {}) {
   return mount(HeroSection, {
     props: {
       production: baseProduction,
       tagGroups: [],
       eventStats: null,
+      bannerUrl: null,
       ...props,
     },
     global: {
@@ -82,6 +85,18 @@ describe("HeroSection.vue", () => {
   // ── rendering ─────────────────────────────────────────────
 
   describe("rendering", () => {
+    it("uses bannerUrl for the hero image when set", () => {
+      const wrapper = mountHero({ bannerUrl: "/media/crops/nbh.jpg" });
+      const img = wrapper.get("img");
+      expect(img.attributes("src")).toBe("/media/crops/nbh.jpg");
+      expect(img.attributes("class") || "").not.toMatch(/grayscale/);
+    });
+
+    it("renders no hero image when bannerUrl is null (black background only)", () => {
+      const wrapper = mountHero({ bannerUrl: null });
+      expect(wrapper.find("img").exists()).toBe(false);
+    });
+
     it("renders production content correctly", () => {
       const wrapper = mountHero();
 

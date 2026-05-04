@@ -20,7 +20,7 @@
         </div>
       </section>
 
-      <section class="mx-auto max-w-4xl px-6 pb-20 pt-8 lg:px-10">
+      <section class="mx-auto max-w-5xl px-6 pb-20 pt-8 lg:px-10">
         <div v-if="!loading" class="mb-4 space-y-3">
           <div
             class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-stretch sm:gap-3"
@@ -298,6 +298,7 @@
               :date-summary="dateSummaryFor(p.id)"
               :tag-chips="tagChipsFor(p)"
               :halls-text="hallsTextFor(p.id)"
+              :thumbnail-url="thumbnailFor(p.id)"
             />
 
             <nav
@@ -399,6 +400,7 @@ import { i18n, type SupportedLang } from "@/i18n";
 import { getEventsForProductions } from "@/services/events";
 import { getHalls } from "@/services/halls";
 import { ApiError } from "@/services/api";
+import { getImagesForProductionOrEmpty } from "@/services/media";
 import { getProductions } from "@/services/productions";
 import { getTags, getTagTypes } from "@/services/tags";
 import { localizeOrEmpty } from "@/utils/language-utils";
@@ -407,6 +409,7 @@ import {
   tagTypeIsGenre,
   type ProductionTagChip,
 } from "@/utils/tagDisplay";
+import { pickProductionListThumbnailUrl } from "@/utils/productionThumbnails";
 import {
   distinctHallNames,
   groupEventsByProductionId,
@@ -421,9 +424,9 @@ const PAGE_SIZE = 20;
 const MAX_SEARCH_TERMS = 20;
 
 /** How many genre/tag filter chips to show before "Show more". Selected tags are always included. */
-const GENRE_FILTER_COLLAPSED_MAX = 7;
+const GENRE_FILTER_COLLAPSED_MAX = 9;
 
-const NON_GENRE_FILTER_COLLAPSED_MAX = 5;
+const NON_GENRE_FILTER_COLLAPSED_MAX = 6;
 
 function collapsedTagFilterList(
   all: { id: number; label: string }[],
@@ -711,9 +714,42 @@ const hasActiveListFilters = computed(() => {
 });
 
 const eventsByProduction = ref(new Map<number, ProductionEvent[]>());
+/** Set after `GET /production/:id/image` for each row on the current list page. */
+const thumbnailUrlByProductionId = ref(
+  new Map<number, string | null>(),
+);
+/** Bumps on each thumbnail load; stale `Promise.all` runs must not overwrite the map after a newer interaction. */
+let thumbnailLoadGeneration = 0;
 const tagsById = ref(new Map<number, Tag>());
 const tagTypesById = ref(new Map<number, TagType>());
 const hallsById = ref(new Map<number, Hall>());
+
+function thumbnailFor(productionId: number): string | null {
+  const m = thumbnailUrlByProductionId.value;
+  if (!m.has(productionId)) {
+    return null;
+  }
+  return m.get(productionId) ?? null;
+}
+
+async function loadThumbnailsForProductionIds(ids: number[]): Promise<void> {
+  const gen = ++thumbnailLoadGeneration;
+  if (ids.length === 0) {
+    thumbnailUrlByProductionId.value = new Map();
+    return;
+  }
+  const next = new Map<number, string | null>();
+  await Promise.all(
+    ids.map(async (id) => {
+      const images = await getImagesForProductionOrEmpty(id);
+      next.set(id, pickProductionListThumbnailUrl(images));
+    }),
+  );
+  if (gen !== thumbnailLoadGeneration) {
+    return;
+  }
+  thumbnailUrlByProductionId.value = next;
+}
 
 const locale = computed(() => i18n.global.locale.value as SupportedLang);
 
@@ -777,6 +813,8 @@ async function fetchProductionsPageData(page0: number) {
   searchBannerTerms.value = [...appliedSearchTerms.value];
   syncFilterBannerFromApplied();
   eventsByProduction.value = eventsMap;
+  thumbnailUrlByProductionId.value = new Map();
+  void loadThumbnailsForProductionIds(ids);
 }
 
 function toggleTag(id: number) {

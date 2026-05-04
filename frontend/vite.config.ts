@@ -25,6 +25,11 @@ export default defineConfig({
         target: `http://backend:${process.env["BACKEND_PORT"] ?? "3000"}`,
         changeOrigin: true,
       },
+      /** Same as backend `cropProxyRoute` — crop URLs are `/media/crops/…`. */
+      "/media": {
+        target: `http://backend:${process.env["BACKEND_PORT"] ?? "3000"}`,
+        changeOrigin: true,
+      },
     },
   },
   test: {
