@@ -215,7 +215,9 @@ export default {
     tagFiltersHeading: "Tags",
     viewMoreTagFilters: "Show more",
     viewLessTagFilters: "Show less",
-    selectDates: "Select dates",
+    expandFiltersPanelAria: "Expand filters",
+    collapseFiltersPanelAria: "Collapse filters",
+    selectDates: "Date",
     filterByYearRange: "Filter by years",
     yearRangeIntro:
       "Limit productions to show years in this range (based on performance dates).",

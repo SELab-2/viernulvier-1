@@ -3,10 +3,10 @@
     <button
       type="button"
       :class="[
-        'inline-flex cursor-pointer items-center gap-2 rounded-full border border-surface-3 px-4 py-2 text-sm font-medium text-ink-primary transition disabled:opacity-100',
+        'inline-flex cursor-pointer items-center gap-2 rounded-md border px-4 py-2 text-base font-medium text-ink-primary transition disabled:opacity-100',
         hasActiveDateFilter
-          ? 'bg-surface-2 ring-1 ring-inset ring-accent-outline/40 hover:bg-surface-2 dark:bg-surface-2 dark:hover:bg-surface-2'
-          : 'bg-surface-0 hover:bg-surface-2 dark:bg-surface-1',
+          ? 'border-accent-outline bg-surface-2 hover:bg-surface-2 dark:bg-surface-2 dark:hover:bg-surface-2'
+          : 'border-surface-3 bg-surface-0 hover:bg-surface-2 dark:bg-surface-1',
       ]"
       :disabled="disabled"
       :aria-expanded="panelOpen"

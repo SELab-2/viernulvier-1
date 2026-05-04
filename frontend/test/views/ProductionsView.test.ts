@@ -766,6 +766,12 @@ describe("ProductionsView.vue", () => {
     vi.spyOn(tagsService, "getTags").mockResolvedValue(manyGenres);
     vi.spyOn(tagsService, "getTagTypes").mockResolvedValue([mockTagTypeGenre]);
     const { wrapper } = await mountView();
+    const expandFilters = wrapper.find(
+      '[aria-label="Filters uitklappen"]',
+    );
+    expect(expandFilters.exists()).toBe(true);
+    await expandFilters.trigger("click");
+    await nextTick();
     const more = wrapper
       .findAll("button")
       .find((b) => b.text() === "Meer tonen");
@@ -789,6 +795,12 @@ describe("ProductionsView.vue", () => {
     vi.spyOn(tagsService, "getTags").mockResolvedValue(nonGenreTags);
     vi.spyOn(tagsService, "getTagTypes").mockResolvedValue([typeOther]);
     const { wrapper } = await mountView();
+    const expandFilters = wrapper.find(
+      '[aria-label="Filters uitklappen"]',
+    );
+    expect(expandFilters.exists()).toBe(true);
+    await expandFilters.trigger("click");
+    await nextTick();
     const more = wrapper
       .findAll("button")
       .filter((b) => b.text() === "Meer tonen");
