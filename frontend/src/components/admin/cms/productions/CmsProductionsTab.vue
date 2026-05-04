@@ -134,17 +134,17 @@
           </p>
         </div>
 
-      <div class="cms-side-footer">
-        <button
-          type="button"
-          class="cms-side-save"
-          :disabled="isSaving"
-          @click="saveEditorPanel"
-        >
-          {{ isSaving ? t("general.saving") : t("cms.panel.save") }}
-        </button>
-      </div>
-    </aside>
+        <div class="cms-side-footer">
+          <button
+            type="button"
+            class="cms-side-save"
+            :disabled="isSaving"
+            @click="saveEditorPanel"
+          >
+            {{ isSaving ? t("general.saving") : t("cms.panel.save") }}
+          </button>
+        </div>
+      </aside>
 
       <CmsTagDrawer
         :show="tagEditorPanel !== null"
@@ -214,16 +214,16 @@
             </p>
           </div>
 
-        <footer class="cms-modal-footer">
-          <button type="button" class="cms-side-close" :disabled="removeConfirmLoading" @click="closeRemoveProductionsConfirm">
-            {{ t("cms.actions.confirmRemoveCancel") }}
-          </button>
-          <button type="button" class="cms-side-save" :disabled="removeConfirmLoading" @click="confirmRemoveProductions">
-            {{ removeConfirmLoading ? t("cms.panel.saving") : t("cms.actions.confirmRemoveSubmit") }}
-          </button>
-        </footer>
-      </section>
-    </div>
+          <footer class="cms-modal-footer">
+            <button type="button" class="cms-side-close" :disabled="removeConfirmLoading" @click="closeRemoveProductionsConfirm">
+              {{ t("general.cancel") }}
+            </button>
+            <button type="button" class="cms-side-save" :disabled="removeConfirmLoading" @click="confirmRemoveProductions">
+              {{ removeConfirmLoading ? t("general.saving") : t("cms.actions.confirmRemoveSubmit") }}
+            </button>
+          </footer>
+        </section>
+      </div>
 
       <div v-if="mediaPreview" class="cms-modal-overlay" @click.self="closeMediaPreview">
         <section class="cms-modal cms-media-modal" role="dialog" aria-modal="true">

@@ -54,15 +54,14 @@ export const routes: RouteRecordRaw[] = [
             path: "login",
             name: RouteNames.LOGIN,
             component: () => import("../views/admin/LoginView.vue"),
-            beforeEnter: async (to, _, next) => {
+            beforeEnter: async (to) => {
               const authStore = useAuthStore();
               try {
                 await authStore.fetchAdmin();
                 // already logged in, redirect to admin
-                return next({ name: RouteNames.ADMIN, params: { lang: to.params.lang } });
+                return { name: RouteNames.ADMIN, params: { lang: to.params.lang } };
               } catch {
                 // not logged in, proceed to login page
-                return next();
               }
             },
           },
