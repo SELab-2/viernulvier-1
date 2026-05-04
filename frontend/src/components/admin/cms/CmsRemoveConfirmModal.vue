@@ -26,7 +26,7 @@
           :disabled="isLoading"
           @click="$emit('close')"
         >
-          {{ t("cms.actions.confirmRemoveCancel") }}
+          {{ t("general.cancel") }}
         </button>
         <button
           type="button"
@@ -34,7 +34,7 @@
           :disabled="isLoading"
           @click="$emit('confirm')"
         >
-          {{ isLoading ? t("cms.panel.saving") : t("cms.actions.confirmRemoveSubmit") }}
+          {{ isLoading ? t("general.saving") : t("cms.actions.confirmRemoveSubmit") }}
         </button>
       </footer>
     </section>

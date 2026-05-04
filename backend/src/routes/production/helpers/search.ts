@@ -40,7 +40,7 @@ interface SearchClauseParams {
 }
 
 const SearchClauseParamsSchema = z.object({
-  search: SearchParamSchema,
+  search: SearchParamSchema.optional(),
   old_id: z.number().int().nonnegative().optional(),
 });
 

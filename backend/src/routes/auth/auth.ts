@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { replyHandler } from "@/routes/helpers.js";
-import { fetchAdmin, fetchAdminWithMeta, createAdmin, replaceAdmin, editAdmin, deleteAdmin, login, logout, fetchAdmins, fetchCurrentlyLoggedInAdmin, fetchCurrentlyLoggedInAdminWithMeta } from "./handlers/index.js";
+import { fetchAdmin, fetchAdminWithMeta, createAdmin, replaceAdmin, editAdmin, deleteAdmin, login, logout, fetchAdmins, fetchCurrentlyLoggedInAdmin, fetchCurrentlyLoggedInAdminWithMeta, editOwnPassword } from "./handlers/index.js";
 
 /**
  * Registers authentication routes on the Fastify instance.
@@ -37,6 +37,7 @@ export default function authRoutes(server: FastifyInstance) {
   server.post("/api/v1/auth", protectSuper, replyHandler(server, createAdmin));
   server.put("/api/v1/auth/:id", protectSuper, replyHandler(server, replaceAdmin));
   server.patch("/api/v1/auth/:id", protectSuper, replyHandler(server, editAdmin));
+  server.patch("/api/v1/auth/me", protect, replyHandler(server, editOwnPassword));
   server.delete("/api/v1/auth/:id", protectSuper, replyHandler(server, deleteAdmin));
 
   server.post("/api/v1/auth/login", replyHandler(server, login));

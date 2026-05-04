@@ -141,7 +141,7 @@
             :disabled="isSaving"
             @click="saveEditorPanel"
           >
-            {{ isSaving ? t("cms.panel.saving") : t("cms.panel.save") }}
+            {{ isSaving ? t("general.saving") : t("cms.panel.save") }}
           </button>
         </div>
       </aside>

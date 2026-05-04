@@ -79,6 +79,6 @@ describe("CmsRemoveConfirmModal", () => {
   it("swaps the submit label to the saving state while loading", () => {
     const wrapper = mountModal({ isLoading: true });
 
-    expect(wrapper.find(".cms-side-save").text()).toBe(i18n.global.t("cms.panel.saving"));
+    expect(wrapper.find(".cms-side-save").text()).toBe(i18n.global.t("general.saving"));
   });
 });

@@ -17,7 +17,7 @@ export const ProductionListQuerySchema = z
   .object({
     limit: z.coerce.number().int().positive().max(MAX_PAGE_SIZE).optional(),
     offset: z.coerce.number().int().min(0).optional(),
-    search: SearchParamSchema,
+    search: SearchParamSchema.optional(),
     old_id: z.coerce.number().int().nonnegative().optional(),
     tags: z.string().max(400).optional(),
     yearMin: z.coerce.number().int().min(1900).max(2100).optional(),

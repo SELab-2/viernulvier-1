@@ -1,4 +1,8 @@
 export default {
+  general: {
+    cancel: "Annuler",
+    saving: "Enregistrement...",
+  },
   nav: {
     home: "Accueil",
     archive: "Archives",
@@ -84,7 +88,6 @@ export default {
     actions: {
       addProduction: "+ Ajouter une production",
       removeProduction: "Supprimer les productions sélectionnées",
-      confirmRemoveCancel: "Annuler",
       confirmRemoveSubmit: "Supprimer définitivement",
       production: {
         confirmRemoveDialogTitle: "Supprimer les productions ?",
@@ -125,9 +128,7 @@ export default {
       selectTagType: "Choisissez un type...",
       finalized: "Marquer comme finalisee",
       languages: "Langues supplementaires",
-      cancel: "Annuler",
       submit: "Ajouter la production",
-      saving: "Ajout...",
       tags: {
         title: "Tags",
         primary: "Tag principal",
@@ -169,7 +170,6 @@ export default {
       save: "Enregistrer",
       saveAction: "Enregistrer les modifications",
       saveHint: "Les changements ne sont appliques qu'apres avoir clique sur Enregistrer les modifications.",
-      saving: "Enregistrement...",
       text: "Texte",
       bulkNotice: "La modification sera appliquee a {count} productions selectionnees.",
     },
@@ -300,6 +300,17 @@ export default {
       quickActions: "Actions rapides",
       openCms: "Ouvrir le CMS",
       logout: "Se déconnecter",
+      changePassword: "Changer le mot de passe",
+    },
+    changePassword: {
+      oldPassword: "Ancien mot de passe",
+      newPassword: "Nouveau mot de passe",
+      confirmPassword: "Confirmer le mot de passe",
+      update: "Mettre à jour",
+      tooShortError: "Le mot de passe doit contenir au moins 8 caractères.",
+      wrongOldPasswordError: "Votre ancien mot de passe n'est pas correct.",
+      dontMatchError: "Les mots de passe ne correspondent pas.",
+      failedToUpdate: "Échec de la mise à jour du mot de passe",
     },
   },
   time: {
