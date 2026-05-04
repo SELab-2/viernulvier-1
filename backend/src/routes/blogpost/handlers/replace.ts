@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { BlogPost, BlogPostWithBackwardsRefs } from "@viernulvier/shared/index.js";
 import { BlogPostSchema, BlogPostWithBackwardsRefsSchema, stringToInt } from "@viernulvier/shared/index.js";
-import { getMetadata, ParseContext, parseParams, parseSchema } from "@/routes/helpers.js";
+import { getMetadata, ParseContext, parseParams, parseSchema, HttpError, HttpServerError } from "@/routes/helpers.js";
 import { z } from "zod";
 
 const ReplaceBlogPostBodySchema = BlogPostSchema.omit({ id: true }).extend({
@@ -43,7 +43,7 @@ export async function replaceBlogPost(
     );
 
     const blogpost = parseSchema(server, BlogPostSchema, result.rows[0], ParseContext.Database);
-    
+
     // Delete existing relations
     await client.query(
       `DELETE FROM production_blogpost WHERE blogpost = $1`,
@@ -72,7 +72,7 @@ export async function replaceBlogPost(
   } catch (err) {
     await client.query("ROLLBACK");
     server.log.error(err);
-    throw err;
+    throw new HttpError(HttpServerError.InternalServerError, "Internal server error");
   } finally {
     client.release();
   }

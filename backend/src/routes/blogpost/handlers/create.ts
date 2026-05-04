@@ -1,8 +1,9 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { BlogPostWithBackwardsRefs } from "@viernulvier/shared/index.js";
 import { BlogPostSchema, BlogPostWithBackwardsRefsSchema } from "@viernulvier/shared/index.js";
-import { getMetadata, ParseContext, parseSchema } from "@/routes/helpers.js";
+import { getMetadata, ParseContext, parseSchema, HttpError, HttpServerError } from "@/routes/helpers.js";
 import { z } from "zod";
+
 
 const CreateBlogPostInputSchema = BlogPostSchema.omit({ id: true }).extend({
   productions: z.array(z.int()).min(1, "Productions array must contain at least one production"),
@@ -63,7 +64,7 @@ export async function createBlogPost(
   } catch (err) {
     await client.query("ROLLBACK");
     server.log.error(err);
-    throw err;
+    throw new HttpError(HttpServerError.InternalServerError, "Internal server error");
   } finally {
     client.release();
   }

@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { BlogPost, BlogPostWithBackwardsRefs } from "@viernulvier/shared/index.js";
 import { BlogPostSchema, BlogPostWithBackwardsRefsSchema, stringToInt } from "@viernulvier/shared/index.js";
-import { getMetadata, parseParams, parseSchema, HttpError, HttpClientError, ParseContext } from "@/routes/helpers.js";
+import { getMetadata, parseParams, parseSchema, HttpError, HttpClientError, HttpServerError, ParseContext } from "@/routes/helpers.js";
 import { z } from "zod";
 
 const EditBlogPostBodySchema = BlogPostSchema.omit({ id: true }).partial().extend({
@@ -94,7 +94,7 @@ export async function editBlogPost(
   } catch (err) {
     await client.query("ROLLBACK");
     server.log.error(err);
-    throw err;
+    throw new HttpError(HttpServerError.InternalServerError, "Internal server error");
   } finally {
     client.release();
   }
