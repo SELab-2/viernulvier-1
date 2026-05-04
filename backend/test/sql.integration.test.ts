@@ -477,7 +477,9 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
     const response = await server.inject({ method: "GET", url: `/api/v1/blog/post/${blogPostId}` });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(BlogPostWithBackwardsRefsSchema.parse(response.json())).toMatchObject({ id: blogPostId, title: "Test Post" });
+    const post = BlogPostWithBackwardsRefsSchema.parse(response.json());
+    expect(post).toMatchObject({ id: blogPostId, title: "Test Post" });
+    expect(post.productions).toEqual([productionId1, productionId2]);
   });
 
   test("GET /api/v1/blog/post/:id/meta — returns the blogpost with metadata", async () => {

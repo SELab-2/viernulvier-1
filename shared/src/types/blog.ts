@@ -30,4 +30,4 @@ export const BlogPostWithBackwardsRefsSchema = createSchema({
 
 export type BlogPost = z.infer<typeof BlogPostSchema>;
 export type BlogPostWithBackwardsRefs = z.infer<typeof BlogPostWithBackwardsRefsSchema>;
-export type BlogPostWithMeta = z.infer<ReturnType<typeof BlogPostSchema.withMeta>>;
+export type BlogPostWithMeta = z.infer<ReturnType<typeof BlogPostWithBackwardsRefsSchema.withMeta>>;
