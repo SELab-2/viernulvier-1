@@ -104,6 +104,7 @@
               !filtersPanelExpanded &&
                 (genreTagsForFilter.length > 0 || showFiltersPanelExpandToggle)
             "
+            :ref="setCompactGenreRowRef"
             class="mt-4 flex w-full flex-wrap items-center gap-x-2 gap-y-2 border-t border-surface-3 pt-4"
             :class="
               genreTagsForFilter.length > 0 && showFiltersPanelExpandToggle
@@ -120,6 +121,7 @@
               <button
                 v-for="g in compactGenreTagsForRow"
                 :key="'compact-genre-' + g.id"
+                :ref="(el) => setCompactGenrePillRef(g.id, el)"
                 type="button"
                 class="rounded-full border px-3 py-1 text-[0.95rem] transition disabled:opacity-100"
                 :class="
@@ -135,6 +137,7 @@
             </div>
             <button
               v-if="showFiltersPanelExpandToggle"
+              :ref="setCompactGenreExpandButtonRef"
               type="button"
               class="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md border border-surface-3 bg-surface-0 text-ink-secondary transition hover:border-accent-outline hover:bg-surface-2 hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-100 dark:bg-surface-1"
               :disabled="listLoading || loadError"
@@ -172,11 +175,12 @@
               >
                 {{ t("productionsPage.genreFiltersHeading") }}
               </p>
-              <div class="flex items-start gap-3">
+              <div :ref="setGenrePanelRowRef" class="flex items-start gap-3">
                 <div class="flex min-w-0 flex-1 flex-wrap gap-2">
                   <button
                     v-for="g in visibleGenreTagsForFilter"
                     :key="g.id"
+                    :ref="(el) => setGenrePanelPillRef(g.id, el)"
                     type="button"
                     class="rounded-full border px-3 py-1 text-[0.95rem] transition disabled:opacity-100"
                     :class="
@@ -192,17 +196,21 @@
                 </div>
                 <button
                   v-if="showGenreTagFilterExpandToggle"
+                  :ref="setGenrePanelExpandButtonRef"
                   type="button"
-                  class="shrink-0 cursor-pointer pt-0.5 text-sm font-medium leading-snug text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100"
+                  class="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full border border-surface-3 bg-surface-0 text-base font-semibold leading-none text-ink-secondary transition hover:border-accent-outline hover:bg-surface-2 hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-100 dark:bg-surface-1"
                   :disabled="listLoading || loadError"
                   :aria-expanded="genreTagFiltersExpanded"
+                  :aria-label="
+                    genreTagFiltersExpanded
+                      ? t('productionsPage.viewLessTagFilters')
+                      : t('productionsPage.viewMoreTagFilters')
+                  "
                   @click="genreTagFiltersExpanded = !genreTagFiltersExpanded"
                 >
-                  {{
-                    genreTagFiltersExpanded
-                      ? t("productionsPage.viewLessTagFilters")
-                      : t("productionsPage.viewMoreTagFilters")
-                  }}
+                  <span aria-hidden="true">{{
+                    genreTagFiltersExpanded ? "−" : "+"
+                  }}</span>
                 </button>
               </div>
             </div>
@@ -220,11 +228,12 @@
               >
                 {{ t("productionsPage.tagFiltersHeading") }}
               </p>
-              <div class="flex items-start gap-3">
+              <div :ref="setNonGenrePanelRowRef" class="flex items-start gap-3">
                 <div class="flex min-w-0 flex-1 flex-wrap gap-2">
                   <button
                     v-for="g in visibleNonGenreTagsForFilter"
                     :key="g.id"
+                    :ref="(el) => setNonGenrePanelPillRef(g.id, el)"
                     type="button"
                     class="rounded-full border px-3 py-1 text-[0.95rem] transition disabled:opacity-100"
                     :class="
@@ -240,19 +249,23 @@
                 </div>
                 <button
                   v-if="showNonGenreTagFilterExpandToggle"
+                  :ref="setNonGenrePanelExpandButtonRef"
                   type="button"
-                  class="shrink-0 cursor-pointer pt-0.5 text-sm font-medium leading-snug text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100"
+                  class="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full border border-surface-3 bg-surface-0 text-base font-semibold leading-none text-ink-secondary transition hover:border-accent-outline hover:bg-surface-2 hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-100 dark:bg-surface-1"
                   :disabled="listLoading || loadError"
                   :aria-expanded="nonGenreTagFiltersExpanded"
+                  :aria-label="
+                    nonGenreTagFiltersExpanded
+                      ? t('productionsPage.viewLessTagFilters')
+                      : t('productionsPage.viewMoreTagFilters')
+                  "
                   @click="
                     nonGenreTagFiltersExpanded = !nonGenreTagFiltersExpanded
                   "
                 >
-                  {{
-                    nonGenreTagFiltersExpanded
-                      ? t("productionsPage.viewLessTagFilters")
-                      : t("productionsPage.viewMoreTagFilters")
-                  }}
+                  <span aria-hidden="true">{{
+                    nonGenreTagFiltersExpanded ? "−" : "+"
+                  }}</span>
                 </button>
               </div>
             </div>
@@ -489,6 +502,7 @@ import AppNavbar from "@/components/AppNavbar.vue";
 import ProductionListCard from "@/components/productions/ProductionListCard.vue";
 import ProductionsDateFilter from "@/components/productions/ProductionsDateFilter.vue";
 import { useDarkMode } from "@/composables/useDarkMode";
+import { useFittingPills } from "@/composables/useFittingPills";
 import { i18n, type SupportedLang } from "@/i18n";
 import { getEventsForProductions } from "@/services/events";
 import { getHalls } from "@/services/halls";
@@ -516,26 +530,22 @@ const PAGE_SIZE = 20;
 /** Same cap as the list API, extra terms are ignored client-side. */
 const MAX_SEARCH_TERMS = 20;
 
-/** How many genre/tag filter chips to show before "Show more". Selected tags are always included. */
-const GENRE_FILTER_COLLAPSED_MAX = 9;
+/**
+ * Safety fallback when widths are not measurable (e.g. JSDOM tests).
+ * Real browsers use measured row fit, not this cap.
+ */
+const COMPACT_GENRE_FALLBACK_MAX = 10;
+const GENRE_PANEL_FALLBACK_MAX = 9;
+const NON_GENRE_PANEL_FALLBACK_MAX = 6;
 
-const NON_GENRE_FILTER_COLLAPSED_MAX = 6;
-
-/** Genre chips next to the date filter before expanding the full filter panel. */
-const COMPACT_GENRE_PREVIEW_MAX = 10;
-
-function collapsedTagFilterList(
+function selectedFirstTagFilterList(
   all: { id: number; label: string }[],
   selectedIds: readonly number[],
-  max: number,
-  expanded: boolean,
 ): { id: number; label: string }[] {
-  if (expanded || all.length <= max) return all;
   const sel = new Set(selectedIds);
-  const must = all.filter((t) => sel.has(t.id));
+  const selected = all.filter((t) => sel.has(t.id));
   const rest = all.filter((t) => !sel.has(t.id));
-  if (must.length >= max) return must;
-  return [...must, ...rest.slice(0, max - must.length)];
+  return [...selected, ...rest];
 }
 
 /** 1-based page index in the URL (`?page=1` is normalized away). */
@@ -1177,45 +1187,75 @@ const nonGenreTagsForFilter = computed(() => {
   return items;
 });
 
+const genrePanelTagCandidates = computed(() =>
+  selectedFirstTagFilterList(genreTagsForFilter.value, selectedTagIds.value),
+);
+
+const nonGenrePanelTagCandidates = computed(() =>
+  selectedFirstTagFilterList(nonGenreTagsForFilter.value, selectedTagIds.value),
+);
+
+const compactGenreTagCandidates = computed(() =>
+  selectedFirstTagFilterList(genreTagsForFilter.value, selectedTagIds.value),
+);
+
+const {
+  setRowRef: setCompactGenreRowRef,
+  setTrailingControlRef: setCompactGenreExpandButtonRef,
+  setPillRef: setCompactGenrePillRef,
+  visibleItems: compactGenreTagsForRow,
+} = useFittingPills(compactGenreTagCandidates, {
+  gapPx: 8,
+  fallbackVisibleCount: COMPACT_GENRE_FALLBACK_MAX,
+});
+
+const {
+  setRowRef: setGenrePanelRowRef,
+  setTrailingControlRef: setGenrePanelExpandButtonRef,
+  setPillRef: setGenrePanelPillRef,
+  visibleItems: collapsedGenrePanelTags,
+} = useFittingPills(genrePanelTagCandidates, {
+  gapPx: 8,
+  fallbackVisibleCount: GENRE_PANEL_FALLBACK_MAX,
+});
+
+const {
+  setRowRef: setNonGenrePanelRowRef,
+  setTrailingControlRef: setNonGenrePanelExpandButtonRef,
+  setPillRef: setNonGenrePanelPillRef,
+  visibleItems: collapsedNonGenrePanelTags,
+} = useFittingPills(nonGenrePanelTagCandidates, {
+  gapPx: 8,
+  fallbackVisibleCount: NON_GENRE_PANEL_FALLBACK_MAX,
+});
+
 const visibleGenreTagsForFilter = computed(() =>
-  collapsedTagFilterList(
-    genreTagsForFilter.value,
-    selectedTagIds.value,
-    GENRE_FILTER_COLLAPSED_MAX,
-    genreTagFiltersExpanded.value,
-  ),
+  genreTagFiltersExpanded.value
+    ? genrePanelTagCandidates.value
+    : collapsedGenrePanelTags.value,
 );
 
 const visibleNonGenreTagsForFilter = computed(() =>
-  collapsedTagFilterList(
-    nonGenreTagsForFilter.value,
-    selectedTagIds.value,
-    NON_GENRE_FILTER_COLLAPSED_MAX,
-    nonGenreTagFiltersExpanded.value,
-  ),
+  nonGenreTagFiltersExpanded.value
+    ? nonGenrePanelTagCandidates.value
+    : collapsedNonGenrePanelTags.value,
 );
 
 const showGenreTagFilterExpandToggle = computed(
-  () => genreTagsForFilter.value.length > GENRE_FILTER_COLLAPSED_MAX,
+  () =>
+    collapsedGenrePanelTags.value.length < genrePanelTagCandidates.value.length,
 );
 
 const showNonGenreTagFilterExpandToggle = computed(
-  () => nonGenreTagsForFilter.value.length > NON_GENRE_FILTER_COLLAPSED_MAX,
-);
-
-const compactGenreTagsForRow = computed(() =>
-  collapsedTagFilterList(
-    genreTagsForFilter.value,
-    selectedTagIds.value,
-    COMPACT_GENRE_PREVIEW_MAX,
-    false,
-  ),
+  () =>
+    collapsedNonGenrePanelTags.value.length <
+    nonGenrePanelTagCandidates.value.length,
 );
 
 const showFiltersPanelExpandToggle = computed(
   () =>
     nonGenreTagsForFilter.value.length > 0 ||
-    genreTagsForFilter.value.length > COMPACT_GENRE_PREVIEW_MAX,
+    compactGenreTagsForRow.value.length < compactGenreTagCandidates.value.length,
 );
 
 /** Matches backend `yearMin`/`yearMax` bounds; not derived from loaded events (list loads events per page only). */

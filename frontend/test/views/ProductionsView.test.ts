@@ -755,8 +755,8 @@ describe("ProductionsView.vue", () => {
   });
 
   it("shows more genre tags after expanding the list", async () => {
-    // Collapsed cap is GENRE_FILTER_COLLAPSED_MAX (9); need strictly more to show "Meer tonen".
-    const manyGenres: Tag[] = Array.from({ length: 10 }, (_, i) => ({
+    // Need more items than the fallback row fit to guarantee expand control in JSDOM.
+    const manyGenres: Tag[] = Array.from({ length: 11 }, (_, i) => ({
       id: 100 + i,
       old_id: null,
       name: { nl: `Genre ${i + 1}` },
@@ -772,13 +772,11 @@ describe("ProductionsView.vue", () => {
     expect(expandFilters.exists()).toBe(true);
     await expandFilters.trigger("click");
     await nextTick();
-    const more = wrapper
-      .findAll("button")
-      .find((b) => b.text() === "Meer tonen");
-    expect(more).toBeDefined();
-    await more!.trigger("click");
+    const more = wrapper.find('[aria-label="Meer tonen"]');
+    expect(more.exists()).toBe(true);
+    await more.trigger("click");
     await nextTick();
-    expect(wrapper.text()).toContain("Genre 10");
+    expect(wrapper.text()).toContain("Genre 11");
     wrapper.unmount();
   });
 
@@ -801,11 +799,9 @@ describe("ProductionsView.vue", () => {
     expect(expandFilters.exists()).toBe(true);
     await expandFilters.trigger("click");
     await nextTick();
-    const more = wrapper
-      .findAll("button")
-      .filter((b) => b.text() === "Meer tonen");
-    expect(more.length).toBeGreaterThanOrEqual(1);
-    await more[more.length - 1]!.trigger("click");
+    const more = wrapper.find('[aria-label="Meer tonen"]');
+    expect(more.exists()).toBe(true);
+    await more.trigger("click");
     await nextTick();
     expect(wrapper.text()).toContain("Extra 7");
     wrapper.unmount();
