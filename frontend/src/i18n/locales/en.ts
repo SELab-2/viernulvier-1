@@ -241,6 +241,7 @@ export default {
       dateRange: "Run",
       runningTime: "Running Time",
       bannerImageAlt: "Page banner image",
+      caption: "Image from the archive of De Vooruit",
     },
     gallery: {
       title: "Images",
@@ -260,6 +261,7 @@ export default {
     details: {
       tags: "Tags",
       extraInfo: "Extra Info",
+      programme: "Programme",
     },
     events: {
       title: "Performance History",

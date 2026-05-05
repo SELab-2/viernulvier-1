@@ -1,6 +1,8 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
+import { createMemoryHistory, createRouter } from "vue-router";
+import { routes } from "@/router/routes";
 import HeroSection from "@/components/production/HeroSection.vue";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 
@@ -12,6 +14,7 @@ const i18n = createI18n({
       production: {
         hero: {
           bannerImageAlt: "Banner",
+          caption: "Beeld uit het archief",
         },
       },
     },
@@ -43,7 +46,7 @@ const baseProduction: ProductionWithBackwardsRefs = {
   events: [],
 };
 
-function mountHero(
+async function mountHero(
   props: Partial<{
     production: ProductionWithBackwardsRefs;
     tagGroups: { label: string; tags: string[] }[];
@@ -51,6 +54,10 @@ function mountHero(
     bannerUrl: string | null;
   }> = {},
 ) {
+  const router = createRouter({ history: createMemoryHistory(), routes });
+  await router.push("/nl");
+  await router.isReady();
+
   return mount(HeroSection, {
     props: {
       production: baseProduction,
@@ -60,7 +67,7 @@ function mountHero(
       ...props,
     },
     global: {
-      plugins: [i18n],
+      plugins: [i18n, router],
     },
   });
 }
@@ -77,35 +84,40 @@ describe("HeroSection.vue", () => {
   // ── rendering ─────────────────────────────────────────────
 
   describe("rendering", () => {
-    it("uses bannerUrl for the hero image when set, in full colour", () => {
-      const wrapper = mountHero({ bannerUrl: "/media/crops/nbh.jpg" });
+    it("uses bannerUrl for the hero image when set, in full colour", async () => {
+      const wrapper = await mountHero({ bannerUrl: "/media/crops/nbh.jpg" });
       const img = wrapper.get("img");
       expect(img.attributes("src")).toBe("/media/crops/nbh.jpg");
       // The hero shows the photograph in colour; no grayscale filter.
       expect(img.attributes("class") || "").not.toMatch(/grayscale/);
     });
 
-    it("renders no hero image when bannerUrl is null (dark background only)", () => {
-      const wrapper = mountHero({ bannerUrl: null });
+    it("renders no hero image when bannerUrl is null (dark background only)", async () => {
+      const wrapper = await mountHero({ bannerUrl: null });
       expect(wrapper.find("img").exists()).toBe(false);
     });
 
-    it("renders title, tagline and artist as the article header", () => {
-      const wrapper = mountHero();
+    it("renders title, tagline and artist as the article header", async () => {
+      const wrapper = await mountHero();
 
       expect(wrapper.find("h1").text()).toContain("Titel");
       expect(wrapper.text()).toContain("Tagline");
       expect(wrapper.text()).toContain("Artiest");
     });
 
-    it("renders the supertitle as part of the kicker", () => {
-      const wrapper = mountHero();
+    it("renders the supertitle as part of the kicker", async () => {
+      const wrapper = await mountHero();
       expect(wrapper.text()).toContain("Supertitel");
+    });
+
+    it("renders the photo dateline caption beneath the kadertje", async () => {
+      const wrapper = await mountHero();
+      expect(wrapper.text()).toContain("Beeld uit het archief");
     });
   });
 
-  it("renders safely when optional language fields are missing", () => {
-    const wrapper = mountHero({
+  it("renders safely when optional language fields are missing", async () => {
+    const wrapper = await mountHero({
       production: {
         ...baseProduction,
         title: null,
@@ -121,8 +133,8 @@ describe("HeroSection.vue", () => {
   // ── kicker (department · genre · year) ────────────────────
 
   describe("kicker", () => {
-    it("includes the year of the first event when eventStats is provided", () => {
-      const wrapper = mountHero({
+    it("includes the year of the first event when eventStats is provided", async () => {
+      const wrapper = await mountHero({
         eventStats: {
           firstDate: new Date("1987-04-08"),
           lastDate: new Date("1987-04-10"),
@@ -134,8 +146,8 @@ describe("HeroSection.vue", () => {
       expect(wrapper.text()).toContain("1987");
     });
 
-    it("includes the primary genre tag in the kicker", () => {
-      const wrapper = mountHero({
+    it("includes the primary genre tag in the kicker", async () => {
+      const wrapper = await mountHero({
         tagGroups: [{ label: "Genre", tags: ["Dance", "Theatre"] }],
       });
 
@@ -143,16 +155,16 @@ describe("HeroSection.vue", () => {
       expect(wrapper.text()).toContain("Dance");
     });
 
-    it("ignores non-genre tag groups in the kicker", () => {
-      const wrapper = mountHero({
+    it("ignores non-genre tag groups in the kicker", async () => {
+      const wrapper = await mountHero({
         tagGroups: [{ label: "Location", tags: ["Gent"] }],
       });
 
       expect(wrapper.text()).not.toContain("Gent");
     });
 
-    it("collapses duplicates in the kicker", () => {
-      const wrapper = mountHero({
+    it("collapses duplicates in the kicker", async () => {
+      const wrapper = await mountHero({
         production: {
           ...baseProduction,
           supertitle: { nl: "Theatre" },
@@ -171,8 +183,8 @@ describe("HeroSection.vue", () => {
       expect(matches.length).toBe(1);
     });
 
-    it("renders no kicker rule when there is nothing to show", () => {
-      const wrapper = mountHero({
+    it("renders no kicker rule when there is nothing to show", async () => {
+      const wrapper = await mountHero({
         production: {
           ...baseProduction,
           supertitle: null,

@@ -75,6 +75,16 @@
       </div>
     </header>
 
+    <!--
+      Photo dateline — a single sober italic caption beneath the kadertje.
+      Places the image as archival material rather than promotional art.
+    -->
+    <p
+      class="mx-auto mt-6 max-w-2xl px-6 text-center font-serif text-xs italic text-ink-tertiary md:px-0 md:text-sm"
+    >
+      {{ t("production.hero.caption") }}
+    </p>
+
     <!-- Breathing room before the next section -->
     <div class="h-12 md:h-16" aria-hidden="true" />
   </article>
