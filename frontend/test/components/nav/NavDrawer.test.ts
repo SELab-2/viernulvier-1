@@ -6,7 +6,13 @@ function mountDrawer(open = false, slotContent = "<span class='slot-content'>ite
   return mount(NavDrawer, {
     props: { open },
     slots: { default: slotContent },
-    global: { stubs: { Transition: false } },
+    global: {
+      stubs: {
+        Transition: {
+          template: `<slot />`,
+        },
+      },
+    },
   });
 }
 
@@ -47,5 +53,23 @@ describe("NavDrawer.vue", () => {
     expect(wrapper.find(".mobile-drawer").exists()).toBe(true);
     await wrapper.setProps({ open: false });
     expect(wrapper.find(".mobile-drawer").exists()).toBe(false);
+  });
+
+  // ── Overlay ─────────────────────────────────────────────────────────────────
+
+  it("renders the overlay when open", () => {
+    const wrapper = mountDrawer(true);
+    expect(wrapper.find(".fixed.inset-0").exists()).toBe(true);
+  });
+
+  it("does not render the overlay when closed", () => {
+    const wrapper = mountDrawer(false);
+    expect(wrapper.find(".fixed.inset-0").exists()).toBe(false);
+  });
+
+  it("emits close when the overlay is clicked", async () => {
+    const wrapper = mountDrawer(true);
+    await wrapper.find(".fixed.inset-0").trigger("click");
+    expect(wrapper.emitted("close")).toHaveLength(1);
   });
 });

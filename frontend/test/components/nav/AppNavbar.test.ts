@@ -121,5 +121,12 @@ describe("AppNavbar.vue", () => {
     it("sets aria-expanded to false when closed", async () => {
       expect(wrapper.find("button.hamburger").attributes("aria-expanded")).toBe("false");
     });
+
+    it("closes the drawer when the overlay is clicked", async () => {
+      await wrapper.find("button.hamburger").trigger("click");
+      expect(wrapper.find(".mobile-drawer").exists()).toBe(true);
+      await wrapper.find(".fixed.inset-0").trigger("click");
+      expect(wrapper.find(".mobile-drawer").exists()).toBe(false);
+    });
   });
 });

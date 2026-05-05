@@ -238,5 +238,13 @@ describe("AdminNavbar", () => {
       expect(mockLogout).toHaveBeenCalled();
       expect(wrapper.find(".mobile-drawer").exists()).toBe(false);
     });
+
+    it("closes the drawer when the overlay is clicked", async () => {
+      const wrapper = mountNavbar();
+      await wrapper.find("button.hamburger").trigger("click");
+      expect(wrapper.find(".mobile-drawer").exists()).toBe(true);
+      await wrapper.find(".fixed.inset-0").trigger("click");
+      expect(wrapper.find(".mobile-drawer").exists()).toBe(false);
+    });
   });
 });
