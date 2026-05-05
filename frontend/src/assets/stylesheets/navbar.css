@@ -38,7 +38,8 @@
 
 /* ===== MOBILE DRAWER ===== */
 .mobile-drawer {
-  @apply sm:hidden sticky top-16 z-40 flex flex-col bg-surface-inv border-t border-surface-inv-border px-6 py-3 gap-1;
+  @apply fixed top-16 left-0 right-0 z-40 flex flex-col bg-surface-inv border-t border-surface-inv-border px-6 py-3 gap-1 shadow-xl;
+  height: auto;
 }
 .drawer-link {
   @apply block w-full text-left px-3 py-2.5 rounded-md text-sm font-medium text-ink-on-inv-secondary transition hover:bg-surface-inv-raised hover:text-ink-on-inv;
