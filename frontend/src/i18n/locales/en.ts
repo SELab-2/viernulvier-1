@@ -88,10 +88,17 @@ export default {
     actions: {
       addProduction: "+ Add Production",
       removeProduction: "Remove selected productions",
-      confirmRemoveDialogTitle: "Remove productions?",
-      confirmRemoveBody: "This will permanently delete {count} selected productions. This cannot be undone.",
       confirmRemoveSubmit: "Remove permanently",
+      production: {
+        confirmRemoveDialogTitle: "Remove productions?",
+        confirmRemoveBody: "This will permanently delete {count} selected productions. This cannot be undone.",
+      },
       addTag: "+ Add Tag",
+      removeTag: "Remove selected tags",
+      tag: {
+        confirmRemoveDialogTitle: "Remove tags?",
+        confirmRemoveBody: "This will permanently delete {count} selected tags. This cannot be undone.",
+      },
       searchPlaceholder: "Search across all columns...",
       selectedCount: "Selected: {count}",
       loadedCount: "Rows loaded: {count}",
@@ -176,6 +183,7 @@ export default {
     feedback: {
       saveSuccess: "Changes saved successfully",
       removeSuccess: "Production removed successfully",
+      removeTagSuccess: "Tag removed successfully",
     },
     admin: {
       noPermission: "You don't have permissions to manage admins.",
