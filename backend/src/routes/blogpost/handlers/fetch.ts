@@ -1,41 +1,43 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import type { BlogPost, BlogPostWithMeta } from "@viernulvier/shared/index.js";
-import { BlogPostSchema, stringToInt } from "@viernulvier/shared/index.js";
+import type { BlogPostWithMeta, BlogPostWithBackwardsRefs } from "@viernulvier/shared/index.js";
+import { BlogPostWithBackwardsRefsSchema, stringToInt } from "@viernulvier/shared/index.js";
 import { parseParams, buildQuery } from "@/routes/helpers.js";
 import z from "zod";
 
 const BlogPostSelect = `
 SELECT
-  id,
-  blog,
-  title,
-  content,
-  published_at
-FROM blogpost
+  bp.id,
+  bp.blog,
+  bp.title,
+  bp.content,
+  bp.published_at,
+  (SELECT COALESCE(ARRAY_AGG(pb.production), '{}') FROM production_blogpost pb WHERE pb.blogpost = bp.id) AS productions
+FROM blogpost bp
 `;
 
 const fetchBlogPostsQuery = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `${BlogPostSelect} WHERE published_at IS NOT NULL ORDER BY id ASC`,
-    BlogPostSchema,
+    `${BlogPostSelect} WHERE published_at IS NOT NULL ORDER BY bp.id ASC`,
+    BlogPostWithBackwardsRefsSchema,
   );
 
 const fetchBlogPostByIdQuery = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `${BlogPostSelect} WHERE id = $1 AND published_at IS NOT NULL`,
+    `${BlogPostSelect} WHERE bp.id = $1 AND published_at IS NOT NULL`,
     z.tuple([z.int()]),
-    BlogPostSchema,
+    BlogPostWithBackwardsRefsSchema,
   );
 
 const fetchBlogPostWithMetaByIdQuery = (server: FastifyInstance) =>
   buildQuery(
     server,
-    `SELECT id, blog, title, content, published_at, created_at, updated_at, created_by, updated_by
-     FROM blogpost WHERE id = $1`,
+    `SELECT bp.id, bp.blog, bp.title, bp.content, bp.published_at, bp.created_at, bp.updated_at, bp.created_by, bp.updated_by,
+    (SELECT COALESCE(ARRAY_AGG(pb.production), '{}') FROM production_blogpost pb WHERE pb.blogpost = bp.id) AS productions
+     FROM blogpost bp WHERE bp.id = $1`,
     z.tuple([z.int()]),
-    BlogPostSchema.withMeta(),
+    BlogPostWithBackwardsRefsSchema.withMeta(),
   );
 
 /**
@@ -48,7 +50,7 @@ const fetchBlogPostWithMetaByIdQuery = (server: FastifyInstance) =>
 export async function getBlogPostById(
   server: FastifyInstance,
   id: number,
-): Promise<BlogPost | null> {
+): Promise<BlogPostWithBackwardsRefs | null> {
   const rows = await fetchBlogPostByIdQuery(server)(id);
   return rows[0] ?? null;
 }
@@ -63,7 +65,7 @@ export async function getBlogPostById(
 export async function fetchBlogPost(
   server: FastifyInstance,
   request: FastifyRequest,
-): Promise<BlogPost | null> {
+): Promise<BlogPostWithBackwardsRefs | null> {
   const { id } = parseParams(request, z.object({ id: stringToInt }));
   return await getBlogPostById(server, id);
 }
@@ -94,7 +96,7 @@ export async function fetchBlogPostWithMeta(
 export async function fetchBlogPosts(
   server: FastifyInstance,
   _request: FastifyRequest,
-): Promise<BlogPost[] | null> {
+): Promise<BlogPostWithBackwardsRefs[] | null> {
   const rows = await fetchBlogPostsQuery(server)();
   return rows;
 }

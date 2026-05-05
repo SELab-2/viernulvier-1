@@ -50,6 +50,7 @@ const baseProduction: ProductionWithBackwardsRefs = {
 
   tags: [],
   events: [],
+  blogposts: [],
 };
 
 
