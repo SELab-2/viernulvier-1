@@ -36,7 +36,7 @@
     </div>
   </nav>
 
-  <NavDrawer :open="menuOpen">
+  <NavDrawer :open="menuOpen" @close="menuOpen = false">
     <RouterLink
       :to="{ name: RouteNames.ADMIN, params: { lang: currentLang } }"
       class="drawer-link"
