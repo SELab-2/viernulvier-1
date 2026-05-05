@@ -16,6 +16,7 @@ type MaybeItemsRef<T> = Ref<readonly T[]> | ComputedRef<readonly T[]>;
 
 interface UseFittingPillsOptions {
   gapPx?: number;
+  trailingControlGapPx?: number;
   /** Used only when widths are not measurable (e.g. JSDOM). */
   fallbackVisibleCount?: number;
 }
@@ -28,6 +29,7 @@ export function useFittingPills<T extends { id: PillId }>(
   options: UseFittingPillsOptions = {},
 ) {
   const gapPx = options.gapPx ?? 8;
+  const trailingControlGapPx = options.trailingControlGapPx ?? gapPx;
   const fallbackVisibleCount = options.fallbackVisibleCount;
 
   const rowEl = ref<HTMLElement | null>(null);
@@ -94,7 +96,7 @@ export function useFittingPills<T extends { id: PillId }>(
     }
 
     const trailingWidth = trailingControlEl.value
-      ? trailingControlEl.value.offsetWidth + gapPx
+      ? trailingControlEl.value.offsetWidth + trailingControlGapPx
       : 0;
     const available = row.clientWidth - trailingWidth;
     if (available <= 0) {
