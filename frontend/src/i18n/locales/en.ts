@@ -272,6 +272,11 @@ export default {
       error_body: "We couldn't retrieve the performance data from the archive.",
       retry: "Try again",
     },
+    blog: {
+      title: "Related articles",
+      body: "Background stories, interviews and notes from the archive that relate to this production.",
+      all: "All articles",
+    },
     notFound: {
       title: "Production not found",
       description: "We couldn't find this specific production for you. Luckily, there's plenty more to discover: return to the overview and dive back into our full history of productions.",

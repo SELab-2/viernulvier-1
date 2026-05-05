@@ -77,11 +77,12 @@ describe("HeroSection.vue", () => {
   // ── rendering ─────────────────────────────────────────────
 
   describe("rendering", () => {
-    it("uses bannerUrl for the hero image when set, in grayscale", () => {
+    it("uses bannerUrl for the hero image when set, in full colour", () => {
       const wrapper = mountHero({ bannerUrl: "/media/crops/nbh.jpg" });
       const img = wrapper.get("img");
       expect(img.attributes("src")).toBe("/media/crops/nbh.jpg");
-      expect(img.attributes("class") || "").toMatch(/grayscale/);
+      // The hero shows the photograph in colour; no grayscale filter.
+      expect(img.attributes("class") || "").not.toMatch(/grayscale/);
     });
 
     it("renders no hero image when bannerUrl is null (dark background only)", () => {

@@ -273,6 +273,11 @@ export default {
       error_body: "Nous n'avons pas pu récupérer les données des représentations dans les archives.",
       retry: "Réessayer",
     },
+    blog: {
+      title: "Articles liés",
+      body: "Récits de fond, entretiens et notes des archives en rapport avec cette production.",
+      all: "Tous les articles",
+    },
     notFound: {
       title: "Production introuvable",
       description: "Nous n'avons pas pu trouver cette production. Heureusement, il reste encore beaucoup à découvrir : revenez à la vue d'ensemble et replongez dans l'historique complet de nos productions.",

@@ -273,6 +273,11 @@ export default {
       error_body: "We konden de gegevens over de voorstellingen niet ophalen uit het archief.",
       retry: "Opnieuw proberen",
     },
+    blog: {
+      title: "Verwante artikelen",
+      body: "Achtergrondverhalen, interviews en notities uit het archief bij deze productie.",
+      all: "Alle artikelen",
+    },
     notFound: {
       title: "Productie niet gevonden",
       description: "Deze productie konden we niet voor je vinden. Gelukkig valt er nog genoeg anders te ontdekken: keer terug naar het overzicht en duik opnieuw in onze volledige historiek van producties.",

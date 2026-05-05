@@ -1,68 +1,82 @@
 <template>
   <!--
-    Article-style header for a production page.
+    Editorial header for a production page.
 
-    Image at the top (grayscale, ~40vh, no dramatic gradient overlay),
-    followed by a centred editorial header below: a kicker line
-    (department · genre · year), a serif headline, an italic deck and
-    a small byline. The previous "ticket info" column (date range,
-    running time, genre chips) is intentionally absent here — those
-    facts belong to EventsSection / DetailsSection where the reader
-    expects them.
+    A full-colour banner photograph fills the top of the section, and
+    the article header floats over the lower half of the photo inside
+    a "letterpress" card — a sober, square, paper-coloured frame with
+    a thin ink-coloured border, like a museum label or magazine title
+    plate. The card carries the kicker, the serif headline, an italic
+    deck and a small byline.
+
+    The right-hand "ticket info" column (date range, running time,
+    genre chips) is intentionally absent here — those facts belong to
+    EventsSection / DetailsSection where the reader expects them.
   -->
-  <article class="bg-surface-0">
+  <article class="relative bg-surface-0">
     <!-- Banner photograph -->
     <div
-      class="relative w-full overflow-hidden bg-surface-inv h-[40vh] md:h-[50vh]"
+      class="relative w-full overflow-hidden bg-surface-inv h-[55vh] md:h-[65vh]"
     >
       <img
         v-if="bannerUrl"
         :src="bannerUrl"
         :alt="heroImageAlt"
-        class="h-full w-full object-cover object-center grayscale contrast-125"
+        class="h-full w-full object-cover object-center"
         loading="eager"
         decoding="async"
         referrerPolicy="no-referrer"
       />
     </div>
 
-    <!-- Article header -->
-    <header
-      class="mx-auto max-w-3xl px-6 pb-8 pt-12 text-center opacity-0 animate-fade-up md:px-8 md:pb-12 md:pt-16"
-    >
-      <!-- Kicker: thin rule on each side, small caps in the middle -->
+    <!-- Letterpress card sitting over the bottom of the photograph -->
+    <header class="relative z-10 mx-auto -mt-32 max-w-2xl px-6 md:-mt-44 md:px-0">
       <div
-        v-if="kicker"
-        class="mb-6 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
+        class="border border-ink-primary bg-surface-0 px-6 py-10 text-center opacity-0 animate-fade-up md:px-12 md:py-14"
       >
-        <span class="h-px w-8 bg-ink-tertiary opacity-50" aria-hidden="true" />
-        <span class="whitespace-nowrap">{{ kicker }}</span>
-        <span class="h-px w-8 bg-ink-tertiary opacity-50" aria-hidden="true" />
+        <!-- Kicker: thin rule on each side, small caps in the middle -->
+        <div
+          v-if="kicker"
+          class="mb-6 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
+        >
+          <span
+            class="h-px w-8 bg-ink-tertiary opacity-50"
+            aria-hidden="true"
+          />
+          <span class="whitespace-nowrap">{{ kicker }}</span>
+          <span
+            class="h-px w-8 bg-ink-tertiary opacity-50"
+            aria-hidden="true"
+          />
+        </div>
+
+        <!-- Headline -->
+        <h1
+          class="font-serif text-3xl font-semibold leading-[1.1] tracking-tight text-ink-primary md:text-5xl"
+        >
+          {{ content.title }}
+        </h1>
+
+        <!-- Deck / tagline -->
+        <p
+          v-if="content.tagline"
+          class="mt-5 font-serif text-lg font-light italic leading-snug text-ink-secondary md:text-xl"
+        >
+          {{ content.tagline }}
+        </p>
+
+        <!-- Byline -->
+        <p
+          v-if="content.artist"
+          class="mt-7 text-xs uppercase tracking-[0.2em] text-ink-tertiary"
+        >
+          {{ content.artist }}
+        </p>
       </div>
-
-      <!-- Headline -->
-      <h1
-        class="font-serif text-4xl font-semibold leading-[1.1] tracking-tight text-ink-primary md:text-5xl"
-      >
-        {{ content.title }}
-      </h1>
-
-      <!-- Deck / tagline -->
-      <p
-        v-if="content.tagline"
-        class="mt-6 font-serif text-xl font-light italic leading-snug text-ink-secondary md:text-2xl"
-      >
-        {{ content.tagline }}
-      </p>
-
-      <!-- Byline -->
-      <p
-        v-if="content.artist"
-        class="mt-8 text-sm uppercase tracking-[0.2em] text-ink-tertiary"
-      >
-        {{ content.artist }}
-      </p>
     </header>
+
+    <!-- Breathing room before the next section -->
+    <div class="h-12 md:h-16" aria-hidden="true" />
   </article>
 </template>
 

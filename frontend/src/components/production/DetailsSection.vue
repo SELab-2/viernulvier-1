@@ -6,7 +6,7 @@
         <div v-if="hasSidebarContent" class="lg:col-start-9 lg:col-span-4">
           <div class="sticky top-32 h-fit space-y-6">
             
-            <div v-if="teaser || description_extra" class="bg-surface-inv p-8 shadow-xl text-ink-on-inv border border-surface-3">
+            <div v-if="teaser || description_extra" class="bg-surface-inv p-8 text-ink-on-inv border border-surface-3">
               <div v-if="teaser" class="text-[10px] font-black uppercase tracking-[0.3em] text-ink-on-inv-tertiary" :class="{ 'mb-4': description_extra }" v-html="teaser" />
               
               <div v-if="teaser && description_extra" class="mb-6 h-px w-12 bg-ink-on-inv-tertiary opacity-30"></div>
@@ -66,19 +66,45 @@
         <div :class="['space-y-16 lg:row-start-1', mainContentClass]">
           
           <div v-if="quote" class="space-y-8 pb-12 border-b border-surface-3">
-            <div class="space-y-4">
-              <p class="italic text-3xl font-black leading-[1.1] tracking-tighter text-ink-primary md:text-5xl">
-                “{{ quote }}”
-              </p>
-              <p v-if="quote_source" class="pl-8 text-sm font-bold uppercase tracking-widest text-ink-secondary md:pl-16">
-                — {{ quote_source }}
-              </p>
-            </div>
+            <figure class="relative">
+              <!--
+                Hanging open-quote glyph in the margin — newspaper feature
+                article convention. Decorative, so hidden from screen readers
+                (the actual quote text already includes its punctuation).
+              -->
+              <span
+                aria-hidden="true"
+                class="pointer-events-none absolute -left-2 -top-6 select-none font-serif text-7xl leading-none text-ink-tertiary opacity-50 md:-left-8 md:-top-10 md:text-8xl"
+              >
+                &ldquo;
+              </span>
+              <blockquote class="space-y-4">
+                <p
+                  class="font-serif italic text-2xl font-medium leading-[1.2] tracking-tight text-ink-primary md:text-4xl"
+                >
+                  {{ quote }}
+                </p>
+                <figcaption
+                  v-if="quote_source"
+                  class="pl-8 text-xs font-semibold uppercase tracking-[0.2em] text-ink-secondary md:pl-16"
+                >
+                  &mdash; {{ quote_source }}
+                </figcaption>
+              </blockquote>
+            </figure>
           </div>
           
           <div v-if="description || description_2" class="space-y-10">
-            <div v-if="description" class="text-lg font-light leading-relaxed text-ink-primary md:text-xl whitespace-pre-line" v-html="description" />
-            <div v-if="description_2" class="text-base font-light leading-relaxed text-ink-secondary whitespace-pre-line" v-html="description_2" />
+            <div
+              v-if="description"
+              class="font-serif text-lg font-normal leading-[1.7] text-ink-primary md:text-xl whitespace-pre-line"
+              v-html="description"
+            />
+            <div
+              v-if="description_2"
+              class="font-serif text-base font-normal leading-[1.7] text-ink-secondary whitespace-pre-line"
+              v-html="description_2"
+            />
           </div>
         </div>
 
