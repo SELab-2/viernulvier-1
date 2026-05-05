@@ -23,39 +23,55 @@
       <section class="mx-auto max-w-5xl px-6 pb-20 pt-8 lg:px-10">
         <div v-if="!loading" class="mb-4 space-y-3">
           <div
-            class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-stretch sm:gap-3"
+            class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-center sm:gap-3"
           >
             <label class="sr-only" for="productions-search">{{
               t("productionsPage.searchLabel")
             }}</label>
-            <input
-              id="productions-search"
-              v-model="searchDraft"
-              type="search"
-              autocomplete="off"
+            <div class="relative min-w-0 grow">
+              <input
+                id="productions-search"
+                v-model="searchDraft"
+                type="search"
+                autocomplete="off"
+                :disabled="listLoading || loadError"
+                :placeholder="t('productionsPage.searchPlaceholder')"
+                class="min-w-0 w-full rounded-md border border-surface-3 bg-surface-0 px-3 py-2 pr-11 text-base text-ink-primary placeholder:text-ink-secondary focus:border-accent-outline focus:outline-none dark:bg-surface-1"
+                :class="
+                  searchAwaitingList
+                    ? 'disabled:cursor-not-allowed disabled:opacity-50'
+                    : 'disabled:opacity-100'
+                "
+                @keydown.enter.prevent="submitSearch"
+              />
+              <button
+                type="button"
+                class="absolute right-1 top-1/2 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-ink-secondary transition hover:bg-surface-2 hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-100"
+                :aria-label="t('productionsPage.searchButton')"
+                :disabled="listLoading || loadError"
+                @click="submitSearch"
+              >
+                <svg
+                  class="size-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+              </button>
+            </div>
+            <ProductionsSortControl
+              :sort-by="sortBy"
+              :sort-dir="sortDir"
               :disabled="listLoading || loadError"
-              :placeholder="t('productionsPage.searchPlaceholder')"
-              class="min-w-0 grow rounded-md border border-surface-3 bg-surface-0 px-3 py-2 text-base text-ink-primary placeholder:text-ink-secondary focus:border-accent-outline focus:outline-none dark:bg-surface-1"
-              :class="
-                searchAwaitingList
-                  ? 'disabled:cursor-not-allowed disabled:opacity-50'
-                  : 'disabled:opacity-100'
-              "
-              @keydown.enter.prevent="submitSearch"
+              @sort-change="(p) => void applyProductionsSortChange(p)"
             />
-            <button
-              type="button"
-              class="shrink-0 cursor-pointer rounded-md border border-accent-outline bg-surface-0 px-4 py-2 text-base font-medium text-ink-primary transition hover:bg-surface-2"
-              :class="
-                searchAwaitingList
-                  ? 'disabled:cursor-not-allowed disabled:opacity-40'
-                  : 'disabled:opacity-100'
-              "
-              :disabled="listLoading || loadError"
-              @click="submitSearch"
-            >
-              {{ t("productionsPage.searchButton") }}
-            </button>
           </div>
           <div
             v-if="searchBannerTerms.length > 0"
@@ -395,13 +411,18 @@ import AppFooter from "@/components/AppFooter.vue";
 import AppNavbar from "@/components/AppNavbar.vue";
 import ProductionListCard from "@/components/productions/ProductionListCard.vue";
 import ProductionsDateFilter from "@/components/productions/ProductionsDateFilter.vue";
+import ProductionsSortControl from "@/components/productions/ProductionsSortControl.vue";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
 import { getEventsForProductions } from "@/services/events";
 import { getHalls } from "@/services/halls";
 import { ApiError } from "@/services/api";
 import { getImagesForProductionOrEmpty } from "@/services/media";
-import { getProductions } from "@/services/productions";
+import {
+  getProductions,
+  type ProductionSortBy,
+  type ProductionSortDir,
+} from "@/services/productions";
 import { getTags, getTagTypes } from "@/services/tags";
 import { localizeOrEmpty } from "@/utils/language-utils";
 import {
@@ -452,6 +473,8 @@ const YEAR_MIN_QUERY_KEY = "yearMin";
 const YEAR_MAX_QUERY_KEY = "yearMax";
 const FROM_QUERY_KEY = "from";
 const TO_QUERY_KEY = "to";
+const SORT_BY_QUERY_KEY = "sortBy";
+const SORT_DIR_QUERY_KEY = "sortDir";
 
 const route = useRoute();
 const router = useRouter();
@@ -599,6 +622,18 @@ function readDateRangeFromRoute(): { from: string; to: string } | null {
   return { from, to: toStr };
 }
 
+function readSortByFromRoute(): ProductionSortBy {
+  const raw = route.query[SORT_BY_QUERY_KEY];
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return value === "name" ? "name" : "date";
+}
+
+function readSortDirFromRoute(): ProductionSortDir {
+  const raw = route.query[SORT_DIR_QUERY_KEY];
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return value === "asc" ? "asc" : "desc";
+}
+
 function queryForPage0WithBase(
   page0: number,
   baseQuery: LocationQuery,
@@ -634,6 +669,13 @@ function queryForPage0WithBase(
   } else {
     delete q[FROM_QUERY_KEY];
     delete q[TO_QUERY_KEY];
+  }
+  if (sortBy.value === "date" && sortDir.value === "desc") {
+    delete q[SORT_BY_QUERY_KEY];
+    delete q[SORT_DIR_QUERY_KEY];
+  } else {
+    q[SORT_BY_QUERY_KEY] = sortBy.value;
+    q[SORT_DIR_QUERY_KEY] = sortDir.value;
   }
   return q;
 }
@@ -693,6 +735,8 @@ const appliedSearchTerms = ref<string[]>([]);
  */
 const searchBannerTerms = ref<string[]>([]);
 const searchDraft = ref("");
+const sortBy = ref<ProductionSortBy>("date");
+const sortDir = ref<ProductionSortDir>("desc");
 /**
  * Total matching the current list query; updated on each successful fetch.
  * While search/filter list loads we keep the previous value so the results line
@@ -704,6 +748,29 @@ const displayedFilteredTotal = ref<number | null>(null);
  * Dims the search field + button; removing pills, clearing all search, and filter fetches do not.
  */
 const searchAwaitingList = ref(false);
+
+async function applyProductionsSortChange(parsed: {
+  sortBy: ProductionSortBy;
+  sortDir: ProductionSortDir;
+}): Promise<void> {
+  if (loading.value) return;
+  if (parsed.sortBy === sortBy.value && parsed.sortDir === sortDir.value) return;
+
+  sortBy.value = parsed.sortBy;
+  sortDir.value = parsed.sortDir;
+
+  listLoading.value = true;
+  beginListAttempt();
+  try {
+    await fetchProductionsPageData(0);
+    await replaceRouteForPage0(0);
+    scrollAfterPageChange();
+  } catch (err) {
+    failListAttempt(err);
+  } finally {
+    listLoading.value = false;
+  }
+}
 
 const hasActiveListFilters = computed(() => {
   if (appliedSearchTerms.value.length > 0) return true;
@@ -776,6 +843,9 @@ function productionsListArgs(page: number) {
   const args: Parameters<typeof getProductions>[0] = {
     limit: PAGE_SIZE,
     offset: page * PAGE_SIZE,
+    sortBy: sortBy.value,
+    sortDir: sortDir.value,
+    lang: locale.value,
   };
   if (appliedSearchTerms.value.length > 0) {
     args.search = appliedSearchTerms.value;
@@ -1177,6 +1247,8 @@ async function clearAllNonSearchFilters(): Promise<void> {
 onMounted(async () => {
   loading.value = true;
   beginListAttempt();
+  sortBy.value = readSortByFromRoute();
+  sortDir.value = readSortDirFromRoute();
   const initialSearch = readSearchFromRoute();
   if (initialSearch.length > 0) {
     appliedSearchTerms.value = initialSearch;
@@ -1258,6 +1330,28 @@ watch(
     try {
       await fetchProductionsPageData(page0);
       scrollAfterPageChange();
+    } catch (err) {
+      failListAttempt(err);
+    } finally {
+      listLoading.value = false;
+    }
+  },
+);
+
+watch(
+  () => `${readSortByFromRoute()}:${readSortDirFromRoute()}`,
+  async (next) => {
+    if (loading.value) return;
+    const [nextByRaw, nextDirRaw] = next.split(":");
+    const nextBy = nextByRaw === "date" ? "date" : "name";
+    const nextDir = nextDirRaw === "desc" ? "desc" : "asc";
+    if (nextBy === sortBy.value && nextDir === sortDir.value) return;
+    sortBy.value = nextBy;
+    sortDir.value = nextDir;
+    listLoading.value = true;
+    beginListAttempt();
+    try {
+      await fetchProductionsPageData(currentPage.value);
     } catch (err) {
       failListAttempt(err);
     } finally {
