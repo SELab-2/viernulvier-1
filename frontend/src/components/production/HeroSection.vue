@@ -1,16 +1,24 @@
 <template>
-  <section class="relative flex min-h-[70vh] w-full items-end overflow-hidden">
+  <!-- Min height matches ~1920×600 banners; flex + justify-end grows the section when overlay text needs more room -->
+  <section
+    class="relative flex w-full min-h-[max(280px,calc(100vw*600/1920))] flex-col justify-end overflow-hidden"
+  >
     <div class="absolute inset-0 z-0 bg-surface-inv">
       <img
-        alt="Contemporary dance performance"
-        class="h-full w-full object-cover grayscale contrast-125"
-        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDU21ewyTmp0aPBEaU9xMGtqD-vLtugWzQIgeF5cNgkw3uvYnZCH2696RoNKJ-kPMsE9zWgEZnutEMH-J-JJfxTKGmKYwRmPRlTakVaNy15qZ9KQXigCvuBMADoZpkjjd9YYLpjteDwWRYyjupc87R0EJsRbW2MzKJN0p2HzFbO65oUEoM7xAE0CfFOdMkaUI45I3xa5PPVHFIdzJkm4Mtz8Y1xX_3ALsoeMsj0C_QTlHCfJnFU0vs_2s95CJhFPdbRZSLDLIPgysph"
+        v-if="bannerUrl"
+        :src="bannerUrl"
+        :alt="heroImageAlt"
+        class="h-full w-full object-cover object-center"
+        loading="eager"
+        decoding="async"
         referrerPolicy="no-referrer"
       />
       <div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent"></div>
     </div>
-    
-    <div class="relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-between gap-12 px-6 pb-20 md:flex-row md:items-end md:px-12">
+
+    <div
+      class="relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-between gap-12 px-6 pb-12 pt-8 md:flex-row md:items-end md:px-12 md:pb-20 md:pt-12"
+    >
       <div class="opacity-0 animate-fade-up max-w-4xl">
         <div class="mb-4 flex flex-col gap-2">
           <span class="text-sm font-bold uppercase tracking-[0.3em] text-ink-on-inv opacity-70">
@@ -94,10 +102,22 @@ interface Props {
     durationMinutes: number | null;
     hasMultipleDays: boolean;
   } | null;
+  /** First gallery image (`FE3_home_featuredWide` crop); when null, solid black hero. */
+  bannerUrl?: string | null;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  bannerUrl: null,
+});
 const { t, locale } = useI18n();
+
+const heroImageAlt = computed(() => {
+  const lang = locale.value as SupportedLang;
+  return (
+    localizeOrEmpty(props.production.title ?? {}, lang).trim() ||
+    t("production.hero.bannerImageAlt")
+  );
+});
 
 const content = computed(() => {
   const lang = locale.value as SupportedLang;

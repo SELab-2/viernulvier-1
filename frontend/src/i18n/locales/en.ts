@@ -249,6 +249,22 @@ export default {
     hero: {
       dateRange: "Run",
       runningTime: "Running Time",
+      bannerImageAlt: "Page banner image",
+    },
+    gallery: {
+      title: "Images",
+      intro: "A selection from this production’s media archive.",
+      prev: "Previous image",
+      next: "Next image",
+      goToScreen: "Go to screen {n} of {total}",
+      screenDotsGroupLabel: "Scroll positions in the gallery",
+      carouselLabel: "Image gallery for this production",
+      carouselRegion: "carousel",
+      openLightbox: "View larger image",
+      lightboxTitle: "Enlarged image",
+      closeLightbox: "Close enlarged image",
+      lightboxExpandMore: "Show extra-large view",
+      lightboxShrinkView: "Show standard enlarged view",
     },
     details: {
       tags: "Tags",

@@ -146,6 +146,12 @@ export default defineConfig([
       "vue/no-ref-object-reactivity-loss": "error",
       "vue/prefer-use-template-ref": "warn",
       "vue/block-order": ["warn", { order: ["template", "script", "style"] }],
+      // Binds to ariaLabel; vue-tsc only accepts :ariaLabel for component props (kebab :aria-label types as a different key).
+      "vue/attribute-hyphenation": [
+        "warn",
+        "always",
+        { ignore: ["ariaLabel"] },
+      ],
       "vue/no-v-html": "warn",
 
       "vue/max-attributes-per-line": "off",

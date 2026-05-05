@@ -249,6 +249,22 @@ export default {
     hero: {
       dateRange: "Speelperiode",
       runningTime: "Speelduur",
+      bannerImageAlt: "Beeld bovenaan de pagina",
+    },
+    gallery: {
+      title: "Beelden",
+      intro: "Een selectie uit het mediarchief van deze productie.",
+      prev: "Vorige afbeelding",
+      next: "Volgende afbeelding",
+      goToScreen: "Ga naar scherm {n} van {total}",
+      screenDotsGroupLabel: "Posities in de galerij",
+      carouselLabel: "Beeldengalerij van deze productie",
+      carouselRegion: "Carrousel",
+      openLightbox: "Afbeelding groter bekijken",
+      lightboxTitle: "Vergrote afbeelding",
+      closeLightbox: "Vergrote afbeelding sluiten",
+      lightboxExpandMore: "Extra groot tonen",
+      lightboxShrinkView: "Normaal vergroot tonen",
     },
     details: {
       tags: "Labels",
