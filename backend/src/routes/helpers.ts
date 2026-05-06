@@ -28,6 +28,8 @@ export enum HttpSuccess {
   IMUsed = 226,
 }
 
+export const NO_CONTENT = Symbol("NO_CONTENT");
+
 export enum HttpRedirect {
   MultipleChoices = 300,
   MovedPermanently = 301,
@@ -94,6 +96,8 @@ export class HttpError extends Error {
   constructor(
     public status: HTTPErrorCode,
     message: string,
+    /** Optional machine-readable code included in JSON error responses when set. */
+    public readonly code?: string,
   ) {
     super(message);
     this.name = "HttpError";
@@ -284,11 +288,12 @@ export function replyHandler<Z extends z.ZodType>(
     server: FastifyInstance,
     request: FastifyRequest,
     reply: FastifyReply,
-  ) => Promise<z.output<Z> | null>,
+  ) => Promise<z.output<Z> | typeof NO_CONTENT | null>,
 ) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const result = await handler(server, request, reply);
+      if (result == NO_CONTENT) return await reply.status(HttpSuccess.NoContent).send();
       if (!result) throw new HttpError(HttpClientError.NotFound, "Not Found");
 
       return await reply.status(reply?.statusCode ?? HttpSuccess.OK).send(result);
@@ -297,7 +302,11 @@ export function replyHandler<Z extends z.ZodType>(
         return await reply.status(err.status).send({ error: err.message, details: err.details });
       }
       if (err instanceof HttpError) {
-        return await reply.status(err.status).send({ error: err.message });
+        const payload =
+          err.code !== undefined
+            ? { error: err.message, code: err.code }
+            : { error: err.message };
+        return await reply.status(err.status).send(payload);
       }
       throw err;
     }

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   argvForLegacyImportYargs,
@@ -105,7 +106,9 @@ describe("rewriteDockerDbHostInDatabaseUrl", () => {
 
 describe("getRepoRootFromImportMeta", () => {
   it("resolves repo root from backend/scripts URL", () => {
-    const root = getRepoRootFromImportMeta("file:///repo/backend/scripts/tool.ts");
+    const scriptPath = path.resolve("/repo/backend/scripts/tool.ts");
+    const scriptUrl = pathToFileURL(scriptPath).href;          // ← platform-safe
+    const root = getRepoRootFromImportMeta(scriptUrl);
     expect(root).toBe(path.resolve("/repo"));
   });
 
@@ -118,7 +121,9 @@ describe("getRepoRootFromImportMeta", () => {
 
 describe("resolveDefaultLegacyImportFile", () => {
   it("joins segments under repo root", () => {
-    const file = resolveDefaultLegacyImportFile("file:///repo/backend/scripts/x.ts", [
+    const scriptPath = path.resolve("/repo/backend/scripts/x.ts");
+    const scriptUrl = pathToFileURL(scriptPath).href;          // ← platform-safe
+    const file = resolveDefaultLegacyImportFile(scriptUrl, [
       "data",
       "imports",
       "x.csv",
@@ -278,6 +283,53 @@ describe("parseLegacyImportCli", () => {
 
   it("throws on unknown flag", () => {
     expect(() => parseLegacyImportCli(baseOptions, ["--nope"])).toThrow(/Unknown argument/);
+  });
+
+  it("throws on unknown flag when events productions default is set", () => {
+    expect(() =>
+      parseLegacyImportCli(
+        { ...baseOptions, eventsProductionsDefault: "/default/prod.csv" },
+        ["--nope"],
+      ),
+    ).toThrow(/Unknown argument/);
+  });
+
+  it("events CLI: defaults productionsFilePath to eventsProductionsDefault", () => {
+    expect(
+      parseLegacyImportCli(
+        { ...baseOptions, eventsProductionsDefault: "/repo/data/imports/productions.csv" },
+        [],
+      ),
+    ).toEqual({
+      filePath: baseOptions.defaultFile,
+      dryRun: false,
+      limit: null,
+      productionsFilePath: "/repo/data/imports/productions.csv",
+    });
+  });
+
+  it("events CLI: --productions-file overrides default", () => {
+    const cwd = process.cwd();
+    expect(
+      parseLegacyImportCli(
+        { ...baseOptions, eventsProductionsDefault: "/default/prod.csv" },
+        ["--productions-file", "./other-prod.csv"],
+      ),
+    ).toEqual({
+      filePath: baseOptions.defaultFile,
+      dryRun: false,
+      limit: null,
+      productionsFilePath: path.resolve(cwd, "./other-prod.csv"),
+    });
+  });
+
+  it("throws when --productions-file is empty", () => {
+    expect(() =>
+      parseLegacyImportCli(
+        { ...baseOptions, eventsProductionsDefault: "/default/prod.csv" },
+        ["--productions-file", ""],
+      ),
+    ).toThrow("Missing value for --productions-file");
   });
 });
 

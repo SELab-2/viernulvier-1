@@ -1,6 +1,8 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import dbPlugin from "./plugins/postgres.js";
 import jwtPlugin from "./plugins/jwt.js";
+import s3Plugin from "./plugins/s3.js";
+import multipartPlugin from "./plugins/multipart.js";
 import authorizePlugin from "./plugins/authorize.js";
 import registerRoutes from "./routes/registerRoutes.js";
 import swaggerPlugin from "./docs/swagger.js";
@@ -43,6 +45,8 @@ async function registerPlugins(server: FastifyInstance) {
 
   await server.register(jwtPlugin);
   await server.register(authorizePlugin);
+  await server.register(s3Plugin);
+  await server.register(multipartPlugin);
   await registerRoutes(server);
 }
 

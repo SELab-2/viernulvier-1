@@ -1,3 +1,177 @@
 <template>
-  <div>Production detail: {{ $route.params.id }}</div>
+  <div class="flex flex-col min-h-screen bg-surface-0">
+    <AppNavbar :is-dark="isDark" @toggle-dark="isDark = !isDark" />
+    
+    <main class="grow flex flex-col">
+      
+      <div v-if="loading" class="grow flex items-center justify-center font-black uppercase tracking-widest opacity-50">
+        Loading...
+      </div>
+
+      <div v-else-if="notFound" class="grow flex flex-col">
+        <NotFound />
+      </div>
+
+      <div v-else-if="error" class="grow flex items-center justify-center">
+        <div class="text-red-500 font-bold border border-red-500 p-8">
+          {{ error }}
+        </div>
+      </div>
+
+      <template v-else-if="production">
+        <HeroSection
+          :production="production"
+          :tag-groups="tagGroups"
+          :event-stats="eventStats"
+          :banner-url="heroBannerUrl"
+        />
+        <DetailsSection 
+          v-if="hasDetails"
+          :production="production" 
+          :tag-groups="tagGroups" 
+          :total-tags="totalTags" 
+        />
+        <EventsSection :events="events" :loading="eventsLoading" :error="eventsError" @retry="eventsRetry" />
+        <GallerySection :slides="gallerySlides" />
+        <BlogSection />
+      </template>
+    </main>
+
+    <AppFooter />
+  </div>
 </template>
+
+<script setup lang="ts">
+import AppNavbar from "@/components/AppNavbar.vue";
+import AppFooter from "@/components/AppFooter.vue";
+import HeroSection from "@/components/production/HeroSection.vue";
+import DetailsSection from "@/components/production/DetailsSection.vue";
+import EventsSection from "@/components/production/EventsSection.vue";
+import GallerySection from "@/components/production/GallerySection.vue";
+import BlogSection from "@/components/production/BlogSection.vue";
+import NotFound from "@/components/NotFound.vue";
+import { ref, onMounted, computed } from "vue";
+import { useRoute } from "vue-router";
+import type { ImageWithCrops } from "@/services/media";
+import { getImagesForProductionOrEmpty } from "@/services/media";
+import { getProduction } from "@/services/productions";
+import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
+import {
+  pickHighQualityImageCropUrl,
+  pickProductionDetailBannerUrl,
+} from "@/utils/productionThumbnails";
+import { i18n, type SupportedLang } from "@/i18n";
+
+import { useDarkMode } from "@/composables/useDarkMode";
+import { ApiError } from "@/services/api";
+import { useTagGroups } from "@/composables/useTagGroups";
+import { useProductionEvents } from "@/composables/useProductionEvents";
+import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
+
+const { isDark } = useDarkMode();
+
+const route = useRoute();
+const id = Number(route.params.id);
+
+const production = ref<ProductionWithBackwardsRefs | null>(null);
+const productionImages = ref<ImageWithCrops[]>([]);
+const loading = ref(true);
+const error = ref<string | null>(null);
+const notFound = ref(false);
+
+onMounted(async () => {
+  try {
+    const [fetched, images] = await Promise.all([
+      getProduction(id),
+      getImagesForProductionOrEmpty(id),
+    ]);
+    production.value = fetched;
+    productionImages.value = images;
+  } catch (e: unknown) {
+    if (e instanceof ApiError && e.status === 404) {
+      notFound.value = true;
+    } else if (e instanceof Error) {
+      error.value = e.message;
+    } else {
+      error.value = "Error loading production";
+    }
+  } finally {
+    loading.value = false;
+  }
+});
+
+const { tagGroups, totalTags } = useTagGroups(id);
+const { events, loading: eventsLoading, error: eventsError, retry: eventsRetry } = useProductionEvents(id);
+
+const heroBannerUrl = computed(() =>
+  pickProductionDetailBannerUrl(productionImages.value),
+);
+
+const gallerySlides = computed(() => {
+  if (!production.value) return [];
+  const lang = i18n.global.locale.value as SupportedLang;
+  const title = localizeOrEmpty(production.value.title ?? {}, lang).trim();
+  const out: { src: string; alt: string }[] = [];
+  for (let i = 0; i < productionImages.value.length; i++) {
+    const img = productionImages.value[i]!;
+    const src = pickHighQualityImageCropUrl(img);
+    if (!src) continue;
+    out.push({
+      src,
+      alt: title ? `${title} (${i + 1})` : `Image ${i + 1}`,
+    });
+  }
+  return out;
+});
+
+/**
+ * Computed statistics derived from the events list.
+ * Calculates date range and the duration of an event shown in the hero.
+ */
+const eventStats = computed(() => {
+  if (!events.value.length) return null;
+
+  const startTimes = events.value.map(e => new Date(e.starts_at).getTime());
+  
+  const firstDate = new Date(Math.min(...startTimes));
+  const lastDate = new Date(Math.max(...startTimes));
+
+  const firstEvent = events.value[0];
+  let durationMinutes = null;
+  if (firstEvent.starts_at && firstEvent.ends_at) {
+    const start = new Date(firstEvent.starts_at);
+    const end = new Date(firstEvent.ends_at);
+    durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+  }
+
+  return {
+    firstDate,
+    lastDate,
+    durationMinutes,
+    hasMultipleDays: firstDate.toDateString() !== lastDate.toDateString(),
+  };
+});
+
+const hasDetails = computed(() => {
+  if (!production.value) return false;
+
+  const p = production.value;
+  
+  const hasText = (field: LanguageMap | null | undefined): boolean => {
+    if (!field) return false;
+    return Object.values(field).some(val => typeof val === 'string' && val.trim() !== '');
+  };
+
+  return (
+    hasText(p.teaser) ||
+    hasText(p.description) ||
+    hasText(p.description_2) ||
+    hasText(p.description_extra) ||
+    hasText(p.quote) ||
+    hasText(p.programme) ||
+    hasText(p.info) ||
+    (tagGroups.value && tagGroups.value.length > 0)
+  );
+});
+
+</script>

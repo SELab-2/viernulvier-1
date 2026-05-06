@@ -139,10 +139,24 @@ export async function withAuth<T>(
 // ---------------------------------------------------------------------------
 
 /**
+ * Fetches all admin accounts.
+ *
+ * @throws {ApiError} 401 — unauthenticated.
+ * @throws {ApiError} 403 — authenticated but not a super admin.
+ *
+ * @example
+ * const admins = await getAllAdmins();
+ */
+export async function getAllAdmins(): Promise<Admin[]> {
+  return await apiFetch<Admin[]>("/auth");
+}
+
+/**
  * Fetches a single admin by ID.
  *
  * @param id The admin's primary key.
  * @throws {ApiError} 401 — unauthenticated.
+ * @throws {ApiError} 403 — authenticated but not a super admin.
  * @throws {ApiError} 404 — admin not found.
  *
  * @example
@@ -159,6 +173,7 @@ export async function getAdmin(id: number): Promise<Admin> {
  *
  * @param id The admin's primary key.
  * @throws {ApiError} 401 — unauthenticated.
+ * @throws {ApiError} 403 — authenticated but not a super admin.
  * @throws {ApiError} 404 — admin not found.
  */
 export async function getAdminWithMeta(id: number): Promise<AdminWithMeta> {
@@ -195,7 +210,8 @@ export async function getCurrentlyLoggedInAdminWithMeta(): Promise<AdminWithMeta
  * @param data Username, plain-text password, and optional profile picture URL.
  * @returns    The newly created admin (without the password).
  * @throws {ApiError} 401 — unauthenticated.
- * @throws {ApiError} 409 — username already taken.
+ * @throws {ApiError} 403 — authenticated but not a super admin.
+ * @throws {ApiError} 409 — username already taken. (note: not implemented in back-end, but great idea)
  *
  * @example
  * const admin = await createAdmin({
@@ -214,6 +230,7 @@ export async function createAdmin(data: CreateAdminInput): Promise<Admin> {
  * @param id   The admin's primary key.
  * @param data Full replacement payload including the new password.
  * @throws {ApiError} 401 — unauthenticated.
+ * @throws {ApiError} 403 — authenticated but not a super admin.
  * @throws {ApiError} 404 — admin not found.
  */
 export async function replaceAdmin(
@@ -229,11 +246,12 @@ export async function replaceAdmin(
  * @param id   The admin's primary key.
  * @param data Only the fields that should change.
  * @throws {ApiError} 401 — unauthenticated.
+ * @throws {ApiError} 403 — authenticated but not a super admin.
  * @throws {ApiError} 404 — admin not found.
  *
  * @example
- * // Only update the profile picture
- * await updateAdmin(1, { profile_picture: "https://example.com/avatar.jpg" });
+ * // Only update the super field
+ * await updateAdmin(1, { super: false });
  */
 export async function updateAdmin(
   id: number,
@@ -243,10 +261,29 @@ export async function updateAdmin(
 }
 
 /**
+ * Update your own password.
+ *
+ * @param oldPassword the old password to verify.
+ * @param newPassword the new password.
+ * @throws {ApiError} 400 — bad request. (password length is too short)
+ * @throws {ApiError} 401 — invalid credentials. (when the old password is wrong)
+ *
+ * @example
+ * await updateOwnPassword("password", "hello123"); // password is the old password and hello123 is the new one
+ */
+export async function updateOwnPassword(
+  oldPassword: string,
+  newPassword: string,
+): Promise<void> {
+  await apiFetch<void>(`/auth/me`, { method: "PATCH", body: { oldPassword, newPassword } });
+}
+
+/**
  * Permanently deletes an admin account.
  *
  * @param id The admin's primary key.
  * @throws {ApiError} 401 — unauthenticated.
+ * @throws {ApiError} 403 — authenticated but not a super admin.
  * @throws {ApiError} 404 — admin not found.
  */
 export async function deleteAdmin(id: number): Promise<void> {

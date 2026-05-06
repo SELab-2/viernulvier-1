@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   enforce-policy:
-    runs-on: [self-hosted, linux]
+    runs-on: ubuntu-latest
     steps:
       - name: Staging source validation
         uses: actions/github-script@v7
@@ -44,7 +44,7 @@ jobs:
 
   validate:
     needs: enforce-policy
-    runs-on: [self-hosted, linux, ARM64]
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         project: [frontend, backend, shared]

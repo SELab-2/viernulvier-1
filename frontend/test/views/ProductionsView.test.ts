@@ -8,9 +8,15 @@ import type {
   ProductionWithBackwardsRefs,
   Tag,
 } from "@viernulvier/shared";
+import {
+  PRODUCTION_LIST_ERROR_CODE,
+  PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE,
+} from "@viernulvier/shared";
+import { ApiError } from "@/services/api";
 import { routes } from "@/router/routes";
 import { i18n } from "@/i18n";
 import { __reset as resetDarkMode } from "@/composables/useDarkMode";
+import * as mediaService from "@/services/media";
 import * as productionsService from "@/services/productions";
 import type { ProductionListPage } from "@/services/productions";
 import * as tagsService from "@/services/tags";
@@ -95,6 +101,7 @@ describe("ProductionsView.vue", () => {
       items: [mockProduction],
       total: 1,
     });
+    vi.spyOn(mediaService, "getImagesForProduction").mockResolvedValue([]);
     vi.spyOn(tagsService, "getTags").mockResolvedValue([mockTag]);
     vi.spyOn(tagsService, "getTagTypes").mockResolvedValue([mockTagTypeGenre]);
     vi.spyOn(eventsService, "getEventsForProductions").mockResolvedValue([
@@ -605,6 +612,270 @@ describe("ProductionsView.vue", () => {
     const { wrapper } = await mountView();
     expect(wrapper.text()).toContain("Theater");
     expect(wrapper.text()).not.toContain("99");
+    wrapper.unmount();
+  });
+
+  it("loads tag filter from the URL", async () => {
+    const getSpy = vi.spyOn(productionsService, "getProductions");
+    getSpy.mockResolvedValue({ items: [mockProduction], total: 1 });
+    const { wrapper } = await mountView("/nl/productions?tags=7");
+    expect(getSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ tagIds: [7] }),
+    );
+    wrapper.unmount();
+  });
+
+  it("prefers calendar dates over year span when both are in the URL", async () => {
+    const getSpy = vi.spyOn(productionsService, "getProductions");
+    getSpy.mockResolvedValue({ items: [mockProduction], total: 1 });
+    const { wrapper } = await mountView(
+      "/nl/productions?yearMin=2010&yearMax=2020&from=2025-01-01&to=2025-06-01",
+    );
+    const first = getSpy.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(first).toMatchObject({
+      dateFrom: "2025-01-01",
+      dateTo: "2025-06-01",
+    });
+    expect(first).not.toHaveProperty("yearMin");
+    wrapper.unmount();
+  });
+
+  it("shows date-range validation when a filter request returns 400 with code", async () => {
+    vi.spyOn(tagsService, "getTagTypes").mockResolvedValue([mockTagTypeGenre]);
+    const getSpy = vi.spyOn(productionsService, "getProductions");
+    let calls = 0;
+    getSpy.mockImplementation(() => {
+      calls++;
+      if (calls === 1) {
+        return Promise.resolve({ items: [mockProduction], total: 1 });
+      }
+      return Promise.reject(
+        new ApiError(
+          400,
+          "bad",
+          undefined,
+          undefined,
+          PRODUCTION_LIST_ERROR_CODE.DATE_RANGE_ORDER,
+        ),
+      );
+    });
+    const { wrapper } = await mountView();
+    const genreBtn = wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Theater");
+    expect(genreBtn).toBeDefined();
+    await genreBtn!.trigger("click");
+    await flushPromises();
+    expect(wrapper.text()).toContain("begindatum");
+    wrapper.unmount();
+  });
+
+  it("shows year-range validation when a filter request returns 400 with year code", async () => {
+    vi.spyOn(tagsService, "getTagTypes").mockResolvedValue([mockTagTypeGenre]);
+    const getSpy = vi.spyOn(productionsService, "getProductions");
+    let calls = 0;
+    getSpy.mockImplementation(() => {
+      calls++;
+      if (calls === 1) {
+        return Promise.resolve({ items: [mockProduction], total: 1 });
+      }
+      return Promise.reject(
+        new ApiError(
+          400,
+          "bad",
+          undefined,
+          undefined,
+          PRODUCTION_LIST_ERROR_CODE.YEAR_RANGE_ORDER,
+        ),
+      );
+    });
+    const { wrapper } = await mountView();
+    const genreBtn = wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Theater");
+    await genreBtn!.trigger("click");
+    await flushPromises();
+    expect(wrapper.text()).toContain("eerste jaar");
+    wrapper.unmount();
+  });
+
+  it("maps 400 errors without code using shared messages", async () => {
+    vi.spyOn(tagsService, "getTagTypes").mockResolvedValue([mockTagTypeGenre]);
+    const getSpy = vi.spyOn(productionsService, "getProductions");
+    let calls = 0;
+    getSpy.mockImplementation(() => {
+      calls++;
+      if (calls === 1) {
+        return Promise.resolve({ items: [mockProduction], total: 1 });
+      }
+      return Promise.reject(
+        new ApiError(400, PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE),
+      );
+    });
+    const { wrapper } = await mountView();
+    const genreBtn = wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Theater");
+    await genreBtn!.trigger("click");
+    await flushPromises();
+    expect(wrapper.text()).toContain("eerste jaar");
+    wrapper.unmount();
+  });
+
+  it("clears non-search filters when clicking clear all filters", async () => {
+    const getSpy = vi.spyOn(productionsService, "getProductions");
+    getSpy.mockResolvedValue({ items: [mockProduction], total: 1 });
+    const { wrapper } = await mountView("/nl/productions?tags=7");
+    const clearAll = wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Alle filters wissen");
+    expect(clearAll).toBeDefined();
+    await clearAll!.trigger("click");
+    await flushPromises();
+    expect(getSpy).toHaveBeenLastCalledWith({
+      limit: 20,
+      offset: 0,
+    });
+    wrapper.unmount();
+  });
+
+  it("removes a tag chip when its remove control is used", async () => {
+    const getSpy = vi.spyOn(productionsService, "getProductions");
+    getSpy.mockResolvedValue({ items: [mockProduction], total: 1 });
+    const { wrapper } = await mountView("/nl/productions?tags=7");
+    const removeChip = wrapper.find('[aria-label="Tagfilter verwijderen"]');
+    expect(removeChip.exists()).toBe(true);
+    await removeChip.trigger("click");
+    await flushPromises();
+    expect(getSpy).toHaveBeenLastCalledWith({
+      limit: 20,
+      offset: 0,
+    });
+    wrapper.unmount();
+  });
+
+  it("shows more genre tags after expanding the list", async () => {
+    // Collapsed cap is GENRE_FILTER_COLLAPSED_MAX (9); need strictly more to show "Meer tonen".
+    const manyGenres: Tag[] = Array.from({ length: 10 }, (_, i) => ({
+      id: 100 + i,
+      old_id: null,
+      name: { nl: `Genre ${i + 1}` },
+      tag_type: 1 as unknown as Tag["tag_type"],
+      public: true,
+    })) as Tag[];
+    vi.spyOn(tagsService, "getTags").mockResolvedValue(manyGenres);
+    vi.spyOn(tagsService, "getTagTypes").mockResolvedValue([mockTagTypeGenre]);
+    const { wrapper } = await mountView();
+    const more = wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Meer tonen");
+    expect(more).toBeDefined();
+    await more!.trigger("click");
+    await nextTick();
+    expect(wrapper.text()).toContain("Genre 10");
+    wrapper.unmount();
+  });
+
+  it("shows more non-genre tags after expanding that list", async () => {
+    const typeOther = { id: 2, name: { nl: "Leeftijd" } } as TagType;
+    // Collapsed cap is NON_GENRE_FILTER_COLLAPSED_MAX (6); need 7+ tags for the expand control.
+    const nonGenreTags: Tag[] = Array.from({ length: 7 }, (_, i) => ({
+      id: 300 + i,
+      old_id: null,
+      name: { nl: `Extra ${i + 1}` },
+      tag_type: 2 as unknown as Tag["tag_type"],
+      public: true,
+    })) as Tag[];
+    vi.spyOn(tagsService, "getTags").mockResolvedValue(nonGenreTags);
+    vi.spyOn(tagsService, "getTagTypes").mockResolvedValue([typeOther]);
+    const { wrapper } = await mountView();
+    const more = wrapper
+      .findAll("button")
+      .filter((b) => b.text() === "Meer tonen");
+    expect(more.length).toBeGreaterThanOrEqual(1);
+    await more[more.length - 1]!.trigger("click");
+    await nextTick();
+    expect(wrapper.text()).toContain("Extra 7");
+    wrapper.unmount();
+  });
+
+  it("ignores page query changes when the list has no pages", async () => {
+    vi.spyOn(productionsService, "getProductions").mockResolvedValue({
+      items: [],
+      total: 0,
+    });
+    const { wrapper, router } = await mountView("/nl/productions");
+    await router.replace({ path: "/nl/productions", query: { page: "3" } });
+    await flushPromises();
+    expect(wrapper.exists()).toBe(true);
+    wrapper.unmount();
+  });
+
+  it("shows no-filter-results copy when filters yield zero productions", async () => {
+    vi.spyOn(productionsService, "getProductions").mockResolvedValue({
+      items: [],
+      total: 0,
+    });
+    const { wrapper } = await mountView("/nl/productions?tags=7");
+    expect(wrapper.text()).toContain("Geen producties gevonden met deze filters");
+    wrapper.unmount();
+  });
+
+  it("shows a single calendar year on the chip when yearMin equals yearMax", async () => {
+    vi.spyOn(productionsService, "getProductions").mockResolvedValue({
+      items: [mockProduction],
+      total: 1,
+    });
+    const { wrapper } = await mountView("/nl/productions?yearMin=2015&yearMax=2015");
+    expect(wrapper.text()).toContain("2015");
+    expect(wrapper.text()).not.toContain("2015–2015");
+    wrapper.unmount();
+  });
+
+  it("removes the year span when the year chip control is activated", async () => {
+    const getSpy = vi.spyOn(productionsService, "getProductions");
+    getSpy.mockResolvedValue({ items: [mockProduction], total: 1 });
+    const { wrapper } = await mountView("/nl/productions?yearMin=2015&yearMax=2020");
+    await wrapper.find('[aria-label="Jaarbereik verwijderen"]').trigger("click");
+    await flushPromises();
+    expect(getSpy).toHaveBeenLastCalledWith({
+      limit: 20,
+      offset: 0,
+    });
+    wrapper.unmount();
+  });
+
+  it("removes the calendar range when the date chip control is activated", async () => {
+    const getSpy = vi.spyOn(productionsService, "getProductions");
+    getSpy.mockResolvedValue({ items: [mockProduction], total: 1 });
+    const { wrapper } = await mountView(
+      "/nl/productions?from=2025-01-01&to=2025-06-01",
+    );
+    await wrapper
+      .find('[aria-label="Datumbereik verwijderen"]')
+      .trigger("click");
+    await flushPromises();
+    expect(getSpy).toHaveBeenLastCalledWith({
+      limit: 20,
+      offset: 0,
+    });
+    wrapper.unmount();
+  });
+
+  it("deselects a genre tag when its chip is toggled off", async () => {
+    vi.spyOn(tagsService, "getTagTypes").mockResolvedValue([mockTagTypeGenre]);
+    const getSpy = vi.spyOn(productionsService, "getProductions");
+    getSpy.mockResolvedValue({ items: [mockProduction], total: 1 });
+    const { wrapper } = await mountView("/nl/productions?tags=7");
+    const genreBtn = wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Theater");
+    await genreBtn!.trigger("click");
+    await flushPromises();
+    expect(getSpy).toHaveBeenLastCalledWith({
+      limit: 20,
+      offset: 0,
+    });
     wrapper.unmount();
   });
 });

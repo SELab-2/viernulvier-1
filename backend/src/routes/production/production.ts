@@ -27,7 +27,7 @@ import {
  * Registers production routes on the Fastify instance.
  *
  * @remarks
- * - `GET /api/v1/production` — fetch a list of productions. Optional `limit`, `offset`, and `search` are URL query parameters, not request body fields.
+ * - `GET /api/v1/production` — fetch a list of productions. Optional `limit`, `offset`, `search`, `tags`, `yearMin` / `yearMax`, `from` / `to` are URL query parameters, not request body fields.
  * - `GET /api/v1/production/:id` — fetch a single production by ID.
  * - `GET /api/v1/production/:id/meta` — fetch a single production with metadata by ID. 🔒
  * - `POST /api/v1/production` — create a new production. 🔒

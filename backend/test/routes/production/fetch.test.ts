@@ -2,6 +2,9 @@ import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import {
+  PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE,
+  PRODUCTION_LIST_ERROR_CODE,
+  PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE,
   ProductionSchema,
   ProductionSchemaWithBackwardsRefs,
   type ProductionWithBackwardsRefs,
@@ -103,6 +106,7 @@ describe("Production fetch routes", () => {
     expect(json.total).toBe(1);
     const parsed = ProductionSchemaWithBackwardsRefs.array().parse(json.items);
     expect(parsed).toEqual([ProductionSchemaWithBackwardsRefs.parse(baseProduction)]);
+    expect(parsed[0]?.blogposts).toEqual([1, 3]);
   });
 
   test("GET /api/v1/production?limit=10&offset=0 -> returns a page with full total", async () => {
@@ -117,6 +121,7 @@ describe("Production fetch routes", () => {
     expect(json.total).toBe(1);
     const parsed = ProductionSchemaWithBackwardsRefs.array().parse(json.items);
     expect(parsed).toEqual([ProductionSchemaWithBackwardsRefs.parse(baseProduction)]);
+    expect(parsed[0]?.blogposts).toEqual([1, 3]);
   });
 
   test("GET /api/v1/production?offset=0 without limit -> lists all productions (offset zero allowed)", async () => {
@@ -258,6 +263,64 @@ describe("Production fetch routes", () => {
     expect(response.statusCode).toBe(400);
   });
 
+  test("GET /api/v1/production?from=… without to -> 400", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?limit=10&from=2026-01-01",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  test("GET /api/v1/production?from=…&to=… -> 400 when from after to", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?limit=10&from=2026-06-01&to=2026-01-01",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(400);
+    const body = response.json() as { error?: string; code?: string };
+    expect(body.error).toBe(PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE);
+    expect(body.code).toBe(PRODUCTION_LIST_ERROR_CODE.DATE_RANGE_ORDER);
+  });
+
+  test("GET /api/v1/production?yearMin=…&yearMax=… -> 200", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?limit=10&yearMin=2015&yearMax=2024&offset=0",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { items: unknown[]; total: number };
+    expect(json.total).toBe(1);
+  });
+
+  test("GET /api/v1/production?yearMin without yearMax -> 400", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?limit=10&yearMin=2020&offset=0",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  test("GET /api/v1/production?yearMin after yearMax -> 400", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?limit=10&yearMin=2024&yearMax=2010&offset=0",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(400);
+    const body = response.json() as { error?: string; code?: string };
+    expect(body.error).toBe(PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE);
+    expect(body.code).toBe(PRODUCTION_LIST_ERROR_CODE.YEAR_RANGE_ORDER);
+  });
+
   test("GET /api/v1/production?limit=5 -> total 0 when COUNT returns no row", async () => {
     server.pg.query = vi.fn().mockImplementation((query: string) => {
       const upper = query.trim().toUpperCase();
@@ -296,6 +359,7 @@ describe("Production fetch routes", () => {
     expect(response.statusCode).toBe(200);
     const parsed = ProductionSchemaWithBackwardsRefs.parse(response.json());
     expect(parsed).toEqual(ProductionSchemaWithBackwardsRefs.parse(baseProduction));
+    expect(parsed.blogposts).toEqual([1, 3]);
   });
 
   test("GET /api/v1/production/:id -> returns 404 for unknown id", async () => {
@@ -345,7 +409,7 @@ describe("Production fetch helpers", () => {
 
   test("getProductionsByIds -> fetches with ANY(ids) in one query", async () => {
     const ids = [2, 1];
-    const { tags: _t, events: _e, ...productionCore } = baseProduction;
+    const { tags: _t, events: _e, blogposts: _b, ...productionCore } = baseProduction;
     const secondProduction: ProductionWithBackwardsRefs = productionRowWithRefsAlt({
       ...productionCore,
       id: 2,
@@ -369,6 +433,8 @@ describe("Production fetch helpers", () => {
       ProductionSchemaWithBackwardsRefs.parse(secondProduction),
       ProductionSchemaWithBackwardsRefs.parse(baseProduction),
     ]);
+    expect(result[0]?.blogposts).toEqual([2]);
+    expect(result[1]?.blogposts).toEqual([1, 3]);
   });
 });
 

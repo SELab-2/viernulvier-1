@@ -33,10 +33,10 @@ export interface ArchiveStats {
  * TODO (milestone 3): Replace with server-side stats endpoint.
  */
 const MANUAL_STATS: ArchiveStats = {
-  productions: 0,
-  events: 0,
-  yearsOfHistory: 0,
-  genres: 0,
+  productions: 2500,
+  events: 4000,
+  yearsOfHistory: 20,
+  genres: 20,
 };
 
 export function useArchiveStats() {

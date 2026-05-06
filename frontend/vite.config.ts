@@ -9,6 +9,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@viernulvier/shared": fileURLToPath(
+        new URL("../shared/src/index.ts", import.meta.url),
+      ),
     },
   },
   server: {
@@ -19,6 +22,11 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
+        target: `http://backend:${process.env["BACKEND_PORT"] ?? "3000"}`,
+        changeOrigin: true,
+      },
+      /** Same as backend `cropProxyRoute` — crop URLs are `/media/crops/…`. */
+      "/media": {
         target: `http://backend:${process.env["BACKEND_PORT"] ?? "3000"}`,
         changeOrigin: true,
       },

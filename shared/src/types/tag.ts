@@ -30,6 +30,8 @@ export const TagSchema = createSchema({
     return foreignKey(() => TagTypeSchema);
   },
   public: z.boolean(),
+  /** Distinct productions linked to this tag; set when `includeProductionCount=true` on list endpoints. */
+  production_count: z.number().int().nonnegative().optional(),
 
   get productions(): TagProductionsSchema {
     return z.array(foreignKey(() => ProductionSchema)).optional();

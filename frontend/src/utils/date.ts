@@ -18,6 +18,8 @@
  * ```
  */
 
+import type { ComposerTranslation } from "vue-i18n";
+
 const DEFAULT_LOCALE = "nl-BE";
 
 // ---------------------------------------------------------------------------
@@ -30,6 +32,40 @@ const DEFAULT_LOCALE = "nl-BE";
  */
 function toDate(value: Date | string | number): Date {
   return value instanceof Date ? value : new Date(value);
+}
+
+/**
+ * Formats a duration in minutes into a localized human-readable string.
+ *
+ * This function supports:
+ * - Minutes only (e.g. "45 min / 45 min / 45 min")
+ * - Hours only (e.g. "2 u / 2 h / 2 h")
+ * - Hours + minutes (e.g. "1 u 15 / 1 h 15 / 1 h 15")
+ *
+ * If the input is `null`, `undefined`, or negative, it returns an em dash `"—"`.
+ *
+ * The actual language output is handled via Vue I18n keys:
+ * - time.minutes
+ * - time.hours
+ * - time.hoursMinutes
+ *
+ * @param minutes - Total duration in minutes
+ * @param t - Vue I18n translation function (ComposerTranslation)
+ * @returns Localized formatted duration string
+ */
+export function formatDurationMinutesI18n(
+  minutes: number | null | undefined,
+  t: ComposerTranslation,
+): string {
+  if (minutes === null || minutes === undefined || minutes <= 0) return "—";
+
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+
+  if (hours === 0) return t("time.minutes", { m: mins });
+  if (mins === 0) return t("time.hours", { h: hours });
+
+  return t("time.hoursMinutes", { h: hours, m: mins });
 }
 
 // ---------------------------------------------------------------------------
@@ -77,6 +113,41 @@ export function formatShortDate(
     month: "short",
     year: "numeric",
   });
+}
+
+/**
+ * Formats a date numerically without leading zeros, using dots as separators.
+ * Respects the locale's date order (e.g., DMY vs. MDY).
+ *
+ * @param date - The date to format.
+ * @param locale - BCP 47 locale string (defaults to "nl-BE").
+ * @returns Formatted date string, e.g., "8.4.2026".
+ *
+ * @example
+ * formatNumericDate(new Date("2026-04-08"), "nl-BE"); // "8.4.2026"
+ * formatNumericDate(new Date("2026-04-08"), "en-US"); // "4.8.2026"
+ */
+export function formatNumericDate(
+  date: Date | string | number,
+  locale: string = DEFAULT_LOCALE,
+): string {
+  const d = new Date(date);
+  const formatter = new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "numeric",
+    year: "numeric",
+  });
+
+  const parts = formatter.formatToParts(d);
+
+  return parts
+    .map((part) => {
+      if (part.type === "literal") return ".";
+      return Number(part.value).toString();
+    })
+    .join("")
+    .replace(/\.+/g, ".")
+    .replace(/\.$/, "");
 }
 
 /**
