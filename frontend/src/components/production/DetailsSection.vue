@@ -40,10 +40,12 @@
                 @click="tagsExpanded = !tagsExpanded"
               >
                 <div class="flex items-center gap-3">
-                  <h3 class="text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-secondary">
+                  <h3
+                    class="text-[11px] font-bold uppercase tracking-[0.2em] text-ink-primary"
+                  >
                     {{ t("production.details.tags") }}
                   </h3>
-                  <span class="text-[10px] text-ink-tertiary">
+                  <span class="text-[10px] font-semibold text-ink-tertiary">
                     ({{ totalTags }})
                   </span>
                 </div>
@@ -64,14 +66,16 @@
               <div v-if="tagsExpanded" class="space-y-6 border-t border-surface-3 p-6 pt-5 bg-surface-0">
                 <template v-for="group in tagGroups" :key="group.label">
                   <div v-if="group.tags.length > 0" class="flex flex-col gap-2">
-                    <span class="text-[9px] font-semibold uppercase tracking-[0.15em] text-ink-tertiary">
+                    <span
+                      class="text-[10px] font-bold uppercase tracking-[0.15em] text-ink-secondary"
+                    >
                       {{ group.label }}
                     </span>
                     <div class="flex flex-wrap gap-2">
                       <span
                         v-for="tag in group.tags"
                         :key="tag"
-                        class="border border-surface-3 bg-surface-1 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-ink-secondary hover:border-ink-tertiary transition-colors cursor-default"
+                        class="border border-ink-tertiary/60 bg-surface-1 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink-primary hover:border-ink-primary transition-colors cursor-default"
                       >
                         {{ tag }}
                       </span>
@@ -102,6 +106,13 @@
           <!-- Pull quote — sits between the two paragraphs as a break -->
           <div v-if="quote" class="my-4 py-4">
             <figure class="relative">
+              <!--
+                Hanging open-quote glyph in the left margin and a
+                mirrored closing glyph in the right margin. Both are
+                decorative — the quote text already reads as a quote
+                via blockquote semantics — and aria-hidden keeps them
+                out of the screen-reader tree.
+              -->
               <span
                 aria-hidden="true"
                 class="pointer-events-none absolute -left-2 -top-6 select-none font-serif text-7xl leading-none text-ink-tertiary opacity-40 md:-left-8 md:-top-10 md:text-8xl"
@@ -121,6 +132,12 @@
                   &mdash; {{ quote_source }}
                 </figcaption>
               </blockquote>
+              <span
+                aria-hidden="true"
+                class="pointer-events-none absolute -right-2 -bottom-2 select-none font-serif text-7xl leading-none text-ink-tertiary opacity-40 md:-right-8 md:-bottom-4 md:text-8xl"
+              >
+                &rdquo;
+              </span>
             </figure>
           </div>
 
@@ -139,18 +156,6 @@
             class="font-serif text-base leading-[1.7] text-ink-secondary whitespace-pre-line text-justify hyphens-auto"
             v-html="description_2"
           />
-
-          <!--
-            End-mark — the classic newspaper "story ends here" sign.
-            Renders only when the body had any content to close out.
-          -->
-          <div
-            v-if="description || description_2 || quote"
-            aria-hidden="true"
-            class="select-none pt-4 text-center text-xs font-semibold tracking-[0.4em] text-ink-tertiary"
-          >
-            &mdash;30&mdash;
-          </div>
         </div>
 
         <!--

@@ -6,12 +6,17 @@
     the article header floats over the lower half of the photo inside
     a "letterpress" card — a sober, square, paper-coloured frame with
     a thin ink-coloured border, like a museum label or magazine title
-    plate. The card carries the kicker, the serif headline, an italic
-    deck and a small byline.
+    plate.
 
-    The right-hand "ticket info" column (date range, running time,
-    genre chips) is intentionally absent here — those facts belong to
-    EventsSection / DetailsSection where the reader expects them.
+    Order inside the card:
+      kicker  →  artist  →  title  →  deck  →  run / duration strip
+
+    The artist is the primary identifier in a concert / theatre
+    archive (you remember "I saw The Cure", not "I saw the Faith
+    Tour") so it sits above the title in italic serif. The strip
+    underneath surfaces the run period and running time at a glance —
+    the same facts also live in EventsSection, but readers expect to
+    see them at the top.
   -->
   <article class="relative bg-surface-0">
     <!-- Banner photograph -->
@@ -32,7 +37,7 @@
     <!-- Letterpress card sitting over the bottom of the photograph -->
     <header class="relative z-10 mx-auto -mt-32 max-w-2xl px-6 md:-mt-44 md:px-0">
       <div
-        class="border border-ink-primary bg-surface-0 px-6 py-10 text-center opacity-0 animate-fade-up md:px-12 md:py-14"
+        class="border border-ink-primary bg-surface-0 px-6 py-12 text-center opacity-0 animate-fade-up md:px-12 md:py-16"
       >
         <!-- Kicker: thin rule on each side, small caps in the middle -->
         <div
@@ -50,9 +55,17 @@
           />
         </div>
 
-        <!-- Headline -->
+        <!-- Artist (primary identifier in this archive) -->
+        <p
+          v-if="content.artist"
+          class="mb-3 font-serif italic text-xl font-medium text-ink-primary md:text-2xl"
+        >
+          {{ content.artist }}
+        </p>
+
+        <!-- Title -->
         <h1
-          class="font-serif text-3xl font-semibold leading-[1.1] tracking-tight text-ink-primary md:text-5xl"
+          class="font-serif text-4xl font-semibold leading-[1.05] tracking-tight text-ink-primary md:text-6xl"
         >
           {{ content.title }}
         </h1>
@@ -60,30 +73,23 @@
         <!-- Deck / tagline -->
         <p
           v-if="content.tagline"
-          class="mt-5 font-serif text-lg font-light italic leading-snug text-ink-secondary md:text-xl"
+          class="mt-5 font-serif text-xl font-light italic leading-snug text-ink-secondary md:text-2xl"
         >
           {{ content.tagline }}
         </p>
 
-        <!-- Byline -->
+        <!--
+          Run period + running time. Compact, sober, no caps.
+          Format: "12.4.1987 — 14.4.1987 · 1 u 30"
+        -->
         <p
-          v-if="content.artist"
-          class="mt-7 text-xs uppercase tracking-[0.2em] text-ink-tertiary"
+          v-if="dateMetaLine"
+          class="mt-7 text-xs tracking-[0.12em] text-ink-secondary md:text-sm"
         >
-          {{ content.artist }}
+          {{ dateMetaLine }}
         </p>
       </div>
     </header>
-
-    <!--
-      Photo dateline — a single sober italic caption beneath the kadertje.
-      Places the image as archival material rather than promotional art.
-    -->
-    <p
-      class="mx-auto mt-6 max-w-2xl px-6 text-center font-serif text-xs italic text-ink-tertiary md:px-0 md:text-sm"
-    >
-      {{ t("production.hero.caption") }}
-    </p>
 
     <!-- Breathing room before the next section -->
     <div class="h-12 md:h-16" aria-hidden="true" />
@@ -96,6 +102,10 @@ import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { computed } from "vue";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import { useI18n } from "vue-i18n";
+import {
+  formatDurationMinutesI18n,
+  formatNumericDate,
+} from "@/utils/date";
 
 interface Props {
   production: ProductionWithBackwardsRefs;
@@ -169,6 +179,32 @@ const kicker = computed(() => {
     if (seen.has(key)) continue;
     seen.add(key);
     parts.push(trimmed);
+  }
+
+  return parts.join(" · ");
+});
+
+/** Compact run-period + running-time strip placed below the deck.
+ *  Reviewer asked for both back on the page after the previous
+ *  redesign moved them down to EventsSection. */
+const dateMetaLine = computed(() => {
+  const stats = props.eventStats;
+  if (!stats) return "";
+
+  const parts: string[] = [];
+
+  if (stats.firstDate) {
+    const start = formatNumericDate(stats.firstDate, locale.value);
+    if (stats.hasMultipleDays && stats.lastDate) {
+      const end = formatNumericDate(stats.lastDate, locale.value);
+      parts.push(`${start} — ${end}`);
+    } else {
+      parts.push(start);
+    }
+  }
+
+  if (stats.durationMinutes != null && stats.durationMinutes > 0) {
+    parts.push(formatDurationMinutesI18n(stats.durationMinutes, t));
   }
 
   return parts.join(" · ");

@@ -14,8 +14,12 @@ const i18n = createI18n({
       production: {
         hero: {
           bannerImageAlt: "Banner",
-          caption: "Beeld uit het archief",
         },
+      },
+      time: {
+        minutes: "{m} min",
+        hours: "{h} u",
+        hoursMinutes: "{h} u {m}",
       },
     },
   },
@@ -105,14 +109,19 @@ describe("HeroSection.vue", () => {
       expect(wrapper.text()).toContain("Artiest");
     });
 
+    it("renders the artist above the title in the DOM", async () => {
+      const wrapper = await mountHero();
+      const text = wrapper.text();
+      const artistIdx = text.indexOf("Artiest");
+      const titleIdx = text.indexOf("Titel");
+      expect(artistIdx).toBeGreaterThanOrEqual(0);
+      expect(titleIdx).toBeGreaterThanOrEqual(0);
+      expect(artistIdx).toBeLessThan(titleIdx);
+    });
+
     it("renders the supertitle as part of the kicker", async () => {
       const wrapper = await mountHero();
       expect(wrapper.text()).toContain("Supertitel");
-    });
-
-    it("renders the photo dateline caption beneath the kadertje", async () => {
-      const wrapper = await mountHero();
-      expect(wrapper.text()).toContain("Beeld uit het archief");
     });
   });
 
@@ -196,6 +205,41 @@ describe("HeroSection.vue", () => {
       // Kicker container is conditional on `kicker` being non-empty;
       // the rules and label should not appear.
       expect(wrapper.find("h1").exists()).toBe(true);
+    });
+  });
+
+  // ── run period + running time strip ───────────────────────
+
+  describe("run / duration strip", () => {
+    it("renders single date and running time when given", async () => {
+      const wrapper = await mountHero({
+        eventStats: {
+          firstDate: new Date("1987-04-08"),
+          lastDate: new Date("1987-04-08"),
+          durationMinutes: 90,
+          hasMultipleDays: false,
+        },
+      });
+
+      const text = wrapper.text();
+      expect(text).toContain("1987");
+      // formatDurationMinutesI18n with the test i18n returns "1 u 30".
+      expect(text).toContain("1 u 30");
+    });
+
+    it("renders a date range when the production has multiple days", async () => {
+      const wrapper = await mountHero({
+        eventStats: {
+          firstDate: new Date("1987-04-08"),
+          lastDate: new Date("1987-04-10"),
+          durationMinutes: null,
+          hasMultipleDays: true,
+        },
+      });
+
+      // Two formatted dates joined by an em dash.
+      const text = wrapper.text();
+      expect(text.match(/1987/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
     });
   });
 });

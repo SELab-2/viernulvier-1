@@ -242,7 +242,6 @@ export default {
       dateRange: "Speelperiode",
       runningTime: "Speelduur",
       bannerImageAlt: "Beeld bovenaan de pagina",
-      caption: "Beeld uit het archief van De Vooruit",
     },
     gallery: {
       title: "Beelden",

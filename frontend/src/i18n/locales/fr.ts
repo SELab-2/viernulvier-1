@@ -242,7 +242,6 @@ export default {
       dateRange: "Période",
       runningTime: "Durée",
       bannerImageAlt: "Image bannière en tête de page",
-      caption: "Image tirée des archives de De Vooruit",
     },
     gallery: {
       title: "Images",
