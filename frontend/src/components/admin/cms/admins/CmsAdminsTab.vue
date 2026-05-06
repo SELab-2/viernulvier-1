@@ -298,6 +298,7 @@ const {
   rowToId: (row) => row.id,
   deleteFn: deleteAdmin,
   t,
+  onConflictMessage: t("cms.actions.admin.cannotRemoveSelf"),
   onSuccess: async () => {
     selectedCount.value = 0;
     gridApi.value?.deselectAll();

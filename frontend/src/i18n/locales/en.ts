@@ -136,6 +136,7 @@ export default {
         removeAdmin: "Remove selected admins",
         confirmRemoveDialogTitle: "Remove admin? | Remove admins?",
         confirmRemoveBody: "This will permanently delete {count} selected admin. This cannot be undone. | This will permanently delete {count} selected admins. This cannot be undone.",
+        cannotRemoveSelf: "You cannot remove yourself.",
       },
     },
     create: {
