@@ -81,7 +81,7 @@
     >
       <svg
         v-if="sortDir === 'asc'"
-        class="size-[1.05rem]"
+        class="size-[1.2rem]"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -94,7 +94,7 @@
       </svg>
       <svg
         v-else
-        class="size-[1.05rem]"
+        class="size-[1.2rem]"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
