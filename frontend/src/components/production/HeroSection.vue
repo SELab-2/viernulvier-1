@@ -92,7 +92,6 @@
     </header>
 
     <!-- Breathing room before the next section -->
-    <div class="h-12 md:h-16" aria-hidden="true" />
   </article>
 </template>
 
