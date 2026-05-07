@@ -10,14 +10,18 @@
       <button
         id="productions-sort-dimension"
         type="button"
-        class="inline-flex h-full min-w-[5.5rem] max-w-[6.75rem] cursor-pointer items-center justify-between gap-1 rounded-l-md border-r border-surface-3 pl-3 pr-2 py-0 text-left text-sm font-medium text-ink-primary transition hover:bg-surface-2 focus-visible:z-10 focus-visible:border-accent-outline focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-100"
-        :disabled="disabled"
+        class="inline-flex h-full w-[7rem] cursor-pointer items-center justify-between gap-1 rounded-l-md border-r border-surface-3 pl-3 pr-2 py-0 text-left text-sm font-medium text-ink-primary transition hover:bg-surface-2 focus-visible:z-10 focus-visible:border-accent-outline focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-100"        :disabled="disabled"
         :aria-expanded="menuOpen"
         aria-haspopup="listbox"
         :aria-controls="menuOpen ? sortListboxId : undefined"
         @click.stop="toggleMenu"
       >
-        <span class="min-w-0 truncate">{{ dimensionLabel }}</span>
+        <span class="inline-flex items-center gap-2 min-w-0 flex-1">
+          <svg class="size-3.5 shrink-0 text-ink-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M7 12h10M11 18h6" />
+          </svg>
+          <span class="min-w-0 truncate">{{ dimensionLabel }}</span>
+        </span>
         <svg
           class="size-3.5 shrink-0 text-ink-secondary"
           viewBox="0 0 24 24"
@@ -35,7 +39,7 @@
       <ul
         v-show="menuOpen"
         :id="sortListboxId"
-        class="absolute left-0 top-full z-20 mt-1 min-w-[7.5rem] rounded-md border border-surface-3 bg-surface-1 py-0.5 text-sm dark:bg-surface-0"
+        class="absolute left-0 top-full z-20 mt-1 min-w-[9rem] rounded-md border border-surface-3 bg-surface-1 py-0.5 text-sm dark:bg-surface-0"
         role="listbox"
         :aria-label="t('productionsPage.sortMetricMenuAria')"
         tabindex="-1"
