@@ -21,7 +21,7 @@
   <article class="relative bg-surface-0">
     <!-- Banner photograph -->
     <div
-      class="relative w-full overflow-hidden bg-surface-inv h-[55vh] md:h-[65vh]"
+      class="relative w-full overflow-hidden bg-surface-inv h-[45vh] md:h-[55vh]"
     >
       <img
         v-if="bannerUrl"
