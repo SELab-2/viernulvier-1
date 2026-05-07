@@ -35,7 +35,7 @@
     </div>
 
     <!-- Letterpress card sitting over the bottom of the photograph -->
-    <header class="relative z-10 mx-auto -mt-40 max-w-2xl px-6 md:-mt-56 md:px-0">
+    <header class="relative z-10 mx-auto -mt-40 max-w-2xl px-6 md:-mt-56 md:max-w-3xl md:px-0">
       <div
         class="border border-ink-primary bg-surface-0 px-6 py-12 text-center opacity-0 animate-fade-up md:px-12 md:py-16"
       >
