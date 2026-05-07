@@ -26,10 +26,10 @@
             class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-center sm:gap-3"
           >
             <ProductionsDateFilter
-              class="shrink-0"
               v-model:year-range="explicitYearRange"
               v-model:date-from="filterDateFrom"
               v-model:date-to="filterDateTo"
+              class="shrink-0"
               :disabled="loadError"
               :min-year="filterYearBounds.minYear"
               :max-year="filterYearBounds.maxYear"
