@@ -81,6 +81,7 @@
       class="flex w-8 shrink-0 cursor-pointer items-center justify-center rounded-r-md text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-100"
       :disabled="disabled"
       :aria-label="t('productionsPage.toggleSortDirectionAria')"
+      :title="t('productionsPage.toggleSortDirectionAria')"
       @click="toggleDirection"
     >
       <svg
