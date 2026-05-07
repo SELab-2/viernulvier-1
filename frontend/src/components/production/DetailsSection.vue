@@ -4,13 +4,7 @@
     <div class="mx-auto max-w-7xl px-6 py-24 md:px-12">
       <section class="flex flex-col gap-16 lg:grid lg:grid-cols-12 lg:gap-x-16 lg:gap-y-24">
 
-        <!--
-          Sidebar — marginalia first, then a tag drawer below.
-          The teaser block used to be a dark promo card; it is now a
-          quiet kantlijn-aantekening: a thin vertical rule on the left,
-          italic serif copy. The accordion mechanic for tags is kept
-          (productions can carry many tags) but with lighter chrome.
-        -->
+        <!-- Sidebar — marginalia first, then a tag drawer below. -->
         <aside v-if="hasSidebarContent" class="lg:col-start-9 lg:col-span-4">
           <div class="sticky top-32 h-fit space-y-8">
 
@@ -87,13 +81,7 @@
           </div>
         </aside>
 
-        <!--
-          Main column — long-form article body.
-
-          Order: lead paragraph (drop cap) → pull quote in the middle →
-          continuation paragraph. If there is no quote and both paragraphs
-          exist, an asterism (***) marks the break instead.
-        -->
+        <!-- Main column — long-form article body. -->
         <div :class="['space-y-12 lg:row-start-1', mainContentClass]">
 
           <!-- Lead paragraph — drop cap on first letter, justified -->
@@ -106,13 +94,6 @@
           <!-- Pull quote — sits between the two paragraphs as a break -->
           <div v-if="quote" class="my-4 py-4">
             <figure class="relative">
-              <!--
-                Hanging open-quote glyph in the left margin and a
-                mirrored closing glyph in the right margin. Both are
-                decorative — the quote text already reads as a quote
-                via blockquote semantics — and aria-hidden keeps them
-                out of the screen-reader tree.
-              -->
               <span
                 aria-hidden="true"
                 class="pointer-events-none absolute -left-2 -top-6 select-none font-serif text-7xl leading-none text-ink-tertiary opacity-40 md:-left-8 md:-top-10 md:text-8xl"
@@ -158,12 +139,7 @@
           />
         </div>
 
-        <!--
-          Credits footer — info + programme as one quiet band at the bottom
-          of the section. Replaces the old separate boxed programme block
-          and the italic info block. Two columns when both exist; the side
-          that is absent simply collapses.
-        -->
+        <!-- Credits footer — info + programme as one quiet band at the bottom. -->
         <footer
           v-if="info || programme"
           class="lg:col-span-12 border-t border-surface-3 pt-10"

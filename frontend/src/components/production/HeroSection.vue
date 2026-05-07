@@ -1,23 +1,5 @@
 <template>
-  <!--
-    Editorial header for a production page.
-
-    A full-colour banner photograph fills the top of the section, and
-    the article header floats over the lower half of the photo inside
-    a "letterpress" card — a sober, square, paper-coloured frame with
-    a thin ink-coloured border, like a museum label or magazine title
-    plate.
-
-    Order inside the card:
-      kicker  →  artist  →  title  →  deck  →  run / duration strip
-
-    The artist is the primary identifier in a concert / theatre
-    archive (you remember "I saw The Cure", not "I saw the Faith
-    Tour") so it sits above the title in italic serif. The strip
-    underneath surfaces the run period and running time at a glance —
-    the same facts also live in EventsSection, but readers expect to
-    see them at the top.
-  -->
+  <!-- Editorial header for a production page. -->
   <article class="relative bg-surface-1">
     <!-- Banner photograph -->
     <div
