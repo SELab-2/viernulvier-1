@@ -37,7 +37,7 @@
     <!-- Letterpress card sitting over the bottom of the photograph -->
     <header class="relative z-10 mx-auto -mt-40 max-w-2xl px-6 md:-mt-56 md:max-w-3xl md:px-0">
       <div
-        class="border border-ink-primary bg-surface-0 px-6 py-12 text-center opacity-0 animate-fade-up md:px-12 md:py-16"
+        class="border border-ink-primary bg-surface-0 px-6 py-8 text-center opacity-0 animate-fade-up md:px-12 md:py-10"
       >
         <!-- Kicker: thin rule on each side, small caps in the middle -->
         <div
@@ -65,7 +65,7 @@
 
         <!-- Title -->
         <h1
-          class="font-serif text-4xl font-semibold leading-[1.05] tracking-tight text-ink-primary md:text-6xl"
+          class="font-serif text-3xl font-semibold leading-[1.05] tracking-tight text-ink-primary md:text-5xl"
         >
           {{ content.title }}
         </h1>
@@ -73,7 +73,7 @@
         <!-- Deck / tagline -->
         <p
           v-if="content.tagline"
-          class="mt-5 font-serif text-xl font-light italic leading-snug text-ink-secondary md:text-2xl"
+          class="mt-4 font-serif text-lg font-light italic leading-snug text-ink-secondary md:text-xl"
         >
           {{ content.tagline }}
         </p>
@@ -84,7 +84,7 @@
         -->
         <p
           v-if="dateMetaLine"
-          class="mt-7 text-xs tracking-[0.12em] text-ink-secondary md:text-sm"
+          class="mt-5 text-xs tracking-[0.12em] text-ink-secondary md:text-sm"
         >
           {{ dateMetaLine }}
         </p>
