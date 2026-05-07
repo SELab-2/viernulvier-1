@@ -85,10 +85,16 @@
                 </div>
 
                 <div class="md:col-span-6">
-                  <h4 class="text-xl font-bold leading-tight text-ink-primary">
+                  <h4
+                    class="font-serif text-xl font-semibold leading-tight tracking-tight text-ink-primary"
+                  >
                     {{ tProd(event.hall?.name) }}
                   </h4>
-                  <p v-if="event.hall?.address" class="mt-1 text-sm text-ink-secondary leading-relaxed" data-test="event-address">
+                  <p
+                    v-if="event.hall?.address"
+                    class="mt-1 font-serif text-sm leading-relaxed text-ink-secondary"
+                    data-test="event-address"
+                  >
                     {{ event.hall.address }}
                   </p>
                 </div>
