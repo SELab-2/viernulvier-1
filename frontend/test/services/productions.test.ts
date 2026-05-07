@@ -131,6 +131,23 @@ describe("getProductions", () => {
       "/api/v1/production?limit=20&offset=0&yearMin=2015&yearMax=2024",
     );
   });
+
+  it("GETs /api/v1/production with sorting and locale", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockOk({ items: [productionPayload], total: 1 }),
+    );
+    await getProductions({
+      limit: 20,
+      offset: 0,
+      sortBy: "date",
+      sortDir: "desc",
+      lang: "fr",
+    });
+    expect(lastCall()[0]).toBe(
+      "/api/v1/production?limit=20&offset=0&sortBy=date&sortDir=desc&lang=fr",
+    );
+  });
 });
 
 describe("getProduction", () => {
