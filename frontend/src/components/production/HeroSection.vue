@@ -203,7 +203,7 @@ const dateMetaLine = computed(() => {
     }
   }
 
-  if (stats.durationMinutes != null && stats.durationMinutes > 0) {
+  if (stats.durationMinutes !== null && stats.durationMinutes > 0) {
     parts.push(formatDurationMinutesI18n(stats.durationMinutes, t));
   }
 
