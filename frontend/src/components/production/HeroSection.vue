@@ -18,7 +18,7 @@
     the same facts also live in EventsSection, but readers expect to
     see them at the top.
   -->
-  <article class="relative bg-surface-0">
+  <article class="relative bg-surface-1">
     <!-- Banner photograph -->
     <div
       class="relative w-full overflow-hidden bg-surface-inv h-[45vh] md:h-[55vh]"
