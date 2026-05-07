@@ -56,7 +56,7 @@
           :disabled="isSaving"
           @click="$emit('save')"
         >
-          {{ isSaving ? t("cms.panel.saving") : t("cms.panel.saveAction") }}
+          {{ isSaving ? t("general.saving") : t("cms.panel.saveAction") }}
         </button>
       </div>
     </aside>

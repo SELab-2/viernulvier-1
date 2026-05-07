@@ -53,7 +53,7 @@ import NotFound from "@/components/NotFound.vue";
 import { ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import type { ImageWithCrops } from "@/services/media";
-import { getImagesForProduction } from "@/services/media";
+import { getImagesForProductionOrEmpty } from "@/services/media";
 import { getProduction } from "@/services/productions";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import {
@@ -83,7 +83,7 @@ onMounted(async () => {
   try {
     const [fetched, images] = await Promise.all([
       getProduction(id),
-      getImagesForProduction(id).catch(() => [] as ImageWithCrops[]),
+      getImagesForProductionOrEmpty(id),
     ]);
     production.value = fetched;
     productionImages.value = images;

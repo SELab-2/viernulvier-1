@@ -1,7 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared/index.js";
 import { getMetadata, parseSchema } from "@/routes/helpers.js";
-import { getProductionById } from "./fetch.js";
 import { CreateProductionBodySchema } from "./body-schema.js";
 import { getFieldValue, getNullableFieldValue } from "./field-utils.js";
 
@@ -64,16 +63,39 @@ export async function createProduction(
   placeholders.push(`$${i++}`, `$${i++}`, `$${i++}`, `$${i++}`);
   values.push(admin, admin, current_time, current_time);
 
-  const insertResult = await server.pg.query<{ id: number }>(
+  const insertResult = await server.pg.query<Omit<ProductionWithBackwardsRefs, "events" | "tags" | "blogposts">>(
     `INSERT INTO production (${fields.join(", ")})
      VALUES (${placeholders.join(", ")})
-     RETURNING id`,
+     RETURNING 
+       id,
+       old_id,
+       finalized,
+       supertitle,
+       title,
+       artist,
+       tagline,
+       teaser,
+       description,
+       description_extra,
+       description_2,
+       video_1,
+       video_2,
+       quote,
+       quote_source,
+       programme,
+       info`,
     values,
   );
 
   const row = insertResult.rows[0];
   if (!row) return null;
 
-  return await getProductionById(server, row.id);
+  // Newly created productions have no events, tags, or blogposts
+  return {
+    ...row,
+    events: [],
+    tags: [],
+    blogposts: [],
+  } as ProductionWithBackwardsRefs;
 }
 

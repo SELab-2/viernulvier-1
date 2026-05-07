@@ -121,6 +121,30 @@ describe("useLocale — setLocale()", () => {
       expect(router.currentRoute.value.path).toBe("/en/productions/42");
     });
 
+    it("preserves query parameters when switching language", async () => {
+      await router.push("/nl/productions?limit=20&offset=40&q=test");
+      const wrapper = createWrapper(router);
+      wrapper.vm.setLocale("fr");
+      await flushPromises();
+
+      expect(router.currentRoute.value.path).toBe("/fr/productions");
+      expect(router.currentRoute.value.query).toEqual({
+        limit: "20",
+        offset: "40",
+        q: "test",
+      });
+    });
+
+    it("preserves hash when switching language", async () => {
+      await router.push("/nl/productions#filters");
+      const wrapper = createWrapper(router);
+      wrapper.vm.setLocale("fr");
+      await flushPromises();
+
+      expect(router.currentRoute.value.path).toBe("/fr/productions");
+      expect(router.currentRoute.value.hash).toBe("#filters");
+    });
+
     it("navigates correctly when the path has no language prefix", async () => {
       // Covers the else branch: pathWithoutLang = route.path
       await router.push("/");

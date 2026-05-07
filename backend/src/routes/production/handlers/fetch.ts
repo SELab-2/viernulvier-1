@@ -41,7 +41,8 @@ SELECT
   p.quote_source,
   p.programme,
   p.info,
-  (SELECT COALESCE(ARRAY_AGG(pt.tag), '{}') FROM production_tag pt WHERE pt.production = p.id) AS tags
+  (SELECT COALESCE(ARRAY_AGG(pt.tag), '{}') FROM production_tag pt WHERE pt.production = p.id) AS tags,
+  (SELECT COALESCE(ARRAY_AGG(bp.blogpost), '{}') FROM production_blogpost bp WHERE bp.production = p.id) AS blogposts
 FROM production p
 `;
 

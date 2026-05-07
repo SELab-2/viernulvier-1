@@ -46,7 +46,7 @@ export async function parseMultipart(request: FastifyRequest): Promise<{
  *
  * @param server - The Fastify instance.
  * @param imageId - The parent image ID.
- * @param mappings - Array of `{ filename, type }` pairs.
+ * @param mappings - Array of `{ filename, type, oldId? }` pairs.
  * @param files - Map of filename → buffer + mimetype.
  * @param admin - The ID of the admin performing the action.
  * @param currentTime - The current timestamp for metadata.
@@ -54,7 +54,7 @@ export async function parseMultipart(request: FastifyRequest): Promise<{
 export async function insertCrops(
   server: FastifyInstance,
   imageId: number,
-  mappings: { filename: string; type: string }[],
+  mappings: { filename: string; type: string; oldId?: number | undefined }[],
   files: Map<string, { buffer: Buffer; mimetype: string }>,
   admin: number,
   currentTime: Date,
@@ -67,10 +67,21 @@ export async function insertCrops(
     await uploadToS3(server.s3.client, s3Key, file.buffer, file.mimetype);
 
     const url = buildCropPath(s3Key);
+    const legacyId =
+      mapping.oldId !== undefined ? mapping.oldId : null;
     await server.pg.query(
-      `INSERT INTO crop (image, url, type, created_by, updated_by, created_at, updated_at)
-       VALUES (\$1, \$2, \$3, \$4, \$5, \$6, \$7)`,
-      [imageId, url, mapping.type, admin, admin, currentTime, currentTime],
+      `INSERT INTO crop (image, url, type, old_id, created_by, updated_by, created_at, updated_at)
+       VALUES (\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8)`,
+      [
+        imageId,
+        url,
+        mapping.type,
+        legacyId,
+        admin,
+        admin,
+        currentTime,
+        currentTime,
+      ],
     );
   }
 }
@@ -85,7 +96,7 @@ export async function insertCrops(
  * @throws HttpError if any mapping is missing a file.
  */
 export function validateCropFiles(
-  mappings: { filename: string; type: string }[],
+  mappings: { filename: string; type: string; oldId?: number | undefined }[],
   files: Map<string, { buffer: Buffer; mimetype: string }>,
 ): void {
   for (const mapping of mappings) {

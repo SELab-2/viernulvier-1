@@ -106,6 +106,7 @@ describe("Production fetch routes", () => {
     expect(json.total).toBe(1);
     const parsed = ProductionSchemaWithBackwardsRefs.array().parse(json.items);
     expect(parsed).toEqual([ProductionSchemaWithBackwardsRefs.parse(baseProduction)]);
+    expect(parsed[0]?.blogposts).toEqual([1, 3]);
   });
 
   test("GET /api/v1/production?limit=10&offset=0 -> returns a page with full total", async () => {
@@ -120,6 +121,7 @@ describe("Production fetch routes", () => {
     expect(json.total).toBe(1);
     const parsed = ProductionSchemaWithBackwardsRefs.array().parse(json.items);
     expect(parsed).toEqual([ProductionSchemaWithBackwardsRefs.parse(baseProduction)]);
+    expect(parsed[0]?.blogposts).toEqual([1, 3]);
   });
 
   test("GET /api/v1/production?offset=0 without limit -> lists all productions (offset zero allowed)", async () => {
@@ -357,6 +359,7 @@ describe("Production fetch routes", () => {
     expect(response.statusCode).toBe(200);
     const parsed = ProductionSchemaWithBackwardsRefs.parse(response.json());
     expect(parsed).toEqual(ProductionSchemaWithBackwardsRefs.parse(baseProduction));
+    expect(parsed.blogposts).toEqual([1, 3]);
   });
 
   test("GET /api/v1/production/:id -> returns 404 for unknown id", async () => {
@@ -406,7 +409,7 @@ describe("Production fetch helpers", () => {
 
   test("getProductionsByIds -> fetches with ANY(ids) in one query", async () => {
     const ids = [2, 1];
-    const { tags: _t, events: _e, ...productionCore } = baseProduction;
+    const { tags: _t, events: _e, blogposts: _b, ...productionCore } = baseProduction;
     const secondProduction: ProductionWithBackwardsRefs = productionRowWithRefsAlt({
       ...productionCore,
       id: 2,
@@ -430,6 +433,8 @@ describe("Production fetch helpers", () => {
       ProductionSchemaWithBackwardsRefs.parse(secondProduction),
       ProductionSchemaWithBackwardsRefs.parse(baseProduction),
     ]);
+    expect(result[0]?.blogposts).toEqual([2]);
+    expect(result[1]?.blogposts).toEqual([1, 3]);
   });
 });
 

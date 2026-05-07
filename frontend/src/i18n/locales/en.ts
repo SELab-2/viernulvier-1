@@ -1,4 +1,8 @@
 export default {
+  general: {
+    cancel: "Cancel",
+    saving: "Saving...",
+  },
   nav: {
     home: "Home",
     archive: "Archive",
@@ -32,10 +36,24 @@ export default {
     },
   },
   footer: {
-    copyright: "© {year} VierNulVier / De Vooruit. All rights reserved.",
-    privacy: "Privacy Policy",
-    terms: "Terms of Use",
-    contact: "Contact",
+    titles: {
+      organization: "Organization",
+      contact: "Contact",
+      navigation: "Navigation",
+      connect: "Follow us",
+    },
+    address: {
+      city: "9000 Ghent",
+      country: "Belgium",
+    },
+    contact: {
+      phone: "+32 (0)9 267 28 20",
+    },
+    nav: {
+      home: "Index",
+      productions: "Productions",
+      blog: "Blog posts",
+    },
   },
   date: {
     doorsOpen: "Doors open at",
@@ -84,11 +102,17 @@ export default {
     actions: {
       addProduction: "+ Add Production",
       removeProduction: "Remove selected productions",
-      confirmRemoveDialogTitle: "Remove productions?",
-      confirmRemoveBody: "This will permanently delete {count} selected productions. This cannot be undone.",
-      confirmRemoveCancel: "Cancel",
       confirmRemoveSubmit: "Remove permanently",
+      production: {
+        confirmRemoveDialogTitle: "Remove productions?",
+        confirmRemoveBody: "This will permanently delete {count} selected productions. This cannot be undone.",
+      },
       addTag: "+ Add Tag",
+      removeTag: "Remove selected tags",
+      tag: {
+        confirmRemoveDialogTitle: "Remove tags?",
+        confirmRemoveBody: "This will permanently delete {count} selected tags. This cannot be undone.",
+      },
       searchPlaceholder: "Search across all columns...",
       selectedCount: "Selected: {count}",
       loadedCount: "Rows loaded: {count}",
@@ -118,7 +142,6 @@ export default {
       selectTagType: "Choose a type...",
       finalized: "Mark as finalized",
       languages: "Extra languages",
-      cancel: "Cancel",
       submit: "Add production",
       saving: "Adding...",
       tags: {
@@ -162,7 +185,6 @@ export default {
       save: "Save",
       saveAction: "Save Changes",
       saveHint: "Changes are only applied after clicking Save Changes.",
-      saving: "Saving...",
       text: "Text",
       bulkNotice: "Change will be applied to {count} selected productions.",
     },
@@ -175,6 +197,7 @@ export default {
     feedback: {
       saveSuccess: "Changes saved successfully",
       removeSuccess: "Production removed successfully",
+      removeTagSuccess: "Tag removed successfully",
     },
     admin: {
       noPermission: "You don't have permissions to manage admins.",
@@ -313,6 +336,17 @@ export default {
       quickActions: "Quick actions",
       openCms: "Open CMS",
       logout: "Logout",
+      changePassword: "Change password",
+    },
+    changePassword: {
+      oldPassword: "Old password",
+      newPassword: "New password",
+      confirmPassword: "Confirm password",
+      update: "Update",
+      tooShortError: "Password must be at least 8 characters.",
+      wrongOldPasswordError: "Old password is wrong.",
+      dontMatchError: "Passwords do not match.",
+      failedToUpdate: "Failed to update password",
     },
   },
   time: {

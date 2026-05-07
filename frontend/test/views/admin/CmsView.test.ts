@@ -2,12 +2,12 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import { createRouter, createMemoryHistory } from "vue-router";
 import { createPinia, setActivePinia } from "pinia";
-import CMSView from "@/views/admin/CMSView.vue";
+import CmsView from "@/views/admin/CmsView.vue";
 import { i18n } from "@/i18n";
 import { RouteNames } from "@/router/routeNames";
-import CmsProductionsTab from "@/components/admin/cms/tabs/CmsProductionsTab.vue";
-import CmsTagsTab from "@/components/admin/cms/tabs/CmsTagsTab.vue";
-import CmsAdminsTab from "@/components/admin/cms/tabs/CmsAdminsTab.vue";
+import CmsProductionsTab from "@/components/admin/cms/productions/CmsProductionsTab.vue";
+import CmsTagsTab from "@/components/admin/cms/tags/CmsTagsTab.vue";
+import CmsAdminsTab from "@/components/admin/cms/admins/CmsAdminsTab.vue";
 
 vi.mock("@/services/productions", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/services/productions")>();
@@ -24,6 +24,7 @@ vi.mock("@/services/tags", () => ({
   getTagsForProduction: vi.fn(),
   getTagTypes: vi.fn().mockResolvedValue([]),
   updateTag: vi.fn(),
+  deleteTag: vi.fn(),
 }));
 
 vi.mock("@/services/halls", () => ({
@@ -56,7 +57,7 @@ vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
 
 type CmsTab = "productions" | "tags" | "admins";
 
-describe("CMSView", () => {
+describe("CmsView", () => {
   let testRouter: ReturnType<typeof createRouter>;
   let pinia: ReturnType<typeof createPinia>;
 
@@ -68,7 +69,7 @@ describe("CMSView", () => {
       history: createMemoryHistory(),
       routes: [
         { path: "/:lang/admin", name: RouteNames.ADMIN, component: { template: "<div>Admin</div>" } },
-        { path: "/:lang/admin/cms", name: RouteNames.CMS, component: CMSView },
+        { path: "/:lang/admin/cms", name: RouteNames.CMS, component: CmsView },
         { path: "/:lang/admin/login", name: RouteNames.LOGIN, component: { template: "<div>Login</div>" } },
       ],
     });
@@ -78,7 +79,7 @@ describe("CMSView", () => {
   });
 
   function mountView() {
-    return mount(CMSView, {
+    return mount(CmsView, {
       global: {
         plugins: [i18n, testRouter, pinia],
         stubs: {
@@ -96,23 +97,23 @@ describe("CMSView", () => {
     return `[data-testid="cms-tab-${tab}"]`;
   }
 
-  function mountCMSView() {
+  function mountCmsView() {
     return mountView();
   }
 
   it("renders without errors", async () => {
-    const wrapper = await mountCMSView();
+    const wrapper = await mountCmsView();
     expect(wrapper.exists()).toBe(true);
   });
 
   it("shows the productions tab by default", async () => {
-    const wrapper = await mountCMSView();
+    const wrapper = await mountCmsView();
     expect(wrapper.findComponent(CmsProductionsTab).exists()).toBe(true);
     expect(wrapper.get('[data-testid="cms-tab-productions"]').attributes("aria-selected")).toBe("true");
   });
 
   it("switches to the tags tab and unmounts productions", async () => {
-    const wrapper = await mountCMSView();
+    const wrapper = await mountCmsView();
     await wrapper.get('[data-testid="cms-tab-tags"]').trigger("click");
     await flushPromises(); // wait for router to update (URL params changed)
     expect(wrapper.findComponent(CmsProductionsTab).exists()).toBe(false);
@@ -120,7 +121,7 @@ describe("CMSView", () => {
   });
 
   it("switches to the admins tab", async () => {
-    const wrapper = await mountCMSView();
+    const wrapper = await mountCmsView();
     await wrapper.get('[data-testid="cms-tab-admins"]').trigger("click");
     await flushPromises(); // wait for router to update (URL params changed)
     expect(wrapper.findComponent(CmsProductionsTab).exists()).toBe(false);
@@ -128,7 +129,7 @@ describe("CMSView", () => {
   });
 
   it("switches back to productions after visiting another tab", async () => {
-    const wrapper = await mountCMSView();
+    const wrapper = await mountCmsView();
     await wrapper.get('[data-testid="cms-tab-tags"]').trigger("click");
     await wrapper.get('[data-testid="cms-tab-productions"]').trigger("click");
     await flushPromises();
@@ -136,7 +137,7 @@ describe("CMSView", () => {
   });
 
   it("renders the CMS text", async () => {
-    const wrapper = await mountCMSView();
+    const wrapper = await mountCmsView();
     expect(wrapper.text()).toMatch(/Gegevens bewerken|CMS \(admin only\)/);
   });
 

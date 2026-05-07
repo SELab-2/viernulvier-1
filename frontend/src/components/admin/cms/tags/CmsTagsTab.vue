@@ -1,37 +1,42 @@
 <template>
-  <div class="cms-tab-content">
-    <div class="flex items-center justify-between">
-      <p class="text-xs text-ink-tertiary">
-        {{ t("cms.actions.loadedTagsCount", { count: rowData.length }) }}
-      </p>
+  <CmsTabShell
+    v-model:quick-filter-text="quickFilterText"
+    v-model:column-chooser-open="columnChooserOpen"
+    :row-count="rowData.length"
+    loaded-count-key="cms.actions.loadedTagsCount"
+    empty-state-key="cms.actions.noTags"
+    :is-loading="isLoading"
+    :load-error="loadError"
+    :save-error="saveError"
+    :selected-count="selectedCount"
+    :column-options="gridColumnOptions"
+    :column-visibility="columnVisibility"
+    @apply-quick-filter="applyQuickFilter"
+    @fit-columns="fitGridColumns"
+    @auto-size-columns="autoSizeGridColumns"
+    @reset-filters="resetGridFilters"
+    @export-csv="exportGridCsv"
+    @reset-state="resetGridState"
+    @set-column-visibility="setGridColumnVisibility"
+  >
+    <template #header-actions>
+      <div class="flex flex-col gap-2">
+        <button type="button" class="cms-add-button" data-testid="cms-add-tag" @click="openCreateModal">
+          {{ t("cms.actions.addTag") }}
+        </button>
+        <button
+          type="button"
+          class="cms-remove-button"
+          data-testid="cms-remove-tags"
+          :disabled="selectedCount === 0"
+          @click="openRemoveConfirm"
+        >
+          {{ t("cms.actions.removeTag") }}
+        </button>
+      </div>
+    </template>
 
-      <button type="button" class="cms-add-button" data-testid="cms-add-tag" @click="openCreateModal">
-        {{ t("cms.actions.addTag") }}
-      </button>
-    </div>
-
-    <CmsGridControls
-      :quick-filter-text="quickFilterText"
-      :selected-count="selectedCount"
-      :column-chooser-open="columnChooserOpen"
-      @update:quick-filter-text="quickFilterText = $event"
-      @apply-quick-filter="applyQuickFilter"
-      @fit-columns="fitGridColumns"
-      @auto-size-columns="autoSizeGridColumns"
-      @reset-filters="resetGridFilters"
-      @export-csv="exportGridCsv"
-      @reset-state="resetGridState"
-      @toggle-columns="columnChooserOpen = !columnChooserOpen"
-    />
-
-    <div
-      v-if="loadError"
-      class="rounded-lg border border-red-400/40 bg-red-400/10 p-4 text-sm text-red-700"
-    >
-      {{ loadError }}
-    </div>
-
-    <div v-else class="cms-grid-shell">
+    <template #grid>
       <AgGridVue
         :class="['ag-theme-alpine', 'cms-grid']"
         :style="agThemeVars"
@@ -57,48 +62,39 @@
         @selection-changed="onSelectionChanged"
         @cell-editing-stopped="onCellEditingStopped"
       />
-    </div>
+    </template>
 
-    <CmsColumnChooser
-      :show="columnChooserOpen && !loadError"
-      :column-options="gridColumnOptions"
-      :column-visibility="columnVisibility"
-      @close="columnChooserOpen = false"
-      @set-column-visibility="setGridColumnVisibility"
-    />
+    <template #modals>
+      <CmsRemoveConfirmModal
+        v-if="removeConfirmOpen"
+        :is-loading="removeConfirmLoading"
+        :error="removeConfirmError"
+        :count="selectedCount"
+        title-key="cms.actions.tag.confirmRemoveDialogTitle"
+        body-key="cms.actions.tag.confirmRemoveBody"
+        @close="closeRemoveConfirm"
+        @confirm="confirmRemove"
+      />
 
-    <p
-      v-if="saveError"
-      class="rounded-md border border-red-400/40 bg-red-400/10 px-4 py-2 text-sm text-red-700"
-    >
-      {{ saveError }}
-    </p>
-
-    <p
-      v-if="!isLoading && !loadError && rowData.length === 0"
-      class="rounded-md border border-surface-3 bg-surface-0 px-4 py-3 text-sm text-ink-secondary"
-    >
-      {{ t("cms.actions.noTags") }}
-    </p>
-
-    <CmsCreateTagModal
-      :open="createModalOpen"
-      :create-form="createForm"
-      :create-extra-langs="createExtraLangs"
-      :visible-create-langs="visibleCreateLangs"
-      :lang-grid-class="langGridClass"
-      :tag-types="tagTypesData"
-      :create-error="createError"
-      :is-creating="isCreating"
-      :localize-value="localizeValue"
-      @close="closeCreateModal"
-      @submit="submitCreateTag"
-      @update-name="setCreateName"
-      @update-tag-type="setCreateTagType"
-      @update-public="setCreatePublic"
-      @update-extra-lang="setCreateExtraLang"
-    />
-  </div>
+      <CmsCreateTagModal
+        :open="createModalOpen"
+        :create-form="createForm"
+        :create-extra-langs="createExtraLangs"
+        :visible-create-langs="visibleCreateLangs"
+        :lang-grid-class="langGridClass"
+        :tag-types="tagTypesData"
+        :create-error="createError"
+        :is-creating="isCreating"
+        :localize-value="localizeValue"
+        @close="closeCreateModal"
+        @submit="submitCreateTag"
+        @update-name="setCreateName"
+        @update-tag-type="setCreateTagType"
+        @update-public="setCreatePublic"
+        @update-extra-lang="setCreateExtraLang"
+      />
+    </template>
+  </CmsTabShell>
 </template>
 
 <script setup lang="ts">
@@ -107,13 +103,14 @@ import { AgGridVue } from "ag-grid-vue3";
 import type { CellEditingStoppedEvent } from "ag-grid-community";
 import { useI18n } from "vue-i18n";
 import type { Tag, TagType } from "@viernulvier/shared";
-import CmsColumnChooser from "@/components/admin/cms/CmsColumnChooser.vue";
-import CmsGridControls from "@/components/admin/cms/CmsGridControls.vue";
+import CmsRemoveConfirmModal from "@/components/admin/cms/CmsRemoveConfirmModal.vue";
+import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
 import CmsCreateTagModal from "@/components/admin/cms/tags/CmsCreateTagModal.vue";
+import { useCmsRemove } from "@/composables/useCmsRemove";
 import { useCmsTagGrid } from "@/composables/useCmsTagGrid";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
-import { createTag, getAllTags, getTagTypes, updateTag } from "@/services/tags";
+import { createTag, deleteTag, getAllTags, getTagTypes, updateTag } from "@/services/tags";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import {
   applyUpdatedTagToRow,
@@ -149,6 +146,7 @@ const {
   setGridColumnVisibility,
   applyQuickFilter,
   persistGridState,
+  gridApi,
 } = useCmsTagGrid({ isDark, t });
 
 const isLoading = ref(false);
@@ -189,6 +187,26 @@ function localizeValue(map: LanguageMap | null | undefined): string {
 function tagTypeMap(): Map<number, TagType> {
   return new Map(tagTypesData.value.map((type) => [type.id, type]));
 }
+
+const {
+  removeConfirmOpen,
+  removeConfirmLoading,
+  removeConfirmError,
+  openRemoveConfirm,
+  closeRemoveConfirm,
+  confirmRemove,
+} = useCmsRemove<CmsTagGridRow>({
+  selectedCount,
+  getSelectedRows: () => gridApi.value?.getSelectedRows() ?? [],
+  rowToId: (row) => row.id,
+  deleteFn: deleteTag,
+  t,
+  onSuccess: async () => {
+    selectedCount.value = 0;
+    gridApi.value?.deselectAll();
+    await loadTagsData();
+  },
+});
 
 function rebuildRows(): void {
   rowData.value = buildTagGridRows(tagsData.value, tagTypesData.value, localizeValue);
@@ -359,6 +377,14 @@ defineExpose({
     setCreateTagType,
     setCreatePublic,
     setCreateExtraLang,
+    removeConfirmOpen,
+    removeConfirmLoading,
+    removeConfirmError,
+    openRemoveConfirm,
+    closeRemoveConfirm,
+    confirmRemove,
+    selectedCount,
+    gridApi,
   },
 });
 

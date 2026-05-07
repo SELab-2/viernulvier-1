@@ -22,14 +22,20 @@ export default fp(function authorizePlugin(server: FastifyInstance) {
         const payload = request.user as { jti?: string; super?: boolean };
 
         if (payload.jti && server.tokenDenylist.has(payload.jti)) {
-          return await reply.status(401).send({ error: "Token has been revoked" });
+          return await reply
+            .status(401)
+            .header("WWW-Authenticate", 'Bearer realm="api", error_description="Token has been revoked"')
+            .send({ error: "Token has been revoked" });
         }
 
         if (options.super && !payload.super) {
           return await reply.status(403).send({ error: "Forbidden" });
         }
       } catch {
-        return await reply.status(401).send({ error: "Unauthorized" });
+        return await reply
+          .status(401)
+          .header("WWW-Authenticate", 'Bearer realm="api"')
+          .send({ error: "Unauthorized" });
       }
     };
   });

@@ -3,8 +3,7 @@ import { flushPromises, mount } from "@vue/test-utils";
 import { defineComponent } from "vue";
 import type { Tag, TagType } from "@viernulvier/shared";
 import { i18n } from "@/i18n";
-import CmsTagsTab from "@/components/admin/cms/tabs/CmsTagsTab.vue";
-import CmsGridControls from "@/components/admin/cms/CmsGridControls.vue";
+import CmsTagsTab from "@/components/admin/cms/tags/CmsTagsTab.vue";
 import * as tagsService from "@/services/tags";
 
 vi.mock("@/services/tags", () => ({
@@ -12,6 +11,7 @@ vi.mock("@/services/tags", () => ({
   getTagTypes: vi.fn(),
   updateTag: vi.fn(),
   createTag: vi.fn(),
+  deleteTag: vi.fn(),
 }));
 
 const gridStub = defineComponent({
@@ -60,6 +60,7 @@ describe("CmsTagsTab", () => {
     vi.spyOn(tagsService, "getTagTypes").mockResolvedValue([mockTagType]);
     vi.spyOn(tagsService, "updateTag").mockResolvedValue({ ...mockPublicTag, public: false });
     vi.spyOn(tagsService, "createTag").mockResolvedValue({ ...mockPublicTag, id: 42 } as never);
+    vi.spyOn(tagsService, "deleteTag").mockResolvedValue();
   });
 
   it("loads tags and tag types on mount", async () => {
@@ -233,24 +234,6 @@ describe("CmsTagsTab", () => {
     expect(api.rowData.value).toEqual([]);
   });
 
-  it("wires grid controls events through to the composable", async () => {
-    const wrapper = mountTab();
-    await flushPromises();
-    const controls = wrapper.findComponent(CmsGridControls);
-
-    controls.vm.$emit("update:quick-filter-text", "drama");
-    controls.vm.$emit("apply-quick-filter");
-    controls.vm.$emit("fit-columns");
-    controls.vm.$emit("auto-size-columns");
-    controls.vm.$emit("reset-filters");
-    controls.vm.$emit("export-csv");
-    controls.vm.$emit("toggle-columns");
-    controls.vm.$emit("reset-state");
-    await flushPromises();
-
-    expect(controls.exists()).toBe(true);
-  });
-
   it("opens the create modal with a default tag-type from loaded data", async () => {
     const wrapper = mountTab();
     await flushPromises();
@@ -368,5 +351,119 @@ describe("CmsTagsTab", () => {
     });
 
     expect(api.saveError.value).toBeTruthy();
+  });
+
+  describe("delete flow", () => {
+    it("guards against opening confirm without a selection", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.openRemoveConfirm();
+
+      expect(api.removeConfirmOpen.value).toBe(false);
+    });
+
+    it("opens the confirm modal once rows are selected", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.selectedCount.value = 2;
+      api.openRemoveConfirm();
+
+      expect(api.removeConfirmOpen.value).toBe(true);
+      expect(api.removeConfirmError.value).toBeNull();
+    });
+
+    it("closeRemoveConfirm resets state", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.removeConfirmOpen.value = true;
+      api.removeConfirmError.value = "boom";
+
+      api.closeRemoveConfirm();
+
+      expect(api.removeConfirmOpen.value).toBe(false);
+      expect(api.removeConfirmError.value).toBeNull();
+    });
+
+    it("deletes selected rows, deselects, reloads and closes the modal", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+      const row = api.rowData.value[0];
+
+      const deselectAll = vi.fn();
+      api.selectedCount.value = 1;
+      api.gridApi.value = {
+        getSelectedRows: () => [row],
+        deselectAll,
+      };
+
+      api.openRemoveConfirm();
+      (tagsService.getAllTags as any).mockClear();
+      await api.confirmRemove();
+      await flushPromises();
+
+      expect(tagsService.deleteTag).toHaveBeenCalledWith(row.id);
+      expect(deselectAll).toHaveBeenCalled();
+      expect(tagsService.getAllTags).toHaveBeenCalled();
+      expect(api.removeConfirmOpen.value).toBe(false);
+      expect(api.selectedCount.value).toBe(0);
+    });
+
+    it("closes the modal silently when the selection became empty mid-flight", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.removeConfirmOpen.value = true;
+      api.gridApi.value = { getSelectedRows: () => [], deselectAll: vi.fn() };
+
+      await api.confirmRemove();
+
+      expect(tagsService.deleteTag).not.toHaveBeenCalled();
+      expect(api.removeConfirmOpen.value).toBe(false);
+    });
+
+    it("surfaces an error when delete fails and keeps the modal open", async () => {
+      vi.spyOn(tagsService, "deleteTag").mockRejectedValueOnce(new Error("boom"));
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+      const row = api.rowData.value[0];
+
+      api.selectedCount.value = 1;
+      api.gridApi.value = {
+        getSelectedRows: () => [row],
+        deselectAll: vi.fn(),
+      };
+      api.openRemoveConfirm();
+      await api.confirmRemove();
+
+      expect(api.removeConfirmError.value).toMatch(/boom|fail|fout/i);
+      expect(api.removeConfirmOpen.value).toBe(true);
+    });
+
+    it("uses a generic message for non-Error rejections", async () => {
+      vi.spyOn(tagsService, "deleteTag").mockRejectedValueOnce("nope");
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+      const row = api.rowData.value[0];
+
+      api.selectedCount.value = 1;
+      api.gridApi.value = {
+        getSelectedRows: () => [row],
+        deselectAll: vi.fn(),
+      };
+      api.openRemoveConfirm();
+      await api.confirmRemove();
+
+      expect(api.removeConfirmError.value).toBeTruthy();
+    });
   });
 });

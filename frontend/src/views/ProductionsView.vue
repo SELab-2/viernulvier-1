@@ -400,7 +400,7 @@ import { i18n, type SupportedLang } from "@/i18n";
 import { getEventsForProductions } from "@/services/events";
 import { getHalls } from "@/services/halls";
 import { ApiError } from "@/services/api";
-import { getImagesForProduction } from "@/services/media";
+import { getImagesForProductionOrEmpty } from "@/services/media";
 import { getProductions } from "@/services/productions";
 import { getTags, getTagTypes } from "@/services/tags";
 import { localizeOrEmpty } from "@/utils/language-utils";
@@ -718,6 +718,8 @@ const eventsByProduction = ref(new Map<number, ProductionEvent[]>());
 const thumbnailUrlByProductionId = ref(
   new Map<number, string | null>(),
 );
+/** Bumps on each thumbnail load; stale `Promise.all` runs must not overwrite the map after a newer interaction. */
+let thumbnailLoadGeneration = 0;
 const tagsById = ref(new Map<number, Tag>());
 const tagTypesById = ref(new Map<number, TagType>());
 const hallsById = ref(new Map<number, Hall>());
@@ -731,6 +733,7 @@ function thumbnailFor(productionId: number): string | null {
 }
 
 async function loadThumbnailsForProductionIds(ids: number[]): Promise<void> {
+  const gen = ++thumbnailLoadGeneration;
   if (ids.length === 0) {
     thumbnailUrlByProductionId.value = new Map();
     return;
@@ -738,14 +741,13 @@ async function loadThumbnailsForProductionIds(ids: number[]): Promise<void> {
   const next = new Map<number, string | null>();
   await Promise.all(
     ids.map(async (id) => {
-      try {
-        const images = await getImagesForProduction(id);
-        next.set(id, pickProductionListThumbnailUrl(images));
-      } catch {
-        next.set(id, null);
-      }
+      const images = await getImagesForProductionOrEmpty(id);
+      next.set(id, pickProductionListThumbnailUrl(images));
     }),
   );
+  if (gen !== thumbnailLoadGeneration) {
+    return;
+  }
   thumbnailUrlByProductionId.value = next;
 }
 

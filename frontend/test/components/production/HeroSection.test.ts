@@ -48,6 +48,7 @@ const baseProduction: ProductionWithBackwardsRefs = {
 
   tags: [],
   events: [],
+  blogposts: [],
 };
 
 async function mountHero(

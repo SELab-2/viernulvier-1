@@ -1,94 +1,69 @@
 <template>
-  <div class="cms-tab-content">
-    <div
-      v-if="!isSuper"
-      class="rounded-lg border border-surface-3 bg-surface-0 px-4 py-3 text-sm text-ink-secondary"
-    >
+  <div
+    v-if="!isSuper"
+    class="cms-tab-content"
+  >
+    <div class="rounded-lg border border-surface-3 bg-surface-0 px-4 py-3 text-sm text-ink-secondary">
       {{ t("cms.admin.noPermission") }}
     </div>
+  </div>
 
-    <template v-else>
-      <div class="flex items-center justify-between">
-        <p class="text-xs text-ink-tertiary">
-          {{ t("cms.actions.loadedCount", { count: rowData.length }) }}
-        </p>
+  <CmsTabShell
+    v-else
+    v-model:quick-filter-text="quickFilterText"
+    v-model:column-chooser-open="columnChooserOpen"
+    :row-count="rowData.length"
+    loaded-count-key="cms.actions.loadedCount"
+    empty-state-key="cms.actions.admin.noAdmins"
+    :is-loading="isLoading"
+    :load-error="loadError"
+    :save-error="saveError"
+    :selected-count="selectedCount"
+    :column-options="gridColumnOptions"
+    :column-visibility="columnVisibility"
+    @apply-quick-filter="applyQuickFilter"
+    @fit-columns="fitGridColumns"
+    @auto-size-columns="autoSizeGridColumns"
+    @reset-filters="resetGridFilters"
+    @export-csv="exportGridCsv"
+    @reset-state="resetGridState"
+    @set-column-visibility="setGridColumnVisibility"
+  >
+    <template #header-actions>
+      <button type="button" class="cms-add-button" data-testid="cms-add-admin" @click="openCreateModal">
+        {{ t("cms.actions.admin.addAdmin") }}
+      </button>
+    </template>
 
-        <button type="button" class="cms-add-button" data-testid="cms-add-admin" @click="openCreateModal">
-          {{ t("cms.actions.admin.addAdmin") }}
-        </button>
-      </div>
-
-      <CmsGridControls
-        :quick-filter-text="quickFilterText"
-        :selected-count="selectedCount"
-        :column-chooser-open="columnChooserOpen"
-        @update:quick-filter-text="quickFilterText = $event"
-        @apply-quick-filter="applyQuickFilter"
-        @fit-columns="fitGridColumns"
-        @auto-size-columns="autoSizeGridColumns"
-        @reset-filters="resetGridFilters"
-        @export-csv="exportGridCsv"
-        @reset-state="resetGridState"
-        @toggle-columns="columnChooserOpen = !columnChooserOpen"
+    <template #grid>
+      <AgGridVue
+        :class="['ag-theme-alpine', 'cms-grid']"
+        :style="agThemeVars"
+        :column-defs="columnDefs"
+        :default-col-def="defaultColDef"
+        :row-data="rowData"
+        :animate-rows="true"
+        :pagination="false"
+        :header-height="44"
+        :row-height="42"
+        :loading="isLoading"
+        :row-selection="rowSelection"
+        :selection-column-def="selectionColumnDef"
+        :suppress-row-click-selection="false"
+        :column-hover-highlight="true"
+        :enable-cell-text-selection="true"
+        :ensure-dom-order="true"
+        :undo-redo-cell-editing="true"
+        :undo-redo-cell-editing-limit="25"
+        :value-cache="true"
+        :cache-quick-filter="true"
+        @grid-ready="onGridReady"
+        @selection-changed="onSelectionChanged"
+        @cell-editing-stopped="onCellEditingStopped"
       />
+    </template>
 
-      <div
-        v-if="loadError"
-        class="rounded-lg border border-red-400/40 bg-red-400/10 p-4 text-sm text-red-700"
-      >
-        {{ loadError }}
-      </div>
-
-      <div v-else class="cms-grid-shell">
-        <AgGridVue
-          :class="['ag-theme-alpine', 'cms-grid']"
-          :style="agThemeVars"
-          :column-defs="columnDefs"
-          :default-col-def="defaultColDef"
-          :row-data="rowData"
-          :animate-rows="true"
-          :pagination="false"
-          :header-height="44"
-          :row-height="42"
-          :loading="isLoading"
-          :row-selection="rowSelection"
-          :selection-column-def="selectionColumnDef"
-          :suppress-row-click-selection="false"
-          :column-hover-highlight="true"
-          :enable-cell-text-selection="true"
-          :ensure-dom-order="true"
-          :undo-redo-cell-editing="true"
-          :undo-redo-cell-editing-limit="25"
-          :value-cache="true"
-          :cache-quick-filter="true"
-          @grid-ready="onGridReady"
-          @selection-changed="onSelectionChanged"
-          @cell-editing-stopped="onCellEditingStopped"
-        />
-      </div>
-
-      <CmsColumnChooser
-        :show="columnChooserOpen && !loadError"
-        :column-options="gridColumnOptions"
-        :column-visibility="columnVisibility"
-        @close="columnChooserOpen = false"
-        @set-column-visibility="setGridColumnVisibility"
-      />
-
-      <p
-        v-if="saveError"
-        class="rounded-md border border-red-400/40 bg-red-400/10 px-4 py-2 text-sm text-red-700"
-      >
-        {{ saveError }}
-      </p>
-
-      <p
-        v-if="!isLoading && !loadError && rowData.length === 0"
-        class="rounded-md border border-surface-3 bg-surface-0 px-4 py-3 text-sm text-ink-secondary"
-      >
-        {{ t("cms.actions.admin.noAdmins") }}
-      </p>
-
+    <template #modals>
       <CmsCreateAdminModal
         :open="createModalOpen"
         :create-form="createForm"
@@ -101,7 +76,7 @@
         @update-super="setCreateSuper"
       />
     </template>
-  </div>
+  </CmsTabShell>
 </template>
 
 <script setup lang="ts">
@@ -109,8 +84,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { AgGridVue } from "ag-grid-vue3";
 import type { CellEditingStoppedEvent } from "ag-grid-community";
 import { useI18n } from "vue-i18n";
-import CmsColumnChooser from "@/components/admin/cms/CmsColumnChooser.vue";
-import CmsGridControls from "@/components/admin/cms/CmsGridControls.vue";
+import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
 import CmsCreateAdminModal from "@/components/admin/cms/admins/CmsCreateAdminModal.vue";
 import { useCmsAdminGrid } from "@/composables/useCmsAdminGrid";
 import { useDarkMode } from "@/composables/useDarkMode";
