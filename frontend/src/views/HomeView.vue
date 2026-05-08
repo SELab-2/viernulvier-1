@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import { useDarkMode } from "@/composables/useDarkMode";
-import AppNavbar from "@/components/AppNavbar.vue";
+import AppNavbar from "@/components/nav/AppNavbar.vue";
 import AppFooter from "@/components/AppFooter.vue";
 import HeroSection from "@/components/home/HeroSection.vue";
 import StatsSection from "@/components/home/StatsSection.vue";

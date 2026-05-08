@@ -392,7 +392,7 @@ import {
   PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE,
 } from "@viernulvier/shared";
 import AppFooter from "@/components/AppFooter.vue";
-import AppNavbar from "@/components/AppNavbar.vue";
+import AppNavbar from "@/components/nav/AppNavbar.vue";
 import ProductionListCard from "@/components/productions/ProductionListCard.vue";
 import ProductionsDateFilter from "@/components/productions/ProductionsDateFilter.vue";
 import { useDarkMode } from "@/composables/useDarkMode";

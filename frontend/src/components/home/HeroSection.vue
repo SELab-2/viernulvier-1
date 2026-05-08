@@ -1,5 +1,5 @@
 <template>
-  <section class="bg-surface-inv px-6 py-20 lg:px-10 lg:py-28">
+  <section class="bg-surface-inv-raised px-6 py-20 lg:px-10 lg:py-28">
     <div
       class="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 lg:grid-cols-2"
     >

@@ -67,7 +67,7 @@ import { RouterLink } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/stores/auth";
 import { RouteNames } from "@/router/routeNames";
-import AdminNavbar from "@/components/admin/AdminNavbar.vue";
+import AdminNavbar from "@/components/nav/AdminNavbar.vue";
 import ChangePasswordModal from "@/components/admin/ChangePasswordModal.vue";
 import { i18n, type SupportedLang } from "@/i18n";
 
