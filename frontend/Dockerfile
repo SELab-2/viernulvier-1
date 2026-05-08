@@ -1,6 +1,6 @@
 FROM --platform=$BUILDPLATFORM node:24 AS base
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.30.3
 WORKDIR /app
 
 
@@ -20,7 +20,7 @@ COPY --from=deps /app /app
 
 COPY . .
 
-RUN pnpm install
+RUN pnpm install --ignore-scripts
 RUN pnpm --filter frontend build
 
 
