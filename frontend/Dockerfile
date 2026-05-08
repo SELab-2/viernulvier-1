@@ -20,7 +20,7 @@ COPY --from=deps /app /app
 
 COPY . .
 
-RUN pnpm install --ignore-scripts
+RUN pnpm install
 RUN pnpm --filter frontend build
 
 
