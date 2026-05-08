@@ -3,10 +3,20 @@
     <div class="nav-left">
       <NavHamburger :open="menuOpen" @click="menuOpen = !menuOpen" />
       <div class="nav-links">
-        <RouterLink :to="{ name: RouteNames.HOME, params: { lang: currentLang } }" class="nav-link">
+        <RouterLink
+          :to="{ name: RouteNames.HOME, params: { lang: currentLang } }"
+          class="nav-link"
+          active-class=""
+          exact-active-class="router-link-active"
+        >
           {{ t("nav.home") }}
         </RouterLink>
-        <RouterLink :to="{ name: RouteNames.PRODUCTIONS, params: { lang: currentLang } }" class="nav-link">
+        <RouterLink
+          :to="{ name: RouteNames.PRODUCTIONS, params: { lang: currentLang } }"
+          class="nav-link"
+          active-class=""
+          exact-active-class="router-link-active"
+        >
           {{ t("nav.productions") }}
         </RouterLink>
       </div>
@@ -25,11 +35,15 @@
     <RouterLink
       :to="{ name: RouteNames.HOME, params: { lang: currentLang } }"
       class="drawer-link"
+      active-class=""
+      exact-active-class="router-link-active"
       @click="menuOpen = false"
     >{{ t("nav.home") }}</RouterLink>
     <RouterLink
       :to="{ name: RouteNames.PRODUCTIONS, params: { lang: currentLang } }"
       class="drawer-link"
+      active-class=""
+      exact-active-class="router-link-active"
       @click="menuOpen = false"
     >{{ t("nav.productions") }}</RouterLink>
     <div class="drawer-divider" />
