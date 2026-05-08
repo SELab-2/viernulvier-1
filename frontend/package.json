@@ -19,7 +19,7 @@
     "ag-grid-community": "^35.2.1",
     "ag-grid-vue3": "^35.2.1",
     "dompurify": "^3.4.1",
-    "easymde": "^2.18.0",
+    "easymde": "^2.21.0",
     "focus-trap": "^8.1.0",
     "pinia": "^3.0.4",
     "vue": "^3.5.30",
