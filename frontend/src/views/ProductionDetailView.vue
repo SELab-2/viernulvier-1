@@ -37,7 +37,7 @@
       </template>
     </main>
 
-    <AppFooter />
+    <AppFooter v-if="!loading" />
   </div>
 </template>
 

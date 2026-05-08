@@ -1,7 +1,7 @@
 <template>
   <div class="flex min-h-screen flex-col bg-surface-0">
     <AppNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
-    <main>
+    <main class="flex-1">
       <HeroSection />
       <StatsSection />
       <BentoGrid />

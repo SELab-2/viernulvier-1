@@ -1,7 +1,7 @@
 <template>
   <div class="flex min-h-screen flex-col bg-surface-0">
     <AppNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
-    <main>
+    <main class="flex-1">
       <section
         ref="pageTopAnchor"
         class="scroll-mt-16 border-b border-surface-3 bg-surface-1 py-12 md:py-16"
@@ -365,7 +365,7 @@
         </div>
       </section>
     </main>
-    <AppFooter />
+    <AppFooter v-if="!loading" />
   </div>
 </template>
 
