@@ -3,12 +3,12 @@
     <div class="nav-left">
       <NavHamburger :open="menuOpen" @click="menuOpen = !menuOpen" />
       <div class="nav-links">
-        <RouterLink :to="{ name: RouteNames.ADMIN, params: { lang: currentLang } }" class="nav-link">
+        <NavLink :to="{ name: RouteNames.ADMIN, params: { lang: currentLang } }" class="nav-link">
           {{ t("nav.admin.dashboard") }}
-        </RouterLink>
-        <RouterLink :to="{ name: RouteNames.CMS, params: { lang: currentLang } }" class="nav-link">
+        </NavLink>
+        <NavLink :to="{ name: RouteNames.CMS, params: { lang: currentLang } }" class="nav-link">
           {{ t("nav.admin.cms") }}
-        </RouterLink>
+        </NavLink>
       </div>
     </div>
 
@@ -37,16 +37,12 @@
   </nav>
 
   <NavDrawer :open="menuOpen" @close="menuOpen = false">
-    <RouterLink
-      :to="{ name: RouteNames.ADMIN, params: { lang: currentLang } }"
-      class="drawer-link"
-      @click="menuOpen = false"
-    >{{ t("nav.admin.dashboard") }}</RouterLink>
-    <RouterLink
-      :to="{ name: RouteNames.CMS, params: { lang: currentLang } }"
-      class="drawer-link"
-      @click="menuOpen = false"
-    >{{ t("nav.admin.cms") }}</RouterLink>
+    <NavLink :to="{ name: RouteNames.ADMIN, params: { lang: currentLang } }" class="drawer-link" @click="menuOpen = false">
+      {{ t("nav.admin.dashboard") }}
+    </NavLink>
+    <NavLink :to="{ name: RouteNames.CMS, params: { lang: currentLang } }" class="drawer-link" @click="menuOpen = false">
+      {{ t("nav.admin.cms") }}
+    </NavLink>
     <div class="drawer-divider" />
     <NavControls :is-dark="isDark" @toggle-dark="$emit('toggle-dark')" />
     <div class="drawer-divider" />
@@ -72,6 +68,7 @@ import { logout } from "@/services/auth";
 import NavControls from "@/components/nav/NavControls.vue";
 import NavHamburger from "@/components/nav/NavHamburger.vue";
 import NavDrawer from "@/components/nav/NavDrawer.vue";
+import NavLink from "./NavLink.vue";
 import "@/assets/stylesheets/navbar.css";
 
 defineProps<{ isDark: boolean }>();
