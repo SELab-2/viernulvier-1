@@ -12,6 +12,8 @@ import {
 import { getProductionsByIds } from "@/routes/production/handlers/fetch.js";
 import { productionRowWithRefs, productionRowWithRefsAlt } from "./fixtures.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let sessionCookie: string;
 

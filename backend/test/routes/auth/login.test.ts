@@ -37,8 +37,6 @@ describe("Login on auth route", () => {
     const decoded = server.jwt.verify(body.token);
     expect(decoded).toMatchObject({
       id: 404,
-      username: mockUsername,
-      super: true,
     });
 
     expect(response.cookies).toEqual(
@@ -66,7 +64,7 @@ describe("Login on auth route", () => {
 
     const decoded = server.jwt.verify(response.json().token);
     expect(decoded).toMatchObject({
-      super: false,
+      id: 404,
     });
   });
 

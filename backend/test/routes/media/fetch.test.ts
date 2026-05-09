@@ -12,6 +12,8 @@ import {
 } from "./fixtures.js";
 import { getImageByOldId } from "@/routes/media/handlers/fetch.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let sessionCookie: string;
 

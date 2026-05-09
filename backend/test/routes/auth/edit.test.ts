@@ -3,6 +3,9 @@ import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import { AdminSchema, type Admin } from "@viernulvier/shared/index.js";
 import { hashPassword } from "@/routes/auth/handlers/hash.js";
+import { authorizeMock } from "@mocks/plugins/authorize.js";
+
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
 
 let server: FastifyInstance;
 let sessionCookie: string;
@@ -22,6 +25,7 @@ const mockEditedPassword = "ILoveKarel<3";
 beforeAll(async () => {
   server = await buildServer();
   sessionCookie = server.jwt.sign({ id: 404, username: mockUsername, super: true });
+  authorizeMock.super = true;
 
   const hashedPassword = await hashPassword(mockPassword);
 

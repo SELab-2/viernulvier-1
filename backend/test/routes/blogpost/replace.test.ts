@@ -4,6 +4,8 @@ import type { FastifyInstance } from "fastify";
 import { BlogPostWithBackwardsRefsSchema, type BlogPost } from "@viernulvier/shared/index.js";
 import { HttpSuccess, HttpClientError, HttpServerError } from "@/routes/helpers.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let sessionCookie: string;
 
