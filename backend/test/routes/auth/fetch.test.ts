@@ -2,6 +2,9 @@ import { describe, test, expect, beforeAll, vi, afterAll, beforeEach } from "vit
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import { AdminSchema } from "@viernulvier/shared/index.js";
+import { authorizeMock } from "@mocks/plugins/authorize.js";
+
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
 
 let server: FastifyInstance;
 let sessionCookie: string;
@@ -24,6 +27,7 @@ const mockAdminsWithMeta = mockAdmins.map((admin) => ({
 beforeAll(async () => {
   server = await buildServer();
   sessionCookie = server.jwt.sign({ id: 404, username: "Karel", super: true });
+  authorizeMock.super = true;
 });
 
 beforeEach(async () => {

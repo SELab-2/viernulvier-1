@@ -112,4 +112,4 @@ async function fetchAdmins(
   return await fetchAllAdmins(server)();
 }
 
-export { fetchAdmin, fetchAdminWithMeta, fetchCurrentlyLoggedInAdmin, fetchCurrentlyLoggedInAdminWithMeta, fetchAdmins };
+export { fetchAdminById, fetchAdmin, fetchAdminWithMeta, fetchCurrentlyLoggedInAdmin, fetchCurrentlyLoggedInAdminWithMeta, fetchAdmins };

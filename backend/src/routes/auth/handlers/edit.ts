@@ -9,17 +9,10 @@ import {
   NO_CONTENT,
 } from "@/routes/helpers.js";
 import z from "zod";
-import { hashPassword } from "./hash.js";
+import { hashPassword, PasswordBase, zPassword } from "./hash.js";
 import { checkCredentials } from "./login.js";
 
-const zPassword = z.string().min(8).max(72);
-
-export const EditAdminBodySchema = AdminSchema.pick({
-  username: true,
-  super: true,
-})
-  .extend({ password: zPassword })
-  .partial();
+export const EditAdminBodySchema = AdminSchema.pick({ username: true, super: true }).extend(PasswordBase).partial();
 
 export const EditOwnPasswordSchema = z.object({
   oldPassword: zPassword,

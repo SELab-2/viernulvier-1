@@ -12,6 +12,8 @@ import {
 import { getProductionsByIds } from "@/routes/production/handlers/fetch.js";
 import { productionRowWithRefs, productionRowWithRefsAlt } from "./fixtures.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let sessionCookie: string;
 
@@ -250,6 +252,97 @@ describe("Production fetch routes", () => {
     expect(response.statusCode).toBe(200);
     const json = response.json() as { items: unknown[]; total: number };
     expect(json.total).toBe(1);
+  });
+
+  test("GET /api/v1/production with sort + lang -> 200", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?limit=10&offset=0&sortBy=date&sortDir=desc&lang=fr",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { items: unknown[]; total: number };
+    expect(json.total).toBe(1);
+  });
+
+  test("GET /api/v1/production with sortBy=date&sortDir=asc -> uses date ASC ordering", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+      if (upper.includes("COUNT(*)") && upper.includes("FROM PRODUCTION")) {
+        return Promise.resolve({ rows: [{ count: 1 }], rowCount: 1 });
+      }
+      if (
+        upper.includes("ORDER BY") &&
+        upper.includes("SELECT E.STARTS_AT") &&
+        upper.includes("ORDER BY E.ID ASC") &&
+        upper.includes("ASC NULLS LAST") &&
+        upper.includes("LIMIT") &&
+        upper.includes("OFFSET")
+      ) {
+        return Promise.resolve({ rows: [baseProduction], rowCount: 1 });
+      }
+      throw new Error(`Unexpected query in date-asc sort test: ${query}`);
+    });
+
+    try {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/production?limit=10&offset=0&sortBy=date&sortDir=asc",
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const json = response.json() as { items: unknown[]; total: number };
+      expect(json.total).toBe(1);
+    } finally {
+      server.pg.query = vi.fn().mockImplementation(mockProductionFetchPgQuery);
+    }
+  });
+
+  test("GET /api/v1/production with sortBy=name (no lang) -> uses localized title ordering fallback", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+      if (upper.includes("COUNT(*)") && upper.includes("FROM PRODUCTION")) {
+        return Promise.resolve({ rows: [{ count: 1 }], rowCount: 1 });
+      }
+      if (
+        upper.includes("ORDER BY") &&
+        upper.includes("LOWER(COALESCE") &&
+        upper.includes("TITLE->>'NL'") &&
+        upper.includes("TITLE->>'EN'") &&
+        upper.includes("TITLE->>'FR'") &&
+        upper.includes("LIMIT") &&
+        upper.includes("OFFSET")
+      ) {
+        return Promise.resolve({ rows: [baseProduction], rowCount: 1 });
+      }
+      throw new Error(`Unexpected query in name sort fallback test: ${query}`);
+    });
+
+    try {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/production?limit=10&offset=0&sortBy=name",
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const json = response.json() as { items: unknown[]; total: number };
+      expect(json.total).toBe(1);
+    } finally {
+      server.pg.query = vi.fn().mockImplementation(mockProductionFetchPgQuery);
+    }
+  });
+
+  test("GET /api/v1/production with invalid sortBy -> 400", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?limit=10&offset=0&sortBy=random",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(400);
   });
 
   test("GET /api/v1/production -> 400 when more than 20 comma-separated search terms", async () => {

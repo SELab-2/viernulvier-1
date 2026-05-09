@@ -1,7 +1,7 @@
 <template>
   <div class="flex min-h-screen flex-col bg-surface-0">
     <AppNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
-    <main>
+    <main class="flex-1">
       <HeroSection />
       <StatsSection />
       <BentoGrid />
@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import { useDarkMode } from "@/composables/useDarkMode";
-import AppNavbar from "@/components/AppNavbar.vue";
+import AppNavbar from "@/components/nav/AppNavbar.vue";
 import AppFooter from "@/components/AppFooter.vue";
 import HeroSection from "@/components/home/HeroSection.vue";
 import StatsSection from "@/components/home/StatsSection.vue";

@@ -14,7 +14,7 @@ const LoginRowSchema = AdminSchema.pick({ id: true, super: true }).extend({
 
 /**
  * Authenticates an admin by username and password, sets a session cookie, and returns a signed JWT.
- * The token contains the admin's `id`, `username`, `super`, and a unique `jti` claim used for revocation on logout.
+ * The token contains the admin's `id` and a unique `jti` claim used for revocation on logout.
  * Clients that cannot use cookies should store the returned token and pass it via the `Authorization: Bearer <token>` header.
  *
  * @param server - The Fastify instance, used for database access and logging.
@@ -30,10 +30,10 @@ export async function login(
 ) {
   const { username, password } = parseSchema(server, LoginBodySchema, request.body);
 
-  const { id, super: superValue } = await checkCredentials(server, { username }, password);
+  const { id } = await checkCredentials(server, { username }, password);
 
   const token = server.jwt.sign(
-    { id, username, super: superValue, jti: server.generateJti() },
+    { id: id, jti: server.generateJti() },
     { expiresIn: "24h" },
   );
 

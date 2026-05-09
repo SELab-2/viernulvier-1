@@ -92,6 +92,13 @@ const mockTagTypeGenre = {
   name: { nl: "Genre", en: "Genre", fr: "Genre" },
 } as TagType;
 
+/** Passed on every paginated `getProductions` call (route `/nl/...` → `lang: "nl"`). */
+const DEFAULT_LIST_FETCH_OPTS = {
+  sortBy: "date" as const,
+  sortDir: "desc" as const,
+  lang: "nl" as const,
+};
+
 /** Mount through `<router-view />` so `onBeforeRouteUpdate` registers (matches the real app). */
 const routerViewRoot = { template: "<router-view />" };
 
@@ -101,7 +108,9 @@ describe("ProductionsView.vue", () => {
       items: [mockProduction],
       total: 1,
     });
-    vi.spyOn(mediaService, "getImagesForProduction").mockResolvedValue([]);
+    vi.spyOn(mediaService, "getImagesForProductionOrEmpty").mockResolvedValue(
+      [],
+    );
     vi.spyOn(tagsService, "getTags").mockResolvedValue([mockTag]);
     vi.spyOn(tagsService, "getTagTypes").mockResolvedValue([mockTagTypeGenre]);
     vi.spyOn(eventsService, "getEventsForProductions").mockResolvedValue([
@@ -136,6 +145,7 @@ describe("ProductionsView.vue", () => {
     expect(productionsService.getProductions).toHaveBeenCalledWith({
       limit: 20,
       offset: 0,
+      ...DEFAULT_LIST_FETCH_OPTS,
     });
     wrapper.unmount();
   });
@@ -233,6 +243,7 @@ describe("ProductionsView.vue", () => {
       limit: 20,
       offset: 0,
       search: ["voorstelling"],
+      ...DEFAULT_LIST_FETCH_OPTS,
     });
     expect(router.currentRoute.value.query.search).toBe("voorstelling");
     wrapper.unmount();
@@ -250,6 +261,7 @@ describe("ProductionsView.vue", () => {
       limit: 20,
       offset: 0,
       search: ["gezelschap"],
+      ...DEFAULT_LIST_FETCH_OPTS,
     });
     wrapper.unmount();
   });
@@ -272,6 +284,7 @@ describe("ProductionsView.vue", () => {
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
       limit: 20,
       offset: 40,
+      ...DEFAULT_LIST_FETCH_OPTS,
     });
 
     await new Promise<void>((resolve) => {
@@ -319,6 +332,7 @@ describe("ProductionsView.vue", () => {
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
       limit: 20,
       offset: 20,
+      ...DEFAULT_LIST_FETCH_OPTS,
     });
 
     await new Promise<void>((resolve) => {
@@ -343,6 +357,7 @@ describe("ProductionsView.vue", () => {
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
       limit: 20,
       offset: 40,
+      ...DEFAULT_LIST_FETCH_OPTS,
     });
     expect((field.element as HTMLInputElement).value).toBe("3");
 
@@ -465,6 +480,7 @@ describe("ProductionsView.vue", () => {
     expect(getProductionsSpy).toHaveBeenCalledWith({
       limit: 20,
       offset: 40,
+      ...DEFAULT_LIST_FETCH_OPTS,
     });
     expect(router.currentRoute.value.query.page).toBe("3");
     wrapper.unmount();
@@ -497,6 +513,7 @@ describe("ProductionsView.vue", () => {
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
       limit: 20,
       offset: 40,
+      ...DEFAULT_LIST_FETCH_OPTS,
     });
     wrapper.unmount();
   });
@@ -512,6 +529,7 @@ describe("ProductionsView.vue", () => {
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
       limit: 20,
       offset: 20,
+      ...DEFAULT_LIST_FETCH_OPTS,
     });
 
     await router.replace({
@@ -523,6 +541,7 @@ describe("ProductionsView.vue", () => {
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
       limit: 20,
       offset: 0,
+      ...DEFAULT_LIST_FETCH_OPTS,
     });
     wrapper.unmount();
   });
@@ -735,6 +754,7 @@ describe("ProductionsView.vue", () => {
     expect(getSpy).toHaveBeenLastCalledWith({
       limit: 20,
       offset: 0,
+      ...DEFAULT_LIST_FETCH_OPTS,
     });
     wrapper.unmount();
   });
@@ -750,6 +770,7 @@ describe("ProductionsView.vue", () => {
     expect(getSpy).toHaveBeenLastCalledWith({
       limit: 20,
       offset: 0,
+      ...DEFAULT_LIST_FETCH_OPTS,
     });
     wrapper.unmount();
   });
@@ -841,6 +862,7 @@ describe("ProductionsView.vue", () => {
     expect(getSpy).toHaveBeenLastCalledWith({
       limit: 20,
       offset: 0,
+      ...DEFAULT_LIST_FETCH_OPTS,
     });
     wrapper.unmount();
   });
@@ -858,6 +880,7 @@ describe("ProductionsView.vue", () => {
     expect(getSpy).toHaveBeenLastCalledWith({
       limit: 20,
       offset: 0,
+      ...DEFAULT_LIST_FETCH_OPTS,
     });
     wrapper.unmount();
   });
@@ -875,7 +898,52 @@ describe("ProductionsView.vue", () => {
     expect(getSpy).toHaveBeenLastCalledWith({
       limit: 20,
       offset: 0,
+      ...DEFAULT_LIST_FETCH_OPTS,
     });
+    wrapper.unmount();
+  });
+
+  it("loads sort options from the URL and passes them to the API", async () => {
+    const getSpy = vi.spyOn(productionsService, "getProductions");
+    getSpy.mockResolvedValue({ items: [mockProduction], total: 1 });
+    const { wrapper } = await mountView(
+      "/nl/productions?sortBy=name&sortDir=asc",
+    );
+    expect(getSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sortBy: "name",
+        sortDir: "asc",
+        lang: "nl",
+      }),
+    );
+    wrapper.unmount();
+  });
+
+  it("refetches from page 1 when the sort select changes", async () => {
+    const getSpy = vi.spyOn(productionsService, "getProductions");
+    getSpy.mockResolvedValue({ items: [mockProduction], total: 45 });
+    const { wrapper, router } = await mountView(
+      "/nl/productions?page=2&sortBy=name&sortDir=asc",
+    );
+    expect(getSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ limit: 20, offset: 20 }),
+    );
+
+    const dimBtn = wrapper.find("#productions-sort-dimension");
+    expect(dimBtn.exists()).toBe(true);
+    await dimBtn.trigger("click");
+    await wrapper.find('[data-sort-metric="date"]').trigger("click");
+    await flushPromises();
+
+    expect(getSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        sortBy: "date",
+        sortDir: "asc",
+        offset: 0,
+        lang: "nl",
+      }),
+    );
+    expect(router.currentRoute.value.query.page).toBeUndefined();
     wrapper.unmount();
   });
 });

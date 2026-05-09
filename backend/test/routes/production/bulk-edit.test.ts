@@ -5,6 +5,8 @@ import { ProductionSchema, type Production } from "@viernulvier/shared/index.js"
 import { bulkEditProductions } from "@/routes/production/handlers/bulk-edit.js";
 import { productionRowWithRefs, productionRowWithRefsAlt } from "./fixtures.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let sessionCookie: string;
 

@@ -59,7 +59,7 @@ import { i18n, type SupportedLang } from "@/i18n";
 import { RouteNames } from "@/router/routeNames";
 import { getBlogPost } from "@/services/blogposts";
 import { ApiError } from "@/services/api";
-import AppNavbar from "@/components/AppNavbar.vue";
+import AppNavbar from "@/components/nav/AppNavbar.vue";
 import AppFooter from "@/components/AppFooter.vue";
 import type { BlogPost } from "@viernulvier/shared";
 

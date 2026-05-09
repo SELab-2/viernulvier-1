@@ -16,6 +16,6 @@
     "check": "pnpm run lint && pnpm run build"
   },
   "dependencies": {
-    "zod": "^4.4.1"
+    "zod": "^4.4.3"
   }
 }
