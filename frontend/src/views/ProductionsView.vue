@@ -123,7 +123,7 @@
                 :key="'compact-genre-' + g.id"
                 :ref="(el) => setCompactGenrePillRef(g.id, el)"
                 type="button"
-                class="rounded-full border px-3 py-1 text-[0.95rem] transition disabled:opacity-100"
+                class="productions-genre-collapsed-row-pill"
                 :class="
                   selectedTagIds.includes(g.id)
                     ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
@@ -182,7 +182,7 @@
                     :key="g.id"
                     :ref="(el) => setGenrePanelPillRef(g.id, el)"
                     type="button"
-                    class="rounded-full border px-3 py-1 text-[0.95rem] transition disabled:opacity-100"
+                    class="productions-tag-filter-panel-pill"
                     :class="
                       selectedTagIds.includes(g.id)
                         ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
@@ -237,7 +237,7 @@
                     :key="g.id"
                     :ref="(el) => setNonGenrePanelPillRef(g.id, el)"
                     type="button"
-                    class="rounded-full border px-3 py-1 text-[0.95rem] transition disabled:opacity-100"
+                    class="productions-tag-filter-panel-pill"
                     :class="
                       selectedTagIds.includes(g.id)
                         ? 'border-accent-outline bg-surface-1 text-ink-primary'
@@ -1496,7 +1496,15 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
 
 .productions-tag-filter-expand {
   @apply inline-flex shrink-0 cursor-pointer justify-end self-start whitespace-nowrap pt-0.5 text-right text-sm font-medium leading-snug text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100;
-  min-width: 8rem;
+  min-width: 6rem;
+}
+
+.productions-genre-collapsed-row-pill {
+  @apply rounded-full border px-3 py-1 text-[0.95rem] transition disabled:opacity-100;
+}
+
+.productions-tag-filter-panel-pill {
+  @apply rounded-full border px-2.75 py-1 text-sm transition disabled:opacity-100;
 }
 </style>
 
