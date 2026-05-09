@@ -27,7 +27,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    exclude: ["dist/**", "node_modules/**"],
+    exclude: ["dist/**", "node_modules/**", "src/scraper/load-repo-env.ts"],
     setupFiles: ["./test/setup.ts"],
     coverage: {
       provider: "v8",
