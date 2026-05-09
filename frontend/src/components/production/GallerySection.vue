@@ -5,7 +5,9 @@
   >
     <div class="mx-auto max-w-7xl px-6 md:px-12">
       <div class="mb-10 md:mb-12">
-        <h2 class="text-3xl font-black uppercase tracking-tighter text-ink-primary md:text-4xl">
+        <h2
+          class="font-serif text-3xl font-semibold leading-tight tracking-tight text-ink-primary md:text-4xl"
+        >
           {{ t("production.gallery.title") }}
         </h2>
         <p class="mt-2 max-w-2xl text-sm leading-relaxed text-ink-secondary md:text-base">

@@ -283,6 +283,7 @@ export default {
     details: {
       tags: "Étiquettes",
       extraInfo: "Infos complémentaires",
+      programme: "Programme",
     },
     events: {
       title: "Historique des représentations",
@@ -294,6 +295,11 @@ export default {
       error_title: "Erreur de chargement",
       error_body: "Nous n'avons pas pu récupérer les données des représentations dans les archives.",
       retry: "Réessayer",
+    },
+    blog: {
+      title: "Articles liés",
+      body: "Récits de fond, entretiens et notes des archives en rapport avec cette production.",
+      all: "Tous les articles",
     },
     notFound: {
       title: "Production introuvable",

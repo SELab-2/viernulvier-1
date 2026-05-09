@@ -1,7 +1,7 @@
 <template>
   <div class="flex min-h-screen flex-col bg-surface-0">
     <AppNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
-    <main>
+    <main class="flex-1">
       <section
         ref="pageTopAnchor"
         class="scroll-mt-16 border-b border-surface-3 bg-surface-1 py-12 md:py-16"
@@ -365,7 +365,7 @@
         </div>
       </section>
     </main>
-    <AppFooter />
+    <AppFooter v-if="!loading" />
   </div>
 </template>
 
@@ -392,7 +392,7 @@ import {
   PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE,
 } from "@viernulvier/shared";
 import AppFooter from "@/components/AppFooter.vue";
-import AppNavbar from "@/components/AppNavbar.vue";
+import AppNavbar from "@/components/nav/AppNavbar.vue";
 import ProductionListCard from "@/components/productions/ProductionListCard.vue";
 import ProductionsDateFilter from "@/components/productions/ProductionsDateFilter.vue";
 import { useDarkMode } from "@/composables/useDarkMode";

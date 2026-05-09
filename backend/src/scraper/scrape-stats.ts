@@ -41,15 +41,36 @@ export type EventSliceRunStats = {
   failed: number;
 };
 
+export type MediaRunStats = {
+  media_created: number;
+  media_existing: number;
+  media_skipped: number;
+};
+
+export type CropRunStats = {
+  crop_created: number;
+  crop_existing: number;
+  crop_skipped: number;
+};
+
 export type ScrapeRunStats = {
+  startTime: Date;
   events: EventSliceRunStats;
   halls: LazyEntityRunStats;
   productions: LazyEntityRunStats;
   tags: TagRunStats;
+  media_created?: number;
+  media_existing?: number;
+  media_skipped?: number;
+  crop_created?: number;
+  crop_existing?: number;
+  crop_skipped?: number;
+  errors?: number;
 };
 
 export function createEmptyRunStats(): ScrapeRunStats {
   return {
+    startTime: new Date(),
     events: {
       seen: 0,
       imported: 0,
@@ -70,6 +91,13 @@ export function createEmptyRunStats(): ScrapeRunStats {
       tagTypesCreated: 0,
       genresSkipped: 0,
     },
+    media_created: 0,
+    media_existing: 0,
+    media_skipped: 0,
+    crop_created: 0,
+    crop_existing: 0,
+    crop_skipped: 0,
+    errors: 0,
   };
 }
 
@@ -89,8 +117,18 @@ export function formatRunReport(
 ): string {
   const { windowLabel, bounds } = opts;
   const e = stats.events;
+  
+  const endTime = new Date();
+  const elapsedMs = endTime.getTime() - stats.startTime.getTime();
+  const elapsedSec = Math.round(elapsedMs / 1000);
+  const elapsedMin = Math.floor(elapsedSec / 60);
+  const remainingSec = elapsedSec % 60;
+  const elapsedStr = elapsedMin > 0 
+    ? `${elapsedMin}m ${remainingSec}s` 
+    : `${elapsedSec}s`;
+  
   const lines = [
-    `Scraper run — ${new Date().toISOString()}`,
+    `Scraper run — started ${stats.startTime.toISOString()}, ended ${endTime.toISOString()} (${elapsedStr})`,
     `Events window: ${windowLabel} (${formatBounds(bounds)})`,
     "",
     "Events:",
@@ -119,7 +157,23 @@ export function formatRunReport(
     `  Tag types created (bootstrap): ${stats.tags.tagTypesCreated}`,
     `  Genre refs skipped: ${stats.tags.genresSkipped}`,
     "",
+    "Images (from production galleries):",
+    `  Created: ${stats.media_created ?? 0}`,
+    `  Already in database (reuse): ${stats.media_existing ?? 0}`,
+    `  Skipped: ${stats.media_skipped ?? 0}`,
+    "",
+    "Crops (uploaded to Garage):",
+    `  Created: ${stats.crop_created ?? 0}`,
+    `  Already in database (reuse): ${stats.crop_existing ?? 0}`,
+    `  Skipped: ${stats.crop_skipped ?? 0}`,
+    "",
   ];
+  
+  if ((stats.errors ?? 0) > 0) {
+    lines.push(`Errors encountered: ${stats.errors}`);
+    lines.push("");
+  }
+
   return lines.join("\n");
 }
 

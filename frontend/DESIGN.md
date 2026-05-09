@@ -754,6 +754,8 @@ pair without checking contrast.
 |------|---------|
 | `src/assets/stylesheets/design-tokens.css` | All CSS custom properties (light + dark) |
 | `src/style.css` | Imports tokens, registers Tailwind `@theme` (colours + `--font-serif`) |
+| `src/components/nav/AppNavbar.vue` | Sticky nav bar (inverted surface) |
+| `src/components/AppFooter.vue` | Footer (standard surface) |
 | `src/components/production/HeroSection.vue` | Canonical kadertje implementation |
 | `src/components/production/DetailsSection.vue` | Canonical drop cap, pull quote, marginalia, credits, end-mark |
 | `src/components/productions/ProductionListCard.vue` | Canonical list-row implementation |
