@@ -333,7 +333,7 @@ describe("Auth route integration", () => {
     expect(body.super).toBe(false);
   });
 
-  test("12. GET /api/v1/auth — fetching admins is allowed when super admin is set to true (with the same JWT)", async () => {
+  test("12. GET /api/v1/auth — fetching admins is allowed when super is set to true in the same session", async () => {
     mockDb[0]!.super = true;
     authorizeMock.super = true;
 
