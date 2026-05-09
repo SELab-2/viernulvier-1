@@ -4,7 +4,9 @@
       <div class="grid grid-cols-1 gap-16 lg:grid-cols-12">
         
         <div class="lg:col-span-4">
-          <h2 class="mb-6 text-4xl font-black uppercase leading-[0.9] tracking-tighter text-ink-primary wrap-break-word hyphens-auto">
+          <h2
+            class="mb-6 font-serif text-3xl font-semibold leading-tight tracking-tight text-ink-primary md:text-4xl wrap-break-word hyphens-auto"
+          >
             {{ t('production.events.title') }}
           </h2>
           <p class="text-sm leading-relaxed text-ink-secondary">
@@ -68,7 +70,9 @@
                 class="group -mx-4 grid grid-cols-1 gap-y-6 px-4 py-10 transition-colors duration-300 hover:bg-surface-1 md:grid-cols-12 md:items-center md:gap-x-8"
               >
                 <div class="md:col-span-3">
-                  <div class="text-2xl font-black tracking-tighter text-ink-primary leading-none mb-2">
+                  <div
+                    class="font-serif text-2xl font-semibold tracking-tight text-ink-primary leading-none mb-2"
+                  >
                     {{ formatNumericDate(event.starts_at, currentLang) }}
                   </div>
                   <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-secondary flex items-center gap-2">
@@ -81,26 +85,34 @@
                 </div>
 
                 <div class="md:col-span-6">
-                  <h4 class="text-xl font-bold leading-tight text-ink-primary">
+                  <h4
+                    class="font-serif text-xl font-semibold leading-tight tracking-tight text-ink-primary"
+                  >
                     {{ tProd(event.hall?.name) }}
                   </h4>
-                  <p v-if="event.hall?.address" class="mt-1 text-sm text-ink-secondary leading-relaxed" data-test="event-address">
+                  <p
+                    v-if="event.hall?.address"
+                    class="mt-1 font-serif text-sm leading-relaxed text-ink-secondary"
+                    data-test="event-address"
+                  >
                     {{ event.hall.address }}
                   </p>
                 </div>
 
                 <div class="flex md:col-span-3 md:justify-end">
-                  <span class="font-mono text-xl font-black text-ink-primary tabular-nums tracking-tight text-right">
+                  <span
+                    class="font-serif text-lg font-medium text-ink-primary tabular-nums tracking-tight text-right"
+                  >
                     <template v-if="event.minPrice === null">
-                      € —
+                      € &mdash;
                     </template>
-                    <div v-else-if="event.minPrice !== event.maxPrice" class="flex flex-col items-end leading-none">
-                      <span>€{{ formatCurrency(event.minPrice) }}</span>
-                      <span class="my-1">—</span>
-                      <span>€{{ formatCurrency(event.maxPrice) }}</span>
+                    <div v-else-if="event.minPrice !== event.maxPrice" class="flex flex-col items-end leading-tight">
+                      <span>&euro;{{ formatCurrency(event.minPrice) }}</span>
+                      <span class="opacity-50">&mdash;</span>
+                      <span>&euro;{{ formatCurrency(event.maxPrice) }}</span>
                     </div>
                     <template v-else>
-                      €{{ formatCurrency(event.minPrice) }}
+                      &euro;{{ formatCurrency(event.minPrice) }}
                     </template>
                   </span>
                 </div>

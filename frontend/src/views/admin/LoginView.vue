@@ -93,7 +93,7 @@ import { useRouter, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { login, ApiError } from "@/services/auth";
 import { RouteNames } from "@/router/routeNames";
-import NavControls from "@/components/NavControls.vue";
+import NavControls from "@/components/nav/NavControls.vue";
 
 const { isDark, toggleDark } = useDarkMode();
 
