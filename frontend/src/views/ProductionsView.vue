@@ -37,7 +37,7 @@
             <label class="sr-only" for="productions-search">{{
               t("productionsPage.searchLabel")
             }}</label>
-            <div class="relative min-h-10 min-w-0 grow">
+            <div class="relative min-h-11 min-w-0 grow">
               <input
                 id="productions-search"
                 v-model="searchDraft"
@@ -1598,7 +1598,7 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
 }
 
 .productions-view__search-field {
-  @apply box-border min-h-10 min-w-0 w-full rounded-md border border-surface-3 bg-surface-0 px-3 py-2 pr-11 text-base text-ink-primary placeholder:text-ink-secondary focus:border-accent-outline focus:outline-none dark:bg-surface-1;
+  @apply box-border h-11 min-h-11 min-w-0 w-full rounded-md border border-surface-3 bg-surface-0 px-3 py-0 pr-11 text-base leading-normal text-ink-primary placeholder:text-ink-secondary focus:border-accent-outline focus:outline-none dark:bg-surface-1;
 }
 
 .productions-view__search-submit {

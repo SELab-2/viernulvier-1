@@ -184,7 +184,7 @@ onUnmounted(() => {
 @reference "@/style.css";
 
 .productions-sort-control {
-  @apply inline-flex h-10 shrink-0 items-stretch rounded-md border border-surface-3 bg-surface-0 text-sm dark:bg-surface-1;
+  @apply inline-flex h-11 min-h-11 shrink-0 items-stretch rounded-md border border-surface-3 bg-surface-0 text-sm dark:bg-surface-1;
 }
 
 .productions-sort-control__dimension {

@@ -3,7 +3,7 @@
     <button
       type="button"
       :class="[
-        'inline-flex cursor-pointer items-center gap-2 rounded-md border px-4 py-2 text-base font-medium text-ink-primary transition disabled:opacity-100',
+        'box-border inline-flex h-11 min-h-11 cursor-pointer items-center gap-2 rounded-md border px-4 py-0 text-sm font-medium text-ink-primary transition disabled:opacity-100',
         hasActiveDateFilter
           ? 'border-accent-outline bg-surface-2 hover:bg-surface-2 dark:bg-surface-2 dark:hover:bg-surface-2'
           : 'border-surface-3 bg-surface-0 hover:bg-surface-2 dark:bg-surface-1',
