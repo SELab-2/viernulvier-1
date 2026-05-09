@@ -2,6 +2,12 @@ import fp from "fastify-plugin";
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { fetchAdminById } from "@/routes/auth/handlers/fetch.js";
 
+/**
+ * NOTE: when making changes on this plugin,
+ * keep it in sync with the mock plugin:
+ * backend/test/__mocks__/plugins/authorize.ts
+ */
+
 interface AuthorizeOptions {
   super?: boolean;
 }
