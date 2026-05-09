@@ -4,9 +4,13 @@ import z from "zod";
 
 const SALT_ROUNDS = 12;
 
-const PasswordValidationSchema = z.object({
-  password: z.string().min(8).max(72),
-});
+export const zPassword = z.string().min(8).max(72);
+
+export const PasswordBase = {
+  password: zPassword,
+}
+
+const PasswordValidationSchema = z.object(PasswordBase);
 
 /**
  * Hashes a plaintext password.
