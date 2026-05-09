@@ -332,4 +332,17 @@ describe("Auth route integration", () => {
     expect(body.username).toBe(existingAdmin.username);
     expect(body.super).toBe(false);
   });
+
+  test("12. GET /api/v1/auth — fetching admins is allowed when super admin is set to true (with the same JWT)", async () => {
+    mockDb[0]!.super = true;
+    authorizeMock.super = true;
+
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/auth`,
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+  });
 });
