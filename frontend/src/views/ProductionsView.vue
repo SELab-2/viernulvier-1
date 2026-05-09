@@ -1594,7 +1594,7 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
 }
 
 .productions-view__tag-filter-panel-pill {
-  @apply rounded-full border px-2.5 py-1 text-sm transition disabled:opacity-100;
+  @apply rounded-full border px-2.75 py-1 text-sm transition disabled:opacity-100;
 }
 
 .productions-view__search-field {
