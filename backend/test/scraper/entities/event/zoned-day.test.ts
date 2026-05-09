@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   formatYmdInTimeZone,
+  pastSevenDaysBounds,
+  pastThirtyDaysBounds,
   previousBrusselsDayBounds,
   startOfCalendarDayUtc,
 } from "@/scraper/entities/event/zoned-day.js";
@@ -20,6 +22,26 @@ describe("zoned-day (Europe/Brussels archive window)", () => {
 
   it("previousBrusselsDayBounds returns ordered half-open interval", () => {
     const bounds = previousBrusselsDayBounds();
+    const after = bounds.after!;
+    const before = bounds.before!;
+    expect(after.getTime()).toBeLessThan(before.getTime());
+    expect(formatYmdInTimeZone(after, "Europe/Brussels") < formatYmdInTimeZone(before, "Europe/Brussels")).toBe(
+      true,
+    );
+  });
+
+  it("pastSevenDaysBounds returns ordered half-open interval", () => {
+    const bounds = pastSevenDaysBounds();
+    const after = bounds.after!;
+    const before = bounds.before!;
+    expect(after.getTime()).toBeLessThan(before.getTime());
+    expect(formatYmdInTimeZone(after, "Europe/Brussels") < formatYmdInTimeZone(before, "Europe/Brussels")).toBe(
+      true,
+    );
+  });
+
+  it("pastThirtyDaysBounds returns ordered half-open interval", () => {
+    const bounds = pastThirtyDaysBounds();
     const after = bounds.after!;
     const before = bounds.before!;
     expect(after.getTime()).toBeLessThan(before.getTime());
