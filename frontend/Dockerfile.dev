@@ -2,7 +2,7 @@ FROM node:24
 
 WORKDIR /app
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.30.3
 
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc ./
 
