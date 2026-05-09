@@ -26,7 +26,7 @@ export default fp(function authorizePlugin(server: FastifyInstance) {
           return await reply.status(401).send({ error: "Token has been revoked" });
         }
 
-        if (!payload.id) throw Error();
+        if (payload.id === undefined) throw Error();
 
         const rows = await fetchAdminById(server)(payload.id!);
 
