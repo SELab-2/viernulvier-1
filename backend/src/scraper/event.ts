@@ -4,7 +4,7 @@ import { scrapeHallById } from "./hall.js";
 import { localApiUrl } from "./local-api.js";
 import { scrapeProductionById } from "./production.js";
 import { syncProductionGenreTagsFromViernulvier } from "./production-tags.js";
-import { scrapeEventPricesForEvent } from "./event_price.js";
+import { scrapeEventPricesForEvent } from "./event-price.js";
 import { totalPagesFromHydraView } from "./hydra-view.js";
 import { viernulvierApiUrl } from "./viernulvier-api.js";
 import { createEmptyRunStats, type ScrapeRunStats } from "./scrape-stats.js";
