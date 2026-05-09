@@ -21,4 +21,8 @@ describe("local-api", () => {
     process.env["VIERNULVIER_LOCAL_API_URL"] = "http://backend:3000/";
     expect(localApiBaseUrl()).toBe("http://backend:3000");
   });
+
+  it("prepends slash to paths without leading slash", () => {
+    expect(localApiUrl("api/v1/event")).toBe("http://localhost:3000/api/v1/event");
+  });
 });

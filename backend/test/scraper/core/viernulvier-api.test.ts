@@ -24,4 +24,8 @@ describe("viernulvier-api", () => {
     process.env["VIERNULVIER_API_ORIGIN"] = "https://staging.example.com/";
     expect(viernulvierApiOrigin()).toBe("https://staging.example.com");
   });
+
+  it("prepends slash to paths without leading slash", () => {
+    expect(viernulvierApiUrl("api/v1/productions")).toBe("https://www.viernulvier.gent/api/v1/productions");
+  });
 });
