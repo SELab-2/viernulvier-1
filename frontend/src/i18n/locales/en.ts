@@ -283,6 +283,7 @@ export default {
     details: {
       tags: "Tags",
       extraInfo: "Extra Info",
+      programme: "Programme",
     },
     events: {
       title: "Performance History",
@@ -294,6 +295,11 @@ export default {
       error_title: "Loading error",
       error_body: "We couldn't retrieve the performance data from the archive.",
       retry: "Try again",
+    },
+    blog: {
+      title: "Related articles",
+      body: "Background stories, interviews and notes from the archive that relate to this production.",
+      all: "All articles",
     },
     notFound: {
       title: "Production not found",

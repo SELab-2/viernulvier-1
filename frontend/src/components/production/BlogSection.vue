@@ -3,21 +3,23 @@
     <div class="mx-auto max-w-7xl px-6 md:px-12">
       <div class="mb-12 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <h2 class="text-4xl font-black uppercase tracking-tighter text-ink-primary">
-            Related Blogposts
+          <h2
+            class="font-serif text-3xl font-semibold leading-tight tracking-tight text-ink-primary md:text-4xl"
+          >
+            {{ t("production.blog.title") }}
           </h2>
-          <p class="mt-2 text-sm tracking-wide text-ink-secondary">
-            In-depth blogposts and articles connected to this production.
+          <p class="mt-2 text-sm leading-relaxed text-ink-secondary">
+            {{ t("production.blog.body") }}
           </p>
         </div>
         <a
           href="#"
           class="border-b-2 border-ink-primary text-ink-primary pb-1 text-[10px] font-bold uppercase tracking-widest"
         >
-          All Blogposts
+          {{ t("production.blog.all") }}
         </a>
       </div>
-      
+
       <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div v-for="(insight, index) in insights" :key="index" class="group cursor-pointer">
           <div class="mb-6 aspect-video overflow-hidden bg-surface-2">
@@ -31,7 +33,9 @@
           <span class="text-[10px] font-black uppercase tracking-widest text-ink-tertiary">
             {{ insight.category }}
           </span>
-          <h3 class="mt-2 text-2xl font-bold text-ink-primary decoration-2 group-hover:underline">
+          <h3
+            class="mt-2 font-serif text-2xl font-semibold leading-snug tracking-tight text-ink-primary decoration-2 group-hover:underline"
+          >
             {{ insight.title }}
           </h3>
           <p class="mt-4 text-sm leading-relaxed text-ink-secondary">
@@ -44,6 +48,10 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
+
 const insights = [
   {
     category: "Essay — Oct 2024",
