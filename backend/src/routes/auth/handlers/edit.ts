@@ -3,12 +3,10 @@ import type { Admin } from "@viernulvier/shared/index.js";
 import { AdminSchema, stringToInt } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, parseSchema, ParseContext, NO_CONTENT } from "@/routes/helpers.js";
 import z from "zod";
-import { hashPassword } from "./hash.js";
+import { hashPassword, PasswordBase, zPassword } from "./hash.js";
 import { checkCredentials } from "./login.js";
 
-const zPassword = z.string().min(8).max(72);
-
-const EditAdminBodySchema = AdminSchema.pick({ username: true, super: true }).extend({ password: zPassword }).partial();
+const EditAdminBodySchema = AdminSchema.pick({ username: true, super: true }).extend(PasswordBase).partial();
 
 const EditOwnPasswordSchema = z.object({
   oldPassword: zPassword,
