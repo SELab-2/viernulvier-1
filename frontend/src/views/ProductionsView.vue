@@ -38,21 +38,43 @@
               t("productionsPage.searchLabel")
             }}</label>
             <div class="relative min-h-11 min-w-0 grow">
-              <input
-                id="productions-search"
-                v-model="searchDraft"
-                type="search"
-                autocomplete="off"
-                :disabled="listLoading || loadError"
-                :placeholder="t('productionsPage.searchPlaceholder')"
+              <div
                 class="productions-view__search-field"
                 :class="
                   searchAwaitingList
-                    ? 'disabled:cursor-not-allowed disabled:opacity-50'
-                    : 'disabled:opacity-100'
+                    ? 'cursor-not-allowed opacity-50'
+                    : 'opacity-100'
                 "
-                @keydown.enter.prevent="submitSearch"
-              />
+              >
+                <button
+                  v-for="(term, idx) in appliedSearchTerms"
+                  :key="`${idx}-${term}`"
+                  type="button"
+                  class="productions-view__search-chip"
+                  :disabled="listLoading"
+                  :aria-label="
+                    t('productionsPage.removeSearchTerm', { term })
+                  "
+                  @click.stop="removeSearchTermAt(idx)"
+                >
+                  <span class="min-w-0 truncate">{{ term }}</span>
+                  <span class="text-base leading-none text-ink-secondary" aria-hidden="true">×</span>
+                </button>
+                <input
+                  id="productions-search"
+                  v-model="searchDraft"
+                  type="search"
+                  autocomplete="off"
+                  :disabled="listLoading || loadError"
+                  :placeholder="
+                    appliedSearchTerms.length > 0
+                      ? ''
+                      : t('productionsPage.searchPlaceholder')
+                  "
+                  class="productions-view__search-input"
+                  @keydown.enter.prevent="submitSearch"
+                />
+              </div>
               <button
                 type="button"
                 class="productions-view__search-submit"
@@ -82,39 +104,6 @@
               @sort-change="(p) => void applyProductionsSortChange(p)"
             />
           </div>
-          <div
-            v-if="searchBannerTerms.length > 0"
-            class="productions-view__search-banner"
-          >
-            <div class="flex min-w-0 flex-wrap items-center gap-2">
-              <span class="text-sm text-ink-secondary">{{
-                t("productionsPage.activeSearchLabel")
-              }}</span>
-              <button
-                v-for="(term, idx) in searchBannerTerms"
-                :key="`${idx}-${term}`"
-                type="button"
-                :class="['max-w-full', 'productions-view__active-chip']"
-                :disabled="listLoading"
-                :aria-label="
-                  t('productionsPage.removeSearchTerm', { term })
-                "
-                @click="removeSearchTermAt(idx)"
-              >
-                <span class="min-w-0 truncate">{{ term }}</span>
-                <span class="text-lg leading-none text-ink-secondary" aria-hidden="true">×</span>
-              </button>
-            </div>
-            <button
-              type="button"
-              class="productions-view__banner-action"
-              :disabled="listLoading || loadError"
-              @click="void clearSearchFilter()"
-            >
-              {{ t("productionsPage.clearAllSearches") }}
-            </button>
-          </div>
-
           <div
             v-if="
               !filtersPanelExpanded &&
@@ -605,7 +594,7 @@ const filterDateTo = ref<string | null>(null);
 /**
  * Tag/year/date chips in the "Active filters" row. Row appears/updates after fetch
  * when adding the first non-search filter, and may stay visible (stale chips) until
- * fetch when removing the last non-search filter -> same idea as searchBannerTerms.
+ * fetch when removing the last non-search filter.
  */
 const filterBannerTagIds = ref<number[]>([]);
 const filterBannerYearRange = ref<{ from: number; to: number } | null>(null);
@@ -834,14 +823,6 @@ const productions = ref<ProductionWithBackwardsRefs[]>([]);
 const totalCount = ref(0);
 const currentPage = ref(0);
 const appliedSearchTerms = ref<string[]>([]);
-/**
- * Terms shown in the "Search:" chip row. The results count line also keys off
- * `hasActiveListFilters` so it can show while the first term’s fetch runs.
- * When clearing all terms, this stays populated until the unfiltered list has loaded,
- * so layout does not jump while stale filtered cards are still on screen.
- * When adding the first term, same as non-search filters: row appears only after fetch.
- */
-const searchBannerTerms = ref<string[]>([]);
 const searchDraft = ref("");
 const sortBy = ref<ProductionSortBy>("date");
 const sortDir = ref<ProductionSortDir>("desc");
@@ -988,7 +969,6 @@ async function fetchProductionsPageData(page0: number) {
   totalCount.value = total;
   currentPage.value = page0;
   displayedFilteredTotal.value = hasActiveListFilters.value ? total : null;
-  searchBannerTerms.value = [...appliedSearchTerms.value];
   syncFilterBannerFromApplied();
   eventsByProduction.value = eventsMap;
   thumbnailUrlByProductionId.value = new Map();
@@ -1089,7 +1069,6 @@ async function applyFilterChange() {
 async function submitSearch() {
   const q = searchDraft.value.trim();
   if (!q) {
-    await clearSearchFilter();
     return;
   }
   const lower = q.toLowerCase();
@@ -1101,14 +1080,11 @@ async function submitSearch() {
     searchDraft.value = "";
     return;
   }
-  const hadVisibleSearchPillRow = searchBannerTerms.value.length > 0;
   appliedSearchTerms.value = dedupePreserveSearchCap([
     ...appliedSearchTerms.value,
     q,
   ]);
-  if (hadVisibleSearchPillRow) {
-    searchBannerTerms.value = [...appliedSearchTerms.value];
-  }
+  searchDraft.value = "";
   listLoading.value = true;
   searchAwaitingList.value = true;
   beginListAttempt();
@@ -1116,10 +1092,8 @@ async function submitSearch() {
     await fetchProductionsPageData(0);
     await replaceRouteForPage0(0);
     scrollAfterPageChange();
-    searchDraft.value = "";
   } catch (err) {
     failListAttempt(err);
-    searchBannerTerms.value = [...appliedSearchTerms.value];
   } finally {
     listLoading.value = false;
     searchAwaitingList.value = false;
@@ -1131,9 +1105,6 @@ async function removeSearchTermAt(index: number) {
   if (next.length === appliedSearchTerms.value.length) return;
   listLoading.value = true;
   beginListAttempt();
-  if (next.length > 0) {
-    searchBannerTerms.value = [...next];
-  }
   appliedSearchTerms.value = next;
   try {
     await fetchProductionsPageData(0);
@@ -1141,24 +1112,6 @@ async function removeSearchTermAt(index: number) {
     scrollAfterPageChange();
   } catch (err) {
     failListAttempt(err);
-    searchBannerTerms.value = [...appliedSearchTerms.value];
-  } finally {
-    listLoading.value = false;
-  }
-}
-
-async function clearSearchFilter() {
-  listLoading.value = true;
-  beginListAttempt();
-  appliedSearchTerms.value = [];
-  searchDraft.value = "";
-  try {
-    await fetchProductionsPageData(0);
-    await replaceRouteForPage0(0);
-    scrollAfterPageChange();
-  } catch (err) {
-    failListAttempt(err);
-    searchBannerTerms.value = [...appliedSearchTerms.value];
   } finally {
     listLoading.value = false;
   }
@@ -1598,15 +1551,25 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
 }
 
 .productions-view__search-field {
-  @apply box-border h-11 min-h-11 min-w-0 w-full rounded-md border border-surface-3 bg-surface-0 px-3 py-0 pr-11 text-base leading-normal text-ink-primary placeholder:text-ink-secondary focus:border-accent-outline focus:outline-none dark:bg-surface-1;
+  @apply box-border flex min-h-11 min-w-0 w-full flex-wrap items-center gap-1.5 rounded-md border border-surface-3 bg-surface-0 py-1.5 pl-2 pr-11 text-ink-primary transition focus-within:border-accent-outline dark:bg-surface-1;
+}
+
+.productions-view__search-input {
+  @apply min-h-7 min-w-28 flex-1 border-0 bg-transparent px-1 py-0 text-base leading-normal text-ink-primary placeholder:text-ink-secondary focus:outline-none disabled:cursor-not-allowed disabled:opacity-100;
+}
+
+.productions-view__search-input::-webkit-search-cancel-button,
+.productions-view__search-input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.productions-view__search-chip {
+  @apply inline-flex max-w-40 cursor-pointer items-center gap-1 rounded-md border border-surface-3 bg-surface-1 px-2 py-1 text-sm leading-tight text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-100 dark:bg-surface-0;
 }
 
 .productions-view__search-submit {
   @apply absolute right-1 top-1/2 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-ink-secondary transition hover:bg-surface-2 hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-100;
-}
-
-.productions-view__search-banner {
-  @apply grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-2;
 }
 
 .productions-view__banner-action {
