@@ -36,7 +36,7 @@
                 autocomplete="off"
                 :disabled="listLoading || loadError"
                 :placeholder="t('productionsPage.searchPlaceholder')"
-                class="min-w-0 w-full rounded-md border border-surface-3 bg-surface-0 px-3 py-2 pr-11 text-base text-ink-primary placeholder:text-ink-secondary focus:border-accent-outline focus:outline-none dark:bg-surface-1"
+                class="productions-view__search-field"
                 :class="
                   searchAwaitingList
                     ? 'disabled:cursor-not-allowed disabled:opacity-50'
@@ -46,7 +46,7 @@
               />
               <button
                 type="button"
-                class="absolute right-1 top-1/2 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-ink-secondary transition hover:bg-surface-2 hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-100"
+                class="productions-view__search-submit"
                 :aria-label="t('productionsPage.searchButton')"
                 :disabled="listLoading || loadError"
                 @click="submitSearch"
@@ -75,7 +75,7 @@
           </div>
           <div
             v-if="searchBannerTerms.length > 0"
-            class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-2"
+            class="productions-view__search-banner"
           >
             <div class="flex min-w-0 flex-wrap items-center gap-2">
               <span class="text-sm text-ink-secondary">{{
@@ -85,7 +85,7 @@
                 v-for="(term, idx) in searchBannerTerms"
                 :key="`${idx}-${term}`"
                 type="button"
-                :class="['max-w-full', ACTIVE_FILTER_CHIP_CLASS]"
+                :class="['max-w-full', 'productions-view__active-chip']"
                 :disabled="listLoading"
                 :aria-label="
                   t('productionsPage.removeSearchTerm', { term })
@@ -98,7 +98,7 @@
             </div>
             <button
               type="button"
-              class="col-start-2 row-start-1 justify-self-end self-start pt-0.5 shrink-0 cursor-pointer text-sm font-medium text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100"
+              class="productions-view__banner-action"
               :disabled="listLoading || loadError"
               @click="void clearSearchFilter()"
             >
@@ -134,7 +134,7 @@
                   v-for="g in visibleGenreTagsForFilter"
                   :key="g.id"
                   type="button"
-                  class="rounded-full border px-3 py-1 text-sm transition disabled:opacity-100"
+                  class="productions-view__tag-pill"
                   :class="
                     selectedTagIds.includes(g.id)
                       ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
@@ -149,7 +149,7 @@
               <button
                 v-if="showGenreTagFilterExpandToggle"
                 type="button"
-                class="shrink-0 cursor-pointer pt-0.5 text-sm font-medium leading-snug text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100"
+                class="productions-view__filter-expand"
                 :disabled="listLoading || loadError"
                 :aria-expanded="genreTagFiltersExpanded"
                 @click="genreTagFiltersExpanded = !genreTagFiltersExpanded"
@@ -193,7 +193,7 @@
               <button
                 v-if="showNonGenreTagFilterExpandToggle"
                 type="button"
-                class="shrink-0 cursor-pointer pt-0.5 text-sm font-medium leading-snug text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100"
+                class="productions-view__filter-expand"
                 :disabled="listLoading || loadError"
                 :aria-expanded="nonGenreTagFiltersExpanded"
                 @click="nonGenreTagFiltersExpanded = !nonGenreTagFiltersExpanded"
@@ -213,7 +213,7 @@
                 filterBannerYearRange !== null ||
                 (filterBannerDateFrom && filterBannerDateTo)
             "
-            class="mb-4 mt-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-2 border-t border-surface-3 pt-5"
+            class="productions-view__filter-banner"
           >
             <div class="flex min-w-0 flex-wrap items-center gap-2">
               <span class="text-sm text-ink-secondary">{{
@@ -223,7 +223,7 @@
                 v-for="tid in filterBannerTagIds"
                 :key="'tag-' + tid"
                 type="button"
-                :class="['max-w-full', ACTIVE_FILTER_CHIP_CLASS]"
+                :class="['max-w-full', 'productions-view__active-chip']"
                 :disabled="listLoading"
                 :aria-label="t('productionsPage.removeTagFilter')"
                 @click="removeTag(tid)"
@@ -234,7 +234,7 @@
               <button
                 v-if="filterBannerYearRange"
                 type="button"
-                :class="[ACTIVE_FILTER_CHIP_CLASS, 'tabular-nums']"
+                :class="['productions-view__active-chip', 'tabular-nums']"
                 :disabled="listLoading"
                 :aria-label="t('productionsPage.removeYearRangeFilter')"
                 @click="clearYearRangeFilter"
@@ -245,7 +245,7 @@
               <button
                 v-if="filterBannerDateFrom && filterBannerDateTo"
                 type="button"
-                :class="['max-w-full', ACTIVE_FILTER_CHIP_CLASS]"
+                :class="['max-w-full', 'productions-view__active-chip']"
                 :disabled="listLoading"
                 :aria-label="t('productionsPage.removeDateRangeFilter')"
                 @click="clearDateRange"
@@ -256,7 +256,7 @@
             </div>
             <button
               type="button"
-              class="col-start-2 row-start-1 justify-self-end self-start pt-0.5 shrink-0 cursor-pointer text-sm font-medium text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100"
+              class="productions-view__banner-action"
               :disabled="listLoading || loadError"
               @click="void clearAllNonSearchFilters()"
             >
@@ -267,7 +267,7 @@
 
         <p
           v-if="loadError"
-          class="rounded-md border border-surface-3 bg-surface-1 px-4 py-3 text-sm text-ink-secondary"
+          class="productions-view__alert"
           role="alert"
         >
           {{ loadErrorDetail ?? t("productionsPage.error") }}
@@ -319,7 +319,7 @@
 
             <nav
               v-if="totalPages > 1"
-              class="mt-10 grid grid-cols-1 justify-items-center gap-y-6 border-t border-surface-3 pt-8 sm:grid-cols-[1fr_auto] sm:items-center sm:justify-items-start sm:gap-x-12 sm:gap-y-0"
+              class="productions-view__pagination"
               aria-label="Pagination"
             >
               <p class="text-center text-sm text-ink-secondary sm:text-left">
@@ -332,13 +332,13 @@
                 }}
               </p>
               <div
-                class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:justify-self-end"
+                class="productions-view__pagination-toolbar"
                 role="group"
                 :aria-label="t('productionsPage.goToPage')"
               >
                 <button
                   type="button"
-                  class="cursor-pointer rounded-md border border-accent-outline bg-surface-0 px-3 py-1.5 text-sm font-medium text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
+                  class="productions-view__pager-btn"
                   :disabled="currentPage <= 0 || listLoading"
                   @click="goToPage(currentPage - 1)"
                 >
@@ -358,7 +358,7 @@
                     maxlength="6"
                     :disabled="listLoading"
                     :aria-label="t('productionsPage.goToPage')"
-                    class="min-w-6 max-w-8 shrink-0 border-0 border-b border-surface-3 bg-transparent px-0 pb-px text-center text-sm tabular-nums text-ink-secondary focus:border-ink-primary focus:text-ink-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                    class="productions-view__page-input"
                     @input="onPageNumberInput"
                     @keydown.enter.prevent="commitPageNumberInput"
                     @blur="commitPageNumberInput"
@@ -369,7 +369,7 @@
                 </div>
                 <button
                   type="button"
-                  class="cursor-pointer rounded-md border border-accent-outline bg-surface-0 px-3 py-1.5 text-sm font-medium text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
+                  class="productions-view__pager-btn"
                   :disabled="currentPage >= totalPages - 1 || listLoading"
                   @click="goToPage(currentPage + 1)"
                 >
@@ -479,10 +479,6 @@ const SORT_DIR_QUERY_KEY = "sortDir";
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
-
-/** Removable applied-filter chips: active search terms, tag/year/date summary row */
-const ACTIVE_FILTER_CHIP_CLASS =
-  "inline-flex cursor-pointer items-center gap-1 rounded-full border border-surface-3 bg-surface-0 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary shadow-sm ring-1 ring-inset ring-accent-outline/25 transition hover:bg-surface-2 dark:bg-surface-1 disabled:opacity-100";
 
 const pageTopAnchor = useTemplateRef<HTMLElement>("pageTopAnchor");
 
@@ -1404,3 +1400,59 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
   return sortProductionTagChipsGenresFirst(chips);
 }
 </script>
+
+<style scoped>
+@reference "@/style.css";
+
+.productions-view__search-field {
+  @apply min-w-0 w-full rounded-md border border-surface-3 bg-surface-0 px-3 py-2 pr-11 text-base text-ink-primary placeholder:text-ink-secondary focus:border-accent-outline focus:outline-none dark:bg-surface-1;
+}
+
+.productions-view__search-submit {
+  @apply absolute right-1 top-1/2 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-ink-secondary transition hover:bg-surface-2 hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-100;
+}
+
+.productions-view__search-banner {
+  @apply grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-2;
+}
+
+.productions-view__banner-action {
+  @apply col-start-2 row-start-1 shrink-0 cursor-pointer justify-self-end self-start pt-0.5 text-sm font-medium text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100;
+}
+
+.productions-view__tag-pill {
+  @apply rounded-full border px-3 py-1 text-sm transition disabled:opacity-100;
+}
+
+.productions-view__filter-expand {
+  @apply shrink-0 cursor-pointer pt-0.5 text-sm font-medium leading-snug text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100;
+}
+
+.productions-view__filter-banner {
+  @apply mb-4 mt-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-2 border-t border-surface-3 pt-5;
+}
+
+.productions-view__active-chip {
+  @apply inline-flex cursor-pointer items-center gap-1 rounded-full border border-surface-3 bg-surface-0 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary shadow-sm ring-1 ring-inset ring-accent-outline/25 transition hover:bg-surface-2 disabled:opacity-100 dark:bg-surface-1;
+}
+
+.productions-view__alert {
+  @apply rounded-md border border-surface-3 bg-surface-1 px-4 py-3 text-sm text-ink-secondary;
+}
+
+.productions-view__pagination {
+  @apply mt-10 grid grid-cols-1 justify-items-center gap-y-6 border-t border-surface-3 pt-8 sm:grid-cols-[1fr_auto] sm:items-center sm:justify-items-start sm:gap-x-12 sm:gap-y-0;
+}
+
+.productions-view__pagination-toolbar {
+  @apply flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:justify-self-end;
+}
+
+.productions-view__pager-btn {
+  @apply cursor-pointer rounded-md border border-accent-outline bg-surface-0 px-3 py-1.5 text-sm font-medium text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40;
+}
+
+.productions-view__page-input {
+  @apply min-w-6 max-w-8 shrink-0 border-0 border-b border-surface-3 bg-transparent px-0 pb-px text-center text-sm tabular-nums text-ink-secondary focus:border-ink-primary focus:text-ink-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-40;
+}
+</style>

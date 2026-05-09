@@ -2,7 +2,7 @@
   <div
     id="productions-sort"
     ref="sortRoot"
-    class="productions-sort-control inline-flex h-10 shrink-0 items-stretch rounded-md border border-surface-3 bg-surface-0 text-sm dark:bg-surface-1"
+    class="productions-sort-control"
     role="group"
     :aria-label="t('productionsPage.sortByLabel')"
   >
@@ -10,7 +10,8 @@
       <button
         id="productions-sort-dimension"
         type="button"
-        class="inline-flex h-full w-[7rem] cursor-pointer items-center justify-between gap-1 rounded-l-md border-r border-surface-3 pl-3 pr-2 py-0 text-left text-sm font-medium text-ink-primary transition hover:bg-surface-2 focus-visible:z-10 focus-visible:border-accent-outline focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-100"        :disabled="disabled"
+        class="productions-sort-control__dimension"
+        :disabled="disabled"
         :aria-expanded="menuOpen"
         aria-haspopup="listbox"
         :aria-controls="menuOpen ? sortListboxId : undefined"
@@ -39,7 +40,7 @@
       <ul
         v-show="menuOpen"
         :id="sortListboxId"
-        class="absolute left-0 top-full z-20 mt-1 min-w-[9rem] rounded-md border border-surface-3 bg-surface-1 py-0.5 text-sm dark:bg-surface-0"
+        class="productions-sort-control__menu"
         role="listbox"
         :aria-label="t('productionsPage.sortMetricMenuAria')"
         tabindex="-1"
@@ -51,8 +52,8 @@
             type="button"
             role="option"
             data-sort-metric="name"
-            class="flex w-full cursor-pointer items-center px-3 py-2 text-left text-sm text-ink-primary hover:bg-surface-2"
-            :class="sortBy === 'name' ? 'bg-surface-2/80 font-medium' : ''"
+            class="productions-sort-control__metric"
+            :class="sortBy === 'name' ? 'productions-sort-control__metric--active' : ''"
             :aria-selected="sortBy === 'name'"
             @click="pickDimension('name')"
           >
@@ -64,8 +65,8 @@
             type="button"
             role="option"
             data-sort-metric="date"
-            class="flex w-full cursor-pointer items-center px-3 py-2 text-left text-sm text-ink-primary hover:bg-surface-2"
-            :class="sortBy === 'date' ? 'bg-surface-2/80 font-medium' : ''"
+            class="productions-sort-control__metric"
+            :class="sortBy === 'date' ? 'productions-sort-control__metric--active' : ''"
             :aria-selected="sortBy === 'date'"
             @click="pickDimension('date')"
           >
@@ -78,7 +79,7 @@
     <button
       id="productions-sort-direction"
       type="button"
-      class="flex w-8 shrink-0 cursor-pointer items-center justify-center rounded-r-md text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-100"
+      class="productions-sort-control__direction"
       :disabled="disabled"
       :aria-label="t('productionsPage.toggleSortDirectionAria')"
       :title="t('productionsPage.toggleSortDirectionAria')"
@@ -178,3 +179,31 @@ onUnmounted(() => {
   document.removeEventListener("click", onDocClick);
 });
 </script>
+
+<style scoped>
+@reference "@/style.css";
+
+.productions-sort-control {
+  @apply inline-flex h-10 shrink-0 items-stretch rounded-md border border-surface-3 bg-surface-0 text-sm dark:bg-surface-1;
+}
+
+.productions-sort-control__dimension {
+  @apply inline-flex h-full w-[7rem] cursor-pointer items-center justify-between gap-1 rounded-l-md border-r border-surface-3 py-0 pl-3 pr-2 text-left text-sm font-medium text-ink-primary transition hover:bg-surface-2 focus-visible:z-10 focus-visible:border-accent-outline focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-100;
+}
+
+.productions-sort-control__menu {
+  @apply absolute left-0 top-full z-20 mt-1 min-w-[9rem] rounded-md border border-surface-3 bg-surface-1 py-0.5 text-sm dark:bg-surface-0;
+}
+
+.productions-sort-control__metric {
+  @apply flex w-full cursor-pointer items-center px-3 py-2 text-left text-sm text-ink-primary hover:bg-surface-2;
+}
+
+.productions-sort-control__metric--active {
+  @apply bg-surface-2/80 font-medium;
+}
+
+.productions-sort-control__direction {
+  @apply flex w-8 shrink-0 cursor-pointer items-center justify-center rounded-r-md text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-100;
+}
+</style>
