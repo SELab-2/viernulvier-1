@@ -7,10 +7,32 @@
     class="production-list-card group -mx-3 flex items-stretch gap-4 border-b border-surface-3 px-3 py-8 transition-colors last:border-b-0 hover:bg-surface-1/60 sm:-mx-4 sm:gap-6 sm:px-4 md:-mx-5 md:gap-8 md:px-5"
     :style="{ '--production-list-stagger': `${staggerDelayMs}ms` }"
   >
+    <!--
+      Fixed width (~2× list column), natural height: no min-height/grey when a crop URL exists.
+      Placeholder grey + min-height only when there is no thumbnail. max-h caps extreme ratios.
+    -->
     <div
-      class="relative h-28 w-24 shrink-0 overflow-hidden rounded-md bg-surface-2 sm:h-32 sm:w-28 md:h-36 md:w-32"
+      class="relative w-48 shrink-0 self-start sm:w-56 md:w-64"
       aria-hidden="true"
-    />
+    >
+      <div
+        :class="[
+          'overflow-hidden rounded-md',
+          thumbnailUrl
+            ? 'bg-transparent'
+            : 'min-h-28 bg-surface-2 sm:min-h-32 md:min-h-36',
+        ]"
+      >
+        <img
+          v-if="thumbnailUrl"
+          :src="thumbnailUrl"
+          alt=""
+          class="block h-auto w-full max-h-96 object-contain object-left"
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+    </div>
 
     <div class="relative flex min-h-0 min-w-0 flex-1 flex-col">
       <!--
@@ -108,10 +130,12 @@ const props = withDefaults(
     dateSummary: ProductionDateSummary;
     tagChips: ProductionTagChip[];
     hallsText: string;
+    /** Public crop URL (`/media/crops/…`) for the list thumbnail, if any. */
+    thumbnailUrl?: string | null;
     /** Used to stagger the row entrance animation on the productions list. */
     rowIndex?: number;
   }>(),
-  { rowIndex: 0 },
+  { rowIndex: 0, thumbnailUrl: null },
 );
 
 const { t, locale } = useI18n();

@@ -28,6 +28,8 @@ export enum HttpSuccess {
   IMUsed = 226,
 }
 
+export const NO_CONTENT = Symbol("NO_CONTENT");
+
 export enum HttpRedirect {
   MultipleChoices = 300,
   MovedPermanently = 301,
@@ -286,11 +288,12 @@ export function replyHandler<Z extends z.ZodType>(
     server: FastifyInstance,
     request: FastifyRequest,
     reply: FastifyReply,
-  ) => Promise<z.output<Z> | null>,
+  ) => Promise<z.output<Z> | typeof NO_CONTENT | null>,
 ) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const result = await handler(server, request, reply);
+      if (result == NO_CONTENT) return await reply.status(HttpSuccess.NoContent).send();
       if (!result) throw new HttpError(HttpClientError.NotFound, "Not Found");
       return await reply.status(HttpSuccess.OK).send(result);
     } catch (err) {

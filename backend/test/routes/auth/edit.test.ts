@@ -2,6 +2,7 @@ import { describe, test, expect, beforeAll, vi, afterAll } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import { AdminSchema, type Admin } from "@viernulvier/shared/index.js";
+import { hashPassword } from "@/routes/auth/handlers/hash.js";
 import { authorizeMock } from "@mocks/plugins/authorize.js";
 
 vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
@@ -26,10 +27,32 @@ beforeAll(async () => {
   sessionCookie = server.jwt.sign({ id: 404, username: mockUsername, super: true });
   authorizeMock.super = true;
 
-  server.pg.query = vi.fn().mockImplementation((query: string, values: unknown[]) => {
-    const isUpdate = query.trim().toUpperCase().startsWith("UPDATE");
+  const hashedPassword = await hashPassword(mockPassword);
 
-    if (isUpdate) {
+  server.pg.query = vi.fn().mockImplementation(async (query: string, values: unknown[]) => {
+    const upper = query.trim().toUpperCase();
+
+    if (upper.startsWith("SELECT")) {
+      const identifier = values[0];
+
+      // simulate "user not found"
+      if (identifier !== mockCreatedAdmin.id) {
+        return { rows: [], rowCount: 0 };
+      }
+
+      return {
+        rows: [
+          {
+            id: mockCreatedAdmin.id,
+            password: hashedPassword,
+            super: mockCreatedAdmin.super,
+          },
+        ],
+        rowCount: 1,
+      };
+    }
+
+    if (upper.startsWith("UPDATE")) {
       const row = { ...mockCreatedAdmin };
 
       // Extract SET clause assignments, e.g. ["username = $1", "password = $2"]
@@ -60,103 +83,157 @@ afterAll(async () => {
 });
 
 describe("Edit on auth route", () => {
-  test("PATCH /api/v1/auth/:id — updates username only", async () => {
-    const response = await server.inject({
-      method: "PATCH",
-      url: `/api/v1/auth/${mockCreatedAdmin.id}`,
-      cookies: { session: sessionCookie },
-      payload: { username: mockEditedUsername },
+  describe("PATCH /api/v1/auth/:id", () => {
+    test("updates username only", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/auth/${mockCreatedAdmin.id}`,
+        cookies: { session: sessionCookie },
+        payload: { username: mockEditedUsername },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(AdminSchema.parse(response.json())).toEqual({
+        id: mockCreatedAdmin.id,
+        username: mockEditedUsername,
+        profile_picture: mockCreatedAdmin.profile_picture,
+        super: mockCreatedAdmin.super,
+      });
     });
 
-    expect(response.statusCode).toBe(200);
-    expect(AdminSchema.parse(response.json())).toEqual({
-      id: mockCreatedAdmin.id,
-      username: mockEditedUsername,
-      profile_picture: mockCreatedAdmin.profile_picture,
-      super: mockCreatedAdmin.super,
+    test("updates password only", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/auth/${mockCreatedAdmin.id}`,
+        cookies: { session: sessionCookie },
+        payload: { password: mockEditedPassword },
+      });
+
+      expect(response.statusCode).toBe(200);
+      // password shouldn't be returned, so the result is still equal to original
+      expect(AdminSchema.parse(response.json())).toEqual(mockCreatedAdmin);
+    });
+
+    test("updates both username and password", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/auth/${mockCreatedAdmin.id}`,
+        cookies: { session: sessionCookie },
+        payload: { username: mockEditedUsername, password: mockEditedPassword },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(AdminSchema.parse(response.json())).toEqual({
+        id: mockCreatedAdmin.id,
+        username: mockEditedUsername,
+        profile_picture: mockCreatedAdmin.profile_picture,
+        super: mockCreatedAdmin.super,
+      });
+    });
+
+    test("updates all fields", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/auth/${mockCreatedAdmin.id}`,
+        cookies: { session: sessionCookie },
+        payload: { username: mockEditedUsername, password: mockEditedPassword, super: false },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(AdminSchema.parse(response.json())).toEqual({
+        id: mockCreatedAdmin.id,
+        username: mockEditedUsername,
+        profile_picture: mockCreatedAdmin.profile_picture,
+        super: false,
+      });
+    });
+
+    test("updating fields with existing values also works", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/auth/${mockCreatedAdmin.id}`,
+        cookies: { session: sessionCookie },
+        payload: { username: mockUsername, password: mockPassword },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(AdminSchema.parse(response.json())).toEqual(mockCreatedAdmin);
+    });
+
+    test("rejects short password", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/auth/${mockCreatedAdmin.id}`,
+        cookies: { session: sessionCookie },
+        payload: { password: "short" },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    test("returns 404 when update returns no rows", async () => {
+      // save original mock
+      const original = server.pg.query;
+
+      server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
+
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/auth/${mockCreatedAdmin.id}`,
+        cookies: { session: sessionCookie },
+        payload: { username: mockEditedUsername },
+      });
+
+      expect(response.statusCode).toBe(404);
+
+      // restore original mock
+      server.pg.query = original;
     });
   });
 
-  test("PATCH /api/v1/auth/:id — updates password only", async () => {
-    const response = await server.inject({
-      method: "PATCH",
-      url: `/api/v1/auth/${mockCreatedAdmin.id}`,
-      cookies: { session: sessionCookie },
-      payload: { password: mockEditedPassword },
+  describe("PATCH /api/v1/auth/me", () => {
+    test("updates password", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/auth/me`,
+        cookies: { session: sessionCookie },
+        payload: {
+          oldPassword: mockPassword,
+          newPassword: mockEditedPassword,
+        },
+      });
+
+      expect(response.statusCode).toBe(204);
+      // no content
+      expect(response.body).toEqual("");
     });
 
-    expect(response.statusCode).toBe(200);
-    // password shouldn't be returned, so the result is still equal to original
-    expect(AdminSchema.parse(response.json())).toEqual(mockCreatedAdmin);
-  });
+    test("rejects when old password is incorrect", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/auth/me`,
+        cookies: { session: sessionCookie },
+        payload: {
+          oldPassword: "wrongPassword",
+          newPassword: mockEditedPassword,
+        },
+      });
 
-  test("PATCH /api/v1/auth/:id — updates both username and password", async () => {
-    const response = await server.inject({
-      method: "PATCH",
-      url: `/api/v1/auth/${mockCreatedAdmin.id}`,
-      cookies: { session: sessionCookie },
-      payload: { username: mockEditedUsername, password: mockEditedPassword },
+      expect(response.statusCode).toBe(401);
     });
 
-    expect(response.statusCode).toBe(200);
-    expect(AdminSchema.parse(response.json())).toEqual({
-      id: mockCreatedAdmin.id,
-      username: mockEditedUsername,
-      profile_picture: mockCreatedAdmin.profile_picture,
-      super: mockCreatedAdmin.super,
+    test("password too short", async () => {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/v1/auth/me`,
+        cookies: { session: sessionCookie },
+        payload: {
+          oldPassword: "short",
+          newPassword: "alsoShort",
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
     });
-  });
-
-  test("PATCH /api/v1/auth/:id — updates all fields", async () => {
-    const response = await server.inject({
-      method: "PATCH",
-      url: `/api/v1/auth/${mockCreatedAdmin.id}`,
-      cookies: { session: sessionCookie },
-      payload: { username: mockEditedUsername, password: mockEditedPassword, super: false },
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(AdminSchema.parse(response.json())).toEqual({
-      id: mockCreatedAdmin.id,
-      username: mockEditedUsername,
-      profile_picture: mockCreatedAdmin.profile_picture,
-      super: false,
-    });
-  });
-
-  test("PATCH /api/v1/auth/:id — updating fields with existing values also works", async () => {
-    const response = await server.inject({
-      method: "PATCH",
-      url: `/api/v1/auth/${mockCreatedAdmin.id}`,
-      cookies: { session: sessionCookie },
-      payload: { username: mockUsername, password: mockPassword },
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(AdminSchema.parse(response.json())).toEqual(mockCreatedAdmin);
-  });
-
-  test("PATCH /api/v1/auth/:id — rejects short password", async () => {
-    const response = await server.inject({
-      method: "PATCH",
-      url: `/api/v1/auth/${mockCreatedAdmin.id}`,
-      cookies: { session: sessionCookie },
-      payload: { password: "short" },
-    });
-
-    expect(response.statusCode).toBe(400);
-  });
-
-  test("PATCH /api/v1/auth/:id — returns 404 when update returns no rows", async () => {
-    server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
-
-    const response = await server.inject({
-      method: "PATCH",
-      url: `/api/v1/auth/${mockCreatedAdmin.id}`,
-      cookies: { session: sessionCookie },
-      payload: { username: mockEditedUsername },
-    });
-
-    expect(response.statusCode).toBe(404);
   });
 });

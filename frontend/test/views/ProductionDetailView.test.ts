@@ -5,7 +5,7 @@ import ProductionDetailView from "@/views/ProductionDetailView.vue";
 import { ApiError } from "@/services/api";
 
 // ─── Mock child components ────────────────────────────────────────────────────
-vi.mock("@/components/AppNavbar.vue", () => ({
+vi.mock("@/components/nav/AppNavbar.vue", () => ({
   default: defineComponent({
     template: `<div data-testid="app-navbar"><button data-testid="navbar-toggle" @click="$emit('toggle-dark')" /></div>`,
     emits: ["toggle-dark"],
@@ -56,8 +56,13 @@ vi.mock("vue-router", () => ({
 
 // ─── Mock service ─────────────────────────────────────────────────────────────
 const mockGetProduction = vi.fn();
+const mockGetImagesForProductionOrEmpty = vi.fn();
 vi.mock("@/services/productions", () => ({
   getProduction: (...args: any[]) => mockGetProduction(...args),
+}));
+vi.mock("@/services/media", () => ({
+  getImagesForProductionOrEmpty: (...args: any[]) =>
+    mockGetImagesForProductionOrEmpty(...args),
 }));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -82,6 +87,7 @@ describe("ProductionDetail", () => {
     mockEvents.value = [];
     mockTagGroups.value = [];
     mockTotalTags.value = 0;
+    mockGetImagesForProductionOrEmpty.mockResolvedValue([]);
   });
 
   // ── Layout ──────────────────────────────────────────────────────────────────
@@ -281,6 +287,26 @@ describe("ProductionDetail", () => {
 
       expect(wrapper.text()).toContain("Server error");
       expect(wrapper.find(".text-red-500").exists()).toBe(true);
+    });
+  });
+
+  // ── Images fetch (parallel with production) ───────────────────────────────
+  describe("production images fetch", () => {
+    it("requests images in parallel with production for the route id", async () => {
+      mockGetProduction.mockResolvedValue(makeProduction());
+      mountComponent();
+      await flushPromises();
+
+      expect(mockGetImagesForProductionOrEmpty).toHaveBeenCalledWith(42);
+    });
+
+    it("still renders the hero when images resolve to an empty list", async () => {
+      mockGetProduction.mockResolvedValue(makeProduction());
+      mockGetImagesForProductionOrEmpty.mockResolvedValue([]);
+      const wrapper = mountComponent();
+      await flushPromises();
+
+      expect(wrapper.find('[data-testid="hero-section"]').exists()).toBe(true);
     });
   });
 });

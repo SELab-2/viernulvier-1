@@ -241,7 +241,7 @@ Optional: add a CSS noise texture at 3-5% opacity for a film-grain look.
 | `src/assets/design-tokens.css` | All CSS custom properties (light + dark) |
 | `src/style.css` | Imports tokens, registers Tailwind `@theme` utilities |
 | `src/components/home/*.vue` | Landing page section components |
-| `src/components/AppNavbar.vue` | Sticky nav bar (inverted surface) |
+| `src/components/nav/AppNavbar.vue` | Sticky nav bar (inverted surface) |
 | `src/components/AppFooter.vue` | Footer (standard surface) |
 
 ### Adding a new token

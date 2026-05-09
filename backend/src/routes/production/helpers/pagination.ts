@@ -24,6 +24,9 @@ export const ProductionListQuerySchema = z
     yearMax: z.coerce.number().int().min(1900).max(2100).optional(),
     from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    sortBy: z.enum(["name", "date"]).optional(),
+    sortDir: z.enum(["asc", "desc"]).optional(),
+    lang: z.enum(["nl", "fr", "en"]).optional(),
   })
   .refine(
     (q) => q.limit !== undefined || q.offset === undefined || q.offset === 0,

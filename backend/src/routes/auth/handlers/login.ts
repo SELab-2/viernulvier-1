@@ -12,17 +12,6 @@ const LoginRowSchema = AdminSchema.pick({ id: true, super: true }).extend({
   password: z.string(),
 });
 
-const fetchAdminCredentials = (server: FastifyInstance) =>
-  buildQuery(
-    server,
-    `SELECT id, password, super FROM admin WHERE username = $1`,
-    z.tuple([z.string()]),
-    LoginRowSchema,
-  );
-
-// A pre-computed bcrypt hash used as a dummy target
-const DUMMY_HASH = "$2b$12$invalidhashvaluethatwillnevermatchangything";
-
 /**
  * Authenticates an admin by username and password, sets a session cookie, and returns a signed JWT.
  * The token contains the admin's `id` and a unique `jti` claim used for revocation on logout.
@@ -41,15 +30,10 @@ export async function login(
 ) {
   const { username, password } = parseSchema(server, LoginBodySchema, request.body);
 
-  const rows = await fetchAdminCredentials(server)(username);
-
-  // always compare hash to prevent a timing attack
-  const valid = await comparePassword(password, rows[0]?.password ?? DUMMY_HASH);
-
-  if (rows.length === 0 || !valid) throw new HttpError(401, "Invalid credentials");
+  const { id } = await checkCredentials(server, { username }, password);
 
   const token = server.jwt.sign(
-    { id: rows[0]!.id, jti: server.generateJti() },
+    { id: id, jti: server.generateJti() },
     { expiresIn: "24h" },
   );
 
@@ -61,4 +45,60 @@ export async function login(
   });
 
   return { token };
+}
+
+type AdminIdentifier =
+  | { username: string }
+  | { id: number };
+
+const fetchByUsername = (server: FastifyInstance) =>
+  buildQuery(
+    server,
+    `SELECT id, password, super FROM admin WHERE username = $1`,
+    z.tuple([z.string()]),
+    LoginRowSchema,
+  );
+
+const fetchById = (server: FastifyInstance) =>
+  buildQuery(
+    server,
+    `SELECT id, password, super FROM admin WHERE id = $1`,
+    z.tuple([z.number()]),
+    LoginRowSchema,
+  );
+
+// A pre-computed bcrypt hash used as a dummy target
+const DUMMY_HASH = "$2b$12$invalidhashvaluethatwillnevermatchangything";
+
+/**
+ * Checks if the provided username and password match, throws an error if they don't.
+ * 
+ * @param server - The Fastify instance, used for database access.
+ * @param username - The username of the admin.
+ * @param password - The password to compare with.
+ * @returns The result of the fetch query (object with id, (hashed) password and super)
+ * @throws `HttpError` With status 401 if the username is not found or the password is incorrect.
+ */
+export async function checkCredentials(
+  server: FastifyInstance,
+  identifier: AdminIdentifier,
+  password: string,
+): Promise<{
+  id: number;
+  super: boolean;
+  password: string;
+}> {
+  const rows = await (
+    "username" in identifier
+      ? fetchByUsername(server)(identifier.username)
+      : fetchById(server)(identifier.id)
+  );
+
+  const valid = await comparePassword(password, rows[0]?.password ?? DUMMY_HASH);
+
+  if (rows.length === 0 || !valid) {
+    throw new HttpError(401, "Invalid credentials");
+  }
+
+  return rows[0]!;
 }

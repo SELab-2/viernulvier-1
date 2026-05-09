@@ -30,7 +30,10 @@ export default fp(function authorizePlugin(server: FastifyInstance) {
         const payload = request.user as { id?: number, jti?: string };
 
         if (payload.jti && server.tokenDenylist.has(payload.jti)) {
-          return await reply.status(401).send({ error: "Token has been revoked" });
+          return await reply
+            .status(401)
+            .header("WWW-Authenticate", 'Bearer realm="api", error_description="Token has been revoked"')
+            .send({ error: "Token has been revoked" });
         }
 
         if (payload.id === undefined) throw Error();
@@ -45,7 +48,10 @@ export default fp(function authorizePlugin(server: FastifyInstance) {
           return await reply.status(403).send({ error: "Forbidden" });
         }
       } catch {
-        return await reply.status(401).send({ error: "Unauthorized" });
+        return await reply
+          .status(401)
+          .header("WWW-Authenticate", 'Bearer realm="api"')
+          .send({ error: "Unauthorized" });
       }
     };
   });

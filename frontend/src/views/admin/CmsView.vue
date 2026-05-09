@@ -64,7 +64,7 @@ import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import AppFooter from "@/components/AppFooter.vue";
-import AdminNavbar from "@/components/admin/AdminNavbar.vue";
+import AdminNavbar from "@/components/nav/AdminNavbar.vue";
 import CmsAdminsTab from "@/components/admin/cms/admins/CmsAdminsTab.vue";
 import CmsProductionsTab from "@/components/admin/cms/productions/CmsProductionsTab.vue";
 import CmsTagsTab from "@/components/admin/cms/tags/CmsTagsTab.vue";
