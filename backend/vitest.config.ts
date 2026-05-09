@@ -27,12 +27,12 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    exclude: ["dist/**", "node_modules/**", "src/scraper/load-repo-env.ts"],
+    exclude: ["dist/**", "node_modules/**"],
     setupFiles: ["./test/setup.ts"],
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/index.ts"],
+      exclude: ["src/index.ts", "src/scraper/core/load-repo-env.ts"],
       thresholds: {
         "src/server.ts": STRICT_COVERAGE,
         "src/db/**/*.ts": STRICT_COVERAGE,
