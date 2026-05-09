@@ -298,6 +298,39 @@ describe("Production fetch routes", () => {
     }
   });
 
+  test("GET /api/v1/production with year range + sortBy=date asc -> orders by MIN(starts_at) in range", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+      const upper = query.trim().toUpperCase();
+      if (upper.includes("COUNT(*)") && upper.includes("FROM PRODUCTION")) {
+        return Promise.resolve({ rows: [{ count: 1 }], rowCount: 1 });
+      }
+      if (
+        upper.includes("ORDER BY") &&
+        upper.includes("MIN(E.STARTS_AT)") &&
+        upper.includes("EXTRACT(YEAR") &&
+        upper.includes("LIMIT") &&
+        upper.includes("OFFSET")
+      ) {
+        expect(params).toEqual([2016, 2026, 2016, 2026, 10, 0]);
+        return Promise.resolve({ rows: [baseProduction], rowCount: 1 });
+      }
+      throw new Error(`Unexpected query in year+date sort test: ${query}`);
+    });
+
+    try {
+      const response = await server.inject({
+        method: "GET",
+        url:
+          "/api/v1/production?limit=10&offset=0&yearMin=2016&yearMax=2026&sortBy=date&sortDir=asc",
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+    } finally {
+      server.pg.query = vi.fn().mockImplementation(mockProductionFetchPgQuery);
+    }
+  });
+
   test("GET /api/v1/production with sortBy=name (no lang) -> uses localized title ordering fallback", async () => {
     server.pg.query = vi.fn().mockImplementation((query: string) => {
       const upper = query.trim().toUpperCase();
