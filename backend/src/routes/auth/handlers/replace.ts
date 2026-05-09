@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Admin } from "@viernulvier/shared/index.js";
-import { AdminSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { AdminSchema, serial } from "@viernulvier/shared/index.js";
 import { buildQuery, getMetadata, parseParams, parseSchema } from "@/routes/helpers.js";
 import { z } from "zod";
 import { hashPassword } from "./hash.js";
@@ -31,7 +31,7 @@ export async function replaceAdmin(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Admin | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const body = parseSchema(server, ReplaceAdminBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
   const hashedPassword = await hashPassword(body.password);

@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Crop, Image } from "@viernulvier/shared/index.js";
-import { stringToInt } from "@viernulvier/shared/index.js";
+import { serial } from "@viernulvier/shared/index.js";
 import {
   HttpClientError,
   HttpError,
@@ -33,7 +33,7 @@ export async function createImage(
 ): Promise<(Image & { crops: Crop[] }) | null> {
   const { productionId } = parseParams(
     request,
-    z.object({ productionId: stringToInt }),
+    z.object({ productionId: serial() }),
   );
   const { admin, current_time } = getMetadata(request);
 
@@ -91,7 +91,7 @@ export async function createCrops(
 ): Promise<Crop[] | null> {
   const { imageId } = parseParams(
     request,
-    z.object({ imageId: stringToInt }),
+    z.object({ imageId: serial() }),
   );
   const { admin, current_time } = getMetadata(request);
 

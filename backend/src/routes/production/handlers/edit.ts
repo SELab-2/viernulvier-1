@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared/index.js";
 import { HttpClientError, HttpError, getMetadata, parseParams, parseSchema } from "@/routes/helpers.js";
-import { stringToInt } from "@viernulvier/shared/index.js";
+import { serial } from "@viernulvier/shared/index.js";
 import { getProductionById } from "./fetch.js";
 import { PartialProductionBodySchema } from "./body-schema.js";
 import { getFieldValue, getNullableFieldValue, hasOwn } from "./field-utils.js";
@@ -38,7 +38,7 @@ export async function editProduction(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<ProductionWithBackwardsRefs | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const body = parseSchema(server, PartialProductionBodySchema, request.body);
 
   const { admin, current_time } = getMetadata(request);

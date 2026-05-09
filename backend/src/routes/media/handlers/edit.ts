@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Crop, Image } from "@viernulvier/shared/index.js";
-import { stringToInt } from "@viernulvier/shared/index.js";
+import { serial } from "@viernulvier/shared/index.js";
 import {
   HttpClientError,
   HttpError,
@@ -37,7 +37,7 @@ export async function editImage(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<(Image & { crops: Crop[] }) | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const body = parseSchema(server, PatchImageBodySchema, request.body);
 
   const { admin, current_time } = getMetadata(request);
@@ -68,8 +68,8 @@ export async function editImage(
   values.push(admin, current_time, id);
 
   const result = await server.pg.query(
-    `UPDATE image SET ${fields.join(", ")} WHERE id =$${i} 
-    RETURNING id`, 
+    `UPDATE image SET ${fields.join(", ")} WHERE id =$${i}
+    RETURNING id`,
     values,
   );
 
@@ -97,7 +97,7 @@ export async function editCrop(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Crop | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const { admin, current_time } = getMetadata(request);
 
   // Fetch existing crop

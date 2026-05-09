@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Admin } from "@viernulvier/shared/index.js";
-import { AdminSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { AdminSchema, serial } from "@viernulvier/shared/index.js";
 import {
   getMetadata,
   parseParams,
@@ -37,7 +37,7 @@ export async function editAdmin(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Admin | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const body = parseSchema(server, EditAdminBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
 

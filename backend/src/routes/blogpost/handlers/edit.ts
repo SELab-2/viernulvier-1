@@ -6,7 +6,7 @@ import type {
 import {
   BlogPostSchema,
   BlogPostWithBackwardsRefsSchema,
-  stringToInt,
+  serial,
 } from "@viernulvier/shared/index.js";
 import {
   getMetadata,
@@ -42,7 +42,7 @@ export async function editBlogPost(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<BlogPostWithBackwardsRefs | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const body = parseSchema(server, EditBlogPostBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
   const productions = body.productions;

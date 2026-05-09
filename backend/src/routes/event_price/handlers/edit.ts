@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import z from "zod";
 
 import { getMetadata, parseParams, ParseContext, parseSchema } from "@/routes/helpers.js";
-import { stringToInt } from "@viernulvier/shared/index.js";
+import { serial } from "@viernulvier/shared/index.js";
 import type { EventPrice } from "@viernulvier/shared/index.js";
 import { EventPriceCreateSchema, updateEventPrice } from "./helper.js";
 import type { EventPriceCreate } from "./helper.js";
@@ -23,7 +23,7 @@ export async function editEventPrice(
   request: FastifyRequest,
 ): Promise<EventPrice | null> {
   const body = parseSchema(server, EventPriceUpdateSchema, request.body, ParseContext.Request);
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
 
   const selectedEventPrice = await fetchEventPrice(server, request);
 

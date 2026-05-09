@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared/index.js";
-import { stringToInt } from "@viernulvier/shared/index.js";
+import { serial } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, parseSchema } from "@/routes/helpers.js";
 import { getProductionById } from "./fetch.js";
 import { ProductionBodySchema } from "./body-schema.js";
@@ -37,7 +37,7 @@ export async function replaceProduction(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<ProductionWithBackwardsRefs | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const body = parseSchema(server, ProductionBodySchema, request.body);
 
   const { admin, current_time } = getMetadata(request);

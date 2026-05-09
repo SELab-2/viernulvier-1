@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { BlogPostWithMeta, BlogPostWithBackwardsRefs } from "@viernulvier/shared/index.js";
-import { BlogPostWithBackwardsRefsSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { BlogPostWithBackwardsRefsSchema, serial } from "@viernulvier/shared/index.js";
 import { parseParams, buildQuery } from "@/routes/helpers.js";
 import z from "zod";
 
@@ -66,7 +66,7 @@ export async function fetchBlogPost(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<BlogPostWithBackwardsRefs | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   return await getBlogPostById(server, id);
 }
 
@@ -81,7 +81,7 @@ export async function fetchBlogPostWithMeta(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<BlogPostWithMeta | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const rows = await fetchBlogPostWithMetaByIdQuery(server)(id);
   return rows[0] ?? null;
 }

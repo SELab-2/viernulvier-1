@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Tag, TagWithMeta } from "@viernulvier/shared/index.js";
-import { TagSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { TagSchema, serial, stringToInt } from "@viernulvier/shared/index.js";
 import { parseParams, buildQuery, parseSchema, ParseContext } from "@/routes/helpers.js";
 import { z } from "zod";
 
@@ -217,7 +217,7 @@ async function fetchTag(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Tag | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const rows = await fetchTagByIdQuery(server)(id);
   const row = rows[0];
   if (!row) return null;
@@ -237,7 +237,7 @@ async function fetchTagVisible(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Tag | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const rows = await fetchTagVisibleByIdQuery(server)(id);
   const row = rows[0];
   if (!row) return null;
@@ -257,7 +257,7 @@ async function fetchTagWithMeta(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<TagWithMeta | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const rows = await fetchTagWithMetaByIdQuery(server)(id);
   const row = rows[0];
   if (!row) return null;

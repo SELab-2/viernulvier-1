@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Crop, Image } from "@viernulvier/shared/index.js";
-import { stringToInt } from "@viernulvier/shared/index.js";
+import { serial } from "@viernulvier/shared/index.js";
 import {
   HttpClientError,
   HttpError,
@@ -24,7 +24,7 @@ export async function deleteImage(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<(Image & { crops: Crop[] }) | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
 
   // Fetch the image + crops before deletion (to return and to get S3 keys)
   const image = await getImageById(server, id);
@@ -57,7 +57,7 @@ export async function deleteCrop(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Crop | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
 
   const crop = await getCropById(server, id);
   if (!crop) {

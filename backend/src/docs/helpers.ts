@@ -91,7 +91,7 @@ export class RequestErrorMessage extends AbstractRequestSchema {
   constructor(statusCode: HttpServerError | HttpClientError, msg: string) {
     super({
       response: {
-        [statusCode]: z.object({error: z.literal(msg)}),
+        [statusCode]: z.object({error:/* z.literal(msg)*/ z.string(), code: z.string().optional()}),
       },
     })
   }
@@ -211,4 +211,8 @@ export const requestById = new RequestParams(
   z.object({ id: stringToInt }),
 );
 
-export const protectedRequest = new RequestSecurity("Login Session");
+export const protectedRequest = new CombinedRequestSchema(
+  new RequestSecurity("Login Session"),
+  new RequestErrorMessage(401, "Token has been revoked"),
+  new RequestErrorMessage(403, "Forbidden"),
+);

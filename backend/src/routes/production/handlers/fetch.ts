@@ -5,7 +5,7 @@ import {
   ProductionSchema,
   ProductionSchemaWithBackwardsRefs,
   productionListErrorCodeForMessage,
-  stringToInt,
+  serial,
 } from "@viernulvier/shared/index.js";
 import {
   HttpClientError,
@@ -99,7 +99,7 @@ export async function fetchProduction(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<ProductionWithBackwardsRefs | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   return await getProductionById(server, id);
 }
 
@@ -114,7 +114,7 @@ export async function fetchProductionWithMeta(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<ProductionWithMeta | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const result = await server.pg.query<ProductionWithMeta>(
     `SELECT
        p.id,
