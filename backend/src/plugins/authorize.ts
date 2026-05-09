@@ -15,8 +15,9 @@ interface AuthorizeOptions {
 /**
  * Decorates the Fastify instance with an `authorize` hook that verifies the JWT session cookie or
  * `Authorization: Bearer <token>` header. Attach this as a `preHandler` on routes that require authentication.
- * Returns a `401` response if the token is missing, invalid, or has been revoked.
- * Returns a `403` response if `{ super: true }` is passed and the token's `super` claim is not true.
+ * Does a database query to fetch the corresponding admin.
+ * Returns a `401` response if the token is missing, invalid (can also be due to the admin having been deleted), or has been revoked.
+ * Returns a `403` response if `{ super: true }` is passed and the super field of the corresponding admin is false.
  *
  * @param server - The Fastify instance to decorate.
  */
