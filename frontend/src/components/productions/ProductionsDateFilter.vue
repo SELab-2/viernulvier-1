@@ -429,6 +429,7 @@ onUnmounted(() => {
   pointer-events: auto;
   width: 1.125rem;
   height: 1.125rem;
+  margin-top: -0.375rem;
   border-radius: 9999px;
   border: 2px solid var(--color-accent-outline, #2563eb);
   background: var(--color-surface-0, #fff);
@@ -456,6 +457,8 @@ onUnmounted(() => {
 }
 
 .year-range-thumb::-webkit-slider-runnable-track {
+  -webkit-appearance: none;
+  appearance: none;
   background: transparent;
   height: 0.375rem;
 }
