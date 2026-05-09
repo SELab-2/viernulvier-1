@@ -54,6 +54,7 @@ const baseProduction: ProductionWithBackwardsRefs = {
 
   tags: [],
   events: [],
+  blogposts: [],
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -240,7 +241,7 @@ describe("ProductionDetailsSection", () => {
   // ─────────────────────────────────────────────
 
   describe("teaser + extra", () => {
-    it("renders both blocks with divider", () => {
+    it("renders both blocks inside the marginalia aside", () => {
       const wrapper = mountComponent({
         production: {
           ...baseProduction,
@@ -251,7 +252,8 @@ describe("ProductionDetailsSection", () => {
 
       expect(wrapper.text()).toContain("Teaser");
       expect(wrapper.text()).toContain("Extra content");
-      expect(wrapper.find(".h-px").exists()).toBe(true);
+      // Marginalia uses a vertical rule on the left rather than an inline divider.
+      expect(wrapper.find("aside .border-l-2").exists()).toBe(true);
     });
 
     it("does not render teaser when whitespace", () => {

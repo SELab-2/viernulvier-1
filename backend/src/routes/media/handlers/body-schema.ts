@@ -1,11 +1,12 @@
 import z from "zod";
-import { ImageSchema } from "@viernulvier/shared/index.js";
+import { ImageSchema, stringToInt } from "@viernulvier/shared/index.js";
 import { CropSchema } from "@viernulvier/shared/index.js";
 
 // ── Crop-file mapping (used inside multipart "data" JSON field) ──
 
 export const CropMappingSchema = CropSchema.pick({ type: true }).extend({
   filename: z.string().min(1),
+  oldId: z.number().int().nonnegative().optional(),
 });
 
 // ── Image body schemas ──
@@ -32,6 +33,16 @@ export const ReplaceImageBodySchema = ImageSchema.pick({
   crops: z.array(CropMappingSchema).optional(),
 });
 
+/**
+ * `GET /api/v1/image` query: optional legacy id filter, or paginated list (`page` 1-based).
+ * When `page` is set, the handler returns `{ totalItems, member }` instead of a raw array.
+ */
+export const ImageListQuerySchema = z.object({
+  oldId: stringToInt.optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(500).optional(),
+});
+
 // ── Crop body schemas ──
 
 /** POST — upload one or more crops to an existing image */
@@ -47,4 +58,9 @@ export const PatchCropBodySchema = CropSchema.pick({
 /** PUT — replace crop type + file */
 export const ReplaceCropBodySchema = CropSchema.pick({
   type: true,
+});
+
+/** FETCH - search query for crops*/
+export const CropListQuerySchema = z.object({
+  oldId: stringToInt.optional(),
 });

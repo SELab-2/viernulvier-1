@@ -26,6 +26,8 @@ export {
   ARCHIVE_TIME_ZONE,
   formatYmdInTimeZone,
   previousBrusselsDayBounds,
+  pastSevenDaysBounds,
+  pastThirtyDaysBounds,
   startOfCalendarDayUtc,
 } from "./zoned-day.js";
 

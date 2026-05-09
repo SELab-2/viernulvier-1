@@ -36,10 +36,24 @@ export default {
     },
   },
   footer: {
-    copyright: "© {year} VierNulVier / De Vooruit. All rights reserved.",
-    privacy: "Privacy Policy",
-    terms: "Terms of Use",
-    contact: "Contact",
+    titles: {
+      organization: "Organization",
+      contact: "Contact",
+      navigation: "Navigation",
+      connect: "Follow us",
+    },
+    address: {
+      city: "9000 Ghent",
+      country: "Belgium",
+    },
+    contact: {
+      phone: "+32 (0)9 267 28 20",
+    },
+    nav: {
+      home: "Index",
+      productions: "Productions",
+      blog: "Blog posts",
+    },
   },
   date: {
     doorsOpen: "Doors open at",
@@ -88,10 +102,17 @@ export default {
     actions: {
       addProduction: "+ Add Production",
       removeProduction: "Remove selected productions",
-      confirmRemoveDialogTitle: "Remove productions?",
-      confirmRemoveBody: "This will permanently delete {count} selected productions. This cannot be undone.",
       confirmRemoveSubmit: "Remove permanently",
+      production: {
+        confirmRemoveDialogTitle: "Remove productions?",
+        confirmRemoveBody: "This will permanently delete {count} selected productions. This cannot be undone.",
+      },
       addTag: "+ Add Tag",
+      removeTag: "Remove selected tags",
+      tag: {
+        confirmRemoveDialogTitle: "Remove tags?",
+        confirmRemoveBody: "This will permanently delete {count} selected tags. This cannot be undone.",
+      },
       searchPlaceholder: "Search across all columns...",
       selectedCount: "Selected: {count}",
       loadedCount: "Rows loaded: {count}",
@@ -176,6 +197,7 @@ export default {
     feedback: {
       saveSuccess: "Changes saved successfully",
       removeSuccess: "Production removed successfully",
+      removeTagSuccess: "Tag removed successfully",
     },
     admin: {
       noPermission: "You don't have permissions to manage admins.",
@@ -202,6 +224,11 @@ export default {
     searchLabel: "Search productions",
     searchPlaceholder: "Title, artist, venue, description…",
     searchButton: "Search",
+    sortByLabel: "Sort productions",
+    sortNameShort: "Name",
+    sortDateShort: "Date",
+    sortMetricMenuAria: "Choose name or date sort",
+    toggleSortDirectionAria: "Reverse sort direction",
     activeSearchLabel: "Search:",
     clearAllSearches: "Clear all searches",
     clearAllFilters: "Clear all filters",
@@ -263,6 +290,7 @@ export default {
     details: {
       tags: "Tags",
       extraInfo: "Extra Info",
+      programme: "Programme",
     },
     events: {
       title: "Performance History",
@@ -274,6 +302,11 @@ export default {
       error_title: "Loading error",
       error_body: "We couldn't retrieve the performance data from the archive.",
       retry: "Try again",
+    },
+    blog: {
+      title: "Related articles",
+      body: "Background stories, interviews and notes from the archive that relate to this production.",
+      all: "All articles",
     },
     notFound: {
       title: "Production not found",

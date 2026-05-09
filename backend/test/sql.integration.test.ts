@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
-import { HallSchema, AdminSchema, BlogSchema, BlogPostSchema, ProductionSchema, ProductionSchemaWithBackwardsRefs, EventSchema, EventPriceSchema, TagSchema, TagTypeSchema } from "@viernulvier/shared/index.js";
+import { HallSchema, AdminSchema, BlogSchema, BlogPostSchema, BlogPostWithBackwardsRefsSchema, ProductionSchema, ProductionSchemaWithBackwardsRefs, EventSchema, EventPriceSchema, TagSchema, TagTypeSchema } from "@viernulvier/shared/index.js";
 import { HttpSuccess } from "@/routes/helpers.js";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { migrate } from "@/db/migrate.js";
@@ -357,29 +357,76 @@ describe("Blog routes — SQL integration", { sequential: true }, () => {
 describe("BlogPost routes — SQL integration", { sequential: true }, () => {
   let blogId: number;
   let blogPostId: number;
+  let productionId1: number;
+  let productionId2: number;
 
   beforeAll(async () => {
-    const response = await server.inject({
+    // Create blog
+    const blogResponse = await server.inject({
       method: "POST",
       url: "/api/v1/blog",
       cookies: { session: sessionCookie },
       payload: { name: "BlogPost Test Blog", description: null },
     });
 
-    expect(response.statusCode).toBe(HttpSuccess.OK);
-    blogId = BlogSchema.parse(response.json()).id;
+    expect(blogResponse.statusCode).toBe(HttpSuccess.OK);
+    blogId = BlogSchema.parse(blogResponse.json()).id;
+
+    // Create test productions for blogpost to link to
+    const prod1Response = await server.inject({
+      method: "POST",
+      url: "/api/v1/production",
+      cookies: { session: sessionCookie },
+      payload: {
+        title: { nl: "BlogPost Test Production 1" },
+        artist: { nl: "Test Artist" },
+        tagline: { nl: "Test tagline" },
+        teaser: { nl: "Test teaser" },
+        finalized: false,
+      },
+    });
+    expect(prod1Response.statusCode).toBe(HttpSuccess.OK);
+    productionId1 = prod1Response.json().id;
+
+    const prod2Response = await server.inject({
+      method: "POST",
+      url: "/api/v1/production",
+      cookies: { session: sessionCookie },
+      payload: {
+        title: { nl: "BlogPost Test Production 2" },
+        artist: { nl: "Test Artist" },
+        tagline: { nl: "Test tagline" },
+        teaser: { nl: "Test teaser" },
+        finalized: false,
+      },
+    });
+    expect(prod2Response.statusCode).toBe(HttpSuccess.OK);
+    productionId2 = prod2Response.json().id;
   });
 
   afterAll(async () => {
+    // Clean up blog (blogpost cascade deletes)
     const response = await server.inject({
       method: "DELETE",
       url: `/api/v1/blog/${blogId}`,
       cookies: { session: sessionCookie },
     });
     expect(response.statusCode).toBe(HttpSuccess.OK);
+
+    // Clean up productions
+    await server.inject({
+      method: "DELETE",
+      url: `/api/v1/production/${productionId1}`,
+      cookies: { session: sessionCookie },
+    });
+    await server.inject({
+      method: "DELETE",
+      url: `/api/v1/production/${productionId2}`,
+      cookies: { session: sessionCookie },
+    });
   });
 
-  test("POST /api/v1/blog/post — inserts and returns a new blogpost", async () => {
+  test("POST /api/v1/blog/post — inserts and returns a new blogpost with productions", async () => {
     const response = await server.inject({
       method: "POST",
       url: "/api/v1/blog/post",
@@ -389,12 +436,14 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
         title: "Test Post",
         content: { body: "Hello world" },
         published_at: new Date().toISOString(),
+        productions: [productionId1, productionId2],
       },
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    const post = BlogPostSchema.parse(response.json());
+    const post = BlogPostWithBackwardsRefsSchema.parse(response.json());
     expect(post).toMatchObject({ blog: blogId, title: "Test Post" });
+    expect(post.productions).toEqual([productionId1, productionId2]);
     blogPostId = post.id;
   });
 
@@ -403,7 +452,7 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
     const posts = response.json<unknown[]>();
-    expect(posts.some((p) => BlogPostSchema.parse(p).id === blogPostId)).toBe(true);
+    expect(posts.some((p) => BlogPostWithBackwardsRefsSchema.parse(p).id === blogPostId)).toBe(true);
   });
 
   test("GET /api/v1/blog/post — does not return draft posts (published_at IS NULL)", async () => {
@@ -416,15 +465,18 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
         title: "Draft Post",
         content: { body: "Not yet published" },
         published_at: null,
+        productions: [productionId1],
       },
     });
     expect(draftResponse.statusCode).toBe(HttpSuccess.OK);
-    const draftId = BlogPostSchema.parse(draftResponse.json()).id;
+    const draftPost = BlogPostWithBackwardsRefsSchema.parse(draftResponse.json());
+    expect(draftPost.productions).toEqual([productionId1]);
+    const draftId = draftPost.id;
 
     const listResponse = await server.inject({ method: "GET", url: "/api/v1/blog/post" });
     expect(listResponse.statusCode).toBe(HttpSuccess.OK);
     const posts = listResponse.json<unknown[]>();
-    expect(posts.some((p) => BlogPostSchema.parse(p).id === draftId)).toBe(false);
+    expect(posts.some((p) => BlogPostWithBackwardsRefsSchema.parse(p).id === draftId)).toBe(false);
 
     await server.inject({
       method: "DELETE",
@@ -437,7 +489,9 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
     const response = await server.inject({ method: "GET", url: `/api/v1/blog/post/${blogPostId}` });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(BlogPostSchema.parse(response.json())).toMatchObject({ id: blogPostId, title: "Test Post" });
+    const post = BlogPostWithBackwardsRefsSchema.parse(response.json());
+    expect(post).toMatchObject({ id: blogPostId, title: "Test Post" });
+    expect(post.productions).toEqual([productionId1, productionId2]);
   });
 
   test("GET /api/v1/blog/post/:id/meta — returns the blogpost with metadata", async () => {
@@ -456,13 +510,17 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
       method: "PATCH",
       url: `/api/v1/blog/post/${blogPostId}`,
       cookies: { session: sessionCookie },
-      payload: { title: "Updated Title" },
+      payload: { 
+        title: "Updated Title",
+        productions: [productionId1],
+      },
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    const post = BlogPostSchema.parse(response.json());
+    const post = BlogPostWithBackwardsRefsSchema.parse(response.json());
     expect(post.title).toBe("Updated Title");
     expect(post.content).toEqual({ body: "Hello world" }); // unchanged
+    expect(post.productions).toEqual([productionId1]);
   });
 
   test("PUT /api/v1/blog/post/:id — replaces all fields of the blogpost", async () => {
@@ -475,15 +533,18 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
         title: "Replaced Title",
         content: { body: "Replaced content" },
         published_at: null,
+        productions: [productionId2],
       },
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(BlogPostSchema.parse(response.json())).toMatchObject({
+    const post = BlogPostWithBackwardsRefsSchema.parse(response.json());
+    expect(post).toMatchObject({
       id: blogPostId,
       title: "Replaced Title",
       published_at: null,
     });
+    expect(post.productions).toEqual([productionId2]);
   });
 
   test("DELETE /api/v1/blog/post/:id — removes the blogpost from the database", async () => {
@@ -496,6 +557,49 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
 
     const fetchResponse = await server.inject({ method: "GET", url: `/api/v1/blog/post/${blogPostId}` });
     expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
+  });
+
+  test("GET /api/v1/production/:id — returns production with linked blogposts", async () => {
+    // Create a fresh blogpost to verify the production backwards reference
+    const postResponse = await server.inject({
+      method: "POST",
+      url: "/api/v1/blog/post",
+      cookies: { session: sessionCookie },
+      payload: {
+        blog: blogId,
+        title: "Verification Post",
+        content: { body: "Verify backwards refs" },
+        published_at: new Date().toISOString(),
+        productions: [productionId1],
+      },
+    });
+
+    expect(postResponse.statusCode).toBe(HttpSuccess.OK);
+    const verificationPost = BlogPostWithBackwardsRefsSchema.parse(postResponse.json());
+    expect(verificationPost.productions).toEqual([productionId1]);
+    const verificationPostId = verificationPost.id;
+
+    // Fetch production and verify it includes the linked blogpost
+    const prodResponse = await server.inject({
+      method: "GET",
+      url: `/api/v1/production/${productionId1}`,
+    });
+
+    expect(prodResponse.statusCode).toBe(HttpSuccess.OK);
+    const production = ProductionSchemaWithBackwardsRefs.parse(prodResponse.json());
+    expect(production.blogposts).toBeDefined();
+    expect(Array.isArray(production.blogposts)).toBe(true);
+    expect(production.blogposts.some((bp) => {
+      const bpId = typeof bp === "object" && bp !== null && "id" in bp ? (bp as { id: number }).id : bp;
+      return bpId === verificationPostId;
+    })).toBe(true);
+
+    // Clean up verification post
+    await server.inject({
+      method: "DELETE",
+      url: `/api/v1/blog/post/${verificationPostId}`,
+      cookies: { session: sessionCookie },
+    });
   });
 });
 

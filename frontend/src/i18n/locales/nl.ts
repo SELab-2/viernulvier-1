@@ -36,10 +36,24 @@ export default {
     },
   },
   footer: {
-    copyright: "© {year} VierNulVier / De Vooruit. Alle rechten voorbehouden.",
-    privacy: "Privacybeleid",
-    terms: "Gebruiksvoorwaarden",
-    contact: "Contact",
+    titles: {
+      organization: "Organisatie",
+      contact: "Contact",
+      navigation: "Navigatie",
+      connect: "Volg ons",
+    },
+    address: {
+      city: "9000 Gent",
+      country: "België",
+    },
+    contact: {
+      phone: "09 267 28 20",
+    },
+    nav: {
+      home: "Index",
+      productions: "Producties",
+      blog: "Blogposts",
+    },
   },
   date: {
     doorsOpen: "Deuren open om",
@@ -88,10 +102,17 @@ export default {
     actions: {
       addProduction: "+ Voeg Productie Toe",
       removeProduction: "Geselecteerde producties verwijderen",
-      confirmRemoveDialogTitle: "Producties verwijderen?",
-      confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde producties. Dit kan niet ongedaan worden gemaakt.",
       confirmRemoveSubmit: "Definitief verwijderen",
+      production: {
+        confirmRemoveDialogTitle: "Producties verwijderen?",
+        confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde producties. Dit kan niet ongedaan worden gemaakt.",
+      },
       addTag: "+ Voeg Tag Toe",
+      removeTag: "Geselecteerde tags verwijderen",
+      tag: {
+        confirmRemoveDialogTitle: "Tags verwijderen?",
+        confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde tags. Dit kan niet ongedaan worden gemaakt.",
+      },
       searchPlaceholder: "Zoek in alle kolommen...",
       selectedCount: "Geselecteerd: {count}",
       loadedCount: "Rijen geladen: {count}",
@@ -175,6 +196,7 @@ export default {
     feedback: {
       saveSuccess: "Wijzigingen opgeslagen",
       removeSuccess: "Productie verwijderd",
+      removeTagSuccess: "Tag verwijderd",
     },
     admin: {
       noPermission: "Je hebt geen toestemming om admins te beheren.",
@@ -202,6 +224,11 @@ export default {
     searchLabel: "Producties doorzoeken",
     searchPlaceholder: "Titel, artiest, zaal, beschrijving…",
     searchButton: "Zoeken",
+    sortByLabel: "Producties sorteren",
+    sortNameShort: "Naam",
+    sortDateShort: "Datum",
+    sortMetricMenuAria: "Kies sorteren op naam of datum",
+    toggleSortDirectionAria: "Sorteerrichting omkeren",
     activeSearchLabel: "Zoekterm:",
     clearAllSearches: "Alle zoektermen wissen",
     clearAllFilters: "Alle filters wissen",
@@ -263,6 +290,7 @@ export default {
     details: {
       tags: "Labels",
       extraInfo: "Extra info",
+      programme: "Programma",
     },
     events: {
       title: "Voorstellings\u00adgeschiedenis",
@@ -274,6 +302,11 @@ export default {
       error_title: "Fout bij laden",
       error_body: "We konden de gegevens over de voorstellingen niet ophalen uit het archief.",
       retry: "Opnieuw proberen",
+    },
+    blog: {
+      title: "Verwante artikelen",
+      body: "Achtergrondverhalen, interviews en notities uit het archief bij deze productie.",
+      all: "Alle artikelen",
     },
     notFound: {
       title: "Productie niet gevonden",
