@@ -23,7 +23,7 @@
       <section class="mx-auto max-w-5xl px-6 pb-20 pt-8 lg:px-10">
         <div v-if="!loading" class="mb-4 space-y-3">
           <div
-            class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-center sm:gap-3"
+            class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-stretch sm:gap-3"
           >
             <ProductionsDateFilter
               v-model:year-range="explicitYearRange"
@@ -37,7 +37,7 @@
             <label class="sr-only" for="productions-search">{{
               t("productionsPage.searchLabel")
             }}</label>
-            <div class="relative min-w-0 grow">
+            <div class="relative min-h-10 min-w-0 grow">
               <input
                 id="productions-search"
                 v-model="searchDraft"
@@ -139,7 +139,7 @@
                 :key="'compact-genre-' + g.id"
                 :ref="(el) => setCompactGenrePillRef(g.id, el)"
                 type="button"
-                class="productions-genre-collapsed-row-pill"
+                class="productions-view__genre-collapsed-row-pill"
                 :class="
                   selectedTagIds.includes(g.id)
                     ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
@@ -198,7 +198,7 @@
                     :key="g.id"
                     :ref="(el) => setGenrePanelPillRef(g.id, el)"
                     type="button"
-                    class="productions-tag-filter-panel-pill"
+                    class="productions-view__tag-filter-panel-pill"
                     :class="
                       selectedTagIds.includes(g.id)
                         ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
@@ -214,7 +214,7 @@
                   v-if="showGenreTagFilterExpandToggle"
                   :ref="setGenrePanelExpandButtonRef"
                   type="button"
-                  class="productions-tag-filter-expand"
+                  class="productions-view__tag-filter-expand"
                   :disabled="listLoading || loadError"
                   :aria-expanded="genreTagFiltersExpanded"
                   :aria-label="
@@ -253,7 +253,7 @@
                     :key="g.id"
                     :ref="(el) => setNonGenrePanelPillRef(g.id, el)"
                     type="button"
-                    class="productions-tag-filter-panel-pill"
+                    class="productions-view__tag-filter-panel-pill"
                     :class="
                       selectedTagIds.includes(g.id)
                         ? 'border-accent-outline bg-surface-1 text-ink-primary'
@@ -269,7 +269,7 @@
                   v-if="showNonGenreTagFilterExpandToggle"
                   :ref="setNonGenrePanelExpandButtonRef"
                   type="button"
-                  class="productions-tag-filter-expand"
+                  class="productions-view__tag-filter-expand"
                   :disabled="listLoading || loadError"
                   :aria-expanded="nonGenreTagFiltersExpanded"
                   :aria-label="
@@ -1584,22 +1584,21 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
 <style scoped>
 @reference "@/style.css";
 
-.productions-tag-filter-expand {
+.productions-view__tag-filter-expand {
   @apply inline-flex shrink-0 cursor-pointer justify-end self-start whitespace-nowrap pt-0.5 text-right text-sm font-medium leading-snug text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100;
   min-width: 6rem;
 }
 
-.productions-genre-collapsed-row-pill {
+.productions-view__genre-collapsed-row-pill {
   @apply rounded-full border px-3 py-1 text-[0.95rem] transition disabled:opacity-100;
 }
 
-.productions-tag-filter-panel-pill {
-  @apply rounded-full border px-2.75 py-1 text-sm transition disabled:opacity-100;
+.productions-view__tag-filter-panel-pill {
+  @apply rounded-full border px-2.5 py-1 text-sm transition disabled:opacity-100;
 }
-</style>
 
 .productions-view__search-field {
-  @apply min-w-0 w-full rounded-md border border-surface-3 bg-surface-a0 px-3 py-2 pr-11 text-base text-ink-primary placeholder:text-ink-secondary focus:border-accent-outline focus:outline-none dark:bg-surface-1;
+  @apply box-border min-h-10 min-w-0 w-full rounded-md border border-surface-3 bg-surface-0 px-3 py-2 pr-11 text-base text-ink-primary placeholder:text-ink-secondary focus:border-accent-outline focus:outline-none dark:bg-surface-1;
 }
 
 .productions-view__search-submit {
@@ -1612,14 +1611,6 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
 
 .productions-view__banner-action {
   @apply col-start-2 row-start-1 shrink-0 cursor-pointer justify-self-end self-start pt-0.5 text-sm font-medium text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100;
-}
-
-.productions-view__tag-pill {
-  @apply rounded-full border px-3 py-1 text-sm transition disabled:opacity-100;
-}
-
-.productions-view__filter-expand {
-  @apply shrink-0 cursor-pointer pt-0.5 text-sm font-medium leading-snug text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100;
 }
 
 .productions-view__filter-banner {
