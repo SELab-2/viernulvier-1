@@ -198,7 +198,7 @@
                   v-if="showGenreTagFilterExpandToggle"
                   :ref="setGenrePanelExpandButtonRef"
                   type="button"
-                  class="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full border border-surface-3 bg-surface-0 text-base font-semibold leading-none text-ink-secondary transition hover:border-accent-outline hover:bg-surface-2 hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-100 dark:bg-surface-1"
+                  class="productions-tag-filter-expand"
                   :disabled="listLoading || loadError"
                   :aria-expanded="genreTagFiltersExpanded"
                   :aria-label="
@@ -208,9 +208,11 @@
                   "
                   @click="genreTagFiltersExpanded = !genreTagFiltersExpanded"
                 >
-                  <span aria-hidden="true">{{
-                    genreTagFiltersExpanded ? "−" : "+"
-                  }}</span>
+                  {{
+                    genreTagFiltersExpanded
+                      ? t("productionsPage.viewLessTagFilters")
+                      : t("productionsPage.viewMoreTagFilters")
+                  }}
                 </button>
               </div>
             </div>
@@ -251,7 +253,7 @@
                   v-if="showNonGenreTagFilterExpandToggle"
                   :ref="setNonGenrePanelExpandButtonRef"
                   type="button"
-                  class="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full border border-surface-3 bg-surface-0 text-base font-semibold leading-none text-ink-secondary transition hover:border-accent-outline hover:bg-surface-2 hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-100 dark:bg-surface-1"
+                  class="productions-tag-filter-expand"
                   :disabled="listLoading || loadError"
                   :aria-expanded="nonGenreTagFiltersExpanded"
                   :aria-label="
@@ -263,9 +265,11 @@
                     nonGenreTagFiltersExpanded = !nonGenreTagFiltersExpanded
                   "
                 >
-                  <span aria-hidden="true">{{
-                    nonGenreTagFiltersExpanded ? "−" : "+"
-                  }}</span>
+                  {{
+                    nonGenreTagFiltersExpanded
+                      ? t("productionsPage.viewLessTagFilters")
+                      : t("productionsPage.viewMoreTagFilters")
+                  }}
                 </button>
               </div>
             </div>
@@ -1486,3 +1490,13 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
   return sortProductionTagChipsGenresFirst(chips);
 }
 </script>
+
+<style scoped>
+@reference "@/style.css";
+
+.productions-tag-filter-expand {
+  @apply inline-flex shrink-0 cursor-pointer justify-end self-start whitespace-nowrap pt-0.5 text-right text-sm font-medium leading-snug text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100;
+  min-width: 8rem;
+}
+</style>
+

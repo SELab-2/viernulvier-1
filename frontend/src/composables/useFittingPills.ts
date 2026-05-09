@@ -23,6 +23,8 @@ interface UseFittingPillsOptions {
 
 /**
  * Computes how many pills can fit in one row, accounting for an optional trailing control
+ * (width is measured dynamically; ResizeObserver watches the trailing node so reflow-safe
+ * labels like switching “more/less” text still recomputes the fit).
  */
 export function useFittingPills<T extends { id: PillId }>(
   items: MaybeItemsRef<T>,
@@ -38,6 +40,7 @@ export function useFittingPills<T extends { id: PillId }>(
   const visibleCount = ref(0);
   const pillElements = new Map<PillId, HTMLElement>();
   let rowResizeObserver: ResizeObserver | null = null;
+  let trailingResizeObserver: ResizeObserver | null = null;
 
   function resolveDomElement(
     el: Element | ComponentPublicInstance | null,
@@ -140,7 +143,18 @@ export function useFittingPills<T extends { id: PillId }>(
 
   watch(
     trailingControlEl,
-    async () => {
+    async (next) => {
+      trailingResizeObserver?.disconnect();
+      trailingResizeObserver = null;
+      if (
+        typeof ResizeObserver !== "undefined" &&
+        next instanceof HTMLElement
+      ) {
+        trailingResizeObserver = new ResizeObserver(() => {
+          recomputeVisibleCount();
+        });
+        trailingResizeObserver.observe(next);
+      }
       await nextTick();
       recomputeVisibleCount();
     },
@@ -178,6 +192,8 @@ export function useFittingPills<T extends { id: PillId }>(
   });
 
   onUnmounted(() => {
+    trailingResizeObserver?.disconnect();
+    trailingResizeObserver = null;
     rowResizeObserver?.disconnect();
     rowResizeObserver = null;
     window.removeEventListener("resize", onWindowResize);
