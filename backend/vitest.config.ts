@@ -4,7 +4,7 @@ import path from "path";
 /** Same bar for both legacy CSV importers (streaming / DB-heavy; branches are costly to drive). */
 const LEGACY_IMPORTER_COVERAGE = {
   statements: 85,
-  branches: 65,
+  branches: 75,
   functions: 100,
   lines: 85,
 } as const;
@@ -17,7 +17,7 @@ const STRICT_COVERAGE = {
   lines: 100,
 } as const;
 
-const SCRAPER_COVERAGE = {
+const SCRAPER_ENTITIES_COVERAGE = {
   statements: 90,
   branches: 90,
   functions: 90,
@@ -47,7 +47,8 @@ export default defineConfig({
         "src/routes/**/*.ts": STRICT_COVERAGE,
         "src/legacy-import/shared.ts": STRICT_COVERAGE,
         "src/legacy-import/validate-legacy-inserts.ts": STRICT_COVERAGE,
-        "src/scraper/**/*.ts": SCRAPER_COVERAGE,
+        "src/scraper/core/**/*.ts": STRICT_COVERAGE,
+        "src/scraper/entities/**/*.ts": SCRAPER_ENTITIES_COVERAGE,
         "src/legacy-import/import-productions-legacy.ts": LEGACY_IMPORTER_COVERAGE,
         "src/legacy-import/import-events-legacy.ts": LEGACY_IMPORTER_COVERAGE,
         perFile: true,
