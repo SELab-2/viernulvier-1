@@ -158,7 +158,7 @@ export async function fetchEvents(
 ): Promise<Event[]> {
   const { production, old_id } = parseSchema(
     server,
-    EventsListQuerySchema,
+    EventsListQuerySchema.out,
     request.query,
   );
 

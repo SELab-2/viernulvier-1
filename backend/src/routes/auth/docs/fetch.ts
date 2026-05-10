@@ -1,5 +1,7 @@
-import { RequestDescription, requestSchema, requestById, protectedRequest } from "@/docs/helpers.js";
+import { RequestDescription, requestSchema, requestById, protectedRequest, RequestResponse } from "@/docs/helpers.js";
 import { returnsAdminArray, returnsAdmin, sharedRequestSchema } from "./shared.js";
+import { AdminSchema } from "@viernulvier/shared/index.js";
+import { HttpSuccess } from "@/routes/helpers.js";
 
 
 const fetchAdminsDocs = requestSchema(
@@ -20,7 +22,7 @@ const fetchAdminDocs = requestSchema(
 const fetchAdminWithMetaDocs = requestSchema(
   sharedRequestSchema,
   requestById,
-  returnsAdmin,
+  new RequestResponse(HttpSuccess.OK, AdminSchema.withMeta()),
   protectedRequest,
   new RequestDescription("Fetch an admin with metadata by ID"),
 );
@@ -34,7 +36,7 @@ const fetchCurrentlyLoggedInAdminDocs = requestSchema(
 
 const fetchCurrentlyLoggedInAdminWithMetaDocs = requestSchema(
   sharedRequestSchema,
-  returnsAdmin,
+  new RequestResponse(HttpSuccess.OK, AdminSchema.withMeta()),
   protectedRequest,
   new RequestDescription("Fetch the currently authenticated admin with metadata"),
 );

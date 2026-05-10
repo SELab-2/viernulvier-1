@@ -1,15 +1,11 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import z from "zod";
 
 import { getMetadata, parseSchema, ParseContext } from "@/routes/helpers.js";
-import type { Event } from "@viernulvier/shared/index.js";
+import { type Event } from "@viernulvier/shared/index.js";
 import { fetchEvent } from "./fetch.js";
-import { EventCreateSchema, normalizePartialEventDates, updateEvent } from "./helper.js";
+import { EventBulkUpdateSchema, updateEvent } from "./helper.js";
 
-// Define schema with explicit types to avoid ForeignKey issues
-export const EventBulkUpdateSchema = EventCreateSchema.partial().extend({
-  ids: z.array(z.number().nonnegative()).nonempty(),
-});
+
 
 /**
  * Updates certain fields from multiple events by ID in the database.
@@ -23,12 +19,12 @@ export async function editEvents(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Event[] | null> {
-  const normalizedBody = normalizePartialEventDates(request.body);
-  const body = parseSchema(server, EventBulkUpdateSchema, normalizedBody, ParseContext.Request);
+  const body = parseSchema(server, EventBulkUpdateSchema, request.body, ParseContext.Request);
+
   const selectedEvents = await Promise.all(
     body.ids.map((id: number) => fetchEvent(
       server,
-      { ...request, params: { ...(request.params as Record<string, string>), id: String(id) } },
+      { ...request, params: { ...(request.params as Record<string, string>), id } },
     )),
   );
 

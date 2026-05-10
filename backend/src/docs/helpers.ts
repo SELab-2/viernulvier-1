@@ -87,11 +87,11 @@ export function requestSchema(...requestSchemas: AbstractRequestSchema[]) {
  * const requestWithNotFoundError = new RequestErrorMessage(404, "Not Found")
  * ```
  */
-export class RequestErrorMessage extends AbstractRequestSchema {
-  constructor(statusCode: HttpServerError | HttpClientError, msg: string) {
+export class RequestError extends AbstractRequestSchema {
+  constructor(statusCode: HttpServerError | HttpClientError) {
     super({
       response: {
-        [statusCode]: z.object({error:/* z.literal(msg)*/ z.string(), code: z.string().optional()}),
+        [statusCode]: z.object({error: z.string(), code: z.string().optional()}),
       },
     })
   }
@@ -202,9 +202,9 @@ export class RequestSecurity extends AbstractRequestSchema {
 
 
 export const DefaultRequestErrorMessages = new CombinedRequestSchema(
-  new RequestErrorMessage(HttpClientError.NotFound, "Not Found"),
-  new RequestErrorMessage(HttpClientError.BadRequest, "Invalid request data"),
-  new RequestErrorMessage(HttpServerError.InternalServerError, "Internal server error"),
+  new RequestError(HttpClientError.NotFound),
+  new RequestError(HttpClientError.BadRequest),
+  new RequestError(HttpServerError.InternalServerError),
 );
 
 export const requestById = new RequestParams(
@@ -213,6 +213,6 @@ export const requestById = new RequestParams(
 
 export const protectedRequest = new CombinedRequestSchema(
   new RequestSecurity("Login Session"),
-  new RequestErrorMessage(401, "Token has been revoked"),
-  new RequestErrorMessage(403, "Forbidden"),
+  new RequestError(HttpClientError.Unauthorized),
+  new RequestError(HttpClientError.Forbidden),
 );

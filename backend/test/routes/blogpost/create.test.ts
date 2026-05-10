@@ -46,7 +46,7 @@ describe("Create on blogpost route", () => {
     const mockClient = {
       query: vi.fn(async (query: string) => {
         const upper = query.trim().toUpperCase();
-        
+
         if (upper === "BEGIN" || upper === "COMMIT" || upper === "ROLLBACK") {
           return Promise.resolve({ rows: [], rowCount: 0 });
         }
@@ -259,7 +259,6 @@ describe("Create on blogpost route", () => {
         productions: [],
       },
     });
-
     expect(response.statusCode).toBe(HttpClientError.Unauthorized);
   });
 

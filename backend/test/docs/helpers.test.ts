@@ -1,4 +1,4 @@
-import { CombinedRequestSchema, RequestBody, RequestDescription, RequestErrorMessage, RequestParams, RequestResponse, requestSchema, RequestTag } from "@/docs/helpers.js";
+import { CombinedRequestSchema, RequestBody, RequestDescription, RequestError, RequestParams, RequestResponse, requestSchema, RequestTag } from "@/docs/helpers.js";
 import { describe, expect, expectTypeOf, test } from "vitest";
 import z from "zod";
 
@@ -49,10 +49,10 @@ describe(RequestBody, () => {
   });
 });
 
-describe(RequestErrorMessage, () => {
+describe(RequestError, () => {
   describe("Creating a basic RequestErrorMessage", () => {
     test("new RequestErrorMessage(404, 'Not Found')", () => {
-      const errorMessage = new RequestErrorMessage(404, "Not Found");
+      const errorMessage = new RequestError(404, "Not Found");
       expect(errorMessage.schema.response, "should contain the correct error message schema.").toHaveProperty("404");
       expect(Object.keys(errorMessage.schema), "should not contain any other properties.").toEqual(["response"]);
     });
@@ -60,8 +60,8 @@ describe(RequestErrorMessage, () => {
 
   describe("Combining two RequestErrorMessages", () => {
     test("new CombinedRequestSchema(new RequestErrorMessage(404, 'Not Found'), new RequestErrorMessage(500, 'Internal Server Error')))", () => {
-      const errorMessage1 = new RequestErrorMessage(404, "Not Found");
-      const errorMessage2 = new RequestErrorMessage(500, "Internal Server Error");
+      const errorMessage1 = new RequestError(404, "Not Found");
+      const errorMessage2 = new RequestError(500, "Internal Server Error");
       expect(errorMessage1.schema.response, "error message 1 should contain the correct error message schema.").toHaveProperty("404");
       expect(errorMessage2.schema.response, "error message 2 should contain the correct error message schema.").toHaveProperty("500");
 
