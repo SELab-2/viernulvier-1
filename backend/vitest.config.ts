@@ -18,10 +18,10 @@ const STRICT_COVERAGE = {
 } as const;
 
 const SCRAPER_ENTITIES_COVERAGE = {
-  statements: 90,
+  statements: 95,
   branches: 90,
-  functions: 90,
-  lines: 90,
+  functions: 100,
+  lines: 95,
 } as const;
 
 export default defineConfig({
