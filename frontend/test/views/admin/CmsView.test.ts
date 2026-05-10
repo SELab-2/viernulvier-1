@@ -24,6 +24,7 @@ vi.mock("@/services/tags", () => ({
   getTagsForProduction: vi.fn(),
   getTagTypes: vi.fn().mockResolvedValue([]),
   updateTag: vi.fn(),
+  deleteTag: vi.fn(),
 }));
 
 vi.mock("@/services/halls", () => ({

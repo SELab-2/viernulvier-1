@@ -28,6 +28,8 @@ export enum HttpSuccess {
   IMUsed = 226,
 }
 
+export const NO_CONTENT = Symbol("NO_CONTENT");
+
 export enum HttpRedirect {
   MultipleChoices = 300,
   MovedPermanently = 301,
@@ -146,16 +148,16 @@ export function parseParams<
   return parsed.data;
 }
 
-const UserPayloadSchema = AdminSchema.pick({ id: true, username: true });
+const UserPayloadSchema = AdminSchema.pick({ id: true });
 type UserPayload = z.infer<typeof UserPayloadSchema>;
 
 /**
- * Extracts and validates the JWT payload from the request, returning only `id` and `username`.
+ * Extracts and validates the JWT payload from the request, returning only `id`.
  *
  * Example: `const { id } = parseUser(request);`
  *
  * @param request - The Fastify request to extract the user payload from.
- * @returns A type-safe object containing only `id` and `username`.
+ * @returns A type-safe object containing only `id`.
  * @throws `HttpError` If the payload doesn't match the expected shape.
  */
 export function parseUser(request: FastifyRequest): UserPayload {
@@ -286,11 +288,12 @@ export function replyHandler<Z extends z.ZodType>(
     server: FastifyInstance,
     request: FastifyRequest,
     reply: FastifyReply,
-  ) => Promise<z.output<Z> | null>,
+  ) => Promise<z.output<Z> | typeof NO_CONTENT | null>,
 ) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const result = await handler(server, request, reply);
+      if (result == NO_CONTENT) return await reply.status(HttpSuccess.NoContent).send();
       if (!result) throw new HttpError(HttpClientError.NotFound, "Not Found");
       return await reply.status(HttpSuccess.OK).send(result);
     } catch (err) {

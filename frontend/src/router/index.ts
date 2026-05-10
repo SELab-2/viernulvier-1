@@ -18,20 +18,20 @@ export const router = createRouter({
  * 2. Syncs the vue-i18n locale with the language in the URL
  * 3. Blocks access to admin routes for non-admin users
  */
-router.beforeEach(async (to, _, next) => {
+router.beforeEach(async (to) => {
   // check if non existing route would exist with a lang prefix
   if (to.name === RouteNames.NOT_FOUND) {
     const lang = detectLanguage();
     const pathWithLang = `/${lang}${to.path}`;
     const matchedRoute = router.resolve(pathWithLang);
 
-    // if route exists with lang prefix, redirect there (bv. /productions → /nl/productions)
+    // if route exists with lang prefix, redirect there (e.g. /productions → /nl/productions)
     if (matchedRoute.name !== RouteNames.NOT_FOUND) {
-      return next(pathWithLang);
+      return pathWithLang;
     }
 
     // else, route truly doesn't exist, proceed to 404
-    return next();
+    return true;
   }
 
   // set locale based on route param
@@ -39,10 +39,8 @@ router.beforeEach(async (to, _, next) => {
 
   // check admin access for routes that require it
   if (to.meta.requiresAdmin && !(await checkUserIsAdmin())) {
-    return next(`/${to.params.lang}/admin/login?redirect=${encodeURIComponent(to.fullPath)}`); // redirect to login
+    return `/${to.params.lang}/admin/login?redirect=${encodeURIComponent(to.fullPath)}`; // redirect to login
   }
-
-  next();
 });
 
 /**

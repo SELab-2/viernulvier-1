@@ -1,13 +1,17 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Admin } from "@viernulvier/shared/index.js";
 import { AdminSchema, stringToInt } from "@viernulvier/shared/index.js";
-import { getMetadata, parseParams, parseSchema, ParseContext } from "@/routes/helpers.js";
+import { getMetadata, parseParams, parseSchema, ParseContext, NO_CONTENT } from "@/routes/helpers.js";
 import z from "zod";
-import { hashPassword } from "./hash.js";
+import { hashPassword, PasswordBase, zPassword } from "./hash.js";
+import { checkCredentials } from "./login.js";
 
-const EditAdminBodySchema = AdminSchema.pick({ username: true, super: true }).extend({
-  password: z.string().min(8).max(72),
-}).partial();
+const EditAdminBodySchema = AdminSchema.pick({ username: true, super: true }).extend(PasswordBase).partial();
+
+const EditOwnPasswordSchema = z.object({
+  oldPassword: zPassword,
+  newPassword: zPassword,
+});
 
 /**
  * Updates an existing admin and returns the updated record.
@@ -53,4 +57,35 @@ export async function editAdmin(
   );
 
   return parseSchema(server, z.array(AdminSchema), result.rows, ParseContext.Database)[0] ?? null;
+}
+
+/**
+ * Edits the current logged in admin's password and returns an empty 204 No Content.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param request - The Fastify request, expected to contain a body with `oldPassword` and `newPassword`.
+ * @returns NO_CONTENT to send a 204 No Content response.
+ * @throws `HttpError` With status 401 if the old password is incorrect.
+ */
+export async function editOwnPassword(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<typeof NO_CONTENT> {
+  const body = parseSchema(server, EditOwnPasswordSchema, request.body);
+  const { admin } = getMetadata(request);
+
+  // check if old password matches
+  await checkCredentials(server, { id: admin }, body.oldPassword);
+
+  // update with new password
+  const hashedPassword = await hashPassword(body.newPassword);
+
+  // note: I won't update the updated by, since it doesn't change anything to the admin schema or any of the fields visible in the CMS.
+
+  await server.pg.query(
+    `UPDATE admin SET password = $1 WHERE id = $2`,
+    [hashedPassword, admin],
+  );
+
+  return NO_CONTENT;
 }

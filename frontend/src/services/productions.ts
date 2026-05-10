@@ -103,6 +103,9 @@ export type ProductionListPage = {
   total: number;
 };
 
+export type ProductionSortBy = "name" | "date";
+export type ProductionSortDir = "asc" | "desc";
+
 /**
  * Extracts normalized tag IDs from a production relation array.
  * Handles numeric IDs and object references (`{ id }`).
@@ -153,6 +156,9 @@ export async function getProductions(options?: {
   yearMax?: number;
   dateFrom?: string;
   dateTo?: string;
+  sortBy?: ProductionSortBy;
+  sortDir?: ProductionSortDir;
+  lang?: "nl" | "fr" | "en";
 }): Promise<ProductionListPage> {
   const params = new URLSearchParams();
   if (options?.limit !== undefined) {
@@ -184,6 +190,13 @@ export async function getProductions(options?: {
   if (options?.dateFrom !== undefined && options?.dateTo !== undefined) {
     params.set("from", options.dateFrom);
     params.set("to", options.dateTo);
+  }
+  if (options?.sortBy !== undefined) {
+    params.set("sortBy", options.sortBy);
+    params.set("sortDir", options.sortDir ?? "asc");
+  }
+  if (options?.lang !== undefined) {
+    params.set("lang", options.lang);
   }
   const qs = params.toString();
   return await apiFetch<ProductionListPage>(

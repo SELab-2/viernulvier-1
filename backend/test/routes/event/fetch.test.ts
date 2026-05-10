@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import type { FastifyInstance } from "fastify";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 import { buildServer } from "@/server.js";
 import type { EventPrice, EventWithoutPrice } from "@viernulvier/shared/index.js";
 

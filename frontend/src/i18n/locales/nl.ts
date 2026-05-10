@@ -1,4 +1,8 @@
 export default {
+  general: {
+    cancel: "Annuleer",
+    saving: "Opslaan...",
+  },
   nav: {
     home: "Home",
     archive: "Archief",
@@ -32,10 +36,24 @@ export default {
     },
   },
   footer: {
-    copyright: "© {year} VierNulVier / De Vooruit. Alle rechten voorbehouden.",
-    privacy: "Privacybeleid",
-    terms: "Gebruiksvoorwaarden",
-    contact: "Contact",
+    titles: {
+      organization: "Organisatie",
+      contact: "Contact",
+      navigation: "Navigatie",
+      connect: "Volg ons",
+    },
+    address: {
+      city: "9000 Gent",
+      country: "België",
+    },
+    contact: {
+      phone: "09 267 28 20",
+    },
+    nav: {
+      home: "Index",
+      productions: "Producties",
+      blog: "Blogposts",
+    },
   },
   date: {
     doorsOpen: "Deuren open om",
@@ -84,15 +102,21 @@ export default {
     actions: {
       addProduction: "+ Voeg Productie Toe",
       removeProduction: "Geselecteerde producties verwijderen",
-      confirmRemoveDialogTitle: "Producties verwijderen?",
-      confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde producties. Dit kan niet ongedaan worden gemaakt.",
-      confirmRemoveCancel: "Annuleer",
       confirmRemoveSubmit: "Definitief verwijderen",
+      production: {
+        confirmRemoveDialogTitle: "Producties verwijderen?",
+        confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde producties. Dit kan niet ongedaan worden gemaakt.",
+      },
       confirmBulkEditDialogTitle: "Meerdere producties bewerken?",
       confirmBulkEditBody: "Je bent op het punt om {count} producties met dezelfde gegevens bij te werken.",
       confirmBulkEditSubmit: "Ja, bijwerken",
       confirmBulkEditCancelInfo: "Als je sluit, zal alleen de huidige productie worden bewerkt.",
       addTag: "+ Voeg Tag Toe",
+      removeTag: "Geselecteerde tags verwijderen",
+      tag: {
+        confirmRemoveDialogTitle: "Tags verwijderen?",
+        confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde tags. Dit kan niet ongedaan worden gemaakt.",
+      },
       searchPlaceholder: "Zoek in alle kolommen...",
       selectedCount: "Geselecteerd: {count}",
       loadedCount: "Rijen geladen: {count}",
@@ -122,9 +146,7 @@ export default {
       selectTagType: "Kies een type...",
       finalized: "Markeer als gefinaliseerd",
       languages: "Extra talen",
-      cancel: "Annuleer",
       submit: "Productie toevoegen",
-      saving: "Toevoegen...",
       tags: {
         title: "Tags",
         primary: "Primaire tag",
@@ -166,7 +188,6 @@ export default {
       save: "Opslaan",
       saveAction: "Wijzigingen Opslaan",
       saveHint: "Wijzigingen worden pas toegepast nadat je op Wijzigingen Opslaan klikt.",
-      saving: "Opslaan...",
       text: "Tekst",
       bulkNotice: "Wijziging wordt toegepast op {count} geselecteerde producties.",
     },
@@ -179,6 +200,7 @@ export default {
     feedback: {
       saveSuccess: "Wijzigingen opgeslagen",
       removeSuccess: "Productie verwijderd",
+      removeTagSuccess: "Tag verwijderd",
     },
     admin: {
       noPermission: "Je hebt geen toestemming om admins te beheren.",
@@ -206,6 +228,11 @@ export default {
     searchLabel: "Producties doorzoeken",
     searchPlaceholder: "Titel, artiest, zaal, beschrijving…",
     searchButton: "Zoeken",
+    sortByLabel: "Producties sorteren",
+    sortNameShort: "Naam",
+    sortDateShort: "Datum",
+    sortMetricMenuAria: "Kies sorteren op naam of datum",
+    toggleSortDirectionAria: "Sorteerrichting omkeren",
     activeSearchLabel: "Zoekterm:",
     clearAllSearches: "Alle zoektermen wissen",
     clearAllFilters: "Alle filters wissen",
@@ -245,10 +272,27 @@ export default {
     hero: {
       dateRange: "Speelperiode",
       runningTime: "Speelduur",
+      bannerImageAlt: "Beeld bovenaan de pagina",
+    },
+    gallery: {
+      title: "Beelden",
+      intro: "Een selectie uit het mediarchief van deze productie.",
+      prev: "Vorige afbeelding",
+      next: "Volgende afbeelding",
+      goToScreen: "Ga naar scherm {n} van {total}",
+      screenDotsGroupLabel: "Posities in de galerij",
+      carouselLabel: "Beeldengalerij van deze productie",
+      carouselRegion: "Carrousel",
+      openLightbox: "Afbeelding groter bekijken",
+      lightboxTitle: "Vergrote afbeelding",
+      closeLightbox: "Vergrote afbeelding sluiten",
+      lightboxExpandMore: "Extra groot tonen",
+      lightboxShrinkView: "Normaal vergroot tonen",
     },
     details: {
       tags: "Labels",
       extraInfo: "Extra info",
+      programme: "Programma",
     },
     events: {
       title: "Voorstellings\u00adgeschiedenis",
@@ -260,6 +304,11 @@ export default {
       error_title: "Fout bij laden",
       error_body: "We konden de gegevens over de voorstellingen niet ophalen uit het archief.",
       retry: "Opnieuw proberen",
+    },
+    blog: {
+      title: "Verwante artikelen",
+      body: "Achtergrondverhalen, interviews en notities uit het archief bij deze productie.",
+      all: "Alle artikelen",
     },
     notFound: {
       title: "Productie niet gevonden",
@@ -295,7 +344,17 @@ export default {
       superAdmin: "Super admin",
       quickActions: "Snelle acties",
       openCms: "CMS openen",
-      logout: "Uitloggen",
+      changePassword: "Wachtwoord wijzigen",
+    },
+    changePassword: {
+      oldPassword: "Oud wachtwoord",
+      newPassword: "Nieuw wachtwoord",
+      confirmPassword: "Bevestig wachtwoord",
+      update: "Bijwerken",
+      tooShortError: "Het wachtwoord moet minstens 8 tekens bevatten.",
+      wrongOldPasswordError: "Oud wachtwoord is verkeerd.",
+      dontMatchError: "De wachtwoorden komen niet overeen.",
+      failedToUpdate: "Wachtwoord bijwerken mislukt",
     },
   },
   time: {

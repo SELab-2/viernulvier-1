@@ -28,8 +28,9 @@ function buildProduction(tags: unknown[] = [1], events: unknown[] = []): Product
     quote_source: null,
     programme: null,
     info: null,
-    tags: tags as never,
-    events: events as never,
+    tags: tags as number[],
+    events: events as number[],
+    blogposts: [],
   } as ProductionWithBackwardsRefs;
 }
 
@@ -37,8 +38,8 @@ function buildTag(id: number, tagType: number, name: Record<string, string> | nu
   return {
     id,
     old_id: null,
-    name: name as never,
-    tag_type: tagType as never,
+    name: name,
+    tag_type: tagType,
     public: true,
   } as Tag;
 }

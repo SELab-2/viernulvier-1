@@ -1,4 +1,8 @@
 export default {
+  general: {
+    cancel: "Annuler",
+    saving: "Enregistrement...",
+  },
   nav: {
     home: "Accueil",
     archive: "Archives",
@@ -32,10 +36,24 @@ export default {
     },
   },
   footer: {
-    copyright: "© {year} VierNulVier / De Vooruit. Tous droits réservés.",
-    privacy: "Politique de confidentialité",
-    terms: "Conditions d'utilisation",
-    contact: "Contact",
+    titles: {
+      organization: "Organisation",
+      contact: "Contact",
+      navigation: "Navigation",
+      connect: "Nous suivre",
+    },
+    address: {
+      city: "9000 Gand",
+      country: "Belgique",
+    },
+    contact: {
+      phone: "+32 (0)9 267 28 20",
+    },
+    nav: {
+      home: "Index",
+      productions: "Productions",
+      blog: "Articles de blog",
+    },
   },
   date: {
     doorsOpen: "Portes ouvertes à",
@@ -84,15 +102,21 @@ export default {
     actions: {
       addProduction: "+ Ajouter une production",
       removeProduction: "Supprimer les productions sélectionnées",
-      confirmRemoveDialogTitle: "Supprimer les productions ?",
-      confirmRemoveBody: "Cette action supprimera définitivement {count} productions sélectionnées. Cette opération est irréversible.",
-      confirmRemoveCancel: "Annuler",
       confirmRemoveSubmit: "Supprimer définitivement",
+      production: {
+        confirmRemoveDialogTitle: "Supprimer les productions ?",
+        confirmRemoveBody: "Cette action supprimera définitivement {count} productions sélectionnées. Cette opération est irréversible.",
+      },
       confirmBulkEditDialogTitle: "Modifier plusieurs productions ?",
       confirmBulkEditBody: "Vous êtes sur le point de mettre à jour {count} productions avec les mêmes données.",
       confirmBulkEditSubmit: "Oui, mettre à jour",
       confirmBulkEditCancelInfo: "Si vous fermez, seule la production actuelle sera modifiée.",
       addTag: "+ Ajouter un tag",
+      removeTag: "Supprimer les tags sélectionnés",
+      tag: {
+        confirmRemoveDialogTitle: "Supprimer les tags ?",
+        confirmRemoveBody: "Cette action supprimera définitivement {count} tags sélectionnés. Cette opération est irréversible.",
+      },
       searchPlaceholder: "Rechercher dans toutes les colonnes...",
       selectedCount: "Selectionne: {count}",
       loadedCount: "Lignes chargees: {count}",
@@ -122,9 +146,7 @@ export default {
       selectTagType: "Choisissez un type...",
       finalized: "Marquer comme finalisee",
       languages: "Langues supplementaires",
-      cancel: "Annuler",
       submit: "Ajouter la production",
-      saving: "Ajout...",
       tags: {
         title: "Tags",
         primary: "Tag principal",
@@ -166,7 +188,6 @@ export default {
       save: "Enregistrer",
       saveAction: "Enregistrer les modifications",
       saveHint: "Les changements ne sont appliques qu'apres avoir clique sur Enregistrer les modifications.",
-      saving: "Enregistrement...",
       text: "Texte",
       bulkNotice: "La modification sera appliquee a {count} productions selectionnees.",
     },
@@ -179,6 +200,7 @@ export default {
     feedback: {
       saveSuccess: "Modifications enregistrees",
       removeSuccess: "Production supprimee",
+      removeTagSuccess: "Tag supprimé",
     },
     admin: {
       noPermission: "Vous n'avez pas la permission de administrer les admins.",
@@ -206,6 +228,11 @@ export default {
     searchLabel: "Rechercher des productions",
     searchPlaceholder: "Titre, artiste, lieu, description…",
     searchButton: "Rechercher",
+    sortByLabel: "Trier les productions",
+    sortNameShort: "Nom",
+    sortDateShort: "Date",
+    sortMetricMenuAria: "Choisir le tri par nom ou par date",
+    toggleSortDirectionAria: "Inverser l'ordre de tri",
     activeSearchLabel: "Recherche :",
     clearAllSearches: "Effacer toutes les recherches",
     clearAllFilters: "Effacer tous les filtres",
@@ -245,10 +272,27 @@ export default {
     hero: {
       dateRange: "Période",
       runningTime: "Durée",
+      bannerImageAlt: "Image bannière en tête de page",
+    },
+    gallery: {
+      title: "Images",
+      intro: "Une sélection des médias de cette production.",
+      prev: "Image précédente",
+      next: "Image suivante",
+      goToScreen: "Aller à la vue {n} sur {total}",
+      screenDotsGroupLabel: "Vues de la galerie",
+      carouselLabel: "Galerie d’images de cette production",
+      carouselRegion: "Carrousel",
+      openLightbox: "Voir l’image en grand",
+      lightboxTitle: "Image agrandie",
+      closeLightbox: "Fermer l’image agrandie",
+      lightboxExpandMore: "Afficher encore plus grand",
+      lightboxShrinkView: "Revenir à la vue agrandie standard",
     },
     details: {
       tags: "Étiquettes",
       extraInfo: "Infos complémentaires",
+      programme: "Programme",
     },
     events: {
       title: "Historique des représentations",
@@ -260,6 +304,11 @@ export default {
       error_title: "Erreur de chargement",
       error_body: "Nous n'avons pas pu récupérer les données des représentations dans les archives.",
       retry: "Réessayer",
+    },
+    blog: {
+      title: "Articles liés",
+      body: "Récits de fond, entretiens et notes des archives en rapport avec cette production.",
+      all: "Tous les articles",
     },
     notFound: {
       title: "Production introuvable",
@@ -296,6 +345,17 @@ export default {
       quickActions: "Actions rapides",
       openCms: "Ouvrir le CMS",
       logout: "Se déconnecter",
+      changePassword: "Changer le mot de passe",
+    },
+    changePassword: {
+      oldPassword: "Ancien mot de passe",
+      newPassword: "Nouveau mot de passe",
+      confirmPassword: "Confirmer le mot de passe",
+      update: "Mettre à jour",
+      tooShortError: "Le mot de passe doit contenir au moins 8 caractères.",
+      wrongOldPasswordError: "Votre ancien mot de passe n'est pas correct.",
+      dontMatchError: "Les mots de passe ne correspondent pas.",
+      failedToUpdate: "Échec de la mise à jour du mot de passe",
     },
   },
   time: {

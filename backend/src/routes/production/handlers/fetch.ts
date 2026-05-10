@@ -41,7 +41,8 @@ SELECT
   p.quote_source,
   p.programme,
   p.info,
-  (SELECT COALESCE(ARRAY_AGG(pt.tag), '{}') FROM production_tag pt WHERE pt.production = p.id) AS tags
+  (SELECT COALESCE(ARRAY_AGG(pt.tag), '{}') FROM production_tag pt WHERE pt.production = p.id) AS tags,
+  (SELECT COALESCE(ARRAY_AGG(bp.blogpost), '{}') FROM production_blogpost bp WHERE bp.production = p.id) AS blogposts
 FROM production p
 `;
 
@@ -150,6 +151,33 @@ export type PaginatedProductions = {
   total: number;
 };
 
+function buildProductionListOrderClause(
+  sortBy: "name" | "date" | undefined,
+  sortDir: "asc" | "desc" | undefined,
+  lang: "nl" | "fr" | "en" | undefined,
+): string {
+  const dir = sortDir === "desc" ? "DESC" : "ASC";
+  if (sortBy === "date") {
+    // Use the first event row by primary key (insertion order).
+    // Usually matches the earliest show when events are created chronologically:
+    // for single-event productions it is identical, for several events it could
+    // differ if events weren't inserted in chronological order.
+    return `ORDER BY (
+      SELECT e.starts_at
+      FROM event e
+      WHERE e.production = p.id
+      ORDER BY e.id ASC
+      LIMIT 1
+    ) ${dir} NULLS LAST, p.id ASC`;
+  }
+  if (sortBy === "name") {
+    const key = lang ?? "nl";
+    const titleExpr = `COALESCE(NULLIF(TRIM(p.title->>'${key}'), ''), NULLIF(TRIM(p.title->>'nl'), ''), NULLIF(TRIM(p.title->>'en'), ''), NULLIF(TRIM(p.title->>'fr'), ''), '')`;
+    return `ORDER BY LOWER(${titleExpr}) ${dir}, p.id ASC`;
+  }
+  return "ORDER BY p.id ASC";
+}
+
 /**
  * Fetches a list of productions.
  *
@@ -161,6 +189,8 @@ export type PaginatedProductions = {
  * - Optional `yearMin` / `yearMax` (inclusive) — event year must fall in that span.
  * - Optional `from` / `to` (`YYYY-MM-DD`) — production must have an event in that range (venue TZ).
  * - Optional `old_id` — legacy id; when set, only `p.old_id` (same as staging; other filters ignored).
+ * - Optional `sortBy` / `sortDir` / `lang` — `date` uses `starts_at` of the first `event` row by
+ *   primary key (`id`) for that production
  *
  * @param server - The Fastify instance, used for database access and logging.
  * @param request - The Fastify request; optional list query params as documented above.
@@ -189,6 +219,11 @@ export async function fetchProductions(
       : undefined;
   const dateFrom = query.from;
   const dateTo = query.to;
+  const orderSql = buildProductionListOrderClause(
+    query.sortBy,
+    query.sortDir,
+    query.lang,
+  );
   const { whereSql, params: filterParams } = buildProductionListWhere(
     searchTerms,
     tagIds,
@@ -203,7 +238,7 @@ export async function fetchProductions(
 
   if (limit === undefined) {
     result = await server.pg.query<ProductionWithBackwardsRefs>(
-      `${ProductionSelect}${whereSql} ORDER BY p.id ASC`,
+      `${ProductionSelect}${whereSql} ${orderSql}`,
       filterParams,
     );
     total = result.rows.length;
@@ -218,7 +253,7 @@ export async function fetchProductions(
     const limitIdx = filterParams.length + 1;
     const offsetIdx = filterParams.length + 2;
     result = await server.pg.query<ProductionWithBackwardsRefs>(
-      `${ProductionSelect}${whereSql} ORDER BY p.id ASC LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+      `${ProductionSelect}${whereSql} ${orderSql} LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
       listParams,
     );
   }

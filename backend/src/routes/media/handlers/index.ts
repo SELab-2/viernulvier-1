@@ -1,6 +1,7 @@
 export {
   fetchImagesByProduction,
   fetchImage,
+  fetchAllImages,
   fetchImageWithMeta,
   fetchCropsByImage,
   fetchCropByType,

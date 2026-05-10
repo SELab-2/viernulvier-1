@@ -156,6 +156,17 @@ export default defineConfig([
   {
     files: ["test/**/*.ts", "**/*.test.ts", "**/*.spec.ts"],
 
+    plugins: {
+      "import-x": importX,
+    },
+
+    settings: {
+      "import-x/resolver-next": createTypeScriptImportResolver({
+        alwaysTryTypes: true,
+        project: './tsconfig.json'
+      })
+    },
+
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {

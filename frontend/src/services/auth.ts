@@ -250,14 +250,32 @@ export async function replaceAdmin(
  * @throws {ApiError} 404 — admin not found.
  *
  * @example
- * // Only update the profile picture
- * await updateAdmin(1, { profile_picture: "https://example.com/avatar.jpg" });
+ * // Only update the super field
+ * await updateAdmin(1, { super: false });
  */
 export async function updateAdmin(
   id: number,
   data: UpdateAdminInput,
 ): Promise<Admin> {
   return await apiFetch<Admin>(`/auth/${id}`, { method: "PATCH", body: data });
+}
+
+/**
+ * Update your own password.
+ *
+ * @param oldPassword the old password to verify.
+ * @param newPassword the new password.
+ * @throws {ApiError} 400 — bad request. (password length is too short)
+ * @throws {ApiError} 401 — invalid credentials. (when the old password is wrong)
+ *
+ * @example
+ * await updateOwnPassword("password", "hello123"); // password is the old password and hello123 is the new one
+ */
+export async function updateOwnPassword(
+  oldPassword: string,
+  newPassword: string,
+): Promise<void> {
+  await apiFetch<void>(`/auth/me`, { method: "PATCH", body: { oldPassword, newPassword } });
 }
 
 /**
