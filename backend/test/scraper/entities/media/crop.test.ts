@@ -251,7 +251,7 @@ describe("createCropsForImage — successful upload", () => {
     const fetchSpy = happyPathFetch();
     await createCropsForImage([makeCrop({ "@id": "/api/v1/media/crops/77" })], IMAGE_ID, LOGIN_TOKEN);
     const postCall = fetchSpy.mock.calls.find(
-      ([, init]: [unknown, RequestInit?]) => (init as RequestInit)?.method?.toUpperCase() === "POST",
+      ([, init]: [unknown, RequestInit?]) => init?.method?.toUpperCase() === "POST",
     );
     expect(postCall).toBeDefined();
     const formData = (postCall![1] as RequestInit).body as FormData;
@@ -265,7 +265,7 @@ describe("createCropsForImage — successful upload", () => {
     const fetchSpy = happyPathFetch();
     await createCropsForImage([makeCrop()], IMAGE_ID, LOGIN_TOKEN);
     const postCall = fetchSpy.mock.calls.find(
-      ([, init]: [unknown, RequestInit?]) => (init as RequestInit)?.method?.toUpperCase() === "POST",
+      ([, init]: [unknown, RequestInit?]) => init?.method?.toUpperCase() === "POST",
     );
     const headers = (postCall![1] as RequestInit).headers as Record<string, string>;
     expect(headers["Authorization"]).toBe(`Bearer ${LOGIN_TOKEN}`);
