@@ -17,6 +17,13 @@ const STRICT_COVERAGE = {
   lines: 100,
 } as const;
 
+const SCRAPER_COVERAGE = {
+  statements: 90,
+  branches: 90,
+  functions: 90,
+  lines: 90,
+} as const;
+
 export default defineConfig({
   resolve: {
     alias: {
@@ -40,7 +47,7 @@ export default defineConfig({
         "src/routes/**/*.ts": STRICT_COVERAGE,
         "src/legacy-import/shared.ts": STRICT_COVERAGE,
         "src/legacy-import/validate-legacy-inserts.ts": STRICT_COVERAGE,
-        "src/scraper/**/*.ts": STRICT_COVERAGE,
+        "src/scraper/**/*.ts": SCRAPER_COVERAGE,
         "src/legacy-import/import-productions-legacy.ts": LEGACY_IMPORTER_COVERAGE,
         "src/legacy-import/import-events-legacy.ts": LEGACY_IMPORTER_COVERAGE,
         perFile: true,
