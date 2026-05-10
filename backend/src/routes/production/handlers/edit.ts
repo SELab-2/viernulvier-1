@@ -68,6 +68,55 @@ export async function editProduction(
     throw new HttpError(HttpClientError.BadRequest, "No fields to update");
   }
 
+  if (hasOwn(body, "tags")) {
+    const nextTagIds = [...new Set((body.tags ?? []).filter((tagId) => Number.isInteger(tagId) && tagId > 0))];
+    const client = await server.pg.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      // Always update metadata
+      const updateFields = [...fields, `updated_by = $${i++}`, `updated_at = $${i++}`];
+      const updateValues = [...values, admin, current_time, id];
+
+      const updateRes = await client.query<{ id: number }>(
+        `UPDATE production SET ${updateFields.join(", ")} WHERE id = $${i}
+         RETURNING id`,
+        updateValues,
+      );
+
+      if (!updateRes.rows[0]?.id) {
+        await client.query("ROLLBACK");
+        return null;
+      }
+
+      // Replace semantics for tags: delete removed, insert missing.
+      await client.query(
+        `DELETE FROM production_tag
+         WHERE production = $1 AND NOT (tag = ANY($2::int[]))`,
+        [id, nextTagIds],
+      );
+
+      await client.query(
+        `INSERT INTO production_tag (production, tag, created_by, updated_by, created_at, updated_at)
+         SELECT $1, t, $3, $3, $4, $4
+         FROM UNNEST($2::int[]) AS t
+         ON CONFLICT DO NOTHING`,
+        [id, nextTagIds, admin, current_time],
+      );
+
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      server.log.error(err);
+      throw err;
+    } finally {
+      client.release();
+    }
+
+    return await getProductionById(server, id);
+  }
+
   // Always update metadata
   fields.push(`updated_by = $${i++}`, `updated_at = $${i++}`);
   values.push(admin, current_time, id);

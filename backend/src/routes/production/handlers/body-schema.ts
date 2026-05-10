@@ -19,6 +19,7 @@ export const ProductionBodySchema = ProductionSchema.pick({
   programme: true,
   info: true,
 }).extend({
+  tags: z.array(z.int().positive()).optional(),
 });
 
 export const CreateProductionBodySchema = ProductionSchema.pick({
@@ -42,6 +43,7 @@ export const CreateProductionBodySchema = ProductionSchema.pick({
     info: true,
   }).partial().shape,
 ).extend({
+  tags: z.array(z.int().positive()).optional(),
 });
 
 export const PartialProductionBodySchema = ProductionBodySchema.partial();

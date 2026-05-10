@@ -111,6 +111,13 @@ export default {
       confirmBulkEditBody: "Je bent op het punt om {count} producties met dezelfde gegevens bij te werken.",
       confirmBulkEditSubmit: "Ja, bijwerken",
       confirmBulkEditCancelInfo: "Als je sluit, zal alleen de huidige productie worden bewerkt.",
+      bulkEditTagsModeTitle: "Tags in bulk bewerken",
+      bulkEditTagsModeBody: "Hoe wil je de tag-wijzigingen toepassen op {count} producties?",
+      bulkEditTagsModeReplace: "Tags vervangen",
+      bulkEditTagsModeDiff: "Toevoegen/verwijderen toepassen",
+      bulkEditTagsPreviewTags: "Vervang Tags:",
+      bulkEditTagsPreviewAdd: "Toevoegen:",
+      bulkEditTagsPreviewRemove: "Verwijderen:",
       addTag: "+ Voeg Tag Toe",
       removeTag: "Geselecteerde tags verwijderen",
       tag: {

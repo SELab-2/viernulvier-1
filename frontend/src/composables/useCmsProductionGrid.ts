@@ -164,8 +164,22 @@ function renderMediaCell(value: unknown): string {
 export function useCmsProductionGrid(options: {
   isDark: Ref<boolean>;
   t: TranslateFunction;
-  getPrimaryTagLabels?: () => string[];
+  getPrimaryTagOptions?: () => Array<{ id: number; label: string }>;
 }) {
+  const primaryTagLabelById = computed(() => {
+    const entries = options.getPrimaryTagOptions?.() ?? [];
+    return new Map(entries.map((entry) => [entry.id, entry.label] as const));
+  });
+
+  function formatPrimaryTag(value: unknown): string {
+    const id = Number(value ?? 0);
+    if (!Number.isFinite(id) || id === 0) {
+      return "-";
+    }
+
+    return primaryTagLabelById.value.get(id) ?? `#${id}`;
+  }
+
   const base = useCmsGridBase<CmsProductionGridRow>({
     isDark: options.isDark,
     storageKey: cmsGridStateStorageKey,
@@ -176,6 +190,10 @@ export function useCmsProductionGrid(options: {
       if (params.column.getColId() === "tags") {
         const data = params.node?.data as CmsProductionGridRow | undefined;
         return JSON.stringify(data?.source.tags ?? []);
+      }
+
+      if (params.column.getColId() === "genres") {
+        return formatPrimaryTag(params.value);
       }
 
       return String(params.value ?? "");
@@ -264,8 +282,11 @@ export function useCmsProductionGrid(options: {
       singleClickEdit: true,
       cellEditor: "agSelectCellEditor",
       cellEditorParams: () => ({
-        values: options.getPrimaryTagLabels?.() ?? [],
+        values: [0, ...(options.getPrimaryTagOptions?.().map((entry) => entry.id) ?? [])],
+        formatValue: formatPrimaryTag,
       }),
+      valueFormatter: ({ value }) => formatPrimaryTag(value),
+      filterValueGetter: (params) => formatPrimaryTag(params.data?.genres),
       minWidth: 120,
     },
     {

@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared/index.js";
 import { getMetadata, parseSchema } from "@/routes/helpers.js";
 import { CreateProductionBodySchema } from "./body-schema.js";
+import { getProductionById } from "./fetch.js";
 import { getFieldValue, getNullableFieldValue } from "./field-utils.js";
 
 const RequiredCreateColumns = [
@@ -39,6 +40,69 @@ export async function createProduction(
   const body = parseSchema(server, CreateProductionBodySchema, request.body);
 
   const { admin, current_time } = getMetadata(request);
+
+  const tagIds = [...new Set((body.tags ?? []).filter((tagId) => Number.isInteger(tagId) && tagId > 0))];
+  const useTransaction = tagIds.length > 0;
+
+  if (useTransaction) {
+    const client = await server.pg.connect();
+    try {
+      await client.query("BEGIN");
+
+      const fields: string[] = [];
+      const placeholders: string[] = [];
+      const values: unknown[] = [];
+      let i = 1;
+
+      const addField = (column: string, value: unknown) => {
+        fields.push(column);
+        placeholders.push(`$${i++}`);
+        values.push(value);
+      };
+
+      for (const column of RequiredCreateColumns) {
+        addField(column, getFieldValue(body, column));
+      }
+      for (const column of NullableCreateColumns) {
+        addField(column, getNullableFieldValue(body, column));
+      }
+
+      // Metadata
+      fields.push("created_by", "updated_by", "created_at", "updated_at");
+      placeholders.push(`$${i++}`, `$${i++}`, `$${i++}`, `$${i++}`);
+      values.push(admin, admin, current_time, current_time);
+
+      const insertResult = await client.query<{ id: number }>(
+        `INSERT INTO production (${fields.join(", ")})
+         VALUES (${placeholders.join(", ")})
+         RETURNING id`,
+        values,
+      );
+
+      const row = insertResult.rows[0];
+      if (!row) {
+        await client.query("ROLLBACK");
+        return null;
+      }
+
+      await client.query(
+        `INSERT INTO production_tag (production, tag, created_by, updated_by, created_at, updated_at)
+         SELECT $1, t, $2, $2, $3, $3
+         FROM UNNEST($4::int[]) AS t
+         ON CONFLICT DO NOTHING`,
+        [row.id, admin, current_time, tagIds],
+      );
+
+      await client.query("COMMIT");
+      return await getProductionById(server, row.id);
+    } catch (err) {
+      await client.query("ROLLBACK");
+      server.log.error(err);
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
 
   const fields: string[] = [];
   const placeholders: string[] = [];

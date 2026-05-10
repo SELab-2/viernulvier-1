@@ -111,6 +111,13 @@ export default {
       confirmBulkEditBody: "Vous êtes sur le point de mettre à jour {count} productions avec les mêmes données.",
       confirmBulkEditSubmit: "Oui, mettre à jour",
       confirmBulkEditCancelInfo: "Si vous fermez, seule la production actuelle sera modifiée.",
+      bulkEditTagsModeTitle: "Modification groupée des tags",
+      bulkEditTagsModeBody: "Comment appliquer les modifications de tags à {count} productions ?",
+      bulkEditTagsModeReplace: "Remplacer les tags",
+      bulkEditTagsModeDiff: "Appliquer les ajouts/suppressions",
+      bulkEditTagsPreviewTags: "Remplacer Tags:",
+      bulkEditTagsPreviewAdd: "Ajouter:",
+      bulkEditTagsPreviewRemove: "Supprimer:",
       addTag: "+ Ajouter un tag",
       removeTag: "Supprimer les tags sélectionnés",
       tag: {

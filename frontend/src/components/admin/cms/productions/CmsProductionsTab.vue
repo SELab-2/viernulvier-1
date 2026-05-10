@@ -150,7 +150,7 @@
         :show="tagEditorPanel !== null"
         :panel="tagEditorPanel"
         :additional-tag-groups="additionalTagGroups"
-        :bulk-count="0"
+        :bulk-count="tagEditorBulkCount"
         :save-error="saveError"
         :is-saving="isSaving"
         @close="closeTagEditorPanel"
@@ -236,6 +236,55 @@
         </section>
       </div>
 
+      <div v-if="secondaryTagBulkModeOpen" class="cms-modal-overlay" @click.self="closeSecondaryTagBulkMode">
+        <section class="cms-modal cms-remove-modal" role="dialog" aria-modal="true">
+          <header class="cms-modal-header">
+            <h2 class="text-xl font-bold text-ink-primary">
+              {{ t("cms.actions.bulkEditTagsModeTitle") }}
+            </h2>
+            <button type="button" class="cms-side-close" :disabled="secondaryTagBulkModeLoading" @click="closeSecondaryTagBulkMode">
+              {{ t("cms.panel.close") }}
+            </button>
+          </header>
+
+          <div class="cms-modal-body">
+            <p class="text-sm text-ink-secondary">
+              {{ t("cms.actions.bulkEditTagsModeBody", { count: secondaryTagBulkModeCount }) }}
+            </p>
+
+            <div class="mt-3 text-sm">
+              <div v-if="secondaryTagBulkModeTagsPreview">
+                <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewTags') }}</div>
+                <div class="ml-2 mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeTagsPreview }}</div>
+              </div>
+
+              <div v-if="secondaryTagBulkModeAddedPreview || secondaryTagBulkModeRemovedPreview" class="mt-2">
+                <div v-if="secondaryTagBulkModeAddedPreview">
+                  <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewAdd') }}</div>
+                  <div class="ml-2 mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeAddedPreview }}</div>
+                </div>
+                <div v-if="secondaryTagBulkModeRemovedPreview" class="mt-1">
+                  <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewRemove') }}</div>
+                  <div class="ml-2 mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeRemovedPreview }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <footer class="cms-modal-footer">
+            <button type="button" class="cms-side-close" :disabled="secondaryTagBulkModeLoading" @click="closeSecondaryTagBulkMode">
+              {{ t("general.cancel") }}
+            </button>
+            <button type="button" class="cms-side-close" :disabled="secondaryTagBulkModeLoading" @click="confirmSecondaryTagBulkReplace">
+              {{ t("cms.actions.bulkEditTagsModeReplace") }}
+            </button>
+            <button type="button" class="cms-side-save" :disabled="secondaryTagBulkModeLoading" @click="confirmSecondaryTagBulkDiff">
+              {{ t("cms.actions.bulkEditTagsModeDiff") }}
+            </button>
+          </footer>
+        </section>
+      </div>
+
       <div v-if="mediaPreview" class="cms-modal-overlay" @click.self="closeMediaPreview">
         <section class="cms-modal cms-media-modal" role="dialog" aria-modal="true">
           <header class="cms-modal-header">
@@ -292,7 +341,7 @@ import {
 import { createEvent, deleteEvent, getEvent, updateEvent } from "@/services/events";
 import { getHall, getHalls } from "@/services/halls";
 import { getAllTags, getTagTypes } from "@/services/tags";
-import { localizeOrEmpty, localizeWithFallback, type LanguageMap } from "@/utils/language-utils";
+import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import {
   buildEventGridRows,
   buildProductionGridRows,
@@ -347,10 +396,10 @@ const {
 } = useCmsProductionGrid({
   isDark,
   t,
-  getPrimaryTagLabels: () =>
+  getPrimaryTagOptions: () =>
     createTagGroups.value
       .filter((group) => group.isGenre)
-      .flatMap((group) => group.tags.map((tag) => tag.label)),
+      .flatMap((group) => group.tags),
 });
 
 const isLoading = ref(false);
@@ -458,7 +507,29 @@ const tagEditorPanel = ref<{
   rowId: number;
   label: string;
   selectedTagIds: number[];
+  initialSelectedTagIds: number[];
 } | null>(null);
+
+const tagEditorBulkCount = computed(() => {
+  if (!tagEditorPanel.value) {
+    return 0;
+  }
+
+  const row = rowData.value.find((item) => item.id === tagEditorPanel.value?.rowId);
+  if (!row) {
+    return 0;
+  }
+
+  return getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], row).length;
+});
+
+const secondaryTagBulkModeOpen = ref(false);
+const secondaryTagBulkModeLoading = ref(false);
+const secondaryTagBulkModeCount = ref(0);
+const secondaryTagBulkModeTagsPreview = ref("");
+const secondaryTagBulkModeAddedPreview = ref("");
+const secondaryTagBulkModeRemovedPreview = ref("");
+const pendingSecondaryTagBulkRows = ref<CmsProductionGridRow[]>([]);
 
 const inlineFieldToApi: Record<InlineEditableField, keyof ProductionWithBackwardsRefs> = {
   performer: "artist",
@@ -476,24 +547,6 @@ const longGridFieldToApi: Record<"descriptionOne" | "descriptionTwo" | "media", 
 const genreTagTypeIds = computed(
   () => new Set(createTagGroups.value.filter((group) => group.isGenre).map((group) => group.tagTypeId)),
 );
-
-function findGenreTagIdByLabel(label: string): number | null {
-  const normalized = label.trim().toLowerCase();
-  if (!normalized) {
-    return null;
-  }
-
-  const genreTypeIds = genreTagTypeIds.value;
-  const match = tagsData.value.find((tag) => {
-    const tagTypeId = Number(tag.tag_type);
-    if (!genreTypeIds.has(tagTypeId)) {
-      return false;
-    }
-    return localizeWithFallback(tag.name, localizeValue).trim().toLowerCase() === normalized;
-  });
-
-  return match?.id ?? null;
-}
 
 function localizeValue(map: LanguageMap | null | undefined): string {
   if (!map) {
@@ -514,6 +567,18 @@ function setCurrentLanguageValue(
 
 function getProductionEditKey(rowId: number, field: string): string {
   return `${rowId}:${field}`;
+}
+
+function formatTagNames(tagIds: number[], maxCount: number = 5): string {
+  const tags = tagIds
+    .slice(0, maxCount)
+    .map((tagId) => tagsData.value.find((t) => t.id === tagId)?.name[currentLang.value] || `Tag ${tagId}`)
+    .filter(Boolean);
+  const result = tags.join(", ");
+  if (tagIds.length > maxCount) {
+    return `${result} +${tagIds.length - maxCount}`;
+  }
+  return result;
 }
 
 function snapshotEventRows(rows: CmsEventGridRow[]): void {
@@ -594,6 +659,7 @@ function toggleCreateTag(tagId: number, selected: boolean): void {
 function closeTagEditorPanel(): void {
   tagEditorPanel.value = null;
   saveError.value = null;
+  closeSecondaryTagBulkMode();
 }
 
 function openTagEditorPanel(row: CmsProductionGridRow): void {
@@ -608,6 +674,7 @@ function openTagEditorPanel(row: CmsProductionGridRow): void {
     rowId: row.id,
     label: row.title || t("cms.columns.tags"),
     selectedTagIds: selectedAdditionalTagIds,
+    initialSelectedTagIds: selectedAdditionalTagIds,
   };
   saveError.value = null;
 }
@@ -640,6 +707,27 @@ async function saveTagEditorPanel(): Promise<void> {
     return;
   }
 
+  const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], row);
+
+  if (targetRows.length > 1) {
+    openBulkEditConfirm(targetRows.length, async () => {
+      // Compute tag previews for the modal
+      const desiredTagIds = [...new Set(tagEditorPanel.value!.selectedTagIds)];
+      const initialTagIds = [...new Set(tagEditorPanel.value!.initialSelectedTagIds)];
+      const addedTagIds = desiredTagIds.filter((tagId) => !initialTagIds.includes(tagId));
+      const removedTagIds = initialTagIds.filter((tagId) => !desiredTagIds.includes(tagId));
+
+      secondaryTagBulkModeTagsPreview.value = formatTagNames(desiredTagIds);
+      secondaryTagBulkModeAddedPreview.value = formatTagNames(addedTagIds);
+      secondaryTagBulkModeRemovedPreview.value = formatTagNames(removedTagIds);
+
+      pendingSecondaryTagBulkRows.value = targetRows;
+      secondaryTagBulkModeCount.value = targetRows.length;
+      secondaryTagBulkModeOpen.value = true;
+    });
+    return;
+  }
+
   const genreTypeIds = genreTagTypeIds.value;
   const currentTagIds = extractProductionTagIds(row.source);
   const existingGenreTagIds = currentTagIds.filter((tagId) => {
@@ -664,6 +752,91 @@ async function saveTagEditorPanel(): Promise<void> {
   } finally {
     isSaving.value = false;
   }
+}
+
+function closeSecondaryTagBulkMode(): void {
+  secondaryTagBulkModeOpen.value = false;
+  secondaryTagBulkModeLoading.value = false;
+  secondaryTagBulkModeCount.value = 0;
+  secondaryTagBulkModeTagsPreview.value = "";
+  secondaryTagBulkModeAddedPreview.value = "";
+  secondaryTagBulkModeRemovedPreview.value = "";
+  pendingSecondaryTagBulkRows.value = [];
+}
+
+async function applySecondaryTagBulkEdit(mode: "replace" | "diff"): Promise<void> {
+  if (!tagEditorPanel.value) {
+    closeSecondaryTagBulkMode();
+    return;
+  }
+
+  const targetRows = pendingSecondaryTagBulkRows.value;
+  if (targetRows.length === 0) {
+    closeSecondaryTagBulkMode();
+    return;
+  }
+
+  const desiredAdditionalTagIds = [...new Set(tagEditorPanel.value.selectedTagIds)];
+  const initialAdditionalTagIds = [...new Set(tagEditorPanel.value.initialSelectedTagIds)];
+  const addedTagIds = desiredAdditionalTagIds.filter((tagId) => !initialAdditionalTagIds.includes(tagId));
+  const removedTagIds = initialAdditionalTagIds.filter((tagId) => !desiredAdditionalTagIds.includes(tagId));
+  const genreTypeIds = genreTagTypeIds.value;
+
+  secondaryTagBulkModeLoading.value = true;
+  isSaving.value = true;
+  saveError.value = null;
+
+  try {
+    for (const targetRow of targetRows) {
+      const currentTagIds = extractProductionTagIds(targetRow.source);
+      const existingGenreTagIds = currentTagIds.filter((tagId) => {
+        const tag = tagsData.value.find((item) => item.id === tagId);
+        return tag ? genreTypeIds.has(Number(tag.tag_type)) : false;
+      });
+
+      const existingAdditionalTagIds = currentTagIds.filter((tagId) => {
+        const tag = tagsData.value.find((item) => item.id === tagId);
+        return tag ? !genreTypeIds.has(Number(tag.tag_type)) : false;
+      });
+
+      const nextAdditionalTagIds =
+        mode === "replace"
+          ? desiredAdditionalTagIds
+          : Array.from(
+              new Set(
+                existingAdditionalTagIds
+                  .filter((tagId) => !removedTagIds.includes(tagId))
+                  .concat(addedTagIds),
+              ),
+            );
+
+      await updateProduction(targetRow.id, {
+        tags: [...existingGenreTagIds, ...nextAdditionalTagIds],
+      });
+    }
+
+    await loadCmsData();
+    closeSecondaryTagBulkMode();
+    closeTagEditorPanel();
+    showSaveSuccess(t("cms.feedback.saveSuccess"));
+  } catch (error) {
+    saveError.value =
+      error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+    throw error;
+  } finally {
+    secondaryTagBulkModeLoading.value = false;
+    isSaving.value = false;
+  }
+}
+
+async function confirmSecondaryTagBulkReplace(): Promise<void> {
+  await applySecondaryTagBulkEdit("replace");
+}
+
+async function confirmSecondaryTagBulkDiff(): Promise<void> {
+  await applySecondaryTagBulkEdit("diff");
 }
 
 async function loadEventsForProduction(production: ProductionWithBackwardsRefs): Promise<ArchiveEvent[]> {
@@ -717,19 +890,6 @@ function closeEditorPanel(): void {
   saveError.value = null;
 }
 
-function openRemoveProductionsConfirm(): void {
-  if (selectedCount.value === 0) {
-    return;
-  }
-  removeConfirmError.value = null;
-  removeConfirmOpen.value = true;
-}
-
-function closeRemoveProductionsConfirm(): void {
-  removeConfirmOpen.value = false;
-  removeConfirmError.value = null;
-}
-
 function openBulkEditConfirm(count: number, action: () => Promise<void>): void {
   bulkEditConfirmCount.value = count;
   pendingBulkEditAction.value = action;
@@ -755,33 +915,6 @@ async function confirmBulkEdit(): Promise<void> {
   } catch {
     // Error is already handled in the action
     bulkEditConfirmLoading.value = false;
-  }
-}
-
-async function confirmRemoveProductions(): Promise<void> {
-  const selectedRows = gridApi.value?.getSelectedRows() ?? [];
-  if (selectedRows.length === 0) {
-    closeRemoveProductionsConfirm();
-    return;
-  }
-
-  removeConfirmLoading.value = true;
-  removeConfirmError.value = null;
-
-  try {
-    await Promise.all(selectedRows.map((row) => deleteProduction(row.id)));
-    selectedCount.value = 0;
-    gridApi.value?.deselectAll();
-    await loadCmsData();
-    closeRemoveProductionsConfirm();
-    showSaveSuccess(t("cms.feedback.removeSuccess"));
-  } catch (error) {
-    removeConfirmError.value =
-      error instanceof Error
-        ? t("cms.errors.saveFailed", { message: error.message })
-        : t("cms.errors.saveGeneric");
-  } finally {
-    removeConfirmLoading.value = false;
   }
 }
 
@@ -979,39 +1112,68 @@ async function onCellEditingStopped(
 
   const field = event.colDef.field as InlineEditableField;
   if (event.colDef.field === "genres") {
-    const newLabel = String(event.value ?? "").trim();
-    const oldLabel = String(event.oldValue ?? "").trim();
+    const newGenreId = Number(event.value ?? 0);
+    const oldGenreId = Number(event.oldValue ?? 0);
     const editKey = getProductionEditKey(event.data.id, event.colDef.field);
     pendingProductionEnterCommits.value.delete(editKey);
     activeProductionEditKey.value = null;
 
-    if (newLabel === oldLabel) {
+    if (newGenreId === oldGenreId) {
       return;
     }
 
-    const selectedGenreTagId = findGenreTagIdByLabel(newLabel);
-    if (selectedGenreTagId === null) {
-      event.node.setDataValue("genres", oldLabel);
+    if (!Number.isFinite(newGenreId)) {
+      event.node.setDataValue("genres", oldGenreId);
       return;
     }
 
+    const selectedGenreTagId = newGenreId === 0 ? null : newGenreId;
     const genreTypeIds = genreTagTypeIds.value;
-    const currentTagIds = extractProductionTagIds(event.data.source);
-    const nonGenreTagIds = currentTagIds.filter((tagId) => {
-      const tag = tagsData.value.find((item) => item.id === tagId);
-      return !tag || !genreTypeIds.has(Number(tag.tag_type));
-    });
+
+    const persistPrimaryTagForRow = async (row: CmsProductionGridRow): Promise<void> => {
+      const currentTagIds = extractProductionTagIds(row.source);
+      const nonGenreTagIds = currentTagIds.filter((tagId) => {
+        const tag = tagsData.value.find((item) => item.id === tagId);
+        return !tag || !genreTypeIds.has(Number(tag.tag_type));
+      });
+
+      await updateProduction(row.id, {
+        tags: [...(selectedGenreTagId ? [selectedGenreTagId] : []), ...nonGenreTagIds],
+      });
+    };
+
+    const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], event.data);
+    if (targetRows.length > 1) {
+      openBulkEditConfirm(targetRows.length, async () => {
+        isSaving.value = true;
+        saveError.value = null;
+        try {
+          for (const row of targetRows) {
+            await persistPrimaryTagForRow(row);
+          }
+          await loadCmsData();
+          showSaveSuccess(t("cms.feedback.saveSuccess"));
+        } catch (error) {
+          saveError.value =
+            error instanceof Error
+              ? t("cms.errors.saveFailed", { message: error.message })
+              : t("cms.errors.saveGeneric");
+          throw error;
+        } finally {
+          isSaving.value = false;
+        }
+      });
+      return;
+    }
 
     isSaving.value = true;
     saveError.value = null;
     try {
-      await updateProduction(event.data.id, {
-        tags: [selectedGenreTagId, ...nonGenreTagIds],
-      });
+      await persistPrimaryTagForRow(event.data);
       await loadCmsData();
       showSaveSuccess(t("cms.feedback.saveSuccess"));
     } catch {
-      event.node.setDataValue("genres", oldLabel);
+      event.node.setDataValue("genres", oldGenreId);
     } finally {
       isSaving.value = false;
       persistGridState();
@@ -1380,6 +1542,13 @@ defineExpose({
     removeConfirmError,
     mediaPreview,
     tagEditorPanel,
+    tagEditorBulkCount,
+    secondaryTagBulkModeOpen,
+    secondaryTagBulkModeLoading,
+    secondaryTagBulkModeCount,
+    secondaryTagBulkModeTagsPreview,
+    secondaryTagBulkModeAddedPreview,
+    secondaryTagBulkModeRemovedPreview,
     additionalTagGroups,
     createError,
     eventsPanelError,
@@ -1422,6 +1591,9 @@ defineExpose({
     closeTagEditorPanel,
     toggleTagEditorTag,
     saveTagEditorPanel,
+    closeSecondaryTagBulkMode,
+    confirmSecondaryTagBulkReplace,
+    confirmSecondaryTagBulkDiff,
     closeEventsPanel,
     closeEditorPanel,
     saveEditorPanel,
