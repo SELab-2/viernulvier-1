@@ -190,7 +190,7 @@ export async function fetchImagesByProduction(
     [productionId],
   );
   const images = parseSchema(server, z.array(ImageSchema), imgResult.rows, ParseContext.Database);
-  return attachCropsToImages(server, images);
+  return await attachCropsToImages(server, images);
 }
 
 const MAX_BATCH_PRODUCTION_IMAGE_IDS = 50;
@@ -233,8 +233,7 @@ export async function fetchImagesByProductionIdsBatch(
   const query = request.query as Record<string, unknown> | undefined;
   const ids = parseCommaSeparatedProductionIds(query?.["ids"]);
 
-  const byProductionId: Record<string, (Image & { crops: Crop[] })[]> = {};
-  if (ids.length === 0) return { byProductionId };
+  if (ids.length === 0) return { byProductionId: {} };
 
   const imgResult = await server.pg.query(
     `${ImageSelect} WHERE i.production = ANY($1::int[]) ORDER BY i.production ASC, i.id ASC`,
@@ -255,10 +254,14 @@ export async function fetchImagesByProductionIdsBatch(
     list.push(img);
   }
 
-  for (const id of ids) {
-    const key = String(id);
-    byProductionId[key] = grouped.get(id) ?? [];
-  }
+  const byProductionId: Record<string, (Image & { crops: Crop[] })[]> = Object.fromEntries(
+    ids.map(
+      (id): [string, (Image & { crops: Crop[] })[]] => [
+        String(id),
+        grouped.get(id) ?? [],
+      ],
+    ),
+  );
 
   return { byProductionId };
 }
