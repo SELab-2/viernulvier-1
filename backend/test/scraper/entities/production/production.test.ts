@@ -323,6 +323,20 @@ describe("scrapeProductionById", () => {
 
     expect(await scrapeProductionById(123, "auth")).toBe(555);
   });
+
+  it("ignores malformed gallery objects when processing galleries", async () => {
+    mockFetch(
+      handleNotFoundLocally,
+      handleRemoteProduction({
+        "@id": "/api/v1/productions/123",
+        title: { nl: "Show" },
+        media_gallery: {} as unknown as { "@id": string },
+      }),
+      handleCreateOk(555),
+    );
+
+    expect(await scrapeProductionById(123, "auth", "jwt")).toBe(555);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -451,5 +465,19 @@ describe("scrapeAllProductions", () => {
     );
 
     await expect(scrapeAllProductions("auth")).resolves.toBeUndefined();
+  });
+
+  it("throws when fetching a productions page returns a non-ok response", async () => {
+    mockFetch(
+      handleJwt,
+      (url) =>
+        url.includes("/api/v1/productions?page=1")
+          ? textResponse("Server error", 500)
+          : null,
+    );
+
+    await expect(scrapeAllProductions("auth")).rejects.toThrow(
+      "API returned status 500",
+    );
   });
 });
