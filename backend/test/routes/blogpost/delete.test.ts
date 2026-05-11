@@ -14,8 +14,8 @@ const mockTime = new Date();
 const mockBlogPost: BlogPost = {
   id: 1,
   blog: 1,
-  title: "Post to Delete",
-  content: { body: "Goodbye" },
+  title: { en: "Post to Delete" },
+  content: { en: "Goodbye" },
   published_at: mockTime,
 };
 

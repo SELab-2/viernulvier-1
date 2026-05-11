@@ -14,16 +14,16 @@ const mockTime = new Date();
 const mockBlogPost: BlogPost = {
   id: 1,
   blog: 1,
-  title: "First Post",
-  content: { body: "Hello world" },
+  title: {en: "First Post" },
+  content: { en: "Hello world" },
   published_at: mockTime,
 };
 
 const mockDraftBlogPost: BlogPost = {
   id: 2,
   blog: 1,
-  title: "Draft Post",
-  content: { body: "Work in progress" },
+  title: {en: "Draft Post" },
+  content: { en: "Work in progress" },
   published_at: null,
 };
 
