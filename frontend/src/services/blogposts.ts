@@ -15,7 +15,7 @@
  * ```
  */
 
-import type { BlogPost } from "@viernulvier/shared";
+import type { BlogPostWithBackwardsRefs } from "@viernulvier/shared";
 import { apiFetch } from "./api";
 
 // ---------------------------------------------------------------------------
@@ -36,6 +36,6 @@ import { apiFetch } from "./api";
  * const post = await getBlogPost(42);
  * console.log(post.title);
  */
-export async function getBlogPost(id: number): Promise<BlogPost> {
-  return await apiFetch<BlogPost>(`/blog/post/${id}`);
+export async function getBlogPost(id: number): Promise<BlogPostWithBackwardsRefs> {
+  return await apiFetch<BlogPostWithBackwardsRefs>(`/blog/post/${id}`);
 }
