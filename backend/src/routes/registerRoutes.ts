@@ -9,6 +9,7 @@ import hallRoutes from "./hall/hall.js";
 import blogRoutes from "./blog/blog.js";
 import mediaRoutes from "./media/media.js";
 import blogPostRoutes from "./blogpost/blogpost.js";
+import type { ZodTypeProvider } from "fastify-type-provider-zod";
 
 /**
  * Registers all application routes on the Fastify instance.
@@ -16,6 +17,7 @@ import blogPostRoutes from "./blogpost/blogpost.js";
  * @param server - The Fastify instance to register routes on.
  */
 export default async function registerRoutes(server: FastifyInstance) {
+  server = server.withTypeProvider<ZodTypeProvider>();
   await server.register(productionRoutes);
   await server.register(authRoutes);
   await server.register(eventRoutes);

@@ -1,10 +1,25 @@
 import { AdminSchema } from "@viernulvier/shared/index.js";
 import { primaryKey } from "@viernulvier/shared/types/helpers.js";
-import {
-  type FastifyInstance,
-  type FastifyRequest,
-  type FastifyReply,
+import type {
+  FastifyInstance,
+  FastifyRequest,
+  FastifyReply,
+  RawServerDefault,
+  RawRequestDefaultExpression,
+  RawReplyDefaultExpression,
+  FastifyBaseLogger,
 } from "fastify";
+import type { ZodTypeProvider } from "fastify-type-provider-zod";
+
+export type TypedFastifyInstance = FastifyInstance<
+  RawServerDefault,
+  RawRequestDefaultExpression<RawServerDefault>,
+  RawReplyDefaultExpression<RawServerDefault>,
+  FastifyBaseLogger,
+  ZodTypeProvider
+>;
+
+
 import type { QueryResult } from "pg";
 import { z } from "zod";
 
