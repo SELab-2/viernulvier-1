@@ -92,7 +92,7 @@ function mockFetch(...handlers: UrlHandler[]): void {
 function fetchedUrls(): string[] {
   return (global.fetch as ReturnType<typeof vi.fn>).mock.calls.map(
     (args: unknown[]) => {
-      const input = args[0] as RequestInfo;
+      const input = args[0] as Request | string;
       return typeof input === "string" ? input : (input as Request).url;
     },
   );
@@ -102,7 +102,7 @@ function fetchedUrls(): string[] {
 function fetchCallsWithMethod(method: string): unknown[][] {
   return (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
     (args: unknown[]) => {
-      const input = args[0] as RequestInfo;
+      const input = args[0] as Request | string;
       const init = args[1] as RequestInit | undefined;
       const url = typeof input === "string" ? input : (input as Request).url;
       return (
