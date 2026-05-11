@@ -16,6 +16,7 @@ import blogPostRoutes from "./blogpost/blogpost.js";
  * @param server - The Fastify instance to register routes on.
  */
 export default async function registerRoutes(server: FastifyInstance) {
+  await server.register(mediaRoutes);
   await server.register(productionRoutes);
   await server.register(authRoutes);
   await server.register(eventRoutes);
@@ -24,6 +25,5 @@ export default async function registerRoutes(server: FastifyInstance) {
   await server.register(tagTypeRoutes);
   await server.register(hallRoutes);
   await server.register(blogRoutes);
-  await server.register(mediaRoutes);
   await server.register(blogPostRoutes);
 }
