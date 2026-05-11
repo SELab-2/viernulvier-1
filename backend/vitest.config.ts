@@ -3,10 +3,10 @@ import path from "path";
 
 /** Same bar for both legacy CSV importers (streaming / DB-heavy; branches are costly to drive). */
 const LEGACY_IMPORTER_COVERAGE = {
-  statements: 85,
-  branches: 65,
+  statements: 95,
+  branches: 90,
   functions: 100,
-  lines: 85,
+  lines: 95,
 } as const;
 
 /** Default gate for application source (contrast `SCRAPER_COVERAGE` for `src/scraper`). */
