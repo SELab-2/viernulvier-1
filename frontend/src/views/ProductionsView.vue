@@ -853,7 +853,7 @@ async function applyProductionsSortChange(parsed: {
   try {
     await fetchProductionsPageData(0);
     await replaceRouteForPage0(0);
-    scrollAfterPageChange();
+    await scrollAfterPageChange();
   } catch (err) {
     failListAttempt(err);
   } finally {
@@ -1061,7 +1061,7 @@ async function applyFilterChange() {
   try {
     await fetchProductionsPageData(0);
     await replaceRouteForPage0(0);
-    scrollAfterPageChange();
+    await scrollAfterPageChange();
   } catch (err) {
     failListAttempt(err);
     syncFilterBannerFromApplied();
@@ -1095,7 +1095,7 @@ async function submitSearch() {
   try {
     await fetchProductionsPageData(0);
     await replaceRouteForPage0(0);
-    scrollAfterPageChange();
+    await scrollAfterPageChange();
   } catch (err) {
     failListAttempt(err);
   } finally {
@@ -1113,7 +1113,7 @@ async function removeSearchTermAt(index: number) {
   try {
     await fetchProductionsPageData(0);
     await replaceRouteForPage0(0);
-    scrollAfterPageChange();
+    await scrollAfterPageChange();
   } catch (err) {
     failListAttempt(err);
   } finally {
@@ -1462,7 +1462,7 @@ watch(
     beginListAttempt();
     try {
       await fetchProductionsPageData(page0);
-      scrollAfterPageChange();
+      await scrollAfterPageChange();
     } catch (err) {
       failListAttempt(err);
     } finally {
@@ -1500,7 +1500,7 @@ async function goToPage(page: number) {
   try {
     await fetchProductionsPageData(page);
     await replaceRouteForPage0(page);
-    scrollAfterPageChange();
+    await scrollAfterPageChange();
   } catch (err) {
     failListAttempt(err);
   } finally {
