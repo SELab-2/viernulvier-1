@@ -7,7 +7,7 @@ import { ProductionSchema } from "./production.js";
 export const BlogSchema = createSchema({
   id: primaryKey(),
   name: languageMap,
-  description: languageMap,
+  description: languageMap.nullable(),
 });
 
 export type Blog = z.infer<typeof BlogSchema>;
