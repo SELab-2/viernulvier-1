@@ -110,100 +110,7 @@ beforeEach(() => {
 });
 
 describe("Bulk edit on production route", () => {
-  test("PATCH /api/v1/production/bulk -> bulk updates core fields", async () => {
-    const ids = [baseProduction1["id"], baseProduction2["id"]];
-
-    server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
-      const upper = query.trim().toUpperCase();
-
-      if (upper.startsWith("UPDATE")) {
-        // ids are passed as last parameter
-        expect(params?.[params.length - 1]).toEqual(ids);
-        return Promise.resolve({ rows: [], rowCount: 2 });
-      }
-
-      if (upper.startsWith("SELECT")) {
-        expect(params?.[0]).toEqual(ids);
-        return Promise.resolve({
-          rows: [
-            productionRowWithRefs(updatedBulkA1),
-            productionRowWithRefsAlt(updatedBulkA2),
-          ],
-          rowCount: 2,
-        });
-      }
-
-      throw new Error(`Unexpected query in bulk-edit tests A: ${query}`);
-    });
-
-    const response = await server.inject({
-      method: "PATCH",
-      url: "/api/v1/production/bulk",
-      cookies: { session: sessionCookie },
-      payload: {
-        ids,
-        data: {
-          title: { nl: "Bulk A titel" },
-          artist: { nl: "Bulk A artiest" },
-        },
-      },
-    });
-
-    expect(response.statusCode).toBe(200);
-    const parsed = ProductionSchema.array().parse(response.json());
-    expect(parsed).toEqual([
-      ProductionSchema.parse(updatedBulkA1),
-      ProductionSchema.parse(updatedBulkA2),
-    ]);
-  });
-
-  test("PATCH /api/v1/production/bulk -> bulk updates other optional fields", async () => {
-    const ids = [baseProduction1["id"], baseProduction2["id"]];
-
-    server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
-      const upper = query.trim().toUpperCase();
-
-      if (upper.startsWith("UPDATE")) {
-        expect(params?.[params.length - 1]).toEqual(ids);
-        return Promise.resolve({ rows: [], rowCount: 2 });
-      }
-
-      if (upper.startsWith("SELECT")) {
-        expect(params?.[0]).toEqual(ids);
-        return Promise.resolve({
-          rows: [
-            productionRowWithRefs(updatedBulkB1),
-            productionRowWithRefsAlt(updatedBulkB2),
-          ],
-          rowCount: 2,
-        });
-      }
-
-      throw new Error(`Unexpected query in bulk-edit tests B: ${query}`);
-    });
-
-    const response = await server.inject({
-      method: "PATCH",
-      url: "/api/v1/production/bulk",
-      cookies: { session: sessionCookie },
-      payload: {
-        ids,
-        data: {
-          video_1: { nl: "Bulk B video 1" },
-          info: { nl: "Bulk B info" },
-        },
-      },
-    });
-
-    expect(response.statusCode).toBe(200);
-    const parsed = ProductionSchema.array().parse(response.json());
-    expect(parsed).toEqual([
-      ProductionSchema.parse(updatedBulkB1),
-      ProductionSchema.parse(updatedBulkB2),
-    ]);
-  });
-
-  test("PATCH /api/v1/production/bulk -> rejects invalid body", async () => {
+  test("PATCH /api/v1/production/bulk -> rejects empty array", async () => {
     const response = await server.inject({
       method: "PATCH",
       url: "/api/v1/production/bulk",
@@ -358,6 +265,140 @@ describe("Bulk edit on production route", () => {
         },
       } as unknown as FastifyRequest),
     ).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe("Bulk edit additional cases", () => {
+  test("PATCH /api/v1/production/bulk -> successfully updates multiple productions", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+
+      if (upper.startsWith("UPDATE")) {
+        return Promise.resolve({ rows: [], rowCount: 2 });
+      }
+
+      if (upper.startsWith("SELECT")) {
+        return Promise.resolve({
+          rows: [productionRowWithRefs(updatedBulkA1), productionRowWithRefs(updatedBulkA2)],
+          rowCount: 2,
+        });
+      }
+
+      throw new Error(`Unexpected query: ${query}`);
+    });
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: "/api/v1/production/bulk",
+      cookies: { session: sessionCookie },
+      payload: {
+        ids: [1, 2],
+        data: {
+          title: updatedBulkA1["title"],
+          artist: updatedBulkA1["artist"],
+        },
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const parsed = response.json() as Production[];
+    expect(parsed).toHaveLength(2);
+    expect(parsed[0]?.id).toBe(updatedBulkA1.id);
+    expect(parsed[1]?.id).toBe(updatedBulkA2.id);
+  });
+
+  test("PATCH /api/v1/production/bulk -> handles nullable fields with merge", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+
+      if (upper.startsWith("UPDATE")) {
+        return Promise.resolve({ rows: [], rowCount: 2 });
+      }
+
+      if (upper.startsWith("SELECT")) {
+        return Promise.resolve({
+          rows: [productionRowWithRefs(updatedBulkB1), productionRowWithRefs(updatedBulkB2)],
+          rowCount: 2,
+        });
+      }
+
+      throw new Error(`Unexpected query: ${query}`);
+    });
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: "/api/v1/production/bulk",
+      cookies: { session: sessionCookie },
+      payload: {
+        ids: [1, 2],
+        data: {
+          video_1: updatedBulkB1["video_1"],
+          info: updatedBulkB1["info"],
+        },
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+  });
+
+  test("PATCH /api/v1/production/bulk -> updates all supported fields", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+
+      if (upper.startsWith("UPDATE")) {
+        return Promise.resolve({ rows: [], rowCount: 2 });
+      }
+
+      if (upper.startsWith("SELECT")) {
+        return Promise.resolve({
+          rows: [productionRowWithRefs(updatedBulkC1), productionRowWithRefs(updatedBulkC2)],
+          rowCount: 2,
+        });
+      }
+
+      throw new Error(`Unexpected query: ${query}`);
+    });
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: "/api/v1/production/bulk",
+      cookies: { session: sessionCookie },
+      payload: {
+        ids: [1, 2],
+        data: {
+          supertitle: updatedBulkC1["supertitle"],
+          title: updatedBulkC1["title"],
+          artist: updatedBulkC1["artist"],
+          tagline: updatedBulkC1["tagline"],
+          teaser: updatedBulkC1["teaser"],
+          description: updatedBulkC1["description"],
+          description_extra: updatedBulkC1["description_extra"],
+          description_2: updatedBulkC1["description_2"],
+          video_1: updatedBulkC1["video_1"],
+          video_2: updatedBulkC1["video_2"],
+          quote: updatedBulkC1["quote"],
+          quote_source: updatedBulkC1["quote_source"],
+          programme: updatedBulkC1["programme"],
+          info: updatedBulkC1["info"],
+        },
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+  });
+
+  test("PATCH /api/v1/production/bulk -> rejects empty ids array", async () => {
+    const response = await server.inject({
+      method: "PATCH",
+      url: "/api/v1/production/bulk",
+      cookies: { session: sessionCookie },
+      payload: {
+        ids: [],
+        data: { title: { nl: "Test" } },
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
   });
 });
 

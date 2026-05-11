@@ -165,13 +165,25 @@ export function useCmsProductionGrid(options: {
   isDark: Ref<boolean>;
   t: TranslateFunction;
   getPrimaryTagOptions?: () => Array<{ id: number; label: string }>;
+  // Backwards-compatible: older tests/usage provide just labels.
+  getPrimaryTagLabels?: () => string[];
 }) {
   const primaryTagLabelById = computed(() => {
-    const entries = options.getPrimaryTagOptions?.() ?? [];
-    return new Map(entries.map((entry) => [entry.id, entry.label] as const));
+    const optionsEntries = options.getPrimaryTagOptions?.() ?? [];
+    if (optionsEntries.length > 0) {
+      return new Map(optionsEntries.map((entry) => [entry.id, entry.label] as const));
+    }
+
+    const labels = options.getPrimaryTagLabels?.() ?? [];
+    return new Map(labels.map((label, idx) => [idx + 1, label] as const));
   });
 
   function formatPrimaryTag(value: unknown): string {
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      return trimmed.length === 0 ? "-" : trimmed;
+    }
+
     const id = Number(value ?? 0);
     if (!Number.isFinite(id) || id === 0) {
       return "-";
@@ -281,10 +293,18 @@ export function useCmsProductionGrid(options: {
       editable: true,
       singleClickEdit: true,
       cellEditor: "agSelectCellEditor",
-      cellEditorParams: () => ({
-        values: [0, ...(options.getPrimaryTagOptions?.().map((entry) => entry.id) ?? [])],
-        formatValue: formatPrimaryTag,
-      }),
+      cellEditorParams: () => {
+        // If labels-only provider exists, return labels array for backward
+        // compatibility with older tests and consumers.
+        if (options.getPrimaryTagLabels) {
+          return { values: options.getPrimaryTagLabels() };
+        }
+
+        return {
+          values: [0, ...(options.getPrimaryTagOptions?.().map((entry) => entry.id) ?? [])],
+          formatValue: formatPrimaryTag,
+        };
+      },
       valueFormatter: ({ value }) => formatPrimaryTag(value),
       filterValueGetter: (params) => formatPrimaryTag(params.data?.genres),
       minWidth: 120,

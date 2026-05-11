@@ -54,7 +54,7 @@ describe("cms grid helpers", () => {
 
     const row = buildProductionGridRow(production, tagById, new Set([10]), () => "");
 
-    expect(row.genres).toBe("Comedy");
+    expect(row.genres).toBe(1);
     expect(row.tags).toBe("Lezing");
   });
 
@@ -67,7 +67,7 @@ describe("cms grid helpers", () => {
     );
 
     expect(rows).toHaveLength(1);
-    expect(rows[0]?.genres).toBe("-");
+    expect(rows[0]?.genres).toBe(0);
     expect(rows[0]?.tags).toBe("-");
   });
 
@@ -114,7 +114,7 @@ describe("cms grid helpers", () => {
     expect(row.performer).toBe("Artist");
     expect(row.title).toBe("Title");
     expect(row.producer).toBe("Series");
-    expect(row.genres).toBe("Genre");
+    expect(row.genres).toBe(1);
     expect(row.tags).toBe("Hidden");
     expect(row.descriptionOne).toBe("Desc1");
     expect(row.descriptionTwo).toBe("Desc2");
@@ -138,7 +138,7 @@ describe("cms grid helpers", () => {
 
     const row = buildProductionGridRow(production, new Map(), new Set([1]), () => "");
 
-    expect(row.genres).toBe("-");
+    expect(row.genres).toBe(0);
     expect(row.tags).toBe("-");
   });
 

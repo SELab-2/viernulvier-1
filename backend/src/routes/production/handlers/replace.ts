@@ -52,7 +52,7 @@ export async function replaceProduction(
   }
 
   if (hasOwn(body, "tags")) {
-    const nextTagIds = [...new Set((body.tags ?? []).filter((tagId) => Number.isInteger(tagId) && tagId > 0))];
+    const nextTagIds = [...new Set(body.tags ?? [])];
     const client = await server.pg.connect();
 
     try {

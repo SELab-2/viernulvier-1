@@ -68,12 +68,43 @@ describe("useCmsProductionGrid", () => {
         | (() => { values: string[] })
         | undefined;
       expect(withParams?.().values).toEqual(["Genre A", "Genre B"]);
+      const withValueFormatter = withLabels.columnDefs.value.find((c) => c.field === "genres")?.valueFormatter as
+        | ((params: { value: unknown }) => string)
+        | undefined;
+      expect(withValueFormatter?.({ value: 1 })).toBe("Genre A");
 
       const withoutLabels = useCmsProductionGrid({ isDark: ref(false), t: (key) => key });
       const withoutParams = withoutLabels.columnDefs.value.find((c) => c.field === "genres")?.cellEditorParams as
         | (() => { values: string[] })
         | undefined;
-      expect(withoutParams?.().values).toEqual([]);
+      expect(withoutParams?.().values).toEqual([0]);
+    });
+
+    it("formats primary tag ids with label and fallback values", () => {
+      const grid = useCmsProductionGrid({
+        isDark: ref(false),
+        t: (key) => key,
+        getPrimaryTagOptions: () => [{ id: 7, label: "Genre X" }],
+      });
+
+      const genresCol = grid.columnDefs.value.find((c) => c.field === "genres");
+      const params = genresCol?.cellEditorParams as
+        | (() => { values: number[]; formatValue: (value: unknown) => string })
+        | undefined;
+      expect(params?.().values).toEqual([0, 7]);
+
+      const valueFormatter = genresCol?.valueFormatter as
+        | ((params: { value: unknown }) => string)
+        | undefined;
+      expect(valueFormatter?.({ value: 7 })).toBe("Genre X");
+      expect(valueFormatter?.({ value: 0 })).toBe("-");
+      expect(valueFormatter?.({ value: Number.NaN })).toBe("-");
+      expect(params?.().formatValue(7)).toBe("Genre X");
+
+      const filterValueGetter = genresCol?.filterValueGetter as
+        | ((params: { data?: { genres?: unknown } }) => string)
+        | undefined;
+      expect(filterValueGetter?.({ data: { genres: 7 } })).toBe("Genre X");
     });
   });
 
@@ -109,7 +140,11 @@ describe("useCmsProductionGrid", () => {
   describe("CSV export specifics", () => {
     it("excludes the events action column and serializes tag arrays", () => {
       const exportDataAsCsv = vi.fn();
-      const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key });
+      const grid = useCmsProductionGrid({
+        isDark: ref(false),
+        t: (key) => key,
+        getPrimaryTagOptions: () => [{ id: 7, label: "Genre X" }],
+      });
       grid.gridApi.value = { exportDataAsCsv } as never;
 
       grid.exportGridCsv();
@@ -124,6 +159,13 @@ describe("useCmsProductionGrid", () => {
         value: "ignored",
       });
       expect(serializedTags).toBe("[1,2]");
+
+      const serializedGenre = arg.processCellCallback({
+        column: { getColId: () => "genres" },
+        node: { data: { source: { tags: [] } } },
+        value: 7,
+      });
+      expect(serializedGenre).toBe("Genre X");
 
       const plainValue = arg.processCellCallback({
         column: { getColId: () => "title" },

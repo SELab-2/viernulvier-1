@@ -41,7 +41,7 @@ export async function createProduction(
 
   const { admin, current_time } = getMetadata(request);
 
-  const tagIds = [...new Set((body.tags ?? []).filter((tagId) => Number.isInteger(tagId) && tagId > 0))];
+  const tagIds = [...new Set(body.tags ?? [])];
   const useTransaction = tagIds.length > 0;
 
   if (useTransaction) {

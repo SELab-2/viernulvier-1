@@ -300,5 +300,231 @@ describe("Edit on production route", () => {
       body: { title: undefined },
     } as unknown as FastifyRequest)).rejects.toMatchObject({ status: 400 });
   });
+
+  test("editProduction() -> accepts tags present but undefined", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+
+      if (upper.startsWith("BEGIN")) return Promise.resolve({ rowCount: 0 });
+      if (upper.startsWith("UPDATE")) return Promise.resolve({ rows: [{ id: originalProduction.id }], rowCount: 1 });
+      if (upper.startsWith("DELETE")) return Promise.resolve({ rows: [], rowCount: 0 });
+      if (upper.startsWith("INSERT INTO PRODUCTION_TAG")) return Promise.resolve({ rows: [], rowCount: 0 });
+      if (upper.startsWith("COMMIT")) return Promise.resolve({ rowCount: 0 });
+      if (upper.startsWith("SELECT")) {
+        return Promise.resolve({
+          rows: [productionRowWithRefs(updatedProductionA)],
+          rowCount: 1,
+        });
+      }
+
+      throw new Error(`Unexpected query in edit tests: ${query}`);
+    });
+
+    server.pg.connect = vi.fn().mockResolvedValue({
+      query: server.pg.query,
+      release: vi.fn(),
+    });
+
+    const response = await editProduction(server, {
+      params: { id: String(originalProduction["id"]) },
+      user: { id: 1 },
+      body: {
+        title: updatedProductionA.title,
+        tags: undefined,
+      },
+    } as unknown as FastifyRequest);
+
+    expect(response).not.toBeNull();
+    expect(response?.id).toBe(originalProduction.id);
+  });
+
+  test("PATCH /api/v1/production/:id -> updates with tags", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+
+      if (upper.startsWith("BEGIN")) return Promise.resolve({ rowCount: 0 });
+      if (upper.startsWith("COMMIT")) return Promise.resolve({ rowCount: 0 });
+      if (upper.startsWith("ROLLBACK")) return Promise.resolve({ rowCount: 0 });
+
+      if (upper.startsWith("UPDATE")) {
+        return Promise.resolve({ rows: [{ id: originalProduction.id }], rowCount: 1 });
+      }
+
+      if (upper.startsWith("DELETE")) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+
+      if (upper.startsWith("INSERT INTO PRODUCTION_TAG")) {
+        return Promise.resolve({ rows: [], rowCount: 2 });
+      }
+
+      if (upper.startsWith("SELECT")) {
+        return Promise.resolve({
+          rows: [productionRowWithRefs(updatedProductionA)],
+          rowCount: 1,
+        });
+      }
+
+      throw new Error(`Unexpected query in edit tests: ${query}`);
+    });
+
+    server.pg.connect = vi.fn().mockResolvedValue({
+      query: server.pg.query,
+      release: vi.fn(),
+    });
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/production/${originalProduction["id"]}`,
+      cookies: { session: sessionCookie },
+      payload: {
+        title: updatedProductionA["title"],
+        tags: [1, 2],
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const parsed = ProductionSchema.parse(response.json());
+    expect(parsed.id).toBe(updatedProductionA.id);
+  });
+
+  test("PATCH /api/v1/production/:id -> returns 404 when transactional update returns no row", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+
+      if (upper.startsWith("BEGIN")) return Promise.resolve({ rowCount: 0 });
+      if (upper.startsWith("UPDATE")) return Promise.resolve({ rows: [{}], rowCount: 1 });
+      if (upper.startsWith("ROLLBACK")) return Promise.resolve({ rowCount: 0 });
+
+      throw new Error(`Unexpected query in edit tests: ${query}`);
+    });
+
+    server.pg.connect = vi.fn().mockResolvedValue({
+      query: server.pg.query,
+      release: vi.fn(),
+    });
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/production/${originalProduction["id"]}`,
+      cookies: { session: sessionCookie },
+      payload: {
+        title: updatedProductionA["title"],
+        tags: [1, 2],
+      },
+    });
+
+    expect(response.statusCode).toBe(404);
+  });
+
+  test("PATCH /api/v1/production/:id -> returns 404 when transactional update returns empty rows", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+
+      if (upper.startsWith("BEGIN")) return Promise.resolve({ rowCount: 0 });
+      if (upper.startsWith("UPDATE")) return Promise.resolve({ rows: [], rowCount: 0 });
+      if (upper.startsWith("ROLLBACK")) return Promise.resolve({ rowCount: 0 });
+
+      throw new Error(`Unexpected query in edit tests: ${query}`);
+    });
+
+    server.pg.connect = vi.fn().mockResolvedValue({
+      query: server.pg.query,
+      release: vi.fn(),
+    });
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/production/${originalProduction["id"]}`,
+      cookies: { session: sessionCookie },
+      payload: {
+        title: updatedProductionA["title"],
+        tags: [1, 2],
+      },
+    });
+
+    expect(response.statusCode).toBe(404);
+  });
+
+  test("PATCH /api/v1/production/:id -> rolls back when tag insert fails", async () => {
+    const queryMock = vi.fn();
+    const releaseMock = vi.fn();
+    server.pg.query = queryMock;
+    server.pg.connect = vi.fn().mockResolvedValue({
+      query: queryMock,
+      release: releaseMock,
+    });
+
+    queryMock.mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+
+      if (upper.startsWith("BEGIN")) return Promise.resolve({ rowCount: 0 });
+      if (upper.startsWith("UPDATE")) return Promise.resolve({ rows: [{ id: originalProduction.id }], rowCount: 1 });
+      if (upper.startsWith("DELETE")) return Promise.resolve({ rows: [], rowCount: 0 });
+      if (upper.startsWith("INSERT INTO PRODUCTION_TAG")) return Promise.reject(new Error("Tag insert failed"));
+      if (upper.startsWith("ROLLBACK")) return Promise.resolve({ rowCount: 0 });
+
+      throw new Error(`Unexpected query in edit tests: ${query}`);
+    });
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/production/${originalProduction["id"]}`,
+      cookies: { session: sessionCookie },
+      payload: {
+        title: updatedProductionA["title"],
+        tags: [1, 2],
+      },
+    });
+
+    expect(response.statusCode).toBe(500);
+    expect(queryMock).toHaveBeenCalledWith("ROLLBACK");
+    expect(releaseMock).toHaveBeenCalled();
+  });
+
+  test("PATCH /api/v1/production/:id -> updates only tags without other fields", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+
+      if (upper.startsWith("BEGIN")) return Promise.resolve({ rowCount: 0 });
+      if (upper.startsWith("COMMIT")) return Promise.resolve({ rowCount: 0 });
+      if (upper.startsWith("ROLLBACK")) return Promise.resolve({ rowCount: 0 });
+
+      if (upper.startsWith("UPDATE")) {
+        return Promise.resolve({ rows: [{ id: originalProduction.id }], rowCount: 1 });
+      }
+
+      if (upper.startsWith("DELETE")) {
+        return Promise.resolve({ rows: [], rowCount: 1 });
+      }
+
+      if (upper.startsWith("INSERT INTO PRODUCTION_TAG")) {
+        return Promise.resolve({ rows: [], rowCount: 1 });
+      }
+
+      if (upper.startsWith("SELECT")) {
+        return Promise.resolve({
+          rows: [productionRowWithRefs(originalProduction)],
+          rowCount: 1,
+        });
+      }
+
+      throw new Error(`Unexpected query in edit tests: ${query}`);
+    });
+
+    server.pg.connect = vi.fn().mockResolvedValue({
+      query: server.pg.query,
+      release: vi.fn(),
+    });
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/production/${originalProduction["id"]}`,
+      cookies: { session: sessionCookie },
+      payload: { tags: [5] },
+    });
+
+    expect(response.statusCode).toBe(200);
+  });
 });
 

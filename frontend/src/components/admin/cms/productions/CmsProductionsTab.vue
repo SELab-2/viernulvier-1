@@ -803,12 +803,12 @@ async function applySecondaryTagBulkEdit(mode: "replace" | "diff"): Promise<void
         mode === "replace"
           ? desiredAdditionalTagIds
           : Array.from(
-              new Set(
-                existingAdditionalTagIds
-                  .filter((tagId) => !removedTagIds.includes(tagId))
-                  .concat(addedTagIds),
-              ),
-            );
+            new Set(
+              existingAdditionalTagIds
+                .filter((tagId) => !removedTagIds.includes(tagId))
+                .concat(addedTagIds),
+            ),
+          );
 
       await updateProduction(targetRow.id, {
         tags: [...existingGenreTagIds, ...nextAdditionalTagIds],

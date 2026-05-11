@@ -51,29 +51,24 @@ export async function bulkEditProductions(
   const values: unknown[] = [];
   let i = 1;
 
-  const addField = (column: string, value: unknown, mergeJson = false) => {
+  const addField = (column: string, value: unknown) => {
     if (value === undefined) return;
-    if (mergeJson) {
-      fields.push(
-        `${column} = CASE WHEN $${i}::jsonb IS NULL THEN NULL ELSE COALESCE(${column}, '{}'::jsonb) || $${i}::jsonb END`,
-      );
-      i += 1;
-      values.push(value);
-      return;
-    }
 
-    fields.push(`${column} = $${i++}`);
+    fields.push(
+      `${column} = CASE WHEN $${i}::jsonb IS NULL THEN NULL ELSE COALESCE(${column}, '{}'::jsonb) || $${i}::jsonb END`,
+    );
+    i += 1;
     values.push(value);
   };
 
   for (const column of DirectBulkEditColumns) {
     if (hasOwn(data, column)) {
-      addField(column, getFieldValue(data, column), true);
+      addField(column, getFieldValue(data, column));
     }
   }
   for (const column of NullableBulkEditColumns) {
     if (hasOwn(data, column)) {
-      addField(column, getNullableFieldValue(data, column), true);
+      addField(column, getNullableFieldValue(data, column));
     }
   }
 
