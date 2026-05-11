@@ -794,9 +794,12 @@ function urlNeedsSyncForPage0(page0: number): boolean {
   return cur !== want;
 }
 
-/** List jumps use instant scroll — `smooth` fights layout reflow (thumbnails resolving). Fallback scrolls doc only (not doc+body doubles). */
+/**
+ * Scroll to hero anchor after list page/filter changes (`smooth` by default).
+ * Fallback uses `documentElement` only (no duplicate `document.body` scroll).
+ */
 function scrollProductionsPageToTop(
-  behavior: ScrollBehavior = "auto",
+  behavior: ScrollBehavior = "smooth",
 ): void {
   const el = pageTopAnchor.value;
   if (el && typeof el.scrollIntoView === "function") {
