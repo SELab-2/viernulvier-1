@@ -21,7 +21,7 @@ export const fetchEventWithMetaDocs = requestSchema(
 
 export const fetchEventsDocs = requestSchema(
   sharedRequestSchema,
-  new RequestQueryString(EventsListQuerySchema),
+  new RequestQueryString(EventsListQuerySchema.in),
   returnsEventArray,
   new RequestDescription(`* Fetches events, optionally filtered by production ID(s) or old_id.
 

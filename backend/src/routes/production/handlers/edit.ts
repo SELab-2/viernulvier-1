@@ -52,7 +52,7 @@ export async function editProduction(
     fields.push(`${column} = $${i++}`);
     values.push(value);
   };
-
+  console.log(body);
   for (const column of DirectEditColumns) {
     if (hasOwn(body, column)) {
       addField(column, getFieldValue(body, column));
@@ -64,6 +64,7 @@ export async function editProduction(
     }
   }
 
+
   if (fields.length === 0 && !hasOwn(body, "tags")) {
     throw new HttpError(HttpClientError.BadRequest, "No fields to update");
   }
@@ -74,9 +75,8 @@ export async function editProduction(
 
   await server.pg.query(
     `UPDATE production SET ${fields.join(", ")} WHERE id = $${i}
-     RETURNING id`,
+    RETURNING id`,
     values,
   );
-
   return await getProductionById(server, id);
 }

@@ -295,7 +295,7 @@ describe("Edit on production route", () => {
     });
 
     await expect(editProduction(server, {
-      params: { id: String(originalProduction["id"]) },
+      params: { id: originalProduction["id"] },
       user: { id: 1 },
       body: { title: undefined },
     } as unknown as FastifyRequest)).rejects.toMatchObject({ status: 400 });
