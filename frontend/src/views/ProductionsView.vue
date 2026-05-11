@@ -517,7 +517,7 @@ import { i18n, type SupportedLang } from "@/i18n";
 import { getEventsForProductions } from "@/services/events";
 import { getHalls } from "@/services/halls";
 import { ApiError } from "@/services/api";
-import { getImagesForProductionOrEmpty } from "@/services/media";
+import { getImagesForProductionsOrEmpty } from "@/services/media";
 import {
   getProductions,
   type ProductionSortBy,
@@ -794,23 +794,20 @@ function urlNeedsSyncForPage0(page0: number): boolean {
   return cur !== want;
 }
 
-function scrollProductionsPageToTop() {
+/** List jumps use instant scroll — `smooth` fights layout reflow (thumbnails resolving). Fallback scrolls doc only (not doc+body doubles). */
+function scrollProductionsPageToTop(
+  behavior: ScrollBehavior = "auto",
+): void {
   const el = pageTopAnchor.value;
   if (el && typeof el.scrollIntoView === "function") {
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.scrollIntoView({ behavior, block: "start" });
     return;
   }
   const doc = document.documentElement;
-  const body = document.body;
   if (typeof doc.scrollTo === "function") {
-    doc.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    doc.scrollTo({ top: 0, left: 0, behavior });
   } else {
     doc.scrollTop = 0;
-  }
-  if (typeof body.scrollTo === "function") {
-    body.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-  } else {
-    body.scrollTop = 0;
   }
 }
 
@@ -870,11 +867,11 @@ const hasActiveListFilters = computed(() => {
 });
 
 const eventsByProduction = ref(new Map<number, ProductionEvent[]>());
-/** Set after `GET /production/:id/image` for each row on the current list page. */
+/** Set after `GET /production/images` for thumbnails on the current list page. */
 const thumbnailUrlByProductionId = ref(
   new Map<number, string | null>(),
 );
-/** Bumps on each thumbnail load; stale `Promise.all` runs must not overwrite the map after a newer interaction. */
+/** Bumps on each thumbnail load; stale batches must not overwrite the map after a newer interaction. */
 let thumbnailLoadGeneration = 0;
 const tagsById = ref(new Map<number, Tag>());
 const tagTypesById = ref(new Map<number, TagType>());
@@ -894,15 +891,16 @@ async function loadThumbnailsForProductionIds(ids: number[]): Promise<void> {
     thumbnailUrlByProductionId.value = new Map();
     return;
   }
-  const next = new Map<number, string | null>();
-  await Promise.all(
-    ids.map(async (id) => {
-      const images = await getImagesForProductionOrEmpty(id);
-      next.set(id, pickProductionListThumbnailUrl(images));
-    }),
-  );
+  const byProduction = await getImagesForProductionsOrEmpty(ids);
   if (gen !== thumbnailLoadGeneration) {
     return;
+  }
+  const next = new Map<number, string | null>();
+  for (const id of ids) {
+    next.set(
+      id,
+      pickProductionListThumbnailUrl(byProduction.get(id) ?? []),
+    );
   }
   thumbnailUrlByProductionId.value = next;
 }
@@ -972,7 +970,7 @@ async function fetchProductionsPageData(page0: number) {
   syncFilterBannerFromApplied();
   eventsByProduction.value = eventsMap;
   thumbnailUrlByProductionId.value = new Map();
-  void loadThumbnailsForProductionIds(ids);
+  await loadThumbnailsForProductionIds(ids);
 }
 
 function toggleTag(id: number) {
@@ -995,11 +993,14 @@ function clearDateRange() {
   filterDateTo.value = null;
 }
 
-function scrollAfterPageChange() {
-  void nextTick();
-  requestAnimationFrame(() => {
-    scrollProductionsPageToTop();
+async function scrollAfterPageChange(): Promise<void> {
+  await nextTick();
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
   });
+  scrollProductionsPageToTop();
 }
 
 async function replaceRouteForPage0(page0: number) {
@@ -1229,7 +1230,7 @@ const {
   visibleItems: compactGenreTagsForRow,
 } = useFittingPills(compactGenreTagCandidates, {
   gapPx: 8,
-  trailingControlGapPx: 8,
+  trailingControlGapPx: 4,
   fallbackVisibleCount: COMPACT_GENRE_FALLBACK_MAX,
 });
 
