@@ -1229,7 +1229,7 @@ const {
   visibleItems: compactGenreTagsForRow,
 } = useFittingPills(compactGenreTagCandidates, {
   gapPx: 8,
-  trailingControlGapPx: 4,
+  trailingControlGapPx: 8,
   fallbackVisibleCount: COMPACT_GENRE_FALLBACK_MAX,
 });
 
