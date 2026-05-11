@@ -242,7 +242,9 @@ export default {
     tagFiltersHeading: "Tags",
     viewMoreTagFilters: "Meer tonen",
     viewLessTagFilters: "Minder tonen",
-    selectDates: "Selecteer datums",
+    expandFiltersPanelAria: "Filters uitklappen",
+    collapseFiltersPanelAria: "Filters inklappen",
+    selectDates: "Kies datums",
     filterByYearRange: "Filter op jaren",
     yearRangeIntro:
       "Beperk producties tot voorstellingsjaren binnen dit bereik.",
