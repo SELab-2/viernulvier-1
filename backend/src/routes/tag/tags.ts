@@ -24,7 +24,7 @@ import {
  * - `GET /api/v1/tag/:id/meta` — fetch a single tag with metadata by ID. 🔒
  * - `POST /api/v1/tag` — create a tag. 🔒
  * - `PUT /api/v1/tag/:id` — replace a tag. 🔒
- * - `PATCH /api/v1/tag/:id` — partially update a tag. 🔒
+ * - `PATCH /api/v1/tag/:id` — partially update a tag; optionally update linked productions. 🔒
  * - `DELETE /api/v1/tag/:id` — delete a tag by ID. 🔒
  *
  * @param server - The Fastify instance to register routes on.

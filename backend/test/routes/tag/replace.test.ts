@@ -18,6 +18,15 @@ const mockTag: Tag = {
   public: true,
 };
 
+// Tag returned from UPDATE query (no productions)
+const mockTagResponse = {
+  id: mockTag.id,
+  old_id: mockTag.old_id,
+  name: mockTag.name,
+  tag_type: mockTag.tag_type,
+  public: mockTag.public,
+};
+
 beforeAll(async () => {
   server = await buildServer();
   sessionCookie = server.jwt.sign({ id: 1, username: "Admin" });
@@ -38,12 +47,29 @@ beforeEach(() => {
   vi.restoreAllMocks();
 });
 
+/**
+ * Sets up mocks for replace operations.
+ * Replace doesn't use transactions, just returns the updated row directly.
+ */
+function setupMocks(server: FastifyInstance, returnTag = mockTagResponse) {
+  server.pg.query = vi.fn((query: string) => {
+    const upper = query.trim().toUpperCase();
+
+    // Handle UPDATE ... RETURNING query
+    if (upper.startsWith("UPDATE TAG")) {
+      return Promise.resolve({
+        rows: [returnTag],
+        rowCount: 1,
+      });
+    }
+
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+}
+
 describe("Replace tag", () => {
   test("PUT /api/v1/tag/:id", async () => {
-    server.pg.query = vi.fn().mockResolvedValue({
-      rows: [mockTag],
-      rowCount: 1,
-    });
+    setupMocks(server);
 
     const response = await server.inject({
       method: "PUT",
@@ -58,7 +84,12 @@ describe("Replace tag", () => {
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(TagSchema.parse(response.json())).toEqual(mockTag);
+    const result = response.json();
+    expect(result.id).toBe(mockTagResponse.id);
+    expect(result.old_id).toBe(mockTagResponse.old_id);
+    expect(result.name).toEqual(mockTagResponse.name);
+    expect(result.tag_type).toBe(mockTagResponse.tag_type);
+    expect(result.public).toBe(mockTagResponse.public);
   });
 
   test("PUT /api/v1/tag/:id — returns 404 when tag not found", async () => {
@@ -96,3 +127,4 @@ describe("Replace tag", () => {
     expect(response.statusCode).toBe(HttpClientError.BadRequest);
   });
 });
+

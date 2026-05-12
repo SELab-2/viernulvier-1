@@ -2,7 +2,7 @@ import { describe, test, expect, beforeAll, beforeEach, vi, afterAll } from "vit
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import { TagSchema, type Tag } from "@viernulvier/shared/index.js";
-import { HttpSuccess, HttpClientError } from "@/routes/helpers.js";
+import { HttpSuccess, HttpClientError, HttpServerError } from "@/routes/helpers.js";
 
 vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
 
@@ -16,6 +16,11 @@ const mockTag: Tag = {
   tag_type: 1,
   productions: [],
   public: true,
+};
+
+const mockTagWithProductions: Tag = {
+  ...mockTag,
+  productions: [10, 20],
 };
 
 beforeAll(async () => {
@@ -38,12 +43,85 @@ beforeEach(() => {
   vi.restoreAllMocks();
 });
 
+/**
+ * Sets up mocks for create operations.
+ * Returns the mock client and sets up the server mocks.
+ */
+function setupMocks(server: FastifyInstance, returnTag: Tag = mockTag, insertedId: number = 5) {
+  const mockClient = {
+    query: vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+
+      if (upper === "BEGIN" || upper === "COMMIT") {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+      if (upper.startsWith("INSERT INTO TAG")) {
+        return Promise.resolve({
+          rows: [
+            {
+              id: insertedId,
+              old_id: returnTag.old_id,
+              name: returnTag.name,
+              tag_type: returnTag.tag_type,
+              public: returnTag.public,
+            },
+          ],
+          rowCount: 1,
+        });
+      }
+      if (upper.startsWith("INSERT INTO PRODUCTION_TAG")) {
+        return Promise.resolve({ rows: [], rowCount: 1 });
+      }
+      
+      // Fallback for unexpected queries in transaction
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    }),
+    release: vi.fn(),
+  };
+
+  server.pg.connect = vi.fn().mockResolvedValue(mockClient);
+  
+  // Mock server-level queries (not in transaction) for getTagById
+  server.pg.query = vi.fn((query: string) => {
+    const upper = query.trim().toUpperCase();
+    
+    // Handle TagSelect query: SELECT id, old_id, name, tag_type, public FROM tag WHERE id = $1
+    if (upper.includes("SELECT") && upper.includes("FROM TAG") && upper.includes("WHERE")) {
+      return Promise.resolve({
+        rows: [
+          {
+            id: returnTag.id,
+            old_id: returnTag.old_id,
+            name: returnTag.name,
+            tag_type: returnTag.tag_type,
+            public: returnTag.public,
+          },
+        ],
+        rowCount: 1,
+      });
+    }
+    
+    // Handle production_tag links query
+    if (upper.includes("FROM PRODUCTION_TAG") && upper.includes("WHERE TAG")) {
+      return Promise.resolve({
+        rows: returnTag.productions.map((prod) => ({
+          tag: returnTag.id,
+          production: prod,
+        })),
+        rowCount: returnTag.productions.length,
+      });
+    }
+
+    // Fallback for unexpected queries
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  return mockClient;
+}
+
 describe("Create tag", () => {
   test("POST /api/v1/tag", async () => {
-    server.pg.query = vi.fn().mockResolvedValue({
-      rows: [mockTag],
-      rowCount: 1,
-    });
+    setupMocks(server);
 
     const response = await server.inject({
       method: "POST",
@@ -61,7 +139,45 @@ describe("Create tag", () => {
     expect(TagSchema.parse(response.json())).toEqual(mockTag);
   });
 
+  test("POST /api/v1/tag with productions", async () => {
+    setupMocks(server, mockTagWithProductions);
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/tag",
+      cookies: { session: sessionCookie },
+      payload: {
+        old_id: mockTagWithProductions.old_id,
+        name: mockTagWithProductions.name,
+        tag_type: mockTagWithProductions.tag_type,
+        public: mockTagWithProductions.public,
+        productions: [10, 20],
+      },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const result = TagSchema.parse(response.json());
+    expect(result.productions).toEqual([10, 20]);
+  });
+
   test("POST /api/v1/tag — returns 404 when insert returns no row", async () => {
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string) => {
+        const upper = query.trim().toUpperCase();
+
+        if (upper === "BEGIN" || upper === "COMMIT" || upper === "ROLLBACK") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("INSERT INTO TAG")) {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
     server.pg.query = vi.fn().mockResolvedValue({
       rows: [],
       rowCount: 0,
@@ -91,5 +207,41 @@ describe("Create tag", () => {
     });
 
     expect(response.statusCode).toBe(HttpClientError.BadRequest);
+  });
+
+  test("POST /api/v1/tag — rolls back transaction on error", async () => {
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string) => {
+        const upper = query.trim().toUpperCase();
+
+        if (upper === "BEGIN") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("INSERT INTO PRODUCTION_TAG")) {
+          throw new Error("Production insertion failed");
+        }
+
+        throw new Error(`Unexpected query: ${query}`);
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/tag",
+      cookies: { session: sessionCookie },
+      payload: {
+        old_id: mockTag.old_id,
+        name: mockTag.name,
+        tag_type: mockTag.tag_type,
+        public: mockTag.public,
+        productions: [10],
+      },
+    });
+
+    expect(response.statusCode).toBe(HttpServerError.InternalServerError);
+    expect(mockClient.release).toHaveBeenCalled();
   });
 });
