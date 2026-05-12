@@ -11,19 +11,21 @@ export const MOCK_PRODUCTION_EVENT_IDS_ALT = [401, 402] as const;
 export const MOCK_PRODUCTION_BLOGPOST_IDS_ALT = [2] as const;
 
 export function productionRowWithRefs<T extends object>(row: T) {
+  const rowWithAny = row as any;
   return {
     ...row,
-    tags: [...MOCK_PRODUCTION_TAG_IDS],
-    events: [...MOCK_PRODUCTION_EVENT_IDS],
-    blogposts: [...MOCK_PRODUCTION_BLOGPOST_IDS],
+    tags: rowWithAny.tags ?? [...MOCK_PRODUCTION_TAG_IDS],
+    events: rowWithAny.events ?? [...MOCK_PRODUCTION_EVENT_IDS],
+    blogposts: rowWithAny.blogposts ?? [...MOCK_PRODUCTION_BLOGPOST_IDS],
   };
 }
 
 export function productionRowWithRefsAlt<T extends object>(row: T) {
+  const rowWithAny = row as any;
   return {
     ...row,
-    tags: [...MOCK_PRODUCTION_TAG_IDS_ALT],
-    events: [...MOCK_PRODUCTION_EVENT_IDS_ALT],
-    blogposts: [...MOCK_PRODUCTION_BLOGPOST_IDS_ALT],
+    tags: rowWithAny.tags ?? [...MOCK_PRODUCTION_TAG_IDS_ALT],
+    events: rowWithAny.events ?? [...MOCK_PRODUCTION_EVENT_IDS_ALT],
+    blogposts: rowWithAny.blogposts ?? [...MOCK_PRODUCTION_BLOGPOST_IDS_ALT],
   };
 }
