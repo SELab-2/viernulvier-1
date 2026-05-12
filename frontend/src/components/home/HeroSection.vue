@@ -150,7 +150,9 @@ const formattedProductions = computed(() =>
  */
 function onSubmit() {
   const trimmed = query.value.trim();
-  router.push({
+  // Fire-and-forget navigation; we don't need to await the resulting
+  // route transition for the form-submit handler to complete.
+  void router.push({
     name: RouteNames.PRODUCTIONS,
     params: { lang: currentLang.value },
     query: trimmed ? { search: trimmed } : {},
