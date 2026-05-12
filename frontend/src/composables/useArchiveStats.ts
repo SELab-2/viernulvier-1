@@ -1,12 +1,12 @@
 /**
  * @file Composable that provides archive statistics.
  *
- * Currently returns manually-set placeholder values (0).
- * These should be updated after scraping/importing the archive data,
- * using approximate values (e.g. "1 000+", "10k+").
+ * Currently returns a manually-set placeholder value. The landing page
+ * uses the productions count as a subtle "X+ producties doorzoekbaar"
+ * line under the hero search bar — nothing else is consumed.
  *
- * For milestone 3, consider replacing this with a server-side
- * endpoint that computes stats via optimised queries.
+ * For milestone 3, replace the manual constant with a server-side
+ * endpoint that computes the count via an optimised query.
  *
  * @example
  * ```vue
@@ -21,22 +21,16 @@ import { ref } from "vue";
 
 export interface ArchiveStats {
   productions: number;
-  events: number;
-  yearsOfHistory: number;
-  genres: number;
 }
 
 /**
  * Manually-set archive statistics.
  *
- * TODO: Update with real approximate values after data import.
- * TODO (milestone 3): Replace with server-side stats endpoint.
+ * TODO: Update with the real approximate value after data import.
+ * TODO (milestone 3): Replace with a server-side stats endpoint.
  */
 const MANUAL_STATS: ArchiveStats = {
   productions: 2500,
-  events: 4000,
-  yearsOfHistory: 20,
-  genres: 20,
 };
 
 export function useArchiveStats() {
