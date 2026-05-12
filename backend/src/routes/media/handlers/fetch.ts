@@ -221,7 +221,7 @@ export async function fetchImagesByProduction(
 ): Promise<(Image & { crops: Crop[] })[] | null> {
   const { productionId } = parseParams(
     request,
-    z.object({ productionId: serial() }),
+    z.object({ productionId: stringToInt }),
   );
 
   const imgResult = await server.pg.query(
@@ -425,7 +425,7 @@ export async function fetchCropByType(
 ): Promise<Crop | null> {
   const { imageId, type } = parseParams(
     request,
-    z.object({ imageId: serial(), type: z.string().min(1).max(32) }),
+    z.object({ imageId: stringToInt, type: z.string().min(1).max(32) }),
   );
 
   const result = await server.pg.query(

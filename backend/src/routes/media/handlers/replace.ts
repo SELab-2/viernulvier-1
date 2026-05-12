@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Crop, Image } from "@viernulvier/shared/index.js";
-import { serial } from "@viernulvier/shared/index.js";
+import { serial, stringToInt } from "@viernulvier/shared/index.js";
 import {
   HttpClientError,
   HttpError,
@@ -9,7 +9,10 @@ import {
   parseSchema,
 } from "@/routes/helpers.js";
 import { getImageById, getCropById } from "./fetch.js";
-import { ReplaceImageBodySchema, ReplaceCropBodySchema } from "./body-schema.js";
+import {
+  ReplaceImageBodySchema,
+  ReplaceCropBodySchema,
+} from "./body-schema.js";
 import { parseMultipart } from "./multipart-helpers.js";
 import {
   uploadToS3,
@@ -41,7 +44,7 @@ export async function replaceImage(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<(Image & { crops: Crop[] }) | null> {
-  const { id } = parseParams(request, z.object({ id: serial() }));
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
   const { admin, current_time } = getMetadata(request);
 
   // Verify image exists
@@ -129,7 +132,7 @@ export async function replaceCrop(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Crop | null> {
-  const { id } = parseParams(request, z.object({ id: serial() }));
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
   const { admin, current_time } = getMetadata(request);
 
   const existing = await getCropById(server, id);
