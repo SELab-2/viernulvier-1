@@ -48,7 +48,11 @@
 
         <div class="prose prose-base lg:prose-lg max-w-none text-ink-primary mb-24" v-html="bodyHtml"></div>
 
-        <LinkedProductionsCarousel :productions="linkedProductions" />
+        <LinkedProductionsCarousel 
+          :productions="linkedProductions" 
+          :thumbnails="thumbnailUrlByProductionId"
+          :date-ranges="dateRangeByProductionId" 
+        />
 
       </article>
     </main>
@@ -73,6 +77,9 @@ import { localizeOrEmpty } from "@/utils/language-utils";
 import { parseAndSanitizeMd } from "@/utils/parsers";
 import { getProduction } from "@/services/productions";
 import LinkedProductionsCarousel from "@/components/blogpost/LinkedProductionsCarousel.vue";
+import { getImagesForProductionOrEmpty } from "@/services/media";
+import { pickProductionListThumbnailUrl } from "@/utils/productionThumbnails";
+import { getEvents } from "@/services/events";
 
 const props = defineProps<{ id: string }>();
 const { t } = useI18n();
@@ -96,6 +103,8 @@ const formattedPublishedAt = computed(() => {
 });
 
 const linkedProductions = ref<ProductionWithBackwardsRefs[]>([]);
+const thumbnailUrlByProductionId = ref(new Map<number, string | null>());
+const dateRangeByProductionId = ref(new Map<number, string>());
 
 async function loadPost() {
   loading.value = true;
@@ -104,20 +113,51 @@ async function loadPost() {
     post.value = data;
 
     const ids = (data.productions || []) as number[];
-    if (ids.length > 0) {
-      const results = await Promise.allSettled(
-        ids.map((id: number) => getProduction(id)),
-      );
-      
-      linkedProductions.value = results
-        .filter((r): r is PromiseFulfilledResult<ProductionWithBackwardsRefs> => r.status === 'fulfilled')
-        .map(r => r.value);
-    }
+    if (ids.length === 0) return;
+
+    const results = await Promise.allSettled(ids.map(id => getProduction(id)));
+    
+    linkedProductions.value = results
+      .filter((r): r is PromiseFulfilledResult<ProductionWithBackwardsRefs> => r.status === 'fulfilled')
+      .map(r => r.value);
+
+    await Promise.all(linkedProductions.value.map(async (prod) => {
+      const [images, eventsResult] = await Promise.allSettled([
+        getImagesForProductionOrEmpty(prod.id),
+        getEvents(prod.id),
+      ]);
+
+      if (images.status === 'fulfilled') {
+        thumbnailUrlByProductionId.value.set(prod.id, pickProductionListThumbnailUrl(images.value));
+      }
+
+      if (eventsResult.status === 'fulfilled') {
+        dateRangeByProductionId.value.set(prod.id, formatYearRange(eventsResult.value));
+      } else {
+        dateRangeByProductionId.value.set(prod.id, "");
+      }
+    }));
+
   } catch (err) {
-    error.value = (err instanceof ApiError && err.isNotFound) ? "not-found" : "generic";
+    error.value = (err instanceof ApiError && err.status === 404) ? "not-found" : "generic";
   } finally {
     loading.value = false;
   }
+}
+
+function formatYearRange(events: { starts_at: string | Date }[]): string {
+  if (!events.length) return "";
+
+  const years = events.map(e => 
+    typeof e.starts_at === 'string' 
+      ? new Date(e.starts_at).getFullYear() 
+      : e.starts_at.getFullYear(),
+  );
+
+  const minYear = Math.min(...years);
+  const maxYear = Math.max(...years);
+
+  return minYear === maxYear ? String(minYear) : `${minYear}-${maxYear}`;
 }
 
 onMounted(loadPost);
