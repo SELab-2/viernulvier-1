@@ -8,7 +8,7 @@
         v-if="thumbnailUrl"
         :src="thumbnailUrl"
         :alt="localizeOrEmpty(production.title, currentLang)"
-        class="h-full w-full object-cover grayscale transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0"
+        class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
       />
       <div v-else class="h-full w-full bg-surface-2"></div>
     </div>
