@@ -227,5 +227,87 @@ describe("Create on production route", () => {
 
     expect(response.statusCode).toBe(400);
   });
+
+  test("POST /api/v1/production -> handles error during transaction", async () => {
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string) => {
+        const upper = query.trim().toUpperCase();
+
+        if (upper === "BEGIN") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("INSERT INTO PRODUCTION")) {
+          return Promise.reject(new Error("Production insert failed"));
+        }
+        if (upper === "ROLLBACK") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+
+        throw new Error(`Unexpected query: ${query}`);
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/production",
+      cookies: { session: sessionCookie },
+      payload: {
+        title: createdProduction["title"],
+        artist: createdProduction["artist"],
+        tagline: createdProduction["tagline"],
+        teaser: createdProduction["teaser"],
+        tags: [1, 2],
+      },
+    });
+
+    expect(response.statusCode).toBe(500);
+    expect(mockClient.release).toHaveBeenCalled();
+  });
+
+  test("POST /api/v1/production -> handles INSERT returning no rows", async () => {
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string) => {
+        const upper = query.trim().toUpperCase();
+
+        if (upper === "BEGIN") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("INSERT INTO PRODUCTION")) {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper === "ROLLBACK") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper === "COMMIT") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+
+        throw new Error(`Unexpected query: ${query}`);
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
+    server.pg.query = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 });
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/production",
+      cookies: { session: sessionCookie },
+      payload: {
+        title: createdProduction["title"],
+        artist: createdProduction["artist"],
+        tagline: createdProduction["tagline"],
+        teaser: createdProduction["teaser"],
+        tags: [1, 2],
+      },
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(mockClient.release).toHaveBeenCalled();
+  });
 });
 

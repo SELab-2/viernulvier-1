@@ -376,5 +376,36 @@ describe("Edit on production route", () => {
       body: { title: undefined },
     } as unknown as FastifyRequest)).rejects.toMatchObject({ status: 400 });
   });
+
+  test("editProduction() -> handles error during transaction", async () => {
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string) => {
+        const upper = query.trim().toUpperCase();
+
+        if (upper === "BEGIN") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("UPDATE PRODUCTION")) {
+          return Promise.reject(new Error("Update failed"));
+        }
+        if (upper === "ROLLBACK") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+
+        throw new Error(`Unexpected query: ${query}`);
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
+
+    await expect(editProduction(server, {
+      params: { id: String(originalProduction["id"]) },
+      user: { id: 1 },
+      body: { title: { nl: "New Title" } },
+    } as unknown as FastifyRequest)).rejects.toMatchObject({ status: 500 });
+
+    expect(mockClient.release).toHaveBeenCalled();
+  });
 });
 

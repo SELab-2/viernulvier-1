@@ -202,6 +202,20 @@ describe("Edit tag", () => {
     expect(result.productions).toEqual([10, 20, 30]);
   });
 
+  test("PATCH /api/v1/tag/:id with no fields (empty payload)", async () => {
+    setupMocks(server);
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/tag/${mockTag.id}`,
+      cookies: { session: sessionCookie },
+      payload: {},
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(TagSchema.parse(response.json())).toEqual(mockTag);
+  });
+
   test("PATCH /api/v1/tag/:id — returns 404 when tag not found", async () => {
     const mockClient = {
       query: vi.fn().mockImplementation((query: string) => {
@@ -245,6 +259,9 @@ describe("Edit tag", () => {
         }
         if (upper.startsWith("DELETE")) {
           throw new Error("Delete operation failed");
+        }
+        if (upper === "ROLLBACK") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
         }
 
         throw new Error(`Unexpected query: ${query}`);

@@ -200,6 +200,52 @@ describe("Create tag", () => {
     expect(response.statusCode).toBe(HttpClientError.NotFound);
   });
 
+  test("POST /api/v1/tag — handles error during transaction", async () => {
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string) => {
+        const upper = query.trim().toUpperCase();
+
+        if (upper === "BEGIN") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("INSERT INTO TAG")) {
+          return Promise.resolve({
+            rows: [{ id: 5, old_id: null, name: { nl: "Test" }, tag_type: 1, public: true }],
+            rowCount: 1,
+          });
+        }
+        // Simulate error on production_tag insert
+        if (upper.startsWith("INSERT INTO PRODUCTION_TAG")) {
+          return Promise.reject(new Error("Database error"));
+        }
+        if (upper === "ROLLBACK") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }),
+      release: vi.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/tag",
+      cookies: { session: sessionCookie },
+      payload: {
+        old_id: mockTag.old_id,
+        name: mockTag.name,
+        tag_type: mockTag.tag_type,
+        public: mockTag.public,
+        productions: [1, 2, 3],
+      },
+    });
+
+    expect(response.statusCode).toBe(HttpServerError.InternalServerError);
+  });
+
   test("POST /api/v1/tag invalid body", async () => {
     const response = await server.inject({
       method: "POST",
