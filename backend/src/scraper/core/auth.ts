@@ -1,4 +1,4 @@
-import { localApiUrl } from "./local-api.js";
+import { localApiUrl } from "@/scraper/core/index.js";
 
 /**
  * Admin user for scraper `POST` calls (JWT). Override in non-local / CI / production.

@@ -1,14 +1,14 @@
 import type { Hall } from "@viernulvier/shared/index.js";
 
-import { fetchScraperJwt } from "./auth.js";
 import {
+  fetchScraperJwt,
   hydraIriString,
   resolveViernulvierResourceUrl,
   totalPagesFromHydraView,
-} from "./hydra-view.js";
-import { localApiUrl } from "./local-api.js";
-import type { ScrapeRunStats } from "./scrape-stats.js";
-import { viernulvierApiUrl } from "./viernulvier-api.js";
+  localApiUrl,
+  type ScrapeRunStats,
+  viernulvierApiUrl,
+} from "@/scraper/core/index.js";
 
 interface HallListMeta {
   totalItems: number;

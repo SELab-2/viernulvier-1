@@ -4,24 +4,24 @@ import path from "path";
 /** Same bar for both legacy CSV importers (streaming / DB-heavy; branches are costly to drive). */
 const LEGACY_IMPORTER_COVERAGE = {
   statements: 85,
-  branches: 65,
+  branches: 75,
   functions: 100,
   lines: 85,
 } as const;
 
 /** Default gate for application source (contrast `SCRAPER_COVERAGE` for `src/scraper`). */
 const STRICT_COVERAGE = {
-  statements: 97.5,
-  branches: 97.5,
-  functions: 97.5,
-  lines: 97.5,
+  statements: 100,
+  branches: 100,
+  functions: 100,
+  lines: 100,
 } as const;
 
-const SCRAPER_COVERAGE = {
-  statements: 0,
-  branches: 0,
-  functions: 0,
-  lines: 0,
+const SCRAPER_ENTITIES_COVERAGE = {
+  statements: 95,
+  branches: 90,
+  functions: 100,
+  lines: 95,
 } as const;
 
 export default defineConfig({
@@ -40,7 +40,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/index.ts"],
+      exclude: ["src/index.ts", "src/scraper/core/load-repo-env.ts"],
       thresholds: {
         "src/server.ts": STRICT_COVERAGE,
         "src/db/**/*.ts": STRICT_COVERAGE,
@@ -48,7 +48,8 @@ export default defineConfig({
         "src/routes/**/*.ts": STRICT_COVERAGE,
         "src/legacy-import/shared.ts": STRICT_COVERAGE,
         "src/legacy-import/validate-legacy-inserts.ts": STRICT_COVERAGE,
-        "src/scraper/**/*.ts": SCRAPER_COVERAGE,
+        "src/scraper/core/**/*.ts": STRICT_COVERAGE,
+        "src/scraper/entities/**/*.ts": SCRAPER_ENTITIES_COVERAGE,
         "src/legacy-import/import-productions-legacy.ts": LEGACY_IMPORTER_COVERAGE,
         "src/legacy-import/import-events-legacy.ts": LEGACY_IMPORTER_COVERAGE,
         perFile: true,

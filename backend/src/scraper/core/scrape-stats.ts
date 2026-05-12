@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import type { ViernulvierEventStartBounds } from "./event-bounds.js";
+import type { ViernulvierEventStartBounds } from "@/scraper/entities/index.js";
 
 /**
  * Counters for lazy hall / production resolution during an event-first scrape.
@@ -183,7 +183,7 @@ export function scraperVerbose(): boolean {
 }
 
 /** Repo root (`viernulvier/`), from `backend/src/scraper/*.ts`. */
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");
 
 /**
  * Where to write {@link formatRunReport} output. Override with `SCRAPE_STATS_FILE` (absolute or relative to cwd).
