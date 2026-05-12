@@ -1,5 +1,16 @@
-import { requestById, RequestDescription, requestSchema, RequestResponse, RequestQueryString, protectedRequest } from "@/docs/helpers.js";
-import { returnsEvent, returnsEventArray, sharedRequestSchema } from "./shared.js";
+import {
+  requestById,
+  RequestDescription,
+  requestSchema,
+  RequestResponse,
+  RequestQueryString,
+  protectedRequest,
+} from "@/docs/helpers.js";
+import {
+  returnsEvent,
+  returnsEventArray,
+  sharedRequestSchema,
+} from "./shared.js";
 import { HttpSuccess } from "@/routes/helpers.js";
 import { EventSchema } from "@viernulvier/shared/index.js";
 import { EventsListQuerySchema } from "../handlers/fetch.js";
@@ -16,12 +27,14 @@ export const fetchEventWithMetaDocs = requestSchema(
   requestById,
   new RequestResponse(HttpSuccess.OK, EventSchema.withMeta()),
   protectedRequest,
-  new RequestDescription("Fetches a single event by ID from the database, with metadata."),
+  new RequestDescription(
+    "Fetches a single event by ID from the database, with metadata.",
+  ),
 );
 
 export const fetchEventsDocs = requestSchema(
   sharedRequestSchema,
-  new RequestQueryString(EventsListQuerySchema.in),
+  new RequestQueryString(EventsListQuerySchema),
   returnsEventArray,
   new RequestDescription(`* Fetches events, optionally filtered by production ID(s) or old_id.
 

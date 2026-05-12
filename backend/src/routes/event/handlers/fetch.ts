@@ -19,7 +19,8 @@ export async function fetchEvent(
   request: FastifyRequest,
 ): Promise<Event | null> {
   const { id } = parseParams(request, z.object({ id: serial() }));
-  const result = await buildQuery(server,
+  const result = await buildQuery(
+    server,
     `SELECT id, old_id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}
     FROM event WHERE id = $1`,
     z.tuple([z.int()]),
@@ -158,7 +159,7 @@ export async function fetchEvents(
 ): Promise<Event[]> {
   const { production, old_id } = parseSchema(
     server,
-    EventsListQuerySchema,
+    EventsListQuerySchema.out,
     request.query,
   );
 

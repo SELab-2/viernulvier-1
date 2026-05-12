@@ -1,6 +1,16 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import type { Crop, CropWithMeta, Image, ImageWithMeta } from "@viernulvier/shared/index.js";
-import { ImageSchema, CropSchema, serial } from "@viernulvier/shared/index.js";
+import type {
+  Crop,
+  CropWithMeta,
+  Image,
+  ImageWithMeta,
+} from "@viernulvier/shared/index.js";
+import {
+  ImageSchema,
+  CropSchema,
+  serial,
+  stringToInt,
+} from "@viernulvier/shared/index.js";
 import { parseParams, parseSchema, ParseContext } from "@/routes/helpers.js";
 import z from "zod";
 import { CropListQuerySchema, ImageListQuerySchema } from "./body-schema.js";
@@ -69,7 +79,12 @@ async function attachCropsToImages(
     `${CropSelect} WHERE c.image = ANY($1::int[]) ORDER BY c.image ASC, c.id ASC`,
     [imageIds],
   );
-  const allCrops = parseSchema(server, z.array(CropSchema), cropsResult.rows, ParseContext.Database);
+  const allCrops = parseSchema(
+    server,
+    z.array(CropSchema),
+    cropsResult.rows,
+    ParseContext.Database,
+  );
 
   const cropsByImage = new Map<number, Crop[]>();
   for (const crop of allCrops) {
@@ -100,7 +115,12 @@ export async function getImageByOldId(
     `${ImageSelect} WHERE i.old_id = \$1`,
     [oldId],
   );
-  const images = parseSchema(server, z.array(ImageSchema), imgResult.rows, ParseContext.Database);
+  const images = parseSchema(
+    server,
+    z.array(ImageSchema),
+    imgResult.rows,
+    ParseContext.Database,
+  );
   if (images.length === 0) return null;
 
   const withCrops = await attachCropsToImages(server, images);
@@ -118,11 +138,15 @@ export async function getImageById(
   server: FastifyInstance,
   id: number | string,
 ): Promise<(Image & { crops: Crop[] }) | null> {
-  const imgResult = await server.pg.query(
-    `${ImageSelect} WHERE i.id = \$1`,
-    [id],
+  const imgResult = await server.pg.query(`${ImageSelect} WHERE i.id = \$1`, [
+    id,
+  ]);
+  const images = parseSchema(
+    server,
+    z.array(ImageSchema),
+    imgResult.rows,
+    ParseContext.Database,
   );
-  const images = parseSchema(server, z.array(ImageSchema), imgResult.rows, ParseContext.Database);
   const image = images[0];
   if (!image) return null;
 
@@ -130,7 +154,12 @@ export async function getImageById(
     `${CropSelect} WHERE c.image = $1 ORDER BY c.id ASC`,
     [image.id],
   );
-  const crops = parseSchema(server, z.array(CropSchema), cropsResult.rows, ParseContext.Database);
+  const crops = parseSchema(
+    server,
+    z.array(CropSchema),
+    cropsResult.rows,
+    ParseContext.Database,
+  );
 
   return { ...image, crops };
 }
@@ -150,7 +179,12 @@ export async function getCropsByImageId(
     `${CropSelect} WHERE c.image = $1 ORDER BY c.id ASC`,
     [imageId],
   );
-  return parseSchema(server, z.array(CropSchema), result.rows, ParseContext.Database);
+  return parseSchema(
+    server,
+    z.array(CropSchema),
+    result.rows,
+    ParseContext.Database,
+  );
 }
 
 /**
@@ -164,11 +198,13 @@ export async function getCropById(
   server: FastifyInstance,
   id: number | string,
 ): Promise<Crop | null> {
-  const result = await server.pg.query(
-    `${CropSelect} WHERE c.id = $1`,
-    [id],
+  const result = await server.pg.query(`${CropSelect} WHERE c.id = $1`, [id]);
+  const crops = parseSchema(
+    server,
+    z.array(CropSchema),
+    result.rows,
+    ParseContext.Database,
   );
-  const crops = parseSchema(server, z.array(CropSchema), result.rows, ParseContext.Database);
   return crops[0] ?? null;
 }
 
@@ -183,13 +219,21 @@ export async function fetchImagesByProduction(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<(Image & { crops: Crop[] })[] | null> {
-  const { productionId } = parseParams(request, z.object({ productionId: serial() }));
+  const { productionId } = parseParams(
+    request,
+    z.object({ productionId: serial() }),
+  );
 
   const imgResult = await server.pg.query(
     `${ImageSelect} WHERE i.production = $1 ORDER BY i.id ASC`,
     [productionId],
   );
-  const images = parseSchema(server, z.array(ImageSchema), imgResult.rows, ParseContext.Database);
+  const images = parseSchema(
+    server,
+    z.array(ImageSchema),
+    imgResult.rows,
+    ParseContext.Database,
+  );
 
   if (images.length === 0) return [];
 
@@ -198,7 +242,12 @@ export async function fetchImagesByProduction(
     `${CropSelect} WHERE c.image = ANY($1::int[]) ORDER BY c.image ASC, c.id ASC`,
     [imageIds],
   );
-  const allCrops = parseSchema(server, z.array(CropSchema), cropsResult.rows, ParseContext.Database);
+  const allCrops = parseSchema(
+    server,
+    z.array(CropSchema),
+    cropsResult.rows,
+    ParseContext.Database,
+  );
 
   const cropsByImage = new Map<number, Crop[]>();
   for (const crop of allCrops) {
@@ -237,7 +286,11 @@ export async function fetchAllImages(
   | (Image & { crops: Crop[] })[]
   | { totalItems: number; member: (Image & { crops: Crop[] })[] }
 > {
-  const { oldId, page, pageSize: rawPageSize } = parseSchema(
+  const {
+    oldId,
+    page,
+    pageSize: rawPageSize,
+  } = parseSchema(
     server,
     ImageListQuerySchema,
     request.query,
@@ -267,13 +320,15 @@ export async function fetchAllImages(
     const member = await attachCropsToImages(server, images);
     return { totalItems, member };
   }
-  const imgResult = await server.pg.query(
-    `${ImageSelect} ORDER BY i.id ASC`,
+  const imgResult = await server.pg.query(`${ImageSelect} ORDER BY i.id ASC`);
+  const images = parseSchema(
+    server,
+    z.array(ImageSchema),
+    imgResult.rows,
+    ParseContext.Database,
   );
-  const images = parseSchema(server, z.array(ImageSchema), imgResult.rows, ParseContext.Database);
   return await attachCropsToImages(server, images);
 }
-
 
 /**
  * GET /api/v1/image/:id
@@ -284,7 +339,7 @@ export async function fetchImage(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<(Image & { crops: Crop[] }) | null> {
-  const { id } = parseParams(request, z.object({ id: serial() }));
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
   return await getImageById(server, id);
 }
 
@@ -297,7 +352,7 @@ export async function fetchImageWithMeta(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<(ImageWithMeta & { crops: CropWithMeta[] }) | null> {
-  const { id } = parseParams(request, z.object({ id: serial() }));
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
 
   const imgResult = await server.pg.query(
     `${ImageSelectWithMeta} WHERE i.id = $1`,
@@ -336,14 +391,24 @@ export async function fetchCropsByImage(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Crop[] | null> {
-  const { imageId } = parseParams(request, z.object({ imageId: serial() }));
-  const { oldId } = parseSchema(server, CropListQuerySchema, request.query, ParseContext.Request);
+  const { imageId } = parseParams(request, z.object({ imageId: stringToInt }));
+  const { oldId } = parseSchema(
+    server,
+    CropListQuerySchema,
+    request.query,
+    ParseContext.Request,
+  );
   if (oldId !== undefined) {
     const crop = await server.pg.query(
       `${CropSelect} WHERE c.image = $1 AND c.old_id = $2`,
       [imageId, oldId],
     );
-    const crops = parseSchema(server, z.array(CropSchema), crop.rows, ParseContext.Database);
+    const crops = parseSchema(
+      server,
+      z.array(CropSchema),
+      crop.rows,
+      ParseContext.Database,
+    );
     return crops;
   }
   return await getCropsByImageId(server, imageId);
@@ -367,6 +432,11 @@ export async function fetchCropByType(
     `${CropSelect} WHERE c.image = $1 AND c.type = $2`,
     [imageId, type],
   );
-  const crops = parseSchema(server, z.array(CropSchema), result.rows, ParseContext.Database);
+  const crops = parseSchema(
+    server,
+    z.array(CropSchema),
+    result.rows,
+    ParseContext.Database,
+  );
   return crops[0] ?? null;
 }

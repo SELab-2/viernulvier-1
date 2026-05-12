@@ -256,7 +256,7 @@ describe("Create on blogpost route", () => {
         title: mockBlogPost["title"],
         content: mockBlogPost["content"],
         published_at: null,
-        productions: [],
+        productions: [1],
       },
     });
     expect(response.statusCode).toBe(HttpClientError.Unauthorized);

@@ -1,8 +1,22 @@
-import { protectedRequest, requestById, RequestDescription, RequestQueryString, RequestResponse, requestSchema } from "@/docs/helpers.js";
-import { returnsProduction, returnsProductionArray, sharedRequestSchema } from "./shared.js";
+import {
+  protectedRequest,
+  requestById,
+  RequestDescription,
+  RequestQueryString,
+  RequestResponse,
+  requestSchema,
+} from "@/docs/helpers.js";
+import {
+  returnsProduction,
+  returnsProductionArray,
+  sharedRequestSchema,
+} from "./shared.js";
 import { ProductionListQuerySchema } from "../helpers/pagination.js";
 import { HttpSuccess } from "@/routes/helpers.js";
-import { ProductionSchemaWithBackwardsRefs } from "@viernulvier/shared/types/production.js";
+import {
+  ProductionSchema,
+  ProductionSchemaWithBackwardsRefs,
+} from "@viernulvier/shared/types/production.js";
 import z from "zod";
 
 export const fetchProductionDocs = requestSchema(
@@ -16,11 +30,14 @@ export const fetchProductionsDocs = requestSchema(
   sharedRequestSchema,
   returnsProductionArray,
   new RequestQueryString(ProductionListQuerySchema),
-  new RequestResponse(HttpSuccess.OK,
-    z.object({
-      items: ProductionSchemaWithBackwardsRefs.array(),
-      total: z.int().positive(),
-    }).describe("A list of productions and the total count"),
+  new RequestResponse(
+    HttpSuccess.OK,
+    z
+      .object({
+        items: ProductionSchemaWithBackwardsRefs.array(),
+        total: z.int().nonnegative(),
+      })
+      .describe("A list of productions and the total count"),
     true,
   ),
   new RequestDescription(`Fetches a list of productions.
@@ -30,15 +47,13 @@ export const fetchProductionsDocs = requestSchema(
  - Optional \`search\`: comma-separated terms (\`search=a,b\`), AND semantics; each term is a
    case-insensitive substring on title, artist, tagline, teaser, description, and hall names.
    Repeating the \`search\` key is still accepted for older clients.
- - Optional \`old_id\`: filter by old_id value.`,
-  ),
+ - Optional \`old_id\`: filter by old_id value.`),
 );
 
 export const fetchProductionWithMetaDocs = requestSchema(
   sharedRequestSchema,
   requestById,
-  new RequestResponse(HttpSuccess.OK, ProductionSchemaWithBackwardsRefs.withMeta()),
+  new RequestResponse(HttpSuccess.OK, ProductionSchema.withMeta()),
   protectedRequest,
   new RequestDescription("Fetch a single production by ID, with metadata"),
 );
-

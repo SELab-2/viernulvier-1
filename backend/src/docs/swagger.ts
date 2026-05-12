@@ -17,9 +17,10 @@ export default fp(async (server: FastifyInstance) => {
   server.setSerializerCompiler(serializerCompiler);
 
   server.setErrorHandler((err, req, reply) => {
+    console.log(err);
     if (hasZodFastifySchemaValidationErrors(err)) {
       return reply.code(400).send({
-        error: 'Response Validation Error',
+        error: "Bad Request",
         message: "Request doesn't match the schema",
         statusCode: 400,
         details: {
@@ -31,7 +32,7 @@ export default fp(async (server: FastifyInstance) => {
     }
     if (isResponseSerializationError(err)) {
       return reply.code(500).send({
-        error: 'Internal Server Error',
+        error: "Internal Server Error",
         message: "Response doesn't match the schema",
         statusCode: 500,
         details: {

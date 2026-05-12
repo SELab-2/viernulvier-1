@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Crop, Image } from "@viernulvier/shared/index.js";
-import { serial } from "@viernulvier/shared/index.js";
+import { serial, stringToInt } from "@viernulvier/shared/index.js";
 import {
   HttpClientError,
   HttpError,
@@ -37,7 +37,7 @@ export async function editImage(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<(Image & { crops: Crop[] }) | null> {
-  const { id } = parseParams(request, z.object({ id: serial() }));
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
   const body = parseSchema(server, PatchImageBodySchema, request.body);
 
   const { admin, current_time } = getMetadata(request);
@@ -97,7 +97,7 @@ export async function editCrop(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Crop | null> {
-  const { id } = parseParams(request, z.object({ id: serial() }));
+  const { id } = parseParams(request, z.object({ id: stringToInt }));
   const { admin, current_time } = getMetadata(request);
 
   // Fetch existing crop
@@ -132,8 +132,15 @@ export async function editCrop(
   // Optionally replace the file
   if (newFile) {
     const oldS3Key = extractS3Key(existing.url);
-    const newS3Key = generateS3Key("crop" + oldS3Key.slice(oldS3Key.lastIndexOf(".")));
-    await uploadToS3(server.s3.client, newS3Key, newFile.buffer, newFile.mimetype);
+    const newS3Key = generateS3Key(
+      "crop" + oldS3Key.slice(oldS3Key.lastIndexOf(".")),
+    );
+    await uploadToS3(
+      server.s3.client,
+      newS3Key,
+      newFile.buffer,
+      newFile.mimetype,
+    );
     await deleteFromS3(server.s3.client, oldS3Key);
 
     const newPath = buildCropPath(newS3Key);
