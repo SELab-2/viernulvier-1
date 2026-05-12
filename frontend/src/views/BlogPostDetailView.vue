@@ -1,5 +1,5 @@
 <template>
-  <div class="flex min-h-screen flex-col bg-surface-0">
+  <div class="flex min-h-screen flex-col bg-surface-0 transition-colors duration-300">
     <AppNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
 
     <main class="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
@@ -34,15 +34,22 @@
       </div>
 
       <!-- Happy path -->
-      <article v-else-if="post" class="post">
-        <header class="mb-8">
-          <h1 class="mb-3 text-4xl font-bold text-ink-primary">{{ title }}</h1>
-          <p v-if="formattedPublishedAt" class="text-sm text-ink-tertiary">
-            {{ t("blogpost.publishedOn", { date: formattedPublishedAt }) }}
-          </p>
+      <article v-else-if="post" class="animate-fade-up">
+
+        <header class="mb-16">
+          <div v-if="formattedPublishedAt" class="mb-6 text-[10px] font-black uppercase tracking-[0.3em] text-ink-tertiary">
+            {{ formattedPublishedAt }}
+          </div>
+          
+          <h1 class="font-serif text-5xl font-black italic uppercase leading-[1.05] text-ink-primary lg:text-7xl">
+            {{ title }}
+          </h1>
         </header>
 
-        <div class="post-body">{{ bodyHtml }}</div>
+        <div class="prose prose-base lg:prose-lg max-w-none text-ink-primary mb-24" v-html="bodyHtml"></div>
+
+        <LinkedProductionsCarousel :productions="linkedProductions" />
+
       </article>
     </main>
 
@@ -61,65 +68,53 @@ import { getBlogPost } from "@/services/blogposts";
 import { ApiError } from "@/services/api";
 import AppNavbar from "@/components/nav/AppNavbar.vue";
 import AppFooter from "@/components/AppFooter.vue";
-import type { BlogPost } from "@viernulvier/shared";
+import type { BlogPostWithBackwardsRefs, ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { localizeOrEmpty } from "@/utils/language-utils";
-import { parseAndSanitizeContent } from "@/utils/parsers";
+import { parseAndSanitizeMd } from "@/utils/parsers";
+import { getProduction } from "@/services/productions";
+import LinkedProductionsCarousel from "@/components/blogpost/LinkedProductionsCarousel.vue";
 
 const props = defineProps<{ id: string }>();
-
 const { t } = useI18n();
 const { isDark, toggleDark } = useDarkMode();
 
 const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
-
-const post = ref<BlogPost | null>(null);
+const post = ref<BlogPostWithBackwardsRefs | null>(null);
 const loading = ref<boolean>(true);
 const error = ref<"not-found" | "generic" | null>(null);
 
-const title = computed(() => 
-  localizeOrEmpty(post.value?.title ?? {}, currentLang.value),
-);
-
+const title = computed(() => localizeOrEmpty(post.value?.title ?? {}, currentLang.value));
 const bodyHtml = computed(() => {
-  const rawHtml = localizeOrEmpty(post.value?.content ?? {}, currentLang.value);
-  return parseAndSanitizeContent(rawHtml);
+  const rawMarkdown = localizeOrEmpty(post.value?.content ?? {}, currentLang.value);
+  return parseAndSanitizeMd(rawMarkdown);
 });
 
-/**
- * Formats `published_at` using the current locale. Returns an empty string
- * for unpublished posts (which shouldn't reach this component via the public
- * endpoint, but we handle it gracefully anyway).
- */
-const formattedPublishedAt = computed<string>(() => {
+const formattedPublishedAt = computed(() => {
   const publishedAt = post.value?.published_at;
   if (!publishedAt) return "";
-  return new Date(publishedAt).toLocaleDateString(currentLang.value, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return new Date(publishedAt).toLocaleDateString(currentLang.value, { year: "numeric", month: "long", day: "numeric" });
 });
+
+const linkedProductions = ref<ProductionWithBackwardsRefs[]>([]);
 
 async function loadPost() {
   loading.value = true;
-  error.value = null;
-  post.value = null;
-
-  const numericId = Number(props.id);
-  if (!Number.isInteger(numericId) || numericId <= 0) {
-    error.value = "not-found";
-    loading.value = false;
-    return;
-  }
-
   try {
-    post.value = await getBlogPost(numericId);
-  } catch (err) {
-    if (err instanceof ApiError && err.isNotFound) {
-      error.value = "not-found";
-    } else {
-      error.value = "generic";
+    const data = await getBlogPost(Number(props.id));
+    post.value = data;
+
+    const ids = (data.productions || []) as number[];
+    if (ids.length > 0) {
+      const results = await Promise.allSettled(
+        ids.map((id: number) => getProduction(id)),
+      );
+      
+      linkedProductions.value = results
+        .filter((r): r is PromiseFulfilledResult<ProductionWithBackwardsRefs> => r.status === 'fulfilled')
+        .map(r => r.value);
     }
+  } catch (err) {
+    error.value = (err instanceof ApiError && err.isNotFound) ? "not-found" : "generic";
   } finally {
     loading.value = false;
   }
@@ -128,21 +123,3 @@ async function loadPost() {
 onMounted(loadPost);
 watch(() => props.id, loadPost);
 </script>
-
-<style scoped>
-@reference "@/style.css";
-
-.post-loading,
-.post-error {
-  @apply py-16 text-center;
-}
-
-.back-link {
-  @apply inline-block rounded-lg bg-accent-dark px-5 py-2.5 text-sm font-semibold text-surface-0 transition hover:bg-accent-dark-hover;
-}
-
-.post-body {
-  @apply text-base leading-relaxed text-ink-primary;
-  white-space: pre-wrap;
-}
-</style>
