@@ -19,7 +19,7 @@ export const ProductionBodySchema = ProductionSchema.pick({
   programme: true,
   info: true,
 }).extend({
-  tags: z.array(z.int()).min(1, "Tags array must contain at least one tag"),
+  tags: z.array(z.int()),
 });
 
 export const CreateProductionBodySchema = ProductionSchema.pick({

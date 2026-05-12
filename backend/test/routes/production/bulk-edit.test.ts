@@ -115,7 +115,7 @@ describe("Bulk edit on production route", () => {
     const ids = [baseProduction1["id"], baseProduction2["id"]];
 
     const mockClient = {
-      query: vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+      query: vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
         const upper = query.trim().toUpperCase();
 
         if (upper === "BEGIN" || upper === "COMMIT") {
@@ -173,7 +173,7 @@ describe("Bulk edit on production route", () => {
     const ids = [baseProduction1["id"], baseProduction2["id"]];
 
     const mockClient = {
-      query: vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+      query: vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
         const upper = query.trim().toUpperCase();
 
         if (upper === "BEGIN" || upper === "COMMIT") {
@@ -234,7 +234,7 @@ describe("Bulk edit on production route", () => {
     const ids = [baseProduction1["id"], baseProduction2["id"]];
 
     const mockClient = {
-      query: vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+      query: vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
         const upper = query.trim().toUpperCase();
 
         if (upper === "BEGIN" || upper === "COMMIT") {
@@ -322,7 +322,7 @@ describe("Bulk edit on production route", () => {
     const ids = [baseProduction1["id"], baseProduction2["id"]];
 
     const mockClient = {
-      query: vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+      query: vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
         const upper = query.trim().toUpperCase();
 
         if (upper === "BEGIN" || upper === "COMMIT") {
@@ -392,7 +392,7 @@ describe("Bulk edit on production route", () => {
     const ids = [baseProduction1["id"], baseProduction2["id"]];
 
     const mockClient = {
-      query: vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+      query: vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
         const upper = query.trim().toUpperCase();
 
         if (upper === "BEGIN" || upper === "COMMIT") {

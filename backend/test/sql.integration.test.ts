@@ -706,6 +706,7 @@ describe("Production routes — SQL integration", { sequential: true }, () => {
         quote_source: null,
         programme: null,
         info: null,
+        tags: [],
       },
     });
 
@@ -727,6 +728,60 @@ describe("Production routes — SQL integration", { sequential: true }, () => {
 
     const fetchResponse = await server.inject({ method: "GET", url: `/api/v1/production/${productionId}` });
     expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
+  });
+
+  test("POST /api/v1/production — creates production with empty tags array", async () => {
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/production",
+      cookies: { session: sessionCookie },
+      payload: { ...basePayload, old_id: 9999, description: { nl: "No tags" }, tags: [] },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const production = ProductionSchemaWithBackwardsRefs.parse(response.json());
+    expect(production.tags).toEqual([]);
+    expect(production.title).toEqual({ nl: "Test Productie" });
+  });
+
+  test("PUT /api/v1/production/:id — can replace production keeping empty tags array", async () => {
+    // Create a production to manipulate
+    const createResponse = await server.inject({
+      method: "POST",
+      url: "/api/v1/production",
+      cookies: { session: sessionCookie },
+      payload: { ...basePayload, old_id: 8888, description: { nl: "Edit test" } },
+    });
+    const tempProductionId = createResponse.json().id;
+
+    // Replace with empty tags array
+    const putResponse = await server.inject({
+      method: "PUT",
+      url: `/api/v1/production/${tempProductionId}`,
+      cookies: { session: sessionCookie },
+      payload: {
+        ...basePayload,
+        title: { nl: "Empty Tags Production" },
+        old_id: null,
+        finalized: false,
+        supertitle: null,
+        description: null,
+        description_extra: null,
+        description_2: null,
+        video_1: null,
+        video_2: null,
+        quote: null,
+        quote_source: null,
+        programme: null,
+        info: null,
+        tags: [],
+      },
+    });
+
+    expect(putResponse.statusCode).toBe(HttpSuccess.OK);
+    const production = ProductionSchemaWithBackwardsRefs.parse(putResponse.json());
+    expect(production.tags).toEqual([]);
+    expect(production.title).toEqual({ nl: "Empty Tags Production" });
   });
 });
 
@@ -1181,6 +1236,33 @@ describe("Tag & tag type routes — SQL integration", { sequential: true }, () =
 
       const fetchResponse = await server.inject({ method: "GET", url: `/api/v1/tag/${tagId}` });
       expect(fetchResponse.statusCode).not.toBe(HttpSuccess.OK);
+    });
+
+    test("POST /api/v1/tag — creates a tag without production links (empty array)", async () => {
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/v1/tag",
+        cookies: { session: sessionCookie },
+        payload: {
+          old_id: null,
+          name: { nl: "Unlinked Tag" },
+          tag_type: tagTypeId,
+          public: true,
+        },
+      });
+
+      expect(response.statusCode).toBe(HttpSuccess.OK);
+      const tag = TagSchema.parse(response.json());
+      expect(tag).toMatchObject({ name: { nl: "Unlinked Tag" }, public: true });
+      
+      // Verify when fetched it still has empty production links
+      const fetchResponse = await server.inject({
+        method: "GET",
+        url: `/api/v1/tag/${tag.id}`,
+      });
+      expect(fetchResponse.statusCode).toBe(HttpSuccess.OK);
+      const fetchedTag = TagSchema.parse(fetchResponse.json());
+      expect(fetchedTag).toMatchObject({ id: tag.id, name: { nl: "Unlinked Tag" } });
     });
   });
 

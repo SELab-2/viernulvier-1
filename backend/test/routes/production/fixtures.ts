@@ -11,6 +11,7 @@ export const MOCK_PRODUCTION_EVENT_IDS_ALT = [401, 402] as const;
 export const MOCK_PRODUCTION_BLOGPOST_IDS_ALT = [2] as const;
 
 export function productionRowWithRefs<T extends object>(row: T) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rowWithAny = row as any;
   return {
     ...row,
@@ -21,6 +22,7 @@ export function productionRowWithRefs<T extends object>(row: T) {
 }
 
 export function productionRowWithRefsAlt<T extends object>(row: T) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rowWithAny = row as any;
   return {
     ...row,

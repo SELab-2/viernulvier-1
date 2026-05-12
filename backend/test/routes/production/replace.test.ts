@@ -236,7 +236,43 @@ describe("Replace on production route", () => {
     expect(response.statusCode).toBe(HttpServerError.InternalServerError);
   });
 
-  test("PUT /api/v1/production/:id -> rejects empty tags array", async () => {
+  test("PUT /api/v1/production/:id -> allows empty tags array", async () => {
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string) => {
+        const upper = query.trim().toUpperCase();
+
+        if (upper === "BEGIN" || upper === "COMMIT") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("UPDATE")) {
+          return Promise.resolve({ rows: [], rowCount: 1 });
+        }
+        if (upper.startsWith("DELETE")) {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("SELECT")) {
+          return Promise.resolve({
+            rows: [productionRowWithRefs(replacedProduction)],
+            rowCount: 1,
+          });
+        }
+
+        throw new Error(`Unexpected query in replace tests: ${query}`);
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
+    server.pg.query = vi.fn().mockResolvedValue({
+      rows: [{
+        ...replacedProduction,
+        tags: [],
+        events: [5197, 5204, 5217],
+        blogposts: [1, 3],
+      }],
+      rowCount: 1,
+    });
+
     const response = await server.inject({
       method: "PUT",
       url: `/api/v1/production/${replacedProduction["id"]}`,
@@ -262,7 +298,8 @@ describe("Replace on production route", () => {
       },
     });
 
-    expect(response.statusCode).toBe(400);
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    expect(response.json().tags).toEqual([]);
   });
 
   test("PUT /api/v1/production/:id -> rejects invalid body", async () => {

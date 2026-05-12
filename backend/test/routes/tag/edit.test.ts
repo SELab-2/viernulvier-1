@@ -82,11 +82,11 @@ function setupMocks(server: FastifyInstance, returnTag: Tag = mockTag) {
     }
     if (upper.includes("FROM PRODUCTION_TAG")) {
       return Promise.resolve({
-        rows: returnTag.productions.map((prod) => ({
+        rows: (returnTag.productions ?? []).map((prod) => ({
           tag: returnTag.id,
           production: prod,
         })),
-        rowCount: returnTag.productions.length,
+        rowCount: returnTag.productions?.length ?? 0,
       });
     }
 

@@ -77,7 +77,8 @@ function setupMocks(server: FastifyInstance, returnTag: Tag = mockTag, insertedI
       return Promise.resolve({ rows: [], rowCount: 0 });
     }),
     release: vi.fn(),
-  };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any;
 
   server.pg.connect = vi.fn().mockResolvedValue(mockClient);
   
@@ -104,17 +105,18 @@ function setupMocks(server: FastifyInstance, returnTag: Tag = mockTag, insertedI
     // Handle production_tag links query
     if (upper.includes("FROM PRODUCTION_TAG") && upper.includes("WHERE TAG")) {
       return Promise.resolve({
-        rows: returnTag.productions.map((prod) => ({
+        rows: (returnTag.productions ?? []).map((prod) => ({
           tag: returnTag.id,
           production: prod,
         })),
-        rowCount: returnTag.productions.length,
+        rowCount: returnTag.productions?.length ?? 0,
       });
     }
 
     // Fallback for unexpected queries
     return Promise.resolve({ rows: [], rowCount: 0 });
-  });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }) as any;
 
   return mockClient;
 }

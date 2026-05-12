@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Tag } from "@viernulvier/shared/index.js";
 import { TagSchema } from "@viernulvier/shared/index.js";
-import { getMetadata, parseSchema } from "@/routes/helpers.js";
+import { getMetadata, parseSchema, HttpError, HttpServerError } from "@/routes/helpers.js";
 import { getTagById } from "./fetch.js";
 import z from "zod";
 
@@ -58,7 +58,8 @@ export async function createTag(
     await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK");
-    throw error;
+    server.log.error(error);
+    throw new HttpError(HttpServerError.InternalServerError, "Internal server error");
   } finally {
     client.release();
   }

@@ -4,7 +4,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { ProductionSchemaWithBackwardsRefs, type Production } from "@viernulvier/shared/index.js";
 import { editProduction } from "@/routes/production/handlers/edit.js";
 import { productionRowWithRefs } from "./fixtures.js";
-import { HttpSuccess, HttpServerError } from "@/routes/helpers.js";
+import { HttpSuccess } from "@/routes/helpers.js";
 
 vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
 

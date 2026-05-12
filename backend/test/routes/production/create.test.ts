@@ -3,7 +3,6 @@ import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import { ProductionSchemaWithBackwardsRefs, type Production } from "@viernulvier/shared/index.js";
 import { HttpSuccess } from "@/routes/helpers.js";
-import { productionRowWithRefs } from "./fixtures.js";
 
 vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
 
