@@ -543,7 +543,7 @@ import {
   tagMapById,
 } from "@/utils/productionsOverview";
 
-const PAGE_SIZE = 21;
+const PAGE_SIZE = 30;
 
 /** Same cap as the list API, extra terms are ignored client-side. */
 const MAX_SEARCH_TERMS = 20;
