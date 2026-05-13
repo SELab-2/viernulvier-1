@@ -4,7 +4,7 @@ import { createMemoryHistory, createRouter } from "vue-router";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { routes } from "@/router/routes";
 import { i18n } from "@/i18n";
-import ProductionListCard from "@/components/productions/ProductionListCard.vue";
+import ProductionGridCard from "@/components/productions/ProductionGridCard.vue";
 import type { ProductionDateSummary } from "@/utils/productionsOverview";
 import type { ProductionTagChip } from "@/utils/tagDisplay";
 
@@ -40,7 +40,7 @@ async function mountCard(props: {
   await router.push("/nl/productions");
   await router.isReady();
 
-  const wrapper = mount(ProductionListCard, {
+  const wrapper = mount(ProductionGridCard, {
     props: {
       production: props.production ?? baseProduction,
       dateSummary: props.dateSummary ?? { line: null, moreCount: 0 },
@@ -52,27 +52,25 @@ async function mountCard(props: {
   return wrapper;
 }
 
-describe("ProductionListCard.vue", () => {
+describe("ProductionGridCard.vue", () => {
   afterEach(() => {
     i18n.global.locale.value = "nl";
   });
 
-  it("renders title and applies title padding when a date line exists", async () => {
+  it("renders title in the card body", async () => {
     const wrapper = await mountCard({
       dateSummary: { line: "wo 01.01.2000", moreCount: 0 },
     });
     const h2 = wrapper.get("h2");
     expect(h2.text()).toContain("Titel");
-    expect(h2.classes().some((c) => c.includes("pr-["))).toBe(true);
     wrapper.unmount();
   });
 
-  it("omits title padding when there is no date line", async () => {
+  it("renders the date line when present", async () => {
     const wrapper = await mountCard({
-      dateSummary: { line: null, moreCount: 0 },
+      dateSummary: { line: "wo 01.01.2000", moreCount: 0 },
     });
-    const h2 = wrapper.get("h2");
-    expect(h2.classes().some((c) => c.includes("pr-[12rem]"))).toBe(false);
+    expect(wrapper.text()).toContain("wo 01.01.2000");
     wrapper.unmount();
   });
 

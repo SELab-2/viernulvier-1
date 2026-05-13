@@ -20,7 +20,7 @@
         </div>
       </section>
 
-      <section class="mx-auto max-w-5xl px-6 pb-20 pt-8 lg:px-10">
+      <section class="mx-auto max-w-7xl px-4 pb-20 pt-8 sm:px-6 lg:px-8">
         <div v-if="!loading" class="mb-4 space-y-3">
           <div
             class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-stretch sm:gap-3"
@@ -405,16 +405,20 @@
           </p>
 
           <div v-else>
-            <ProductionListCard
-              v-for="(p, idx) in productions"
-              :key="`${currentPage}-${idx}-${p.id}`"
-              :row-index="idx"
-              :production="p"
-              :date-summary="dateSummaryFor(p.id)"
-              :tag-chips="tagChipsFor(p)"
-              :halls-text="hallsTextFor(p.id)"
-              :thumbnail-url="thumbnailFor(p.id)"
-            />
+            <div
+              class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3"
+            >
+              <ProductionGridCard
+                v-for="(p, idx) in productions"
+                :key="`${currentPage}-${idx}-${p.id}`"
+                :row-index="idx"
+                :production="p"
+                :date-summary="dateSummaryFor(p.id)"
+                :tag-chips="tagChipsFor(p)"
+                :halls-text="hallsTextFor(p.id)"
+                :thumbnail-url="thumbnailFor(p.id)"
+              />
+            </div>
 
             <nav
               v-if="totalPages > 1"
@@ -508,7 +512,7 @@ import {
 } from "@viernulvier/shared";
 import AppFooter from "@/components/AppFooter.vue";
 import AppNavbar from "@/components/nav/AppNavbar.vue";
-import ProductionListCard from "@/components/productions/ProductionListCard.vue";
+import ProductionGridCard from "@/components/productions/ProductionGridCard.vue";
 import ProductionsDateFilter from "@/components/productions/ProductionsDateFilter.vue";
 import ProductionsSortControl from "@/components/productions/ProductionsSortControl.vue";
 import { useDarkMode } from "@/composables/useDarkMode";
@@ -539,7 +543,7 @@ import {
   tagMapById,
 } from "@/utils/productionsOverview";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 21;
 
 /** Same cap as the list API, extra terms are ignored client-side. */
 const MAX_SEARCH_TERMS = 20;
