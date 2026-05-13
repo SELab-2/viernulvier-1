@@ -143,7 +143,7 @@ describe("ProductionsView.vue", () => {
     const { wrapper } = await mountView();
     expect(wrapper.text()).toContain("Producties");
     expect(productionsService.getProductions).toHaveBeenCalledWith({
-      limit: 21,
+      limit: 30,
       offset: 0,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
@@ -240,7 +240,7 @@ describe("ProductionsView.vue", () => {
     await flushPromises();
 
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
-      limit: 21,
+      limit: 30,
       offset: 0,
       search: ["voorstelling"],
       ...DEFAULT_LIST_FETCH_OPTS,
@@ -258,7 +258,7 @@ describe("ProductionsView.vue", () => {
 
     const { wrapper } = await mountView("/nl/productions?search=gezelschap");
     expect(getProductionsSpy).toHaveBeenCalledWith({
-      limit: 21,
+      limit: 30,
       offset: 0,
       search: ["gezelschap"],
       ...DEFAULT_LIST_FETCH_OPTS,
@@ -270,7 +270,7 @@ describe("ProductionsView.vue", () => {
     const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
     getProductionsSpy.mockResolvedValue({
       items: [mockProduction],
-      total: 45,
+      total: 75,
     });
 
     const { wrapper } = await mountView();
@@ -282,8 +282,8 @@ describe("ProductionsView.vue", () => {
     await flushPromises();
 
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
-      limit: 21,
-      offset: 42,
+      limit: 30,
+      offset: 60,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
 
@@ -297,7 +297,7 @@ describe("ProductionsView.vue", () => {
     const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
     getProductionsSpy.mockResolvedValue({
       items: [mockProduction],
-      total: 45,
+      total: 75,
     });
 
     const { wrapper } = await mountView();
@@ -320,7 +320,7 @@ describe("ProductionsView.vue", () => {
     const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
     getProductionsSpy.mockResolvedValue({
       items: [mockProduction],
-      total: 45,
+      total: 75,
     });
 
     const { wrapper } = await mountView();
@@ -330,8 +330,8 @@ describe("ProductionsView.vue", () => {
     await flushPromises();
 
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
-      limit: 21,
-      offset: 21,
+      limit: 30,
+      offset: 30,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
 
@@ -345,7 +345,7 @@ describe("ProductionsView.vue", () => {
     const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
     getProductionsSpy.mockResolvedValue({
       items: [mockProduction],
-      total: 45,
+      total: 75,
     });
 
     const { wrapper } = await mountView();
@@ -355,8 +355,8 @@ describe("ProductionsView.vue", () => {
     await flushPromises();
 
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
-      limit: 21,
-      offset: 42,
+      limit: 30,
+      offset: 60,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
     expect((field.element as HTMLInputElement).value).toBe("3");
@@ -372,7 +372,7 @@ describe("ProductionsView.vue", () => {
     getProductionsSpy
       .mockResolvedValueOnce({
         items: [mockProduction],
-        total: 45,
+        total: 75,
       })
       .mockRejectedValueOnce(new Error("network"));
 
@@ -394,7 +394,7 @@ describe("ProductionsView.vue", () => {
     const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
     getProductionsSpy.mockResolvedValue({
       items: [mockProduction],
-      total: 45,
+      total: 75,
     });
 
     const { wrapper } = await mountView();
@@ -417,7 +417,7 @@ describe("ProductionsView.vue", () => {
     const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
     getProductionsSpy.mockResolvedValue({
       items: [mockProduction],
-      total: 45,
+      total: 75,
     });
 
     const { wrapper } = await mountView();
@@ -446,7 +446,7 @@ describe("ProductionsView.vue", () => {
     const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
     getProductionsSpy.mockResolvedValue({
       items: [mockProduction],
-      total: 45,
+      total: 75,
     });
 
     try {
@@ -473,13 +473,13 @@ describe("ProductionsView.vue", () => {
     const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
     getProductionsSpy.mockResolvedValue({
       items: [mockProduction],
-      total: 45,
+      total: 75,
     });
 
     const { wrapper, router } = await mountView("/nl/productions?page=3");
     expect(getProductionsSpy).toHaveBeenCalledWith({
-      limit: 21,
-      offset: 42,
+      limit: 30,
+      offset: 60,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
     expect(router.currentRoute.value.query.page).toBe("3");
@@ -505,14 +505,14 @@ describe("ProductionsView.vue", () => {
     const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
     getProductionsSpy.mockResolvedValue({
       items: [mockProduction],
-      total: 45,
+      total: 75,
     });
 
     const { wrapper, router } = await mountView("/nl/productions?page=99");
     expect(router.currentRoute.value.query.page).toBe("3");
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
-      limit: 21,
-      offset: 42,
+      limit: 30,
+      offset: 60,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
     wrapper.unmount();
@@ -522,13 +522,13 @@ describe("ProductionsView.vue", () => {
     const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
     getProductionsSpy.mockResolvedValue({
       items: [mockProduction],
-      total: 45,
+      total: 75,
     });
 
     const { wrapper, router } = await mountView("/nl/productions?page=2");
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
-      limit: 21,
-      offset: 21,
+      limit: 30,
+      offset: 30,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
 
@@ -539,7 +539,7 @@ describe("ProductionsView.vue", () => {
     await flushPromises();
 
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
-      limit: 21,
+      limit: 30,
       offset: 0,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
@@ -550,7 +550,7 @@ describe("ProductionsView.vue", () => {
     const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
     getProductionsSpy.mockResolvedValue({
       items: [mockProduction],
-      total: 45,
+      total: 75,
     });
 
     const { wrapper, router } = await mountView("/nl/productions?page=2");
@@ -571,7 +571,7 @@ describe("ProductionsView.vue", () => {
     getProductionsSpy
       .mockResolvedValueOnce({
         items: [mockProduction],
-        total: 45,
+        total: 75,
       })
       .mockRejectedValueOnce(new Error("network"));
 
@@ -592,7 +592,7 @@ describe("ProductionsView.vue", () => {
     const getProductionsSpy = vi.spyOn(productionsService, "getProductions");
     getProductionsSpy.mockResolvedValue({
       items: [mockProduction],
-      total: 45,
+      total: 75,
     });
 
     const { wrapper, router } = await mountView();
@@ -752,7 +752,7 @@ describe("ProductionsView.vue", () => {
     await clearAll!.trigger("click");
     await flushPromises();
     expect(getSpy).toHaveBeenLastCalledWith({
-      limit: 21,
+      limit: 30,
       offset: 0,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
@@ -768,7 +768,7 @@ describe("ProductionsView.vue", () => {
     await removeChip.trigger("click");
     await flushPromises();
     expect(getSpy).toHaveBeenLastCalledWith({
-      limit: 21,
+      limit: 30,
       offset: 0,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
@@ -868,7 +868,7 @@ describe("ProductionsView.vue", () => {
     await wrapper.find('[aria-label="Jaarbereik verwijderen"]').trigger("click");
     await flushPromises();
     expect(getSpy).toHaveBeenLastCalledWith({
-      limit: 21,
+      limit: 30,
       offset: 0,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
@@ -886,7 +886,7 @@ describe("ProductionsView.vue", () => {
       .trigger("click");
     await flushPromises();
     expect(getSpy).toHaveBeenLastCalledWith({
-      limit: 21,
+      limit: 30,
       offset: 0,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
@@ -904,7 +904,7 @@ describe("ProductionsView.vue", () => {
     await genreBtn!.trigger("click");
     await flushPromises();
     expect(getSpy).toHaveBeenLastCalledWith({
-      limit: 21,
+      limit: 30,
       offset: 0,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
@@ -929,12 +929,12 @@ describe("ProductionsView.vue", () => {
 
   it("refetches from page 1 when the sort select changes", async () => {
     const getSpy = vi.spyOn(productionsService, "getProductions");
-    getSpy.mockResolvedValue({ items: [mockProduction], total: 45 });
+    getSpy.mockResolvedValue({ items: [mockProduction], total: 75 });
     const { wrapper, router } = await mountView(
       "/nl/productions?page=2&sortBy=name&sortDir=asc",
     );
     expect(getSpy).toHaveBeenLastCalledWith(
-      expect.objectContaining({ limit: 21, offset: 21 }),
+      expect.objectContaining({ limit: 30, offset: 30 }),
     );
 
     const dimBtn = wrapper.find("#productions-sort-dimension");
