@@ -3,6 +3,7 @@ import type { Blog } from "@viernulvier/shared/index.js";
 import { BlogSchema } from "@viernulvier/shared/index.js";
 import { getMetadata, parseSchema, buildQuery } from "@/routes/helpers.js";
 import { z } from "zod";
+import { languageMap } from "@viernulvier/shared/types/helpers.js";
 
 const CreateBlogBodySchema = BlogSchema.omit({ id: true });
 
@@ -13,8 +14,8 @@ const insertBlog = (server: FastifyInstance) =>
      VALUES ($1, $2, $3, $3, $4, $4)
      RETURNING id, name, description`,
     z.tuple([
-      z.string(),           // name
-      z.string().nullable(), // description
+      languageMap,           // name
+      languageMap.nullable(), // description
       z.int(),              // admin
       z.date(),             // current_time
     ]),

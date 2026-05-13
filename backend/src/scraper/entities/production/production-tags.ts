@@ -6,16 +6,17 @@
  */
 import type { Tag, TagType } from "@viernulvier/shared/index.js";
 
-import { hydraIriString, resolveViernulvierResourceUrl } from "./hydra-view.js";
 import {
+  hydraIriString,
+  resolveViernulvierResourceUrl,
   coerceLanguageMap,
   plainTextFromHtmlish,
   SCRAPER_LANGUAGE_KEYS,
-} from "./language-map.js";
-import { localApiUrl } from "./local-api.js";
-import { viernulvierApiUrl } from "./viernulvier-api.js";
-import type { ScrapeRunStats } from "./scrape-stats.js";
-import { scraperVerbose } from "./scrape-stats.js";
+  localApiUrl,
+  viernulvierApiUrl,
+  scraperVerbose,
+  type ScrapeRunStats,
+} from "@/scraper/core/index.js";
 
 /** Minimal production JSON shape for genre sync (matches {@link ProductionJSON} in `production.ts`). */
 export type ProductionDocumentForTags = {

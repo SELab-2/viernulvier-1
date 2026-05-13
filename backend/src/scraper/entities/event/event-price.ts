@@ -1,5 +1,4 @@
-import { localApiUrl } from "./local-api.js";
-import { viernulvierApiUrl } from "./viernulvier-api.js";
+import { localApiUrl, viernulvierApiUrl } from "@/scraper/core/index.js";
 
 /**
  * Price import is best-effort: fetch/create errors for individual tiers are logged and skipped.

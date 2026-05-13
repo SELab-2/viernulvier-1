@@ -242,7 +242,9 @@ export default {
     tagFiltersHeading: "Tags",
     viewMoreTagFilters: "Voir plus",
     viewLessTagFilters: "Voir moins",
-    selectDates: "Sélectionner des dates",
+    expandFiltersPanelAria: "Développer les filtres",
+    collapseFiltersPanelAria: "Réduire les filtres",
+    selectDates: "Choisir les dates",
     filterByYearRange: "Filtrer par années",
     yearRangeIntro:
       "Limitez les productions aux années de représentation dans cet intervalle.",
