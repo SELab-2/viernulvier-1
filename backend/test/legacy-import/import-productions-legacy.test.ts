@@ -468,7 +468,7 @@ describe("importProductionsLegacy", () => {
     fs.rmSync(dir, { recursive: true });
   });
 
-  it("dry-run maps legacy id to existing production when exactly one title+artist match (ln 294-296)", async () => {
+  it("dry-run maps legacy id to existing production when exactly one title+artist match", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-drymap-"));
     const csvPath = path.join(dir, "p.csv");
     fs.writeFileSync(csvPath, "Titel,ID,Genre\nExisting Show,77,Drama\n", "utf8");
@@ -497,10 +497,10 @@ describe("importProductionsLegacy", () => {
     fs.rmSync(dir, { recursive: true });
   });
 
-  it("dry-run counts createdGenreTags for new genre not in cache (ln 319-321)", async () => {
+  it("dry-run counts createdGenreTags for new genre not in cache", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-drygenre-"));
     const csvPath = path.join(dir, "p.csv");
-    // Two rows: same genre → second hit is cache hit (ln 319 false branch); first is cache miss
+    // Two rows: same genre → second hit is cache hit; first is cache miss
     fs.writeFileSync(csvPath, "Titel,ID,Genre\nShowA,1,Jazz\nShowB,2,Jazz\n", "utf8");
 
     const query = vi.fn().mockImplementation((sql: string, params?: unknown[]) => {
@@ -526,7 +526,7 @@ describe("importProductionsLegacy", () => {
     fs.rmSync(dir, { recursive: true });
   });
 
-  it("write mode skips row when genre tag validation fails (ln 277-287)", async () => {
+  it("write mode skips row when genre tag validation fails", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-tagzod-"));
     const csvPath = path.join(dir, "p.csv");
     fs.writeFileSync(csvPath, "Titel,ID,Genre\nTagFail,1,BadGenre\n", "utf8");
@@ -563,7 +563,7 @@ describe("importProductionsLegacy", () => {
     fs.rmSync(dir, { recursive: true });
   });
 
-  it("write mode reuses cached genre tag for second occurrence (ln 117)", async () => {
+  it("write mode reuses cached genre tag for second occurrence", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-cachetag-"));
     const csvPath = path.join(dir, "p.csv");
     // Two productions with the same genre → second should hit genreTagCache
@@ -603,7 +603,7 @@ describe("importProductionsLegacy", () => {
     fs.rmSync(dir, { recursive: true });
   });
 
-  it("write mode skips already-imported legacy id (ln 249-251)", async () => {
+  it("write mode skips already-imported legacy id", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-skipimp-"));
     const csvPath = path.join(dir, "p.csv");
     fs.writeFileSync(csvPath, "Titel,ID\nAlready,1\n", "utf8");
@@ -633,7 +633,7 @@ describe("importProductionsLegacy", () => {
     fs.rmSync(dir, { recursive: true });
   });
 
-  it("write mode skips row with no legacy id (ln 239-241)", async () => {
+  it("write mode skips row with no legacy id", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-noid-"));
     const csvPath = path.join(dir, "p.csv");
     fs.writeFileSync(csvPath, "Titel,ID\nNoId,\n", "utf8");
@@ -661,7 +661,7 @@ describe("importProductionsLegacy", () => {
     fs.rmSync(dir, { recursive: true });
   });
 
-  it("write mode catches error when mapping legacy id to existing production fails (ln 308-309)", async () => {
+  it("write mode catches error when mapping legacy id to existing production fails", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-mapfail-"));
     const csvPath = path.join(dir, "p.csv");
     fs.writeFileSync(csvPath, "Titel,ID\nMapFail,1\n", "utf8");
@@ -691,7 +691,7 @@ describe("importProductionsLegacy", () => {
     fs.rmSync(dir, { recursive: true });
   });
 
-  it("write mode finds genre tag in DB (not cache) and reuses it (ln 124-126)", async () => {
+  it("write mode finds genre tag in DB (not cache) and reuses it", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-tagdb-"));
     const csvPath = path.join(dir, "p.csv");
     fs.writeFileSync(csvPath, "Titel,ID,Genre\nDbTag,1,Jazz\n", "utf8");
@@ -729,7 +729,7 @@ describe("importProductionsLegacy", () => {
     fs.rmSync(dir, { recursive: true });
   });
 
-  it("splitGenres ignores empty parts after splitting on comma (else branch ln 39)", () => {
+  it("splitGenres ignores empty parts after splitting on comma", () => {
     expect(splitGenres("Jazz, ")).toEqual(["Jazz"]);
     expect(splitGenres(", Drama")).toEqual(["Drama"]);
   });
