@@ -4,6 +4,8 @@ import type { FastifyInstance } from "fastify";
 import { BlogPostWithBackwardsRefsSchema, type BlogPost } from "@viernulvier/shared/index.js";
 import { HttpSuccess, HttpClientError, HttpServerError } from "@/routes/helpers.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let sessionCookie: string;
 
@@ -12,13 +14,13 @@ const mockTime = new Date();
 const originalBlogPost: BlogPost = {
   id: 1,
   blog: 1,
-  title: "Original Title",
-  content: { body: "Original content" },
+  title: {en: "Original Title" },
+  content: { en: "Original content" },
   published_at: mockTime,
 };
 
-const updatedTitle: BlogPost = { ...originalBlogPost, title: "Updated Title" };
-const updatedContent: BlogPost = { ...originalBlogPost, content: { body: "Updated content" } };
+const updatedTitle: BlogPost = { ...originalBlogPost, title: {en: "Updated Title" } };
+const updatedContent: BlogPost = { ...originalBlogPost, content: { en: "Updated content" } };
 const publishedPost: BlogPost = { ...originalBlogPost, published_at: mockTime };
 const draftPost: BlogPost = { ...originalBlogPost, published_at: null };
 
@@ -134,7 +136,7 @@ describe("Edit on blogpost route", () => {
       method: "PATCH",
       url: `/api/v1/blog/post/${originalBlogPost["id"]}`,
       cookies: { session: sessionCookie },
-      payload: { title: "Updated Title Only" },
+      payload: { title: { en: "Updated Title Only" } },
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
@@ -275,7 +277,7 @@ describe("Edit on blogpost route", () => {
       method: "PATCH",
       url: `/api/v1/blog/post/${originalBlogPost["id"]}`,
       cookies: { session: sessionCookie },
-      payload: { title: "Nonexistent post" },
+      payload: { title: { en: "Nonexistent post" } },
     });
 
     expect(response.statusCode).toBe(HttpServerError.InternalServerError);
@@ -349,7 +351,7 @@ describe("Edit on blogpost route", () => {
       method: "PATCH",
       url: `/api/v1/blog/post/${originalBlogPost["id"]}`,
       cookies: { session: sessionCookie },
-      payload: { title: "New title" },
+      payload: { title: { en: "New title" } },
     });
 
     expect(response.statusCode).toBe(HttpServerError.InternalServerError);

@@ -4,6 +4,8 @@ import type { FastifyInstance } from "fastify";
 import { BlogPostWithBackwardsRefsSchema, type BlogPost } from "@viernulvier/shared/index.js";
 import { HttpSuccess, HttpClientError, HttpServerError } from "@/routes/helpers.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let sessionCookie: string;
 
@@ -12,8 +14,8 @@ const mockTime = new Date();
 const replacedBlogPost: BlogPost = {
   id: 1,
   blog: 1,
-  title: "Updated Title",
-  content: { body: "Updated content" },
+  title: { en: "Updated Title" },
+  content: { en: "Updated content" },
   published_at: mockTime,
 };
 
@@ -290,7 +292,7 @@ describe("Replace on blogpost route", () => {
       cookies: { session: sessionCookie },
       payload: {
         blog: replacedBlogPost["blog"],
-        title: "New Title",
+        title: { en: "New Title" },
         content: replacedBlogPost["content"],
         published_at: replacedBlogPost["published_at"],
         productions: [1],

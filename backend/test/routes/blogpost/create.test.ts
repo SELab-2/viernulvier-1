@@ -4,6 +4,8 @@ import type { FastifyInstance } from "fastify";
 import { BlogPostWithBackwardsRefsSchema, type BlogPost } from "@viernulvier/shared/index.js";
 import { HttpSuccess, HttpClientError, HttpServerError } from "@/routes/helpers.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let sessionCookie: string;
 
@@ -12,16 +14,16 @@ const mockTime = new Date();
 const mockBlogPost: BlogPost = {
   id: 1,
   blog: 1,
-  title: "First Post",
-  content: { body: "Hello world" },
+  title: {en: "First Post" },
+  content: { en: "Hello world" },
   published_at: mockTime,
 };
 
 const mockDraftBlogPost: BlogPost = {
   id: 2,
   blog: 1,
-  title: "Draft Post",
-  content: { body: "Work in progress" },
+  title: {en: "Draft Post" },
+  content: { en: "Work in progress" },
   published_at: null,
 };
 

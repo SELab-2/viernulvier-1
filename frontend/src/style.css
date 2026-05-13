@@ -42,6 +42,10 @@
 
   --color-tag-genre-bg: var(--tag-genre-bg);
   --color-tag-genre-text: var(--tag-genre-text);
+
+  /* Editorial display font for article-style headlines (production hero, etc.).
+     Body / UI keeps Inter via Tailwind's default font-sans. */
+  --font-serif: "Source Serif 4", Georgia, serif;
 }
 
 @theme {

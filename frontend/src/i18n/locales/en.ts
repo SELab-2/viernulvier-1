@@ -228,6 +228,11 @@ export default {
     searchLabel: "Search productions",
     searchPlaceholder: "Title, artist, venue, description…",
     searchButton: "Search",
+    sortByLabel: "Sort productions",
+    sortNameShort: "Name",
+    sortDateShort: "Date",
+    sortMetricMenuAria: "Choose name or date sort",
+    toggleSortDirectionAria: "Reverse sort direction",
     activeSearchLabel: "Search:",
     clearAllSearches: "Clear all searches",
     clearAllFilters: "Clear all filters",
@@ -241,7 +246,9 @@ export default {
     tagFiltersHeading: "Tags",
     viewMoreTagFilters: "Show more",
     viewLessTagFilters: "Show less",
-    selectDates: "Select dates",
+    expandFiltersPanelAria: "Expand filters",
+    collapseFiltersPanelAria: "Collapse filters",
+    selectDates: "Choose dates",
     filterByYearRange: "Filter by years",
     yearRangeIntro:
       "Limit productions to show years in this range (based on performance dates).",
@@ -287,6 +294,7 @@ export default {
     details: {
       tags: "Tags",
       extraInfo: "Extra Info",
+      programme: "Programme",
     },
     events: {
       title: "Performance History",
@@ -298,6 +306,11 @@ export default {
       error_title: "Loading error",
       error_body: "We couldn't retrieve the performance data from the archive.",
       retry: "Try again",
+    },
+    blog: {
+      title: "Related articles",
+      body: "Background stories, interviews and notes from the archive that relate to this production.",
+      all: "All articles",
     },
     notFound: {
       title: "Production not found",

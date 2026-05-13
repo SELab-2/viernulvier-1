@@ -36,13 +36,13 @@
       <!-- Happy path -->
       <article v-else-if="post" class="post">
         <header class="mb-8">
-          <h1 class="mb-3 text-4xl font-bold text-ink-primary">{{ post.title }}</h1>
+          <h1 class="mb-3 text-4xl font-bold text-ink-primary">{{ title }}</h1>
           <p v-if="formattedPublishedAt" class="text-sm text-ink-tertiary">
             {{ t("blogpost.publishedOn", { date: formattedPublishedAt }) }}
           </p>
         </header>
 
-        <div class="post-body">{{ bodyText }}</div>
+        <div class="post-body">{{ bodyHtml }}</div>
       </article>
     </main>
 
@@ -59,9 +59,11 @@ import { i18n, type SupportedLang } from "@/i18n";
 import { RouteNames } from "@/router/routeNames";
 import { getBlogPost } from "@/services/blogposts";
 import { ApiError } from "@/services/api";
-import AppNavbar from "@/components/AppNavbar.vue";
+import AppNavbar from "@/components/nav/AppNavbar.vue";
 import AppFooter from "@/components/AppFooter.vue";
 import type { BlogPost } from "@viernulvier/shared";
+import { localizeOrEmpty } from "@/utils/language-utils";
+import { parseAndSanitizeContent } from "@/utils/parsers";
 
 const props = defineProps<{ id: string }>();
 
@@ -74,14 +76,13 @@ const post = ref<BlogPost | null>(null);
 const loading = ref<boolean>(true);
 const error = ref<"not-found" | "generic" | null>(null);
 
-/**
- * Safely extracts the `body` string from the blogpost's content field.
- * `content` is typed as a generic record on the backend, so we defensively
- * check that `body` is actually a string before displaying it.
- */
-const bodyText = computed<string>(() => {
-  const body = post.value?.content?.["body"];
-  return typeof body === "string" ? body : "";
+const title = computed(() => 
+  localizeOrEmpty(post.value?.title ?? {}, currentLang.value),
+);
+
+const bodyHtml = computed(() => {
+  const rawHtml = localizeOrEmpty(post.value?.content ?? {}, currentLang.value);
+  return parseAndSanitizeContent(rawHtml);
 });
 
 /**

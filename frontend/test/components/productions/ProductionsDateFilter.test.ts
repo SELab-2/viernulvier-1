@@ -90,7 +90,7 @@ describe("ProductionsDateFilter.vue", () => {
     wrapper.unmount();
   });
 
-  test("applies active ring class when a year range or date range is active", async () => {
+  test("applies active accent styling when a year range or date range is active", async () => {
     const w1 = mountFilter({
       minYear: 2000,
       maxYear: 2030,
@@ -98,9 +98,12 @@ describe("ProductionsDateFilter.vue", () => {
       dateFrom: null,
       dateTo: null,
     });
-    expect(w1.find("button").classes().some((c) => c.includes("ring-"))).toBe(
-      true,
-    );
+    expect(
+      w1
+        .find("button")
+        .classes()
+        .some((c) => c.includes("border-accent-outline")),
+    ).toBe(true);
     w1.unmount();
 
     const w2 = mountFilter({
@@ -110,9 +113,12 @@ describe("ProductionsDateFilter.vue", () => {
       dateFrom: "2025-01-01",
       dateTo: "2025-02-01",
     });
-    expect(w2.find("button").classes().some((c) => c.includes("ring-"))).toBe(
-      true,
-    );
+    expect(
+      w2
+        .find("button")
+        .classes()
+        .some((c) => c.includes("border-accent-outline")),
+    ).toBe(true);
     w2.unmount();
   });
 

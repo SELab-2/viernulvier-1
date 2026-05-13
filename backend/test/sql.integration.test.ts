@@ -275,12 +275,12 @@ describe("Blog routes — SQL integration", { sequential: true }, () => {
       method: "POST",
       url: "/api/v1/blog",
       cookies: { session: sessionCookie },
-      payload: { name: "Test Blog", description: "A test description" },
+      payload: { name: { en: "Test Blog" }, description: { en: "A test description" } },
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
     const blog = BlogSchema.parse(response.json());
-    expect(blog).toMatchObject({ name: "Test Blog", description: "A test description" });
+    expect(blog).toMatchObject({ name: { en: "Test Blog" }, description: { en: "A test description" } });
 
     blogId = blog.id;
   });
@@ -297,7 +297,7 @@ describe("Blog routes — SQL integration", { sequential: true }, () => {
     const response = await server.inject({ method: "GET", url: `/api/v1/blog/${blogId}` });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
-    expect(BlogSchema.parse(response.json())).toMatchObject({ id: blogId, name: "Test Blog" });
+    expect(BlogSchema.parse(response.json())).toMatchObject({ id: blogId, name: { en: "Test Blog" } });
   });
 
   test("GET /api/v1/blog/:id/meta — returns the blog with metadata", async () => {
@@ -316,13 +316,13 @@ describe("Blog routes — SQL integration", { sequential: true }, () => {
       method: "PATCH",
       url: `/api/v1/blog/${blogId}`,
       cookies: { session: sessionCookie },
-      payload: { description: "Updated description" },
+      payload: { description: { en: "Updated description" } },
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
     const blog = BlogSchema.parse(response.json());
-    expect(blog.description).toBe("Updated description");
-    expect(blog.name).toBe("Test Blog"); // unchanged
+    expect(blog.description).toStrictEqual( { en: "Updated description" } );
+    expect(blog.name).toStrictEqual( { en: "Test Blog" } ); // unchanged
   });
 
   test("PUT /api/v1/blog/:id — replaces all fields of the blog", async () => {
@@ -330,13 +330,13 @@ describe("Blog routes — SQL integration", { sequential: true }, () => {
       method: "PUT",
       url: `/api/v1/blog/${blogId}`,
       cookies: { session: sessionCookie },
-      payload: { name: "Replaced Blog", description: null },
+      payload: { name: { en: "Replaced Blog" }, description: null },
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
     expect(BlogSchema.parse(response.json())).toMatchObject({
       id: blogId,
-      name: "Replaced Blog",
+      name: { en: "Replaced Blog" },
       description: null,
     });
   });
@@ -366,7 +366,7 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
       method: "POST",
       url: "/api/v1/blog",
       cookies: { session: sessionCookie },
-      payload: { name: "BlogPost Test Blog", description: null },
+      payload: { name: { en: "BlogPost Test Blog" }, description: null },
     });
 
     expect(blogResponse.statusCode).toBe(HttpSuccess.OK);
@@ -433,8 +433,8 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
       cookies: { session: sessionCookie },
       payload: {
         blog: blogId,
-        title: "Test Post",
-        content: { body: "Hello world" },
+        title: { en: "Test Post" },
+        content: { en: "Hello world" },
         published_at: new Date().toISOString(),
         productions: [productionId1, productionId2],
       },
@@ -442,7 +442,7 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
     const post = BlogPostWithBackwardsRefsSchema.parse(response.json());
-    expect(post).toMatchObject({ blog: blogId, title: "Test Post" });
+    expect(post).toMatchObject({ blog: blogId, title: { en: "Test Post" } });
     expect(post.productions).toEqual([productionId1, productionId2]);
     blogPostId = post.id;
   });
@@ -462,8 +462,8 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
       cookies: { session: sessionCookie },
       payload: {
         blog: blogId,
-        title: "Draft Post",
-        content: { body: "Not yet published" },
+        title: { en: "Draft Post" },
+        content: { en: "Not yet published" },
         published_at: null,
         productions: [productionId1],
       },
@@ -490,7 +490,7 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
     const post = BlogPostWithBackwardsRefsSchema.parse(response.json());
-    expect(post).toMatchObject({ id: blogPostId, title: "Test Post" });
+    expect(post).toMatchObject({ id: blogPostId, title: { en: "Test Post" } });
     expect(post.productions).toEqual([productionId1, productionId2]);
   });
 
@@ -511,15 +511,15 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
       url: `/api/v1/blog/post/${blogPostId}`,
       cookies: { session: sessionCookie },
       payload: { 
-        title: "Updated Title",
+        title: { en: "Updated Title" },
         productions: [productionId1],
       },
     });
 
     expect(response.statusCode).toBe(HttpSuccess.OK);
     const post = BlogPostWithBackwardsRefsSchema.parse(response.json());
-    expect(post.title).toBe("Updated Title");
-    expect(post.content).toEqual({ body: "Hello world" }); // unchanged
+    expect(post.title).toStrictEqual({ en: "Updated Title" });
+    expect(post.content).toStrictEqual({ en: "Hello world" }); // unchanged
     expect(post.productions).toEqual([productionId1]);
   });
 
@@ -530,8 +530,8 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
       cookies: { session: sessionCookie },
       payload: {
         blog: blogId,
-        title: "Replaced Title",
-        content: { body: "Replaced content" },
+        title: { en: "Replaced Title" },
+        content: { en: "Replaced content" },
         published_at: null,
         productions: [productionId2],
       },
@@ -541,7 +541,7 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
     const post = BlogPostWithBackwardsRefsSchema.parse(response.json());
     expect(post).toMatchObject({
       id: blogPostId,
-      title: "Replaced Title",
+      title: { en: "Replaced Title" },
       published_at: null,
     });
     expect(post.productions).toEqual([productionId2]);
@@ -567,8 +567,8 @@ describe("BlogPost routes — SQL integration", { sequential: true }, () => {
       cookies: { session: sessionCookie },
       payload: {
         blog: blogId,
-        title: "Verification Post",
-        content: { body: "Verify backwards refs" },
+        title: { en: "Verification Post" },
+        content: { en: "Verify backwards refs" },
         published_at: new Date().toISOString(),
         productions: [productionId1],
       },

@@ -4,14 +4,16 @@ import type { FastifyInstance } from "fastify";
 import { BlogPostSchema, BlogPostWithBackwardsRefsSchema, type BlogPostWithMeta, type BlogPostWithBackwardsRefs } from "@viernulvier/shared/index.js";
 import { HttpSuccess, HttpClientError } from "@/routes/helpers.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let sessionCookie: string;
 
 const mockTime = new Date();
 
 const mockBlogPosts: Array<BlogPostWithBackwardsRefs> = [
-  { id: 1, blog: 1, title: "First Post", content: { body: "Hello world" }, published_at: mockTime, productions: [1, 2] },
-  { id: 2, blog: 1, title: "Draft Post", content: { body: "Work in progress" }, published_at: null, productions: [] },
+  { id: 1, blog: 1, title: { en: "First Post" }, content: { en: "Hello world" }, published_at: mockTime, productions: [1, 2] },
+  { id: 2, blog: 1, title: { en: "Draft Post" }, content: { en: "Work in progress" }, published_at: null, productions: [] },
 ];
 
 const mockBlogPostsWithMeta: Array<BlogPostWithMeta> = mockBlogPosts.map((post) => ({

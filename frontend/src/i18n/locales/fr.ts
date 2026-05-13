@@ -228,6 +228,11 @@ export default {
     searchLabel: "Rechercher des productions",
     searchPlaceholder: "Titre, artiste, lieu, description…",
     searchButton: "Rechercher",
+    sortByLabel: "Trier les productions",
+    sortNameShort: "Nom",
+    sortDateShort: "Date",
+    sortMetricMenuAria: "Choisir le tri par nom ou par date",
+    toggleSortDirectionAria: "Inverser l'ordre de tri",
     activeSearchLabel: "Recherche :",
     clearAllSearches: "Effacer toutes les recherches",
     clearAllFilters: "Effacer tous les filtres",
@@ -241,7 +246,9 @@ export default {
     tagFiltersHeading: "Tags",
     viewMoreTagFilters: "Voir plus",
     viewLessTagFilters: "Voir moins",
-    selectDates: "Sélectionner des dates",
+    expandFiltersPanelAria: "Développer les filtres",
+    collapseFiltersPanelAria: "Réduire les filtres",
+    selectDates: "Choisir les dates",
     filterByYearRange: "Filtrer par années",
     yearRangeIntro:
       "Limitez les productions aux années de représentation dans cet intervalle.",
@@ -287,6 +294,7 @@ export default {
     details: {
       tags: "Étiquettes",
       extraInfo: "Infos complémentaires",
+      programme: "Programme",
     },
     events: {
       title: "Historique des représentations",
@@ -298,6 +306,11 @@ export default {
       error_title: "Erreur de chargement",
       error_body: "Nous n'avons pas pu récupérer les données des représentations dans les archives.",
       retry: "Réessayer",
+    },
+    blog: {
+      title: "Articles liés",
+      body: "Récits de fond, entretiens et notes des archives en rapport avec cette production.",
+      all: "Tous les articles",
     },
     notFound: {
       title: "Production introuvable",

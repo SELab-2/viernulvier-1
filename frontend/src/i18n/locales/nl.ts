@@ -228,6 +228,11 @@ export default {
     searchLabel: "Producties doorzoeken",
     searchPlaceholder: "Titel, artiest, zaal, beschrijving…",
     searchButton: "Zoeken",
+    sortByLabel: "Producties sorteren",
+    sortNameShort: "Naam",
+    sortDateShort: "Datum",
+    sortMetricMenuAria: "Kies sorteren op naam of datum",
+    toggleSortDirectionAria: "Sorteerrichting omkeren",
     activeSearchLabel: "Zoekterm:",
     clearAllSearches: "Alle zoektermen wissen",
     clearAllFilters: "Alle filters wissen",
@@ -241,7 +246,9 @@ export default {
     tagFiltersHeading: "Tags",
     viewMoreTagFilters: "Meer tonen",
     viewLessTagFilters: "Minder tonen",
-    selectDates: "Selecteer datums",
+    expandFiltersPanelAria: "Filters uitklappen",
+    collapseFiltersPanelAria: "Filters inklappen",
+    selectDates: "Kies datums",
     filterByYearRange: "Filter op jaren",
     yearRangeIntro:
       "Beperk producties tot voorstellingsjaren binnen dit bereik.",
@@ -287,6 +294,7 @@ export default {
     details: {
       tags: "Labels",
       extraInfo: "Extra info",
+      programme: "Programma",
     },
     events: {
       title: "Voorstellings\u00adgeschiedenis",
@@ -298,6 +306,11 @@ export default {
       error_title: "Fout bij laden",
       error_body: "We konden de gegevens over de voorstellingen niet ophalen uit het archief.",
       retry: "Opnieuw proberen",
+    },
+    blog: {
+      title: "Verwante artikelen",
+      body: "Achtergrondverhalen, interviews en notities uit het archief bij deze productie.",
+      all: "Alle artikelen",
     },
     notFound: {
       title: "Productie niet gevonden",
