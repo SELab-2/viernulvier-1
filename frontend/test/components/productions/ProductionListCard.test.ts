@@ -110,15 +110,15 @@ describe("ProductionListCard.vue", () => {
         { tagId: 2, label: "Vooruit", isGenre: false },
       ],
     });
-    const chips = wrapper.findAll("span.rounded-full");
+    const chips = wrapper.findAll("span.rounded-sm");
     expect(chips[0]!.classes().join(" ")).toMatch(/tag-genre-bg/);
-    expect(chips[1]!.classes().join(" ")).toMatch(/border-ink-primary/);
+    expect(chips[1]!.classes().join(" ")).toMatch(/border-surface-3/);
     wrapper.unmount();
   });
 
   it("renders no tag row when tagChips is empty", async () => {
     const wrapper = await mountCard({ tagChips: [] });
-    expect(wrapper.findAll("span.rounded-full")).toHaveLength(0);
+    expect(wrapper.findAll("span.rounded-sm")).toHaveLength(0);
     wrapper.unmount();
   });
 });

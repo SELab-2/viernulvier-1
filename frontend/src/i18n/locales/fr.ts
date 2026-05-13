@@ -203,6 +203,7 @@ export default {
     },
   },
   productionsPage: {
+    kicker: "Les archives",
     heading: "Productions",
     intro:
       "Tous les spectacles de l’archive en un coup d’œil.",

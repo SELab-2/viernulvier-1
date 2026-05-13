@@ -41,12 +41,12 @@
       -->
       <div
         v-if="dateSummary.line"
-        class="absolute right-0 top-0 z-10 max-w-[11rem] text-right text-sm text-ink-secondary sm:max-w-[13rem]"
+        class="absolute right-0 top-0 z-10 max-w-[11rem] text-right font-serif text-sm text-ink-secondary tabular-nums sm:max-w-[13rem]"
       >
         <span class="whitespace-nowrap">{{ dateSummary.line }}</span>
         <span
           v-if="dateSummary.moreCount > 0"
-          class="mt-0.5 block text-xs text-ink-tertiary"
+          class="mt-0.5 block font-sans text-xs not-italic text-ink-tertiary"
         >
           {{
             t("productionsPage.morePerformances", {
@@ -58,7 +58,7 @@
 
       <div class="min-w-0">
         <h2
-          class="text-xl font-bold leading-tight tracking-tight text-ink-primary md:text-2xl"
+          class="font-serif text-xl font-semibold leading-tight tracking-tight text-ink-primary md:text-2xl"
           :class="dateSummary.line ? 'pr-[12rem] sm:pr-[14rem]' : ''"
         >
           {{ title }}
@@ -66,7 +66,7 @@
 
         <p
           v-if="artist"
-          class="mt-1 text-base font-medium text-ink-secondary md:text-lg"
+          class="mt-1 font-serif text-base italic text-ink-secondary md:text-lg"
         >
           {{ artist }}
         </p>
@@ -94,16 +94,16 @@
 
       <div
         v-if="tagChips.length"
-        class="mt-auto flex flex-wrap items-center gap-2 pt-4 text-xs"
+        class="mt-auto flex flex-wrap items-center gap-2 pt-4"
       >
         <span
           v-for="chip in tagChips"
           :key="chip.tagId"
-          class="rounded-full px-2.5 py-1 font-medium"
+          class="rounded-sm px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide"
           :class="
             chip.isGenre
               ? 'bg-tag-genre-bg text-tag-genre-text'
-              : 'border border-ink-primary bg-transparent text-ink-primary'
+              : 'border border-surface-3 bg-surface-1 text-ink-secondary'
           "
         >
           {{ chip.label }}

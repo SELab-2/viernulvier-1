@@ -29,13 +29,15 @@
 
     <div
       v-if="panelOpen"
-      class="absolute left-0 z-30 mt-2 w-[min(100vw-2rem,36rem)] max-h-[min(85vh,32rem)] origin-top-left overflow-y-auto rounded-xl border border-surface-3 bg-surface-1 p-4 shadow-lg"
+      class="absolute left-0 z-30 mt-2 w-[min(100vw-2rem,36rem)] max-h-[min(85vh,32rem)] origin-top-left overflow-y-auto rounded-lg border border-surface-3 bg-surface-1 p-4 shadow-lg"
       role="dialog"
       :aria-label="t('productionsPage.selectDates')"
       @click.stop
     >
       <section class="space-y-3">
-        <h3 class="text-sm font-semibold text-ink-primary">
+        <h3
+          class="text-xs font-semibold uppercase tracking-[0.2em] text-ink-secondary"
+        >
           {{ t("productionsPage.filterByYearRange") }}
         </h3>
         <p class="text-xs leading-snug text-ink-secondary">
@@ -115,23 +117,25 @@
         :aria-label="t('productionsPage.dateFilterOrDividerAria')"
       >
         <div
-          class="h-px min-w-0 flex-1 bg-ink-secondary/25 dark:bg-ink-secondary/30"
+          class="h-px min-w-0 flex-1 bg-ink-tertiary opacity-50"
           aria-hidden="true"
         />
         <span
-          class="shrink-0 px-3 text-xs font-bold uppercase tracking-wide text-ink-secondary select-none"
+          class="shrink-0 select-none px-3 text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
           aria-hidden="true"
         >
           {{ t("productionsPage.dateFilterOrDivider") }}
         </span>
         <div
-          class="h-px min-w-0 flex-1 bg-ink-secondary/25 dark:bg-ink-secondary/30"
+          class="h-px min-w-0 flex-1 bg-ink-tertiary opacity-50"
           aria-hidden="true"
         />
       </div>
 
       <section class="space-y-3">
-        <h3 class="text-sm font-semibold text-ink-primary">
+        <h3
+          class="text-xs font-semibold uppercase tracking-[0.2em] text-ink-secondary"
+        >
           {{ t("productionsPage.filterByDateRange") }}
         </h3>
         <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">

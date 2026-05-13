@@ -203,6 +203,7 @@ export default {
     },
   },
   productionsPage: {
+    kicker: "Het archief",
     heading: "Producties",
     intro:
       "Alle voorstellingen uit het archief op een rij.",

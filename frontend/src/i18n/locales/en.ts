@@ -204,6 +204,7 @@ export default {
     },
   },
   productionsPage: {
+    kicker: "The archive",
     heading: "Productions",
     intro:
       "Every show in the archive at a glance.",

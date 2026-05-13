@@ -4,19 +4,36 @@
     <main class="flex-1">
       <section
         ref="pageTopAnchor"
-        class="scroll-mt-16 border-b border-surface-3 bg-surface-1 py-12 md:py-16"
+        class="scroll-mt-16 border-b border-surface-3 bg-surface-1 py-14 md:py-20"
       >
-        <div class="mx-auto max-w-3xl px-6 text-center lg:px-10">
-          <h1
-            class="text-2xl font-bold tracking-tight text-ink-primary md:text-3xl"
-          >
-            {{ t("productionsPage.heading") }}
-          </h1>
-          <p
-            class="mt-4 text-sm leading-relaxed text-ink-secondary md:text-base"
-          >
-            {{ t("productionsPage.intro") }}
-          </p>
+        <div class="mx-auto max-w-5xl px-6 lg:px-10">
+          <div class="mx-auto max-w-3xl text-center">
+            <div
+              class="mb-6 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
+            >
+              <span
+                class="h-px w-8 bg-ink-tertiary opacity-50"
+                aria-hidden="true"
+              />
+              <span class="whitespace-nowrap">{{
+                t("productionsPage.kicker")
+              }}</span>
+              <span
+                class="h-px w-8 bg-ink-tertiary opacity-50"
+                aria-hidden="true"
+              />
+            </div>
+            <h1
+              class="font-serif text-3xl font-semibold leading-tight tracking-tight text-ink-primary md:text-4xl"
+            >
+              {{ t("productionsPage.heading") }}
+            </h1>
+            <p
+              class="mx-auto mt-4 max-w-2xl font-serif text-lg italic leading-snug text-ink-secondary md:text-xl"
+            >
+              {{ t("productionsPage.intro") }}
+            </p>
+          </div>
         </div>
       </section>
 
@@ -169,14 +186,14 @@
           <div
             v-if="filtersPanelExpanded"
             id="productions-extended-filters"
-            class="mt-4 space-y-4 rounded-lg border border-surface-3 bg-surface-1/50 px-4 py-4 shadow-sm ring-1 ring-inset ring-surface-3/40 dark:bg-surface-1/25"
+            class="mt-4 space-y-4 rounded-md border border-surface-3 bg-surface-1 px-4 py-4 dark:bg-surface-1/60"
           >
             <div
               v-if="genreTagsForFilter.length > 0"
               class="space-y-3"
             >
               <p
-                class="text-xs font-medium uppercase tracking-wide text-ink-secondary"
+                class="text-xs font-semibold uppercase tracking-[0.2em] text-ink-secondary"
               >
                 {{ t("productionsPage.genreFiltersHeading") }}
               </p>
@@ -231,7 +248,7 @@
               "
             >
               <p
-                class="text-xs font-medium uppercase tracking-wide text-ink-secondary"
+                class="text-xs font-semibold uppercase tracking-[0.2em] text-ink-secondary"
               >
                 {{ t("productionsPage.tagFiltersHeading") }}
               </p>
@@ -315,9 +332,9 @@
             class="productions-view__filter-banner"
           >
             <div class="flex min-w-0 flex-wrap items-center gap-2">
-              <span class="text-sm text-ink-secondary">{{
-                t("productionsPage.activeFiltersLabel")
-              }}</span>
+              <span
+                class="text-[10px] font-bold uppercase tracking-[0.25em] text-ink-secondary"
+              >{{ t("productionsPage.activeFiltersLabel") }}</span>
               <button
                 v-for="tid in filterBannerTagIds"
                 :key="'tag-' + tid"
@@ -383,7 +400,7 @@
           <p
             v-if="displayedFilteredTotal !== null"
             :class="[
-              'mb-2 text-sm leading-normal text-ink-secondary tabular-nums',
+              'mb-2 font-serif text-base italic leading-normal text-ink-secondary tabular-nums',
               !filterBannerHasNonSearchChips() && 'mt-6',
             ]"
             aria-live="polite"
@@ -421,7 +438,9 @@
               class="productions-view__pagination"
               aria-label="Pagination"
             >
-              <p class="text-center text-sm text-ink-secondary sm:text-left">
+              <p
+                class="text-center font-serif text-sm italic text-ink-secondary tabular-nums sm:text-left"
+              >
                 {{
                   t("productionsPage.showingRange", {
                     from: rangeFrom,
@@ -444,7 +463,7 @@
                   {{ t("productionsPage.prevPage") }}
                 </button>
                 <div
-                  class="flex items-center gap-2 text-sm tabular-nums text-ink-secondary"
+                  class="flex items-center gap-2 font-serif text-sm tabular-nums text-ink-secondary"
                 >
                   <span class="whitespace-nowrap">{{
                     t("productionsPage.pageWord")
@@ -1542,12 +1561,9 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
   min-width: 6rem;
 }
 
-.productions-view__genre-collapsed-row-pill {
-  @apply rounded-full border px-3 py-1 text-[0.95rem] transition disabled:opacity-100;
-}
-
+.productions-view__genre-collapsed-row-pill,
 .productions-view__tag-filter-panel-pill {
-  @apply rounded-full border px-2.75 py-1 text-sm transition disabled:opacity-100;
+  @apply cursor-pointer rounded-sm border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-100;
 }
 
 .productions-view__search-field {
@@ -1581,7 +1597,7 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
 }
 
 .productions-view__active-chip {
-  @apply inline-flex cursor-pointer items-center gap-1 rounded-full border border-surface-3 bg-surface-0 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary shadow-sm ring-1 ring-inset ring-accent-outline/25 transition hover:bg-surface-2 disabled:opacity-100 dark:bg-surface-1;
+  @apply inline-flex cursor-pointer items-center gap-1 rounded-sm border border-surface-3 bg-surface-0 py-1 pl-2.5 pr-1.5 text-xs text-ink-primary transition hover:bg-surface-2 disabled:opacity-100 dark:bg-surface-1;
 }
 
 .productions-view__alert {
