@@ -167,16 +167,6 @@ export async function createProduction(
       return null;
     }
 
-    // Insert all production_tag relations within same transaction
-    for (const tag of tags) {
-      await client.query(
-        `INSERT INTO production_tag (production, tag, created_by, updated_by, created_at, updated_at)
-         VALUES ($1, $2, $3, $3, $4, $4)
-         ON CONFLICT DO NOTHING`,
-        [row.id, tag, admin, current_time],
-      );
-    }
-
     await client.query("COMMIT");
     return await getProductionById(server, row.id);
   } catch (err) {
