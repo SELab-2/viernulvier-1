@@ -97,7 +97,7 @@
         class="mt-auto flex flex-wrap items-center gap-2 pt-4.5"
       >
         <span
-          v-for="chip in tagChips"
+          v-for="chip in visibleTagChips"
           :key="chip.tagId"
           class="rounded-sm px-2.5 py-1 text-xs font-medium uppercase tracking-wide"
           :class="
@@ -107,6 +107,12 @@
           "
         >
           {{ chip.label }}
+        </span>
+        <span
+          v-if="hiddenTagCount > 0"
+          class="text-xs font-medium tabular-nums tracking-wide text-ink-tertiary"
+        >
+          {{ t("productionsPage.moreListTags", { n: hiddenTagCount }) }}
         </span>
       </div>
     </div>
@@ -124,6 +130,9 @@ import { localizeOrEmpty } from "@/utils/language-utils";
 import type { ProductionDateSummary } from "@/utils/productionsOverview";
 import type { ProductionTagChip } from "@/utils/tagDisplay";
 
+/** Beyond this count, remaining tags are summarized as localized “+n more”. */
+const MAX_VISIBLE_LIST_TAGS = 5;
+
 const props = withDefaults(
   defineProps<{
     production: ProductionWithBackwardsRefs;
@@ -139,6 +148,14 @@ const props = withDefaults(
 );
 
 const { t, locale } = useI18n();
+
+const visibleTagChips = computed(() =>
+  props.tagChips.slice(0, MAX_VISIBLE_LIST_TAGS),
+);
+
+const hiddenTagCount = computed(() =>
+  Math.max(0, props.tagChips.length - MAX_VISIBLE_LIST_TAGS),
+);
 
 /** Cap delay so long pages do not stretch the sequence too far. */
 const staggerDelayMs = computed(() =>

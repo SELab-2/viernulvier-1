@@ -116,6 +116,30 @@ describe("ProductionListCard.vue", () => {
     wrapper.unmount();
   });
 
+  it("shows at most five tag pills and summarizes the rest with +n more", async () => {
+    const tagChips: ProductionTagChip[] = Array.from({ length: 7 }, (_, i) => ({
+      tagId: i + 1,
+      label: `Tag ${i + 1}`,
+      isGenre: false,
+    }));
+    const wrapper = await mountCard({ tagChips });
+    expect(wrapper.findAll("span.rounded-sm")).toHaveLength(5);
+    expect(wrapper.text()).toContain("+2 meer");
+    wrapper.unmount();
+  });
+
+  it("shows every tag pill when there are five or fewer tags", async () => {
+    const tagChips: ProductionTagChip[] = [1, 2, 3, 4, 5].map((id) => ({
+      tagId: id,
+      label: `T${id}`,
+      isGenre: false,
+    }));
+    const wrapper = await mountCard({ tagChips });
+    expect(wrapper.findAll("span.rounded-sm")).toHaveLength(5);
+    expect(wrapper.text()).not.toContain("+");
+    wrapper.unmount();
+  });
+
   it("renders no tag row when tagChips is empty", async () => {
     const wrapper = await mountCard({ tagChips: [] });
     expect(wrapper.findAll("span.rounded-sm")).toHaveLength(0);

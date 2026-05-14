@@ -216,6 +216,7 @@ export default {
       "Het eerste jaar moet op of vóór het laatste jaar liggen. Pas het bereik aan of corrigeer de link en probeer opnieuw.",
     empty: "Er staan nog geen producties in het archief.",
     morePerformances: "nog {n}",
+    moreListTags: "+{n} meer",
     showingRange: "{from}–{to} van {total}",
     prevPage: "Vorige",
     nextPage: "Volgende",
