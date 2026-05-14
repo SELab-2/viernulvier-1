@@ -4,7 +4,6 @@
     v-model:column-chooser-open="columnChooserOpen"
     :row-count="rowData.length"
     loaded-count-key="cms.actions.loadedTagsCount"
-    empty-state-key="cms.actions.noTags"
     :is-loading="isLoading"
     :load-error="loadError"
     :save-error="saveError"

@@ -54,8 +54,8 @@ export function useCmsBlogPostGrid(options: {
 
   /** Labels for the column-chooser panel; must stay in sync with columnDefs. */
   const gridColumnOptions = computed(() => [
-    { colId: "id", label: options.t("cms.columns.blogpost.id") },
-    { colId: "title", label: options.t("cms.columns.blogpost.title") },
+    { colId: "id", label: options.t("cms.columns.id") },
+    { colId: "title", label: options.t("cms.columns.title") },
     { colId: "content", label: options.t("cms.columns.blogpost.content") },
     { colId: "publishedAt", label: options.t("cms.columns.blogpost.publishedAt") },
     { colId: "productions", label: options.t("cms.columns.blogpost.productions") },
@@ -63,14 +63,14 @@ export function useCmsBlogPostGrid(options: {
 
   const columnDefs = computed<ColDef<CmsBlogPostGridRow>[]>(() => [
     {
-      headerName: options.t("cms.columns.blogpost.id"),
+      headerName: options.t("cms.columns.id"),
       field: "id",
       editable: false,
       minWidth: 50,
       maxWidth: 100,
     },
     {
-      headerName: options.t("cms.columns.blogpost.title"),
+      headerName: options.t("cms.columns.title"),
       field: "title",
       editable: true,
       minWidth: 200,

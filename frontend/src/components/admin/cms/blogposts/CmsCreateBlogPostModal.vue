@@ -2,7 +2,7 @@
   <div v-if="open" class="cms-modal-overlay" @click.self="emit('close')">
     <section class="cms-modal" role="dialog" aria-modal="true" data-testid="create-blogpost-modal">
       <header class="cms-modal-header">
-        <h2 class="text-xl font-bold text-ink-primary">{{ t("cms.blogposts.create.title") }}</h2>
+        <h2 class="text-xl font-bold text-ink-primary">{{ t("cms.create.blogpost.title") }}</h2>
         <button type="button" class="cms-side-close" data-testid="modal-close" @click="emit('close')">
           {{ t("cms.panel.close") }}
         </button>
@@ -34,7 +34,7 @@
 
         <fieldset class="cms-form-block">
           <legend class="cms-form-legend">
-            {{ t("cms.blogposts.columns.title") }}
+            {{ t("cms.columns.title") }}
             <span class="cms-required">*</span>
           </legend>
 
@@ -54,7 +54,7 @@
 
         <fieldset class="cms-form-block">
           <legend class="cms-form-legend">
-            {{ t("cms.blogposts.columns.content") }}
+            {{ t("cms.columns.blogpost.content") }}
             <span class="cms-required">*</span>
           </legend>
 
@@ -74,7 +74,7 @@
 
         <fieldset class="cms-form-block">
           <legend class="cms-form-legend">
-            {{ t("cms.blogposts.columns.productions") }}
+            {{ t("cms.columns.blogpost.productions") }}
           </legend>
 
           <div class="cms-production-create">
@@ -86,10 +86,8 @@
                 ref="productionInput"
                 v-model="productionDraft"
                 type="number"
-                min="1"
                 inputmode="numeric"
                 class="cms-text-input"
-                :placeholder="t('cms.blogposts.create.productionIdPlaceholder')"
                 data-testid="cms-create-blogpost-production-input"
               />
 
@@ -97,7 +95,7 @@
                 type="submit"
                 class="cms-production-add"
               >
-                {{ t("cms.blogposts.create.addProductionId") }}
+                +
               </button>
             </form>
 
@@ -122,6 +120,10 @@
               </span>
             </div>
           </div>
+
+          <p v-if="productionInputError" class="mt-2 text-xs text-red-600">
+            {{ productionInputError }}
+          </p>
         </fieldset>
 
         <p v-if="createError" class="text-sm text-red-700">
@@ -139,7 +141,7 @@
           :disabled="isCreating"
           @click="emit('submit')"
         >
-          {{ isCreating ? t("general.saving") : t("cms.blogposts.create.submit") }}
+          {{ isCreating ? t("general.saving") : t("cms.create.blogpost.submit") }}
         </button>
       </footer>
     </section>
@@ -183,7 +185,7 @@ function addProduction(): void {
 
   if (!Number.isInteger(parsed) || parsed < 1) {
     productionInputError.value = t(
-      "cms.blogposts.create.errors.invalidProductionId",
+      "cms.create.validation.invalidId",
     );
     return;
   }

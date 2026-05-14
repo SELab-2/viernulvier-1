@@ -29,12 +29,9 @@
             {{ t("cms.create.admin.adminPassword") }}
             <span class="cms-required">*</span>
           </legend>
-          <!--
-          TODO:
           <p class="mb-3 text-xs text-ink-tertiary">
             {{ t("cms.create.admin.adminPasswordHint") }}
           </p>
-          -->
           <input
             :value="createForm.password"
             type="password"

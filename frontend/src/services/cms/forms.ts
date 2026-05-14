@@ -117,10 +117,10 @@ export function validateCreateBlogPostForm(
   t: (key: string, params?: Record<string, unknown>) => string,
 ): string | null {
   if (!hasAnyLanguageValue(form.title)) {
-    return t("cms.blogposts.create.errors.titleRequired");
+    return t("cms.create.validation.requiredOneLanguage");
   }
   if (!hasAnyLanguageValue(form.content)) {
-    return t("cms.blogposts.create.errors.contentRequired");
+    return t("cms.create.validation.requiredOneLanguage");
   }
   return null;
 }

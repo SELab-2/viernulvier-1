@@ -67,10 +67,10 @@ export default {
       productions: "Productions",
       tags: "Tags",
       admins: "Admins",
-      tagsPlaceholder: "La gestion des tags arrive bientôt.",
-      adminsPlaceholder: "La gestion des admins arrive bientôt.",
+      blogposts: "Articles",
     },
     columns: {
+      id: "ID",
       performer: "Artiste",
       title: "Titre",
       producer: "Supertitre",
@@ -88,6 +88,11 @@ export default {
         username: "Nom d'utilisateur",
         profilePicture: "Photo de profil",
         super: "Super admin",
+      },
+      blogpost: {
+        content: "Contenu",
+        publishedAt: "Publié à",
+        productions: "Production associés",
       },
     },
     events: {
@@ -131,12 +136,17 @@ export default {
       expandAllEvents: "Afficher tous les evenements",
       collapseAllEvents: "Masquer les evenements",
       admin: {
-        noAdmins: "Aucun admin trouvé",
         addAdmin: "+ Ajouter un Admin",
         removeAdmin: "Supprimer les admins sélectionnés",
         confirmRemoveDialogTitle: "Supprimer l'admin? | Supprimer les admins?",
-        confirmRemoveBody: "Cette action supprimera définitivement {count} admin sélectionnés. Cette opération est irréversible. | Cette action supprimera définitivement {count} admins sélectionnés. Cette opération est irréversible.",
+        confirmRemoveBody: "Cette action supprimera définitivement {count} admin sélectionné. Cette opération est irréversible. | Cette action supprimera définitivement {count} admins sélectionnés. Cette opération est irréversible.",
         cannotRemoveSelf: "Vous ne pouvez pas vous supprimer.",
+      },
+      blogpost: {
+        addBlogpost: "+ Ajouter un article",
+        removeBlogpost: "Supprimer les articles sélectionnés",
+        confirmRemoveDialogTitle: "Supprimer l'article? | Supprimer les articles?",
+        confirmRemoveBody: "Cette action supprimera définitivement {count} article sélectionné. Cette opération est irréversible. | Cette action supprimera définitivement {count} articles sélectionnés. Cette opération est irréversible.",
       },
     },
     create: {
@@ -175,12 +185,17 @@ export default {
         requiredOneLanguage: "Remplissez au moins 1 langue pour: {field}",
         imageRequired: "Remplissez au moins une URL d'image (dans n'importe quelle langue).",
         tagTypeRequired: "Sélectionnez un type de tag.",
+        invalidId: "ID non valide",
       },
       admin: {
         adminTitle: "Nouvel admin",
         adminPassword: "Mot de passe",
-        // TODO: adminPasswordHint: "Le nouvel admin peut modifier son mot de passe après connexion via son profil.",
+        adminPasswordHint: "Le nouvel admin peut modifier son mot de passe après connexion via son profil.",
         submitAdmin: "Ajouter l'admin",
+      },
+      blogpost: {
+        title: "Nouvel articles",
+        submit: "Ajouter l'article",
       },
     },
     panel: {

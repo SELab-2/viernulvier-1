@@ -67,10 +67,10 @@ export default {
       productions: "Producties",
       tags: "Tags",
       admins: "Admins",
-      tagsPlaceholder: "Tagbeheer komt binnenkort.",
-      adminsPlaceholder: "Adminbeheer komt binnenkort.",
+      blogposts: "Blogposts",
     },
     columns: {
+      id: "ID",
       performer: "Artiest",
       title: "Titel",
       producer: "Supertitel",
@@ -88,6 +88,11 @@ export default {
         username: "Gebruikersnaam",
         profilePicture: "Profielfoto",
         super: "Super admin",
+      },
+      blogpost: {
+        content: "Inhoud",
+        publishedAt: "Gepubliceerd op",
+        productions: "Bijhorende producties",
       },
     },
     events: {
@@ -131,12 +136,17 @@ export default {
       expandAllEvents: "Toon alle events",
       collapseAllEvents: "Verberg events",
       admin: {
-        noAdmins: "Geen admins gevonden.",
         addAdmin: "+ Admin toevoegen",
         removeAdmin: "Geselecteerde admins verwijderen",
         confirmRemoveDialogTitle: "Admin verwijderen? | Admins verwijderen?",
         confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde admin. Dit kan niet ongedaan worden gemaakt. | Hiermee verwijder je definitief {count} geselecteerde admins. Dit kan niet ongedaan worden gemaakt.",
         cannotRemoveSelf: "Je kan jezelf niet verwijderen.",
+      },
+      blogpost: {
+        addBlogpost: "+ Blogpost toevoegen",
+        removeBlogpost: "Geselecteerde blogposts verwijderen",
+        confirmRemoveDialogTitle: "Blogpost verwijderen? | Blogposts verwijderen?",
+        confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde blogpost. Dit kan niet ongedaan worden gemaakt. | Hiermee verwijder je definitief {count} geselecteerde blogposts. Dit kan niet ongedaan worden gemaakt.",
       },
     },
     create: {
@@ -175,12 +185,17 @@ export default {
         requiredOneLanguage: "Vul minstens 1 taal in voor: {field}",
         imageRequired: "Vul minstens een afbeelding URL in (in eender welke taal).",
         tagTypeRequired: "Selecteer een tag-type.",
+        invalidId: "Ongeldig ID",
       },
       admin: {
         adminTitle: "Nieuwe admin",
         adminPassword: "Wachtwoord",
-        // TODO: adminPasswordHint: "De nieuwe admin kan zijn wachtwoord na het inloggen wijzigen via zijn profiel.",
+        adminPasswordHint: "De nieuwe admin kan zijn wachtwoord na het inloggen wijzigen via zijn profiel.",
         submitAdmin: "Admin toevoegen",
+      },
+      blogpost: {
+        title: "Nieuwe blogpost",
+        submit: "Blogpost toevoegen",
       },
     },
     panel: {
