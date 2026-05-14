@@ -37,7 +37,7 @@
         </div>
       </section>
 
-      <section class="mx-auto max-w-5xl px-6 pb-20 pt-8 lg:px-10">
+      <section class="mx-auto max-w-4xl px-6 pb-20 pt-10 lg:px-10">
         <div v-if="!loading" class="mb-4 space-y-3">
           <div
             class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-stretch sm:gap-3"
@@ -1571,7 +1571,7 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
 }
 
 .productions-view__search-input {
-  @apply min-h-7 min-w-28 flex-1 border-0 bg-transparent px-1 py-0 text-base leading-normal text-ink-primary placeholder:text-ink-secondary focus:outline-none disabled:cursor-not-allowed disabled:opacity-100;
+  @apply min-h-7 min-w-28 flex-1 border-0 bg-transparent px-1 py-0 text-base leading-normal text-ink-primary placeholder:font-serif placeholder:italic placeholder:text-ink-tertiary focus:outline-none disabled:cursor-not-allowed disabled:opacity-100;
 }
 
 .productions-view__search-input::-webkit-search-cancel-button,
@@ -1589,11 +1589,11 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
 }
 
 .productions-view__banner-action {
-  @apply col-start-2 row-start-1 shrink-0 cursor-pointer justify-self-end self-start pt-0.5 text-sm font-medium text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100;
+  @apply col-start-2 row-start-1 shrink-0 cursor-pointer justify-self-end self-center text-sm font-medium text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100;
 }
 
 .productions-view__filter-banner {
-  @apply mb-4 mt-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-2 border-t border-surface-3 pt-5;
+  @apply mb-6 mt-6 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-3 rounded-md border border-surface-3 bg-surface-1 px-5 py-4 dark:bg-surface-1/60;
 }
 
 .productions-view__active-chip {
