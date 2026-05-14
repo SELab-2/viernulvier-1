@@ -1,23 +1,26 @@
 /**
  * @file Blogpost API — CRUD for blogposts.
  *
- * A "blog" in this project is a collection of blogposts.
- *
- * Public endpoints (no session required):
- *   - {@link getBlogPost} — fetch one published blogpost by id
+ * Public endpoints:
+ *   - {@link getBlogPosts} — fetch all blogposts
+ *   - {@link getBlogPost}  — fetch a single blogpost by ID
  *
  * Protected endpoints:
- *   - {@link getAllBlogPosts}, {@link getBlogPostAdmin}, {@link updateBlogPost}
+ *   - {@link getBlogPostWithMeta} — fetch a single blogpost with audit metadata
+ *   - {@link createBlogPost}      — create a new blogpost
+ *   - {@link replaceBlogPost}     — fully replace a blogpost (PUT)
+ *   - {@link updateBlogPost}      — partially update a blogpost (PATCH)
+ *   - {@link deleteBlogPost}      — delete a blogpost
  *
  * Usage:
  * ```ts
- * import { getBlogPost, getAllBlogPosts } from "@/services/blogposts";
+ * import { getBlogPosts, updateBlogPost } from "@/services/blogposts";
  *
- * const posts = await getAllBlogPosts();
+ * const posts = await getBlogPosts();
  * ```
  */
 
-import type { BlogPost, BlogPostWithBackwardsRefs } from "@viernulvier/shared";
+import type { BlogPost, BlogPostWithBackwardsRefs, BlogPostWithMeta } from "@viernulvier/shared";
 import { apiFetch } from "./api";
 import type { LanguageMap } from "@/utils/language-utils";
 
@@ -25,33 +28,35 @@ import type { LanguageMap } from "@/utils/language-utils";
 // Input types
 // ---------------------------------------------------------------------------
 
-/**
- * Payload for partially updating a blogpost (PATCH semantics).
- * Only include the fields that should change.
- */
-export interface UpdateBlogPostInput {
-  title?: LanguageMap;
-  content?: LanguageMap;
+/** Payload for creating a new blogpost. */
+export interface CreateBlogPostInput {
+  blog: number;
+  title: LanguageMap;
+  content: LanguageMap;
+  /** Optional display date. Null means the post is published without a visible date. */
   published_at?: string | null;
 }
+
+/** Payload for fully replacing a blogpost (PUT semantics — all fields required). */
+export type ReplaceBlogPostInput = CreateBlogPostInput;
+
+/** Payload for partially updating a blogpost (PATCH semantics — only changed fields). */
+export type UpdateBlogPostInput = Partial<CreateBlogPostInput>;
 
 // ---------------------------------------------------------------------------
 // Public endpoints
 // ---------------------------------------------------------------------------
 
+/** Fetches all blogposts. */
+export async function getBlogPosts(): Promise<BlogPostWithBackwardsRefs[]> {
+  return await apiFetch<BlogPostWithBackwardsRefs[]>("/blog/post");
+}
+
 /**
- * Fetches a single published blogpost by ID (public — no session required).
- *
- * The backend only returns blogposts whose `published_at` is not null, so
- * unpublished drafts will respond with a 404 on this endpoint.
+ * Fetches a single blogpost by ID.
  *
  * @param id The blogpost's primary key.
- * @returns  The blogpost.
- * @throws {ApiError} 404 — blogpost not found or not yet published.
- *
- * @example
- * const post = await getBlogPost(42);
- * console.log(post.title);
+ * @throws {ApiError} 404 — blogpost not found.
  */
 export async function getBlogPost(id: number): Promise<BlogPostWithBackwardsRefs> {
   return await apiFetch<BlogPostWithBackwardsRefs>(`/blog/post/${id}`);
@@ -62,23 +67,34 @@ export async function getBlogPost(id: number): Promise<BlogPostWithBackwardsRefs
 // ---------------------------------------------------------------------------
 
 /**
- * Fetches all blogposts (including unpublished drafts).
+ * Fetches a single blogpost including audit metadata.
  *
- * @throws {ApiError} 401 — unauthenticated.
+ * @param id The blogpost's primary key.
+ * @throws {ApiError} 404 — blogpost not found.
  */
-export async function getAllBlogPosts(): Promise<BlogPost[]> {
-  return await apiFetch<BlogPost[]>("/blog/post/all");
+export async function getBlogPostWithMeta(id: number): Promise<BlogPostWithMeta> {
+  return await apiFetch<BlogPostWithMeta>(`/blog/post/${id}/meta`);
 }
 
 /**
- * Fetches any blogpost by ID, regardless of its `published_at` state.
+ * Creates a new blogpost.
  *
- * @param id The blogpost's primary key.
- * @throws {ApiError} 401 — unauthenticated.
+ * @param data The blogpost payload.
+ * @throws {ApiError} 422 — validation failed.
+ */
+export async function createBlogPost(data: CreateBlogPostInput): Promise<BlogPost> {
+  return await apiFetch<BlogPost>("/blog/post", { method: "POST", body: data });
+}
+
+/**
+ * Fully replaces a blogpost (PUT semantics — all fields required).
+ *
+ * @param id   The blogpost's primary key.
+ * @param data Full replacement payload.
  * @throws {ApiError} 404 — blogpost not found.
  */
-export async function getBlogPostAdmin(id: number): Promise<BlogPost> {
-  return await apiFetch<BlogPost>(`/blog/post/${id}/all`);
+export async function replaceBlogPost(id: number, data: ReplaceBlogPostInput): Promise<BlogPost> {
+  return await apiFetch<BlogPost>(`/blog/post/${id}`, { method: "PUT", body: data });
 }
 
 /**
@@ -86,16 +102,21 @@ export async function getBlogPostAdmin(id: number): Promise<BlogPost> {
  *
  * @param id   The blogpost's primary key.
  * @param data Only the fields that should change.
- * @throws {ApiError} 401 — unauthenticated.
  * @throws {ApiError} 404 — blogpost not found.
  *
  * @example
- * // Publish a blogpost
  * await updateBlogPost(3, { published_at: new Date().toISOString() });
  */
-export async function updateBlogPost(
-  id: number,
-  data: UpdateBlogPostInput,
-): Promise<BlogPost> {
+export async function updateBlogPost(id: number, data: UpdateBlogPostInput): Promise<BlogPost> {
   return await apiFetch<BlogPost>(`/blog/post/${id}`, { method: "PATCH", body: data });
+}
+
+/**
+ * Permanently deletes a blogpost.
+ *
+ * @param id The blogpost's primary key.
+ * @throws {ApiError} 404 — blogpost not found.
+ */
+export async function deleteBlogPost(id: number): Promise<void> {
+  await apiFetch<void>(`/blog/post/${id}`, { method: "DELETE" });
 }
