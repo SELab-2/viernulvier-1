@@ -19,6 +19,20 @@
     @reset-state="resetGridState"
     @set-column-visibility="setGridColumnVisibility"
   >
+    <template #header-actions>
+      <div class="flex flex-col gap-2">
+        <button
+          type="button"
+          class="cms-remove-button"
+          data-testid="cms-remove-blogposts"
+          :disabled="selectedCount === 0"
+          @click="openRemoveConfirm"
+        >
+          {{ t("cms.actions.blogpost.removeBlogpost") }}
+        </button>
+      </div>
+    </template>
+
     <template #grid>
       <AgGridVue
         :class="['ag-theme-alpine', 'cms-grid']"
@@ -46,6 +60,18 @@
         @cell-editing-stopped="onCellEditingStopped"
       />
     </template>
+    <template #modals>
+      <CmsRemoveConfirmModal
+        v-if="removeConfirmOpen"
+        :is-loading="removeConfirmLoading"
+        :error="removeConfirmError"
+        :count="selectedCount"
+        title-key="cms.actions.blogpost.confirmRemoveDialogTitle"
+        body-key="cms.actions.blogpost.confirmRemoveBody"
+        @close="closeRemoveConfirm"
+        @confirm="confirmRemove"
+      />
+    </template>
   </CmsTabShell>
 </template>
 
@@ -56,10 +82,12 @@ import type { CellEditingStoppedEvent } from "ag-grid-community";
 import { useI18n } from "vue-i18n";
 import type { BlogPostWithBackwardsRefs } from "@viernulvier/shared";
 import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
+import CmsRemoveConfirmModal from "@/components/admin/cms/CmsRemoveConfirmModal.vue";
 import { useCmsBlogPostGrid } from "@/composables/useCmsBlogPostGrid";
+import { useCmsRemove } from "@/composables/useCmsRemove";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
-import { getBlogPosts, updateBlogPost } from "@/services/blogposts";
+import { getBlogPosts, updateBlogPost, deleteBlogPost } from "@/services/blogposts";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import {
   applyUpdatedBlogPostToRow,
@@ -198,6 +226,30 @@ async function onCellEditingStopped(
 }
 
 // ---------------------------------------------------------------------------
+// Removal
+// ---------------------------------------------------------------------------
+
+const {
+  removeConfirmOpen,
+  removeConfirmLoading,
+  removeConfirmError,
+  openRemoveConfirm,
+  closeRemoveConfirm,
+  confirmRemove,
+} = useCmsRemove<CmsBlogPostGridRow>({
+  selectedCount,
+  getSelectedRows: () => gridApi.value?.getSelectedRows() ?? [],
+  rowToId: (row) => row.id,
+  deleteFn: deleteBlogPost,
+  t,
+  onSuccess: async () => {
+    selectedCount.value = 0;
+    gridApi.value?.deselectAll();
+    await loadBlogPostsData();
+  },
+});
+
+// ---------------------------------------------------------------------------
 // Expose internals for testing
 // ---------------------------------------------------------------------------
 
@@ -213,6 +265,12 @@ defineExpose({
     rebuildRows,
     localizeValue,
     onCellEditingStopped,
+    removeConfirmOpen,
+    removeConfirmLoading,
+    removeConfirmError,
+    openRemoveConfirm,
+    closeRemoveConfirm,
+    confirmRemove,
     selectedCount,
     gridApi,
     persistGridState,

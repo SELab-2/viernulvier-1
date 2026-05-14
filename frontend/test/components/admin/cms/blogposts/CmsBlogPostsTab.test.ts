@@ -68,323 +68,399 @@ describe("CmsBlogPostsTab", () => {
     vi.restoreAllMocks();
   });
 
-  // --------------------------------------------------
-  // loading
-  // --------------------------------------------------
+  describe("loading", () => {
+    it("loads blogposts on mount", async () => {
+      const spy = vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
+        {
+          id: 1,
+          title: { en: "Hello" },
+          content: { en: "World" },
+          published_at: null,
+          productions: [],
+        } as any,
+      ]);
 
-  it("loads blogposts on mount", async () => {
-    const spy = vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
-      {
-        id: 1,
-        title: { en: "Hello" },
-        content: { en: "World" },
-        published_at: null,
-        productions: [],
-      } as any,
-    ]);
+      const wrapper = mountTab();
+      await flushPromises();
 
-    const wrapper = mountTab();
-    await flushPromises();
+      expect(spy).toHaveBeenCalledOnce();
+      expect(wrapper.vm.__test.isLoading.value).toBe(false);
+      expect(wrapper.vm.__test.rowData.value.length).toBe(1);
+    });
 
-    expect(spy).toHaveBeenCalledOnce();
-    expect(wrapper.vm.__test.isLoading.value).toBe(false);
-    expect(wrapper.vm.__test.rowData.value.length).toBe(1);
+    it("handles load error", async () => {
+      vi.spyOn(blogposts, "getBlogPosts").mockRejectedValue(new Error("fail"));
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      expect(wrapper.vm.__test.loadError.value).toBeTruthy();
+      expect(wrapper.vm.__test.rowData.value.length).toBe(0);
+    });
+
+    it("uses generic load error for non-Error values", async () => {
+      vi.spyOn(blogposts, "getBlogPosts").mockRejectedValue("boom");
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      expect(wrapper.vm.__test.loadError.value).toBeTruthy();
+    });
+
+    it("handles missing language map fields", async () => {
+      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
+        {
+          id: 1,
+          title: null,
+          content: undefined,
+          published_at: null,
+          productions: [],
+        } as any,
+      ]);
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      expect(wrapper.vm.__test.rowData.value[0].title).toBe("");
+      expect(wrapper.vm.__test.rowData.value[0].content).toBe("");
+    });
+  });  
+
+  describe("locale watch", () => {
+    it("rebuilds rows when locale changes", async () => {
+      const spy = vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
+        {
+          id: 1,
+          title: { en: "Hello", nl: "Hallo" },
+          content: { en: "World", nl: "Wereld" },
+          published_at: null,
+          productions: [],
+        } as any,
+      ]);
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      const initial = wrapper.vm.__test.rowData.value[0].title;
+
+      // change locale
+      (i18n.global.locale as any).value = "en";
+      await wrapper.vm.$nextTick();
+
+      const updated = wrapper.vm.__test.rowData.value[0].title;
+
+      expect(spy).toHaveBeenCalledOnce();
+      expect(initial).not.toBe(updated);
+    });
   });
 
-  it("handles load error", async () => {
-    vi.spyOn(blogposts, "getBlogPosts").mockRejectedValue(new Error("fail"));
+  describe("editing", () => {
+    it("reverts unchanged edits", async () => {
+      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
+        {
+          id: 1,
+          title: { en: "Hello" },
+          content: { en: "World" },
+          published_at: null,
+          productions: [],
+        } as any,
+      ]);
 
-    const wrapper = mountTab();
-    await flushPromises();
+      const wrapper = mountTab();
+      await flushPromises();
 
-    expect(wrapper.vm.__test.loadError.value).toBeTruthy();
-    expect(wrapper.vm.__test.rowData.value.length).toBe(0);
-  });
+      const row = wrapper.vm.__test.rowData.value[0];
 
-  it("uses generic load error for non-Error values", async () => {
-    vi.spyOn(blogposts, "getBlogPosts").mockRejectedValue("boom");
+      const event = {
+        data: row,
+        colDef: { field: "title" },
+        value: row.title,
+        oldValue: row.title,
+        node: {
+          setDataValue: vi.fn(),
+        },
+      } as any;
 
-    const wrapper = mountTab();
-    await flushPromises();
+      await wrapper.vm.__test.onCellEditingStopped(event);
 
-    expect(wrapper.vm.__test.loadError.value).toBeTruthy();
-  });
+      expect(event.node.setDataValue).not.toHaveBeenCalled();
+    });
 
-  it("handles missing language map fields", async () => {
-    vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
-      {
-        id: 1,
-        title: null,
-        content: undefined,
-        published_at: null,
-        productions: [],
-      } as any,
-    ]);
+    it("rejects empty title edit", async () => {
+      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
+        {
+          id: 1,
+          title: { en: "Hello" },
+          content: { en: "World" },
+          published_at: null,
+          productions: [],
+        } as any,
+      ]);
 
-    const wrapper = mountTab();
-    await flushPromises();
+      const wrapper = mountTab();
+      await flushPromises();
 
-    expect(wrapper.vm.__test.rowData.value[0].title).toBe("");
-    expect(wrapper.vm.__test.rowData.value[0].content).toBe("");
-  });
+      const row = wrapper.vm.__test.rowData.value[0];
 
-  // --------------------------------------------------
-  // locale watch => rebuildRows
-  // --------------------------------------------------
+      const event = {
+        data: row,
+        colDef: { field: "title" },
+        value: "   ",
+        oldValue: "Hello",
+        node: {
+          setDataValue: vi.fn(),
+        },
+      } as any;
 
-  it("rebuilds rows when locale changes", async () => {
-    const spy = vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
-      {
-        id: 1,
-        title: { en: "Hello", nl: "Hallo" },
-        content: { en: "World", nl: "Wereld" },
-        published_at: null,
-        productions: [],
-      } as any,
-    ]);
+      await wrapper.vm.__test.onCellEditingStopped(event);
 
-    const wrapper = mountTab();
-    await flushPromises();
+      expect(event.node.setDataValue).toHaveBeenCalled();
+    });
 
-    const initial = wrapper.vm.__test.rowData.value[0].title;
+    it("saves title update", async () => {
+      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
+        {
+          id: 1,
+          title: { en: "Hello" },
+          content: { en: "World" },
+          published_at: null,
+          productions: [],
+        } as any,
+      ]);
 
-    // change locale
-    (i18n.global.locale as any).value = "en";
-    await wrapper.vm.$nextTick();
+      const updateSpy = vi
+        .spyOn(blogposts, "updateBlogPost")
+        .mockResolvedValue({
+          id: 1,
+          title: { en: "Updated" },
+          content: { en: "World" },
+          published_at: null,
+          productions: [],
+        } as any);
 
-    const updated = wrapper.vm.__test.rowData.value[0].title;
+      const wrapper = mountTab();
+      await flushPromises();
 
-    expect(spy).toHaveBeenCalledOnce();
-    expect(initial).not.toBe(updated);
-  });
+      const row = wrapper.vm.__test.rowData.value[0];
 
-  // --------------------------------------------------
-  // editing
-  // --------------------------------------------------
+      const event = {
+        data: row,
+        colDef: { field: "title" },
+        value: "Updated",
+        oldValue: "Hello",
+        node: {
+          setDataValue: vi.fn(),
+        },
+      } as any;
 
-  it("reverts unchanged edits", async () => {
-    vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
-      {
-        id: 1,
-        title: { en: "Hello" },
-        content: { en: "World" },
-        published_at: null,
-        productions: [],
-      } as any,
-    ]);
+      await wrapper.vm.__test.onCellEditingStopped(event);
+      await flushPromises();
 
-    const wrapper = mountTab();
-    await flushPromises();
+      expect(updateSpy).toHaveBeenCalledWith(1, expect.any(Object));
+      expect(wrapper.vm.__test.saveError.value).toBeNull();
+    });
 
-    const row = wrapper.vm.__test.rowData.value[0];
+    it("handles save error", async () => {
+      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
+        {
+          id: 1,
+          title: { en: "Hello" },
+          content: { en: "World" },
+          published_at: null,
+          productions: [],
+        } as any,
+      ]);
 
-    const event = {
-      data: row,
-      colDef: { field: "title" },
-      value: row.title,
-      oldValue: row.title,
-      node: {
-        setDataValue: vi.fn(),
-      },
-    } as any;
+      vi.spyOn(blogposts, "updateBlogPost").mockRejectedValue(
+        new Error("fail"),
+      );
 
-    await wrapper.vm.__test.onCellEditingStopped(event);
+      const wrapper = mountTab();
+      await flushPromises();
 
-    expect(event.node.setDataValue).not.toHaveBeenCalled();
-  });
+      const row = wrapper.vm.__test.rowData.value[0];
 
-  it("rejects empty title edit", async () => {
-    vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
-      {
-        id: 1,
-        title: { en: "Hello" },
-        content: { en: "World" },
-        published_at: null,
-        productions: [],
-      } as any,
-    ]);
+      const event = {
+        data: row,
+        colDef: { field: "title" },
+        value: "Updated",
+        oldValue: "Hello",
+        node: {
+          setDataValue: vi.fn(),
+        },
+      } as any;
 
-    const wrapper = mountTab();
-    await flushPromises();
+      await wrapper.vm.__test.onCellEditingStopped(event);
+      await flushPromises();
 
-    const row = wrapper.vm.__test.rowData.value[0];
+      expect(wrapper.vm.__test.saveError.value).toBeTruthy();
+    });
 
-    const event = {
-      data: row,
-      colDef: { field: "title" },
-      value: "   ",
-      oldValue: "Hello",
-      node: {
-        setDataValue: vi.fn(),
-      },
-    } as any;
+    it("uses generic save error for non-Error values", async () => {
+      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
+        {
+          id: 1,
+          title: { en: "Hello" },
+          content: { en: "World" },
+          published_at: null,
+          productions: [],
+        } as any,
+      ]);
 
-    await wrapper.vm.__test.onCellEditingStopped(event);
+      vi.spyOn(blogposts, "updateBlogPost").mockRejectedValue("boom");
 
-    expect(event.node.setDataValue).toHaveBeenCalled();
-  });
+      const wrapper = mountTab();
+      await flushPromises();
 
-  it("saves title update", async () => {
-    vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
-      {
-        id: 1,
-        title: { en: "Hello" },
-        content: { en: "World" },
-        published_at: null,
-        productions: [],
-      } as any,
-    ]);
+      const row = wrapper.vm.__test.rowData.value[0];
 
-    const updateSpy = vi
-      .spyOn(blogposts, "updateBlogPost")
-      .mockResolvedValue({
-        id: 1,
-        title: { en: "Updated" },
-        content: { en: "World" },
-        published_at: null,
-        productions: [],
+      await wrapper.vm.__test.onCellEditingStopped({
+        data: row,
+        colDef: { field: "title" },
+        value: "Updated",
+        oldValue: "Hello",
+        node: { setDataValue: vi.fn() },
       } as any);
 
-    const wrapper = mountTab();
-    await flushPromises();
+      expect(wrapper.vm.__test.saveError.value).toBeTruthy();
+    });
 
-    const row = wrapper.vm.__test.rowData.value[0];
+    it("ignores non-editable fields", async () => {
+      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
+        {
+          id: 1,
+          title: { en: "Hello" },
+          content: { en: "World" },
+          published_at: null,
+          productions: [],
+        } as any,
+      ]);
 
-    const event = {
-      data: row,
-      colDef: { field: "title" },
-      value: "Updated",
-      oldValue: "Hello",
-      node: {
-        setDataValue: vi.fn(),
-      },
-    } as any;
+      const updateSpy = vi.spyOn(blogposts, "updateBlogPost");
 
-    await wrapper.vm.__test.onCellEditingStopped(event);
-    await flushPromises();
+      const wrapper = mountTab();
+      await flushPromises();
 
-    expect(updateSpy).toHaveBeenCalledWith(1, expect.any(Object));
-    expect(wrapper.vm.__test.saveError.value).toBeNull();
+      const row = wrapper.vm.__test.rowData.value[0];
+
+      const event = {
+        data: row,
+        colDef: { field: "publishedAt" },
+        value: "x",
+        oldValue: "y",
+        node: {
+          setDataValue: vi.fn(),
+        },
+      } as any;
+
+      await wrapper.vm.__test.onCellEditingStopped(event);
+
+      expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    it("onCellEditingStopped - returns early when event data is missing", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+
+      await wrapper.vm.__test.onCellEditingStopped({
+        data: null,
+        colDef: { field: "title" },
+      } as any);
+
+      expect(true).toBe(true); // just ensures no crash
+    });
   });
 
-  it("handles save error", async () => {
-    vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
-      {
-        id: 1,
-        title: { en: "Hello" },
-        content: { en: "World" },
-        published_at: null,
-        productions: [],
-      } as any,
-    ]);
+  describe("removing", () => {
+    it("open modal by clicking button", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
 
-    vi.spyOn(blogposts, "updateBlogPost").mockRejectedValue(
-      new Error("fail"),
-    );
+      // enable button
+      wrapper.vm.__test.selectedCount.value = 1;
 
-    const wrapper = mountTab();
-    await flushPromises();
+      await wrapper.vm.$nextTick();
 
-    const row = wrapper.vm.__test.rowData.value[0];
+      await wrapper.find('[data-testid="cms-remove-blogposts"]').trigger("click");
 
-    const event = {
-      data: row,
-      colDef: { field: "title" },
-      value: "Updated",
-      oldValue: "Hello",
-      node: {
-        setDataValue: vi.fn(),
-      },
-    } as any;
+      expect(wrapper.find('.cms-remove-modal').exists()).toBe(true);
+    });
 
-    await wrapper.vm.__test.onCellEditingStopped(event);
-    await flushPromises();
+    it("confirms removal successfully and reloads data", async () => {
+      const getSpy = vi
+        .spyOn(blogposts, "getBlogPosts")
+        .mockResolvedValue([]);
 
-    expect(wrapper.vm.__test.saveError.value).toBeTruthy();
+      const deleteSpy = vi
+        .spyOn(blogposts, "deleteBlogPost")
+        .mockResolvedValue(undefined as any);
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      // mock selected rows
+      const deselectAll = vi.fn();
+
+      vi.spyOn(wrapper.vm.__test.gridApi, "value", "get").mockReturnValue({
+        getSelectedRows: () => [
+          { id: 1 },
+          { id: 2 },
+        ],
+        deselectAll,
+      } as any);
+
+      wrapper.vm.__test.selectedCount.value = 2;
+
+      wrapper.vm.__test.openRemoveConfirm();
+      await wrapper.vm.$nextTick();
+
+      await wrapper.vm.__test.confirmRemove();
+      await flushPromises();
+
+      expect(deleteSpy).toHaveBeenCalledWith(1);
+      expect(deleteSpy).toHaveBeenCalledWith(2);
+
+      // reload happened (initial + after delete)
+      expect(getSpy).toHaveBeenCalledTimes(2);
+
+      expect(deselectAll).toHaveBeenCalled();
+      expect(wrapper.vm.__test.selectedCount.value).toBe(0);
+      expect(wrapper.vm.__test.removeConfirmOpen.value).toBe(false);
+    });
+
+    it("keeps modal open and shows error when delete fails", async () => {
+      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([]);
+
+      vi.spyOn(blogposts, "deleteBlogPost")
+        .mockRejectedValue(new Error("Forbidden"));
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      vi.spyOn(wrapper.vm.__test.gridApi, "value", "get").mockReturnValue({
+        getSelectedRows: () => [{ id: 1 }],
+        deselectAll: vi.fn(),
+      } as any);
+
+      wrapper.vm.__test.selectedCount.value = 1;
+
+      wrapper.vm.__test.openRemoveConfirm();
+      await wrapper.vm.$nextTick();
+
+      await wrapper.vm.__test.confirmRemove();
+      await flushPromises();
+
+      expect(wrapper.vm.__test.removeConfirmError.value).toBeTruthy();
+      expect(wrapper.vm.__test.removeConfirmOpen.value).toBe(true);
+    });
   });
 
-  it("uses generic save error for non-Error values", async () => {
-    vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
-      {
-        id: 1,
-        title: { en: "Hello" },
-        content: { en: "World" },
-        published_at: null,
-        productions: [],
-      } as any,
-    ]);
+  describe("unmount", () => {
+    it("does not throw on unmount", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
 
-    vi.spyOn(blogposts, "updateBlogPost").mockRejectedValue("boom");
-
-    const wrapper = mountTab();
-    await flushPromises();
-
-    const row = wrapper.vm.__test.rowData.value[0];
-
-    await wrapper.vm.__test.onCellEditingStopped({
-      data: row,
-      colDef: { field: "title" },
-      value: "Updated",
-      oldValue: "Hello",
-      node: { setDataValue: vi.fn() },
-    } as any);
-
-    expect(wrapper.vm.__test.saveError.value).toBeTruthy();
-  });
-
-  it("ignores non-editable fields", async () => {
-    vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
-      {
-        id: 1,
-        title: { en: "Hello" },
-        content: { en: "World" },
-        published_at: null,
-        productions: [],
-      } as any,
-    ]);
-
-    const updateSpy = vi.spyOn(blogposts, "updateBlogPost");
-
-    const wrapper = mountTab();
-    await flushPromises();
-
-    const row = wrapper.vm.__test.rowData.value[0];
-
-    const event = {
-      data: row,
-      colDef: { field: "publishedAt" },
-      value: "x",
-      oldValue: "y",
-      node: {
-        setDataValue: vi.fn(),
-      },
-    } as any;
-
-    await wrapper.vm.__test.onCellEditingStopped(event);
-
-    expect(updateSpy).not.toHaveBeenCalled();
-  });
-
-  it("onCellEditingStopped - returns early when event data is missing", async () => {
-    const wrapper = mountTab();
-    await flushPromises();
-
-    await wrapper.vm.__test.onCellEditingStopped({
-      data: null,
-      colDef: { field: "title" },
-    } as any);
-
-    expect(true).toBe(true); // just ensures no crash
-  });
-
-  // --------------------------------------------------
-  // unmount
-  // --------------------------------------------------
-
-  it("does not throw on unmount", async () => {
-    const wrapper = mountTab();
-    await flushPromises();
-
-    expect(() => wrapper.unmount()).not.toThrow();
+      expect(() => wrapper.unmount()).not.toThrow();
+    });
   });
 });
