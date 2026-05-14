@@ -22,6 +22,7 @@ const samplePost = {
   title: { en: "Hello world" },
   content: { en: "Some text." },
   published_at: "2026-03-15T10:00:00.000Z",
+  productions: [1],
 };
 
 beforeEach(() => {
@@ -68,6 +69,7 @@ describe("blogposts service", () => {
         blog: 1,
         title: { en: "New post" },
         content: { en: "Body" },
+        productions: [1],
       };
 
       await createBlogPost(payload);
@@ -85,6 +87,7 @@ describe("blogposts service", () => {
         blog: 1,
         title: { en: "Updated" },
         content: { en: "Updated body" },
+        productions: [1],
       };
 
       await replaceBlogPost(42, payload);
