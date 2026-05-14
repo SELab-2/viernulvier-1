@@ -12,7 +12,7 @@
       Placeholder grey + min-height only when there is no thumbnail. max-h caps extreme ratios.
     -->
     <div
-      class="relative w-48 shrink-0 self-start sm:w-56 md:w-64"
+      class="relative w-52 shrink-0 self-start sm:w-60 md:w-72"
       aria-hidden="true"
     >
       <div
