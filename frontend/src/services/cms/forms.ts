@@ -1,7 +1,7 @@
 import type { SupportedLang } from "@/i18n";
 import type { LanguageMap } from "@/utils/language-utils";
 import { emptyLangRecord } from "./helpers";
-import type { CmsCreateFieldConfig, CreateFormState, CreateTagFormState } from "./types";
+import type { CmsCreateFieldConfig, CreateFormState, CreateTagFormState, CreateFormMediaItem } from "./types";
 
 /**
  * Field definitions used to render the create-production modal dynamically.
@@ -29,8 +29,22 @@ export function buildEmptyCreateForm(): CreateFormState {
     supertitle: emptyLangRecord(),
     description: emptyLangRecord(),
     description_2: emptyLangRecord(),
-    video_1: emptyLangRecord(),
-    video_2: emptyLangRecord(),
+    media: [],
+  };
+}
+
+/**
+ * Creates a new media item with a unique client ID.
+ */
+export function createMediaItem(
+  type: "image" | "video",
+  url: string = "",
+): CreateFormMediaItem {
+  return {
+    id: `media-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    type,
+    url,
+    isUploaded: false,
   };
 }
 
@@ -123,7 +137,7 @@ export function validateCreateProductionForm(
     }
   }
 
-  if (!hasAnyLanguageValue(form.video_1) && !hasAnyLanguageValue(form.video_2)) {
+  if (form.media.length === 0 || !form.media.some((m) => m.url.trim().length > 0)) {
     return t("cms.create.validation.imageRequired");
   }
   return null;

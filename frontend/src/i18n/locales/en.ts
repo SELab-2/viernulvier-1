@@ -1,6 +1,7 @@
 export default {
   general: {
     cancel: "Cancel",
+    delete: "Delete",
     saving: "Saving...",
   },
   nav: {
@@ -178,10 +179,15 @@ export default {
       },
       media: {
         title: "Media",
+        image: "Image",
+        video: "Video",
+        addImage: "Add image",
+        addVideo: "Add video",
+        confirmDelete: "Are you sure you want to delete this image?",
         language: "Upload language",
         uploadImage: "Upload image",
         youtubeLink: "YouTube link",
-        hint: "You can upload an image file, enter an image/media URL, or paste a YouTube link. At least one image is required.",
+        hint: "You can add multiple images and videos. For images, different formats will be automatically generated.",
       },
       validation: {
         requiredOneLanguage: "Fill at least 1 language for: {field}",
@@ -213,6 +219,7 @@ export default {
       saveSuccess: "Changes saved successfully",
       removeSuccess: "Production removed successfully",
       removeTagSuccess: "Tag removed successfully",
+      mediaRemoveSuccess: "Image removed successfully",
     },
     admin: {
       noPermission: "You don't have permissions to manage admins.",

@@ -1,6 +1,7 @@
 export default {
   general: {
     cancel: "Annuleer",
+    delete: "Verwijderen",
     saving: "Opslaan...",
   },
   nav: {
@@ -177,10 +178,15 @@ export default {
       },
       media: {
         title: "Media",
+        image: "Afbeelding",
+        video: "Video",
+        addImage: "Afbeelding toevoegen",
+        addVideo: "Video toevoegen",
+        confirmDelete: "Weet je zeker dat je deze afbeelding wilt verwijderen?",
         language: "Taal voor upload",
         uploadImage: "Upload afbeelding",
         youtubeLink: "YouTube link",
-        hint: "Je kan een afbeelding uploaden, een afbeelding/media URL invullen, of een YouTube link plakken. Minstens één afbeelding is verplicht.",
+        hint: "Je kan meerdere afbeeldingen en video's toevoegen. Voor afbeeldingen worden automatisch verschillende formaten gegenereerd.",
       },
       validation: {
         requiredOneLanguage: "Vul minstens 1 taal in voor: {field}",
@@ -212,6 +218,7 @@ export default {
       saveSuccess: "Wijzigingen opgeslagen",
       removeSuccess: "Productie verwijderd",
       removeTagSuccess: "Tag verwijderd",
+      mediaRemoveSuccess: "Afbeelding verwijderd",
     },
     admin: {
       noPermission: "Je hebt geen toestemming om admins te beheren.",

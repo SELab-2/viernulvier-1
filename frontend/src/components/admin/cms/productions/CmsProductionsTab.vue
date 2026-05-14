@@ -175,8 +175,10 @@
         @update-form-field="setCreateFormField"
         @update-primary-tag="setSelectedPrimaryTag"
         @toggle-tag="toggleCreateTag"
-        @image-file-change="onImageFileChange"
-        @video-file-change="onVideoFileChange"
+        @add-media="addMedia"
+        @remove-media="removeMedia"
+        @media-file-change="onMediaFileChange"
+        @update-media-url="updateMediaUrl"
         @close="closeCreateModal"
         @submit="submitCreateProduction"
       />
@@ -303,6 +305,15 @@
               <source :src="mediaPreview.url" />
             </video>
           </div>
+
+          <footer v-if="mediaPreview.imageId" class="cms-modal-footer">
+            <button type="button" class="cms-side-close" :disabled="isSaving" @click="closeMediaPreview">
+              {{ t("cms.panel.close") }}
+            </button>
+            <button type="button" class="cms-remove-button" :disabled="isSaving" @click="removeMediaImage">
+              {{ isSaving ? t("general.saving") : t("general.delete") }}
+            </button>
+          </footer>
         </section>
       </div>
     </template>
@@ -341,6 +352,7 @@ import {
 import { createEvent, deleteEvent, getEvent, updateEvent } from "@/services/events";
 import { getHall, getHalls } from "@/services/halls";
 import { getAllTags, getTagTypes } from "@/services/tags";
+import { getImagesByProduction, deleteImage as deleteImageService } from "@/services/images";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import {
   buildEventGridRows,
@@ -348,8 +360,8 @@ import {
   buildCmsTagGroups,
   createProductionFields,
   buildEmptyCreateForm,
+  createMediaItem,
   fileToDataUrl,
-  mediaToLanguageMap,
   toLanguageMap,
   toLanguageMapOrNull,
   validateCreateProductionForm,
@@ -367,6 +379,7 @@ import {
   toIsoStringFromLocalInput,
   toLocalDateTimeInput,
 } from "@/services/cms";
+import { uploadImageWithCrops } from "@/services/cms/media-upload";
 
 const { t } = useI18n();
 const { isDark } = useDarkMode();
@@ -417,7 +430,13 @@ const bulkEditConfirmOpen = ref(false);
 const bulkEditConfirmLoading = ref(false);
 const bulkEditConfirmCount = ref(0);
 const pendingBulkEditAction = ref<(() => Promise<void>) | null>(null);
-const mediaPreview = ref<{ url: string; kind: "image" | "video" | "youtube"; label: string } | null>(null);
+const mediaPreview = ref<{ 
+  url: string; 
+  kind: "image" | "video" | "youtube"; 
+  label: string;
+  imageId?: number;
+} | null>(null);
+const imagesByProductionId = ref(new Map<number, Array<{ id: number; url: string }>>());
 const languages = SUPPORTED_LANGS as ReadonlyArray<SupportedLang>;
 const createExtraLangs = ref({ en: false, fr: false });
 const visibleCreateLangs = computed<SupportedLang[]>(() => {
@@ -538,10 +557,9 @@ const inlineFieldToApi: Record<InlineEditableField, keyof ProductionWithBackward
   teaser: "teaser",
 };
 
-const longGridFieldToApi: Record<"descriptionOne" | "descriptionTwo" | "media", LongField> = {
+const longGridFieldToApi: Record<"descriptionOne" | "descriptionTwo", LongField> = {
   descriptionOne: "description",
   descriptionTwo: "description_2",
-  media: "video_1",
 };
 
 const genreTagTypeIds = computed(
@@ -938,14 +956,14 @@ function isVideoPreviewUrl(url: string): boolean {
   return /^(data:video\/|https?:\/\/.*\.(?:webm|ogg|mov)(?:\?.*)?$)/.test(value);
 }
 
-function openMediaPreview(url: string, label: string): void {
+function openMediaPreview(url: string, label: string, imageId?: number): void {
   const trimmed = url.trim();
   if (!trimmed) {
     return;
   }
 
   if (isImagePreviewUrl(trimmed)) {
-    mediaPreview.value = { url: trimmed, kind: "image", label };
+    mediaPreview.value = { url: trimmed, kind: "image", label, imageId };
     return;
   }
 
@@ -972,6 +990,32 @@ function closeMediaPreview(): void {
   mediaPreview.value = null;
 }
 
+async function removeMediaImage(): Promise<void> {
+  if (!mediaPreview.value?.imageId) {
+    return;
+  }
+
+  if (!confirm(t("cms.media.confirmDelete"))) {
+    return;
+  }
+
+  isSaving.value = true;
+  saveError.value = null;
+  try {
+    await deleteImageService(mediaPreview.value.imageId);
+    closeMediaPreview();
+    await loadCmsData();
+    showSaveSuccess(t("cms.feedback.mediaRemoveSuccess"));
+  } catch (error) {
+    saveError.value =
+      error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+  } finally {
+    isSaving.value = false;
+  }
+}
+
 function resetCreateForm(): void {
   createForm.value = buildEmptyCreateForm();
   createExtraLangs.value = { en: false, fr: false };
@@ -990,22 +1034,32 @@ function closeCreateModal(): void {
   resetCreateForm();
 }
 
-async function onImageFileChange(event: Event): Promise<void> {
+function addMedia(type: "image" | "video"): void {
+  createForm.value.media.push(createMediaItem(type));
+}
+
+function removeMedia(mediaId: string): void {
+  createForm.value.media = createForm.value.media.filter((m) => m.id !== mediaId);
+}
+
+async function onMediaFileChange(mediaId: string, event: Event): Promise<void> {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
   if (!file) return;
+
   const dataUrl = await fileToDataUrl(file);
-  createForm.value.video_1.nl = dataUrl;
+  const mediaIndex = createForm.value.media.findIndex((m) => m.id === mediaId);
+  if (mediaIndex >= 0) {
+    createForm.value.media[mediaIndex]!.url = dataUrl;
+  }
   input.value = "";
 }
 
-async function onVideoFileChange(event: Event): Promise<void> {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  if (!file) return;
-  const dataUrl = await fileToDataUrl(file);
-  createForm.value.video_2.nl = dataUrl;
-  input.value = "";
+function updateMediaUrl(mediaId: string, url: string): void {
+  const mediaIndex = createForm.value.media.findIndex((m) => m.id === mediaId);
+  if (mediaIndex >= 0) {
+    createForm.value.media[mediaIndex]!.url = url;
+  }
 }
 
 async function submitCreateProduction(): Promise<void> {
@@ -1019,7 +1073,12 @@ async function submitCreateProduction(): Promise<void> {
   createError.value = null;
 
   try {
-    await createProduction({
+    // Extract media items for API submission
+    const imageMedia = createForm.value.media.find((m) => m.type === "image");
+    const videoMedia = createForm.value.media.find((m) => m.type === "video");
+
+    // Create production first
+    const production = await createProduction({
       vendor_id: 0,
       box_office_id: 0,
       finalized: createForm.value.finalized,
@@ -1034,9 +1093,30 @@ async function submitCreateProduction(): Promise<void> {
       supertitle: toLanguageMapOrNull(createForm.value.supertitle),
       description: toLanguageMapOrNull(createForm.value.description),
       description_2: toLanguageMapOrNull(createForm.value.description_2),
-      video_1: mediaToLanguageMap(createForm.value.video_1),
-      video_2: mediaToLanguageMap(createForm.value.video_2),
+      video_1: imageMedia?.url?.trim() ? { nl: imageMedia.url } : null,
+      video_2: videoMedia?.url?.trim() ? { nl: videoMedia.url } : null,
     });
+
+    // Upload image media items with auto-generated crops
+    for (const mediaItem of createForm.value.media) {
+      if (mediaItem.type === "image" && mediaItem.url && !mediaItem.imageId) {
+        try {
+          // Check if it's a data URL (file upload) or external URL
+          if (mediaItem.url.startsWith("data:")) {
+            const uploadedImage = await uploadImageWithCrops(production.id, mediaItem.url);
+            mediaItem.imageId = uploadedImage.id;
+            mediaItem.isUploaded = true;
+          }
+          // If it's an external URL, it's already stored in video_1 and doesn't need crops
+        } catch (error) {
+          console.error(
+            `Failed to upload image for production ${production.id}:`,
+            error,
+          );
+          // Continue with other images, but log the error
+        }
+      }
+    }
 
     await loadCmsData();
     closeCreateModal();
@@ -1258,17 +1338,17 @@ function onCellClicked(event: CellClickedEvent<CmsProductionGridRow>): void {
     return;
   }
 
-  const gridField = event.colDef.field as "descriptionOne" | "descriptionTwo" | "media";
-  if (!(gridField in longGridFieldToApi)) {
-    return;
-  }
-
-  if (gridField === "media") {
+  if (event.colDef.field === "media") {
     const value = String(event.data.media ?? "").trim();
     if (value && (isImagePreviewUrl(value) || isVideoPreviewUrl(value))) {
       openMediaPreview(value, event.colDef.headerName ?? t("cms.columns.media"));
       return;
     }
+  }
+
+  const gridField = event.colDef.field as "descriptionOne" | "descriptionTwo";
+  if (!(gridField in longGridFieldToApi)) {
+    return;
   }
 
   const apiField = longGridFieldToApi[gridField];
@@ -1518,6 +1598,27 @@ async function loadCmsData(): Promise<void> {
       resetCreateLinkedEventForm();
     }
 
+    // Fetch images for each production
+    const imagesMap = new Map<number, Array<{ id: number; url: string }>>();
+    await Promise.all(
+      productionsData.value.map(async (production) => {
+        try {
+          const images = await getImagesByProduction(production.id);
+          if (images && images.length > 0) {
+            imagesMap.set(
+              production.id,
+              images
+                .map((img) => ({ id: img.id, url: img.res ?? "" }))
+                .filter((img) => img.url.length > 0),
+            );
+          }
+        } catch {
+          // Silently fail for individual image loads
+        }
+      }),
+    );
+    imagesByProductionId.value = imagesMap;
+
     rebuildRows();
   } catch (error) {
     loadError.value =
@@ -1583,8 +1684,6 @@ defineExpose({
     onProductionCellEditingStarted,
     onWindowKeyDown,
     onCellEditingStopped,
-    onImageFileChange,
-    onVideoFileChange,
     openMediaPreview,
     closeMediaPreview,
     openTagEditorPanel,

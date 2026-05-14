@@ -1,6 +1,7 @@
 export default {
   general: {
     cancel: "Annuler",
+    delete: "Supprimer",
     saving: "Enregistrement...",
   },
   nav: {
@@ -177,10 +178,15 @@ export default {
       },
       media: {
         title: "Media",
+        image: "Image",
+        video: "Vidéo",
+        addImage: "Ajouter une image",
+        addVideo: "Ajouter une vidéo",
+        confirmDelete: "Êtes-vous sûr de vouloir supprimer cette image ?",
         language: "Langue de l'upload",
         uploadImage: "Uploader une image",
         youtubeLink: "Lien YouTube",
-        hint: "Vous pouvez uploader une image, saisir une URL d'image/média, ou coller un lien YouTube. Au moins une image est requise.",
+        hint: "Vous pouvez ajouter plusieurs images et vidéos. Pour les images, différents formats seront générés automatiquement.",
       },
       validation: {
         requiredOneLanguage: "Remplissez au moins 1 langue pour: {field}",
@@ -212,6 +218,7 @@ export default {
       saveSuccess: "Modifications enregistrees",
       removeSuccess: "Production supprimee",
       removeTagSuccess: "Tag supprimé",
+      mediaRemoveSuccess: "Image supprimée",
     },
     admin: {
       noPermission: "Vous n'avez pas la permission de administrer les admins.",
