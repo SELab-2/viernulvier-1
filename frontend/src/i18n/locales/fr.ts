@@ -207,6 +207,7 @@ export default {
     },
   },
   productionsPage: {
+    kicker: "Les archives",
     heading: "Productions",
     intro:
       "Tous les spectacles de l’archive en un coup d’œil.",
@@ -219,6 +220,7 @@ export default {
       "La première année doit être antérieure ou égale à la dernière. Ajustez la plage ou le lien et réessayez.",
     empty: "Aucune production dans les archives pour l’instant.",
     morePerformances: "{n} de plus",
+    moreListTags: "+{n} de plus",
     showingRange: "{from}–{to} sur {total}",
     prevPage: "Précédent",
     nextPage: "Suivant",

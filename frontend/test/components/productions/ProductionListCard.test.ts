@@ -43,7 +43,7 @@ async function mountCard(props: {
   const wrapper = mount(ProductionListCard, {
     props: {
       production: props.production ?? baseProduction,
-      dateSummary: props.dateSummary ?? { line: null, moreCount: 0 },
+      dateSummary: props.dateSummary ?? { line: "zo 01.01.2000", moreCount: 0 },
       tagChips: props.tagChips ?? [],
       hallsText: props.hallsText ?? "",
     },
@@ -57,22 +57,14 @@ describe("ProductionListCard.vue", () => {
     i18n.global.locale.value = "nl";
   });
 
-  it("renders title and applies title padding when a date line exists", async () => {
+  it("renders title with right gutter clearing the date column", async () => {
     const wrapper = await mountCard({
       dateSummary: { line: "wo 01.01.2000", moreCount: 0 },
     });
     const h2 = wrapper.get("h2");
     expect(h2.text()).toContain("Titel");
-    expect(h2.classes().some((c) => c.includes("pr-["))).toBe(true);
-    wrapper.unmount();
-  });
-
-  it("omits title padding when there is no date line", async () => {
-    const wrapper = await mountCard({
-      dateSummary: { line: null, moreCount: 0 },
-    });
-    const h2 = wrapper.get("h2");
-    expect(h2.classes().some((c) => c.includes("pr-[12rem]"))).toBe(false);
+    expect(h2.classes().some((c) => c.includes("pr-[12rem]"))).toBe(true);
+    expect(h2.classes().some((c) => c.includes("sm:pr-[14rem]"))).toBe(true);
     wrapper.unmount();
   });
 
@@ -110,15 +102,39 @@ describe("ProductionListCard.vue", () => {
         { tagId: 2, label: "Vooruit", isGenre: false },
       ],
     });
-    const chips = wrapper.findAll("span.rounded-full");
+    const chips = wrapper.findAll("span.rounded-sm");
     expect(chips[0]!.classes().join(" ")).toMatch(/tag-genre-bg/);
-    expect(chips[1]!.classes().join(" ")).toMatch(/border-ink-primary/);
+    expect(chips[1]!.classes().join(" ")).toMatch(/border-surface-3/);
+    wrapper.unmount();
+  });
+
+  it("shows at most five tag pills and summarizes the rest with +n more", async () => {
+    const tagChips: ProductionTagChip[] = Array.from({ length: 7 }, (_, i) => ({
+      tagId: i + 1,
+      label: `Tag ${i + 1}`,
+      isGenre: false,
+    }));
+    const wrapper = await mountCard({ tagChips });
+    expect(wrapper.findAll("span.rounded-sm")).toHaveLength(5);
+    expect(wrapper.text()).toContain("+2 meer");
+    wrapper.unmount();
+  });
+
+  it("shows every tag pill when there are five or fewer tags", async () => {
+    const tagChips: ProductionTagChip[] = [1, 2, 3, 4, 5].map((id) => ({
+      tagId: id,
+      label: `T${id}`,
+      isGenre: false,
+    }));
+    const wrapper = await mountCard({ tagChips });
+    expect(wrapper.findAll("span.rounded-sm")).toHaveLength(5);
+    expect(wrapper.text()).not.toContain("+");
     wrapper.unmount();
   });
 
   it("renders no tag row when tagChips is empty", async () => {
     const wrapper = await mountCard({ tagChips: [] });
-    expect(wrapper.findAll("span.rounded-full")).toHaveLength(0);
+    expect(wrapper.findAll("span.rounded-sm")).toHaveLength(0);
     wrapper.unmount();
   });
 });

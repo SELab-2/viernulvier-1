@@ -4,23 +4,40 @@
     <main class="flex-1">
       <section
         ref="pageTopAnchor"
-        class="scroll-mt-16 border-b border-surface-3 bg-surface-1 py-12 md:py-16"
+        class="scroll-mt-16 border-b border-surface-3 bg-surface-1 py-10 md:py-14"
       >
-        <div class="mx-auto max-w-3xl px-6 text-center lg:px-10">
-          <h1
-            class="text-2xl font-bold tracking-tight text-ink-primary md:text-3xl"
-          >
-            {{ t("productionsPage.heading") }}
-          </h1>
-          <p
-            class="mt-4 text-sm leading-relaxed text-ink-secondary md:text-base"
-          >
-            {{ t("productionsPage.intro") }}
-          </p>
+        <div class="mx-auto max-w-6xl px-6 lg:px-10">
+          <div class="mx-auto max-w-3xl text-center">
+            <div
+              class="mb-5 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
+            >
+              <span
+                class="h-px w-8 bg-ink-tertiary opacity-50"
+                aria-hidden="true"
+              />
+              <span class="whitespace-nowrap">{{
+                t("productionsPage.kicker")
+              }}</span>
+              <span
+                class="h-px w-8 bg-ink-tertiary opacity-50"
+                aria-hidden="true"
+              />
+            </div>
+            <h1
+              class="font-serif text-3xl font-semibold leading-tight tracking-tight text-ink-primary md:text-4xl"
+            >
+              {{ t("productionsPage.heading") }}
+            </h1>
+            <p
+              class="mx-auto mt-3 max-w-2xl font-serif text-lg italic leading-snug text-ink-secondary md:text-xl"
+            >
+              {{ t("productionsPage.intro") }}
+            </p>
+          </div>
         </div>
       </section>
 
-      <section class="mx-auto max-w-5xl px-6 pb-20 pt-8 lg:px-10">
+      <section class="mx-auto max-w-[82rem] px-6 pb-20 pt-10 lg:px-10">
         <div v-if="!loading" class="mb-4 space-y-3">
           <div
             class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-stretch sm:gap-3"
@@ -169,14 +186,14 @@
           <div
             v-if="filtersPanelExpanded"
             id="productions-extended-filters"
-            class="mt-4 space-y-4 rounded-lg border border-surface-3 bg-surface-1/50 px-4 py-4 shadow-sm ring-1 ring-inset ring-surface-3/40 dark:bg-surface-1/25"
+            class="mt-4 space-y-4 rounded-md border border-surface-3 bg-surface-1 px-4 py-4 dark:bg-surface-1/60"
           >
             <div
               v-if="genreTagsForFilter.length > 0"
               class="space-y-3"
             >
               <p
-                class="text-xs font-medium uppercase tracking-wide text-ink-secondary"
+                class="text-xs font-semibold uppercase tracking-[0.2em] text-ink-secondary"
               >
                 {{ t("productionsPage.genreFiltersHeading") }}
               </p>
@@ -231,7 +248,7 @@
               "
             >
               <p
-                class="text-xs font-medium uppercase tracking-wide text-ink-secondary"
+                class="text-xs font-semibold uppercase tracking-[0.2em] text-ink-secondary"
               >
                 {{ t("productionsPage.tagFiltersHeading") }}
               </p>
@@ -315,9 +332,9 @@
             class="productions-view__filter-banner"
           >
             <div class="flex min-w-0 flex-wrap items-center gap-2">
-              <span class="text-sm text-ink-secondary">{{
-                t("productionsPage.activeFiltersLabel")
-              }}</span>
+              <span
+                class="text-[15px] pr-1 text-ink-secondary"
+              >{{ t("productionsPage.activeFiltersLabel") }}</span>
               <button
                 v-for="tid in filterBannerTagIds"
                 :key="'tag-' + tid"
@@ -383,7 +400,7 @@
           <p
             v-if="displayedFilteredTotal !== null"
             :class="[
-              'mb-2 text-sm leading-normal text-ink-secondary tabular-nums',
+              'mb-2 text-sm italic leading-normal text-ink-secondary tabular-nums',
               !filterBannerHasNonSearchChips() && 'mt-6',
             ]"
             aria-live="polite"
@@ -421,7 +438,9 @@
               class="productions-view__pagination"
               aria-label="Pagination"
             >
-              <p class="text-center text-sm text-ink-secondary sm:text-left">
+              <p
+                class="text-center text-sm text-ink-secondary tabular-nums sm:text-left"
+              >
                 {{
                   t("productionsPage.showingRange", {
                     from: rangeFrom,
@@ -1512,7 +1531,7 @@ function dateSummaryFor(productionId: number) {
 function hallsTextFor(productionId: number) {
   const evs = eventsByProduction.value.get(productionId);
   const names = distinctHallNames(evs, hallsById.value, locale.value);
-  return names.join(" · ");
+  return names[0] ?? "";
 }
 
 function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip[] {
@@ -1542,20 +1561,20 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
   min-width: 6rem;
 }
 
-.productions-view__genre-collapsed-row-pill {
-  @apply rounded-full border px-3 py-1 text-[0.95rem] transition disabled:opacity-100;
-}
+.productions-view__genre-collapsed-row-pill {  
+  @apply cursor-pointer rounded-sm border px-3 py-1.5 text-[12px] font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-100;  
+}  
 
-.productions-view__tag-filter-panel-pill {
-  @apply rounded-full border px-2.75 py-1 text-sm transition disabled:opacity-100;
-}
+.productions-view__tag-filter-panel-pill {  
+  @apply cursor-pointer rounded-sm border px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-100;  
+} 
 
 .productions-view__search-field {
   @apply box-border flex min-h-11 min-w-0 w-full flex-wrap items-center gap-1.5 rounded-md border border-surface-3 bg-surface-0 py-1.5 pl-2 pr-11 text-ink-primary transition focus-within:border-accent-outline dark:bg-surface-1;
 }
 
 .productions-view__search-input {
-  @apply min-h-7 min-w-28 flex-1 border-0 bg-transparent px-1 py-0 text-base leading-normal text-ink-primary placeholder:text-ink-secondary focus:outline-none disabled:cursor-not-allowed disabled:opacity-100;
+  @apply min-h-7 min-w-28 flex-1 border-0 bg-transparent px-1 py-0 text-base leading-normal text-ink-primary placeholder:text-ink-tertiary focus:outline-none disabled:cursor-not-allowed disabled:opacity-100;
 }
 
 .productions-view__search-input::-webkit-search-cancel-button,
@@ -1573,7 +1592,7 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
 }
 
 .productions-view__banner-action {
-  @apply col-start-2 row-start-1 shrink-0 cursor-pointer justify-self-end self-start pt-0.5 text-sm font-medium text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100;
+  @apply col-start-2 row-start-1 shrink-0 cursor-pointer justify-self-end self-center text-sm font-medium text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100;
 }
 
 .productions-view__filter-banner {
@@ -1581,7 +1600,7 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
 }
 
 .productions-view__active-chip {
-  @apply inline-flex cursor-pointer items-center gap-1 rounded-full border border-surface-3 bg-surface-0 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary shadow-sm ring-1 ring-inset ring-accent-outline/25 transition hover:bg-surface-2 disabled:opacity-100 dark:bg-surface-1;
+  @apply inline-flex cursor-pointer items-center gap-1.5 rounded-sm border border-surface-3 bg-surface-0 py-1 pl-2.5 pr-1.5 text-[13px] text-ink-primary transition hover:bg-surface-2 disabled:opacity-100 dark:bg-surface-1;
 }
 
 .productions-view__alert {
