@@ -41,12 +41,12 @@
       -->
       <div
         v-if="dateSummary.line"
-        class="absolute right-0 top-0 z-10 max-w-[11rem] text-right font-serif text-sm text-ink-secondary tabular-nums sm:max-w-[13rem]"
+        class="absolute right-0 top-0 z-10 max-w-[12rem] text-right font-serif text-base font-semibold leading-tight text-ink-secondary tabular-nums sm:max-w-[14rem] md:text-lg"
       >
         <span class="whitespace-nowrap">{{ dateSummary.line }}</span>
         <span
           v-if="dateSummary.moreCount > 0"
-          class="mt-0.5 block font-sans text-xs not-italic text-ink-tertiary"
+          class="mt-1 block font-sans text-xs font-normal not-italic text-ink-tertiary"
         >
           {{
             t("productionsPage.morePerformances", {
@@ -58,22 +58,22 @@
 
       <div class="min-w-0">
         <h2
-          class="font-serif text-xl font-semibold leading-tight tracking-tight text-ink-primary md:text-2xl"
-          :class="dateSummary.line ? 'pr-[12rem] sm:pr-[14rem]' : ''"
+          class="font-serif text-2xl font-semibold leading-tight tracking-tight text-ink-primary md:text-3xl"
+          :class="dateSummary.line ? 'pr-[13rem] sm:pr-[15rem]' : ''"
         >
           {{ title }}
         </h2>
 
         <p
           v-if="artist"
-          class="mt-1 font-serif text-base italic text-ink-secondary md:text-lg"
+          class="mt-2 font-serif text-lg italic text-ink-secondary md:text-xl"
         >
           {{ artist }}
         </p>
 
         <p
           v-if="hallsText"
-          class="mt-4 flex items-start gap-1 text-sm text-ink-secondary"
+          class="mt-4 flex items-start gap-1.5 text-base text-ink-secondary"
         >
           <svg
             class="mt-0.5 size-[0.9rem] shrink-0 text-ink-tertiary"
@@ -94,12 +94,12 @@
 
       <div
         v-if="tagChips.length"
-        class="mt-auto flex flex-wrap items-center gap-2 pt-4"
+        class="mt-auto flex flex-wrap items-center gap-2 pt-5"
       >
         <span
           v-for="chip in tagChips"
           :key="chip.tagId"
-          class="rounded-sm px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide"
+          class="rounded-sm px-2.5 py-1 text-xs font-medium uppercase tracking-wide"
           :class="
             chip.isGenre
               ? 'bg-tag-genre-bg text-tag-genre-text'

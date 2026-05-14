@@ -4,32 +4,32 @@
     <main class="flex-1">
       <section
         ref="pageTopAnchor"
-        class="scroll-mt-16 border-b border-surface-3 bg-surface-1 py-14 md:py-20"
+        class="scroll-mt-16 border-b border-surface-3 bg-surface-1 py-20 md:py-28"
       >
         <div class="mx-auto max-w-5xl px-6 lg:px-10">
           <div class="mx-auto max-w-3xl text-center">
             <div
-              class="mb-6 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
+              class="mb-8 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
             >
               <span
-                class="h-px w-8 bg-ink-tertiary opacity-50"
+                class="h-px w-10 bg-ink-tertiary opacity-50"
                 aria-hidden="true"
               />
               <span class="whitespace-nowrap">{{
                 t("productionsPage.kicker")
               }}</span>
               <span
-                class="h-px w-8 bg-ink-tertiary opacity-50"
+                class="h-px w-10 bg-ink-tertiary opacity-50"
                 aria-hidden="true"
               />
             </div>
             <h1
-              class="font-serif text-3xl font-semibold leading-tight tracking-tight text-ink-primary md:text-4xl"
+              class="font-serif text-4xl font-semibold leading-[1.05] tracking-tight text-ink-primary md:text-5xl lg:text-6xl"
             >
               {{ t("productionsPage.heading") }}
             </h1>
             <p
-              class="mx-auto mt-4 max-w-2xl font-serif text-lg italic leading-snug text-ink-secondary md:text-xl"
+              class="mx-auto mt-6 max-w-2xl font-serif text-xl italic leading-relaxed text-ink-secondary md:text-2xl"
             >
               {{ t("productionsPage.intro") }}
             </p>
@@ -333,7 +333,7 @@
           >
             <div class="flex min-w-0 flex-wrap items-center gap-2">
               <span
-                class="text-[10px] font-bold uppercase tracking-[0.25em] text-ink-secondary"
+                class="text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
               >{{ t("productionsPage.activeFiltersLabel") }}</span>
               <button
                 v-for="tid in filterBannerTagIds"
@@ -400,7 +400,7 @@
           <p
             v-if="displayedFilteredTotal !== null"
             :class="[
-              'mb-2 font-serif text-base italic leading-normal text-ink-secondary tabular-nums',
+              'mb-3 font-serif text-lg italic leading-normal text-ink-secondary tabular-nums',
               !filterBannerHasNonSearchChips() && 'mt-6',
             ]"
             aria-live="polite"
@@ -439,7 +439,7 @@
               aria-label="Pagination"
             >
               <p
-                class="text-center font-serif text-sm italic text-ink-secondary tabular-nums sm:text-left"
+                class="text-center font-serif text-base italic text-ink-secondary tabular-nums sm:text-left"
               >
                 {{
                   t("productionsPage.showingRange", {
@@ -463,7 +463,7 @@
                   {{ t("productionsPage.prevPage") }}
                 </button>
                 <div
-                  class="flex items-center gap-2 font-serif text-sm tabular-nums text-ink-secondary"
+                  class="flex items-center gap-2 font-serif text-base tabular-nums text-ink-secondary"
                 >
                   <span class="whitespace-nowrap">{{
                     t("productionsPage.pageWord")
@@ -1563,7 +1563,7 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
 
 .productions-view__genre-collapsed-row-pill,
 .productions-view__tag-filter-panel-pill {
-  @apply cursor-pointer rounded-sm border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-100;
+  @apply cursor-pointer rounded-sm border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-100;
 }
 
 .productions-view__search-field {
@@ -1597,7 +1597,7 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
 }
 
 .productions-view__active-chip {
-  @apply inline-flex cursor-pointer items-center gap-1 rounded-sm border border-surface-3 bg-surface-0 py-1 pl-2.5 pr-1.5 text-xs text-ink-primary transition hover:bg-surface-2 disabled:opacity-100 dark:bg-surface-1;
+  @apply inline-flex cursor-pointer items-center gap-1.5 rounded-sm border border-surface-3 bg-surface-0 py-1.5 pl-3 pr-2 text-sm text-ink-primary transition hover:bg-surface-2 disabled:opacity-100 dark:bg-surface-1;
 }
 
 .productions-view__alert {
