@@ -43,7 +43,7 @@ async function mountCard(props: {
   const wrapper = mount(ProductionListCard, {
     props: {
       production: props.production ?? baseProduction,
-      dateSummary: props.dateSummary ?? { line: null, moreCount: 0 },
+      dateSummary: props.dateSummary ?? { line: "zo 01.01.2000", moreCount: 0 },
       tagChips: props.tagChips ?? [],
       hallsText: props.hallsText ?? "",
     },
@@ -57,22 +57,14 @@ describe("ProductionListCard.vue", () => {
     i18n.global.locale.value = "nl";
   });
 
-  it("renders title and applies title padding when a date line exists", async () => {
+  it("renders title with right gutter clearing the date column", async () => {
     const wrapper = await mountCard({
       dateSummary: { line: "wo 01.01.2000", moreCount: 0 },
     });
     const h2 = wrapper.get("h2");
     expect(h2.text()).toContain("Titel");
-    expect(h2.classes().some((c) => c.includes("pr-["))).toBe(true);
-    wrapper.unmount();
-  });
-
-  it("omits title padding when there is no date line", async () => {
-    const wrapper = await mountCard({
-      dateSummary: { line: null, moreCount: 0 },
-    });
-    const h2 = wrapper.get("h2");
-    expect(h2.classes().some((c) => c.includes("pr-[12rem]"))).toBe(false);
+    expect(h2.classes().some((c) => c.includes("pr-[12.5rem]"))).toBe(true);
+    expect(h2.classes().some((c) => c.includes("sm:pr-[14.5rem]"))).toBe(true);
     wrapper.unmount();
   });
 

@@ -40,7 +40,6 @@
         grow the title row and push the artist down.
       -->
       <div
-        v-if="dateSummary.line"
         class="absolute right-0 top-0 z-10 max-w-[12rem] text-right font-serif text-base leading-tight text-ink-secondary tabular-nums sm:max-w-[14rem] md:text-lg"
       >
         <span class="whitespace-nowrap">{{ dateSummary.line }}</span>
@@ -58,15 +57,14 @@
 
       <div class="-mt-0.5 min-w-0">
         <h2
-          class="font-serif text-2xl font-semibold leading-tight tracking-tight text-ink-primary md:text-2xl"
-          :class="dateSummary.line ? 'pr-[13rem] sm:pr-[15rem]' : ''"
+          class="pr-[12rem] font-serif text-2xl font-semibold leading-tight tracking-tight text-ink-primary sm:pr-[14rem] md:text-2xl"
         >
           {{ title }}
         </h2>
 
         <p
           v-if="artist"
-          class="mt-1 font-serif text-lg italic text-ink-secondary md:text-lg"
+          class="mt-1 pr-[12rem] font-serif text-lg italic text-ink-secondary sm:pr-[14rem] md:text-lg"
         >
           {{ artist }}
         </p>
