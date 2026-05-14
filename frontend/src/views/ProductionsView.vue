@@ -37,7 +37,7 @@
         </div>
       </section>
 
-      <section class="mx-auto max-w-4xl px-6 pb-20 pt-10 lg:px-10">
+      <section class="mx-auto max-w-7xl px-6 pb-20 pt-10 lg:px-10">
         <div v-if="!loading" class="mb-4 space-y-3">
           <div
             class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-stretch sm:gap-3"
