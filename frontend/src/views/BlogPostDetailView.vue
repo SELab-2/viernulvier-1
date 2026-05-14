@@ -4,8 +4,17 @@
 
     <main class="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
       <!-- Loading state -->
-      <div v-if="loading" class="post-loading" role="status" aria-live="polite">
-        <p class="text-ink-secondary">{{ t("blogpost.loading") }}</p>
+      <div v-if="loading" class="flex min-h-[40vh] items-center justify-center" role="status" aria-live="polite">
+        <div class="flex items-center gap-1">
+          <span class="text-[10px] font-black uppercase tracking-[0.3em] text-ink-secondary">
+            {{ t("blogpost.loading") }}
+          </span>
+          <div class="flex gap-1">
+            <span class="dot-wave">.</span>
+            <span class="dot-wave delay-100">.</span>
+            <span class="dot-wave delay-200">.</span>
+          </div>
+        </div>
       </div>
 
       <!-- Not found state -->
@@ -163,3 +172,31 @@ function formatYearRange(events: { starts_at: string | Date }[]): string {
 onMounted(loadPost);
 watch(() => props.id, loadPost);
 </script>
+
+<style scoped>
+@reference "@/style.css";
+
+.dot-wave {
+  @apply text-[10px] font-black text-ink-secondary;
+  display: inline-block;
+  animation: dot-wave 1.4s infinite ease-in-out;
+}
+
+.delay-100 {
+  animation-delay: 0.2s;
+}
+
+.delay-200 {
+  animation-delay: 0.4s;
+}
+
+@keyframes dot-wave {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-4px);
+  }
+}
+
+</style>

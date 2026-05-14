@@ -1,223 +1,302 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, afterEach, vi, beforeEach } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
+import type { BlogPostWithBackwardsRefs, ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { routes } from "@/router/routes";
 import { i18n } from "@/i18n";
-import BlogPostDetailView from "@/views/BlogPostDetailView.vue";
 import { ApiError } from "@/services/api";
-import type { BlogPost } from "@viernulvier/shared";
+import BlogPostDetailView from "@/views/BlogPostDetailView.vue";
 
-// ─── Mock the blogposts service ────────────────────────────────────────────
+vi.mock("@/services/blogposts", () => ({ getBlogPost: vi.fn() }));
+vi.mock("@/services/productions", () => ({ getProduction: vi.fn() }));
+vi.mock("@/services/media", () => ({ getImagesForProductionOrEmpty: vi.fn() }));
+vi.mock("@/services/events", () => ({ getEvents: vi.fn() }));
 
-const getBlogPostMock = vi.fn();
-
-vi.mock("@/services/blogposts", () => ({
-  getBlogPost: (id: number) => getBlogPostMock(id),
+vi.mock("@/components/nav/AppNavbar.vue", () => ({
+  default: { template: '<div data-testid="app-navbar" />' },
+}));
+vi.mock("@/components/AppFooter.vue", () => ({
+  default: { template: '<div data-testid="app-footer" />' },
+}));
+vi.mock("@/components/blogpost/LinkedProductionsCarousel.vue", () => ({
+  default: { template: '<div data-testid="linked-productions-carousel" />', props: ["productions", "thumbnails", "dateRanges"] },
 }));
 
-// ─── Mock matchMedia (jsdom does not provide it) ────────────────────────────
+import { getBlogPost } from "@/services/blogposts";
+import { getProduction } from "@/services/productions";
+import { getImagesForProductionOrEmpty } from "@/services/media";
+import { getEvents } from "@/services/events";
 
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: vi.fn().mockImplementation((query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-});
+const makePost = (overrides: Partial<BlogPostWithBackwardsRefs> = {}): BlogPostWithBackwardsRefs =>
+  ({
+    id: 1,
+    title: { nl: "Mijn blogpost" },
+    content: { nl: "## Hallo\n\nDit is de inhoud." },
+    published_at: "2024-06-01T00:00:00.000Z",
+    productions: [],
+    ...overrides,
+  }) as BlogPostWithBackwardsRefs;
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+const makeProduction = (id: number): ProductionWithBackwardsRefs =>
+  ({
+    id,
+    title: { nl: `Productie ${id}` },
+    artist: { nl: `Artiest ${id}` },
+    tags: [],
+    events: [],
+  }) as unknown as ProductionWithBackwardsRefs;
 
-const publishedAt = new Date("2026-03-15T10:00:00Z");
-
-const samplePost: BlogPost = {
-  id: 42,
-  blog: 1,
-  title: { nl: "Hallo wereld", en: "Hello world" },
-  content: { 
-    nl: "<p>Dit is de blog body.</p><p>Met twee regels.</p>", 
-    en: "<p>This is the blog body.</p><p>With two lines.</p>",
-  },
-  published_at: publishedAt,
-};
-
-async function mountView(id: string = "42", lang: "nl" | "fr" | "en" = "nl") {
+const makeEvent = (startsAt: string) =>
+  ({
+    id: 1,
+    old_id: null,
+    starts_at: new Date(startsAt),
+    production: null,
+    hall: null,
+    price: [],
+  }) as any;
+async function mountView(id = "1") {
   const router = createRouter({ history: createMemoryHistory(), routes });
-  await router.push(`/${lang}/blog/post/${id}`);
+  await router.push(`/nl/blog/${id}`);
   await router.isReady();
-
-  i18n.global.locale.value = lang;
 
   const wrapper = mount(BlogPostDetailView, {
     props: { id },
     global: { plugins: [router, i18n] },
-    attachTo: document.body,
   });
-
-  return { wrapper, router };
+  return wrapper;
 }
 
-// ─── Tests ──────────────────────────────────────────────────────────────────
-
+// ── Tests ────────────────────────────────────────────────────────────────────
 describe("BlogPostDetailView.vue", () => {
   beforeEach(() => {
-    getBlogPostMock.mockReset();
+    vi.mocked(getImagesForProductionOrEmpty).mockResolvedValue([]);
+    vi.mocked(getEvents).mockResolvedValue([]);
   });
 
   afterEach(() => {
-    document.body.innerHTML = "";
-    document.documentElement.classList.remove("dark");
-    localStorage.clear();
+    i18n.global.locale.value = "nl";
+    vi.resetAllMocks();
   });
 
-  // ── Loading state ───────────────────────────────────────────────────────
+  // ── Loading state ──────────────────────────────────────────────────────────
+  it("shows the loading indicator before the post resolves", async () => {
+    vi.mocked(getBlogPost).mockReturnValue(new Promise(() => {}));
+    const wrapper = await mountView();
 
-  describe("loading state", () => {
-    it("shows a loading indicator immediately after mount", async () => {
-      // Never-resolving promise keeps us in the loading state
-      getBlogPostMock.mockImplementation(() => new Promise(() => {}));
-
-      const { wrapper } = await mountView();
-
-      expect(wrapper.find('[role="status"]').exists()).toBe(true);
-      wrapper.unmount();
-    });
+    expect(wrapper.find('[role="status"]').exists()).toBe(true);
+    expect(wrapper.find("article").exists()).toBe(false);
+    wrapper.unmount();
   });
 
-  // ── Happy path ──────────────────────────────────────────────────────────
+  // ── Happy path ─────────────────────────────────────────────────────────────
+  it("renders the article after the post loads", async () => {
+    vi.mocked(getBlogPost).mockResolvedValue(makePost());
+    const wrapper = await mountView();
+    await flushPromises();
 
-  describe("when the post loads successfully", () => {
-    it("renders the post title in the correct language", async () => {
-      getBlogPostMock.mockResolvedValue(samplePost);
-
-      const { wrapper } = await mountView("42", "nl");
-      await flushPromises();
-
-      expect(wrapper.find("h1").text()).toBe("Hallo wereld");
-    });
-
-    it("renders the content in the correct language", async () => {
-      getBlogPostMock.mockResolvedValue(samplePost);
-
-      const { wrapper } = await mountView("42", "en");
-      await flushPromises();
-
-      const body = wrapper.find(".post-body");
-      expect(body.exists()).toBe(true);
-      expect(body.text()).toContain("This is the blog body.");
-      expect(body.text()).toContain("With two lines.");
-    });
-
-    it("renders the published date", async () => {
-      getBlogPostMock.mockResolvedValue(samplePost);
-
-      const { wrapper } = await mountView();
-      await flushPromises();
-
-      // The exact format depends on the locale; just ensure the year is present.
-      expect(wrapper.text()).toContain("2026");
-    });
-
-    it("renders an empty body when content.body is not a string", async () => {
-      getBlogPostMock.mockResolvedValue({
-        ...samplePost,
-        content: { body: 123 as unknown as string },
-      });
-
-      const { wrapper } = await mountView();
-      await flushPromises();
-
-      expect(wrapper.find(".post-body").text()).toBe("");
-    });
-
-    it("calls getBlogPost with the numeric id from the route", async () => {
-      getBlogPostMock.mockResolvedValue(samplePost);
-
-      await mountView("42");
-      await flushPromises();
-
-      expect(getBlogPostMock).toHaveBeenCalledWith(42);
-    });
+    expect(wrapper.find('[role="status"]').exists()).toBe(false);
+    expect(wrapper.find("article").exists()).toBe(true);
+    wrapper.unmount();
   });
 
-  // ── Not found state ─────────────────────────────────────────────────────
+  it("renders the post title in an h1", async () => {
+    vi.mocked(getBlogPost).mockResolvedValue(makePost());
+    const wrapper = await mountView();
+    await flushPromises();
 
-  describe("when the post is not found", () => {
-    it("shows a not-found message when the service throws a 404 ApiError", async () => {
-      getBlogPostMock.mockRejectedValue(new ApiError(404, "Not found"));
-
-      const { wrapper } = await mountView();
-      await flushPromises();
-
-      const alert = wrapper.find('[role="alert"]');
-      expect(alert.exists()).toBe(true);
-      // The default locale is nl, so expect the Dutch not-found copy.
-      expect(alert.text()).toContain("Blogpost niet gevonden");
-    });
-
-    it("shows a not-found message when the id is not a valid integer", async () => {
-      getBlogPostMock.mockResolvedValue(samplePost);
-
-      const { wrapper } = await mountView("abc");
-      await flushPromises();
-
-      expect(wrapper.find('[role="alert"]').exists()).toBe(true);
-      expect(getBlogPostMock).not.toHaveBeenCalled();
-    });
-
-    it("shows a not-found message when the id is zero or negative", async () => {
-      getBlogPostMock.mockResolvedValue(samplePost);
-
-      const { wrapper } = await mountView("0");
-      await flushPromises();
-
-      expect(wrapper.find('[role="alert"]').exists()).toBe(true);
-      expect(getBlogPostMock).not.toHaveBeenCalled();
-    });
+    expect(wrapper.find("h1").text()).toBe("Mijn blogpost");
+    wrapper.unmount();
   });
 
-  // ── Generic error state ─────────────────────────────────────────────────
+  it("renders the body html from the markdown content", async () => {
+    vi.mocked(getBlogPost).mockResolvedValue(makePost());
+    const wrapper = await mountView();
+    await flushPromises();
 
-  describe("when the service throws a non-404 error", () => {
-    it("shows a generic error message", async () => {
-      getBlogPostMock.mockRejectedValue(new Error("network failed"));
-
-      const { wrapper } = await mountView();
-      await flushPromises();
-
-      expect(wrapper.find('[role="alert"]').exists()).toBe(true);
-      // Not the "not-found" heading
-      expect(wrapper.find("h1").exists()).toBe(false);
-    });
-
-    it("shows a generic error message for non-404 ApiErrors", async () => {
-      getBlogPostMock.mockRejectedValue(new ApiError(500, "Server error"));
-
-      const { wrapper } = await mountView();
-      await flushPromises();
-
-      expect(wrapper.find('[role="alert"]').exists()).toBe(true);
-      // Not the "not-found" heading
-      expect(wrapper.find("h1").exists()).toBe(false);
-    });
+    const prose = wrapper.find(".prose");
+    expect(prose.find("h2").exists()).toBe(true);
+    wrapper.unmount();
   });
 
-  // ── Layout composition ──────────────────────────────────────────────────
+  it("renders the formatted published date", async () => {
+    vi.mocked(getBlogPost).mockResolvedValue(makePost({ published_at: new Date("2024-06-01T00:00:00.000Z") }));
+    const wrapper = await mountView();
+    await flushPromises();
 
-  describe("layout composition", () => {
-    it("always renders the navbar and footer", async () => {
-      getBlogPostMock.mockResolvedValue(samplePost);
+    expect(wrapper.find("header").text()).toContain("2024");
+    wrapper.unmount();
+  });
 
-      const { wrapper } = await mountView();
-      await flushPromises();
+  it("omits the date line when published_at is absent", async () => {
+    vi.mocked(getBlogPost).mockResolvedValue(makePost({ published_at: undefined }));
+    const wrapper = await mountView();
+    await flushPromises();
 
-      expect(wrapper.find("nav").exists()).toBe(true);
-      expect(wrapper.find("footer").exists()).toBe(true);
-    });
+    const header = wrapper.find("header");
+    expect(header.findAll("div")).toHaveLength(0);
+    wrapper.unmount();
+  });
+
+  it("uses the active locale to display the title", async () => {
+    i18n.global.locale.value = "fr";
+    vi.mocked(getBlogPost).mockResolvedValue(
+      makePost({ title: { nl: "Nederlandse titel", fr: "Titre français" } }),
+    );
+    const wrapper = await mountView();
+    await flushPromises();
+
+    expect(wrapper.find("h1").text()).toBe("Titre français");
+    wrapper.unmount();
+  });
+
+  // ── Error states ───────────────────────────────────────────────────────────
+  it("shows the not-found error when the API returns 404", async () => {
+    vi.mocked(getBlogPost).mockRejectedValue(new ApiError(404, "Not Found"));
+    const wrapper = await mountView();
+    await flushPromises();
+
+    const alert = wrapper.find('[role="alert"]');
+    expect(alert.exists()).toBe(true);
+    expect(alert.text()).toContain(i18n.global.t("blogpost.notFound"));
+    expect(wrapper.find("article").exists()).toBe(false);
+    wrapper.unmount();
+  });
+
+  it("shows the generic error for non-404 API failures", async () => {
+    vi.mocked(getBlogPost).mockRejectedValue(new ApiError(500, "Server Error"));
+    const wrapper = await mountView();
+    await flushPromises();
+
+    const alert = wrapper.find('[role="alert"]');
+    expect(alert.exists()).toBe(true);
+    expect(alert.text()).toContain(i18n.global.t("blogpost.errorGeneric"));
+    expect(alert.text()).not.toContain(i18n.global.t("blogpost.notFound"));
+    wrapper.unmount();
+  });
+
+  it("shows the generic error for unexpected (non-ApiError) failures", async () => {
+    vi.mocked(getBlogPost).mockRejectedValue(new Error("Network failure"));
+    const wrapper = await mountView();
+    await flushPromises();
+
+    expect(wrapper.find('[role="alert"]').exists()).toBe(true);
+    expect(wrapper.find('[role="alert"]').text()).toContain(i18n.global.t("blogpost.errorGeneric"));
+    wrapper.unmount();
+  });
+
+  it("renders a back-to-home link in the error state", async () => {
+    vi.mocked(getBlogPost).mockRejectedValue(new ApiError(404, "Not Found"));
+    const wrapper = await mountView();
+    await flushPromises();
+
+    const link = wrapper.find('[role="alert"] a');
+    expect(link.exists()).toBe(true);
+    expect(link.text()).toBe(i18n.global.t("blogpost.backToHome"));
+    wrapper.unmount();
+  });
+
+  // ── Linked productions ─────────────────────────────────────────────────────
+  it("renders the carousel stub when the post has linked productions", async () => {
+    vi.mocked(getBlogPost).mockResolvedValue(makePost({ productions: [10, 20] as unknown as BlogPostWithBackwardsRefs["productions"] }));
+    vi.mocked(getProduction)
+      .mockResolvedValueOnce(makeProduction(10))
+      .mockResolvedValueOnce(makeProduction(20));
+
+    const wrapper = await mountView();
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="linked-productions-carousel"]').exists()).toBe(true);
+    wrapper.unmount();
+  });
+
+  it("passes the resolved productions to the carousel", async () => {
+    vi.mocked(getBlogPost).mockResolvedValue(makePost({ productions: [10] as unknown as BlogPostWithBackwardsRefs["productions"] }));
+    vi.mocked(getProduction).mockResolvedValueOnce(makeProduction(10));
+
+    const wrapper = await mountView();
+    await flushPromises();
+
+    const carousel = wrapper.findComponent({ name: "LinkedProductionsCarousel" });
+    expect((carousel.props("productions") as ProductionWithBackwardsRefs[]).map((p) => p.id)).toEqual([10]);
+    wrapper.unmount();
+  });
+
+  it("still renders the article when a production fetch fails", async () => {
+    vi.mocked(getBlogPost).mockResolvedValue(makePost({ productions: [10, 20] as unknown as BlogPostWithBackwardsRefs["productions"] }));
+    vi.mocked(getProduction)
+      .mockResolvedValueOnce(makeProduction(10))
+      .mockRejectedValueOnce(new ApiError(404, "Not Found"));
+
+    const wrapper = await mountView();
+    await flushPromises();
+
+    expect(wrapper.find("article").exists()).toBe(true);
+    const carousel = wrapper.findComponent({ name: "LinkedProductionsCarousel" });
+    expect((carousel.props("productions") as ProductionWithBackwardsRefs[]).map((p) => p.id)).toEqual([10]);
+    wrapper.unmount();
+  });
+
+  // ── Date range formatting ──────────────────────────────────────────────────
+  it("formats a single-year event range as just the year", async () => {
+    vi.mocked(getBlogPost).mockResolvedValue(makePost({ productions: [10] as unknown as BlogPostWithBackwardsRefs["productions"] }));
+    vi.mocked(getProduction).mockResolvedValueOnce(makeProduction(10));
+    vi.mocked(getEvents).mockResolvedValueOnce([
+      makeEvent("2024-03-01T00:00:00.000Z"),
+      makeEvent("2024-11-15T00:00:00.000Z"),
+    ]);
+
+    const wrapper = await mountView();
+    await flushPromises();
+
+    const carousel = wrapper.findComponent({ name: "LinkedProductionsCarousel" });
+    expect((carousel.props("dateRanges") as Map<number, string>).get(10)).toBe("2024");
+    wrapper.unmount();
+  });
+
+  it("formats a multi-year event range as 'minYear-maxYear'", async () => {
+    vi.mocked(getBlogPost).mockResolvedValue(makePost({ productions: [10] as unknown as BlogPostWithBackwardsRefs["productions"] }));
+    vi.mocked(getProduction).mockResolvedValueOnce(makeProduction(10));
+    vi.mocked(getEvents).mockResolvedValueOnce([
+      makeEvent("2023-01-10T00:00:00.000Z"),
+      makeEvent("2025-08-20T00:00:00.000Z"),
+    ]);
+
+    const wrapper = await mountView();
+    await flushPromises();
+
+    const carousel = wrapper.findComponent({ name: "LinkedProductionsCarousel" });
+    expect((carousel.props("dateRanges") as Map<number, string>).get(10)).toBe("2023-2025");
+    wrapper.unmount();
+  });
+
+  it("sets an empty date range when a production has no events", async () => {
+    vi.mocked(getBlogPost).mockResolvedValue(makePost({ productions: [10] as unknown as BlogPostWithBackwardsRefs["productions"] }));
+    vi.mocked(getProduction).mockResolvedValueOnce(makeProduction(10));
+    vi.mocked(getEvents).mockResolvedValueOnce([]);
+
+    const wrapper = await mountView();
+    await flushPromises();
+
+    const carousel = wrapper.findComponent({ name: "LinkedProductionsCarousel" });
+    expect((carousel.props("dateRanges") as Map<number, string>).get(10)).toBe("");
+    wrapper.unmount();
+  });
+
+  // ── Reactivity ────────────────────────────────────────────────────────────
+  it("reloads when the id prop changes", async () => {
+    vi.mocked(getBlogPost)
+      .mockResolvedValueOnce(makePost({ title: { nl: "Eerste post" } }))
+      .mockResolvedValueOnce(makePost({ title: { nl: "Tweede post" } }));
+
+    const wrapper = await mountView("1");
+    await flushPromises();
+    expect(wrapper.find("h1").text()).toBe("Eerste post");
+
+    await wrapper.setProps({ id: "2" });
+    await flushPromises();
+    expect(wrapper.find("h1").text()).toBe("Tweede post");
+    expect(vi.mocked(getBlogPost)).toHaveBeenCalledTimes(2);
+    wrapper.unmount();
   });
 });

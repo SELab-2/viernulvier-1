@@ -318,12 +318,13 @@ export default {
     },
   },
   blogpost: {
-    loading: "Chargement de l'article…",
+    loading: "Chargement de l'article",
     notFound: "Article introuvable",
     notFoundDescription: "Cet article n'existe pas ou n'est plus disponible.",
     errorGeneric: "Une erreur s'est produite lors du chargement de cet article.",
     publishedOn: "Publié le {date}",
     backToHome: "Retour à l'accueil",
+    relatedProductions: "Productions associées",
   },
   admin: {
     login: {

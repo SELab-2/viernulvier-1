@@ -4,7 +4,7 @@
       
       <div class="mb-10 flex items-center gap-4">
         <h2 class="text-[11px] font-black uppercase tracking-[0.3em] text-ink-primary shrink-0">
-          Gerelateerde producties
+          {{ t("blogpost.relatedProductions") }}
         </h2>
         <div class="h-px flex-1 bg-surface-3 opacity-50"></div>
       </div>
@@ -12,7 +12,7 @@
       <div class="hidden md:block">
         <button 
           class="absolute -left-4 top-[58%] z-30 -translate-y-1/2 p-4 text-ink-primary opacity-0 transition-all hover:scale-125 group-hover/carousel:opacity-100"
-          aria-label="Vorige"
+          aria-label="Previous"
           @click="scroll('left')"
         >
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-sm">
@@ -22,7 +22,7 @@
         
         <button 
           class="absolute -right-4 top-[58%] z-30 -translate-y-1/2 p-4 text-ink-primary opacity-0 transition-all hover:scale-125 group-hover/carousel:opacity-100"
-          aria-label="Volgende"
+          aria-label="Next"
           @click="scroll('right')"
         >
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-sm">
@@ -55,12 +55,15 @@
 import { useTemplateRef } from 'vue';
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import LinkedProductionCard from "./LinkedProductionCard.vue";
+import { useI18n } from 'vue-i18n';
 
 defineProps<{
   productions: ProductionWithBackwardsRefs[];
   thumbnails: Map<number, string | null>;
   dateRanges: Map<number, string>;
 }>();
+
+const { t } = useI18n();
 
 const scrollContainer = useTemplateRef<HTMLElement>('scroll-container');
 
