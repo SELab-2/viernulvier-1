@@ -16,6 +16,7 @@ import {
   viernulvierApiUrl,
   scraperVerbose,
   type ScrapeRunStats,
+  fetchScraperJwt,
 } from "@/scraper/core/index.js";
 
 /** Minimal production JSON shape for genre sync (matches {@link ProductionJSON} in `production.ts`). */
@@ -425,4 +426,76 @@ async function syncProductionGenreTagsInner(
       bumpGenresSkipped(stats);
     }
   }
+}
+
+export function scrapeTagsByIds(
+    genres: unknown,
+    authToken: string,
+    loginToken?: string,
+    stats?: ScrapeRunStats,
+  ): number[] {
+  if (genres == null) return [];
+  const refs = normalizeGenresField(genres);
+  const out: number[] = [];
+  const jwt = loginToken ?? fetchScraperJwt();
+
+  for (const ref of refs) {
+    const iri = hydraIriString(ref);
+    if (iri === null) {
+      bumpGenresSkipped(stats);
+      continue;
+    }
+    const genreOldId = genreLegacyIdFromIri(resolveViernulvierResourceUrl(iri));
+    if (genreOldId === null) {
+      bumpGenresSkipped(stats);
+      continue;
+    }
+
+    const genreJson = await fetchViernulvierGenreJson(genreOldId, authToken);
+    if (genreJson === null) {
+      bumpGenresSkipped(stats);
+      continue;
+    }
+
+    const useAs = normalizeUseAs(genreJson.use_as);
+    if (useAs === null) {
+      bumpGenresSkipped(stats);
+      continue;
+    }
+
+    const tagTypeId = tagTypes[useAs];
+    const nameMap = nameMapForGenre(genreJson);
+    if (nameMap === null) {
+      if (scraperVerbose()) {
+        console.log(
+          `Skip genre old_id=${genreOldId} (no name/vendor_id) production local id=${localProductionId}`,
+        );
+      }
+      bumpGenresSkipped(stats);
+      continue;
+    }
+
+    const tagId = await resolveLocalTagIdForGenre(
+      genreOldId,
+      tagTypeId,
+      nameMap,
+      jwt,
+      stats,
+    );
+    if (tagId === null) {
+      bumpGenresSkipped(stats);
+      continue;
+    }
+
+    const linked = await linkProductionToTag(
+      localProductionId,
+      tagId,
+      jwt,
+      stats,
+    );
+    if (!linked) {
+      bumpGenresSkipped(stats);
+    }
+  }
+  return out;
 }

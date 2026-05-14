@@ -16,6 +16,7 @@ import {
   rememberViernulvierProductionJson,
   syncProductionGenreTagsWithPayload,
   processProductionMediaGallery,
+  scrapeTagsByIds,
 } from "@/scraper/entities/index.js";
 
 interface ProductionListMeta {
@@ -202,7 +203,12 @@ async function createLocalProductionFromViernulvierJson(
     return null;
   }
 
-  const payload = scraperProductionToCreateBody(production, id);
+  const tags = scrapeTagsByIds(production.genres);
+  if (tags.length === 0) {
+    console.warn(`Production old_id=${id} has no genres/tags; will create without tags.`);
+  }
+
+  const payload = scraperProductionToCreateBody({...production, genres: tags}, id);
 
   const response = await fetch(localApiUrl("/api/v1/production"), {
     method: "POST",
@@ -394,7 +400,7 @@ export async function scrapeProductionById(
     return null;
   }
   const jwt = loginToken ?? await fetchScraperJwt();
-  const created = await createLocalProductionFromViernulvierJson(production, jwt);
+  const created = await createLocalProductionFromViernulvierJson(production, authToken, jwt, stats);
   if (created !== null) {
     if (stats !== undefined){
       stats.productions.created++;
