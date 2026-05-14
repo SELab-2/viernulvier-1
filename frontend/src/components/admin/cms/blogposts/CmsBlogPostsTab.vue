@@ -21,6 +21,9 @@
   >
     <template #header-actions>
       <div class="flex flex-col gap-2">
+        <button type="button" class="cms-add-button" data-testid="cms-add-blogpost" @click="openCreateModal">
+          {{ t("cms.actions.blogpost.addBlogpost") }}
+        </button>
         <button
           type="button"
           class="cms-remove-button"
@@ -60,6 +63,7 @@
         @cell-editing-stopped="onCellEditingStopped"
       />
     </template>
+
     <template #modals>
       <CmsRemoveConfirmModal
         v-if="removeConfirmOpen"
@@ -70,6 +74,23 @@
         body-key="cms.actions.blogpost.confirmRemoveBody"
         @close="closeRemoveConfirm"
         @confirm="confirmRemove"
+      />
+
+      <CmsCreateBlogPostModal
+        :open="createModalOpen"
+        :create-form="createForm"
+        :create-extra-langs="createExtraLangs"
+        :visible-create-langs="visibleCreateLangs"
+        :lang-grid-class="langGridClass"
+        :create-error="createError"
+        :is-creating="isCreating"
+        @close="closeCreateModal"
+        @submit="submitCreateBlogPost"
+        @update-title="setCreateTitle"
+        @update-content="setCreateContent"
+        @update-extra-lang="setCreateExtraLang"
+        @add-production-id="addProductionId"
+        @remove-production-id="removeProductionId"
       />
     </template>
   </CmsTabShell>
@@ -83,16 +104,20 @@ import { useI18n } from "vue-i18n";
 import type { BlogPostWithBackwardsRefs } from "@viernulvier/shared";
 import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
 import CmsRemoveConfirmModal from "@/components/admin/cms/CmsRemoveConfirmModal.vue";
+import CmsCreateBlogPostModal from "@/components/admin/cms/blogposts/CmsCreateBlogPostModal.vue";
 import { useCmsBlogPostGrid } from "@/composables/useCmsBlogPostGrid";
 import { useCmsRemove } from "@/composables/useCmsRemove";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
-import { getBlogPosts, updateBlogPost, deleteBlogPost } from "@/services/blogposts";
+import { getBlogPosts, createBlogPost, updateBlogPost, deleteBlogPost } from "@/services/blogposts";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import {
   applyUpdatedBlogPostToRow,
   buildBlogPostGridRows,
+  buildEmptyBlogPostForm,
+  validateCreateBlogPostForm,
   type CmsBlogPostGridRow,
+  type CreateBlogPostFormState,
 } from "@/services/cms";
 
 const { t } = useI18n();
@@ -124,8 +149,10 @@ const {
 
 const isLoading = ref(false);
 const isSaving = ref(false);
+const isCreating = ref(false);
 const loadError = ref<string | null>(null);
 const saveError = ref<string | null>(null);
+const createError = ref<string | null>(null);
 const rowData = ref<CmsBlogPostGridRow[]>([]);
 const blogpostsData = ref<BlogPostWithBackwardsRefs[]>([]);
 
@@ -226,6 +253,110 @@ async function onCellEditingStopped(
 }
 
 // ---------------------------------------------------------------------------
+// Create modal
+// ---------------------------------------------------------------------------
+
+const createModalOpen = ref(false);
+const createForm = ref<CreateBlogPostFormState>(buildEmptyBlogPostForm());
+const createExtraLangs = ref({ en: false, fr: false });
+
+const visibleCreateLangs = computed<SupportedLang[]>(() => {
+  const result: SupportedLang[] = ["nl"];
+  if (createExtraLangs.value.en) result.push("en");
+  if (createExtraLangs.value.fr) result.push("fr");
+  return result;
+});
+
+const langGridClass = computed(() => {
+  const count = visibleCreateLangs.value.length;
+  if (count <= 1) return "cms-lang-grid cms-lang-grid-single";
+  if (count === 2) return "cms-lang-grid cms-lang-grid-double";
+  return "cms-lang-grid";
+});
+
+function resetCreateForm(): void {
+  createForm.value = buildEmptyBlogPostForm();
+  createExtraLangs.value = { en: false, fr: false };
+}
+
+function openCreateModal(): void {
+  createError.value = null;
+  createModalOpen.value = true;
+}
+
+function closeCreateModal(): void {
+  createModalOpen.value = false;
+  createError.value = null;
+  resetCreateForm();
+}
+
+function setCreateTitle(lang: SupportedLang, value: string): void {
+  createForm.value = {
+    ...createForm.value,
+    title: { ...createForm.value.title, [lang]: value },
+  };
+}
+
+function setCreateContent(lang: SupportedLang, value: string): void {
+  createForm.value = {
+    ...createForm.value,
+    content: { ...createForm.value.content, [lang]: value },
+  };
+}
+
+function setCreateExtraLang(lang: "en" | "fr", value: boolean): void {
+  createExtraLangs.value = { ...createExtraLangs.value, [lang]: value };
+}
+
+function addProductionId(id: number): void {
+  if (createForm.value.productions.includes(id)) {
+    return;
+  }
+
+  createForm.value = {
+    ...createForm.value,
+    productions: [...createForm.value.productions, id],
+  };
+}
+
+function removeProductionId(id: number): void {
+  createForm.value = {
+    ...createForm.value,
+    productions: createForm.value.productions.filter((x) => x !== id),
+  };
+}
+
+async function submitCreateBlogPost(): Promise<void> {
+  const validationError = validateCreateBlogPostForm(createForm.value, t);
+  if (validationError) {
+    createError.value = validationError;
+    return;
+  }
+
+  isCreating.value = true;
+  createError.value = null;
+
+  try {
+    await createBlogPost({
+      blog: 1,
+      title: createForm.value.title,
+      content: createForm.value.content,
+      published_at: new Date().toISOString(),
+      productions: createForm.value.productions,
+    });
+    await loadBlogPostsData();
+    closeCreateModal();
+  } catch (error) {
+    createError.value =
+      error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+  } finally {
+    isCreating.value = false;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Removal
 // ---------------------------------------------------------------------------
 
@@ -261,10 +392,24 @@ defineExpose({
     saveError,
     isLoading,
     isSaving,
+    isCreating,
+    createError,
+    createModalOpen,
+    createForm,
+    createExtraLangs,
     loadBlogPostsData,
     rebuildRows,
     localizeValue,
     onCellEditingStopped,
+    openCreateModal,
+    closeCreateModal,
+    submitCreateBlogPost,
+    resetCreateForm,
+    setCreateTitle,
+    setCreateContent,
+    setCreateExtraLang,
+    addProductionId,
+    removeProductionId,
     removeConfirmOpen,
     removeConfirmLoading,
     removeConfirmError,

@@ -20,7 +20,7 @@
  * ```
  */
 
-import type { BlogPost, BlogPostWithBackwardsRefs, BlogPostWithMeta } from "@viernulvier/shared";
+import type { BlogPostWithBackwardsRefs, BlogPostWithMeta } from "@viernulvier/shared";
 import { apiFetch } from "./api";
 import type { LanguageMap } from "@/utils/language-utils";
 
@@ -33,8 +33,8 @@ export interface CreateBlogPostInput {
   blog: number;
   title: LanguageMap;
   content: LanguageMap;
-  /** Optional display date. Null means the post is published without a visible date. */
   published_at?: string | null;
+  productions: number[];
 }
 
 /** Payload for fully replacing a blogpost (PUT semantics — all fields required). */
@@ -82,8 +82,8 @@ export async function getBlogPostWithMeta(id: number): Promise<BlogPostWithMeta>
  * @param data The blogpost payload.
  * @throws {ApiError} 422 — validation failed.
  */
-export async function createBlogPost(data: CreateBlogPostInput): Promise<BlogPost> {
-  return await apiFetch<BlogPost>("/blog/post", { method: "POST", body: data });
+export async function createBlogPost(data: CreateBlogPostInput): Promise<BlogPostWithBackwardsRefs> {
+  return await apiFetch<BlogPostWithBackwardsRefs>("/blog/post", { method: "POST", body: data });
 }
 
 /**
@@ -93,8 +93,8 @@ export async function createBlogPost(data: CreateBlogPostInput): Promise<BlogPos
  * @param data Full replacement payload.
  * @throws {ApiError} 404 — blogpost not found.
  */
-export async function replaceBlogPost(id: number, data: ReplaceBlogPostInput): Promise<BlogPost> {
-  return await apiFetch<BlogPost>(`/blog/post/${id}`, { method: "PUT", body: data });
+export async function replaceBlogPost(id: number, data: ReplaceBlogPostInput): Promise<BlogPostWithBackwardsRefs> {
+  return await apiFetch<BlogPostWithBackwardsRefs>(`/blog/post/${id}`, { method: "PUT", body: data });
 }
 
 /**
@@ -118,5 +118,5 @@ export async function updateBlogPost(id: number, data: UpdateBlogPostInput): Pro
  * @throws {ApiError} 404 — blogpost not found.
  */
 export async function deleteBlogPost(id: number): Promise<void> {
-  await apiFetch<void>(`/blog/post/${id}`, { method: "DELETE" });
+  await apiFetch<BlogPostWithBackwardsRefs>(`/blog/post/${id}`, { method: "DELETE" });
 }

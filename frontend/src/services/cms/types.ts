@@ -76,6 +76,12 @@ export interface CreateTagFormState {
   public: boolean;
 }
 
+export interface CreateBlogPostFormState {
+  title: Record<SupportedLang, string>;
+  content: Record<SupportedLang, string>;
+  productions: number[];
+}
+
 export type LongField = "teaser" | "description" | "description_2" | "video_1";
 
 export type CreateFieldKey =

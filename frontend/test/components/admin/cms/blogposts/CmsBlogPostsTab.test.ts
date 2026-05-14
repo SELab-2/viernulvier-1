@@ -371,6 +371,178 @@ describe("CmsBlogPostsTab", () => {
     });
   });
 
+  describe("create blog post", () => {
+    it("modal is closed by default", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+
+      expect(
+        wrapper.find('[data-testid="create-blogpost-modal"]').exists(),
+      ).toBe(false);
+    });
+
+    it("opens modal when add button is clicked", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+
+      await wrapper
+        .find('[data-testid="cms-add-blogpost"]')
+        .trigger("click");
+
+      expect(
+        wrapper.find('[data-testid="create-blogpost-modal"]').exists(),
+      ).toBe(true);
+    });
+
+    it("closes modal on close emit", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+
+      wrapper.vm.__test.openCreateModal();
+      await wrapper.vm.$nextTick();
+
+      await wrapper
+        .find('[data-testid="modal-close"]')
+        .trigger("click");
+
+      expect(
+        wrapper.find('[data-testid="create-blogpost-modal"]').exists(),
+      ).toBe(false);
+    });
+
+    it("resets form on close", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+
+      wrapper.vm.__test.setCreateTitle("nl", "Hello");
+      wrapper.vm.__test.setCreateContent("nl", "World");
+
+      wrapper.vm.__test.closeCreateModal();
+
+      expect(wrapper.vm.__test.createForm.value.title.nl).toBe("");
+      expect(wrapper.vm.__test.createForm.value.content.nl).toBe("");
+      expect(wrapper.vm.__test.createForm.value.productions).toEqual([]);
+    });
+
+    it("updates title via setter", async () => {
+      const wrapper = mountTab();
+
+      wrapper.vm.__test.setCreateTitle("nl", "My title");
+
+      expect(wrapper.vm.__test.createForm.value.title.nl).toBe("My title");
+    });
+
+    it("updates content via setter", async () => {
+      const wrapper = mountTab();
+
+      wrapper.vm.__test.setCreateContent("nl", "My content");
+
+      expect(wrapper.vm.__test.createForm.value.content.nl).toBe(
+        "My content",
+      );
+    });
+
+    it("adds production via setter", async () => {
+      const wrapper = mountTab();
+
+      wrapper.vm.__test.addProductionId(12);
+
+      expect(
+        wrapper.vm.__test.createForm.value.productions,
+      ).toContain(12);
+    });
+
+    it("removes production via setter", async () => {
+      const wrapper = mountTab();
+
+      wrapper.vm.__test.addProductionId(12);
+      wrapper.vm.__test.removeProductionId(12);
+
+      expect(
+        wrapper.vm.__test.createForm.value.productions,
+      ).not.toContain(12);
+    });
+
+    it("submits and reloads on success", async () => {
+      const getSpy = vi
+        .spyOn(blogposts, "getBlogPosts")
+        .mockResolvedValue([]);
+
+      vi.spyOn(blogposts, "createBlogPost").mockResolvedValue({
+        id: 99,
+        title: { nl: "Hello", en: "Hello", fr: "Bonjour" },
+        content: { en: "World" },
+        published_at: null,
+        productions: [12],
+      } as any);
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      wrapper.vm.__test.setCreateTitle("nl", "Hallo");
+      wrapper.vm.__test.setCreateExtraLang("en", true);
+      wrapper.vm.__test.setCreateTitle("en", "Hello");
+      wrapper.vm.__test.setCreateContent("en", "World");
+      wrapper.vm.__test.setCreateExtraLang("fr", true);
+      wrapper.vm.__test.setCreateTitle("fr", "Bonjour");
+      wrapper.vm.__test.addProductionId(12);
+      wrapper.vm.__test.addProductionId(12); // does nothing, just for extra coverage
+
+      await wrapper.vm.__test.submitCreateBlogPost();
+      await flushPromises();
+
+      expect(getSpy).toHaveBeenCalledTimes(2);
+      expect(wrapper.vm.__test.createModalOpen.value).toBe(false);
+    });
+
+    it("shows create error on submit failure", async () => {
+      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([]);
+
+      vi.spyOn(blogposts, "createBlogPost").mockRejectedValue(
+        new Error("boom"),
+      );
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      await wrapper.vm.__test.submitCreateBlogPost();
+      await flushPromises();
+
+      expect(wrapper.vm.__test.createError.value).toBeTruthy();
+      expect(wrapper.vm.__test.createModalOpen.value).toBe(false);
+    });
+
+    it("clears createError when modal is reopened", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+
+      wrapper.vm.__test.createError.value = "old error";
+
+      wrapper.vm.__test.openCreateModal();
+
+      expect(wrapper.vm.__test.createError.value).toBeNull();
+    });
+
+    it("sets generic error for non-Error failures", async () => {
+      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([]);
+
+      vi.spyOn(blogposts, "createBlogPost").mockRejectedValue(
+        "raw error",
+      );
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      await wrapper.vm.__test.submitCreateBlogPost();
+      await flushPromises();
+
+      expect(wrapper.vm.__test.createError.value).toBeTruthy();
+      expect(wrapper.vm.__test.createError.value).not.toBe(
+        "raw error",
+      );
+    });
+  });
+
   describe("removing", () => {
     it("open modal by clicking button", async () => {
       const wrapper = mountTab();
