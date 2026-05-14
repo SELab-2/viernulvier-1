@@ -10,7 +10,7 @@ import {
   MOCK_META,
   imageWithCrops,
 } from "./fixtures.js";
-import { getImageByOldId } from "@/routes/media/handlers/fetch.js";
+import { getCropById, getImageByOldId } from "@/routes/media/handlers/fetch.js";
 
 vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
 
@@ -85,6 +85,18 @@ beforeAll(async () => {
       });
     }
 
+    // ── Images by productions (batch, ANY array) ──
+    if (upper.includes("FROM IMAGE I") && upper.includes("I.PRODUCTION = ANY($1::INT[])")) {
+      const prodIds = params?.[0] as number[];
+      const want = new Set(prodIds);
+      const rows = [MOCK_IMAGE_1, MOCK_IMAGE_2]
+        .filter((i) => want.has(i.production))
+        .sort((a, b) =>
+          a.production !== b.production ? a.production - b.production : a.id - b.id,
+        );
+      return Promise.resolve({ rows, rowCount: rows.length });
+    }
+
     // ── Images by production ──
     if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.PRODUCTION = \$1")) {
       const prodId = Number(params?.[0]);
@@ -101,6 +113,16 @@ beforeAll(async () => {
         ids.includes(c.image),
       );
       return Promise.resolve({ rows: crops, rowCount: crops.length });
+    }
+
+    // ── Crop by primary key id ──
+    if (upper.includes("FROM CROP C") && upper.includes("WHERE C.ID = \$1")) {
+      const cropId = Number(params?.[0]);
+      const crop = [MOCK_CROP_1, MOCK_CROP_2, MOCK_CROP_3].find((c) => c.id === cropId);
+      return Promise.resolve({
+        rows: crop ? [crop] : [],
+        rowCount: crop ? 1 : 0,
+      });
     }
 
     // ── Crop by image + oldId ── CHECK THIS BEFORE IMAGE ONLY!
@@ -176,6 +198,120 @@ describe("Image fetch routes", () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual([]);
+  });
+
+  test("GET /api/v1/production/images -> returns keyed images with crops for multiple productions", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production/images?ids=1,9999",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      byProductionId: {
+        "1": [
+          imageWithCrops(MOCK_IMAGE_1, [MOCK_CROP_1, MOCK_CROP_2]),
+          imageWithCrops(MOCK_IMAGE_2, [MOCK_CROP_3]),
+        ],
+        "9999": [],
+      },
+    });
+  });
+
+  test("GET /api/v1/production/images -> returns empty object without ids query", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production/images",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ byProductionId: {} });
+  });
+
+  test("GET /api/v1/production/images -> empty byProductionId when ids are all unparsable", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production/images?ids=foo,,-1,007,2147483648,x",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ byProductionId: {} });
+  });
+
+  test("GET /api/v1/production/images -> trims tokens, dedupes ids, skips junk between commas", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production/images?ids=1,bad,1,9999",
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { byProductionId: Record<string, unknown> };
+    expect(Object.keys(json.byProductionId).sort()).toEqual(["1", "9999"]);
+    expect(json.byProductionId["1"]).toEqual([
+      imageWithCrops(MOCK_IMAGE_1, [MOCK_CROP_1, MOCK_CROP_2]),
+      imageWithCrops(MOCK_IMAGE_2, [MOCK_CROP_3]),
+    ]);
+    expect(json.byProductionId["9999"]).toEqual([]);
+  });
+
+  test("GET /api/v1/production/images -> only unknown productions still runs batch (empty image set)", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production/images?ids=9998,9999",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      byProductionId: {
+        "9998": [],
+        "9999": [],
+      },
+    });
+  });
+
+  test("GET /api/v1/production/images -> caps at 50 ids (extra discarded)", async () => {
+    const ids = Array.from({ length: 51 }, (_, i) => String(i + 1)).join(",");
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/production/images?ids=${encodeURIComponent(ids)}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const keys = Object.keys((response.json() as { byProductionId: Record<string, unknown> }).byProductionId);
+    expect(keys).toHaveLength(50);
+    expect(keys).not.toContain("51");
+  });
+
+  test("GET /api/v1/production/images -> accepts ids as repeated string query params (array branch)", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production/images",
+      query: { ids: ["1", "9999"] },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      byProductionId: {
+        "1": [
+          imageWithCrops(MOCK_IMAGE_1, [MOCK_CROP_1, MOCK_CROP_2]),
+          imageWithCrops(MOCK_IMAGE_2, [MOCK_CROP_3]),
+        ],
+        "9999": [],
+      },
+    });
+  });
+
+  test("GET /api/v1/production/images -> array ids skips empty trimmed segments", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production/images",
+      query: { ids: [" \t ", "", "1", "9999", "   "] },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const keys = Object.keys((response.json() as { byProductionId: Record<string, unknown> }).byProductionId)
+      .sort();
+    expect(keys).toEqual(["1", "9999"]);
   });
 
   test("GET /api/v1/image/:id -> returns a single image with crops", async () => {
@@ -606,6 +742,16 @@ describe("Branch coverage for edge cases", () => {
     expect(res).toBeNull();
 
     server.pg.query = originalQuery;
+  });
+
+  test("direct: getCropById -> returns crop when row exists", async () => {
+    const res = await getCropById(server, MOCK_CROP_2.id);
+    expect(res).toEqual(MOCK_CROP_2);
+  });
+
+  test("direct: getCropById -> returns null when row missing", async () => {
+    const res = await getCropById(server, 99_999);
+    expect(res).toBeNull();
   });
 
   test("direct: getImageByOldId -> returns image with crops when present (covers withCrops[0] branch)", async () => {
