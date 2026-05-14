@@ -16,6 +16,8 @@ import blogPostRoutes from "./blogpost/blogpost.js";
  * @param server - The Fastify instance to register routes on.
  */
 export default async function registerRoutes(server: FastifyInstance) {
+  // Media before production: `GET /api/v1/production/images` must not be
+  // captured by `GET /api/v1/production/:id` (which would treat "images" as an id).
   await server.register(mediaRoutes);
   await server.register(productionRoutes);
   await server.register(authRoutes);
