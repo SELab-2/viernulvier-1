@@ -1,8 +1,9 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
 import { buildServer } from "@/server.js";
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { ProductionSchemaWithBackwardsRefs, type Production } from "@viernulvier/shared/index.js";
 import { HttpSuccess, HttpServerError } from "@/routes/helpers.js";
+import { replaceProduction } from "@/routes/production/handlers/replace.js";
 import { productionRowWithRefs } from "./fixtures.js";
 
 vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
@@ -302,7 +303,7 @@ describe("Replace on production route", () => {
     expect(response.json().tags).toEqual([]);
   });
 
-  test("replaceProduction() -> accepts tags present but undefined", async () => {
+  test("replaceProduction() -> accepts empty tags array", async () => {
     server.pg.query = vi.fn().mockImplementation((query: string) => {
       const upper = query.trim().toUpperCase();
 
@@ -346,7 +347,7 @@ describe("Replace on production route", () => {
         quote_source: replacedProduction.quote_source,
         programme: replacedProduction.programme,
         info: replacedProduction.info,
-        tags: undefined,
+        tags: [],
       },
     } as unknown as FastifyRequest);
 
@@ -401,11 +402,28 @@ describe("Replace on production route", () => {
       url: `/api/v1/production/${replacedProduction["id"]}`,
       cookies: { session: sessionCookie },
       payload: {
+        old_id: replacedProduction["old_id"],
+        finalized: replacedProduction["finalized"],
+        supertitle: replacedProduction["supertitle"],
+        title: replacedProduction["title"],
+        artist: replacedProduction["artist"],
+        tagline: replacedProduction["tagline"],
+        teaser: replacedProduction["teaser"],
+        description: replacedProduction["description"],
+        description_extra: replacedProduction["description_extra"],
+        description_2: replacedProduction["description_2"],
+        video_1: replacedProduction["video_1"],
+        video_2: replacedProduction["video_2"],
+        quote: replacedProduction["quote"],
+        quote_source: replacedProduction["quote_source"],
+        programme: replacedProduction["programme"],
+        info: replacedProduction["info"],
+        tags: [1, 2],
       },
     });
 
     expect(response.statusCode).toBe(200);
-    const parsed = ProductionSchema.parse(response.json());
+    const parsed = ProductionSchemaWithBackwardsRefs.parse(response.json());
     expect(parsed.id).toBe(replacedProduction.id);
   });
 });

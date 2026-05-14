@@ -211,8 +211,8 @@ describe("Create on production route", () => {
     const parsed = ProductionSchemaWithBackwardsRefs.parse(response.json());
     expect(parsed.id).toBe(createdProduction.id);
     expect(parsed.tags).toEqual([1, 2, 3]);
-    // Should have called: BEGIN + INSERT production + 3x INSERT production_tag + COMMIT = 6 times
-    expect(mockClient.query).toHaveBeenCalledTimes(6);
+    // Uses one UNNEST insert for tags: BEGIN + INSERT production + INSERT production_tag + COMMIT.
+    expect(mockClient.query).toHaveBeenCalledTimes(4);
     expect(mockClient.release).toHaveBeenCalled();
   });
 

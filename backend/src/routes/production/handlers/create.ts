@@ -2,7 +2,6 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared/index.js";
 import { getMetadata, parseSchema, HttpError, HttpServerError } from "@/routes/helpers.js";
 import { CreateProductionBodySchema } from "./body-schema.js";
-import { getProductionById } from "./fetch.js";
 import { getFieldValue, getNullableFieldValue } from "./field-utils.js";
 import { getProductionById } from "./fetch.js";
 
