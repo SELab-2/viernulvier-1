@@ -35,6 +35,7 @@ async function mountCard(props: {
   dateSummary?: ProductionDateSummary;
   tagChips?: ProductionTagChip[];
   hallsText?: string;
+  thumbnailUrl?: string | null | undefined;
 }) {
   const router = createRouter({ history: createMemoryHistory(), routes });
   await router.push("/nl/productions");
@@ -46,6 +47,7 @@ async function mountCard(props: {
       dateSummary: props.dateSummary ?? { line: null, moreCount: 0 },
       tagChips: props.tagChips ?? [],
       hallsText: props.hallsText ?? "",
+      ...(props.thumbnailUrl !== undefined ? { thumbnailUrl: props.thumbnailUrl } : {}),
     },
     global: { plugins: [router, i18n] },
   });
@@ -113,6 +115,30 @@ describe("ProductionListCard.vue", () => {
     const chips = wrapper.findAll("span.rounded-full");
     expect(chips[0]!.classes().join(" ")).toMatch(/tag-genre-bg/);
     expect(chips[1]!.classes().join(" ")).toMatch(/border-ink-primary/);
+    wrapper.unmount();
+  });
+
+  it("shows grey placeholder without img while thumbnailUrl is undefined", async () => {
+    const wrapper = await mountCard({ thumbnailUrl: undefined });
+    expect(wrapper.find("img").exists()).toBe(false);
+    expect(wrapper.find(".bg-surface-2").exists()).toBe(true);
+    wrapper.unmount();
+  });
+
+  it("shows theme placeholder when thumbnailUrl is null (no list crop)", async () => {
+    const wrapper = await mountCard({ thumbnailUrl: null });
+    const img = wrapper.find("img");
+    expect(img.exists()).toBe(true);
+    expect(img.attributes("src")).toMatch(/placeholder-(light|dark)\.svg/);
+    wrapper.unmount();
+  });
+
+  it("shows crop img src when thumbnailUrl is set", async () => {
+    const wrapper = await mountCard({
+      thumbnailUrl: "/media/crops/example.jpg",
+    });
+    const img = wrapper.find("img");
+    expect(img.attributes("src")).toBe("/media/crops/example.jpg");
     wrapper.unmount();
   });
 

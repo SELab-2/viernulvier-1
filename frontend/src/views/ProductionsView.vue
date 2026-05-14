@@ -880,10 +880,11 @@ const tagsById = ref(new Map<number, Tag>());
 const tagTypesById = ref(new Map<number, TagType>());
 const hallsById = ref(new Map<number, Hall>());
 
-function thumbnailFor(productionId: number): string | null {
+/** `undefined` while thumbnails not loaded yet; `null` when loaded but no usable crop URL. */
+function thumbnailFor(productionId: number): string | null | undefined {
   const m = thumbnailUrlByProductionId.value;
   if (!m.has(productionId)) {
-    return null;
+    return undefined;
   }
   return m.get(productionId) ?? null;
 }
