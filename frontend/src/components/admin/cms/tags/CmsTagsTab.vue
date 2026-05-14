@@ -121,6 +121,7 @@ import { useCmsRemove } from "@/composables/useCmsRemove";
 import { useCmsTagGrid } from "@/composables/useCmsTagGrid";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
+import { ApiError } from "@/services/api";
 import { createTag, createTagType, deleteTag, getAllTags, getTagTypes, updateTag } from "@/services/tags";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import {
@@ -361,9 +362,27 @@ function closeTagTypeModal(): void {
   tagTypeModalOrigin.value = null;
 }
 
+function findDuplicateTagType(name: LanguageMap): TagType | null {
+  const entries = (Object.entries(name) as Array<[SupportedLang, string | undefined]>)
+    .map(([lang, value]) => [lang, value?.trim().toLowerCase() ?? ""] as const)
+    .filter(([, value]) => value.length > 0);
+  if (entries.length === 0) return null;
+  return (
+    tagTypesData.value.find((type) => {
+      const existing: LanguageMap = type.name ?? {};
+      return entries.some(([lang, value]) => existing[lang]?.trim().toLowerCase() === value);
+    }) ?? null
+  );
+}
+
 async function submitCreateTagType(payload: { name: LanguageMap }): Promise<void> {
   if (Object.keys(payload.name).length === 0) {
     tagTypeModalError.value = t("cms.create.validation.tagTypeNameRequired");
+    return;
+  }
+
+  if (findDuplicateTagType(payload.name)) {
+    tagTypeModalError.value = t("cms.create.validation.tagTypeNameConflict");
     return;
   }
 
@@ -390,8 +409,7 @@ async function submitCreateTagType(payload: { name: LanguageMap }): Promise<void
 
     closeTagTypeModal();
   } catch (error) {
-    const message = error instanceof Error ? error.message : "";
-    if (message.toLowerCase().includes("conflict") || message.includes("409")) {
+    if (error instanceof ApiError && error.isConflict) {
       tagTypeModalError.value = t("cms.create.validation.tagTypeNameConflict");
     } else {
       tagTypeModalError.value = error instanceof Error
