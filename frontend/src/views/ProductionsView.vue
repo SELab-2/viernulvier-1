@@ -4,32 +4,32 @@
     <main class="flex-1">
       <section
         ref="pageTopAnchor"
-        class="scroll-mt-16 border-b border-surface-3 bg-surface-1 py-20 md:py-28"
+        class="scroll-mt-16 border-b border-surface-3 bg-surface-1 py-10 md:py-14"
       >
-        <div class="mx-auto max-w-5xl px-6 lg:px-10">
+        <div class="mx-auto max-w-6xl px-6 lg:px-10">
           <div class="mx-auto max-w-3xl text-center">
             <div
-              class="mb-8 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
+              class="mb-5 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
             >
               <span
-                class="h-px w-10 bg-ink-tertiary opacity-50"
+                class="h-px w-8 bg-ink-tertiary opacity-50"
                 aria-hidden="true"
               />
               <span class="whitespace-nowrap">{{
                 t("productionsPage.kicker")
               }}</span>
               <span
-                class="h-px w-10 bg-ink-tertiary opacity-50"
+                class="h-px w-8 bg-ink-tertiary opacity-50"
                 aria-hidden="true"
               />
             </div>
             <h1
-              class="font-serif text-4xl font-semibold leading-[1.05] tracking-tight text-ink-primary md:text-5xl lg:text-6xl"
+              class="font-serif text-3xl font-semibold leading-tight tracking-tight text-ink-primary md:text-4xl"
             >
               {{ t("productionsPage.heading") }}
             </h1>
             <p
-              class="mx-auto mt-6 max-w-2xl font-serif text-xl italic leading-relaxed text-ink-secondary md:text-2xl"
+              class="mx-auto mt-3 max-w-2xl font-serif text-lg italic leading-snug text-ink-secondary md:text-xl"
             >
               {{ t("productionsPage.intro") }}
             </p>
