@@ -311,6 +311,7 @@ export default {
       title: "Articles liés",
       body: "Récits de fond, entretiens et notes des archives en rapport avec cette production.",
       all: "Tous les articles",
+      readMore: "Lire plus",
     },
     notFound: {
       title: "Production introuvable",

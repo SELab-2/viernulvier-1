@@ -311,6 +311,7 @@ export default {
       title: "Related articles",
       body: "Background stories, interviews and notes from the archive that relate to this production.",
       all: "All articles",
+      readMore: "Read more",
     },
     notFound: {
       title: "Production not found",
