@@ -215,6 +215,7 @@ defineExpose({
     onCellEditingStopped,
     selectedCount,
     gridApi,
+    persistGridState,
   },
 });
 
