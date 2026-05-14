@@ -140,6 +140,8 @@ export default {
       tagTitle: "Nieuwe tag",
       submitTag: "Tag toevoegen",
       selectTagType: "Kies een type...",
+      tagTypeTitle: "Nieuw tag type",
+      submitTagType: "Tag type toevoegen",
       finalized: "Markeer als gefinaliseerd",
       languages: "Extra talen",
       submit: "Productie toevoegen",
@@ -171,6 +173,8 @@ export default {
         requiredOneLanguage: "Vul minstens 1 taal in voor: {field}",
         imageRequired: "Vul minstens een afbeelding URL in (in eender welke taal).",
         tagTypeRequired: "Selecteer een tag-type.",
+        tagTypeNameRequired: "Vul minstens 1 taal in voor de tag-type naam.",
+        tagTypeNameConflict: "Er bestaat al een tag-type met deze naam.",
       },
       admin: {
         adminTitle: "Nieuwe admin",
@@ -200,6 +204,12 @@ export default {
     },
     admin: {
       noPermission: "Je hebt geen toestemming om admins te beheren.",
+    },
+    tagTypePicker: {
+      placeholder: "Zoek of typ een type...",
+      createNew: "+ Maak nieuw type '{name}'",
+      createNewEmpty: "+ Maak nieuw tag-type",
+      noMatch: "Geen overeenkomende types",
     },
   },
   productionsPage: {

@@ -1,6 +1,9 @@
-import { computed, type Ref } from "vue";
+import { computed, markRaw, type Ref } from "vue";
 import type { ColDef } from "ag-grid-community";
+import type { TagType } from "@viernulvier/shared";
 import type { CmsTagGridRow } from "@/services/cms";
+import type { LanguageMap } from "@/utils/language-utils";
+import TagTypeCellEditor from "@/components/admin/cms/tags/TagTypeCellEditor.vue";
 import { useCmsGridBase } from "./useCmsGridBase";
 
 type TranslateFunction = (key: string, params?: Record<string, unknown>) => string;
@@ -16,6 +19,9 @@ const cmsTagGridColumnIds = [
 export function useCmsTagGrid(options: {
   isDark: Ref<boolean>;
   t: TranslateFunction;
+  getTagTypes: () => TagType[];
+  localize: (map: LanguageMap | null | undefined) => string;
+  onCreateTagTypeRequest: (ctx: { rowId: number; initialName: string }) => void;
 }) {
   const base = useCmsGridBase<CmsTagGridRow>({
     isDark: options.isDark,
@@ -58,9 +64,26 @@ export function useCmsTagGrid(options: {
       flex: 1,
     },
     {
+      colId: "tagType",
       headerName: options.t("cms.columns.tagType"),
-      field: "tagType",
-      editable: false,
+      valueGetter: (params) => params.data?.tagTypeId ?? null,
+      valueFormatter: (params) => {
+        const row = params.data as CmsTagGridRow | undefined;
+        return row?.tagType ?? "";
+      },
+      filterValueGetter: (params) => {
+        const row = params.data as CmsTagGridRow | undefined;
+        return row?.tagType ?? "";
+      },
+      editable: true,
+      singleClickEdit: true,
+      cellEditor: markRaw(TagTypeCellEditor),
+      cellEditorPopup: true,
+      cellEditorParams: () => ({
+        tagTypes: options.getTagTypes(),
+        localize: options.localize,
+        onCreateRequest: options.onCreateTagTypeRequest,
+      }),
       minWidth: 160,
     },
     {

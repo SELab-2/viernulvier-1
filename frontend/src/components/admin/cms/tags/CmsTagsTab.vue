@@ -92,6 +92,16 @@
         @update-tag-type="setCreateTagType"
         @update-public="setCreatePublic"
         @update-extra-lang="setCreateExtraLang"
+        @request-create-tag-type="openTagTypeModalFromCreate"
+      />
+
+      <CmsCreateTagTypeModal
+        :open="tagTypeModalOpen"
+        :initial-name="tagTypeModalInitialName"
+        :is-creating="isCreatingTagType"
+        :error="tagTypeModalError"
+        @close="closeTagTypeModal"
+        @submit="submitCreateTagType"
       />
     </template>
   </CmsTabShell>
@@ -106,11 +116,12 @@ import type { Tag, TagType } from "@viernulvier/shared";
 import CmsRemoveConfirmModal from "@/components/admin/cms/CmsRemoveConfirmModal.vue";
 import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
 import CmsCreateTagModal from "@/components/admin/cms/tags/CmsCreateTagModal.vue";
+import CmsCreateTagTypeModal from "@/components/admin/cms/tags/CmsCreateTagTypeModal.vue";
 import { useCmsRemove } from "@/composables/useCmsRemove";
 import { useCmsTagGrid } from "@/composables/useCmsTagGrid";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
-import { createTag, deleteTag, getAllTags, getTagTypes, updateTag } from "@/services/tags";
+import { createTag, createTagType, deleteTag, getAllTags, getTagTypes, updateTag } from "@/services/tags";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import {
   applyUpdatedTagToRow,
@@ -124,6 +135,30 @@ import {
 
 const { t } = useI18n();
 const { isDark } = useDarkMode();
+
+const isLoading = ref(false);
+const isSaving = ref(false);
+const isCreating = ref(false);
+const loadError = ref<string | null>(null);
+const saveError = ref<string | null>(null);
+const createError = ref<string | null>(null);
+const rowData = ref<CmsTagGridRow[]>([]);
+const tagsData = ref<Tag[]>([]);
+const tagTypesData = ref<TagType[]>([]);
+
+const createModalOpen = ref(false);
+const createForm = ref<CreateTagFormState>(buildEmptyTagForm());
+const createExtraLangs = ref({ en: false, fr: false });
+
+const tagTypeModalOpen = ref(false);
+const tagTypeModalInitialName = ref("");
+const tagTypeModalError = ref<string | null>(null);
+const isCreatingTagType = ref(false);
+/** Tracks the originator of the tag-type modal so we re-select the new type in the right place. */
+type TagTypeModalOrigin =
+  | { kind: "createTagModal" }
+  | { kind: "gridRow"; rowId: number };
+const tagTypeModalOrigin = ref<TagTypeModalOrigin | null>(null);
 
 const {
   agThemeVars,
@@ -147,21 +182,15 @@ const {
   applyQuickFilter,
   persistGridState,
   gridApi,
-} = useCmsTagGrid({ isDark, t });
-
-const isLoading = ref(false);
-const isSaving = ref(false);
-const isCreating = ref(false);
-const loadError = ref<string | null>(null);
-const saveError = ref<string | null>(null);
-const createError = ref<string | null>(null);
-const rowData = ref<CmsTagGridRow[]>([]);
-const tagsData = ref<Tag[]>([]);
-const tagTypesData = ref<TagType[]>([]);
-
-const createModalOpen = ref(false);
-const createForm = ref<CreateTagFormState>(buildEmptyTagForm());
-const createExtraLangs = ref({ en: false, fr: false });
+} = useCmsTagGrid({
+  isDark,
+  t,
+  getTagTypes: () => tagTypesData.value,
+  localize: (map) => localizeValue(map),
+  onCreateTagTypeRequest: ({ rowId, initialName }) => {
+    openTagTypeModal(initialName, { kind: "gridRow", rowId });
+  },
+});
 const visibleCreateLangs = computed<SupportedLang[]>(() => {
   const result: SupportedLang[] = ["nl"];
   if (createExtraLangs.value.en) result.push("en");
@@ -231,10 +260,11 @@ async function persistTagPatch(
 async function onCellEditingStopped(
   event: CellEditingStoppedEvent<CmsTagGridRow>,
 ): Promise<void> {
-  if (!event.data || !event.colDef.field) {
+  if (!event.data) {
     return;
   }
 
+  const colId = event.column?.getColId();
   const field = event.colDef.field;
   const newValue = event.value;
   const oldValue = event.oldValue;
@@ -254,12 +284,21 @@ async function onCellEditingStopped(
       await persistTagPatch(event.data, { name: nextMap });
     } else if (field === "public") {
       await persistTagPatch(event.data, { public: Boolean(newValue) });
-    } else {
+    } else if (colId === "tagType") {
+      const newId = typeof newValue === "number" ? newValue : Number(newValue);
+      if (!Number.isFinite(newId) || newId <= 0) {
+        return;
+      }
+      await persistTagPatch(event.data, { tag_type: newId });
+      event.api.refreshCells({ rowNodes: [event.node], columns: ["tagType"], force: true });
+    } else if (field) {
       event.node.setDataValue(field, oldValue);
       return;
     }
   } catch {
-    event.node.setDataValue(field, oldValue);
+    if (field) {
+      event.node.setDataValue(field, oldValue);
+    }
   } finally {
     isSaving.value = false;
     persistGridState();
@@ -302,6 +341,66 @@ function setCreatePublic(value: boolean): void {
 
 function setCreateExtraLang(lang: "en" | "fr", value: boolean): void {
   createExtraLangs.value = { ...createExtraLangs.value, [lang]: value };
+}
+
+function openTagTypeModal(initialName: string, origin: TagTypeModalOrigin): void {
+  tagTypeModalInitialName.value = initialName;
+  tagTypeModalOrigin.value = origin;
+  tagTypeModalError.value = null;
+  tagTypeModalOpen.value = true;
+}
+
+function openTagTypeModalFromCreate(initialName: string): void {
+  openTagTypeModal(initialName, { kind: "createTagModal" });
+}
+
+function closeTagTypeModal(): void {
+  tagTypeModalOpen.value = false;
+  tagTypeModalError.value = null;
+  tagTypeModalInitialName.value = "";
+  tagTypeModalOrigin.value = null;
+}
+
+async function submitCreateTagType(payload: { name: LanguageMap }): Promise<void> {
+  if (Object.keys(payload.name).length === 0) {
+    tagTypeModalError.value = t("cms.create.validation.tagTypeNameRequired");
+    return;
+  }
+
+  isCreatingTagType.value = true;
+  tagTypeModalError.value = null;
+  try {
+    const created = await createTagType({ name: payload.name });
+    tagTypesData.value = [...tagTypesData.value, created];
+
+    const origin = tagTypeModalOrigin.value;
+    if (origin?.kind === "createTagModal") {
+      createForm.value = { ...createForm.value, tagTypeId: created.id };
+    } else if (origin?.kind === "gridRow") {
+      const row = rowData.value.find((r) => r.id === origin.rowId);
+      if (row) {
+        try {
+          await persistTagPatch(row, { tag_type: created.id });
+          gridApi.value?.refreshCells({ columns: ["tagType"], force: true });
+        } catch {
+          // saveError already set by persistTagPatch
+        }
+      }
+    }
+
+    closeTagTypeModal();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message.toLowerCase().includes("conflict") || message.includes("409")) {
+      tagTypeModalError.value = t("cms.create.validation.tagTypeNameConflict");
+    } else {
+      tagTypeModalError.value = error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+    }
+  } finally {
+    isCreatingTagType.value = false;
+  }
 }
 
 async function submitCreateTag(): Promise<void> {
@@ -377,6 +476,14 @@ defineExpose({
     setCreateTagType,
     setCreatePublic,
     setCreateExtraLang,
+    tagTypeModalOpen,
+    tagTypeModalInitialName,
+    tagTypeModalError,
+    isCreatingTagType,
+    openTagTypeModal,
+    openTagTypeModalFromCreate,
+    closeTagTypeModal,
+    submitCreateTagType,
     removeConfirmOpen,
     removeConfirmLoading,
     removeConfirmError,

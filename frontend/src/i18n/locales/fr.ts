@@ -140,6 +140,8 @@ export default {
       tagTitle: "Nouveau tag",
       submitTag: "Ajouter le tag",
       selectTagType: "Choisissez un type...",
+      tagTypeTitle: "Nouveau type de tag",
+      submitTagType: "Ajouter le type de tag",
       finalized: "Marquer comme finalisee",
       languages: "Langues supplementaires",
       submit: "Ajouter la production",
@@ -171,6 +173,8 @@ export default {
         requiredOneLanguage: "Remplissez au moins 1 langue pour: {field}",
         imageRequired: "Remplissez au moins une URL d'image (dans n'importe quelle langue).",
         tagTypeRequired: "Sélectionnez un type de tag.",
+        tagTypeNameRequired: "Remplissez au moins 1 langue pour le nom du type de tag.",
+        tagTypeNameConflict: "Un type de tag avec ce nom existe déjà.",
       },
       admin: {
         adminTitle: "Nouvel admin",
@@ -200,6 +204,12 @@ export default {
     },
     admin: {
       noPermission: "Vous n'avez pas la permission de administrer les admins.",
+    },
+    tagTypePicker: {
+      placeholder: "Rechercher ou saisir un type...",
+      createNew: "+ Créer un nouveau type '{name}'",
+      createNewEmpty: "+ Créer un nouveau type de tag",
+      noMatch: "Aucun type correspondant",
     },
   },
   productionsPage: {
