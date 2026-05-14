@@ -41,7 +41,7 @@
       -->
       <div
         v-if="dateSummary.line"
-        class="absolute right-0 top-0 z-10 max-w-[12rem] text-right font-serif text-base font-semibold leading-tight text-ink-secondary tabular-nums sm:max-w-[14rem] md:text-lg"
+        class="absolute right-0 top-0 z-10 max-w-[12rem] text-right font-serif text-base leading-tight text-ink-secondary tabular-nums sm:max-w-[14rem] md:text-lg"
       >
         <span class="whitespace-nowrap">{{ dateSummary.line }}</span>
         <span
@@ -58,7 +58,7 @@
 
       <div class="min-w-0">
         <h2
-          class="font-serif text-2xl font-semibold leading-tight tracking-tight text-ink-primary md:text-3xl"
+          class="font-serif text-2xl font-semibold leading-tight tracking-tight text-ink-primary md:text-2xl"
           :class="dateSummary.line ? 'pr-[13rem] sm:pr-[15rem]' : ''"
         >
           {{ title }}
@@ -66,14 +66,14 @@
 
         <p
           v-if="artist"
-          class="mt-2 font-serif text-lg italic text-ink-secondary md:text-xl"
+          class="mt-1 font-serif text-lg italic text-ink-secondary md:text-lg"
         >
           {{ artist }}
         </p>
 
         <p
           v-if="hallsText"
-          class="mt-4 flex items-start gap-1.5 text-base text-ink-secondary"
+          class="mt-4 flex items-start gap-1 text-sm text-ink-secondary"
         >
           <svg
             class="mt-0.5 size-[0.9rem] shrink-0 text-ink-tertiary"

@@ -37,7 +37,7 @@
         </div>
       </section>
 
-      <section class="mx-auto max-w-7xl px-6 pb-20 pt-10 lg:px-10">
+      <section class="mx-auto max-w-[82rem] px-6 pb-20 pt-10 lg:px-10">
         <div v-if="!loading" class="mb-4 space-y-3">
           <div
             class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-stretch sm:gap-3"
@@ -333,7 +333,7 @@
           >
             <div class="flex min-w-0 flex-wrap items-center gap-2">
               <span
-                class="text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
+                class="text-[15px] pr-1 text-ink-secondary"
               >{{ t("productionsPage.activeFiltersLabel") }}</span>
               <button
                 v-for="tid in filterBannerTagIds"
@@ -400,7 +400,7 @@
           <p
             v-if="displayedFilteredTotal !== null"
             :class="[
-              'mb-3 font-serif text-lg italic leading-normal text-ink-secondary tabular-nums',
+              'mb-2 text-sm italic leading-normal text-ink-secondary tabular-nums',
               !filterBannerHasNonSearchChips() && 'mt-6',
             ]"
             aria-live="polite"
@@ -439,7 +439,7 @@
               aria-label="Pagination"
             >
               <p
-                class="text-center font-serif text-base italic text-ink-secondary tabular-nums sm:text-left"
+                class="text-center text-sm text-ink-secondary tabular-nums sm:text-left"
               >
                 {{
                   t("productionsPage.showingRange", {
@@ -463,7 +463,7 @@
                   {{ t("productionsPage.prevPage") }}
                 </button>
                 <div
-                  class="flex items-center gap-2 font-serif text-base tabular-nums text-ink-secondary"
+                  class="flex items-center gap-2 text-sm tabular-nums text-ink-secondary"
                 >
                   <span class="whitespace-nowrap">{{
                     t("productionsPage.pageWord")
@@ -1561,17 +1561,20 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
   min-width: 6rem;
 }
 
-.productions-view__genre-collapsed-row-pill,
-.productions-view__tag-filter-panel-pill {
-  @apply cursor-pointer rounded-sm border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-100;
-}
+.productions-view__genre-collapsed-row-pill {  
+  @apply cursor-pointer rounded-sm border px-3 py-1.5 text-[12px] font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-100;  
+}  
+
+.productions-view__tag-filter-panel-pill {  
+  @apply cursor-pointer rounded-sm border px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-100;  
+} 
 
 .productions-view__search-field {
   @apply box-border flex min-h-11 min-w-0 w-full flex-wrap items-center gap-1.5 rounded-md border border-surface-3 bg-surface-0 py-1.5 pl-2 pr-11 text-ink-primary transition focus-within:border-accent-outline dark:bg-surface-1;
 }
 
 .productions-view__search-input {
-  @apply min-h-7 min-w-28 flex-1 border-0 bg-transparent px-1 py-0 text-base leading-normal text-ink-primary placeholder:font-serif placeholder:italic placeholder:text-ink-tertiary focus:outline-none disabled:cursor-not-allowed disabled:opacity-100;
+  @apply min-h-7 min-w-28 flex-1 border-0 bg-transparent px-1 py-0 text-base leading-normal text-ink-primary placeholder:text-ink-tertiary focus:outline-none disabled:cursor-not-allowed disabled:opacity-100;
 }
 
 .productions-view__search-input::-webkit-search-cancel-button,
@@ -1593,11 +1596,11 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
 }
 
 .productions-view__filter-banner {
-  @apply mb-6 mt-6 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-3 rounded-md border border-surface-3 bg-surface-1 px-5 py-4 dark:bg-surface-1/60;
+  @apply mb-4 mt-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-2 border-t border-surface-3 pt-5;
 }
 
 .productions-view__active-chip {
-  @apply inline-flex cursor-pointer items-center gap-1.5 rounded-sm border border-surface-3 bg-surface-0 py-1.5 pl-3 pr-2 text-sm text-ink-primary transition hover:bg-surface-2 disabled:opacity-100 dark:bg-surface-1;
+  @apply inline-flex cursor-pointer items-center gap-1.5 rounded-sm border border-surface-3 bg-surface-0 py-1 pl-2.5 pr-1.5 text-[13px] text-ink-primary transition hover:bg-surface-2 disabled:opacity-100 dark:bg-surface-1;
 }
 
 .productions-view__alert {

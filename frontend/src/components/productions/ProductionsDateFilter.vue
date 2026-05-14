@@ -36,7 +36,7 @@
     >
       <section class="space-y-3">
         <h3
-          class="text-xs font-semibold uppercase tracking-[0.2em] text-ink-secondary"
+          class="text-xs font-semibold uppercase tracking-[0.15em] text-ink-primary"
         >
           {{ t("productionsPage.filterByYearRange") }}
         </h3>
@@ -134,7 +134,7 @@
 
       <section class="space-y-3">
         <h3
-          class="text-xs font-semibold uppercase tracking-[0.2em] text-ink-secondary"
+          class="text-xs font-semibold uppercase tracking-[0.15em] text-ink-primary"
         >
           {{ t("productionsPage.filterByDateRange") }}
         </h3>
