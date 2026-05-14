@@ -973,7 +973,7 @@ async function fetchProductionsPageData(page0: number) {
   syncFilterBannerFromApplied();
   eventsByProduction.value = eventsMap;
   thumbnailUrlByProductionId.value = new Map();
-  await loadThumbnailsForProductionIds(ids);
+  void loadThumbnailsForProductionIds(ids);
 }
 
 function toggleTag(id: number) {

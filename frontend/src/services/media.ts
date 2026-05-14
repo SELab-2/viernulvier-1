@@ -65,9 +65,6 @@ function handleProductionImagesBatchFetchError(
   productionIds: readonly number[],
   err: unknown,
 ): void {
-  if (err instanceof ApiError && err.status === 404) {
-    return;
-  }
   const slug =
     productionIds.length <= 5
       ? `[production ids: ${productionIds.join(",")}]`
@@ -83,8 +80,9 @@ function handleProductionImagesBatchFetchError(
 
 /**
  * Batch-fetch images (with crops) for many productions in one HTTP round-trip.
- * Missing or failed lookups yield an empty array for that id (same spirit as
- * {@link getImagesForProductionOrEmpty}).
+ * Successful responses map each id to an array (possibly empty). Request failures
+ * (including 404 on this route, which signals routing/deploy mismatch) log with 
+ * {@link console.warn} and degrade to empty lists per id.
  */
 export async function getImagesForProductionsOrEmpty(
   productionIds: number[],

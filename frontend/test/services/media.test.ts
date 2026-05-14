@@ -119,7 +119,17 @@ describe("getImagesForProductionsOrEmpty", () => {
     expect(f).not.toHaveBeenCalled();
   });
 
-  it("returns empty lists and warns on non-404 HTTP errors", async () => {
+  it("returns empty lists and warns on HTTP 404", async () => {
+    vi.stubGlobal("fetch", mockErrorFetch(404, { error: "Not Found" }));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const out = await getImagesForProductionsOrEmpty([9]);
+    expect(out.get(9)).toEqual([]);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0]![0])).toContain("404");
+    warn.mockRestore();
+  });
+
+  it("returns empty lists and warns on HTTP 503", async () => {
     vi.stubGlobal("fetch", mockErrorFetch(503, { error: "Unavailable" }));
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const out = await getImagesForProductionsOrEmpty([9]);
