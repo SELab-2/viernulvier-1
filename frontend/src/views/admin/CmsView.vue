@@ -63,7 +63,7 @@
         <CmsProductionsTab v-if="activeTab === 'productions'" />
         <CmsTagsTab v-else-if="activeTab === 'tags'" />
         <CmsAdminsTab v-else-if="activeTab === 'admins'" />
-        <CmsBlogpostsTab v-else />
+        <CmsBlogPostsTab v-else />
       </div>
     </main>
 
@@ -80,7 +80,7 @@ import AdminNavbar from "@/components/nav/AdminNavbar.vue";
 import CmsAdminsTab from "@/components/admin/cms/admins/CmsAdminsTab.vue";
 import CmsProductionsTab from "@/components/admin/cms/productions/CmsProductionsTab.vue";
 import CmsTagsTab from "@/components/admin/cms/tags/CmsTagsTab.vue";
-import CmsBlogpostsTab from "@/components/admin/cms/blogposts/CmsBlogpostsTab.vue";
+import CmsBlogPostsTab from "@/components/admin/cms/blogposts/CmsBlogPostsTab.vue";
 import { useDarkMode } from "@/composables/useDarkMode";
 
 type CmsTabId = "productions" | "tags" | "admins" | "blogposts";

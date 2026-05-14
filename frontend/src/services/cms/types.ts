@@ -60,6 +60,14 @@ export interface CmsTagGridRow {
   productionCount: number;
 }
 
+export interface CmsBlogPostGridRow {
+  id: number;
+  title: string;
+  content: string;
+  publishedAt: string | null;
+  productions: number[];
+}
+
 export type TagInlineEditableField = "name" | "tagType" | "public";
 
 export interface CreateTagFormState {

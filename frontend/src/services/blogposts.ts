@@ -107,8 +107,8 @@ export async function replaceBlogPost(id: number, data: ReplaceBlogPostInput): P
  * @example
  * await updateBlogPost(3, { published_at: new Date().toISOString() });
  */
-export async function updateBlogPost(id: number, data: UpdateBlogPostInput): Promise<BlogPost> {
-  return await apiFetch<BlogPost>(`/blog/post/${id}`, { method: "PATCH", body: data });
+export async function updateBlogPost(id: number, data: UpdateBlogPostInput): Promise<BlogPostWithBackwardsRefs> {
+  return await apiFetch<BlogPostWithBackwardsRefs>(`/blog/post/${id}`, { method: "PATCH", body: data });
 }
 
 /**
