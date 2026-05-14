@@ -1,8 +1,8 @@
 <template>
-  <div v-if="open" class="cms-modal-overlay" @click.self="emit('close')">
+  <div v-if="open" class="cms-modal-overlay" data-testid="cms-create-tag-type-modal" @click.self="emit('close')">
     <section class="cms-modal" role="dialog" aria-modal="true">
       <header class="cms-modal-header">
-        <h2 class="text-xl font-bold text-ink-primary">{{ t("cms.create.tagTitle") }}</h2>
+        <h2 class="text-xl font-bold text-ink-primary">{{ t("cms.create.tagTypeTitle") }}</h2>
         <button type="button" class="cms-side-close" @click="emit('close')">
           {{ t("cms.panel.close") }}
         </button>
@@ -16,16 +16,16 @@
             <button
               type="button"
               class="cms-language-pill"
-              :class="{ active: createExtraLangs.en }"
-              @click="emit('update-extra-lang', 'en', !createExtraLangs.en)"
+              :class="{ active: extraLangs.en }"
+              @click="toggleExtraLang('en')"
             >
               EN
             </button>
             <button
               type="button"
               class="cms-language-pill"
-              :class="{ active: createExtraLangs.fr }"
-              @click="emit('update-extra-lang', 'fr', !createExtraLangs.fr)"
+              :class="{ active: extraLangs.fr }"
+              @click="toggleExtraLang('fr')"
             >
               FR
             </button>
@@ -34,51 +34,25 @@
 
         <fieldset class="cms-form-block">
           <legend class="cms-form-legend">
-            {{ t("cms.columns.tagName") }}
+            {{ t("cms.columns.tagType") }}
             <span class="cms-required">*</span>
           </legend>
 
           <div :class="langGridClass">
-            <label v-for="lang in visibleCreateLangs" :key="`name-${lang}`" class="cms-form-lang-field">
+            <label v-for="lang in visibleLangs" :key="`name-${lang}`" class="cms-form-lang-field">
               <span class="cms-lang-label">{{ lang.toUpperCase() }}</span>
               <input
-                :value="createForm.name[lang]"
+                v-model="name[lang]"
                 type="text"
                 class="cms-text-input"
-                :data-testid="`cms-create-tag-name-${lang}`"
-                @input="emit('update-name', lang, ($event.target as HTMLInputElement).value)"
+                :data-testid="`cms-create-tag-type-name-${lang}`"
               />
             </label>
           </div>
         </fieldset>
 
-        <fieldset class="cms-form-block">
-          <legend class="cms-form-legend">
-            {{ t("cms.columns.tagType") }}
-            <span class="cms-required">*</span>
-          </legend>
-          <TagTypePicker
-            :model-value="createForm.tagTypeId"
-            :tag-types="tagTypes"
-            :localize="(map) => localizeValue(map)"
-            data-testid="cms-create-tag-type"
-            @update:model-value="(id) => emit('update-tag-type', id)"
-            @create-request="(initial) => emit('request-create-tag-type', initial)"
-          />
-        </fieldset>
-
-        <label class="cms-toggle-row">
-          <input
-            :checked="createForm.public"
-            type="checkbox"
-            data-testid="cms-create-tag-public"
-            @change="emit('update-public', ($event.target as HTMLInputElement).checked)"
-          />
-          <span>{{ t("cms.columns.public") }}</span>
-        </label>
-
-        <p v-if="createError" class="text-sm text-red-700">
-          {{ createError }}
+        <p v-if="error" class="text-sm text-red-700" data-testid="cms-create-tag-type-error">
+          {{ error }}
         </p>
       </div>
 
@@ -89,10 +63,11 @@
         <button
           type="button"
           class="cms-side-save"
+          data-testid="cms-create-tag-type-submit"
           :disabled="isCreating"
-          @click="emit('submit')"
+          @click="submit"
         >
-          {{ isCreating ? t("general.saving") : t("cms.create.submitTag") }}
+          {{ isCreating ? t("general.saving") : t("cms.create.submitTagType") }}
         </button>
       </footer>
     </section>
@@ -100,47 +75,87 @@
 </template>
 
 <script setup lang="ts">
+import { computed, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import type { TagType } from "@viernulvier/shared";
-import type { CreateTagFormState } from "@/services/cms";
 import type { SupportedLang } from "@/i18n";
+import { emptyLangRecord } from "@/services/cms/helpers";
+import { toLanguageMap } from "@/services/cms";
 import type { LanguageMap } from "@/utils/language-utils";
-import TagTypePicker from "@/components/admin/cms/tags/TagTypePicker.vue";
 
-defineProps<{
+const props = defineProps<{
   open: boolean;
-  createForm: CreateTagFormState;
-  createExtraLangs: { en: boolean; fr: boolean };
-  visibleCreateLangs: SupportedLang[];
-  langGridClass: string;
-  tagTypes: TagType[];
-  createError: string | null;
+  /** Pre-fill the active language input when opening (e.g. text typed into the picker). */
+  initialName?: string;
+  /** Which language `initialName` belongs to. Defaults to "nl". */
+  initialLang?: SupportedLang;
   isCreating: boolean;
-  localizeValue: (map: LanguageMap | null | undefined) => string;
+  error: string | null;
 }>();
 
 const emit = defineEmits<{
   (e: "close"): void;
-  (e: "submit"): void;
-  (e: "update-name", lang: SupportedLang, value: string): void;
-  (e: "update-tag-type", id: number | null): void;
-  (e: "update-public", value: boolean): void;
-  (e: "update-extra-lang", lang: "en" | "fr", value: boolean): void;
-  (e: "request-create-tag-type", initialName: string): void;
+  (e: "submit", payload: { name: LanguageMap }): void;
 }>();
 
 const { t } = useI18n();
+
+const name = reactive<Record<SupportedLang, string>>(emptyLangRecord());
+const extraLangs = ref({ en: false, fr: false });
+
+const visibleLangs = computed<SupportedLang[]>(() => {
+  const result: SupportedLang[] = ["nl"];
+  if (extraLangs.value.en) result.push("en");
+  if (extraLangs.value.fr) result.push("fr");
+  return result;
+});
+
+const langGridClass = computed(() => {
+  const count = visibleLangs.value.length;
+  if (count <= 1) return "cms-lang-grid cms-lang-grid-single";
+  if (count === 2) return "cms-lang-grid cms-lang-grid-double";
+  return "cms-lang-grid";
+});
+
+function toggleExtraLang(lang: "en" | "fr"): void {
+  extraLangs.value = { ...extraLangs.value, [lang]: !extraLangs.value[lang] };
+}
+
+function resetForm(): void {
+  const fresh = emptyLangRecord();
+  for (const key of Object.keys(name) as SupportedLang[]) {
+    name[key] = fresh[key];
+  }
+  extraLangs.value = { en: false, fr: false };
+}
+
+watch(
+  () => props.open,
+  (isOpen) => {
+    if (isOpen) {
+      resetForm();
+      const lang = props.initialLang ?? "nl";
+      if (props.initialName !== undefined) {
+        name[lang] = props.initialName;
+      }
+    }
+  },
+  { immediate: true },
+);
+
+function submit(): void {
+  emit("submit", { name: toLanguageMap(name) });
+}
 </script>
 
 <style scoped>
 @reference "@/style.css";
 
 .cms-modal-overlay {
-  @apply fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4;
+  @apply fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4;
 }
 
 .cms-modal {
-  @apply flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-surface-3 bg-surface-0;
+  @apply flex max-h-[85vh] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-surface-3 bg-surface-0;
 }
 
 .cms-modal-header {
@@ -201,10 +216,6 @@ const { t } = useI18n();
 
 .cms-text-input {
   @apply rounded-md border border-surface-3 bg-surface-0 px-3 py-2 text-sm text-ink-primary;
-}
-
-.cms-toggle-row {
-  @apply flex items-center gap-2 text-sm text-ink-primary;
 }
 
 .cms-side-close {

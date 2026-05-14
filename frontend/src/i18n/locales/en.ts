@@ -144,6 +144,8 @@ export default {
       tagTitle: "New tag",
       submitTag: "Add tag",
       selectTagType: "Choose a type...",
+      tagTypeTitle: "New tag type",
+      submitTagType: "Add tag type",
       finalized: "Mark as finalized",
       languages: "Extra languages",
       submit: "Add production",
@@ -176,6 +178,8 @@ export default {
         requiredOneLanguage: "Fill at least 1 language for: {field}",
         imageRequired: "Fill at least one image URL (in any language).",
         tagTypeRequired: "Select a tag type.",
+        tagTypeNameRequired: "Fill at least 1 language for the tag type name.",
+        tagTypeNameConflict: "A tag type with this name already exists.",
       },
       admin: {
         adminTitle: "New admin",
@@ -205,6 +209,12 @@ export default {
     },
     admin: {
       noPermission: "You don't have permissions to manage admins.",
+    },
+    tagTypePicker: {
+      placeholder: "Search or type a type...",
+      createNew: "+ Create new type '{name}'",
+      createNewEmpty: "+ Create new tag type",
+      noMatch: "No matching types",
     },
   },
   productionsPage: {

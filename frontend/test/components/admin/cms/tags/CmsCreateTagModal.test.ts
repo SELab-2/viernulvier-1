@@ -45,18 +45,20 @@ describe("CmsCreateTagModal", () => {
     expect(events?.[events.length - 1]).toEqual(["nl", "Drama"]);
   });
 
-  it("emits update-tag-type with parsed number on select change", async () => {
+  it("emits update-tag-type when a type is picked from the dropdown", async () => {
     const wrapper = mountModal();
-    await wrapper.get('[data-testid="cms-create-tag-type"]').setValue("1");
+    await wrapper.get('[data-testid="cms-create-tag-type"]').trigger("focus");
+    await wrapper.get('[data-testid="tag-type-picker-item-1"]').trigger("click");
     expect(wrapper.emitted("update-tag-type")?.[0]).toEqual([1]);
   });
 
-  it("emits update-tag-type with null when the placeholder option is chosen", async () => {
+  it("emits request-create-tag-type when the create-new affordance is clicked", async () => {
     const wrapper = mountModal();
-    const select = wrapper.get('[data-testid="cms-create-tag-type"]').element as HTMLSelectElement;
-    select.value = "";
-    await wrapper.get('[data-testid="cms-create-tag-type"]').trigger("change");
-    expect(wrapper.emitted("update-tag-type")?.[0]).toEqual([null]);
+    const input = wrapper.get('[data-testid="cms-create-tag-type"]');
+    await input.trigger("focus");
+    await input.setValue("Workshop");
+    await wrapper.get('[data-testid="tag-type-picker-create"]').trigger("click");
+    expect(wrapper.emitted("request-create-tag-type")?.[0]).toEqual(["Workshop"]);
   });
 
   it("emits update-public on checkbox toggle", async () => {
@@ -88,9 +90,10 @@ describe("CmsCreateTagModal", () => {
     expect(wrapper.emitted("submit")).toHaveLength(1);
   });
 
-  it("falls back to #id label when tag type has no localisable name", () => {
+  it("falls back to #id label when tag type has no localisable name", async () => {
     const wrapper = mountModal();
-    expect(wrapper.text()).toContain("#2");
+    await wrapper.get('[data-testid="cms-create-tag-type"]').trigger("focus");
+    expect(wrapper.get('[data-testid="tag-type-picker-item-2"]').text()).toContain("#2");
   });
 
   it("disables the save button while creating", () => {

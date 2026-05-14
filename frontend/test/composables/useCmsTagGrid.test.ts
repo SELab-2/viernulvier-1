@@ -4,18 +4,24 @@ import { useCmsTagGrid } from "@/composables/useCmsTagGrid";
 
 describe("useCmsTagGrid", () => {
   it("declares the tag column definitions", () => {
-    const { columnDefs } = useCmsTagGrid({ isDark: ref(false), t: (key) => key });
+    const { columnDefs } = useCmsTagGrid({
+      isDark: ref(false),
+      t: (key) => key,
+      getTagTypes: () => [],
+      localize: () => "",
+      onCreateTagTypeRequest: () => {},
+    });
 
     expect(columnDefs.value).toHaveLength(4);
 
     const name = columnDefs.value.find((c) => c.field === "name");
-    const tagType = columnDefs.value.find((c) => c.field === "tagType");
+    const tagType = columnDefs.value.find((c) => c.colId === "tagType");
     const publicField = columnDefs.value.find((c) => c.field === "public");
     const productionCount = columnDefs.value.find((c) => c.field === "productionCount");
 
     expect(name?.editable).toBe(true);
     expect(name?.flex).toBe(1);
-    expect(tagType?.editable).toBe(false);
+    expect(tagType?.editable).toBe(true);
     expect(publicField?.editable).toBe(true);
     expect(publicField?.cellEditor).toBe("agCheckboxCellEditor");
     expect(productionCount?.editable).toBe(false);
@@ -23,7 +29,13 @@ describe("useCmsTagGrid", () => {
   });
 
   it("builds translated column options", () => {
-    const { gridColumnOptions } = useCmsTagGrid({ isDark: ref(false), t: (key) => key });
+    const { gridColumnOptions } = useCmsTagGrid({
+      isDark: ref(false),
+      t: (key) => key,
+      getTagTypes: () => [],
+      localize: () => "",
+      onCreateTagTypeRequest: () => {},
+    });
 
     expect(gridColumnOptions.value).toEqual([
       { colId: "name", label: "cms.columns.tagName" },
@@ -34,7 +46,13 @@ describe("useCmsTagGrid", () => {
   });
 
   it("exposes a pinned selection column definition", () => {
-    const { selectionColumnDef } = useCmsTagGrid({ isDark: ref(false), t: (key) => key });
+    const { selectionColumnDef } = useCmsTagGrid({
+      isDark: ref(false),
+      t: (key) => key,
+      getTagTypes: () => [],
+      localize: () => "",
+      onCreateTagTypeRequest: () => {},
+    });
 
     expect(selectionColumnDef.width).toBe(48);
     expect(selectionColumnDef.pinned).toBe("left");
@@ -42,7 +60,13 @@ describe("useCmsTagGrid", () => {
   });
 
   it("provides a non-editable defaultColDef with floating filter", () => {
-    const { defaultColDef } = useCmsTagGrid({ isDark: ref(false), t: (key) => key });
+    const { defaultColDef } = useCmsTagGrid({
+      isDark: ref(false),
+      t: (key) => key,
+      getTagTypes: () => [],
+      localize: () => "",
+      onCreateTagTypeRequest: () => {},
+    });
 
     expect(defaultColDef.editable).toBe(false);
     expect(defaultColDef.sortable).toBe(true);
