@@ -1531,7 +1531,7 @@ function dateSummaryFor(productionId: number) {
 function hallsTextFor(productionId: number) {
   const evs = eventsByProduction.value.get(productionId);
   const names = distinctHallNames(evs, hallsById.value, locale.value);
-  return names.join(" · ");
+  return names[0] ?? "";
 }
 
 function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip[] {
