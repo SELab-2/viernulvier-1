@@ -63,8 +63,8 @@ describe("ProductionListCard.vue", () => {
     });
     const h2 = wrapper.get("h2");
     expect(h2.text()).toContain("Titel");
-    expect(h2.classes().some((c) => c.includes("pr-[12.5rem]"))).toBe(true);
-    expect(h2.classes().some((c) => c.includes("sm:pr-[14.5rem]"))).toBe(true);
+    expect(h2.classes().some((c) => c.includes("pr-[12rem]"))).toBe(true);
+    expect(h2.classes().some((c) => c.includes("sm:pr-[14rem]"))).toBe(true);
     wrapper.unmount();
   });
 
