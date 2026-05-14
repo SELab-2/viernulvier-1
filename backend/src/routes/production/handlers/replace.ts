@@ -4,7 +4,7 @@ import { stringToInt } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, parseSchema, HttpError, HttpServerError } from "@/routes/helpers.js";
 import { getProductionById } from "./fetch.js";
 import { ProductionBodySchema } from "./body-schema.js";
-import { getFieldValue, hasOwn } from "./field-utils.js";
+import { getFieldValue } from "./field-utils.js";
 import z from "zod";
 
 const ReplaceColumns = [
