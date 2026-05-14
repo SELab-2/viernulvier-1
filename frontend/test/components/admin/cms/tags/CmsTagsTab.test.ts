@@ -4,6 +4,7 @@ import { defineComponent } from "vue";
 import type { Tag, TagType } from "@viernulvier/shared";
 import { i18n } from "@/i18n";
 import CmsTagsTab from "@/components/admin/cms/tags/CmsTagsTab.vue";
+import { ApiError } from "@/services/api";
 import * as tagsService from "@/services/tags";
 
 vi.mock("@/services/tags", () => ({
@@ -12,6 +13,7 @@ vi.mock("@/services/tags", () => ({
   updateTag: vi.fn(),
   createTag: vi.fn(),
   deleteTag: vi.fn(),
+  createTagType: vi.fn(),
 }));
 
 const gridStub = defineComponent({
@@ -61,6 +63,11 @@ describe("CmsTagsTab", () => {
     vi.spyOn(tagsService, "updateTag").mockResolvedValue({ ...mockPublicTag, public: false });
     vi.spyOn(tagsService, "createTag").mockResolvedValue({ ...mockPublicTag, id: 42 } as never);
     vi.spyOn(tagsService, "deleteTag").mockResolvedValue();
+    vi.spyOn(tagsService, "createTagType").mockResolvedValue({
+      id: 999,
+      old_id: null,
+      name: { nl: "Workshop" },
+    } as never);
   });
 
   it("loads tags and tag types on mount", async () => {
@@ -121,7 +128,7 @@ describe("CmsTagsTab", () => {
     });
   });
 
-  it("ignores non-editable fields", async () => {
+  it("ignores edits to fields that aren't wired for persistence", async () => {
     const wrapper = mountTab();
     await flushPromises();
     const api = (wrapper.vm as any).__test;
@@ -130,14 +137,15 @@ describe("CmsTagsTab", () => {
 
     await api.onCellEditingStopped({
       data: row,
-      colDef: { field: "tagType" },
-      value: "X",
-      oldValue: "Genre",
+      colDef: { field: "productionCount" },
+      column: { getColId: () => "productionCount" },
+      value: 99,
+      oldValue: 3,
       node: { setDataValue },
     });
 
     expect(tagsService.updateTag).not.toHaveBeenCalled();
-    expect(setDataValue).toHaveBeenCalledWith("tagType", "Genre");
+    expect(setDataValue).toHaveBeenCalledWith("productionCount", 3);
   });
 
   it("skips persistence when value did not change", async () => {
@@ -351,6 +359,223 @@ describe("CmsTagsTab", () => {
     });
 
     expect(api.saveError.value).toBeTruthy();
+  });
+
+  describe("tag-type creation flow", () => {
+    it("openTagTypeModalFromCreate opens the sub-modal with createTagModal origin", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.openTagTypeModalFromCreate("Workshop");
+
+      expect(api.tagTypeModalOpen.value).toBe(true);
+      expect(api.tagTypeModalInitialName.value).toBe("Workshop");
+    });
+
+    it("closeTagTypeModal clears state", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.openTagTypeModalFromCreate("Something");
+      api.closeTagTypeModal();
+
+      expect(api.tagTypeModalOpen.value).toBe(false);
+      expect(api.tagTypeModalInitialName.value).toBe("");
+      expect(api.tagTypeModalError.value).toBeNull();
+    });
+
+    it("rejects an empty name without calling the API", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.openTagTypeModalFromCreate("");
+      await api.submitCreateTagType({ name: {} });
+
+      expect(tagsService.createTagType).not.toHaveBeenCalled();
+      expect(api.tagTypeModalError.value).toBeTruthy();
+    });
+
+    it("rejects a duplicate name client-side before calling the API", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.openTagTypeModalFromCreate("Genre");
+      await api.submitCreateTagType({ name: { nl: "  GENRE  " } });
+
+      expect(tagsService.createTagType).not.toHaveBeenCalled();
+      expect(api.tagTypeModalError.value).toMatch(/already exists|bestaat al|existe déjà/i);
+    });
+
+    it("creates a new type and auto-selects it in the create-tag form", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.openCreateModal();
+      api.openTagTypeModalFromCreate("Workshop");
+      await api.submitCreateTagType({ name: { nl: "Workshop" } });
+      await flushPromises();
+
+      expect(tagsService.createTagType).toHaveBeenCalledWith({ name: { nl: "Workshop" } });
+      expect(api.createForm.value.tagTypeId).toBe(999);
+      expect(api.tagTypeModalOpen.value).toBe(false);
+      expect(api.tagTypesData.value).toHaveLength(2);
+    });
+
+    it("creates a new type from a grid row and patches the tag's tag_type", async () => {
+      const updated = { ...mockPublicTag, tag_type: 999 as never };
+      vi.spyOn(tagsService, "updateTag").mockResolvedValueOnce(updated as never);
+
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+      const row = api.rowData.value[0];
+
+      api.openTagTypeModal("Workshop", { kind: "gridRow", rowId: row.id });
+      api.gridApi.value = { refreshCells: vi.fn() };
+      await api.submitCreateTagType({ name: { nl: "Workshop" } });
+      await flushPromises();
+
+      expect(tagsService.updateTag).toHaveBeenCalledWith(row.id, { tag_type: 999 });
+      expect(api.tagTypeModalOpen.value).toBe(false);
+    });
+
+    it("ignores grid-row origin when the row no longer exists", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.openTagTypeModal("Workshop", { kind: "gridRow", rowId: 9999 });
+      await api.submitCreateTagType({ name: { nl: "Workshop" } });
+
+      expect(tagsService.updateTag).not.toHaveBeenCalled();
+      expect(api.tagTypeModalOpen.value).toBe(false);
+    });
+
+    it("swallows updateTag errors from grid-row patching without throwing", async () => {
+      vi.spyOn(tagsService, "updateTag").mockRejectedValueOnce(new Error("boom"));
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+      const row = api.rowData.value[0];
+
+      api.openTagTypeModal("Workshop", { kind: "gridRow", rowId: row.id });
+      await api.submitCreateTagType({ name: { nl: "Workshop" } });
+      await flushPromises();
+
+      expect(api.saveError.value).toMatch(/boom|fail|fout/i);
+      // Sub-modal still closes — the new type was created.
+      expect(api.tagTypeModalOpen.value).toBe(false);
+    });
+
+    it("maps a 409 ApiError to the conflict message", async () => {
+      vi.spyOn(tagsService, "createTagType").mockRejectedValueOnce(
+        new ApiError(409, "Conflict"),
+      );
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.openTagTypeModalFromCreate("Brand-new");
+      await api.submitCreateTagType({ name: { nl: "Brand-new" } });
+
+      expect(api.tagTypeModalError.value).toMatch(/already exists|bestaat al|existe déjà/i);
+      expect(api.tagTypeModalOpen.value).toBe(true);
+    });
+
+    it("surfaces a generic error when the API throws a non-conflict Error", async () => {
+      vi.spyOn(tagsService, "createTagType").mockRejectedValueOnce(new Error("network"));
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.openTagTypeModalFromCreate("Brand-new");
+      await api.submitCreateTagType({ name: { nl: "Brand-new" } });
+
+      expect(api.tagTypeModalError.value).toMatch(/network|fail|fout/i);
+    });
+
+    it("falls back to the generic save message for non-Error rejections", async () => {
+      vi.spyOn(tagsService, "createTagType").mockRejectedValueOnce("nope");
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.openTagTypeModalFromCreate("Brand-new");
+      await api.submitCreateTagType({ name: { nl: "Brand-new" } });
+
+      expect(api.tagTypeModalError.value).toBeTruthy();
+    });
+  });
+
+  describe("tag-type cell editing in the grid", () => {
+    it("persists a tag_type change initiated from the grid", async () => {
+      const updated = { ...mockPublicTag, tag_type: 2 as never };
+      vi.spyOn(tagsService, "updateTag").mockResolvedValueOnce(updated as never);
+
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+      const row = api.rowData.value[0];
+      const refreshCells = vi.fn();
+
+      await api.onCellEditingStopped({
+        data: row,
+        colDef: { field: undefined },
+        column: { getColId: () => "tagType" },
+        value: 2,
+        oldValue: 1,
+        node: { setDataValue: vi.fn() },
+        api: { refreshCells },
+      });
+
+      expect(tagsService.updateTag).toHaveBeenCalledWith(row.id, { tag_type: 2 });
+      expect(refreshCells).toHaveBeenCalled();
+    });
+
+    it("ignores invalid tag_type values without calling the API", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+      const row = api.rowData.value[0];
+
+      await api.onCellEditingStopped({
+        data: row,
+        colDef: { field: undefined },
+        column: { getColId: () => "tagType" },
+        value: NaN,
+        oldValue: 1,
+        node: { setDataValue: vi.fn() },
+        api: { refreshCells: vi.fn() },
+      });
+
+      expect(tagsService.updateTag).not.toHaveBeenCalled();
+    });
+
+    it("reverts the displayed value when persisting a tag_type change fails", async () => {
+      vi.spyOn(tagsService, "updateTag").mockRejectedValueOnce(new Error("boom"));
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+      const row = api.rowData.value[0];
+
+      // No field on colDef → no revert via setDataValue; ensure no crash.
+      await api.onCellEditingStopped({
+        data: row,
+        colDef: { field: undefined },
+        column: { getColId: () => "tagType" },
+        value: 2,
+        oldValue: 1,
+        node: { setDataValue: vi.fn() },
+        api: { refreshCells: vi.fn() },
+      });
+
+      expect(api.saveError.value).toBeTruthy();
+    });
   });
 
   describe("delete flow", () => {
