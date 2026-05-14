@@ -1,3 +1,4 @@
+import MarkdownIt from "markdown-it";
 import DOMPurify from "dompurify";
 
 function normalize(input: string): string {
@@ -75,4 +76,18 @@ export function normalizeQuote(input: string): string {
     .replace(/^["“”']+/, "")
     .replace(/["“”']+$/, "")
     .trim();
+}
+
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true,
+});
+
+export function parseAndSanitizeMd(input: string | null | undefined): string {
+  if (!input) return "";
+
+  const rawHtml = md.render(input);
+
+  return sanitizeHtml(rawHtml);
 }
