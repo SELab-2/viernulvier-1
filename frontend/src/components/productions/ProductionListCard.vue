@@ -56,7 +56,7 @@
         </span>
       </div>
 
-      <div class="min-w-0">
+      <div class="-mt-0.5 min-w-0">
         <h2
           class="font-serif text-2xl font-semibold leading-tight tracking-tight text-ink-primary md:text-2xl"
           :class="dateSummary.line ? 'pr-[13rem] sm:pr-[15rem]' : ''"
@@ -73,7 +73,7 @@
 
         <p
           v-if="hallsText"
-          class="mt-4 flex items-start gap-1 text-sm text-ink-secondary"
+          class="mt-3 flex items-start gap-1 text-sm text-ink-secondary"
         >
           <svg
             class="mt-0.5 size-[0.9rem] shrink-0 text-ink-tertiary"
@@ -94,7 +94,7 @@
 
       <div
         v-if="tagChips.length"
-        class="mt-auto flex flex-wrap items-center gap-2 pt-5"
+        class="mt-auto flex flex-wrap items-center gap-2 pt-4.5"
       >
         <span
           v-for="chip in tagChips"
