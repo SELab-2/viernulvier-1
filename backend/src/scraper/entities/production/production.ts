@@ -194,7 +194,9 @@ async function fetchLocalProductionIdByOldId(oldId: number): Promise<number | nu
 
 async function createLocalProductionFromViernulvierJson(
   production: ProductionJSON,
+  authToken: string,
   loginToken: string,
+  stats?: ScrapeRunStats,
 ): Promise<number | null> {
   const idSegment = production["@id"].split("/").pop();
   const id = idSegment !== undefined ? parseInt(idSegment, 10) : Number.NaN;
@@ -203,7 +205,7 @@ async function createLocalProductionFromViernulvierJson(
     return null;
   }
 
-  const tags = scrapeTagsByIds(production.genres);
+  const tags = await scrapeTagsByIds(id, production.genres, authToken, loginToken, stats);
   if (tags.length === 0) {
     console.warn(`Production old_id=${id} has no genres/tags; will create without tags.`);
   }
@@ -315,7 +317,7 @@ async function ensureProductionImported(
     );
     return null;
   }
-  const created = await createLocalProductionFromViernulvierJson(production, loginToken);
+  const created = await createLocalProductionFromViernulvierJson(production, authToken, loginToken, stats);
   if (created !== null) {
     await syncProductionGenreTagsWithPayload(
       created,

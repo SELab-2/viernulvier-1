@@ -201,7 +201,7 @@ async function resolveProductionId(
     return null;
   }
   productionIdByOldId[oldId] = id;
-  await syncProductionGenreTagsFromViernulvier(oldId, id, authToken, loginToken, stats);
+  // await syncProductionGenreTagsFromViernulvier(oldId, id, authToken, loginToken, stats);
   return id;
 }
 

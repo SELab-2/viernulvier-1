@@ -428,16 +428,19 @@ async function syncProductionGenreTagsInner(
   }
 }
 
-export function scrapeTagsByIds(
+export async function scrapeTagsByIds(
+    localProductionId: number,
     genres: unknown,
     authToken: string,
     loginToken?: string,
     stats?: ScrapeRunStats,
-  ): number[] {
+  ): Promise<number[]> {
   if (genres == null) return [];
+  const jwt = loginToken ?? await fetchScraperJwt();
+  const tagTypes = await ensureScraperTagTypeIds(jwt, stats);
   const refs = normalizeGenresField(genres);
   const out: number[] = [];
-  const jwt = loginToken ?? fetchScraperJwt();
+
 
   for (const ref of refs) {
     const iri = hydraIriString(ref);
