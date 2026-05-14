@@ -3,7 +3,7 @@
     <section class="cms-modal cms-remove-modal" role="dialog" aria-modal="true">
       <header class="cms-modal-header">
         <h2 class="text-xl font-bold text-ink-primary">
-          {{ t(titleKey) }}
+          {{ t(titleKey, { count }) }}
         </h2>
         <button type="button" class="cms-side-close" @click="$emit('close')">
           {{ t("cms.panel.close") }}

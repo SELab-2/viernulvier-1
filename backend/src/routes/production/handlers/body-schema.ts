@@ -19,7 +19,7 @@ export const ProductionBodySchema = ProductionSchema.pick({
   programme: true,
   info: true,
 }).extend({
-  tags: z.array(z.int().positive()).optional(),
+  tags: z.array(z.int()),
 });
 
 export const CreateProductionBodySchema = ProductionSchema.pick({
@@ -43,10 +43,12 @@ export const CreateProductionBodySchema = ProductionSchema.pick({
     info: true,
   }).partial().shape,
 ).extend({
-  tags: z.array(z.int().positive()).optional(),
+  tags: z.array(z.int()).optional(),
 });
 
-export const PartialProductionBodySchema = ProductionBodySchema.partial();
+export const PartialProductionBodySchema = ProductionBodySchema.partial().extend({
+  tags: z.array(z.int()).optional(),
+});
 const ProductionIdObjectSchema = ProductionSchema.pick({ id: true }) as z.ZodObject<{ id: z.ZodType }>;
 export const ProductionIdSchema = ProductionIdObjectSchema.shape["id"];
 

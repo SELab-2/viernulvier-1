@@ -38,8 +38,11 @@ const publishedAt = new Date("2026-03-15T10:00:00Z");
 const samplePost: BlogPost = {
   id: 42,
   blog: 1,
-  title: "Hello world",
-  content: { body: "This is the blog post body.\nIt has two lines." },
+  title: { nl: "Hallo wereld", en: "Hello world" },
+  content: { 
+    nl: "<p>Dit is de blog body.</p><p>Met twee regels.</p>", 
+    en: "<p>This is the blog body.</p><p>With two lines.</p>",
+  },
   published_at: publishedAt,
 };
 
@@ -47,6 +50,8 @@ async function mountView(id: string = "42", lang: "nl" | "fr" | "en" = "nl") {
   const router = createRouter({ history: createMemoryHistory(), routes });
   await router.push(`/${lang}/blog/post/${id}`);
   await router.isReady();
+
+  i18n.global.locale.value = lang;
 
   const wrapper = mount(BlogPostDetailView, {
     props: { id },
@@ -87,26 +92,25 @@ describe("BlogPostDetailView.vue", () => {
   // ── Happy path ──────────────────────────────────────────────────────────
 
   describe("when the post loads successfully", () => {
-    it("renders the post title", async () => {
+    it("renders the post title in the correct language", async () => {
       getBlogPostMock.mockResolvedValue(samplePost);
 
-      const { wrapper } = await mountView();
+      const { wrapper } = await mountView("42", "nl");
       await flushPromises();
 
-      expect(wrapper.find("h1").text()).toBe("Hello world");
-      wrapper.unmount();
+      expect(wrapper.find("h1").text()).toBe("Hallo wereld");
     });
 
-    it("renders the post body with preserved line breaks", async () => {
+    it("renders the content in the correct language", async () => {
       getBlogPostMock.mockResolvedValue(samplePost);
 
-      const { wrapper } = await mountView();
+      const { wrapper } = await mountView("42", "en");
       await flushPromises();
 
       const body = wrapper.find(".post-body");
       expect(body.exists()).toBe(true);
-      expect(body.text()).toContain("This is the blog post body.");
-      expect(body.text()).toContain("It has two lines.");
+      expect(body.text()).toContain("This is the blog body.");
+      expect(body.text()).toContain("With two lines.");
     });
 
     it("renders the published date", async () => {

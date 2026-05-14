@@ -9,16 +9,16 @@ vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
 let server: FastifyInstance;
 let sessionCookie: string;
 
-const originalBlog: Blog = { id: 1, name: "Tech Blog", description: "All about tech" };
+const originalBlog: Blog = { id: 1, name: { en: "Tech Blog" }, description: { en: "All about tech" } };
 
 const updatedBlogName: Blog = {
   ...originalBlog,
-  name: "Updated Tech Blog",
+  name: { en: "Updated Tech Blog" },
 };
 
 const updatedBlogDescription: Blog = {
   ...originalBlog,
-  description: "New description",
+  description: { en: "New description" },
 };
 
 const updatedBlogClearDescription: Blog = {
@@ -128,7 +128,7 @@ describe("Edit on blog route", () => {
       url: `/api/v1/blog/${originalBlog["id"]}`,
       cookies: { session: sessionCookie },
       payload: {
-        name: "Nonexistent blog",
+        name: { en: "Nonexistent blog" },
       },
     });
 

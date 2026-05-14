@@ -144,6 +144,10 @@ export default {
       admin: {
         noAdmins: "Geen admins gevonden.",
         addAdmin: "+ Admin toevoegen",
+        removeAdmin: "Geselecteerde admins verwijderen",
+        confirmRemoveDialogTitle: "Admin verwijderen? | Admins verwijderen?",
+        confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde admin. Dit kan niet ongedaan worden gemaakt. | Hiermee verwijder je definitief {count} geselecteerde admins. Dit kan niet ongedaan worden gemaakt.",
+        cannotRemoveSelf: "Je kan jezelf niet verwijderen.",
       },
     },
     create: {
@@ -253,7 +257,9 @@ export default {
     tagFiltersHeading: "Tags",
     viewMoreTagFilters: "Meer tonen",
     viewLessTagFilters: "Minder tonen",
-    selectDates: "Selecteer datums",
+    expandFiltersPanelAria: "Filters uitklappen",
+    collapseFiltersPanelAria: "Filters inklappen",
+    selectDates: "Kies datums",
     filterByYearRange: "Filter op jaren",
     yearRangeIntro:
       "Beperk producties tot voorstellingsjaren binnen dit bereik.",

@@ -30,9 +30,20 @@
     @set-column-visibility="setGridColumnVisibility"
   >
     <template #header-actions>
-      <button type="button" class="cms-add-button" data-testid="cms-add-admin" @click="openCreateModal">
-        {{ t("cms.actions.admin.addAdmin") }}
-      </button>
+      <div class="flex flex-col gap-2">
+        <button type="button" class="cms-add-button" data-testid="cms-add-admin" @click="openCreateModal">
+          {{ t("cms.actions.admin.addAdmin") }}
+        </button>
+        <button
+          type="button"
+          class="cms-remove-button"
+          data-testid="cms-remove-admins"
+          :disabled="selectedCount === 0"
+          @click="openRemoveConfirm"
+        >
+          {{ t("cms.actions.admin.removeAdmin") }}
+        </button>
+      </div>
     </template>
 
     <template #grid>
@@ -75,6 +86,17 @@
         @update-password="setCreatePassword"
         @update-super="setCreateSuper"
       />
+
+      <CmsRemoveConfirmModal
+        v-if="removeConfirmOpen"
+        :is-loading="removeConfirmLoading"
+        :error="removeConfirmError"
+        :count="selectedCount"
+        title-key="cms.actions.admin.confirmRemoveDialogTitle"
+        body-key="cms.actions.admin.confirmRemoveBody"
+        @close="closeRemoveConfirm"
+        @confirm="confirmRemove"
+      />
     </template>
   </CmsTabShell>
 </template>
@@ -86,10 +108,12 @@ import type { CellEditingStoppedEvent } from "ag-grid-community";
 import { useI18n } from "vue-i18n";
 import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
 import CmsCreateAdminModal from "@/components/admin/cms/admins/CmsCreateAdminModal.vue";
+import CmsRemoveConfirmModal from "@/components/admin/cms/CmsRemoveConfirmModal.vue";
 import { useCmsAdminGrid } from "@/composables/useCmsAdminGrid";
+import { useCmsRemove } from "@/composables/useCmsRemove";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { useAuthStore } from "@/stores/auth";
-import { getAllAdmins, updateAdmin, createAdmin } from "@/services/auth";
+import { getAllAdmins, deleteAdmin, updateAdmin, createAdmin } from "@/services/auth";
 import {
   applyUpdatedAdminToRow,
   buildAdminGridRows,
@@ -125,6 +149,7 @@ const {
   setGridColumnVisibility,
   applyQuickFilter,
   persistGridState,
+  gridApi,
 } = useCmsAdminGrid({ isDark, t });
 
 const isLoading = ref(false);
@@ -260,6 +285,27 @@ async function loadAdminsData(): Promise<void> {
   }
 }
 
+const {
+  removeConfirmOpen,
+  removeConfirmLoading,
+  removeConfirmError,
+  openRemoveConfirm,
+  closeRemoveConfirm,
+  confirmRemove,
+} = useCmsRemove<CmsAdminGridRow>({
+  selectedCount,
+  getSelectedRows: () => gridApi.value?.getSelectedRows() ?? [],
+  rowToId: (row) => row.id,
+  deleteFn: deleteAdmin,
+  t,
+  onConflictMessage: t("cms.actions.admin.cannotRemoveSelf"),
+  onSuccess: async () => {
+    selectedCount.value = 0;
+    gridApi.value?.deselectAll();
+    await loadAdminsData();
+  },
+});
+
 defineExpose({
   __test: {
     rowData,
@@ -282,6 +328,14 @@ defineExpose({
     setCreateUsername,
     setCreatePassword,
     setCreateSuper,
+    removeConfirmOpen,
+    removeConfirmLoading,
+    removeConfirmError,
+    openRemoveConfirm,
+    closeRemoveConfirm,
+    confirmRemove,
+    selectedCount,
+    gridApi,
   },
 });
 

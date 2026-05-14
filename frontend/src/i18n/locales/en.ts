@@ -121,7 +121,7 @@ export default {
       addTag: "+ Add Tag",
       removeTag: "Remove selected tags",
       tag: {
-        confirmRemoveDialogTitle: "Remove tags?",
+        confirmRemoveDialogTitle: "Remove tag? | Remove tags?",
         confirmRemoveBody: "This will permanently delete {count} selected tags. This cannot be undone.",
       },
       searchPlaceholder: "Search across all columns...",
@@ -144,6 +144,10 @@ export default {
       admin: {
         noAdmins: "No admins found.",
         addAdmin: "+ Add Admin",
+        removeAdmin: "Remove selected admins",
+        confirmRemoveDialogTitle: "Remove admin? | Remove admins?",
+        confirmRemoveBody: "This will permanently delete {count} selected admin. This cannot be undone. | This will permanently delete {count} selected admins. This cannot be undone.",
+        cannotRemoveSelf: "You cannot remove yourself.",
       },
     },
     create: {
@@ -253,7 +257,9 @@ export default {
     tagFiltersHeading: "Tags",
     viewMoreTagFilters: "Show more",
     viewLessTagFilters: "Show less",
-    selectDates: "Select dates",
+    expandFiltersPanelAria: "Expand filters",
+    collapseFiltersPanelAria: "Collapse filters",
+    selectDates: "Choose dates",
     filterByYearRange: "Filter by years",
     yearRangeIntro:
       "Limit productions to show years in this range (based on performance dates).",

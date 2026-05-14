@@ -144,6 +144,10 @@ export default {
       admin: {
         noAdmins: "Aucun admin trouvé",
         addAdmin: "+ Ajouter un Admin",
+        removeAdmin: "Supprimer les admins sélectionnés",
+        confirmRemoveDialogTitle: "Supprimer l'admin? | Supprimer les admins?",
+        confirmRemoveBody: "Cette action supprimera définitivement {count} admin sélectionnés. Cette opération est irréversible. | Cette action supprimera définitivement {count} admins sélectionnés. Cette opération est irréversible.",
+        cannotRemoveSelf: "Vous ne pouvez pas vous supprimer.",
       },
     },
     create: {
@@ -253,7 +257,9 @@ export default {
     tagFiltersHeading: "Tags",
     viewMoreTagFilters: "Voir plus",
     viewLessTagFilters: "Voir moins",
-    selectDates: "Sélectionner des dates",
+    expandFiltersPanelAria: "Développer les filtres",
+    collapseFiltersPanelAria: "Réduire les filtres",
+    selectDates: "Choisir les dates",
     filterByYearRange: "Filtrer par années",
     yearRangeIntro:
       "Limitez les productions aux années de représentation dans cet intervalle.",

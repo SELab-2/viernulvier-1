@@ -285,6 +285,7 @@ export async function updateOwnPassword(
  * @throws {ApiError} 401 — unauthenticated.
  * @throws {ApiError} 403 — authenticated but not a super admin.
  * @throws {ApiError} 404 — admin not found.
+ * @throws {ApiError} 409 — conflict when trying to delete yourself.
  */
 export async function deleteAdmin(id: number): Promise<void> {
   await apiFetch<void>(`/auth/${id}`, { method: "DELETE" });

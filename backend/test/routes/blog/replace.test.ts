@@ -9,7 +9,7 @@ vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
 let server: FastifyInstance;
 let sessionCookie: string;
 
-const replacedBlog: Blog = { id: 1, name: "New Blog Name", description: "Updated description" };
+const replacedBlog: Blog = { id: 1, name: { en: "New Blog Name" }, description: { en: "Updated description" } };
 
 beforeAll(async () => {
   server = await buildServer();

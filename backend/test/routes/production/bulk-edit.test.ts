@@ -4,6 +4,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { ProductionSchema, type Production } from "@viernulvier/shared/index.js";
 import { bulkEditProductions } from "@/routes/production/handlers/bulk-edit.js";
 import { productionRowWithRefs, productionRowWithRefsAlt } from "./fixtures.js";
+import { HttpSuccess } from "@/routes/helpers.js";
 
 vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
 
@@ -110,7 +111,184 @@ beforeEach(() => {
 });
 
 describe("Bulk edit on production route", () => {
-  test("PATCH /api/v1/production/bulk -> rejects empty array", async () => {
+  test("PATCH /api/v1/production/bulk -> bulk updates core fields", async () => {
+    const ids = [baseProduction1["id"], baseProduction2["id"]];
+
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
+        const upper = query.trim().toUpperCase();
+
+        if (upper === "BEGIN" || upper === "COMMIT") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("UPDATE")) {
+          return Promise.resolve({ rows: [], rowCount: 2 });
+        }
+        if (upper.startsWith("SELECT")) {
+          return Promise.resolve({
+            rows: [
+              productionRowWithRefs(updatedBulkA1),
+              productionRowWithRefsAlt(updatedBulkA2),
+            ],
+            rowCount: 2,
+          });
+        }
+
+        throw new Error(`Unexpected query in bulk-edit tests A: ${query}`);
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
+    server.pg.query = vi.fn().mockResolvedValue({
+      rows: [
+        productionRowWithRefs(updatedBulkA1),
+        productionRowWithRefsAlt(updatedBulkA2),
+      ],
+      rowCount: 2,
+    });
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: "/api/v1/production/bulk",
+      cookies: { session: sessionCookie },
+      payload: {
+        ids,
+        data: {
+          title: { nl: "Bulk A titel" },
+          artist: { nl: "Bulk A artiest" },
+        },
+      },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const parsed = ProductionSchema.array().parse(response.json());
+    expect(parsed).toEqual([
+      ProductionSchema.parse(updatedBulkA1),
+      ProductionSchema.parse(updatedBulkA2),
+    ]);
+  });
+
+  test("PATCH /api/v1/production/bulk -> bulk updates with tags", async () => {
+    const ids = [baseProduction1["id"], baseProduction2["id"]];
+
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
+        const upper = query.trim().toUpperCase();
+
+        if (upper === "BEGIN" || upper === "COMMIT") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("UPDATE")) {
+          return Promise.resolve({ rows: [], rowCount: 2 });
+        }
+        if (upper.startsWith("DELETE")) {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("INSERT INTO PRODUCTION_TAG")) {
+          return Promise.resolve({ rows: [], rowCount: 1 });
+        }
+        if (upper.startsWith("SELECT")) {
+          return Promise.resolve({
+            rows: [
+              productionRowWithRefs(updatedBulkA1),
+              productionRowWithRefsAlt(updatedBulkA2),
+            ],
+            rowCount: 2,
+          });
+        }
+
+        throw new Error(`Unexpected query in bulk-edit tags test: ${query}`);
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
+    server.pg.query = vi.fn().mockResolvedValue({
+      rows: [
+        productionRowWithRefs(updatedBulkA1),
+        productionRowWithRefsAlt(updatedBulkA2),
+      ],
+      rowCount: 2,
+    });
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: "/api/v1/production/bulk",
+      cookies: { session: sessionCookie },
+      payload: {
+        ids,
+        data: {
+          tags: [1, 2],
+        },
+      },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    // Should have: BEGIN + DELETE + 4x INSERT (2 productions * 2 tags) + COMMIT = 7 times
+    expect(mockClient.query).toHaveBeenCalledTimes(7);
+    expect(mockClient.release).toHaveBeenCalled();
+  });
+
+  test("PATCH /api/v1/production/bulk -> bulk updates other optional fields", async () => {
+    const ids = [baseProduction1["id"], baseProduction2["id"]];
+
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
+        const upper = query.trim().toUpperCase();
+
+        if (upper === "BEGIN" || upper === "COMMIT") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("UPDATE")) {
+          return Promise.resolve({ rows: [], rowCount: 2 });
+        }
+        if (upper.startsWith("SELECT")) {
+          return Promise.resolve({
+            rows: [
+              productionRowWithRefs(updatedBulkB1),
+              productionRowWithRefsAlt(updatedBulkB2),
+            ],
+            rowCount: 2,
+          });
+        }
+
+        throw new Error(`Unexpected query in bulk-edit tests B: ${query}`);
+      }),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
+    server.pg.query = vi.fn().mockResolvedValue({
+      rows: [
+        productionRowWithRefs(updatedBulkB1),
+        productionRowWithRefsAlt(updatedBulkB2),
+      ],
+      rowCount: 2,
+    });
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: "/api/v1/production/bulk",
+      cookies: { session: sessionCookie },
+      payload: {
+        ids,
+        data: {
+          video_1: { nl: "Bulk B video 1" },
+          info: { nl: "Bulk B info" },
+        },
+      },
+    });
+
+    expect(response.statusCode).toBe(HttpSuccess.OK);
+    const parsed = ProductionSchema.array().parse(response.json());
+    expect(parsed).toEqual([
+      ProductionSchema.parse(updatedBulkB1),
+      ProductionSchema.parse(updatedBulkB2),
+    ]);
+  });
+
+  test("PATCH /api/v1/production/bulk -> rejects invalid body", async () => {
     const response = await server.inject({
       method: "PATCH",
       url: "/api/v1/production/bulk",
@@ -143,26 +321,38 @@ describe("Bulk edit on production route", () => {
   test("PATCH /api/v1/production/bulk -> bulk updates all supported fields", async () => {
     const ids = [baseProduction1["id"], baseProduction2["id"]];
 
-    server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
-      const upper = query.trim().toUpperCase();
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
+        const upper = query.trim().toUpperCase();
 
-      if (upper.startsWith("UPDATE")) {
-        expect(params?.[params.length - 1]).toEqual(ids);
-        return Promise.resolve({ rows: [], rowCount: 2 });
-      }
+        if (upper === "BEGIN" || upper === "COMMIT") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("UPDATE")) {
+          return Promise.resolve({ rows: [], rowCount: 2 });
+        }
+        if (upper.startsWith("SELECT")) {
+          return Promise.resolve({
+            rows: [
+              productionRowWithRefs(updatedBulkC1),
+              productionRowWithRefsAlt(updatedBulkC2),
+            ],
+            rowCount: 2,
+          });
+        }
 
-      if (upper.startsWith("SELECT")) {
-        expect(params?.[0]).toEqual(ids);
-        return Promise.resolve({
-          rows: [
-            productionRowWithRefs(updatedBulkC1),
-            productionRowWithRefsAlt(updatedBulkC2),
-          ],
-          rowCount: 2,
-        });
-      }
+        throw new Error(`Unexpected query in bulk-edit tests C: ${query}`);
+      }),
+      release: vi.fn(),
+    };
 
-      throw new Error(`Unexpected query in bulk-edit tests C: ${query}`);
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
+    server.pg.query = vi.fn().mockResolvedValue({
+      rows: [
+        productionRowWithRefs(updatedBulkC1),
+        productionRowWithRefsAlt(updatedBulkC2),
+      ],
+      rowCount: 2,
     });
 
     const response = await server.inject({
@@ -190,7 +380,7 @@ describe("Bulk edit on production route", () => {
       },
     });
 
-    expect(response.statusCode).toBe(200);
+    expect(response.statusCode).toBe(HttpSuccess.OK);
     const parsed = ProductionSchema.array().parse(response.json());
     expect(parsed).toEqual([
       ProductionSchema.parse(updatedBulkC1),
@@ -201,26 +391,38 @@ describe("Bulk edit on production route", () => {
   test("PATCH /api/v1/production/bulk -> accepts null for nullable media/info fields", async () => {
     const ids = [baseProduction1["id"], baseProduction2["id"]];
 
-    server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
-      const upper = query.trim().toUpperCase();
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
+        const upper = query.trim().toUpperCase();
 
-      if (upper.startsWith("UPDATE")) {
-        expect(params?.[params.length - 1]).toEqual(ids);
-        return Promise.resolve({ rows: [], rowCount: 2 });
-      }
+        if (upper === "BEGIN" || upper === "COMMIT") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("UPDATE")) {
+          return Promise.resolve({ rows: [], rowCount: 2 });
+        }
+        if (upper.startsWith("SELECT")) {
+          return Promise.resolve({
+            rows: [
+              productionRowWithRefs(baseProduction1),
+              productionRowWithRefsAlt(baseProduction2),
+            ],
+            rowCount: 2,
+          });
+        }
 
-      if (upper.startsWith("SELECT")) {
-        expect(params?.[0]).toEqual(ids);
-        return Promise.resolve({
-          rows: [
-            productionRowWithRefs(baseProduction1),
-            productionRowWithRefsAlt(baseProduction2),
-          ],
-          rowCount: 2,
-        });
-      }
+        throw new Error(`Unexpected query in bulk-edit null test: ${query}`);
+      }),
+      release: vi.fn(),
+    };
 
-      throw new Error(`Unexpected query in bulk-edit null test: ${query}`);
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
+    server.pg.query = vi.fn().mockResolvedValue({
+      rows: [
+        productionRowWithRefs(baseProduction1),
+        productionRowWithRefsAlt(baseProduction2),
+      ],
+      rowCount: 2,
     });
 
     const response = await server.inject({
@@ -244,7 +446,7 @@ describe("Bulk edit on production route", () => {
       },
     });
 
-    expect(response.statusCode).toBe(200);
+    expect(response.statusCode).toBe(HttpSuccess.OK);
     const parsed = ProductionSchema.array().parse(response.json());
     expect(parsed).toEqual([
       ProductionSchema.parse(baseProduction1),
@@ -254,6 +456,13 @@ describe("Bulk edit on production route", () => {
 
   test("bulkEditProductions() -> rejects explicitly undefined fields", async () => {
     const ids = [baseProduction1["id"]];
+    const mockClient = {
+      query: vi.fn(),
+      release: vi.fn(),
+    };
+
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
+
     await expect(
       bulkEditProductions(server, {
         user: { id: 1 },
@@ -266,139 +475,43 @@ describe("Bulk edit on production route", () => {
       } as unknown as FastifyRequest),
     ).rejects.toMatchObject({ status: 400 });
   });
-});
 
-describe("Bulk edit additional cases", () => {
-  test("PATCH /api/v1/production/bulk -> successfully updates multiple productions", async () => {
-    server.pg.query = vi.fn().mockImplementation((query: string) => {
-      const upper = query.trim().toUpperCase();
+  test("bulkEditProductions() -> handles error during transaction", async () => {
+    const ids = [baseProduction1["id"], baseProduction2["id"]];
+    const mockClient = {
+      query: vi.fn().mockImplementation((query: string) => {
+        const upper = query.trim().toUpperCase();
 
-      if (upper.startsWith("UPDATE")) {
-        return Promise.resolve({ rows: [], rowCount: 2 });
-      }
+        if (upper === "BEGIN") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        if (upper.startsWith("UPDATE PRODUCTION")) {
+          return Promise.reject(new Error("Bulk update failed"));
+        }
+        if (upper === "ROLLBACK") {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
 
-      if (upper.startsWith("SELECT")) {
-        return Promise.resolve({
-          rows: [productionRowWithRefs(updatedBulkA1), productionRowWithRefs(updatedBulkA2)],
-          rowCount: 2,
-        });
-      }
+        throw new Error(`Unexpected query: ${query}`);
+      }),
+      release: vi.fn(),
+    };
 
-      throw new Error(`Unexpected query: ${query}`);
-    });
+    server.pg.connect = vi.fn().mockResolvedValue(mockClient);
 
-    const response = await server.inject({
-      method: "PATCH",
-      url: "/api/v1/production/bulk",
-      cookies: { session: sessionCookie },
-      payload: {
-        ids: [1, 2],
-        data: {
-          title: updatedBulkA1["title"],
-          artist: updatedBulkA1["artist"],
+    await expect(
+      bulkEditProductions(server, {
+        user: { id: 1 },
+        body: {
+          ids,
+          data: {
+            title: { nl: "Bulk Updated" },
+          },
         },
-      },
-    });
+      } as unknown as FastifyRequest),
+    ).rejects.toMatchObject({ status: 500 });
 
-    expect(response.statusCode).toBe(200);
-    const parsed = response.json() as Production[];
-    expect(parsed).toHaveLength(2);
-    expect(parsed[0]?.id).toBe(updatedBulkA1.id);
-    expect(parsed[1]?.id).toBe(updatedBulkA2.id);
-  });
-
-  test("PATCH /api/v1/production/bulk -> handles nullable fields with merge", async () => {
-    server.pg.query = vi.fn().mockImplementation((query: string) => {
-      const upper = query.trim().toUpperCase();
-
-      if (upper.startsWith("UPDATE")) {
-        return Promise.resolve({ rows: [], rowCount: 2 });
-      }
-
-      if (upper.startsWith("SELECT")) {
-        return Promise.resolve({
-          rows: [productionRowWithRefs(updatedBulkB1), productionRowWithRefs(updatedBulkB2)],
-          rowCount: 2,
-        });
-      }
-
-      throw new Error(`Unexpected query: ${query}`);
-    });
-
-    const response = await server.inject({
-      method: "PATCH",
-      url: "/api/v1/production/bulk",
-      cookies: { session: sessionCookie },
-      payload: {
-        ids: [1, 2],
-        data: {
-          video_1: updatedBulkB1["video_1"],
-          info: updatedBulkB1["info"],
-        },
-      },
-    });
-
-    expect(response.statusCode).toBe(200);
-  });
-
-  test("PATCH /api/v1/production/bulk -> updates all supported fields", async () => {
-    server.pg.query = vi.fn().mockImplementation((query: string) => {
-      const upper = query.trim().toUpperCase();
-
-      if (upper.startsWith("UPDATE")) {
-        return Promise.resolve({ rows: [], rowCount: 2 });
-      }
-
-      if (upper.startsWith("SELECT")) {
-        return Promise.resolve({
-          rows: [productionRowWithRefs(updatedBulkC1), productionRowWithRefs(updatedBulkC2)],
-          rowCount: 2,
-        });
-      }
-
-      throw new Error(`Unexpected query: ${query}`);
-    });
-
-    const response = await server.inject({
-      method: "PATCH",
-      url: "/api/v1/production/bulk",
-      cookies: { session: sessionCookie },
-      payload: {
-        ids: [1, 2],
-        data: {
-          supertitle: updatedBulkC1["supertitle"],
-          title: updatedBulkC1["title"],
-          artist: updatedBulkC1["artist"],
-          tagline: updatedBulkC1["tagline"],
-          teaser: updatedBulkC1["teaser"],
-          description: updatedBulkC1["description"],
-          description_extra: updatedBulkC1["description_extra"],
-          description_2: updatedBulkC1["description_2"],
-          video_1: updatedBulkC1["video_1"],
-          video_2: updatedBulkC1["video_2"],
-          quote: updatedBulkC1["quote"],
-          quote_source: updatedBulkC1["quote_source"],
-          programme: updatedBulkC1["programme"],
-          info: updatedBulkC1["info"],
-        },
-      },
-    });
-
-    expect(response.statusCode).toBe(200);
-  });
-
-  test("PATCH /api/v1/production/bulk -> rejects empty ids array", async () => {
-    const response = await server.inject({
-      method: "PATCH",
-      url: "/api/v1/production/bulk",
-      cookies: { session: sessionCookie },
-      payload: {
-        ids: [],
-        data: { title: { nl: "Test" } },
-      },
-    });
-
-    expect(response.statusCode).toBe(400);
+    expect(mockClient.release).toHaveBeenCalled();
   });
 });
 
