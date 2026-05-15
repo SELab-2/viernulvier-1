@@ -1,4 +1,4 @@
-import type { Admin, ProductionWithBackwardsRefs, Tag } from "@viernulvier/shared";
+import type { Admin, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
 import type { SupportedLang } from "@/i18n";
 
 /** Shared timing/location fields for CMS linked-event forms and rows. */
@@ -66,6 +66,19 @@ export interface CmsBlogPostGridRow {
   content: string;
   publishedAt: string | null;
   productions: number[];
+}
+
+export interface CmsTagTypeGridRow {
+  id: number;
+  source: TagType;
+  name: string;
+  tagCount: number;
+  /** IDs of tags that currently belong to this tag type. */
+  tags: number[];
+}
+
+export interface CreateTagTypeFormState {
+  name: Record<SupportedLang, string>;
 }
 
 export type TagInlineEditableField = "name" | "tagType" | "public";

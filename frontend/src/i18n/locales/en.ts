@@ -68,6 +68,7 @@ export default {
       tags: "Tags",
       admins: "Admins",
       blogposts: "Blogposts",
+      tagTypes: "Tag types",
     },
     columns: {
       id: "ID",
@@ -94,6 +95,9 @@ export default {
         publishedAt: "Published at",
         productions: "Associated productions",
       },
+      tagTypeName: "Name",
+      tagCount: "Tag count",
+      tagsInType: "Tags",
     },
     events: {
       date: "Date",
@@ -148,6 +152,13 @@ export default {
         confirmRemoveDialogTitle: "Remove blogpost? | Remove blogposts?",
         confirmRemoveBody: "This will permanently delete {count} selected blogpost. This cannot be undone. | This will permanently delete {count} selected blogposts. This cannot be undone.",
       },
+      addTagType: "+ Add tag type",
+      removeTagType: "Remove selected tag types",
+      loadedTagTypesCount: "Tag types loaded: {count}",
+      tagType: {
+        confirmRemoveDialogTitle: "Remove tag type?",
+        confirmRemoveBody: "This will permanently delete {count} selected tag type(s). This cannot be undone.",
+      },
     },
     create: {
       title: "New production",
@@ -198,6 +209,8 @@ export default {
         title: "New blogpost",
         submit: "Add blogpost",
       },
+      tagTypeTitle: "New tag type",
+      submitTagType: "Add tag type",
     },
     panel: {
       close: "Close",
@@ -217,6 +230,7 @@ export default {
       saveSuccess: "Changes saved successfully",
       removeSuccess: "Production removed successfully",
       removeTagSuccess: "Tag removed successfully",
+      removeTagTypeSuccess: "Tag type removed successfully",
     },
     admin: {
       noPermission: "You don't have permissions to manage admins.",

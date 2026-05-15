@@ -68,6 +68,7 @@ export default {
       tags: "Tags",
       admins: "Admins",
       blogposts: "Articles",
+      tagTypes: "Types de tags",
     },
     columns: {
       id: "ID",
@@ -94,6 +95,9 @@ export default {
         publishedAt: "Publié à",
         productions: "Production associés",
       },
+      tagTypeName: "Nom",
+      tagCount: "Nombre de tags",
+      tagsInType: "Tags",
     },
     events: {
       date: "Date",
@@ -148,6 +152,13 @@ export default {
         confirmRemoveDialogTitle: "Supprimer l'article? | Supprimer les articles?",
         confirmRemoveBody: "Cette action supprimera définitivement {count} article sélectionné. Cette opération est irréversible. | Cette action supprimera définitivement {count} articles sélectionnés. Cette opération est irréversible.",
       },
+      addTagType: "+ Ajouter un type de tag",
+      removeTagType: "Supprimer les types de tags sélectionnés",
+      loadedTagTypesCount: "Types de tags chargés: {count}",
+      tagType: {
+        confirmRemoveDialogTitle: "Supprimer le type de tag ?",
+        confirmRemoveBody: "Cette action supprimera définitivement {count} type(s) de tag sélectionné(s). Cette opération est irréversible.",
+      },
     },
     create: {
       title: "Nouvelle production",
@@ -197,6 +208,8 @@ export default {
         title: "Nouvel articles",
         submit: "Ajouter l'article",
       },
+      tagTypeTitle: "Nouveau type de tag",
+      submitTagType: "Ajouter le type de tag",
     },
     panel: {
       close: "Fermer",
@@ -216,6 +229,7 @@ export default {
       saveSuccess: "Modifications enregistrees",
       removeSuccess: "Production supprimee",
       removeTagSuccess: "Tag supprimé",
+      removeTagTypeSuccess: "Type de tag supprimé",
     },
     admin: {
       noPermission: "Vous n'avez pas la permission de administrer les admins.",
