@@ -36,6 +36,8 @@ export interface CmsProductionGridRow {
   descriptionOne: string;
   descriptionTwo: string;
   media: string;
+  imageMedia: string;
+  imageMediaUrls: string[];
   events: number[];
 }
 

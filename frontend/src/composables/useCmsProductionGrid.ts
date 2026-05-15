@@ -66,6 +66,7 @@ const cmsGridColumnIds = [
   "tags",
   "descriptionOne",
   "descriptionTwo",
+  "imageMedia",
   "media",
 ] as const;
 
@@ -156,6 +157,23 @@ function renderMediaCell(value: unknown): string {
   return `<span class="cms-media-text">${label}</span>`;
 }
 
+function renderImageMediaCell(params: ICellRendererParams<CmsProductionGridRow, unknown>): string {
+  const urls = params.data?.imageMediaUrls ?? [];
+  if (urls.length === 0) {
+    return "";
+  }
+
+  const firstUrl = escapeHtml(truncateValue(urls[0] ?? "", 54));
+  const countLabel = urls.length === 1 ? "1 image" : `${urls.length} images`;
+
+  return `
+    <span class="cms-media-cell-content">
+      <span class="cms-media-text">${escapeHtml(countLabel)}</span>
+      <span class="cms-media-text">${firstUrl}</span>
+    </span>
+  `;
+}
+
 /**
  * CMS productions grid: layers production-specific column defs, cell styling
  * for empty/finalized rows, and a custom CSV cell processor on top of the
@@ -243,6 +261,7 @@ export function useCmsProductionGrid(options: {
     { colId: "tags", label: options.t("cms.columns.tags") },
     { colId: "descriptionOne", label: options.t("cms.columns.descriptionOne") },
     { colId: "descriptionTwo", label: options.t("cms.columns.descriptionTwo") },
+    { colId: "imageMedia", label: options.t("cms.columns.imageMedia") },
     { colId: "media", label: options.t("cms.columns.media") },
   ] as const);
 
@@ -333,6 +352,14 @@ export function useCmsProductionGrid(options: {
       wrapText: true,
       autoHeight: true,
       valueFormatter: ({ value }) => truncateValue(String(value ?? "")),
+    },
+    {
+      headerName: options.t("cms.columns.imageMedia"),
+      field: "imageMedia",
+      editable: false,
+      minWidth: 150,
+      cellClass: "cms-truncate-cell",
+      cellRenderer: (params: ICellRendererParams<CmsProductionGridRow, unknown>) => renderImageMediaCell(params),
     },
     {
       headerName: options.t("cms.columns.media"),
