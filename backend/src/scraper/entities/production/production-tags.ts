@@ -265,9 +265,7 @@ async function linkProductionToTag(
   const body = (await res.json()) as { tags: number[] };
   if (stats !== undefined) {
     const responseTagIds = new Set(body.tags ?? []);
-    const requestedTagIds = new Set(tagIds);
-    const allLinked = responseTagIds.size === requestedTagIds.size && 
-      [...requestedTagIds].every(id => responseTagIds.has(id));
+    const allLinked = tagIds.every(id => responseTagIds.has(id));
     if (allLinked) {
       stats.tags.linksCreated++;
     } else {
