@@ -21,13 +21,14 @@ import {
   fetchAdminWithMetaDocs,
   fetchCurrentlyLoggedInAdminDocs,
   fetchCurrentlyLoggedInAdminWithMetaDocs,
-} from "./docs/fetch.js";
-import { createAdminDocs } from "./docs/create.js";
-import { deleteAdminDocs } from "./docs/delete.js";
-import { editAdminDocs } from "./docs/edit.js";
-import { replaceAdminDocs } from "./docs/replace.js";
-import { loginDocs } from "./docs/login.js";
-import { logoutDocs } from "./docs/logout.js";
+  createAdminDocs,
+  deleteAdminDocs,
+  editAdminDocs,
+  editOwnPasswordAdminDocs,
+  replaceAdminDocs,
+  loginDocs,
+  logoutDocs
+} from "./docs/index.js";
 
 /**
  * Registers authentication routes on the Fastify instance.
@@ -106,7 +107,7 @@ export default function authRoutes(server: FastifyInstance) {
   );
   server.patch(
     "/api/v1/auth/me",
-    protect,
+    { ...protect, schema: editOwnPasswordAdminDocs },
     replyHandler(server, editOwnPassword),
   );
   server.post(
