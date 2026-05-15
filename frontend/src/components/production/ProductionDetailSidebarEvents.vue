@@ -1,9 +1,18 @@
 <template>
   <div class="border border-surface-3 bg-surface-0">
     <div class="border-b border-surface-3 px-5 py-4">
-      <h3 class="text-[11px] font-bold uppercase tracking-[0.2em] text-ink-primary">
-        {{ t("production.events.title") }}
-      </h3>
+      <div class="flex items-center gap-3">
+        <h3 class="text-[11px] font-bold uppercase tracking-[0.2em] text-ink-primary">
+          {{ t("production.events.title") }}
+        </h3>
+        <span
+          v-if="!loading"
+          data-test="event-list-count"
+          class="text-[10px] font-semibold text-ink-tertiary"
+        >
+          ({{ events.length }})
+        </span>
+      </div>
     </div>
 
     <div class="px-5 pb-0 pt-0">

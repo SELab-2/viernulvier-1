@@ -40,6 +40,7 @@ describe("ProductionDetailSidebarEvents.vue", () => {
       global: { plugins: [i18n] },
     });
     expect(w.find(".animate-pulse").exists()).toBe(true);
+    expect(w.find('[data-test="event-list-count"]').exists()).toBe(false);
     expect(w.findComponent(ProductionEventRow).exists()).toBe(false);
   });
 
@@ -54,6 +55,7 @@ describe("ProductionDetailSidebarEvents.vue", () => {
     });
 
     expect(w.text()).toContain("Opnieuw proberen");
+    expect(w.find('[data-test="event-list-count"]').text()).toBe("(0)");
     await w.find('button[type="button"]').trigger("click");
     expect(w.emitted("retry")).toBeTruthy();
   });
@@ -68,6 +70,7 @@ describe("ProductionDetailSidebarEvents.vue", () => {
       global: { plugins: [i18n] },
     });
     expect(w.text()).toContain("speeldata");
+    expect(w.find('[data-test="event-list-count"]').text()).toBe("(0)");
     expect(w.findComponent(ProductionEventRow).exists()).toBe(false);
   });
 
@@ -81,6 +84,7 @@ describe("ProductionDetailSidebarEvents.vue", () => {
       global: { plugins: [i18n] },
     });
     expect(w.findAllComponents(ProductionEventRow).length).toBe(2);
+    expect(w.find('[data-test="event-list-count"]').text()).toBe("(2)");
   });
 
   it("shows toggle when events exceed collapsedLimit and expands slice", async () => {
@@ -95,6 +99,7 @@ describe("ProductionDetailSidebarEvents.vue", () => {
       global: { plugins: [i18n] },
     });
     expect(w.findAll('[data-test="event-row"]').length).toBe(3);
+    expect(w.find('[data-test="event-list-count"]').text()).toBe("(4)");
     expect(w.text()).toContain("evenementen");
 
     await w.find('button[type="button"].cursor-pointer').trigger("click");
@@ -115,6 +120,7 @@ describe("ProductionDetailSidebarEvents.vue", () => {
       global: { plugins: [i18n] },
     });
     expect(w.findAllComponents(ProductionEventRow).length).toBe(2);
+    expect(w.find('[data-test="event-list-count"]').text()).toBe("(2)");
     expect(w.find("button.cursor-pointer").exists()).toBe(false);
   });
 });
