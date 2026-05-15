@@ -142,6 +142,7 @@ async function fetchProductionsListMeta(
 export function scraperProductionToCreateBody(
   production: ProductionJSON,
   legacyId: number,
+  tags?: number[],
 ): z.infer<typeof CreateProductionBodySchema> {
   const title = resolveProductionTitleForCreate(production);
   if (title === null) {
@@ -164,6 +165,7 @@ export function scraperProductionToCreateBody(
     quote_source: coerceLanguageMap(production.quote_source),
     programme: coerceLanguageMap(production.programme),
     info: coerceLanguageMap(production.info),
+    tags,
   };
 }
 
@@ -210,7 +212,7 @@ async function createLocalProductionFromViernulvierJson(
     console.warn(`Production old_id=${id} has no genres/tags; will create without tags.`);
   }
 
-  const payload = scraperProductionToCreateBody({...production, genres: tags}, id);
+  const payload = scraperProductionToCreateBody(production, id, tags);
 
   const response = await fetch(localApiUrl("/api/v1/production"), {
     method: "POST",
