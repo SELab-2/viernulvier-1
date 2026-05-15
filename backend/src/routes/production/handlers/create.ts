@@ -43,8 +43,6 @@ export async function createProduction(
   const body = parseSchema(server, CreateProductionBodySchema, request.body);
 
   const { admin, current_time } = getMetadata(request);
-  const tags = body.tags ?? [];
-
   const tagIds = [...new Set(body.tags ?? [])];
   const useTransaction = tagIds.length > 0;
 
