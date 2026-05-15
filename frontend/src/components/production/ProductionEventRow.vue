@@ -120,7 +120,7 @@ function formatCurrency(value: number | null) {
   if (value === null) return "";
   return new Intl.NumberFormat("nl-BE", {
     minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 0,
   }).format(value);
 }
 </script>
