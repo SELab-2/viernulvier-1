@@ -76,25 +76,15 @@
     </div>
 
     <div class="cms-side-footer">
-      <div class="flex justify-end gap-2">
-        <button
-          type="button"
-          class="cms-side-cancel"
-          @click="emit('close')"
-        >
-          {{ t("general.cancel") }}
-        </button>
-
-        <button
-          type="button"
-          class="cms-side-save"
-          :disabled="isSaving"
-          data-testid="edit-list-panel-save"
-          @click="emit('save')"
-        >
-          {{ isSaving ? t("general.saving") : t("general.save") }}
-        </button>
-      </div>
+      <button
+        type="button"
+        class="cms-side-save"
+        :disabled="isSaving"
+        data-testid="edit-list-panel-save"
+        @click="emit('save')"
+      >
+        {{ isSaving ? t("general.saving") : t("cms.panel.save") }}
+      </button>
     </div>
   </aside>
 </template>

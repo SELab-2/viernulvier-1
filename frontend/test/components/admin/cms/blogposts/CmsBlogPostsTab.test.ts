@@ -360,11 +360,11 @@ describe("CmsBlogPostsTab", () => {
         colDef: { field: "productions", headerName: "Productions" },
       } as any);
 
+      const { t } = i18n.global;
+
       expect(wrapper.vm.__test.productionsPanel.value).not.toBeNull();
       expect(wrapper.vm.__test.productionsPanel.value?.rowId).toBe(row.id);
-      expect(wrapper.vm.__test.productionsPanel.value?.label).toBe(
-        "cms.panel.productions",
-      );
+      expect(wrapper.vm.__test.productionsPanel.value?.label).toBe(t("cms.columns.blogpost.productions"));
       expect(wrapper.vm.__test.productionsPanel.value?.items).toEqual([]);
       expect(spy).toHaveBeenCalledOnce();
     });
