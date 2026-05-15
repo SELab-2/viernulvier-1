@@ -87,7 +87,9 @@ describe("loadOrCreateTagTypes — GET /tag/type fails", () => {
 
 describe("loadOrCreateTagTypes — both tag types already exist", () => {
   it("does not POST tag types when both are found in the GET response", async () => {
-    const fetchSpy = vi.spyOn(global, "fetch").mockResolvedValue(jsonOk(BOTH_TAG_TYPES));
+    const fetchSpy = vi.spyOn(global, "fetch").mockImplementation(async () => {
+      return jsonOk(BOTH_TAG_TYPES);
+    });
 
     const stats = createEmptyRunStats();
     await syncWithPayload(1, { "@id": "/api/v1/productions/1" }, "auth", "login", stats);
@@ -177,7 +179,9 @@ describe("tagTypeIdsPromise — module-level cache", () => {
 
 describe("normalizeGenresField — genres field shapes", () => {
   function mockTagTypes() {
-    vi.spyOn(global, "fetch").mockResolvedValue(jsonOk(BOTH_TAG_TYPES));
+    vi.spyOn(global, "fetch").mockImplementation(async () => {
+      return jsonOk(BOTH_TAG_TYPES);
+    });
   }
 
   it("handles genres: undefined (no iterations)", async () => {
@@ -670,7 +674,9 @@ describe("syncProductionGenreTagsFromViernulvier", () => {
 
 describe("rememberViernulvierProductionJson", () => {
   it("stores production so syncWithPayload does not need to re-parse @id for caching", async () => {
-    vi.spyOn(global, "fetch").mockResolvedValue(jsonOk(BOTH_TAG_TYPES));
+    vi.spyOn(global, "fetch").mockImplementation(async () => {
+      return jsonOk(BOTH_TAG_TYPES);
+    });
 
     const production = { "@id": "/api/v1/productions/7" };
     rememberProduction(7, production);
@@ -682,7 +688,9 @@ describe("rememberViernulvierProductionJson", () => {
   });
 
   it("does not cache when @id segment is not a finite number", async () => {
-    vi.spyOn(global, "fetch").mockResolvedValue(jsonOk(BOTH_TAG_TYPES));
+    vi.spyOn(global, "fetch").mockImplementation(async () => {
+      return jsonOk(BOTH_TAG_TYPES);
+    });
 
     const production = { "@id": "/api/v1/productions/not-a-number" };
     // Should not throw — just skips caching
