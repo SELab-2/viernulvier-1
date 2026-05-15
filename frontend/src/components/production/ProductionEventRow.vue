@@ -128,11 +128,13 @@
           </p>
         </div>
       </div>
-      <div class="shrink-0 pt-0.5 text-right">
+      <div
+        v-if="event.minPrice !== null"
+        class="shrink-0 pt-0.5 text-right"
+      >
         <span class="font-serif text-sm font-medium tabular-nums tracking-tight text-ink-primary">
-          <template v-if="event.minPrice === null">€ —</template>
           <div
-            v-else-if="event.minPrice !== event.maxPrice"
+            v-if="event.minPrice !== event.maxPrice"
             class="flex flex-col items-end gap-0 leading-tight"
           >
             <span>&euro;{{ formatCurrency(event.minPrice) }}</span>
