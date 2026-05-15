@@ -103,6 +103,12 @@ describe("getAllTags", () => {
     await getAllTags(42);
     expect(lastCall()[0]).toBe("/api/v1/tag/all?production=42");
   });
+
+  it("GETs /api/v1/tag/all?includeProductions=true when requested", async () => {
+    vi.stubGlobal("fetch", mockOk([tagPayload]));
+    await getAllTags(undefined, { includeProductions: true });
+    expect(lastCall()[0]).toBe("/api/v1/tag/all?includeProductions=true");
+  });
 });
 
 describe("getTagAdmin", () => {

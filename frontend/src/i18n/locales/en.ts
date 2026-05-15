@@ -83,7 +83,7 @@ export default {
       tagName: "Name",
       tagType: "Type",
       public: "Public",
-      productionCount: "Productions",
+      productions: "Productions",
       admin: {
         username: "Username",
         profilePicture: "Profile picture",

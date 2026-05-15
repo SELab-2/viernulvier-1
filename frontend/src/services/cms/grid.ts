@@ -146,7 +146,7 @@ export function buildTagGridRow(
     tagTypeId,
     tagType: tagType ? localize(tagType.name) || `#${tagTypeId}` : `#${tagTypeId}`,
     public: tag.public,
-    productionCount: productionIds.length,
+    productions: productionIds,
   };
 }
 
