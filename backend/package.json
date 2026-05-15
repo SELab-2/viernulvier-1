@@ -9,7 +9,7 @@
     "@fastify/multipart": "^10.0.0",
     "@fastify/postgres": "^6.0.2",
     "@fastify/swagger": "^9.7.0",
-    "@fastify/swagger-ui": "5.2.3",
+    "@fastify/swagger-ui": "5.2.6",
     "@viernulvier/shared": "workspace:*",
     "bcrypt": "^6.0.0",
     "csv-parse": "^6.2.1",
