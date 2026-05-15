@@ -75,9 +75,9 @@
             {{ t("cms.columns.blogpost.productions") }}
           </legend>
 
-          <div class="cms-production-create">
+          <div class="cms-list-create">
             <form
-              class="cms-production-entry"
+              class="cms-list-entry"
               @submit.prevent="addProduction"
             >
               <input
@@ -91,7 +91,7 @@
 
               <button
                 type="submit"
-                class="cms-production-add"
+                class="cms-list-add"
               >
                 +
               </button>
@@ -99,18 +99,18 @@
 
             <div
               v-if="createForm.productions.length > 0"
-              class="cms-production-tags"
+              class="cms-list-flairs"
             >
               <span
                 v-for="id in createForm.productions"
                 :key="id"
-                class="cms-production-tag"
+                class="cms-list-flair"
               >
                 {{ id }}
 
                 <button
                   type="button"
-                  class="cms-production-tag-remove"
+                  class="cms-list-flair-remove"
                   @click="emit('remove-production-id', id)"
                 >
                   ×
@@ -284,41 +284,6 @@ function addProduction(): void {
 
 .cms-textarea {
   @apply resize-none leading-relaxed;
-}
-
-.cms-production-tags {
-  @apply flex flex-wrap items-center gap-2;
-}
-
-.cms-production-tag {
-  @apply flex items-center gap-1 rounded-full border border-surface-3 bg-surface-0 px-2.5 py-1 text-xs font-semibold text-ink-primary;
-}
-
-.cms-production-tag-remove {
-  @apply -mr-0.5 flex h-4 w-4 items-center justify-center rounded-full text-ink-secondary transition hover:bg-surface-2 hover:text-ink-primary;
-}
-
-.cms-production-input {
-  @apply min-w-[6rem] flex-1 rounded-md border border-surface-3 bg-surface-0 px-2 py-1 text-sm text-ink-primary placeholder:text-ink-tertiary;
-  /* Hide browser number spinners */
-  appearance: textfield;
-}
-
-.cms-production-create {
-  @apply mt-3 space-y-3;
-}
-
-.cms-production-entry {
-  @apply flex gap-2;
-}
-
-.cms-production-add {
-  @apply rounded-md bg-surface-inv px-4 py-2 text-sm font-semibold text-ink-on-inv transition hover:bg-surface-inv-raised;
-}
-
-.cms-production-input::-webkit-inner-spin-button,
-.cms-production-input::-webkit-outer-spin-button {
-  appearance: none;
 }
 
 .cms-side-close {

@@ -65,35 +65,30 @@ export function useCmsBlogPostGrid(options: {
     {
       headerName: options.t("cms.columns.id"),
       field: "id",
-      editable: false,
       minWidth: 50,
       maxWidth: 100,
     },
     {
       headerName: options.t("cms.columns.title"),
       field: "title",
-      editable: true,
       minWidth: 200,
       flex: 1,
     },
     {
       headerName: options.t("cms.columns.blogpost.content"),
       field: "content",
-      editable: true,
       minWidth: 200,
       flex: 2,
     },
     {
       headerName: options.t("cms.columns.blogpost.publishedAt"),
       field: "publishedAt",
-      editable: false,
       minWidth: 180,
       maxWidth: 240,
     },
     {
       headerName: options.t("cms.columns.blogpost.productions"),
       field: "productions",
-      editable: false,
       minWidth: 200,
     },
   ]);

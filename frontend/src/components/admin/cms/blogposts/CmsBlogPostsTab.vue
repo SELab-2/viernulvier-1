@@ -59,7 +59,6 @@
         :cache-quick-filter="true"
         @grid-ready="onGridReady"
         @selection-changed="onSelectionChanged"
-        @cell-editing-stopped="onCellEditingStopped"
         @cell-clicked="onCellClicked"
       />
     </template>
@@ -101,6 +100,14 @@
         @close="closeEditorPanel"
         @save="saveEditorPanel"
       />
+
+      <CmsEditListPanel
+        v-model:panel="editProductionsPanel"
+        :save-error="saveError"
+        :is-saving="isSaving"
+        @close="closeProductionsPanel"
+        @save="saveProductionsPanel"
+      />
     </template>
   </CmsTabShell>
 </template>
@@ -108,13 +115,14 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { AgGridVue } from "ag-grid-vue3";
-import type { CellClickedEvent, CellEditingStoppedEvent } from "ag-grid-community";
+import type { CellClickedEvent } from "ag-grid-community";
 import { useI18n } from "vue-i18n";
 import type { BlogPostWithBackwardsRefs } from "@viernulvier/shared";
 import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
 import CmsRemoveConfirmModal from "@/components/admin/cms/CmsRemoveConfirmModal.vue";
 import CmsCreateBlogPostModal from "@/components/admin/cms/blogposts/CmsCreateBlogPostModal.vue";
 import CmsEditorPanel from "@/components/admin/cms/CmsEditorPanel.vue";
+import CmsEditListPanel, { type EditListPanelState } from "@/components/admin/cms/CmsEditListPanel.vue";
 import { useCmsBlogPostGrid } from "@/composables/useCmsBlogPostGrid";
 import { useCmsRemove } from "@/composables/useCmsRemove";
 import { useDarkMode } from "@/composables/useDarkMode";
@@ -169,6 +177,7 @@ const createError = ref<string | null>(null);
 const rowData = ref<CmsBlogPostGridRow[]>([]);
 const blogpostsData = ref<BlogPostWithBackwardsRefs[]>([]);
 const editorPanel = ref<EditorPanelState | null>(null);
+const editProductionsPanel = ref<EditListPanelState | null>(null);
 
 // Blog posts don't support bulk editing; always 1 so the bulk notice is never shown.
 const editorBulkCount = computed(() => 1);
@@ -210,7 +219,7 @@ async function loadBlogPostsData(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Inline cell editing
+// Editor panel (title / content)
 // ---------------------------------------------------------------------------
 
 async function persistBlogPostPatch(
@@ -229,54 +238,16 @@ async function persistBlogPostPatch(
   }
 }
 
-async function onCellEditingStopped(
-  event: CellEditingStoppedEvent<CmsBlogPostGridRow>,
-): Promise<void> {
-  if (!event.data || !event.colDef.field) {
-    return;
-  }
-
-  const field = event.colDef.field;
-  const newValue = event.value;
-  const oldValue = event.oldValue;
-
-  if (newValue === oldValue) {
-    return;
-  }
-
-  saveError.value = null;
-  isSaving.value = true;
-
-  try {
-    if (field === "title" || field === "content") {
-      const trimmed = String(newValue ?? "").trim();
-      if (!trimmed) {
-        event.node.setDataValue(field, oldValue);
-        return;
-      }
-      const currentMap = (blogpostsData.value.find((p) => p.id === event.data!.id)?.[field] ?? {}) as LanguageMap;
-      const nextMap: LanguageMap = { ...currentMap, [currentLang.value]: trimmed };
-      await persistBlogPostPatch(event.data, { [field]: nextMap });
-    } else {
-      event.node.setDataValue(field, oldValue);
-      return;
-    }
-  } catch {
-    event.node.setDataValue(field, oldValue);
-  } finally {
-    isSaving.value = false;
-    persistGridState();
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Editor panel (title / content)
-// ---------------------------------------------------------------------------
-
 function onCellClicked(event: CellClickedEvent<CmsBlogPostGridRow>): void {
   if (!event.data || !event.colDef.field) return;
 
-  const field = event.colDef.field as "title" | "content";
+  const field = event.colDef.field as "title" | "content" | "productions";
+
+  if (field === "productions") {
+    openProductionsPanel(event.data);
+    return;
+  }
+
   if (field !== "title" && field !== "content") return;
 
   const source = blogpostsData.value.find((p) => p.id === event.data!.id);
@@ -307,7 +278,54 @@ async function saveEditorPanel(): Promise<void> {
   saveError.value = null;
   try {
     await persistBlogPostPatch(row, { [editorPanel.value.apiField]: payload });
+    await loadBlogPostsData();
     closeEditorPanel();
+  } finally {
+    isSaving.value = false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Edit productions panel (Edit list panel)
+// ---------------------------------------------------------------------------
+
+function openProductionsPanel(
+  row: CmsBlogPostGridRow,
+): void {
+  const source = blogpostsData.value.find(
+    (p) => p.id === row.id,
+  );
+
+  editProductionsPanel.value = {
+    rowId: row.id,
+    label: t("cms.panel.productions"),
+    items: [...(source?.productions as number[] ?? [])],
+  };
+
+  saveError.value = null;
+}
+
+function closeProductionsPanel(): void {
+  editProductionsPanel.value = null;
+  saveError.value = null;
+}
+
+async function saveProductionsPanel(): Promise<void> {
+  if (!editProductionsPanel.value) return;
+
+  const row = rowData.value.find(
+    (item) => item.id === editProductionsPanel.value?.rowId,
+  );
+
+  if (!row) return;
+
+  isSaving.value = true;
+  saveError.value = null;
+
+  try {
+    await persistBlogPostPatch(row, { productions: editProductionsPanel.value.items });
+    await loadBlogPostsData();
+    closeProductionsPanel();
   } finally {
     isSaving.value = false;
   }
@@ -464,9 +482,12 @@ defineExpose({
     editorPanel,
     editorBulkCount,
     onCellClicked,
-    onCellEditingStopped,
     closeEditorPanel,
     saveEditorPanel,
+    productionsPanel: editProductionsPanel,
+    openProductionsPanel,
+    closeProductionsPanel,
+    saveProductionsPanel,
     openCreateModal,
     closeCreateModal,
     submitCreateBlogPost,

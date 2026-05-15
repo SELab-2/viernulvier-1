@@ -123,3 +123,33 @@
 .cms-tab-placeholder {
   @apply rounded-md border border-dashed border-surface-3 bg-surface-0 p-8 text-center;
 }
+
+/**
+
+css used for adding/editing lists (of IDs)
+
+*/
+
+.cms-list-flairs {
+  @apply flex flex-wrap items-center gap-2;
+}
+
+.cms-list-flair {
+  @apply flex items-center gap-1 rounded-full border border-surface-3 bg-surface-0 px-2.5 py-1 text-xs font-semibold text-ink-primary;
+}
+
+.cms-list-flair-remove {
+  @apply -mr-0.5 flex h-4 w-4 items-center justify-center rounded-full text-ink-secondary transition hover:bg-surface-2 hover:text-ink-primary;
+}
+
+.cms-list-create {
+  @apply mt-3 space-y-3;
+}
+
+.cms-list-entry {
+  @apply flex gap-2;
+}
+
+.cms-list-add {
+  @apply rounded-md bg-surface-inv px-4 py-2 text-sm font-semibold text-ink-on-inv transition hover:bg-surface-inv-raised;
+}
