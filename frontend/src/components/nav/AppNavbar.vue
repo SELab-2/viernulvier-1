@@ -3,12 +3,12 @@
     <div class="nav-left">
       <NavHamburger :open="menuOpen" @click="menuOpen = !menuOpen" />
       <div class="nav-links">
-        <RouterLink :to="{ name: RouteNames.HOME, params: { lang: currentLang } }" class="nav-link">
+        <NavLink :to="{ name: RouteNames.HOME, params: { lang: currentLang } }" class="nav-link">
           {{ t("nav.home") }}
-        </RouterLink>
-        <RouterLink :to="{ name: RouteNames.PRODUCTIONS, params: { lang: currentLang } }" class="nav-link">
+        </NavLink>
+        <NavLink :to="{ name: RouteNames.PRODUCTIONS, params: { lang: currentLang } }" class="nav-link">
           {{ t("nav.productions") }}
-        </RouterLink>
+        </NavLink>
       </div>
     </div>
 
@@ -22,16 +22,12 @@
   </nav>
 
   <NavDrawer :open="menuOpen" @close="menuOpen = false">
-    <RouterLink
-      :to="{ name: RouteNames.HOME, params: { lang: currentLang } }"
-      class="drawer-link"
-      @click="menuOpen = false"
-    >{{ t("nav.home") }}</RouterLink>
-    <RouterLink
-      :to="{ name: RouteNames.PRODUCTIONS, params: { lang: currentLang } }"
-      class="drawer-link"
-      @click="menuOpen = false"
-    >{{ t("nav.productions") }}</RouterLink>
+    <NavLink :to="{ name: RouteNames.HOME, params: { lang: currentLang } }" class="drawer-link" @click="menuOpen = false">
+      {{ t("nav.home") }}
+    </NavLink>
+    <NavLink :to="{ name: RouteNames.PRODUCTIONS, params: { lang: currentLang } }" class="drawer-link" @click="menuOpen = false">
+      {{ t("nav.productions") }}
+    </NavLink>
     <div class="drawer-divider" />
     <NavControls :is-dark="isDark" @toggle-dark="$emit('toggle-dark')" />
   </NavDrawer>
@@ -47,6 +43,7 @@ import NavControls from "@/components/nav/NavControls.vue";
 import NavHamburger from "@/components/nav/NavHamburger.vue";
 import NavDrawer from "@/components/nav/NavDrawer.vue";
 import "@/assets/stylesheets/navbar.css";
+import NavLink from "./NavLink.vue";
 
 defineProps<{ isDark: boolean }>();
 defineEmits<{ "toggle-dark": [] }>();

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { ref } from "vue";
+import { ApiError } from "@/services/api";
 import { useCmsRemove } from "@/composables/useCmsRemove";
 
 interface Row {
@@ -142,6 +143,31 @@ describe("useCmsRemove", () => {
       await remove.confirmRemove();
 
       expect(remove.removeConfirmError.value).toBe("cms.errors.saveGeneric");
+    });
+
+    it("shows onConflictMessage when a 409 ApiError is thrown and onConflictMessage is set", async () => {
+      const deleteFn = vi.fn().mockRejectedValue(new ApiError(409, "Conflict"));
+      const { remove, onSuccess } = makeRemove({
+        deleteFn,
+        onConflictMessage: "You cannot remove yourself.",
+      });
+      remove.openRemoveConfirm();
+
+      await remove.confirmRemove();
+
+      expect(remove.removeConfirmError.value).toBe("You cannot remove yourself.");
+      expect(remove.removeConfirmOpen.value).toBe(true);
+      expect(onSuccess).not.toHaveBeenCalled();
+    });
+
+    it("falls back to saveFailed when a 409 ApiError is thrown but onConflictMessage is not set", async () => {
+      const deleteFn = vi.fn().mockRejectedValue(new ApiError(409, "Conflict"));
+      const { remove } = makeRemove({ deleteFn });
+      remove.openRemoveConfirm();
+
+      await remove.confirmRemove();
+
+      expect(remove.removeConfirmError.value).toContain("cms.errors.saveFailed");
     });
   });
 });

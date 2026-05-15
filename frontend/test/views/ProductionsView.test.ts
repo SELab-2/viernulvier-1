@@ -108,8 +108,8 @@ describe("ProductionsView.vue", () => {
       items: [mockProduction],
       total: 1,
     });
-    vi.spyOn(mediaService, "getImagesForProductionOrEmpty").mockResolvedValue(
-      [],
+    vi.spyOn(mediaService, "getImagesForProductionsOrEmpty").mockResolvedValue(
+      new Map([[mockProduction.id, []]]),
     );
     vi.spyOn(tagsService, "getTags").mockResolvedValue([mockTag]);
     vi.spyOn(tagsService, "getTagTypes").mockResolvedValue([mockTagTypeGenre]);

@@ -109,14 +109,15 @@ async function submit() {
 
 .modal-backdrop { @apply fixed inset-0 flex items-center justify-center bg-surface-inv/60; }
 .modal { @apply relative w-full max-w-md rounded-2xl border border-surface-3 bg-surface-1 p-6 shadow-lg; }
-.password-toggle { @apply absolute top-4 right-4; }
+.password-toggle { @apply absolute top-4 right-4 text-ink-primary; }
 .title { @apply mb-4 text-lg font-bold text-ink-primary; }
+h4 { @apply text-sm font-medium text-ink-primary mb-1; }
 .form { @apply flex flex-col; }
 .input { @apply w-full rounded-xl border border-surface-3 bg-surface-2 px-4 py-2 text-sm text-ink-primary placeholder:text-ink-tertiary outline-none mb-4; }
 .input:focus { @apply border-accent-outline; }
 .error { @apply text-sm font-medium text-ink-secondary; }
 .actions { @apply mt-6 flex justify-end gap-2; }
 .btn { @apply rounded-xl px-4 py-2 text-sm font-medium; }
-.primary { @apply bg-accent-dark text-surface-0 hover:bg-accent-dark-hover;}
+.primary { @apply bg-accent-dark text-surface-0 hover:bg-accent-dark-hover; }
 .secondary { @apply border border-accent-outline text-ink-primary hover:bg-surface-2; }
 </style>

@@ -110,7 +110,7 @@ export default {
       addTag: "+ Add Tag",
       removeTag: "Remove selected tags",
       tag: {
-        confirmRemoveDialogTitle: "Remove tags?",
+        confirmRemoveDialogTitle: "Remove tag? | Remove tags?",
         confirmRemoveBody: "This will permanently delete {count} selected tags. This cannot be undone.",
       },
       searchPlaceholder: "Search across all columns...",
@@ -133,6 +133,10 @@ export default {
       admin: {
         noAdmins: "No admins found.",
         addAdmin: "+ Add Admin",
+        removeAdmin: "Remove selected admins",
+        confirmRemoveDialogTitle: "Remove admin? | Remove admins?",
+        confirmRemoveBody: "This will permanently delete {count} selected admin. This cannot be undone. | This will permanently delete {count} selected admins. This cannot be undone.",
+        cannotRemoveSelf: "You cannot remove yourself.",
       },
     },
     create: {
@@ -204,6 +208,7 @@ export default {
     },
   },
   productionsPage: {
+    kicker: "The archive",
     heading: "Productions",
     intro:
       "Every show in the archive at a glance.",
@@ -215,6 +220,7 @@ export default {
       "The first year must be on or before the last year. Adjust the range or fix the link and try again.",
     empty: "No productions in the archive yet.",
     morePerformances: "{n} more",
+    moreListTags: "+{n} more",
     showingRange: "{from}–{to} of {total}",
     prevPage: "Previous",
     nextPage: "Next",

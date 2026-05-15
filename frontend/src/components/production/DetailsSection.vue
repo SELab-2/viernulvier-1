@@ -243,16 +243,19 @@ const mainContentClass = computed(() => {
 }
 
 /*
- * Drop cap on the lead paragraph. We target the first letter of the first
- * child element because v-html wraps the description in a <p>, so plain
- * `.article-lead::first-letter` would otherwise miss it.
+ * Drop cap on the lead paragraph. The `> :first-child` variant covers the
+ * case where v-html wraps the description in a <p>; the bare selector
+ * covers plain-text content. Using a direct-child combinator (not a
+ * descendant selector) is essential — otherwise every element that
+ * happens to be a first child (e.g. an <a> that is the only child of its
+ * parent <p>) would also get a drop cap.
  *
  * Modern browsers (Safari, Chrome 110+) honour `initial-letter`, which
  * sizes the cap so it spans exactly N body lines AND aligns the cap's
  * top to the first line's top and its baseline to the Nth line's baseline.
  * Older browsers fall back to a float-based cap.
  */
-.article-lead :first-child::first-letter,
+.article-lead > :first-child::first-letter,
 .article-lead::first-letter {
   font-family: var(--font-serif);
   font-weight: 700;
@@ -263,7 +266,7 @@ const mainContentClass = computed(() => {
 }
 
 @supports not ((initial-letter: 3) or (-webkit-initial-letter: 3)) {
-  .article-lead :first-child::first-letter,
+  .article-lead > :first-child::first-letter,
   .article-lead::first-letter {
     float: left;
     font-size: 4.8em;
