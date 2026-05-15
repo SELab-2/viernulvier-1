@@ -22,7 +22,7 @@ import { replaceBlogDocs } from "./docs/replace.js";
  * @param server - The Fastify instance to register routes on.
  */
 export default function blogRoutes(server: FastifyInstance) {
-  const protect = { preHandler: [server.authorize()] };
+  const protect = { preValidation: [server.authorize()] };
 
   server.get(
     "/api/v1/blog",

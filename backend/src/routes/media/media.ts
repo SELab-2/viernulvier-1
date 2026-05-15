@@ -45,7 +45,7 @@ import cropProxyRoute from "./proxy.js";
  * @param server - The Fastify instance to register routes on.
  */
 export default function mediaRoutes(server: FastifyInstance) {
-  const protect = { preHandler: [server.authorize()] };
+  const protect = { preValidation: [server.authorize()] };
 
   // ── Images ──
   server.get("/api/v1/production/images", replyHandler(server, fetchImagesByProductionIdsBatch));

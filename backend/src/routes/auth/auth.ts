@@ -52,7 +52,7 @@ import { logoutDocs } from "./docs/logout.js";
  * @param server - The Fastify instance to register routes on.
  */
 export default function authRoutes(server: FastifyInstance) {
-  const protect = { preHandler: [server.authorize()] };
+  const protect = { preValidation: [server.authorize()] };
   const protectSuper = { preHandler: [server.authorize({ super: true })] };
 
   server.get(

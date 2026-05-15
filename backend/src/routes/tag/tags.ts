@@ -42,7 +42,7 @@ import {
  * @param server - The Fastify instance to register routes on.
  */
 export default function tagRoutes(server: FastifyInstance) {
-  const protect = { preHandler: [server.authorize()] };
+  const protect = { preValidation: [server.authorize()] };
 
   server.get(
     "/api/v1/tag/all",

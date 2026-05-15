@@ -18,7 +18,7 @@ import { editHallDocs, createHallDocs, fetchHallDocs, fetchHallWithMetaDocs, fet
  * @param server - The Fastify instance to register routes on.
  */
 export default function hallRoutes(server: FastifyInstance) {
-  const protect = { preHandler: [server.authorize()] };
+  const protect = { preValidation: [server.authorize()] };
 
   server.get(
     "/api/v1/hall",

@@ -35,7 +35,7 @@ import {
  * @param server - The Fastify instance to register routes on.
  */
 export default function eventPriceRoutes(server: FastifyInstance) {
-  const protect = { preHandler: [server.authorize()] };
+  const protect = { preValidation: [server.authorize()] };
   server.get(
     "/api/v1/event/price/:id",
     {schema: fetchEventPriceDocs},
