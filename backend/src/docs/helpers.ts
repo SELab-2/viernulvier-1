@@ -46,6 +46,9 @@ abstract class AbstractRequestSchema {
     if (this._schema.tags || schema.tags) {
       newSchema.tags = [...(this._schema.tags ?? []), ...(schema.tags ?? [])];
     }
+    if (this._schema.security || schema.security) {
+      newSchema.security = [ ...(this._schema.security ?? []), ...(schema.security ?? []) ];
+    }
     this._schema = newSchema;
     return this;
   }
@@ -181,36 +184,90 @@ export class RequestBody extends AbstractRequestSchema {
     super({body: bodySchema})
   }
 }
-
+/**
+ * Creates a RequestSchema to set the acceptable querystring format, for a given request.
+ * @remarks
+ * - The querystring must be provided by giving a zod object that specifies the type of each querystring value.
+ * Descriptions that are added on the zod object will be used as the descriptions for the fields.
+ * - Combining this with a second instance of `RequestQueryString` will cause it to be overridden.
+ * @example
+ * ```
+ * const requestWithDateInQueryString = new RequestQueryString(z.object({date: z.iso.date()}));
+ * ```
+ */
 export class RequestQueryString extends AbstractRequestSchema {
   constructor(queryStringSchema: z.ZodType) {
     super({querystring: queryStringSchema})
   }
 }
 
-export class RequestSecurity extends AbstractRequestSchema {
-  constructor(securityName: string, scopes: string[] = []) {
+
+/**
+ * Used to declare more intricate security methods that require multiple forms of authentication.
+ * @remarks
+ * - If no RequestSecurity is added it is assumed that no authorization is required.
+ * - Combining this with a second instance of `RequestSecurity` will cause them to be merged as two distinct
+ *  possible verification methods.
+ * - Every security type must first be declared as a component in the setup for openAPI.
+ * @example
+ * ```
+ * // Creates a security method where both an api key and an OAuth session are required.
+ * const requestWithDateInQueryString = new RequestSecurity({
+ *  ApiKey: [],
+ *  OAuth: ["write"],
+ * });
+ * ```
+ */
+
+export class RequestMultiAuthSecurity extends AbstractRequestSchema {
+  constructor(securityDict: Record<string, string[]>) {
     super({
       security: [
-        {
-          [securityName]: scopes,
-        },
+        securityDict,
       ],
     })
   }
 }
 
+/**
+ * Defines what type of security is used when authorizing the request. This one requires u to specify the scopes, which
+ * is only relevant when using OAuth2.
+ * @remarks
+ * - If no RequestSecurity is added it is assumed that no authorization is required.
+ * - Combining this with a second instance of `RequestSecurity` will cause them to be merged as two distinct
+ *  possible verification methods.
+ * - Every security type must first be declared as a component in the setup for openAPI.
+ * @example
+ * ```
+ * const requestWithDateInQueryString = new RequestSecurity("ApiKeyAuth");
+ * ```
+ */
+export class RequestSecurity extends RequestMultiAuthSecurity {
+  constructor(securityName: string, scopes?: string[]) {
+    scopes = scopes ?? [];
+    super({ [securityName]: scopes });
+  }
+}
 
+/**
+ * These are the default error messages that all endpoints can produce.
+ */
 export const DefaultRequestErrorMessages = new CombinedRequestSchema(
   new RequestError(HttpClientError.NotFound),
   new RequestError(HttpClientError.BadRequest),
   new RequestError(HttpServerError.InternalServerError),
 );
-
+/**
+ * A simple helper for any request that does a lookup by id.
+ */
 export const requestById = new RequestParams(
   z.object({ id: stringToInt }),
 );
 
+/**
+ * This declares our default security method and adds the errors that can show
+ * up when working with authentication.
+ */
 export const protectedRequest = new CombinedRequestSchema(
   new RequestSecurity("Login Session"),
   new RequestError(HttpClientError.Unauthorized),
