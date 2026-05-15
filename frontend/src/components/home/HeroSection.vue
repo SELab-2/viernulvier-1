@@ -74,7 +74,7 @@
           />
           <button
             type="submit"
-            class="flex items-center gap-2 border-l-2 border-ink-on-inv bg-accent-dark px-6 py-4 text-sm font-bold uppercase tracking-[0.18em] text-ink-on-inv transition hover:bg-accent-dark-hover"
+            class="flex items-center gap-2 border-l-2 border-surface-3 bg-accent-dark px-6 py-4 text-sm font-bold uppercase tracking-[0.18em] text-surface-0 transition hover:bg-accent-dark-hover"
           >
             <span>{{ t("hero.searchSubmit") }}</span>
             <svg
