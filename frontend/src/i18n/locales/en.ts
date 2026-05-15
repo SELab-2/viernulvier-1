@@ -258,11 +258,15 @@ export default {
     },
     notFound: {
       title: "Production not found",
-      description: "We couldn't find this specific production for you. Luckily, there's plenty more to discover: return to the overview and dive back into our full history of productions.",
+      description: "We couldn't find this production. Return to the overview and keep browsing our full history of productions.",
       buttonLabel: "Back to productions",
-      helpTitle: "Need help?",
-      helpText: "Can't find what you're looking for in our records? For questions about our archives or specific productions, feel free to email info{'@'}viernulvier.gent. We're happy to help.",
-      contactLabel: "Contact us",
+    },
+  },
+  errors: {
+    notFound: {
+      title: "Page not found",
+      description: "This page does not exist or has been moved. Return to the overview to keep browsing the archive.",
+      buttonLabel: "Back to productions",
     },
   },
   blogpost: {

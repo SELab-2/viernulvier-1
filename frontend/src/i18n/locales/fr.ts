@@ -259,11 +259,15 @@ export default {
     },
     notFound: {
       title: "Production introuvable",
-      description: "Nous n'avons pas pu trouver cette production. Heureusement, il reste encore beaucoup à découvrir : revenez à la vue d'ensemble et replongez dans l'historique complet de nos productions.",
+      description: "Nous n'avons pas pu trouver cette production. Revenez à la vue d'ensemble et replongez dans l'historique complet de nos productions.",
       buttonLabel: "Retour aux productions",
-      helpTitle: "Besoin d'aide ?",
-      helpText: "Vous ne trouvez pas immédiatement ce que vous cherchez dans nos archives ? Pour toute question sur notre historique ou sur une production spécifique, envoyez-nous un e-mail à info{'@'}viernulvier.gent. Nous vous aiderons avec plaisir.",
-      contactLabel: "Contactez-nous",
+    },
+  },
+  errors: {
+    notFound: {
+      title: "Page introuvable",
+      description: "Cette page n'existe pas ou a été déplacée. Revenez à la vue d'ensemble pour continuer à explorer les archives.",
+      buttonLabel: "Retour aux productions",
     },
   },
   blogpost: {

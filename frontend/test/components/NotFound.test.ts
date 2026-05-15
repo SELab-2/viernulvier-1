@@ -5,14 +5,19 @@ import { routes } from "@/router/routes";
 import { i18n } from "@/i18n";
 import NotFound from "@/components/NotFound.vue";
 
+const defaultProps = {
+  title: "Page not found",
+  description: "This page does not exist.",
+  buttonLabel: "Back to productions",
+};
 
-async function mountComponent(props = {}) {
+async function mountComponent(props: Record<string, unknown> = {}) {
   const router = createRouter({ history: createMemoryHistory(), routes });
   await router.push("/nl");
   await router.isReady();
 
   const wrapper = mount(NotFound, {
-    props,
+    props: { ...defaultProps, ...props },
     global: { plugins: [router, i18n] },
   });
 
@@ -51,36 +56,25 @@ describe("NotFound.vue", () => {
       const link = wrapper.find("a");
       expect(link.exists()).toBe(true);
     });
-
-    it("renders contact mail link", () => {
-      const mail = wrapper.find("a[href^='mailto:']");
-      expect(mail.exists()).toBe(true);
-    });
   });
 
-  // ── Props vs i18n ────────────────────────────────────────────────────────
+  // ── Props ────────────────────────────────────────────────────────────────
 
-  describe("props override", () => {
-    it("uses provided title instead of translation", async () => {
-      ({ wrapper } = await mountComponent({
-        title: "Custom title",
-      }));
+  describe("props", () => {
+    it("renders the title prop", async () => {
+      ({ wrapper } = await mountComponent({ title: "Custom title" }));
 
       expect(wrapper.text()).toContain("Custom title");
     });
 
-    it("uses provided description", async () => {
-      ({ wrapper } = await mountComponent({
-        description: "Custom description",
-      }));
+    it("renders the description prop", async () => {
+      ({ wrapper } = await mountComponent({ description: "Custom description" }));
 
       expect(wrapper.text()).toContain("Custom description");
     });
 
-    it("uses provided button label", async () => {
-      ({ wrapper } = await mountComponent({
-        buttonLabel: "Click me",
-      }));
+    it("renders the button label prop", async () => {
+      ({ wrapper } = await mountComponent({ buttonLabel: "Click me" }));
 
       expect(wrapper.text()).toContain("Click me");
     });
@@ -97,9 +91,7 @@ describe("NotFound.vue", () => {
     });
 
     it("uses custom buttonLink when provided", async () => {
-      ({ wrapper } = await mountComponent({
-        buttonLink: "/custom",
-      }));
+      ({ wrapper } = await mountComponent({ buttonLink: "/custom" }));
 
       const link = wrapper.find("a");
       expect(link.attributes("href")).toBe("/custom");

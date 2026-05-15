@@ -9,7 +9,11 @@
       </div>
 
       <div v-else-if="notFound" class="grow flex flex-col">
-        <NotFound />
+        <NotFound
+          :title="t('production.notFound.title')"
+          :description="t('production.notFound.description')"
+          :button-label="t('production.notFound.buttonLabel')"
+        />
       </div>
 
       <div v-else-if="error" class="grow flex items-center justify-center">
@@ -50,6 +54,7 @@ import GallerySection from "@/components/production/GallerySection.vue";
 import BlogSection from "@/components/production/BlogSection.vue";
 import NotFound from "@/components/NotFound.vue";
 import { ref, onMounted, computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { getProduction } from "@/services/productions";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
@@ -60,6 +65,7 @@ import { useTagGroups } from "@/composables/useTagGroups";
 import { useProductionEvents } from "@/composables/useProductionEvents";
 import type { LanguageMap } from "@/utils/language-utils";
 
+const { t } = useI18n();
 const { isDark } = useDarkMode();
 
 const route = useRoute();

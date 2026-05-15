@@ -54,6 +54,11 @@ vi.mock("vue-router", () => ({
   useRoute: () => ({ params: { id: "42" } }),
 }));
 
+// ─── Mock vue-i18n ────────────────────────────────────────────────────────────
+vi.mock("vue-i18n", () => ({
+  useI18n: () => ({ t: (key: string) => key }),
+}));
+
 // ─── Mock service ─────────────────────────────────────────────────────────────
 const mockGetProduction = vi.fn();
 vi.mock("@/services/productions", () => ({

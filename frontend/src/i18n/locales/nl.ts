@@ -259,11 +259,15 @@ export default {
     },
     notFound: {
       title: "Productie niet gevonden",
-      description: "Deze productie konden we niet voor je vinden. Gelukkig valt er nog genoeg anders te ontdekken: keer terug naar het overzicht en duik opnieuw in onze volledige historiek van producties.",
+      description: "Deze productie konden we niet voor je vinden. Keer terug naar het overzicht en duik opnieuw in onze volledige historiek van producties.",
       buttonLabel: "Terug naar producties",
-      helpTitle: "Hulp nodig?",
-      helpText: "Vind je niet meteen wat je zoekt in onze historiek? Voor vragen over ons archief of specifieke producties kun je altijd een mailtje sturen naar info{'@'}viernulvier.gent. We helpen je graag verder.",
-      contactLabel: "Contacteer ons",
+    },
+  },
+  errors: {
+    notFound: {
+      title: "Pagina niet gevonden",
+      description: "Deze pagina bestaat niet of is verplaatst. Keer terug naar het overzicht om verder te zoeken in het archief.",
+      buttonLabel: "Naar producties",
     },
   },
   blogpost: {
