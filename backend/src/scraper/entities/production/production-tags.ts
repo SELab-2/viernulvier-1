@@ -262,9 +262,9 @@ async function linkProductionToTag(
     );
     return false;
   }
-  const body = (await res.json()) as { linked: boolean };
+  const body = (await res.json()) as { tags: number[] };
   if (stats !== undefined) {
-    if (body.linked) {
+    if (body !== undefined && Array.isArray(body.tags) && body.tags.length === tagIds.length) {
       stats.tags.linksCreated++;
     } else {
       stats.tags.linksAlreadyPresent++;
