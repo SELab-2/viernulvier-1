@@ -189,6 +189,8 @@ export default {
         language: "Langue de l'upload",
         uploadImage: "Uploader une image",
         youtubeLink: "Lien YouTube",
+        imageCountOne: "1 image",
+        imageCountOther: "{count} images",
         hint: "Vous pouvez ajouter plusieurs images et vidéos. Pour les images, différents formats seront générés automatiquement.",
       },
       validation: {
@@ -207,6 +209,7 @@ export default {
       close: "Fermer",
       save: "Enregistrer",
       saveAction: "Enregistrer les modifications",
+      saving: "Enregistrement...",
       saveHint: "Les changements ne sont appliques qu'apres avoir clique sur Enregistrer les modifications.",
       text: "Texte",
       bulkNotice: "La modification sera appliquee a {count} productions selectionnees.",

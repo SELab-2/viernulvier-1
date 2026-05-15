@@ -50,8 +50,8 @@ export async function uploadImageWithCrops(
   });
 
   // Upload to backend
-  const response = await apiFetch(
-    `/api/v1/production/${productionId}/image`,
+  const response = await apiFetch<Image & { crops: Crop[] }>(
+    `/production/${productionId}/image`,
     {
       method: "POST",
       body: formData,
@@ -92,8 +92,8 @@ export async function uploadCrops(
     formData.append(crop.filename, crop.blob, crop.filename);
   });
 
-  const response = await apiFetch(
-    `/api/v1/image/${imageId}/crop`,
+  const response = await apiFetch<Crop[]>(
+    `/image/${imageId}/crop`,
     {
       method: "POST",
       body: formData,

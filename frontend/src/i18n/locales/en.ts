@@ -190,6 +190,8 @@ export default {
         language: "Upload language",
         uploadImage: "Upload image",
         youtubeLink: "YouTube link",
+        imageCountOne: "1 image",
+        imageCountOther: "{count} images",
         hint: "You can add multiple images and videos. For images, different formats will be automatically generated.",
       },
       validation: {
@@ -208,6 +210,7 @@ export default {
       close: "Close",
       save: "Save",
       saveAction: "Save Changes",
+      saving: "Saving...",
       saveHint: "Changes are only applied after clicking Save Changes.",
       text: "Text",
       bulkNotice: "Change will be applied to {count} selected productions.",

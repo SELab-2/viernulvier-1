@@ -9,11 +9,11 @@ describe("useCmsProductionGrid", () => {
   });
 
   describe("column definitions", () => {
-    it("declares ten production columns including the events action", () => {
+    it("declares eleven production columns including the events action", () => {
       const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key });
 
-      expect(grid.columnDefs.value).toHaveLength(10);
-      expect(grid.gridColumnOptions.value).toHaveLength(10);
+      expect(grid.columnDefs.value).toHaveLength(11);
+      expect(grid.gridColumnOptions.value).toHaveLength(11);
 
       const eventsValueGetter = grid.columnDefs.value[0]?.valueGetter as
         | ((params: unknown) => string)

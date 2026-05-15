@@ -157,21 +157,21 @@ function renderMediaCell(value: unknown): string {
   return `<span class="cms-media-text">${label}</span>`;
 }
 
-function renderImageMediaCell(params: ICellRendererParams<CmsProductionGridRow, unknown>): string {
+function renderImageMediaCell(
+  params: ICellRendererParams<CmsProductionGridRow, unknown>,
+  t: TranslateFunction,
+): string {
   const urls = params.data?.imageMediaUrls ?? [];
   if (urls.length === 0) {
     return "";
   }
 
-  const firstUrl = escapeHtml(truncateValue(urls[0] ?? "", 54));
-  const countLabel = urls.length === 1 ? "1 image" : `${urls.length} images`;
+  const count = urls.length;
+  const countLabel = count === 1
+    ? t("cms.create.media.imageCountOne")
+    : t("cms.create.media.imageCountOther", { count });
 
-  return `
-    <span class="cms-media-cell-content">
-      <span class="cms-media-text">${escapeHtml(countLabel)}</span>
-      <span class="cms-media-text">${firstUrl}</span>
-    </span>
-  `;
+  return `<span class="cms-media-text">${escapeHtml(countLabel)}</span>`;
 }
 
 /**
@@ -359,7 +359,7 @@ export function useCmsProductionGrid(options: {
       editable: false,
       minWidth: 150,
       cellClass: "cms-truncate-cell",
-      cellRenderer: (params: ICellRendererParams<CmsProductionGridRow, unknown>) => renderImageMediaCell(params),
+      cellRenderer: (params: ICellRendererParams<CmsProductionGridRow, unknown>) => renderImageMediaCell(params, options.t),
     },
     {
       headerName: options.t("cms.columns.media"),

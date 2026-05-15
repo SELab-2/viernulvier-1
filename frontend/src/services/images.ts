@@ -17,7 +17,7 @@ export async function getImagesByProduction(
   productionId: number,
 ): Promise<(Image & { crops?: Crop[] })[]> {
   return await apiFetch<(Image & { crops?: Crop[] })[]>(
-    `/api/v1/production/${productionId}/image`,
+    `/production/${productionId}/image`,
   );
 }
 
@@ -28,7 +28,7 @@ export async function getImagesByProduction(
  * @returns Image with crops
  */
 export async function getImage(imageId: number): Promise<Image & { crops?: Crop[] }> {
-  return await apiFetch<Image & { crops?: Crop[] }>(`/api/v1/image/${imageId}`);
+  return await apiFetch<Image & { crops?: Crop[] }>(`/image/${imageId}`);
 }
 
 /**
@@ -37,7 +37,7 @@ export async function getImage(imageId: number): Promise<Image & { crops?: Crop[
  * @param imageId - The image ID to delete
  */
 export async function deleteImage(imageId: number): Promise<void> {
-  return await apiFetch<void>(`/api/v1/image/${imageId}`, {
+  return await apiFetch<void>(`/image/${imageId}`, {
     method: "DELETE",
   });
 }

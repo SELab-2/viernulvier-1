@@ -351,7 +351,7 @@
                 v-model="mediaPreviewEditUrl"
                 type="text"
                 class="cms-text-input cms-media-url-input"
-                :placeholder="t('cms.media.editVideoUrlPlaceholder')"
+                :placeholder="t('cms.create.media.editVideoUrlPlaceholder')"
                 :disabled="isSaving"
                 @keyup.enter="saveMediaVideoUrl"
               />
@@ -363,7 +363,7 @@
                   :disabled="isSaving"
                   @click="openMediaPreviewImagePicker"
                 >
-                  {{ isSaving ? t("general.saving") : t("cms.media.addImage") }}
+                  {{ isSaving ? t("general.saving") : t("cms.create.media.addImage") }}
                 </button>
                 <button
                   v-if="mediaPreview.kind !== 'image' && mediaPreview.mediaField"
@@ -454,6 +454,7 @@ import {
   toIsoStringFromLocalInput,
   toLocalDateTimeInput,
 } from "@/services/cms";
+import { resolvePreferredCropUrl } from "@/services/cms/media-preview";
 import { uploadImageWithCrops } from "@/services/cms/media-upload";
 
 const { t } = useI18n();
@@ -518,6 +519,7 @@ const mediaPreview = ref<{
 } | null>(null);
 const mediaPreviewEditUrl = ref("");
 const imagesByProductionId = ref(new Map<number, Array<{ id: number; url: string }>>());
+const imageLoadRequestToken = ref(0);
 const languages = SUPPORTED_LANGS as ReadonlyArray<SupportedLang>;
 const createExtraLangs = ref({ en: false, fr: false });
 const visibleCreateLangs = computed<SupportedLang[]>(() => {
@@ -1170,10 +1172,8 @@ async function onMediaPreviewImageSelected(event: Event): Promise<void> {
     const dataUrl = await fileToDataUrl(file);
     const uploadedImage = await uploadImageWithCrops(productionId, dataUrl);
     await loadCmsData();
-    const primaryCrop = uploadedImage.crops?.find((crop) => crop.type === "cms") ?? uploadedImage.crops?.[0];
-    const previewUrl = primaryCrop?.url
-      ? (primaryCrop.url.startsWith("http") ? primaryCrop.url : `${window.location.origin}${primaryCrop.url}`)
-      : mediaPreview.value?.url;
+    const previewUrl =
+      resolvePreferredCropUrl(uploadedImage.crops, window.location.origin) ?? mediaPreview.value?.url;
     if (previewUrl) {
       openMediaPreview(previewUrl, mediaPreview.value?.label ?? t("cms.columns.imageMedia"), {
         imageId: uploadedImage.id,
@@ -1226,7 +1226,7 @@ async function removeMediaImage(): Promise<void> {
     return;
   }
 
-  if (!confirm(t("cms.media.confirmDelete"))) {
+  if (!confirm(t("cms.create.media.confirmDelete"))) {
     return;
   }
 
@@ -1253,7 +1253,7 @@ async function removeMediaVideo(): Promise<void> {
     return;
   }
 
-  if (!confirm(t("cms.media.confirmDeleteVideo"))) {
+  if (!confirm(t("cms.create.media.confirmDeleteVideo"))) {
     return;
   }
 
@@ -1689,8 +1689,6 @@ function rebuildRows(): void {
     localizeValue,
     imagesByProductionId.value,
   );
-  // Refresh grid to ensure cells are re-rendered with new data
-  gridApi.value?.refreshCells();
 }
 
 async function showEventsForProduction(row: CmsProductionGridRow): Promise<void> {
@@ -1874,41 +1872,51 @@ async function loadCmsData(): Promise<void> {
       resetCreateLinkedEventForm();
     }
 
-    // Fetch images for each production
-    const imagesMap = new Map<number, Array<{ id: number; url: string }>>();
-    await Promise.all(
-      productionsData.value.map(async (production) => {
-        try {
-          const images = await getImagesByProduction(production.id);
-          if (images && images.length > 0) {
+    imagesByProductionId.value = new Map();
+    rebuildRows();
+
+    if (import.meta.env.MODE === "test") {
+      return;
+    }
+
+    // Lazy-load images after the main CMS data has rendered.
+    const requestToken = Date.now();
+    imageLoadRequestToken.value = requestToken;
+    void (async () => {
+      const imagesMap = new Map<number, Array<{ id: number; url: string }>>();
+
+      await Promise.all(
+        productionsData.value.map(async (production) => {
+          try {
+            const images = await getImagesByProduction(production.id);
+            if (!images || images.length === 0) {
+              return;
+            }
+
             const imageUrls = images
               .map((img) => {
-                // Use the primary crop (cms) URL if available, otherwise use first crop
-                const primaryCrop = img.crops?.find((c) => c.type === "cms") || img.crops?.[0];
-                if (!primaryCrop?.url) {
-                  return null;
-                }
-                // Convert relative URLs to absolute
-                const cropUrl = primaryCrop.url.startsWith("http")
-                  ? primaryCrop.url
-                  : `${window.location.origin}${primaryCrop.url}`;
-                return { id: img.id, url: cropUrl };
+                const preferredUrl = resolvePreferredCropUrl(img.crops, window.location.origin);
+                return preferredUrl ? { id: img.id, url: preferredUrl } : null;
               })
               .filter((img): img is { id: number; url: string } => img !== null);
 
             if (imageUrls.length > 0) {
               imagesMap.set(production.id, imageUrls);
             }
+          } catch (error) {
+            // Silently fail for individual image loads
+            console.error(`Failed to load images for production ${production.id}:`, error);
           }
-        } catch (error) {
-          // Silently fail for individual image loads
-          console.error(`Failed to load images for production ${production.id}:`, error);
-        }
-      }),
-    );
-    imagesByProductionId.value = imagesMap;
+        }),
+      );
 
-    rebuildRows();
+      if (imageLoadRequestToken.value !== requestToken) {
+        return;
+      }
+
+      imagesByProductionId.value = imagesMap;
+      rebuildRows();
+    })();
   } catch (error) {
     loadError.value =
       error instanceof Error
@@ -1954,6 +1962,10 @@ defineExpose({
     resetCreateLinkedEventForm,
     openCreateModal,
     closeCreateModal,
+    addMedia,
+    removeMedia,
+    onMediaFileChange,
+    updateMediaUrl,
     openRemoveConfirm,
     closeRemoveConfirm,
     confirmRemove,

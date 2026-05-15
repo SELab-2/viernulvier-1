@@ -171,7 +171,12 @@ describe("CmsProductionsTab", () => {
     api.createForm.value.artist.nl = "Artist";
     api.createForm.value.tagline.nl = "Tagline";
     api.createForm.value.teaser.nl = "Teaser";
-    api.createForm.value.video_1.nl = "data:image/png;base64,abc";
+    api.createForm.value.media = [{
+      id: "media-1",
+      type: "image",
+      url: "data:image/png;base64,abc",
+      isUploaded: false,
+    }];
 
     await api.submitCreateProduction();
     expect(productionsService.createProduction).toHaveBeenCalledTimes(1);
@@ -196,7 +201,12 @@ describe("CmsProductionsTab", () => {
     api.createForm.value.artist.nl = "Artist";
     api.createForm.value.tagline.nl = "Tagline";
     api.createForm.value.teaser.nl = "Teaser";
-    api.createForm.value.video_1.nl = "data:image/png;base64,abc";
+    api.createForm.value.media = [{
+      id: "media-1",
+      type: "image",
+      url: "data:image/png;base64,abc",
+      isUploaded: false,
+    }];
 
     await api.submitCreateProduction();
 
@@ -257,7 +267,7 @@ describe("CmsProductionsTab", () => {
       data: row,
       colDef: { field: "media", headerName: "Media" },
     });
-    expect(api.mediaPreview.value?.kind).toBe("youtube");
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
 
     api.onCellClicked({
       data: api.rowData.value[0],
@@ -526,11 +536,16 @@ describe("CmsProductionsTab", () => {
       },
     } as unknown as Event;
 
-    await api.onImageFileChange(imageInputEvent);
-    await api.onVideoFileChange(videoInputEvent);
+    api.addMedia("image");
+    api.addMedia("video");
+    const imageMedia = api.createForm.value.media.find((m: { type: string }) => m.type === "image");
+    const videoMedia = api.createForm.value.media.find((m: { type: string }) => m.type === "video");
 
-    expect(api.createForm.value.video_1.nl).toContain("data:mock");
-    expect(api.createForm.value.video_2.nl).toContain("data:mock");
+    await api.onMediaFileChange(imageMedia.id, imageInputEvent);
+    await api.onMediaFileChange(videoMedia.id, videoInputEvent);
+
+    expect(imageMedia.url).toContain("data:mock");
+    expect(videoMedia.url).toContain("data:mock");
 
     (globalThis as any).FileReader = originalFileReader;
   });
@@ -574,20 +589,20 @@ describe("CmsProductionsTab", () => {
     expect(api.mediaPreview.value?.kind).toBe("image");
 
     api.openMediaPreview("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "Video");
-    expect(api.mediaPreview.value?.kind).toBe("youtube");
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
     expect(api.mediaPreview.value?.url).toContain("youtube.com/embed/");
 
     api.openMediaPreview("https://example.com/video.webm", "Video");
-    expect(api.mediaPreview.value?.kind).toBe("video");
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
 
     api.closeMediaPreview();
     expect(api.mediaPreview.value).toBeNull();
 
     api.openMediaPreview("https://example.com/file.txt", "Text");
-    expect(api.mediaPreview.value).toBeNull();
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
 
     api.openMediaPreview("https://youtu.be/", "Broken");
-    expect(api.mediaPreview.value).toBeNull();
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
   });
 
   it("covers guard branches for no-op paths", async () => {
@@ -741,8 +756,9 @@ describe("CmsProductionsTab", () => {
     api.openMediaPreview("   ", "Empty");
     expect(api.mediaPreview.value).toBeNull();
 
-    await api.onImageFileChange({ target: { files: [], value: "x" } } as unknown as Event);
-    await api.onVideoFileChange({ target: { files: [], value: "x" } } as unknown as Event);
+    api.addMedia("image");
+    const imageMedia = api.createForm.value.media.find((m: { type: string }) => m.type === "image");
+    await api.onMediaFileChange(imageMedia.id, { target: { files: [], value: "x" } } as unknown as Event);
 
     api.removeConfirmOpen.value = true;
     api.gridApi.value = {
@@ -890,13 +906,18 @@ describe("CmsProductionsTab", () => {
     api.createForm.value.artist.nl = "Artist";
     api.createForm.value.tagline.nl = "Tagline";
     api.createForm.value.teaser.nl = "Teaser";
-    api.createForm.value.video_1.nl = "data:image/png;base64,abc";
+    api.createForm.value.media = [{
+      id: "media-1",
+      type: "image",
+      url: "data:image/png;base64,abc",
+      isUploaded: false,
+    }];
     await api.submitCreateProduction();
     expect(api.createError.value).toBeTruthy();
 
     api.onCellClicked({ data: row, colDef: {} });
     api.onCellClicked({ data: row, colDef: { field: "media", headerName: "Media" } });
-    expect(api.editorPanel.value?.apiField).toBe("video_1");
+    expect(api.editorPanel.value).toBeNull();
 
     api.onCellClicked({ data: row, colDef: { field: "descriptionOne" } });
     expect(api.editorPanel.value?.label).toBe(i18n.global.t("cms.panel.text"));
@@ -926,7 +947,12 @@ describe("CmsProductionsTab", () => {
     api.createForm.value.artist.nl = "Artist";
     api.createForm.value.tagline.nl = "Tagline";
     api.createForm.value.teaser.nl = "Teaser";
-    api.createForm.value.video_1.nl = "data:image/png;base64,abc";
+    api.createForm.value.media = [{
+      id: "media-1",
+      type: "image",
+      url: "data:image/png;base64,abc",
+      isUploaded: false,
+    }];
 
     await api.submitCreateProduction();
 

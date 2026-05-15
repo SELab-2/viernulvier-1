@@ -189,6 +189,8 @@ export default {
         language: "Taal voor upload",
         uploadImage: "Upload afbeelding",
         youtubeLink: "YouTube link",
+        imageCountOne: "1 afbeelding",
+        imageCountOther: "{count} afbeeldingen",
         hint: "Je kan meerdere afbeeldingen en video's toevoegen. Voor afbeeldingen worden automatisch verschillende formaten gegenereerd.",
       },
       validation: {
@@ -207,6 +209,7 @@ export default {
       close: "Sluit",
       save: "Opslaan",
       saveAction: "Wijzigingen Opslaan",
+      saving: "Opslaan...",
       saveHint: "Wijzigingen worden pas toegepast nadat je op Wijzigingen Opslaan klikt.",
       text: "Tekst",
       bulkNotice: "Wijziging wordt toegepast op {count} geselecteerde producties.",
