@@ -26,10 +26,10 @@
         <span class="text-xs font-semibold uppercase tracking-wide text-ink-secondary">
           {{ lang.toUpperCase() }}
         </span>
-        <textarea
+
+        <MarkdownEditor
           v-model="localValues[lang]"
-          class="cms-side-textarea"
-          rows="5"
+          :placeholder="t('cms.panel.placeholder')"
         />
       </label>
 
@@ -56,6 +56,7 @@ import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { SUPPORTED_LANGS, type SupportedLang } from "@/i18n";
 import type { EditorPanelState } from "@/services/cms";
+import MarkdownEditor from "@/components/MarkdownEditor.vue";
 
 const props = defineProps<{
   panel: EditorPanelState | null;
@@ -77,10 +78,6 @@ type LocalValues = Record<SupportedLang, string>;
 
 const localValues = ref<LocalValues>({ ...props.panel?.values } as LocalValues);
 
-// Sync inward: when the parent swaps to a different panel, reset local values.
-// Using panel.rowId + panel.apiField as the identity key so that the outward
-// watch (which compares localValues against props.panel.values) does not fire
-// a redundant emit when we write back what the parent just gave us.
 watch(
   () => props.panel && `${props.panel.rowId}:${props.panel.apiField}`,
   () => {
@@ -88,18 +85,23 @@ watch(
   },
 );
 
-// Sync outward: emit only when a value differs from what the prop already holds,
-// preventing a reactive loop when the inward watch resets localValues.
 watch(
   localValues,
   (values) => {
     if (!props.panel) return;
+
     const current = props.panel.values;
+
     const changed = (Object.keys(values) as (keyof LocalValues)[]).some(
       (lang) => values[lang] !== current[lang],
     );
+
     if (!changed) return;
-    emit("update:panel", { ...props.panel, values: { ...values } });
+
+    emit("update:panel", {
+      ...props.panel,
+      values: { ...values },
+    });
   },
   { deep: true },
 );

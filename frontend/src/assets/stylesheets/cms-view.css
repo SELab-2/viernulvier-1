@@ -36,10 +36,6 @@
   @apply flex flex-col gap-2;
 }
 
-.cms-side-textarea {
-  @apply min-h-28 rounded-md border border-surface-3 bg-surface-1 p-3 text-sm text-ink-primary;
-}
-
 .cms-tag-selector-grid {
   @apply grid grid-cols-1 gap-3;
 }
