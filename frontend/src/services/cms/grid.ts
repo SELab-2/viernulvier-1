@@ -137,7 +137,7 @@ export function buildTagGridRow(
 ): CmsTagGridRow {
   const tagTypeId = Number(tag.tag_type);
   const tagType = tagTypeById.get(tagTypeId);
-  const productionIds = Array.isArray(tag.productions) ? tag.productions : [];
+  const productionIds = Array.isArray(tag.productions) ? (tag.productions as number[]) : [];
 
   return {
     id: tag.id,
