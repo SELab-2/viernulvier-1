@@ -243,22 +243,22 @@ async function resolveLocalTagIdForGenre(
 
 async function linkProductionToTag(
   localProductionId: number,
-  tagId: number,
+  tagIds: number[],
   loginToken: string,
   stats?: ScrapeRunStats,
 ): Promise<boolean> {
-  const res = await fetch(localApiUrl(`/api/v1/production/${localProductionId}/tags`), {
-    method: "POST",
+  const res = await fetch(localApiUrl(`/api/v1/production/${localProductionId}`), {
+    method: "PATCH",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${loginToken}`,
     },
-    body: JSON.stringify({ tag: tagId }),
+    body: JSON.stringify({ tags: tagIds }),
   });
   if (!res.ok) {
     const text = await res.text();
     console.warn(
-      `POST /production/${localProductionId}/tags tag=${tagId}: ${res.status} ${text}`,
+      `PATCH /production/${localProductionId}: ${res.status} ${text}`,
     );
     return false;
   }
@@ -368,6 +368,7 @@ async function syncProductionGenreTagsInner(
   const tagTypes = await ensureScraperTagTypeIds(loginToken, stats);
   const refs = normalizeGenresField(production.genres);
 
+  let newTags: number[] = [];
   for (const ref of refs) {
     const iri = hydraIriString(ref);
     if (iri === null) {
@@ -416,15 +417,17 @@ async function syncProductionGenreTagsInner(
       continue;
     }
 
-    const linked = await linkProductionToTag(
-      localProductionId,
-      tagId,
-      loginToken,
-      stats,
-    );
-    if (!linked) {
-      bumpGenresSkipped(stats);
-    }
+    newTags.push(tagId);
+
+  }
+  const linked = await linkProductionToTag(
+    localProductionId,
+    newTags,
+    loginToken,
+    stats,
+  );
+  if (!linked) {
+    bumpGenresSkipped(stats);
   }
 }
 
@@ -489,16 +492,7 @@ export async function scrapeTagsByIds(
       bumpGenresSkipped(stats);
       continue;
     }
-
-    const linked = await linkProductionToTag(
-      localProductionId,
-      tagId,
-      jwt,
-      stats,
-    );
-    if (!linked) {
-      bumpGenresSkipped(stats);
-    }
+    out.push(tagId);
   }
   return out;
 }
