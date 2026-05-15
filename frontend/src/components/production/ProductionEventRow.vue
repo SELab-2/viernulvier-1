@@ -40,12 +40,9 @@
           <div class="row-span-2 flex flex-col items-start gap-1 self-stretch pt-0.5">
             <MapPinOutlineIcon class="size-[0.9rem] shrink-0 translate-y-px text-ink-tertiary" />
             <div
-              class="flex min-h-0 min-w-0 flex-1 flex-col pb-2.5 pl-[0.4rem] mt-0.5"
+              class="ml-[0.42rem] h-[18px] w-[0.75rem] rounded-bl-lg border-b border-l border-ink-tertiary/30 translate-y-[1px]"
               aria-hidden="true"
-            >
-              <div class="w-[0.9px] flex-1 bg-ink-tertiary/40" />
-              <div class="h-[0.9px] bg-ink-tertiary/40" style="width: 0.65rem;" />
-            </div>
+            />
           </div>
           <h4
             class="col-start-2 row-start-1 flex items-start font-serif text-base font-semibold leading-snug tracking-tight text-ink-primary"
