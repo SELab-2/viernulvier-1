@@ -315,6 +315,7 @@ export default {
       all: "Alle artikelen",
     },
     notFound: {
+      kicker: "Dossier nr. 404 · Niet in de collectie",
       title: "Productie niet gevonden",
       description: "Deze productie konden we niet voor je vinden. Gelukkig valt er nog genoeg anders te ontdekken: keer terug naar het overzicht en duik opnieuw in onze volledige historiek van producties.",
       buttonLabel: "Terug naar producties",

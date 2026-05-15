@@ -6,9 +6,14 @@
         <div class="lg:col-span-7">
           <div class="space-y-10">
             <div class="space-y-6">
-              <h1 class="font-serif text-3xl md:text-4xl font-semibold leading-tight tracking-tight text-ink-primary">
-                {{ title || $t('production.notFound.title') }}
-              </h1>
+              <div class="space-y-3">
+                <p class="text-xs font-medium uppercase tracking-[0.2em] text-ink-tertiary">
+                  {{ kicker || $t('production.notFound.kicker') }}
+                </p>
+                <h1 class="font-serif text-3xl md:text-4xl font-semibold leading-tight tracking-tight text-ink-primary">
+                  {{ title || $t('production.notFound.title') }}
+                </h1>
+              </div>
               <p class="text-base md:text-lg leading-relaxed text-ink-secondary max-w-xl">
                 {{ description || $t('production.notFound.description') }}
               </p>
@@ -53,6 +58,7 @@
 <script setup lang="ts">
 
 interface Props {
+  kicker?: string;
   title?: string;
   description?: string;
   buttonLabel?: string;
@@ -63,6 +69,7 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
+  kicker: undefined,
   title: undefined,
   description: undefined,
   buttonLabel: undefined,

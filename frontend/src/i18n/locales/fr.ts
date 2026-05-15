@@ -315,6 +315,7 @@ export default {
       all: "Tous les articles",
     },
     notFound: {
+      kicker: "Dossier nº 404 · Hors collection",
       title: "Production introuvable",
       description: "Nous n'avons pas pu trouver cette production. Heureusement, il reste encore beaucoup à découvrir : revenez à la vue d'ensemble et replongez dans l'historique complet de nos productions.",
       buttonLabel: "Retour aux productions",

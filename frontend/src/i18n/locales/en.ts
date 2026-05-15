@@ -315,6 +315,7 @@ export default {
       all: "All articles",
     },
     notFound: {
+      kicker: "File no. 404 · Not in the collection",
       title: "Production not found",
       description: "We couldn't find this specific production for you. Luckily, there's plenty more to discover: return to the overview and dive back into our full history of productions.",
       buttonLabel: "Back to productions",
