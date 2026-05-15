@@ -38,7 +38,7 @@
           class="mt-3 grid grid-cols-[0.9rem_minmax(0,1fr)] grid-rows-[auto_auto] gap-x-2 gap-y-1 items-start"
         >
           <div class="row-span-2 flex flex-col items-start gap-1 self-stretch pt-0.5">
-            <MapPinOutlineIcon class="size-[0.9rem] shrink-0 text-ink-tertiary" />
+            <MapPinOutlineIcon class="size-[0.9rem] shrink-0 translate-y-px text-ink-tertiary" />
             <div
               class="flex min-h-0 min-w-0 flex-1 flex-col pb-2.5 pl-[0.4rem] mt-0.5"
               aria-hidden="true"
@@ -63,14 +63,14 @@
           v-else-if="tProd(event.hall?.name)"
           class="mt-3 flex items-start gap-2 font-serif text-base font-semibold leading-snug tracking-tight text-ink-primary"
         >
-          <MapPinOutlineIcon class="mt-0.5 size-[0.9rem] shrink-0 text-ink-tertiary" />
+          <MapPinOutlineIcon class="mt-0.5 size-[0.9rem] shrink-0 translate-y-px text-ink-tertiary" />
           <span>{{ tProd(event.hall?.name) }}</span>
         </h4>
         <div
           v-else-if="event.hall?.address"
           class="mt-3 flex items-start gap-2"
         >
-          <MapPinOutlineIcon class="mt-0.5 size-[0.9rem] shrink-0 text-ink-tertiary" />
+          <MapPinOutlineIcon class="mt-0.5 size-[0.9rem] shrink-0 translate-y-px text-ink-tertiary" />
           <p
             class="font-serif text-sm leading-relaxed text-ink-secondary"
             data-test="event-address"
