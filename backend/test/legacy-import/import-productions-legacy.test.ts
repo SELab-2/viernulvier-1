@@ -467,4 +467,270 @@ describe("importProductionsLegacy", () => {
     });
     fs.rmSync(dir, { recursive: true });
   });
+
+  it("dry-run maps legacy id to existing production when exactly one title+artist match", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-drymap-"));
+    const csvPath = path.join(dir, "p.csv");
+    fs.writeFileSync(csvPath, "Titel,ID,Genre\nExisting Show,77,Drama\n", "utf8");
+
+    const query = vi.fn().mockImplementation((sql: string, params?: unknown[]) => {
+      if (sql.includes("FROM tag_type")) {
+        const name = params?.[0];
+        if (name === "Tag") return Promise.resolve({ rows: [{ id: 10 }] });
+        if (name === "Genre") return Promise.resolve({ rows: [{ id: 20 }] });
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("FROM tag") && sql.includes("tag_type = $1")) return Promise.resolve({ rows: [] });
+      // Exactly one matching production → dry-run maps without inserting
+      if (sql.includes("FROM production p")) return Promise.resolve({ rows: [{ id: 42 }] });
+      return Promise.resolve({ rows: [] });
+    });
+
+    await importProductionsLegacy(makeClient(query), {
+      filePath: csvPath,
+      dryRun: true,
+      limit: null,
+    });
+
+    // In dry-run, no INSERT INTO legacy_production_import_map should occur
+    expect(query.mock.calls.some((c) => String(c[0]).includes("INSERT INTO legacy_production_import_map"))).toBe(false);
+    fs.rmSync(dir, { recursive: true });
+  });
+
+  it("dry-run counts createdGenreTags for new genre not in cache", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-drygenre-"));
+    const csvPath = path.join(dir, "p.csv");
+    // Two rows: same genre → second hit is cache hit; first is cache miss
+    fs.writeFileSync(csvPath, "Titel,ID,Genre\nShowA,1,Jazz\nShowB,2,Jazz\n", "utf8");
+
+    const query = vi.fn().mockImplementation((sql: string, params?: unknown[]) => {
+      if (sql.includes("FROM tag_type")) {
+        const name = params?.[0];
+        if (name === "Tag") return Promise.resolve({ rows: [{ id: 10 }] });
+        if (name === "Genre") return Promise.resolve({ rows: [{ id: 20 }] });
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("FROM tag") && sql.includes("tag_type = $1")) return Promise.resolve({ rows: [] });
+      if (sql.includes("FROM production p")) return Promise.resolve({ rows: [] });
+      return Promise.resolve({ rows: [] });
+    });
+
+    await importProductionsLegacy(makeClient(query), {
+      filePath: csvPath,
+      dryRun: true,
+      limit: null,
+    });
+
+    // No DB writes in dry-run, but both rows should complete
+    expect(query.mock.calls.some((c) => String(c[0]).includes("INSERT INTO"))).toBe(false);
+    fs.rmSync(dir, { recursive: true });
+  });
+
+  it("write mode skips row when genre tag validation fails", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-tagzod-"));
+    const csvPath = path.join(dir, "p.csv");
+    fs.writeFileSync(csvPath, "Titel,ID,Genre\nTagFail,1,BadGenre\n", "utf8");
+
+    const failed = z.string().safeParse(1);
+    expect(failed.success).toBe(false);
+    if (failed.success) throw new Error("expected fail");
+
+    // Need to import LegacyTagCreateBodySchema to spy on it
+    const validate = await import("@/legacy-import/validate-legacy-inserts.js");
+    vi.spyOn(validate.LegacyTagCreateBodySchema, "safeParse").mockReturnValueOnce(
+      failed as unknown as ReturnType<typeof validate.LegacyTagCreateBodySchema.safeParse>,
+    );
+
+    const query = vi.fn().mockImplementation((sql: string, params?: unknown[]) => {
+      if (sql.includes("FROM tag_type")) {
+        const name = params?.[0];
+        if (name === "Tag") return Promise.resolve({ rows: [{ id: 10 }] });
+        if (name === "Genre") return Promise.resolve({ rows: [{ id: 20 }] });
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("FROM tag") && sql.includes("tag_type = $1")) return Promise.resolve({ rows: [] });
+      if (sql.includes("FROM production p")) return Promise.resolve({ rows: [] });
+      return Promise.resolve({ rows: [] });
+    });
+
+    await importProductionsLegacy(makeClient(query), {
+      filePath: csvPath,
+      dryRun: true,
+      limit: null,
+    });
+
+    expect(query.mock.calls.some((c) => String(c[0]).includes("INSERT INTO production"))).toBe(false);
+    fs.rmSync(dir, { recursive: true });
+  });
+
+  it("write mode reuses cached genre tag for second occurrence", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-cachetag-"));
+    const csvPath = path.join(dir, "p.csv");
+    // Two productions with the same genre → second should hit genreTagCache
+    fs.writeFileSync(csvPath, "Titel,ID,Genre\nShowA,1,Jazz\nShowB,2,Jazz\n", "utf8");
+
+    const query = vi.fn().mockImplementation((sql: string, params?: unknown[]) => {
+      if (sql.includes("CREATE TABLE IF NOT EXISTS legacy_production_import_map")) return Promise.resolve({ rows: [] });
+      if (sql.includes("SELECT legacy_id") && sql.includes("legacy_production_import_map")) return Promise.resolve({ rows: [] });
+      if (sql.includes("FROM tag_type")) {
+        const name = params?.[0];
+        if (name === "Tag") return Promise.resolve({ rows: [{ id: 10 }] });
+        if (name === "Genre") return Promise.resolve({ rows: [{ id: 20 }] });
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("FROM tag") && sql.includes("tag_type = $1") && !sql.includes("jsonb_each_text")) return Promise.resolve({ rows: [] });
+      if (sql.includes("jsonb_each_text") && sql.includes("FROM tag")) return Promise.resolve({ rows: [] });
+      if (sql.includes("FROM production p")) return Promise.resolve({ rows: [] });
+      if (sql.trimStart().startsWith("BEGIN")) return Promise.resolve({ rows: [] });
+      if (sql.trimStart().startsWith("COMMIT")) return Promise.resolve({ rows: [] });
+      if (sql.trimStart().startsWith("ROLLBACK")) return Promise.resolve({ rows: [] });
+      if (sql.trimStart().startsWith("INSERT INTO tag (")) return Promise.resolve({ rows: [{ id: 55 }] });
+      if (sql.includes("INSERT INTO production")) return Promise.resolve({ rows: [{ id: 100 }] });
+      if (sql.includes("INSERT INTO production_tag")) return Promise.resolve({ rowCount: 1, rows: [] });
+      if (sql.includes("INSERT INTO legacy_production_import_map")) return Promise.resolve({ rows: [] });
+      return Promise.resolve({ rows: [] });
+    });
+
+    await importProductionsLegacy(makeClient(query), {
+      filePath: csvPath,
+      dryRun: false,
+      limit: null,
+    });
+
+    // INSERT INTO tag should only happen once — second production reused the cache
+    const tagInserts = query.mock.calls.filter((c) => String(c[0]).trimStart().startsWith("INSERT INTO tag ("));
+    expect(tagInserts).toHaveLength(1);
+    fs.rmSync(dir, { recursive: true });
+  });
+
+  it("write mode skips already-imported legacy id", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-skipimp-"));
+    const csvPath = path.join(dir, "p.csv");
+    fs.writeFileSync(csvPath, "Titel,ID\nAlready,1\n", "utf8");
+
+    const query = vi.fn().mockImplementation((sql: string, params?: unknown[]) => {
+      if (sql.includes("CREATE TABLE IF NOT EXISTS legacy_production_import_map")) return Promise.resolve({ rows: [] });
+      if (sql.includes("SELECT legacy_id") && sql.includes("legacy_production_import_map")) {
+        return Promise.resolve({ rows: [{ legacy_id: "1" }] });
+      }
+      if (sql.includes("FROM tag_type")) {
+        const name = params?.[0];
+        if (name === "Tag") return Promise.resolve({ rows: [{ id: 10 }] });
+        if (name === "Genre") return Promise.resolve({ rows: [{ id: 20 }] });
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("FROM tag") && sql.includes("tag_type = $1")) return Promise.resolve({ rows: [] });
+      return Promise.resolve({ rows: [] });
+    });
+
+    await importProductionsLegacy(makeClient(query), {
+      filePath: csvPath,
+      dryRun: false,
+      limit: null,
+    });
+
+    expect(query.mock.calls.some((c) => String(c[0]).includes("INSERT INTO production"))).toBe(false);
+    fs.rmSync(dir, { recursive: true });
+  });
+
+  it("write mode skips row with no legacy id", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-noid-"));
+    const csvPath = path.join(dir, "p.csv");
+    fs.writeFileSync(csvPath, "Titel,ID\nNoId,\n", "utf8");
+
+    const query = vi.fn().mockImplementation((sql: string, params?: unknown[]) => {
+      if (sql.includes("CREATE TABLE IF NOT EXISTS legacy_production_import_map")) return Promise.resolve({ rows: [] });
+      if (sql.includes("SELECT legacy_id") && sql.includes("legacy_production_import_map")) return Promise.resolve({ rows: [] });
+      if (sql.includes("FROM tag_type")) {
+        const name = params?.[0];
+        if (name === "Tag") return Promise.resolve({ rows: [{ id: 10 }] });
+        if (name === "Genre") return Promise.resolve({ rows: [{ id: 20 }] });
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("FROM tag") && sql.includes("tag_type = $1")) return Promise.resolve({ rows: [] });
+      return Promise.resolve({ rows: [] });
+    });
+
+    await importProductionsLegacy(makeClient(query), {
+      filePath: csvPath,
+      dryRun: false,
+      limit: null,
+    });
+
+    expect(query.mock.calls.some((c) => String(c[0]).includes("INSERT INTO production"))).toBe(false);
+    fs.rmSync(dir, { recursive: true });
+  });
+
+  it("write mode catches error when mapping legacy id to existing production fails", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-mapfail-"));
+    const csvPath = path.join(dir, "p.csv");
+    fs.writeFileSync(csvPath, "Titel,ID\nMapFail,1\n", "utf8");
+
+    const query = vi.fn().mockImplementation((sql: string, params?: unknown[]) => {
+      if (sql.includes("CREATE TABLE IF NOT EXISTS legacy_production_import_map")) return Promise.resolve({ rows: [] });
+      if (sql.includes("SELECT legacy_id") && sql.includes("legacy_production_import_map")) return Promise.resolve({ rows: [] });
+      if (sql.includes("FROM tag_type")) {
+        const name = params?.[0];
+        if (name === "Tag") return Promise.resolve({ rows: [{ id: 10 }] });
+        if (name === "Genre") return Promise.resolve({ rows: [{ id: 20 }] });
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("FROM tag") && sql.includes("tag_type = $1")) return Promise.resolve({ rows: [] });
+      if (sql.includes("FROM production p")) return Promise.resolve({ rows: [{ id: 42 }] });
+      if (sql.includes("INSERT INTO legacy_production_import_map")) return Promise.reject(new Error("map insert failed"));
+      return Promise.resolve({ rows: [] });
+    });
+
+    await importProductionsLegacy(makeClient(query), {
+      filePath: csvPath,
+      dryRun: false,
+      limit: null,
+    });
+
+    expect(query.mock.calls.some((c) => String(c[0]).includes("INSERT INTO legacy_production_import_map"))).toBe(true);
+    fs.rmSync(dir, { recursive: true });
+  });
+
+  it("write mode finds genre tag in DB (not cache) and reuses it", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-prod-tagdb-"));
+    const csvPath = path.join(dir, "p.csv");
+    fs.writeFileSync(csvPath, "Titel,ID,Genre\nDbTag,1,Jazz\n", "utf8");
+
+    const query = vi.fn().mockImplementation((sql: string, params?: unknown[]) => {
+      if (sql.includes("CREATE TABLE IF NOT EXISTS legacy_production_import_map")) return Promise.resolve({ rows: [] });
+      if (sql.includes("SELECT legacy_id") && sql.includes("legacy_production_import_map")) return Promise.resolve({ rows: [] });
+      if (sql.includes("FROM tag_type")) {
+        const name = params?.[0];
+        if (name === "Tag") return Promise.resolve({ rows: [{ id: 10 }] });
+        if (name === "Genre") return Promise.resolve({ rows: [{ id: 20 }] });
+        return Promise.resolve({ rows: [] });
+      }
+      if (sql.includes("FROM tag") && sql.includes("tag_type = $1") && !sql.includes("jsonb_each_text")) return Promise.resolve({ rows: [] });
+      if (sql.includes("jsonb_each_text") && sql.includes("FROM tag")) return Promise.resolve({ rows: [{ id: 77 }] });
+      if (sql.includes("FROM production p")) return Promise.resolve({ rows: [] });
+      if (sql.trimStart().startsWith("BEGIN")) return Promise.resolve({ rows: [] });
+      if (sql.trimStart().startsWith("COMMIT")) return Promise.resolve({ rows: [] });
+      if (sql.trimStart().startsWith("ROLLBACK")) return Promise.resolve({ rows: [] });
+      if (sql.includes("INSERT INTO production")) return Promise.resolve({ rows: [{ id: 100 }] });
+      if (sql.includes("INSERT INTO production_tag")) return Promise.resolve({ rowCount: 1, rows: [] });
+      if (sql.includes("INSERT INTO legacy_production_import_map")) return Promise.resolve({ rows: [] });
+      return Promise.resolve({ rows: [] });
+    });
+
+    await importProductionsLegacy(makeClient(query), {
+      filePath: csvPath,
+      dryRun: false,
+      limit: null,
+    });
+
+    // Tag was found in DB so no INSERT INTO tag
+    expect(query.mock.calls.some((c) => String(c[0]).trimStart().startsWith("INSERT INTO tag ("))).toBe(false);
+    expect(query.mock.calls.some((c) => String(c[0]).includes("INSERT INTO production"))).toBe(true);
+    fs.rmSync(dir, { recursive: true });
+  });
+
+  it("splitGenres ignores empty parts after splitting on comma", () => {
+    expect(splitGenres("Jazz, ")).toEqual(["Jazz"]);
+    expect(splitGenres(", Drama")).toEqual(["Drama"]);
+  });
 });

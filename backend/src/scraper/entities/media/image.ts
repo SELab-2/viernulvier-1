@@ -1,7 +1,5 @@
-import { localApiUrl } from "./local-api.js";
-import type { ScrapeRunStats } from "./scrape-stats.js";
-import { viernulvierApiUrl } from "./viernulvier-api.js";
-import { createCropsForImage } from "./crop.js";
+import { localApiUrl, type ScrapeRunStats, viernulvierApiUrl } from "@/scraper/core/index.js";
+import { createCropsForImage } from "@/scraper/entities/index.js";
 import type { Crop, Image } from "@viernulvier/shared/types/index.js";
 
 /**

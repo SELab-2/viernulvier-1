@@ -83,7 +83,7 @@ export default {
       tagName: "Naam",
       tagType: "Type",
       public: "Publiek",
-      productionCount: "Aantal producties",
+      productions: "Producties",
       admin: {
         username: "Gebruikersnaam",
         profilePicture: "Profielfoto",
@@ -133,6 +133,10 @@ export default {
       admin: {
         noAdmins: "Geen admins gevonden.",
         addAdmin: "+ Admin toevoegen",
+        removeAdmin: "Geselecteerde admins verwijderen",
+        confirmRemoveDialogTitle: "Admin verwijderen? | Admins verwijderen?",
+        confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde admin. Dit kan niet ongedaan worden gemaakt. | Hiermee verwijder je definitief {count} geselecteerde admins. Dit kan niet ongedaan worden gemaakt.",
+        cannotRemoveSelf: "Je kan jezelf niet verwijderen.",
       },
     },
     create: {
@@ -203,6 +207,7 @@ export default {
     },
   },
   productionsPage: {
+    kicker: "Het archief",
     heading: "Producties",
     intro:
       "Alle voorstellingen uit het archief op een rij.",
@@ -215,6 +220,7 @@ export default {
       "Het eerste jaar moet op of vóór het laatste jaar liggen. Pas het bereik aan of corrigeer de link en probeer opnieuw.",
     empty: "Er staan nog geen producties in het archief.",
     morePerformances: "nog {n}",
+    moreListTags: "+{n} meer",
     showingRange: "{from}–{to} van {total}",
     prevPage: "Vorige",
     nextPage: "Volgende",

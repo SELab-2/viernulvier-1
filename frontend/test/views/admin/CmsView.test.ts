@@ -42,6 +42,7 @@ vi.mock("@/services/events", () => ({
 vi.mock("@/services/auth", () => ({
   logout: vi.fn().mockResolvedValue(undefined),
   getCurrentlyLoggedInAdmin: vi.fn().mockRejectedValue(new Error("Unauthorized")),
+  deleteAdmin: vi.fn().mockRejectedValue(new Error("Unauthorized")),
 }));
 
 vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({

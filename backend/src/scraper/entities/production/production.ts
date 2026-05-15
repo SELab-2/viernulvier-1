@@ -3,17 +3,20 @@ import type { z } from "zod";
 
 import { CreateProductionBodySchema } from "@/routes/production/handlers/body-schema.js";
 
-import { fetchScraperJwt } from "./auth.js";
-import { totalPagesFromHydraView } from "./hydra-view.js";
-import { viernulvierApiUrl } from "./viernulvier-api.js";
-import { coerceLanguageMap } from "./language-map.js";
-import { localApiUrl } from "./local-api.js";
+import {
+  fetchScraperJwt,
+  totalPagesFromHydraView,
+  viernulvierApiUrl,
+  coerceLanguageMap,
+  localApiUrl,
+  createEmptyRunStats,
+  type ScrapeRunStats,
+} from "@/scraper/core/index.js";
 import {
   rememberViernulvierProductionJson,
   syncProductionGenreTagsWithPayload,
-} from "./production-tags.js";
-import { createEmptyRunStats, type ScrapeRunStats } from "./scrape-stats.js";
-import { processProductionMediaGallery } from "./image.js";
+  processProductionMediaGallery,
+} from "@/scraper/entities/index.js";
 
 interface ProductionListMeta {
   totalItems: number;

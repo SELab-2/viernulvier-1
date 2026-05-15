@@ -1,7 +1,7 @@
 /**
  * Thin CLI entry for the archive scraper. Implementation lives in `src/scraper/`.
  *
- * Environment (see `src/scraper/auth.ts`, `local-api.ts`, `event.ts`):
+ * Environment (see `src/scraper/core/auth.ts`, `local-api.ts`, `event.ts`):
  *
  * - `VIERNULVIER_API_TOKEN` — API key for the archive API (`X-AUTH-TOKEN`).
  * - `VIERNULVIER_API_ORIGIN` — archive API origin (default `https://www.viernulvier.gent`).
@@ -11,21 +11,21 @@
  *
  * This entrypoint is events-only: halls and productions are imported lazily while processing each event.
  *
- * `VIERNULVIER_API_TOKEN` (and other vars) are read from the repository root `.env` (see `src/scraper/load-repo-env.ts`).
+ * `VIERNULVIER_API_TOKEN` (and other vars) are read from the repository root `.env` (see `src/scraper/core/load-repo-env.ts`).
  */
-import "@/scraper/load-repo-env.js";
+import "@/scraper/core/load-repo-env.js";
 import {
   previousBrusselsDayBounds,
   pastSevenDaysBounds,
   pastThirtyDaysBounds,
   scrapeAllEvents,
   type ViernulvierEventStartBounds,
-} from "@/scraper/event.js";
+} from "@/scraper/entities/index.js";
 import {
   formatRunReport,
   resolveScrapeStatsOutputPath,
   writeRunReportFile,
-} from "@/scraper/scrape-stats.js";
+} from "@/scraper/core/index.js";
 
 function readViernulvierApiToken(): string {
   const token = process.env["VIERNULVIER_API_TOKEN"];

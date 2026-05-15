@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   filterCropsByAllowList,
   SCRAPER_CROP_NAMES,
-} from "@/scraper/crop-types-config.js";
+} from "@/scraper/entities/media/crop-types-config.js";
 
 describe("crop-types-config", () => {
   it("SCRAPER_CROP_NAMES is non-empty", () => {
