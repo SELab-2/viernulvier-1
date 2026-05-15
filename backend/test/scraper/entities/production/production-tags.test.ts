@@ -709,7 +709,7 @@ describe("scrapeTagsByIds", () => {
       return jsonOk([]);
     });
 
-    await scrapeTagsById(1, []);
+    await scrapeTagsById(1, [], process.env["VIERNULVIER_API_TOKEN"]!);
 
     const jwtFetch = fetchSpy.mock.calls.find(
       ([url, init]) => typeof url === "string" && url.includes("/auth/login") && (init as RequestInit)?.method === "POST",
@@ -867,7 +867,6 @@ describe("scrapeTagsByIds", () => {
       if (url.includes("/genres/")) return jsonOk(genreJson());
       if (url.includes("/tag/all")) {
         // First call returns a tag, second returns empty
-        const body = (init as RequestInit | undefined)?.body;
         const params = new URL(url).searchParams;
         if (params.get("old_id") === "5") return jsonOk([{ id: 77 }]);
         return jsonOk([]);
