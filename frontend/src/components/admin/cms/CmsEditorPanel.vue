@@ -29,7 +29,6 @@
 
         <MarkdownEditor
           v-model="localValues[lang]"
-          :placeholder="t('cms.panel.placeholder')"
         />
       </label>
 

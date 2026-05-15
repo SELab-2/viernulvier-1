@@ -47,6 +47,32 @@ vi.mock("@/composables/useCmsBlogPostsGrid", () => ({
   }),
 }));
 
+vi.mock("easymde", () => {
+  return {
+    default: class MockEasyMDE {
+      private _value = "";
+
+      constructor(opts: any) {
+        this._value = opts?.initialValue ?? "";
+      }
+
+      value(v?: string) {
+        if (typeof v === "string") {
+          this._value = v;
+          return;
+        }
+        return this._value;
+      }
+
+      toTextArea() {}
+
+      codemirror = {
+        on: (_event: string, _cb: Function) => {},
+      };
+    },
+  };
+});
+
 // -------------------------
 // helper
 // -------------------------

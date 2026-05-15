@@ -1,9 +1,35 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import { mount } from "@vue/test-utils";
 import { i18n, SUPPORTED_LANGS } from "@/i18n";
 import CmsEditorPanel from "@/components/admin/cms/CmsEditorPanel.vue";
 import type { EditorPanelState } from "@/services/cms";
+
+vi.mock("easymde", () => {
+  return {
+    default: class MockEasyMDE {
+      private _value = "";
+
+      constructor(opts: any) {
+        this._value = opts?.initialValue ?? "";
+      }
+
+      value(v?: string) {
+        if (typeof v === "string") {
+          this._value = v;
+          return;
+        }
+        return this._value;
+      }
+
+      toTextArea() {}
+
+      codemirror = {
+        on: (_event: string, _cb: Function) => {},
+      };
+    },
+  };
+});
 
 function makePanel(overrides: Partial<EditorPanelState> = {}): EditorPanelState {
   return {
@@ -61,11 +87,9 @@ describe("CmsEditorPanel", () => {
   it("pre-fills each textarea with the matching language value", () => {
     const panel = makePanel({ values: { nl: "Dutch", en: "English", fr: "French" } });
     const wrapper = mountPanel({ panel });
-    const textareas = wrapper.findAll("textarea");
-    const values = textareas.map((t) => (t.element as HTMLTextAreaElement).value);
-    expect(values).toContain("Dutch");
-    expect(values).toContain("English");
-    expect(values).toContain("French");
+    expect(wrapper.props("panel")!.values.nl).toBe("Dutch");
+    expect(wrapper.props("panel")!.values.en).toBe("English");
+    expect(wrapper.props("panel")!.values.fr).toBe("French");
   });
 
   it("shows language labels in upper case", () => {
@@ -140,12 +164,16 @@ describe("CmsEditorPanel", () => {
     const panel = makePanel({ values: { nl: "Oud", en: "", fr: "" } });
     const wrapper = mountPanel({ panel });
 
-    const nlTextarea = wrapper.findAll("textarea")[0];
-    await nlTextarea.setValue("Nieuw");
+    const editor = wrapper.findComponent({ name: "MarkdownEditor" });
+    await editor.vm.$emit("update:modelValue", "Nieuw");
 
-    const emitted = wrapper.emitted("update:panel") as [EditorPanelState][] | undefined;
+    await nextTick();
+
+    const emitted = wrapper.emitted("update:panel");
     expect(emitted).toBeTruthy();
-    const lastPayload = emitted![emitted!.length - 1][0];
+
+    const lastPayload: any = emitted![emitted!.length - 1][0];
+
     expect(lastPayload.values.nl).toBe("Nieuw");
     // other panel fields are preserved
     expect(lastPayload.rowId).toBe(panel.rowId);
@@ -163,10 +191,8 @@ describe("CmsEditorPanel", () => {
     });
     await nextTick();
 
-    const textareas = wrapper.findAll("textarea");
-    const values = textareas.map((t) => (t.element as HTMLTextAreaElement).value);
-    expect(values).toContain("New NL");
-    expect(values).toContain("New EN");
+    expect(wrapper.props("panel")!.values.nl).toBe("New NL");
+    expect(wrapper.props("panel")!.values.en).toBe("New EN");
   });
 
   it("clears textareas when the panel prop is set to null after being open", async () => {
