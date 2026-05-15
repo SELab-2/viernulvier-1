@@ -63,7 +63,6 @@
               <span class="cms-lang-label">{{ lang.toUpperCase() }}</span>
               <MarkdownEditor
                 :model-value="createForm.content[lang]"
-                :placeholder="t('cms.columns.blogpost.content')"
                 :data-testid="`cms-create-blogpost-content-${lang}`"
                 @update:model-value="(value) => emit('update-content', lang, value)"
               />
