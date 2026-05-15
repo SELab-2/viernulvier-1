@@ -689,6 +689,13 @@ describe("scrapeTagsByIds", () => {
   });
 
   it("returns empty array when genres is empty array", async () => {
+    vi.spyOn(global, "fetch").mockImplementation(async (input, init) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      const method = (init as RequestInit | undefined)?.method ?? "GET";
+      if (url.includes("/tag/type") && method === "GET") return jsonOk(BOTH_TAG_TYPES);
+      return jsonOk([]);
+    });
+
     const result = await scrapeTagsById(1, [], "auth", "login", createEmptyRunStats());
     expect(result).toEqual([]);
   });
