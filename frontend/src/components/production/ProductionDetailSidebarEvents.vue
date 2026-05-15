@@ -37,7 +37,7 @@
           </p>
           <button
             type="button"
-            class="mt-4 border-b border-ink-primary pb-0.5 text-[10px] font-black uppercase tracking-widest text-ink-primary transition-colors hover:text-ink-secondary"
+            class="event-sidebar-retry"
             @click="emit('retry')"
           >
             {{ t("production.events.retry") }}
@@ -62,7 +62,8 @@
         <button
           v-if="events.length > collapsedLimit"
           type="button"
-          class="group mt-2 flex w-full cursor-pointer items-center justify-between pb-4 pt-4 text-left"
+          data-test="event-sidebar-expand"
+          class="event-sidebar-expand-btn group"
           @click="expanded = !expanded"
         >
           <div class="flex flex-col gap-1">
@@ -79,24 +80,18 @@
               }}
             </span>
           </div>
-          <span
-            class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-surface-3 transition-colors group-hover:border-ink-primary"
-          >
+          <span class="event-sidebar-expand-chevron-wrap">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
               stroke-width="2.5"
               stroke="currentColor"
-              class="h-2.5 w-2.5 text-ink-tertiary transition-transform duration-300 group-hover:text-ink-primary"
+              class="event-sidebar-expand-chevron-icon"
               :class="{ 'rotate-180': expanded }"
               aria-hidden="true"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="m19.5 8.25-7.5 7.5-7.5-7.5"
-              />
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
             </svg>
           </span>
         </button>
@@ -132,3 +127,23 @@ const displayedEvents = computed(() =>
   expanded.value ? props.events : props.events.slice(0, props.collapsedLimit),
 );
 </script>
+
+<style scoped>
+@reference "@/style.css";
+
+.event-sidebar-retry {
+  @apply mt-4 border-b border-ink-primary pb-0.5 text-[10px] font-black uppercase tracking-widest text-ink-primary transition-colors hover:text-ink-secondary;
+}
+
+.event-sidebar-expand-btn {
+  @apply mt-2 flex w-full cursor-pointer items-center justify-between pb-4 pt-4 text-left;
+}
+
+.event-sidebar-expand-chevron-wrap {
+  @apply flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-surface-3 transition-colors group-hover:border-ink-primary;
+}
+
+.event-sidebar-expand-chevron-icon {
+  @apply h-2.5 w-2.5 text-ink-tertiary transition-transform duration-300 group-hover:text-ink-primary;
+}
+</style>

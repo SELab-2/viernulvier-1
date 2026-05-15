@@ -5,9 +5,7 @@
   >
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0 flex-1">
-        <div
-          class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5"
-        >
+        <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span class="inline-flex items-center gap-2">
             <EventCalendarIcon class="size-[0.9rem] shrink-0 text-ink-tertiary" />
             <span
@@ -16,9 +14,7 @@
               {{ formatNumericDate(event.starts_at, currentLang) }}
             </span>
           </span>
-          <span
-            class="inline-flex items-baseline gap-x-1 font-mono text-[13px] font-medium uppercase leading-none text-ink-secondary"
-          >
+          <span class="event-row-timeslot">
             <span class="text-ink-tertiary/70 tracking-[0.14em]" aria-hidden="true">·</span>
             <span
               class="inline-flex items-baseline gap-x-1 tabular-nums tracking-normal"
@@ -35,22 +31,19 @@
         </div>
         <div
           v-if="tProd(event.hall?.name) && event.hall?.address"
-          class="mt-3 grid grid-cols-[0.9rem_minmax(0,1fr)] grid-rows-[auto_auto] gap-x-2 gap-y-1 items-start"
+          class="event-row-hall-grid"
         >
           <div class="row-span-2 flex flex-col items-start gap-1 self-stretch pt-0.5">
-            <MapPinOutlineIcon class="size-[0.9rem] shrink-0 translate-y-px text-ink-tertiary" />
-            <div
-              class="ml-[0.42rem] h-[18px] w-[0.75rem] rounded-bl-lg border-b border-l border-ink-tertiary/30 translate-y-[1px]"
-              aria-hidden="true"
-            />
+            <MapPinOutlineIcon class="event-row-pin" />
+            <div class="event-row-connector-corner" aria-hidden="true" />
           </div>
           <h4
-            class="col-start-2 row-start-1 flex items-start font-serif text-base font-semibold leading-snug tracking-tight text-ink-primary"
+            class="event-row-hall-title col-start-2 row-start-1 flex items-start"
           >
             {{ tProd(event.hall?.name) }}
           </h4>
           <p
-            class="col-start-2 row-start-2 font-serif text-sm leading-relaxed text-ink-secondary"
+            class="event-row-address-text col-start-2 row-start-2"
             data-test="event-address"
           >
             {{ event.hall.address }}
@@ -58,20 +51,14 @@
         </div>
         <h4
           v-else-if="tProd(event.hall?.name)"
-          class="mt-3 flex items-start gap-2 font-serif text-base font-semibold leading-snug tracking-tight text-ink-primary"
+          class="event-row-hall-title mt-3 flex items-start gap-2"
         >
-          <MapPinOutlineIcon class="mt-0.5 size-[0.9rem] shrink-0 translate-y-px text-ink-tertiary" />
+          <MapPinOutlineIcon class="event-row-pin mt-0.5" />
           <span>{{ tProd(event.hall?.name) }}</span>
         </h4>
-        <div
-          v-else-if="event.hall?.address"
-          class="mt-3 flex items-start gap-2"
-        >
-          <MapPinOutlineIcon class="mt-0.5 size-[0.9rem] shrink-0 translate-y-px text-ink-tertiary" />
-          <p
-            class="font-serif text-sm leading-relaxed text-ink-secondary"
-            data-test="event-address"
-          >
+        <div v-else-if="event.hall?.address" class="mt-3 flex items-start gap-2">
+          <MapPinOutlineIcon class="event-row-pin mt-0.5" />
+          <p class="event-row-address-text" data-test="event-address">
             {{ event.hall.address }}
           </p>
         </div>
@@ -80,7 +67,9 @@
         v-if="event.minPrice !== null"
         class="shrink-0 pt-0.5 text-right"
       >
-        <span class="font-serif text-sm font-medium tabular-nums tracking-tight text-ink-primary">
+        <span
+          class="font-serif text-sm font-medium tabular-nums tracking-tight text-ink-primary"
+        >
           <div
             v-if="event.minPrice !== event.maxPrice"
             class="flex flex-col items-end gap-0 leading-tight"
@@ -121,3 +110,31 @@ function formatCurrency(value: number | null) {
   }).format(value);
 }
 </script>
+
+<style scoped>
+@reference "@/style.css";
+
+.event-row-timeslot {
+  @apply inline-flex items-baseline gap-x-1 font-mono text-[13px] font-medium uppercase leading-none text-ink-secondary;
+}
+
+.event-row-hall-grid {
+  @apply mt-3 grid grid-cols-[0.9rem_minmax(0,1fr)] grid-rows-[auto_auto] gap-x-2 gap-y-1 items-start;
+}
+
+.event-row-hall-title {
+  @apply font-serif text-base font-semibold leading-snug tracking-tight text-ink-primary;
+}
+
+.event-row-address-text {
+  @apply font-serif text-sm leading-relaxed text-ink-secondary;
+}
+
+.event-row-pin {
+  @apply size-[0.9rem] shrink-0 translate-y-px text-ink-tertiary;
+}
+
+.event-row-connector-corner {
+  @apply ml-[0.42rem] h-[18px] w-[0.75rem] translate-y-px rounded-bl-lg border-b border-l border-ink-tertiary/30;
+}
+</style>

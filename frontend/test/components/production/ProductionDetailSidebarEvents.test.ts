@@ -102,10 +102,10 @@ describe("ProductionDetailSidebarEvents.vue", () => {
     expect(w.find('[data-test="event-list-count"]').text()).toBe("(4)");
     expect(w.text()).toContain("evenementen");
 
-    await w.find('button[type="button"].cursor-pointer').trigger("click");
+    await w.find('[data-test="event-sidebar-expand"]').trigger("click");
     expect(w.findAll('[data-test="event-row"]').length).toBe(4);
 
-    await w.find('button[type="button"].cursor-pointer').trigger("click");
+    await w.find('[data-test="event-sidebar-expand"]').trigger("click");
     expect(w.findAll('[data-test="event-row"]').length).toBe(3);
   });
 
@@ -121,6 +121,6 @@ describe("ProductionDetailSidebarEvents.vue", () => {
     });
     expect(w.findAllComponents(ProductionEventRow).length).toBe(2);
     expect(w.find('[data-test="event-list-count"]').text()).toBe("(2)");
-    expect(w.find("button.cursor-pointer").exists()).toBe(false);
+    expect(w.find('[data-test="event-sidebar-expand"]').exists()).toBe(false);
   });
 });
