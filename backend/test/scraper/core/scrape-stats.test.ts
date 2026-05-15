@@ -1,4 +1,5 @@
 import { describe, expect, it, afterEach, vi } from "vitest";
+import { join } from "node:path";
 
 vi.mock("node:fs/promises", () => ({
   mkdir: vi.fn().mockResolvedValue(undefined),
@@ -175,7 +176,7 @@ describe("resolveScrapeStatsOutputPath", () => {
   it("resolves SCRAPE_STATS_FILE relative to cwd when not absolute", () => {
     process.env["SCRAPE_STATS_FILE"] = "out/stats.log";
     const result = resolveScrapeStatsOutputPath();
-    expect(result).toBe(`${process.cwd()}/out/stats.log`);
+    expect(result).toBe(join(process.cwd(), "out", "stats.log"));
   });
 });
 

@@ -5,6 +5,7 @@ import type {
   rememberViernulvierProductionJson as RememberProduction,
   ProductionDocumentForTags,
 } from "@/scraper/entities/production/production-tags.js";
+import { scrapeTagsByIds } from "@/scraper/entities/production/production-tags.js";
 import { createEmptyRunStats } from "@/scraper/core/scrape-stats.js";
 
 // ---------------------------------------------------------------------------
@@ -590,41 +591,6 @@ describe("linkProductionToTag", () => {
     const stats = createEmptyRunStats();
     await syncWithPayload(1, productionWithGenre(1), "auth", "login", stats);
     expect(stats.tags.genresSkipped).toBe(1);
-    expect(stats.tags.linksCreated).toBe(0);
-  });
-
-  it("increments linksCreated when the link POST succeeds with linked: true", async () => {
-    vi.spyOn(global, "fetch").mockImplementation(async (input, init) => {
-      const url = typeof input === "string" ? input : (input as Request).url;
-      const method = (init as RequestInit | undefined)?.method ?? "GET";
-      if (url.includes("/tag/type") && method === "GET") return jsonOk(BOTH_TAG_TYPES);
-      if (url.includes("/genres/")) return jsonOk(genreJson());
-      if (url.includes("/tag/all")) return jsonOk([{ id: 77 }]);
-      if (url.includes("/production/") && url.includes("/tags")) return jsonOk({ linked: true });
-      return jsonOk([]);
-    });
-
-    const stats = createEmptyRunStats();
-    await syncWithPayload(1, productionWithGenre(1), "auth", "login", stats);
-    expect(stats.tags.linksCreated).toBe(1);
-    expect(stats.tags.linksAlreadyPresent).toBe(0);
-  });
-
-  it("increments linksAlreadyPresent when the link POST returns linked: false", async () => {
-    vi.spyOn(global, "fetch").mockImplementation(async (input, init) => {
-      const url = typeof input === "string" ? input : (input as Request).url;
-      const method = (init as RequestInit | undefined)?.method ?? "GET";
-      if (url.includes("/tag/type") && method === "GET") return jsonOk(BOTH_TAG_TYPES);
-      if (url.includes("/genres/")) return jsonOk(genreJson());
-      if (url.includes("/tag/all")) return jsonOk([{ id: 77 }]);
-      if (url.includes("/production/") && url.includes("/tags")) return jsonOk({ linked: false });
-      return jsonOk([]);
-    });
-
-    const stats = createEmptyRunStats();
-    await syncWithPayload(1, productionWithGenre(1), "auth", "login", stats);
-    expect(stats.tags.linksAlreadyPresent).toBe(1);
-    expect(stats.tags.linksCreated).toBe(0);
   });
 });
 
@@ -645,7 +611,6 @@ describe("syncProductionGenreTagsFromViernulvier", () => {
     const stats = createEmptyRunStats();
     await syncFromViernulvier(99, 1, "auth", "login", stats);
     expect(stats.tags.genresSkipped).toBe(0);
-    expect(stats.tags.linksCreated).toBe(0);
   });
 
   it("uses the in-memory cache warmed by rememberViernulvierProductionJson", async () => {
@@ -697,5 +662,287 @@ describe("rememberViernulvierProductionJson", () => {
     await expect(
       syncWithPayload(1, production, "auth", "login"),
     ).resolves.toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// scrapeTagsByIds — main function
+// ---------------------------------------------------------------------------
+
+describe("scrapeTagsByIds", () => {
+  let scrapeTagsById: typeof scrapeTagsByIds;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    const mod = await import("@/scraper/entities/production/production-tags.js");
+    scrapeTagsById = mod.scrapeTagsByIds;
+  });
+
+  it("returns empty array when genres is null", async () => {
+    const result = await scrapeTagsById(1, null, "auth", "login", createEmptyRunStats());
+    expect(result).toEqual([]);
+  });
+
+  it("returns empty array when genres is undefined", async () => {
+    const result = await scrapeTagsById(1, undefined, "auth", "login", createEmptyRunStats());
+    expect(result).toEqual([]);
+  });
+
+  it("returns empty array when genres is empty array", async () => {
+    const result = await scrapeTagsById(1, [], "auth", "login", createEmptyRunStats());
+    expect(result).toEqual([]);
+  });
+
+  it("fetches JWT when loginToken is not provided", async () => {
+    const fetchSpy = vi.spyOn(global, "fetch").mockImplementation(async (input, init) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      const method = (init as RequestInit | undefined)?.method ?? "GET";
+      if (url.includes("/tag/type") && method === "GET") return jsonOk(BOTH_TAG_TYPES);
+      if (url.includes("/auth/login") && method === "POST") return jsonOk({ token: "fetched-jwt" }, 200);
+      return jsonOk([]);
+    });
+
+    await scrapeTagsById(1, []);
+
+    const jwtFetch = fetchSpy.mock.calls.find(
+      ([url, init]) => typeof url === "string" && url.includes("/auth/login") && (init as RequestInit)?.method === "POST",
+    );
+    expect(jwtFetch).toBeDefined();
+  });
+
+  it("returns array of tag IDs for valid genres with reused tags", async () => {
+    vi.spyOn(global, "fetch").mockImplementation(async (input, init) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      const method = (init as RequestInit | undefined)?.method ?? "GET";
+      if (url.includes("/tag/type") && method === "GET") return jsonOk(BOTH_TAG_TYPES);
+      if (url.includes("/genres/")) return jsonOk(genreJson());
+      if (url.includes("/tag/all")) return jsonOk([{ id: 77 }]);
+      return jsonOk([]);
+    });
+
+    const stats = createEmptyRunStats();
+    const result = await scrapeTagsById(
+      1,
+      ["/api/v1/genres/5"],
+      "auth",
+      "login",
+      stats,
+    );
+    expect(result).toEqual([77]);
+    expect(stats.tags.tagsReusedExisting).toBe(1);
+  });
+
+  it("returns array of tag IDs for valid genres with created tags", async () => {
+    vi.spyOn(global, "fetch").mockImplementation(async (input, init) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      const method = (init as RequestInit | undefined)?.method ?? "GET";
+      if (url.includes("/tag/type") && method === "GET") return jsonOk(BOTH_TAG_TYPES);
+      if (url.includes("/genres/")) return jsonOk(genreJson());
+      if (url.includes("/tag/all")) return jsonOk([]);
+      if (url.includes("/api/v1/tag") && !url.includes("/type") && !url.includes("/all") && method === "POST")
+        return jsonOk({ id: 88 }, 201);
+      return jsonOk([]);
+    });
+
+    const stats = createEmptyRunStats();
+    const result = await scrapeTagsById(1, ["/api/v1/genres/5"], "auth", "login", stats);
+    expect(result).toEqual([88]);
+    expect(stats.tags.tagsCreated).toBe(1);
+  });
+
+  it("skips invalid IRI and continues with valid ones", async () => {
+    vi.spyOn(global, "fetch").mockImplementation(async (input, init) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      const method = (init as RequestInit | undefined)?.method ?? "GET";
+      if (url.includes("/tag/type") && method === "GET") return jsonOk(BOTH_TAG_TYPES);
+      if (url.includes("/genres/5")) return jsonOk(genreJson());
+      if (url.includes("/genres/")) return textResponse("Not Found", 404);
+      if (url.includes("/tag/all")) return jsonOk([{ id: 77 }]);
+      return jsonOk([]);
+    });
+
+    const stats = createEmptyRunStats();
+    const result = await scrapeTagsById(
+      1,
+      [
+        { not_an_id: true },  // No IRI
+        "/api/v1/genres/99",   // 404
+        "/api/v1/genres/5",    // Valid
+      ] as unknown as unknown[],
+      "auth",
+      "login",
+      stats,
+    );
+    expect(result).toEqual([77]);
+    expect(stats.tags.genresSkipped).toBe(2);
+  });
+
+  it("skips genre when use_as is invalid", async () => {
+    vi.spyOn(global, "fetch").mockImplementation(async (input, init) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      const method = (init as RequestInit | undefined)?.method ?? "GET";
+      if (url.includes("/tag/type") && method === "GET") return jsonOk(BOTH_TAG_TYPES);
+      if (url.includes("/genres/5")) return jsonOk(genreJson({ use_as: "invalid" }));
+      if (url.includes("/genres/6")) return jsonOk(genreJson({ use_as: "genre" }));
+      if (url.includes("/tag/all")) return jsonOk([{ id: 77 }]);
+      return jsonOk([]);
+    });
+
+    const stats = createEmptyRunStats();
+    const result = await scrapeTagsById(
+      1,
+      ["/api/v1/genres/5", "/api/v1/genres/6"],
+      "auth",
+      "login",
+      stats,
+    );
+    expect(result).toEqual([77]);
+    expect(stats.tags.genresSkipped).toBe(1);
+  });
+
+  it("skips genre when name map is null", async () => {
+    vi.spyOn(global, "fetch").mockImplementation(async (input, init) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      const method = (init as RequestInit | undefined)?.method ?? "GET";
+      if (url.includes("/tag/type") && method === "GET") return jsonOk(BOTH_TAG_TYPES);
+      if (url.includes("/genres/5"))
+        return jsonOk({ "@id": "/api/v1/genres/5", use_as: "genre" }); // no name, no vendor_id
+      if (url.includes("/genres/6")) return jsonOk(genreJson());
+      if (url.includes("/tag/all")) return jsonOk([{ id: 77 }]);
+      return jsonOk([]);
+    });
+
+    const stats = createEmptyRunStats();
+    const result = await scrapeTagsById(
+      1,
+      ["/api/v1/genres/5", "/api/v1/genres/6"],
+      "auth",
+      "login",
+      stats,
+    );
+    expect(result).toEqual([77]);
+    expect(stats.tags.genresSkipped).toBe(1);
+  });
+
+  it("skips genre when tag creation fails", async () => {
+    vi.spyOn(global, "fetch").mockImplementation(async (input, init) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      const method = (init as RequestInit | undefined)?.method ?? "GET";
+      if (url.includes("/tag/type") && method === "GET") return jsonOk(BOTH_TAG_TYPES);
+      if (url.includes("/genres/5")) return jsonOk(genreJson({ use_as: "genre" }));
+      if (url.includes("/genres/6")) return jsonOk(genreJson());
+      if (url.includes("/tag/all")) return jsonOk([]);
+      if (url.includes("/api/v1/tag") && !url.includes("/type") && !url.includes("/all") && method === "POST") {
+        const body = JSON.parse((init as RequestInit).body as string);
+        if ((body.old_id ?? 0) === 5) return textResponse("Conflict", 409);
+        return jsonOk({ id: 88 }, 201);
+      }
+      return jsonOk([]);
+    });
+
+    const stats = createEmptyRunStats();
+    const result = await scrapeTagsById(
+      1,
+      ["/api/v1/genres/5", "/api/v1/genres/6"],
+      "auth",
+      "login",
+      stats,
+    );
+    expect(result).toEqual([88]);
+    expect(stats.tags.genresSkipped).toBe(1);
+  });
+
+  it("handles mixed reused and created tags", async () => {
+    vi.spyOn(global, "fetch").mockImplementation(async (input, init) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      const method = (init as RequestInit | undefined)?.method ?? "GET";
+      if (url.includes("/tag/type") && method === "GET") return jsonOk(BOTH_TAG_TYPES);
+      if (url.includes("/genres/")) return jsonOk(genreJson());
+      if (url.includes("/tag/all")) {
+        // First call returns a tag, second returns empty
+        const body = (init as RequestInit | undefined)?.body;
+        const params = new URL(url).searchParams;
+        if (params.get("old_id") === "5") return jsonOk([{ id: 77 }]);
+        return jsonOk([]);
+      }
+      if (url.includes("/api/v1/tag") && !url.includes("/type") && !url.includes("/all") && method === "POST")
+        return jsonOk({ id: 88 }, 201);
+      return jsonOk([]);
+    });
+
+    const stats = createEmptyRunStats();
+    const result = await scrapeTagsById(
+      1,
+      ["/api/v1/genres/5", "/api/v1/genres/6"],
+      "auth",
+      "login",
+      stats,
+    );
+    // Should have both IDs in some order
+    expect(result).toContain(77);
+    expect(result).toContain(88);
+    expect(result.length).toBe(2);
+    expect(stats.tags.tagsReusedExisting).toBe(1);
+    expect(stats.tags.tagsCreated).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// linkProductionToTag — success case
+// ---------------------------------------------------------------------------
+
+describe("linkProductionToTag — success case", () => {
+  it("returns true when all requested tags are linked", async () => {
+    vi.spyOn(global, "fetch").mockImplementation(async (input, init) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      const method = (init as RequestInit | undefined)?.method ?? "GET";
+      if (url.includes("/tag/type") && method === "GET") return jsonOk(BOTH_TAG_TYPES);
+      if (url.includes("/genres/")) return jsonOk(genreJson());
+      if (url.includes("/tag/all")) return jsonOk([{ id: 77 }]);
+      if (url.includes("/production/1") && method === "PATCH")
+        return jsonOk({ tags: [77] }); // Response includes the linked tags
+      return jsonOk([]);
+    });
+
+    const stats = createEmptyRunStats();
+    await syncWithPayload(1, productionWithGenre(1), "auth", "login", stats);
+    // Should not increment genresSkipped because link succeeded
+    expect(stats.tags.genresSkipped).toBe(0);
+  });
+
+  it("returns false when some requested tags are missing from response", async () => {
+    vi.spyOn(global, "fetch").mockImplementation(async (input, init) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      const method = (init as RequestInit | undefined)?.method ?? "GET";
+      if (url.includes("/tag/type") && method === "GET") return jsonOk(BOTH_TAG_TYPES);
+      if (url.includes("/genres/")) return jsonOk(genreJson());
+      if (url.includes("/tag/all")) return jsonOk([{ id: 77 }]);
+      if (url.includes("/production/1") && method === "PATCH")
+        return jsonOk({ tags: [] }); // Response does not include the tag
+      return jsonOk([]);
+    });
+
+    const stats = createEmptyRunStats();
+    await syncWithPayload(1, productionWithGenre(1), "auth", "login", stats);
+    // Should increment genresSkipped because response didn't include the tag
+    expect(stats.tags.genresSkipped).toBe(1);
+  });
+
+  it("handles response with null tags field", async () => {
+    vi.spyOn(global, "fetch").mockImplementation(async (input, init) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      const method = (init as RequestInit | undefined)?.method ?? "GET";
+      if (url.includes("/tag/type") && method === "GET") return jsonOk(BOTH_TAG_TYPES);
+      if (url.includes("/genres/")) return jsonOk(genreJson());
+      if (url.includes("/tag/all")) return jsonOk([{ id: 77 }]);
+      if (url.includes("/production/1") && method === "PATCH")
+        return jsonOk({ tags: null }); // Null tags
+      return jsonOk([]);
+    });
+
+    const stats = createEmptyRunStats();
+    await syncWithPayload(1, productionWithGenre(1), "auth", "login", stats);
+    // Should increment genresSkipped because null ?? [] results in empty set
+    expect(stats.tags.genresSkipped).toBe(1);
   });
 });

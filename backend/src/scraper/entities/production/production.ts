@@ -139,7 +139,7 @@ async function fetchProductionsListMeta(
 /**
  * Maps Viernulvier JSON-LD into our `CreateProduction` payload (legacy id from `@id` path segment).
  */
-function scraperProductionToCreateBody(
+export function scraperProductionToCreateBody(
   production: ProductionJSON,
   legacyId: number,
 ): z.infer<typeof CreateProductionBodySchema> {

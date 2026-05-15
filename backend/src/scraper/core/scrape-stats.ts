@@ -20,10 +20,6 @@ export type TagRunStats = {
   tagsCreated: number;
   /** Existing tag resolved via `GET /tag/all?old_id=&tag_type=` (not created this run). */
   tagsReusedExisting: number;
-  /** New `production_tag` rows (`POST /production/:id/tags` with `linked: true`). */
-  linksCreated: number;
-  /** `production_tag` row already existed (`linked: false`). */
-  linksAlreadyPresent: number;
   /** Default `tag_type` rows created (`genre` / `tag` bootstrap). */
   tagTypesCreated: number;
   /** Genre refs not linked (bad IRI, 404, wrong `use_as`, no name, tag create/link failed). */
@@ -86,8 +82,6 @@ export function createEmptyRunStats(): ScrapeRunStats {
     tags: {
       tagsCreated: 0,
       tagsReusedExisting: 0,
-      linksCreated: 0,
-      linksAlreadyPresent: 0,
       tagTypesCreated: 0,
       genresSkipped: 0,
     },
@@ -152,8 +146,6 @@ export function formatRunReport(
     "Tags / genres (sync with productions):",
     `  Tags created: ${stats.tags.tagsCreated}`,
     `  Tags reused (existing): ${stats.tags.tagsReusedExisting}`,
-    `  Production–tag links created: ${stats.tags.linksCreated}`,
-    `  Production–tag links already present: ${stats.tags.linksAlreadyPresent}`,
     `  Tag types created (bootstrap): ${stats.tags.tagTypesCreated}`,
     `  Genre refs skipped: ${stats.tags.genresSkipped}`,
     "",

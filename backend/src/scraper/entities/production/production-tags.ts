@@ -245,7 +245,6 @@ async function linkProductionToTag(
   localProductionId: number,
   tagIds: number[],
   loginToken: string,
-  stats?: ScrapeRunStats,
 ): Promise<boolean> {
   const res = await fetch(localApiUrl(`/api/v1/production/${localProductionId}`), {
     method: "PATCH",
@@ -263,16 +262,11 @@ async function linkProductionToTag(
     return false;
   }
   const body = (await res.json()) as { tags: number[] };
-  if (stats !== undefined) {
-    const responseTagIds = new Set(body.tags ?? []);
-    const allLinked = tagIds.every(id => responseTagIds.has(id));
-    if (allLinked) {
-      stats.tags.linksCreated++;
-    } else {
-      stats.tags.linksAlreadyPresent++;
-    }
-  }
-  return true;
+
+  const responseTagIds = new Set(body.tags ?? []);
+  const allLinked = tagIds.every(id => responseTagIds.has(id));
+
+  return allLinked;
 }
 
 const productionJsonByOldId: Record<number, ProductionDocumentForTags> = {};
@@ -426,7 +420,6 @@ async function syncProductionGenreTagsInner(
     localProductionId,
     newTags,
     loginToken,
-    stats,
   );
   if (!linked) {
     bumpGenresSkipped(stats);
