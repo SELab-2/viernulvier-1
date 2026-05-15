@@ -526,11 +526,9 @@ describe("Production fetch routes", () => {
     });
 
     expect(response.statusCode).toBe(400);
-    // Due to the fact that validation happens before we get to the part where we set custom error msgs
-    // this doesn't work anymore
-    // const body = response.json() as { error?: string; code?: string };
-    // expect(body.error).toBe(PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE);
-    // expect(body.code).toBe(PRODUCTION_LIST_ERROR_CODE.DATE_RANGE_ORDER);
+    const body = response.json() as { error?: string; code?: string };
+    expect(body.error).toBe(PRODUCTION_LIST_DATE_RANGE_ORDER_MESSAGE);
+    expect(body.code).toBe(PRODUCTION_LIST_ERROR_CODE.DATE_RANGE_ORDER);
   });
 
   test("GET /api/v1/production?yearMin=…&yearMax=… -> 200", async () => {
@@ -563,11 +561,9 @@ describe("Production fetch routes", () => {
     });
 
     expect(response.statusCode).toBe(400);
-    // Due to the fact that validation happens before we get to the part where we set custom error msgs
-    // this doesn't work anymore
-    // const body = response.json() as { error?: string; code?: string };
-    // expect(body.error).toBe(PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE);
-    // expect(body.code).toBe(PRODUCTION_LIST_ERROR_CODE.YEAR_RANGE_ORDER);
+    const body = response.json() as { error?: string; code?: string };
+    expect(body.error).toBe(PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE);
+    expect(body.code).toBe(PRODUCTION_LIST_ERROR_CODE.YEAR_RANGE_ORDER);
   });
 
   test("GET /api/v1/production?limit=5 -> total 0 when COUNT returns no row", async () => {

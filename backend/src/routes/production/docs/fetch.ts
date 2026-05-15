@@ -11,7 +11,7 @@ import {
   returnsProductionArray,
   sharedRequestSchema,
 } from "./shared.js";
-import { ProductionListQuerySchema } from "../helpers/pagination.js";
+import { ProductionListQuerySchemaNoRefinements } from "../helpers/pagination.js";
 import { HttpSuccess } from "@/routes/helpers.js";
 import {
   ProductionSchema,
@@ -29,7 +29,7 @@ export const fetchProductionDocs = requestSchema(
 export const fetchProductionsDocs = requestSchema(
   sharedRequestSchema,
   returnsProductionArray,
-  new RequestQueryString(ProductionListQuerySchema),
+  new RequestQueryString(ProductionListQuerySchemaNoRefinements),
   new RequestResponse(
     HttpSuccess.OK,
     z
