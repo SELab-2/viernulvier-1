@@ -96,18 +96,18 @@
 
       <!-- Stat line + browse-all link -->
       <div
-        class="mt-6 flex flex-col items-center gap-2 text-xs uppercase tracking-[0.18em] text-ink-on-inv-tertiary sm:flex-row sm:gap-5"
+        class="mt-6 flex flex-col items-center gap-2 text-sm uppercase tracking-[0.18em] text-ink-on-inv-secondary sm:flex-row sm:gap-5"
       >
         <span class="font-semibold">
           {{ t("hero.searchHint", { count: formattedProductions }) }}
         </span>
         <span
-          class="hidden h-1 w-1 rounded-full bg-ink-on-inv-tertiary opacity-60 sm:block"
+          class="hidden h-1 w-1 rounded-full bg-ink-on-inv-secondary opacity-60 sm:block"
           aria-hidden="true"
         />
         <RouterLink
           :to="{ name: RouteNames.PRODUCTIONS, params: { lang: currentLang } }"
-          class="font-semibold text-ink-on-inv-secondary underline decoration-1 underline-offset-4 transition hover:text-ink-on-inv"
+          class="font-semibold text-ink-on-inv underline decoration-1 underline-offset-4 transition hover:text-ink-on-inv-secondary"
         >
           {{ t("hero.browseAll") }}
         </RouterLink>

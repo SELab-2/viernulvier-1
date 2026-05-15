@@ -18,8 +18,8 @@ export default {
     dateline: "Archive · Ghent",
     title: "The Archive of De Vooruit",
     lead:
-      "Decades of performances, concerts and films at De Vooruit — preserved, indexed and made searchable. This is the front page of the house archive: type a name, a year or a title to pull up the file, or wander freely through the collection.",
-    searchPlaceholder: "Search a production, artist or year…",
+      "Decades of performances, concerts and films at De Vooruit — preserved, indexed and made searchable. This is the front page of the house archive: type a name, a title or a hall to pull up the file, or wander freely through the collection.",
+    searchPlaceholder: "Search a production, artist or hall…",
     searchLabel: "Search the archive",
     searchSubmit: "Search",
     searchHint: "{count}+ productions on file",

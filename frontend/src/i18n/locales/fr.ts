@@ -18,8 +18,8 @@ export default {
     dateline: "Archives · Gand",
     title: "Les Archives de Vooruit",
     lead:
-      "Des décennies de spectacles, concerts et films de Vooruit — conservés, classés et consultables. Voici la une des archives de la maison : tapez un nom, une année ou un titre pour ouvrir la fiche, ou parcourez librement la collection.",
-    searchPlaceholder: "Cherchez une production, un artiste ou une année…",
+      "Des décennies de spectacles, concerts et films de Vooruit — conservés, classés et consultables. Voici la une des archives de la maison : tapez un nom, un titre ou une salle pour ouvrir la fiche, ou parcourez librement la collection.",
+    searchPlaceholder: "Cherchez une production, un artiste ou une salle…",
     searchLabel: "Fouiller les archives",
     searchSubmit: "Chercher",
     searchHint: "{count}+ productions répertoriées",

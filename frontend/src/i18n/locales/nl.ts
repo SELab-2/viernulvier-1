@@ -18,8 +18,8 @@ export default {
     dateline: "Archief · Gent",
     title: "Het Archief van De Vooruit",
     lead:
-      "Decennia aan voorstellingen, concerten en films uit De Vooruit — bewaard, ontsloten en doorzoekbaar. Dit is de voorpagina van het huisarchief: typ een naam, een jaar of een titel om de fiche op te zoeken, of blader vrij door de collectie.",
-    searchPlaceholder: "Zoek een productie, artiest of jaar…",
+      "Decennia aan voorstellingen, concerten en films uit De Vooruit — bewaard, ontsloten en doorzoekbaar. Dit is de voorpagina van het huisarchief: typ een naam, een titel of een zaal om de fiche op te zoeken, of blader vrij door de collectie.",
+    searchPlaceholder: "Zoek een productie, artiest of zaal…",
     searchLabel: "Doorzoek het archief",
     searchSubmit: "Zoek",
     searchHint: "{count}+ producties doorzoekbaar",
