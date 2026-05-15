@@ -98,11 +98,6 @@ export default defineConfig([
       "no-redeclare": "off",
       "no-unused-vars": "off",
 
-      "@typescript-eslint/no-redeclare": "error",
-
-      "no-redeclare": "off",
-      "no-unused-vars": "off",
-
       // ----------------------------
       // Security / Node Runtime Safety
       // ----------------------------
