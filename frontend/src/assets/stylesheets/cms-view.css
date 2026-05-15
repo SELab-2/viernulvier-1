@@ -13,7 +13,7 @@
 }
 
 .cms-side-panel {
-  @apply fixed right-0 top-0 z-50 flex h-screen w-full max-w-xl flex-col border-l border-surface-3 bg-surface-0 p-5 shadow-2xl;
+  @apply fixed right-0 top-0 z-50 flex h-screen w-full max-w-4xl flex-col border-l border-surface-3 bg-surface-0 p-5 shadow-2xl;
 }
 
 .cms-side-overlay {
