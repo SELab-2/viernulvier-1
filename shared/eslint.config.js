@@ -1,9 +1,14 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 import security from "eslint-plugin-security";
 import importX from "eslint-plugin-import-x";
 import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
-import tsdoc from 'eslint-plugin-tsdoc'
+import tsdoc from 'eslint-plugin-tsdoc';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig([
   // --------------------------------------------------
@@ -37,7 +42,7 @@ export default defineConfig([
       parser: tseslint.parser,
       parserOptions: {
         project: "./tsconfig.json",
-        tsconfigRootDir: process.cwd()
+        tsconfigRootDir: __dirname,
       }
     },
 
