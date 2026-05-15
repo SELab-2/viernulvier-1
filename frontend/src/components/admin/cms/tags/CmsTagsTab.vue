@@ -337,7 +337,10 @@ async function loadTagsData(): Promise<void> {
   loadError.value = null;
 
   try {
-    const [tags, tagTypes] = await Promise.all([getAllTags(), getTagTypes()]);
+    const [tags, tagTypes] = await Promise.all([
+      getAllTags(undefined, { includeProductions: true }),
+      getTagTypes(),
+    ]);
     tagsData.value = tags;
     tagTypesData.value = tagTypes;
     rebuildRows();

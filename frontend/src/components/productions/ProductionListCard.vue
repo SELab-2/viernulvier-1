@@ -73,19 +73,7 @@
           v-if="hallsText"
           class="mt-3 flex items-start gap-1 text-sm text-ink-secondary"
         >
-          <svg
-            class="mt-0.5 size-[0.9rem] shrink-0 text-ink-tertiary"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
+          <MapPinOutlineIcon class="mt-0.5 size-[0.9rem] shrink-0 text-ink-tertiary" />
           <span>{{ hallsText }}</span>
         </p>
       </div>
@@ -124,6 +112,7 @@ import { useI18n } from "vue-i18n";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import type { SupportedLang } from "@/i18n";
 import { RouteNames } from "@/router/routeNames";
+import MapPinOutlineIcon from "@/components/icons/MapPinOutlineIcon.vue";
 import { localizeOrEmpty } from "@/utils/language-utils";
 import type { ProductionDateSummary } from "@/utils/productionsOverview";
 import type { ProductionTagChip } from "@/utils/tagDisplay";
