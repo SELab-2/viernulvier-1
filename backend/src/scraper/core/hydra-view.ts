@@ -1,4 +1,4 @@
-import { viernulvierApiOrigin } from "./viernulvier-api.js";
+import { viernulvierApiOrigin } from "./index.js";
 
 /**
  * Absolute URL for a Viernulvier JSON-LD resource (`path` or full `http(s)` URL).

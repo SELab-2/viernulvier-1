@@ -83,7 +83,7 @@ export default {
       tagName: "Nom",
       tagType: "Type",
       public: "Public",
-      productionCount: "Productions",
+      productions: "Productions",
       admin: {
         username: "Nom d'utilisateur",
         profilePicture: "Photo de profil",
@@ -133,6 +133,10 @@ export default {
       admin: {
         noAdmins: "Aucun admin trouvé",
         addAdmin: "+ Ajouter un Admin",
+        removeAdmin: "Supprimer les admins sélectionnés",
+        confirmRemoveDialogTitle: "Supprimer l'admin? | Supprimer les admins?",
+        confirmRemoveBody: "Cette action supprimera définitivement {count} admin sélectionnés. Cette opération est irréversible. | Cette action supprimera définitivement {count} admins sélectionnés. Cette opération est irréversible.",
+        cannotRemoveSelf: "Vous ne pouvez pas vous supprimer.",
       },
     },
     create: {
@@ -203,6 +207,7 @@ export default {
     },
   },
   productionsPage: {
+    kicker: "Les archives",
     heading: "Productions",
     intro:
       "Tous les spectacles de l’archive en un coup d’œil.",
@@ -215,6 +220,7 @@ export default {
       "La première année doit être antérieure ou égale à la dernière. Ajustez la plage ou le lien et réessayez.",
     empty: "Aucune production dans les archives pour l’instant.",
     morePerformances: "{n} de plus",
+    moreListTags: "+{n} de plus",
     showingRange: "{from}–{to} sur {total}",
     prevPage: "Précédent",
     nextPage: "Suivant",
@@ -242,7 +248,9 @@ export default {
     tagFiltersHeading: "Tags",
     viewMoreTagFilters: "Voir plus",
     viewLessTagFilters: "Voir moins",
-    selectDates: "Sélectionner des dates",
+    expandFiltersPanelAria: "Développer les filtres",
+    collapseFiltersPanelAria: "Réduire les filtres",
+    selectDates: "Choisir les dates",
     filterByYearRange: "Filtrer par années",
     yearRangeIntro:
       "Limitez les productions aux années de représentation dans cet intervalle.",

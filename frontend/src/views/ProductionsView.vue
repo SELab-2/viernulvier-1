@@ -4,46 +4,94 @@
     <main class="flex-1">
       <section
         ref="pageTopAnchor"
-        class="scroll-mt-16 border-b border-surface-3 bg-surface-1 py-12 md:py-16"
+        class="scroll-mt-16 border-b border-surface-3 bg-surface-1 py-10 md:py-14"
       >
-        <div class="mx-auto max-w-3xl px-6 text-center lg:px-10">
-          <h1
-            class="text-2xl font-bold tracking-tight text-ink-primary md:text-3xl"
-          >
-            {{ t("productionsPage.heading") }}
-          </h1>
-          <p
-            class="mt-4 text-sm leading-relaxed text-ink-secondary md:text-base"
-          >
-            {{ t("productionsPage.intro") }}
-          </p>
+        <div class="mx-auto max-w-6xl px-6 lg:px-10">
+          <div class="mx-auto max-w-3xl text-center">
+            <div
+              class="mb-5 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
+            >
+              <span
+                class="h-px w-8 bg-ink-tertiary opacity-50"
+                aria-hidden="true"
+              />
+              <span class="whitespace-nowrap">{{
+                t("productionsPage.kicker")
+              }}</span>
+              <span
+                class="h-px w-8 bg-ink-tertiary opacity-50"
+                aria-hidden="true"
+              />
+            </div>
+            <h1
+              class="font-serif text-3xl font-semibold leading-tight tracking-tight text-ink-primary md:text-4xl"
+            >
+              {{ t("productionsPage.heading") }}
+            </h1>
+            <p
+              class="mx-auto mt-3 max-w-2xl font-serif text-lg italic leading-snug text-ink-secondary md:text-xl"
+            >
+              {{ t("productionsPage.intro") }}
+            </p>
+          </div>
         </div>
       </section>
 
-      <section class="mx-auto max-w-5xl px-6 pb-20 pt-8 lg:px-10">
+      <section class="mx-auto max-w-[82rem] px-6 pb-20 pt-10 lg:px-10">
         <div v-if="!loading" class="mb-4 space-y-3">
           <div
-            class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-center sm:gap-3"
+            class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-stretch sm:gap-3"
           >
+            <ProductionsDateFilter
+              v-model:year-range="explicitYearRange"
+              v-model:date-from="filterDateFrom"
+              v-model:date-to="filterDateTo"
+              class="shrink-0"
+              :disabled="loadError"
+              :min-year="filterYearBounds.minYear"
+              :max-year="filterYearBounds.maxYear"
+            />
             <label class="sr-only" for="productions-search">{{
               t("productionsPage.searchLabel")
             }}</label>
-            <div class="relative min-w-0 grow">
-              <input
-                id="productions-search"
-                v-model="searchDraft"
-                type="search"
-                autocomplete="off"
-                :disabled="listLoading || loadError"
-                :placeholder="t('productionsPage.searchPlaceholder')"
+            <div class="relative min-h-11 min-w-0 grow">
+              <div
                 class="productions-view__search-field"
                 :class="
                   searchAwaitingList
-                    ? 'disabled:cursor-not-allowed disabled:opacity-50'
-                    : 'disabled:opacity-100'
+                    ? 'cursor-not-allowed opacity-50'
+                    : 'opacity-100'
                 "
-                @keydown.enter.prevent="submitSearch"
-              />
+              >
+                <button
+                  v-for="(term, idx) in appliedSearchTerms"
+                  :key="`${idx}-${term}`"
+                  type="button"
+                  class="productions-view__search-chip"
+                  :disabled="listLoading"
+                  :aria-label="
+                    t('productionsPage.removeSearchTerm', { term })
+                  "
+                  @click.stop="removeSearchTermAt(idx)"
+                >
+                  <span class="min-w-0 truncate">{{ term }}</span>
+                  <span class="text-base leading-none text-ink-secondary" aria-hidden="true">×</span>
+                </button>
+                <input
+                  id="productions-search"
+                  v-model="searchDraft"
+                  type="search"
+                  autocomplete="off"
+                  :disabled="listLoading || loadError"
+                  :placeholder="
+                    appliedSearchTerms.length > 0
+                      ? ''
+                      : t('productionsPage.searchPlaceholder')
+                  "
+                  class="productions-view__search-input"
+                  @keydown.enter.prevent="submitSearch"
+                />
+              </div>
               <button
                 type="button"
                 class="productions-view__search-submit"
@@ -74,135 +122,203 @@
             />
           </div>
           <div
-            v-if="searchBannerTerms.length > 0"
-            class="productions-view__search-banner"
+            v-if="
+              !filtersPanelExpanded &&
+                (genreTagsForFilter.length > 0 || showFiltersPanelExpandToggle)
+            "
+            :ref="setCompactGenreRowRef"
+            class="mt-4 flex w-full flex-wrap items-center gap-x-2 gap-y-2 border-t border-surface-3 pt-4"
+            :class="
+              genreTagsForFilter.length > 0 && showFiltersPanelExpandToggle
+                ? 'justify-between'
+                : showFiltersPanelExpandToggle
+                  ? 'justify-end'
+                  : ''
+            "
           >
-            <div class="flex min-w-0 flex-wrap items-center gap-2">
-              <span class="text-sm text-ink-secondary">{{
-                t("productionsPage.activeSearchLabel")
-              }}</span>
+            <div
+              v-if="genreTagsForFilter.length > 0"
+              class="flex min-w-0 flex-wrap items-center gap-2"
+            >
               <button
-                v-for="(term, idx) in searchBannerTerms"
-                :key="`${idx}-${term}`"
+                v-for="g in compactGenreTagsForRow"
+                :key="'compact-genre-' + g.id"
+                :ref="(el) => setCompactGenrePillRef(g.id, el)"
                 type="button"
-                :class="['max-w-full', 'productions-view__active-chip']"
-                :disabled="listLoading"
-                :aria-label="
-                  t('productionsPage.removeSearchTerm', { term })
+                class="productions-view__genre-collapsed-row-pill"
+                :class="
+                  selectedTagIds.includes(g.id)
+                    ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
+                    : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
                 "
-                @click="removeSearchTermAt(idx)"
+                :disabled="listLoading || loadError"
+                @click="toggleTag(g.id)"
               >
-                <span class="min-w-0 truncate">{{ term }}</span>
-                <span class="text-lg leading-none text-ink-secondary" aria-hidden="true">×</span>
+                {{ g.label }}
               </button>
             </div>
             <button
+              v-if="showFiltersPanelExpandToggle"
+              :ref="setCompactGenreExpandButtonRef"
               type="button"
-              class="productions-view__banner-action"
+              class="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md border border-surface-3 bg-surface-0 text-ink-secondary transition hover:border-accent-outline hover:bg-surface-2 hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-100 dark:bg-surface-1"
               :disabled="listLoading || loadError"
-              @click="void clearSearchFilter()"
+              :aria-expanded="false"
+              :aria-label="t('productionsPage.expandFiltersPanelAria')"
+              aria-controls="productions-extended-filters"
+              @click="filtersPanelExpanded = true"
             >
-              {{ t("productionsPage.clearAllSearches") }}
+              <svg
+                class="size-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
             </button>
           </div>
 
           <div
-            class="mt-4 flex flex-wrap items-center gap-2 border-t border-surface-3 pt-4"
+            v-if="filtersPanelExpanded"
+            id="productions-extended-filters"
+            class="mt-4 space-y-4 rounded-md border border-surface-3 bg-surface-1 px-4 py-4 dark:bg-surface-1/60"
           >
-            <ProductionsDateFilter
-              v-model:year-range="explicitYearRange"
-              v-model:date-from="filterDateFrom"
-              v-model:date-to="filterDateTo"
-              :disabled="loadError"
-              :min-year="filterYearBounds.minYear"
-              :max-year="filterYearBounds.maxYear"
-            />
-          </div>
-
-          <div
-            v-if="genreTagsForFilter.length > 0"
-            class="mt-4 space-y-3 border-t border-surface-3 pt-4"
-          >
-            <p
-              class="text-xs font-medium uppercase tracking-wide text-ink-secondary"
+            <div
+              v-if="genreTagsForFilter.length > 0"
+              class="space-y-3"
             >
-              {{ t("productionsPage.genreFiltersHeading") }}
-            </p>
-            <div class="flex items-start gap-3">
-              <div class="flex min-w-0 flex-1 flex-wrap gap-2">
+              <p
+                class="text-xs font-semibold uppercase tracking-[0.2em] text-ink-secondary"
+              >
+                {{ t("productionsPage.genreFiltersHeading") }}
+              </p>
+              <div :ref="setGenrePanelRowRef" class="flex items-start gap-3">
+                <div class="flex min-w-0 flex-1 flex-wrap gap-2">
+                  <button
+                    v-for="g in visibleGenreTagsForFilter"
+                    :key="g.id"
+                    :ref="(el) => setGenrePanelPillRef(g.id, el)"
+                    type="button"
+                    class="productions-view__tag-filter-panel-pill"
+                    :class="
+                      selectedTagIds.includes(g.id)
+                        ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
+                        : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
+                    "
+                    :disabled="listLoading || loadError"
+                    @click="toggleTag(g.id)"
+                  >
+                    {{ g.label }}
+                  </button>
+                </div>
                 <button
-                  v-for="g in visibleGenreTagsForFilter"
-                  :key="g.id"
+                  v-if="showGenreTagFilterExpandToggle"
+                  :ref="setGenrePanelExpandButtonRef"
                   type="button"
-                  class="productions-view__tag-pill"
-                  :class="
-                    selectedTagIds.includes(g.id)
-                      ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
-                      : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
-                  "
+                  class="productions-view__tag-filter-expand"
                   :disabled="listLoading || loadError"
-                  @click="toggleTag(g.id)"
+                  :aria-expanded="genreTagFiltersExpanded"
+                  :aria-label="
+                    genreTagFiltersExpanded
+                      ? t('productionsPage.viewLessTagFilters')
+                      : t('productionsPage.viewMoreTagFilters')
+                  "
+                  @click="genreTagFiltersExpanded = !genreTagFiltersExpanded"
                 >
-                  {{ g.label }}
+                  {{
+                    genreTagFiltersExpanded
+                      ? t("productionsPage.viewLessTagFilters")
+                      : t("productionsPage.viewMoreTagFilters")
+                  }}
                 </button>
               </div>
-              <button
-                v-if="showGenreTagFilterExpandToggle"
-                type="button"
-                class="productions-view__filter-expand"
-                :disabled="listLoading || loadError"
-                :aria-expanded="genreTagFiltersExpanded"
-                @click="genreTagFiltersExpanded = !genreTagFiltersExpanded"
-              >
-                {{
-                  genreTagFiltersExpanded
-                    ? t("productionsPage.viewLessTagFilters")
-                    : t("productionsPage.viewMoreTagFilters")
-                }}
-              </button>
             </div>
-          </div>
 
-          <div
-            v-if="nonGenreTagsForFilter.length > 0"
-            class="mt-4 space-y-3 border-t border-surface-3 pt-4"
-          >
-            <p
-              class="text-xs font-medium uppercase tracking-wide text-ink-secondary"
+            <div
+              v-if="nonGenreTagsForFilter.length > 0"
+              :class="
+                genreTagsForFilter.length > 0
+                  ? 'space-y-3 border-t border-surface-3 pt-4'
+                  : 'space-y-3'
+              "
             >
-              {{ t("productionsPage.tagFiltersHeading") }}
-            </p>
-            <div class="flex items-start gap-3">
-              <div class="flex min-w-0 flex-1 flex-wrap gap-2">
+              <p
+                class="text-xs font-semibold uppercase tracking-[0.2em] text-ink-secondary"
+              >
+                {{ t("productionsPage.tagFiltersHeading") }}
+              </p>
+              <div :ref="setNonGenrePanelRowRef" class="flex items-start gap-3">
+                <div class="flex min-w-0 flex-1 flex-wrap gap-2">
+                  <button
+                    v-for="g in visibleNonGenreTagsForFilter"
+                    :key="g.id"
+                    :ref="(el) => setNonGenrePanelPillRef(g.id, el)"
+                    type="button"
+                    class="productions-view__tag-filter-panel-pill"
+                    :class="
+                      selectedTagIds.includes(g.id)
+                        ? 'border-accent-outline bg-surface-1 text-ink-primary'
+                        : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
+                    "
+                    :disabled="listLoading || loadError"
+                    @click="toggleTag(g.id)"
+                  >
+                    {{ g.label }}
+                  </button>
+                </div>
                 <button
-                  v-for="g in visibleNonGenreTagsForFilter"
-                  :key="g.id"
+                  v-if="showNonGenreTagFilterExpandToggle"
+                  :ref="setNonGenrePanelExpandButtonRef"
                   type="button"
-                  class="rounded-full border px-3 py-1 text-sm transition disabled:opacity-100"
-                  :class="
-                    selectedTagIds.includes(g.id)
-                      ? 'border-accent-outline bg-surface-1 text-ink-primary'
-                      : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
-                  "
+                  class="productions-view__tag-filter-expand"
                   :disabled="listLoading || loadError"
-                  @click="toggleTag(g.id)"
+                  :aria-expanded="nonGenreTagFiltersExpanded"
+                  :aria-label="
+                    nonGenreTagFiltersExpanded
+                      ? t('productionsPage.viewLessTagFilters')
+                      : t('productionsPage.viewMoreTagFilters')
+                  "
+                  @click="
+                    nonGenreTagFiltersExpanded = !nonGenreTagFiltersExpanded
+                  "
                 >
-                  {{ g.label }}
+                  {{
+                    nonGenreTagFiltersExpanded
+                      ? t("productionsPage.viewLessTagFilters")
+                      : t("productionsPage.viewMoreTagFilters")
+                  }}
                 </button>
               </div>
+            </div>
+
+            <div
+              class="flex justify-end border-t border-surface-3/80 pt-3"
+            >
               <button
-                v-if="showNonGenreTagFilterExpandToggle"
                 type="button"
-                class="productions-view__filter-expand"
+                class="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md border border-surface-3 bg-surface-0 text-ink-secondary transition hover:border-accent-outline hover:bg-surface-2 hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-100 dark:bg-surface-1"
                 :disabled="listLoading || loadError"
-                :aria-expanded="nonGenreTagFiltersExpanded"
-                @click="nonGenreTagFiltersExpanded = !nonGenreTagFiltersExpanded"
+                :aria-expanded="true"
+                :aria-label="t('productionsPage.collapseFiltersPanelAria')"
+                @click="filtersPanelExpanded = false"
               >
-                {{
-                  nonGenreTagFiltersExpanded
-                    ? t("productionsPage.viewLessTagFilters")
-                    : t("productionsPage.viewMoreTagFilters")
-                }}
+                <svg
+                  class="size-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m18 15-6-6-6 6" />
+                </svg>
               </button>
             </div>
           </div>
@@ -216,9 +332,9 @@
             class="productions-view__filter-banner"
           >
             <div class="flex min-w-0 flex-wrap items-center gap-2">
-              <span class="text-sm text-ink-secondary">{{
-                t("productionsPage.activeFiltersLabel")
-              }}</span>
+              <span
+                class="text-[15px] pr-1 text-ink-secondary"
+              >{{ t("productionsPage.activeFiltersLabel") }}</span>
               <button
                 v-for="tid in filterBannerTagIds"
                 :key="'tag-' + tid"
@@ -284,7 +400,7 @@
           <p
             v-if="displayedFilteredTotal !== null"
             :class="[
-              'mb-2 text-sm leading-normal text-ink-secondary tabular-nums',
+              'mb-2 text-sm italic leading-normal text-ink-secondary tabular-nums',
               !filterBannerHasNonSearchChips() && 'mt-6',
             ]"
             aria-live="polite"
@@ -322,7 +438,9 @@
               class="productions-view__pagination"
               aria-label="Pagination"
             >
-              <p class="text-center text-sm text-ink-secondary sm:text-left">
+              <p
+                class="text-center text-sm text-ink-secondary tabular-nums sm:text-left"
+              >
                 {{
                   t("productionsPage.showingRange", {
                     from: rangeFrom,
@@ -413,11 +531,12 @@ import ProductionListCard from "@/components/productions/ProductionListCard.vue"
 import ProductionsDateFilter from "@/components/productions/ProductionsDateFilter.vue";
 import ProductionsSortControl from "@/components/productions/ProductionsSortControl.vue";
 import { useDarkMode } from "@/composables/useDarkMode";
+import { useFittingPills } from "@/composables/useFittingPills";
 import { i18n, type SupportedLang } from "@/i18n";
 import { getEventsForProductions } from "@/services/events";
 import { getHalls } from "@/services/halls";
 import { ApiError } from "@/services/api";
-import { getImagesForProductionOrEmpty } from "@/services/media";
+import { getImagesForProductionsOrEmpty } from "@/services/media";
 import {
   getProductions,
   type ProductionSortBy,
@@ -444,23 +563,22 @@ const PAGE_SIZE = 20;
 /** Same cap as the list API, extra terms are ignored client-side. */
 const MAX_SEARCH_TERMS = 20;
 
-/** How many genre/tag filter chips to show before "Show more". Selected tags are always included. */
-const GENRE_FILTER_COLLAPSED_MAX = 9;
+/**
+ * Safety fallback when widths are not measurable (e.g. JSDOM tests).
+ * Real browsers use measured row fit, not this cap.
+ */
+const COMPACT_GENRE_FALLBACK_MAX = 10;
+const GENRE_PANEL_FALLBACK_MAX = 9;
+const NON_GENRE_PANEL_FALLBACK_MAX = 6;
 
-const NON_GENRE_FILTER_COLLAPSED_MAX = 6;
-
-function collapsedTagFilterList(
+function selectedFirstTagFilterList(
   all: { id: number; label: string }[],
   selectedIds: readonly number[],
-  max: number,
-  expanded: boolean,
 ): { id: number; label: string }[] {
-  if (expanded || all.length <= max) return all;
   const sel = new Set(selectedIds);
-  const must = all.filter((t) => sel.has(t.id));
+  const selected = all.filter((t) => sel.has(t.id));
   const rest = all.filter((t) => !sel.has(t.id));
-  if (must.length >= max) return must;
-  return [...must, ...rest.slice(0, max - must.length)];
+  return [...selected, ...rest];
 }
 
 /** 1-based page index in the URL (`?page=1` is normalized away). */
@@ -486,6 +604,8 @@ const pageTopAnchor = useTemplateRef<HTMLElement>("pageTopAnchor");
 const selectedTagIds = ref<number[]>([]);
 const genreTagFiltersExpanded = ref(false);
 const nonGenreTagFiltersExpanded = ref(false);
+/** Full genre + tag filter sections (beyond compact preview row). */
+const filtersPanelExpanded = ref(false);
 /** `null` = all years in the archive slider span; otherwise inclusive calendar-year range. */
 const explicitYearRange = ref<{ from: number; to: number } | null>(null);
 const filterDateFrom = ref<string | null>(null);
@@ -493,7 +613,7 @@ const filterDateTo = ref<string | null>(null);
 /**
  * Tag/year/date chips in the "Active filters" row. Row appears/updates after fetch
  * when adding the first non-search filter, and may stay visible (stale chips) until
- * fetch when removing the last non-search filter -> same idea as searchBannerTerms.
+ * fetch when removing the last non-search filter.
  */
 const filterBannerTagIds = ref<number[]>([]);
 const filterBannerYearRange = ref<{ from: number; to: number } | null>(null);
@@ -693,23 +813,23 @@ function urlNeedsSyncForPage0(page0: number): boolean {
   return cur !== want;
 }
 
-function scrollProductionsPageToTop() {
+/**
+ * Scroll to hero anchor after list page/filter changes (`smooth` by default).
+ * Fallback uses `documentElement` only (no duplicate `document.body` scroll).
+ */
+function scrollProductionsPageToTop(
+  behavior: ScrollBehavior = "smooth",
+): void {
   const el = pageTopAnchor.value;
   if (el && typeof el.scrollIntoView === "function") {
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.scrollIntoView({ behavior, block: "start" });
     return;
   }
   const doc = document.documentElement;
-  const body = document.body;
   if (typeof doc.scrollTo === "function") {
-    doc.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    doc.scrollTo({ top: 0, left: 0, behavior });
   } else {
     doc.scrollTop = 0;
-  }
-  if (typeof body.scrollTo === "function") {
-    body.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-  } else {
-    body.scrollTop = 0;
   }
 }
 
@@ -722,14 +842,6 @@ const productions = ref<ProductionWithBackwardsRefs[]>([]);
 const totalCount = ref(0);
 const currentPage = ref(0);
 const appliedSearchTerms = ref<string[]>([]);
-/**
- * Terms shown in the "Search:" chip row. The results count line also keys off
- * `hasActiveListFilters` so it can show while the first term’s fetch runs.
- * When clearing all terms, this stays populated until the unfiltered list has loaded,
- * so layout does not jump while stale filtered cards are still on screen.
- * When adding the first term, same as non-search filters: row appears only after fetch.
- */
-const searchBannerTerms = ref<string[]>([]);
 const searchDraft = ref("");
 const sortBy = ref<ProductionSortBy>("date");
 const sortDir = ref<ProductionSortDir>("desc");
@@ -760,7 +872,7 @@ async function applyProductionsSortChange(parsed: {
   try {
     await fetchProductionsPageData(0);
     await replaceRouteForPage0(0);
-    scrollAfterPageChange();
+    await scrollAfterPageChange();
   } catch (err) {
     failListAttempt(err);
   } finally {
@@ -777,11 +889,11 @@ const hasActiveListFilters = computed(() => {
 });
 
 const eventsByProduction = ref(new Map<number, ProductionEvent[]>());
-/** Set after `GET /production/:id/image` for each row on the current list page. */
+/** Set after `GET /production/images` for thumbnails on the current list page. */
 const thumbnailUrlByProductionId = ref(
   new Map<number, string | null>(),
 );
-/** Bumps on each thumbnail load; stale `Promise.all` runs must not overwrite the map after a newer interaction. */
+/** Bumps on each thumbnail load; stale batches must not overwrite the map after a newer interaction. */
 let thumbnailLoadGeneration = 0;
 const tagsById = ref(new Map<number, Tag>());
 const tagTypesById = ref(new Map<number, TagType>());
@@ -801,15 +913,16 @@ async function loadThumbnailsForProductionIds(ids: number[]): Promise<void> {
     thumbnailUrlByProductionId.value = new Map();
     return;
   }
-  const next = new Map<number, string | null>();
-  await Promise.all(
-    ids.map(async (id) => {
-      const images = await getImagesForProductionOrEmpty(id);
-      next.set(id, pickProductionListThumbnailUrl(images));
-    }),
-  );
+  const byProduction = await getImagesForProductionsOrEmpty(ids);
   if (gen !== thumbnailLoadGeneration) {
     return;
+  }
+  const next = new Map<number, string | null>();
+  for (const id of ids) {
+    next.set(
+      id,
+      pickProductionListThumbnailUrl(byProduction.get(id) ?? []),
+    );
   }
   thumbnailUrlByProductionId.value = next;
 }
@@ -876,7 +989,6 @@ async function fetchProductionsPageData(page0: number) {
   totalCount.value = total;
   currentPage.value = page0;
   displayedFilteredTotal.value = hasActiveListFilters.value ? total : null;
-  searchBannerTerms.value = [...appliedSearchTerms.value];
   syncFilterBannerFromApplied();
   eventsByProduction.value = eventsMap;
   thumbnailUrlByProductionId.value = new Map();
@@ -903,11 +1015,14 @@ function clearDateRange() {
   filterDateTo.value = null;
 }
 
-function scrollAfterPageChange() {
-  void nextTick();
-  requestAnimationFrame(() => {
-    scrollProductionsPageToTop();
+async function scrollAfterPageChange(): Promise<void> {
+  await nextTick();
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
   });
+  scrollProductionsPageToTop();
 }
 
 async function replaceRouteForPage0(page0: number) {
@@ -965,7 +1080,7 @@ async function applyFilterChange() {
   try {
     await fetchProductionsPageData(0);
     await replaceRouteForPage0(0);
-    scrollAfterPageChange();
+    await scrollAfterPageChange();
   } catch (err) {
     failListAttempt(err);
     syncFilterBannerFromApplied();
@@ -977,7 +1092,6 @@ async function applyFilterChange() {
 async function submitSearch() {
   const q = searchDraft.value.trim();
   if (!q) {
-    await clearSearchFilter();
     return;
   }
   const lower = q.toLowerCase();
@@ -989,25 +1103,20 @@ async function submitSearch() {
     searchDraft.value = "";
     return;
   }
-  const hadVisibleSearchPillRow = searchBannerTerms.value.length > 0;
   appliedSearchTerms.value = dedupePreserveSearchCap([
     ...appliedSearchTerms.value,
     q,
   ]);
-  if (hadVisibleSearchPillRow) {
-    searchBannerTerms.value = [...appliedSearchTerms.value];
-  }
+  searchDraft.value = "";
   listLoading.value = true;
   searchAwaitingList.value = true;
   beginListAttempt();
   try {
     await fetchProductionsPageData(0);
     await replaceRouteForPage0(0);
-    scrollAfterPageChange();
-    searchDraft.value = "";
+    await scrollAfterPageChange();
   } catch (err) {
     failListAttempt(err);
-    searchBannerTerms.value = [...appliedSearchTerms.value];
   } finally {
     listLoading.value = false;
     searchAwaitingList.value = false;
@@ -1019,34 +1128,13 @@ async function removeSearchTermAt(index: number) {
   if (next.length === appliedSearchTerms.value.length) return;
   listLoading.value = true;
   beginListAttempt();
-  if (next.length > 0) {
-    searchBannerTerms.value = [...next];
-  }
   appliedSearchTerms.value = next;
   try {
     await fetchProductionsPageData(0);
     await replaceRouteForPage0(0);
-    scrollAfterPageChange();
+    await scrollAfterPageChange();
   } catch (err) {
     failListAttempt(err);
-    searchBannerTerms.value = [...appliedSearchTerms.value];
-  } finally {
-    listLoading.value = false;
-  }
-}
-
-async function clearSearchFilter() {
-  listLoading.value = true;
-  beginListAttempt();
-  appliedSearchTerms.value = [];
-  searchDraft.value = "";
-  try {
-    await fetchProductionsPageData(0);
-    await replaceRouteForPage0(0);
-    scrollAfterPageChange();
-  } catch (err) {
-    failListAttempt(err);
-    searchBannerTerms.value = [...appliedSearchTerms.value];
   } finally {
     listLoading.value = false;
   }
@@ -1145,30 +1233,76 @@ const nonGenreTagsForFilter = computed(() => {
   return items;
 });
 
+const genrePanelTagCandidates = computed(() =>
+  selectedFirstTagFilterList(genreTagsForFilter.value, selectedTagIds.value),
+);
+
+const nonGenrePanelTagCandidates = computed(() =>
+  selectedFirstTagFilterList(nonGenreTagsForFilter.value, selectedTagIds.value),
+);
+
+const compactGenreTagCandidates = computed(() =>
+  selectedFirstTagFilterList(genreTagsForFilter.value, selectedTagIds.value),
+);
+
+const {
+  setRowRef: setCompactGenreRowRef,
+  setTrailingControlRef: setCompactGenreExpandButtonRef,
+  setPillRef: setCompactGenrePillRef,
+  visibleItems: compactGenreTagsForRow,
+} = useFittingPills(compactGenreTagCandidates, {
+  gapPx: 8,
+  trailingControlGapPx: 4,
+  fallbackVisibleCount: COMPACT_GENRE_FALLBACK_MAX,
+});
+
+const {
+  setRowRef: setGenrePanelRowRef,
+  setTrailingControlRef: setGenrePanelExpandButtonRef,
+  setPillRef: setGenrePanelPillRef,
+  visibleItems: collapsedGenrePanelTags,
+} = useFittingPills(genrePanelTagCandidates, {
+  gapPx: 8,
+  fallbackVisibleCount: GENRE_PANEL_FALLBACK_MAX,
+});
+
+const {
+  setRowRef: setNonGenrePanelRowRef,
+  setTrailingControlRef: setNonGenrePanelExpandButtonRef,
+  setPillRef: setNonGenrePanelPillRef,
+  visibleItems: collapsedNonGenrePanelTags,
+} = useFittingPills(nonGenrePanelTagCandidates, {
+  gapPx: 8,
+  fallbackVisibleCount: NON_GENRE_PANEL_FALLBACK_MAX,
+});
+
 const visibleGenreTagsForFilter = computed(() =>
-  collapsedTagFilterList(
-    genreTagsForFilter.value,
-    selectedTagIds.value,
-    GENRE_FILTER_COLLAPSED_MAX,
-    genreTagFiltersExpanded.value,
-  ),
+  genreTagFiltersExpanded.value
+    ? genrePanelTagCandidates.value
+    : collapsedGenrePanelTags.value,
 );
 
 const visibleNonGenreTagsForFilter = computed(() =>
-  collapsedTagFilterList(
-    nonGenreTagsForFilter.value,
-    selectedTagIds.value,
-    NON_GENRE_FILTER_COLLAPSED_MAX,
-    nonGenreTagFiltersExpanded.value,
-  ),
+  nonGenreTagFiltersExpanded.value
+    ? nonGenrePanelTagCandidates.value
+    : collapsedNonGenrePanelTags.value,
 );
 
 const showGenreTagFilterExpandToggle = computed(
-  () => genreTagsForFilter.value.length > GENRE_FILTER_COLLAPSED_MAX,
+  () =>
+    collapsedGenrePanelTags.value.length < genrePanelTagCandidates.value.length,
 );
 
 const showNonGenreTagFilterExpandToggle = computed(
-  () => nonGenreTagsForFilter.value.length > NON_GENRE_FILTER_COLLAPSED_MAX,
+  () =>
+    collapsedNonGenrePanelTags.value.length <
+    nonGenrePanelTagCandidates.value.length,
+);
+
+const showFiltersPanelExpandToggle = computed(
+  () =>
+    nonGenreTagsForFilter.value.length > 0 ||
+    compactGenreTagsForRow.value.length < compactGenreTagCandidates.value.length,
 );
 
 /** Matches backend `yearMin`/`yearMax` bounds; not derived from loaded events (list loads events per page only). */
@@ -1205,6 +1339,24 @@ function tagLabel(id: number): string {
   const tag = tagsById.value.get(id);
   if (!tag) return String(id);
   return localizeOrEmpty(tag.name, locale.value) || String(id);
+}
+
+/**
+ * True if any currently selected filter tag is not a genre (i.e. it belongs in
+ * the expanded “Tags” section only).
+ *
+ * Used after hydration from the URL (`?tags=…`): non-genre chips are not shown in
+ * the collapsed genre row, so we auto-expand the filter panel when those selections
+ * would otherwise be invisible.
+ */
+function selectedIncludesNonGenreTag(): boolean {
+  for (const id of selectedTagIds.value) {
+    const tag = tagsById.value.get(id);
+    if (!tag) continue;
+    const tt = tagTypesById.value.get(tag.tag_type as number);
+    if (!tagTypeIsGenre(tt)) return true;
+  }
+  return false;
 }
 
 /** Skip automatic refetch when clearing every non-search filter in one go (single `applyFilterChange` instead). */
@@ -1278,6 +1430,10 @@ onMounted(async () => {
     tagTypesById.value = new Map(tagTypes.map((tt) => [tt.id, tt]));
     hallsById.value = hallMapById(halls);
 
+    if (selectedIncludesNonGenreTag()) {
+      filtersPanelExpanded.value = true;
+    }
+
     /** Events for listing cards are loaded per page (see fetchProductionsPageData), not the full catalog. */
     await fetchProductionsPageData(page0);
 
@@ -1325,7 +1481,7 @@ watch(
     beginListAttempt();
     try {
       await fetchProductionsPageData(page0);
-      scrollAfterPageChange();
+      await scrollAfterPageChange();
     } catch (err) {
       failListAttempt(err);
     } finally {
@@ -1363,7 +1519,7 @@ async function goToPage(page: number) {
   try {
     await fetchProductionsPageData(page);
     await replaceRouteForPage0(page);
-    scrollAfterPageChange();
+    await scrollAfterPageChange();
   } catch (err) {
     failListAttempt(err);
   } finally {
@@ -1379,7 +1535,7 @@ function dateSummaryFor(productionId: number) {
 function hallsTextFor(productionId: number) {
   const evs = eventsByProduction.value.get(productionId);
   const names = distinctHallNames(evs, hallsById.value, locale.value);
-  return names.join(" · ");
+  return names[0] ?? "";
 }
 
 function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip[] {
@@ -1404,28 +1560,43 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
 <style scoped>
 @reference "@/style.css";
 
+.productions-view__tag-filter-expand {
+  @apply inline-flex shrink-0 cursor-pointer justify-end self-start whitespace-nowrap pt-0.5 text-right text-sm font-medium leading-snug text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100;
+  min-width: 6rem;
+}
+
+.productions-view__genre-collapsed-row-pill {  
+  @apply cursor-pointer rounded-sm border px-3 py-1.5 text-[12px] font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-100;  
+}  
+
+.productions-view__tag-filter-panel-pill {  
+  @apply cursor-pointer rounded-sm border px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-100;  
+} 
+
 .productions-view__search-field {
-  @apply min-w-0 w-full rounded-md border border-surface-3 bg-surface-0 px-3 py-2 pr-11 text-base text-ink-primary placeholder:text-ink-secondary focus:border-accent-outline focus:outline-none dark:bg-surface-1;
+  @apply box-border flex min-h-11 min-w-0 w-full flex-wrap items-center gap-1.5 rounded-md border border-surface-3 bg-surface-0 py-1.5 pl-2 pr-11 text-ink-primary transition focus-within:border-accent-outline dark:bg-surface-1;
+}
+
+.productions-view__search-input {
+  @apply min-h-7 min-w-28 flex-1 border-0 bg-transparent px-1 py-0 text-base leading-normal text-ink-primary placeholder:text-ink-tertiary focus:outline-none disabled:cursor-not-allowed disabled:opacity-100;
+}
+
+.productions-view__search-input::-webkit-search-cancel-button,
+.productions-view__search-input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.productions-view__search-chip {
+  @apply inline-flex max-w-40 cursor-pointer items-center gap-1 rounded-md border border-surface-3 bg-surface-1 px-2 py-1 text-sm leading-tight text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-100 dark:bg-surface-0;
 }
 
 .productions-view__search-submit {
   @apply absolute right-1 top-1/2 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-ink-secondary transition hover:bg-surface-2 hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-100;
 }
 
-.productions-view__search-banner {
-  @apply grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-2;
-}
-
 .productions-view__banner-action {
-  @apply col-start-2 row-start-1 shrink-0 cursor-pointer justify-self-end self-start pt-0.5 text-sm font-medium text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100;
-}
-
-.productions-view__tag-pill {
-  @apply rounded-full border px-3 py-1 text-sm transition disabled:opacity-100;
-}
-
-.productions-view__filter-expand {
-  @apply shrink-0 cursor-pointer pt-0.5 text-sm font-medium leading-snug text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100;
+  @apply col-start-2 row-start-1 shrink-0 cursor-pointer justify-self-end self-center text-sm font-medium text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100;
 }
 
 .productions-view__filter-banner {
@@ -1433,7 +1604,7 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
 }
 
 .productions-view__active-chip {
-  @apply inline-flex cursor-pointer items-center gap-1 rounded-full border border-surface-3 bg-surface-0 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary shadow-sm ring-1 ring-inset ring-accent-outline/25 transition hover:bg-surface-2 disabled:opacity-100 dark:bg-surface-1;
+  @apply inline-flex cursor-pointer items-center gap-1.5 rounded-sm border border-surface-3 bg-surface-0 py-1 pl-2.5 pr-1.5 text-[13px] text-ink-primary transition hover:bg-surface-2 disabled:opacity-100 dark:bg-surface-1;
 }
 
 .productions-view__alert {

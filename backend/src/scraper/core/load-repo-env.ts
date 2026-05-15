@@ -7,5 +7,5 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scraperDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(scraperDir, "..", "..", "..");
+const repoRoot = path.resolve(scraperDir, "..", "..", "..", "..");
 config({ path: path.join(repoRoot, ".env") });

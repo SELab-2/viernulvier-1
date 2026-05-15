@@ -1,4 +1,4 @@
-import type { ViernulvierEventStartBounds } from "./event-bounds.js";
+import type { ViernulvierEventStartBounds } from "@/scraper/entities/index.js";
 
 /** Venue and archive schedules follow local (Belgian) calendar days, not UTC midnight. */
 export const ARCHIVE_TIME_ZONE = "Europe/Brussels";

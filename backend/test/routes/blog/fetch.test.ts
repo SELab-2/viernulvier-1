@@ -10,8 +10,8 @@ let server: FastifyInstance;
 let sessionCookie: string;
 
 const mockBlogs: Array<Blog> = [
-  { id: 1, name: "Tech Blog", description: "All about tech" },
-  { id: 2, name: "Art Blog", description: null },
+  { id: 1, name: { en: "Tech Blog" }, description: { en: "All about tech" } },
+  { id: 2, name: { en: "Art Blog" }, description: null },
 ];
 
 const mockTime = new Date();

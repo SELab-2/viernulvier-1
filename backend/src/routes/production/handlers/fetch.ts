@@ -19,6 +19,7 @@ import {
 } from "@/routes/helpers.js";
 import {
   buildProductionListWhere,
+  EVENT_TZ,
   parsePositiveIdList,
 } from "../helpers/list-where.js";
 import { ProductionListQuerySchema } from "../helpers/pagination.js";
@@ -173,31 +174,79 @@ export type PaginatedProductions = {
   total: number;
 };
 
+type ListDateFilters = {
+  yearRange: { from: number; to: number } | undefined;
+  dateFrom: string | undefined;
+  dateTo: string | undefined;
+};
+
 function buildProductionListOrderClause(
   sortBy: "name" | "date" | undefined,
   sortDir: "asc" | "desc" | undefined,
   lang: "nl" | "fr" | "en" | undefined,
-): string {
+  dates: ListDateFilters,
+  legacyOldId: number | undefined,
+  /** 1-based index of the next `$n` placeholder after WHERE params */
+  nextParamIndex: number,
+): { sql: string; extraParams: unknown[] } {
   const dir = sortDir === "desc" ? "DESC" : "ASC";
   if (sortBy === "date") {
-    // Use the first event row by primary key (insertion order).
-    // Usually matches the earliest show when events are created chronologically:
-    // for single-event productions it is identical, for several events it could
-    // differ if events weren't inserted in chronological order.
-    return `ORDER BY (
+    const useFilteredEventSort =
+      legacyOldId === undefined &&
+      (dates.yearRange !== undefined ||
+        (dates.dateFrom !== undefined && dates.dateTo !== undefined));
+
+    if (useFilteredEventSort) {
+      const agg = sortDir === "desc" ? "MAX" : "MIN";
+      let idx = nextParamIndex;
+      const conj: string[] = ["e.production = p.id", "e.starts_at IS NOT NULL"];
+      const extraParams: unknown[] = [];
+
+      if (dates.yearRange !== undefined) {
+        conj.push(
+          `(EXTRACT(YEAR FROM (e.starts_at AT TIME ZONE '${EVENT_TZ}')))::int BETWEEN $${idx}::int AND $${idx + 1}::int`,
+        );
+        extraParams.push(dates.yearRange.from, dates.yearRange.to);
+        idx += 2;
+      }
+      if (dates.dateFrom !== undefined && dates.dateTo !== undefined) {
+        conj.push(`(e.starts_at AT TIME ZONE '${EVENT_TZ}')::date >= $${idx}::date`);
+        extraParams.push(dates.dateFrom);
+        idx += 1;
+        conj.push(`(e.starts_at AT TIME ZONE '${EVENT_TZ}')::date <= $${idx}::date`);
+        extraParams.push(dates.dateTo);
+        idx += 1;
+      }
+
+      const whereEvents = conj.join("\n        AND ");
+      return {
+        sql: `ORDER BY (
+        SELECT ${agg}(e.starts_at)
+        FROM event e
+        WHERE ${whereEvents}
+      ) ${dir} NULLS LAST, p.id ASC`,
+        extraParams,
+      };
+    }
+
+    // No date/year filter (or legacy-only query): cheapest ordering — first event row by pk.
+    return {
+      sql: `ORDER BY (
       SELECT e.starts_at
       FROM event e
       WHERE e.production = p.id
       ORDER BY e.id ASC
       LIMIT 1
-    ) ${dir} NULLS LAST, p.id ASC`;
+    ) ${dir} NULLS LAST, p.id ASC`,
+      extraParams: [],
+    };
   }
   if (sortBy === "name") {
     const key = lang ?? "nl";
     const titleExpr = `COALESCE(NULLIF(TRIM(p.title->>'${key}'), ''), NULLIF(TRIM(p.title->>'nl'), ''), NULLIF(TRIM(p.title->>'en'), ''), NULLIF(TRIM(p.title->>'fr'), ''), '')`;
-    return `ORDER BY LOWER(${titleExpr}) ${dir}, p.id ASC`;
+    return { sql: `ORDER BY LOWER(${titleExpr}) ${dir}, p.id ASC`, extraParams: [] };
   }
-  return "ORDER BY p.id ASC";
+  return { sql: "ORDER BY p.id ASC", extraParams: [] };
 }
 
 /**
@@ -211,8 +260,9 @@ function buildProductionListOrderClause(
  * - Optional `yearMin` / `yearMax` (inclusive) — event year must fall in that span.
  * - Optional `from` / `to` (`YYYY-MM-DD`) — production must have an event in that range (venue TZ).
  * - Optional `old_id` — legacy id; when set, only `p.old_id` (same as staging; other filters ignored).
- * - Optional `sortBy` / `sortDir` / `lang` — `date` uses `starts_at` of the first `event` row by
- *   primary key (`id`) for that production
+ * - Optional `sortBy` / `sortDir` / `lang` — `date` uses the first `event` by `id` when no
+ *   year/date list filters apply; with `yearMin`/`yearMax` and/or `from`/`to`, `date` sorts by
+ *   `MIN`/`MAX(starts_at)` over events matching those filters (venue TZ), so order matches the window.
  *
  * @param server - The Fastify instance, used for database access and logging.
  * @param request - The Fastify request; optional list query params as documented above.
@@ -240,11 +290,6 @@ export async function fetchProductions(
       : undefined;
   const dateFrom = query.from;
   const dateTo = query.to;
-  const orderSql = buildProductionListOrderClause(
-    query.sortBy,
-    query.sortDir,
-    query.lang,
-  );
   const { whereSql, params: filterParams } = buildProductionListWhere(
     searchTerms,
     tagIds,
@@ -253,6 +298,16 @@ export async function fetchProductions(
     dateTo,
     query.old_id,
   );
+  const { sql: orderSql, extraParams: orderExtraParams } =
+    buildProductionListOrderClause(
+      query.sortBy,
+      query.sortDir,
+      query.lang,
+      { yearRange, dateFrom, dateTo },
+      query.old_id,
+      filterParams.length + 1,
+    );
+  const listBaseParams = [...filterParams, ...orderExtraParams];
 
   let result: QueryResult<ProductionWithBackwardsRefs>;
   let total: number;
@@ -260,7 +315,7 @@ export async function fetchProductions(
   if (limit === undefined) {
     result = await server.pg.query<ProductionWithBackwardsRefs>(
       `${ProductionSelect}${whereSql} ${orderSql}`,
-      filterParams,
+      listBaseParams,
     );
     total = result.rows.length;
   } else {
@@ -270,9 +325,9 @@ export async function fetchProductions(
     );
     total = countResult.rows[0]?.count ?? 0;
 
-    const listParams = [...filterParams, limit, offset];
-    const limitIdx = filterParams.length + 1;
-    const offsetIdx = filterParams.length + 2;
+    const listParams = [...listBaseParams, limit, offset];
+    const limitIdx = listBaseParams.length + 1;
+    const offsetIdx = listBaseParams.length + 2;
     result = await server.pg.query<ProductionWithBackwardsRefs>(
       `${ProductionSelect}${whereSql} ${orderSql} LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
       listParams,

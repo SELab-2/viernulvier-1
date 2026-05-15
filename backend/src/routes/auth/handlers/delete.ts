@@ -1,7 +1,7 @@
 import type { Admin } from "@viernulvier/shared/index.js";
 import { AdminSchema, serial } from "@viernulvier/shared/index.js";
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import { buildQuery, parseParams } from "@/routes/helpers.js";
+import { buildQuery, getMetadata, HttpClientError, HttpError, parseParams } from "@/routes/helpers.js";
 import z from "zod";
 
 const deleteAdminById = (server: FastifyInstance) =>
@@ -19,6 +19,7 @@ const deleteAdminById = (server: FastifyInstance) =>
  * @param server - The Fastify instance, used for database access and logging.
  * @param request - The Fastify request, expected to contain `id` in its params.
  * @returns The deleted admin, or `null` if not found or parsing failed.
+ * @throws A 409 conflict error when trying to delete yourself.
  */
 export async function deleteAdmin(
   server: FastifyInstance,
@@ -26,6 +27,12 @@ export async function deleteAdmin(
 ): Promise<Admin | null> {
 
   const { id } = parseParams(request, z.object({ id: serial() }));
+  const { admin } = getMetadata(request);
+
+  if (id == admin) {
+    throw new HttpError(HttpClientError.Conflict, "You can't delete yourself.");
+  }
+
   const rows = await deleteAdminById(server)(id);
   return rows[0] ?? null;
 }

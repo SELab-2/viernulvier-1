@@ -2,7 +2,7 @@ const MAX_TAG_FILTER_IDS = 30;
 const TAG_ID_MAX = 2_147_483_647;
 
 /** Event timestamps are interpreted in this zone for year/day filters (venue locale). */
-const EVENT_TZ = "Europe/Brussels";
+export const EVENT_TZ = "Europe/Brussels";
 
 export function parsePositiveIdList(raw: string | undefined): number[] {
   if (raw === undefined || raw.trim() === "") return [];

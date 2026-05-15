@@ -218,49 +218,88 @@ export async function getCropById(
 export async function fetchImagesByProduction(
   server: FastifyInstance,
   request: FastifyRequest,
-): Promise<(Image & { crops: Crop[] })[] | null> {
-  const { productionId } = parseParams(
-    request,
-    z.object({ productionId: stringToInt }),
-  );
+): Promise<(Image & { crops: Crop[] })[]> {
+  const { productionId } = parseParams(request, z.object({ productionId: stringToInt }));
 
   const imgResult = await server.pg.query(
     `${ImageSelect} WHERE i.production = $1 ORDER BY i.id ASC`,
     [productionId],
   );
-  const images = parseSchema(
-    server,
-    z.array(ImageSchema),
-    imgResult.rows,
-    ParseContext.Database,
+  const images = parseSchema(server, z.array(ImageSchema), imgResult.rows, ParseContext.Database);
+  return await attachCropsToImages(server, images);
+}
+
+const MAX_BATCH_PRODUCTION_IMAGE_IDS = 50;
+
+function parseCommaSeparatedProductionIds(idsParam: unknown): number[] {
+  const raw =
+    idsParam === undefined || idsParam === null
+      ? ""
+      : Array.isArray(idsParam)
+        ? idsParam.filter((x): x is string => typeof x === "string").join(",")
+        : String(idsParam);
+
+  const out: number[] = [];
+  const seen = new Set<number>();
+  for (const part of raw.split(",")) {
+    const trimmed = part.trim();
+    if (trimmed.length === 0) continue;
+
+    const n = Number.parseInt(trimmed, 10);
+    if (trimmed !== String(n) || Number.isNaN(n) || n < 1 || n > 2_147_483_647) continue;
+    if (seen.has(n)) continue;
+
+    seen.add(n);
+    out.push(n);
+    if (out.length >= MAX_BATCH_PRODUCTION_IMAGE_IDS) break;
+  }
+  return out;
+}
+
+/**
+ * GET /api/v1/production/images?ids=1,2,3
+ *
+ * Fetches images with crops for many productions in one query. Response maps
+ * every requested id (string key) to an array (possibly empty).
+ */
+export async function fetchImagesByProductionIdsBatch(
+  server: FastifyInstance,
+  request: FastifyRequest,
+): Promise<{ byProductionId: Record<string, (Image & { crops: Crop[] })[]> }> {
+  const query = request.query as Record<string, unknown> | undefined;
+  const ids = parseCommaSeparatedProductionIds(query?.["ids"]);
+
+  if (ids.length === 0) return { byProductionId: {} };
+
+  const imgResult = await server.pg.query(
+    `${ImageSelect} WHERE i.production = ANY($1::int[]) ORDER BY i.production ASC, i.id ASC`,
+    [ids],
   );
 
-  if (images.length === 0) return [];
+  const images = parseSchema(server, z.array(ImageSchema), imgResult.rows, ParseContext.Database);
+  const withCrops = await attachCropsToImages(server, images);
 
-  const imageIds = images.map((img) => img.id);
-  const cropsResult = await server.pg.query(
-    `${CropSelect} WHERE c.image = ANY($1::int[]) ORDER BY c.image ASC, c.id ASC`,
-    [imageIds],
-  );
-  const allCrops = parseSchema(
-    server,
-    z.array(CropSchema),
-    cropsResult.rows,
-    ParseContext.Database,
-  );
-
-  const cropsByImage = new Map<number, Crop[]>();
-  for (const crop of allCrops) {
-    const imageId = crop.image as number;
-    const list = cropsByImage.get(imageId) ?? [];
-    list.push(crop);
-    cropsByImage.set(imageId, list);
+  const grouped = new Map<number, (Image & { crops: Crop[] })[]>();
+  for (const img of withCrops) {
+    const prodId = img.production as number;
+    let list = grouped.get(prodId);
+    if (list === undefined) {
+      list = [];
+      grouped.set(prodId, list);
+    }
+    list.push(img);
   }
 
-  return images.map((img) => ({
-    ...img,
-    crops: cropsByImage.get(img.id) ?? [],
-  }));
+  const byProductionId: Record<string, (Image & { crops: Crop[] })[]> = Object.fromEntries(
+    ids.map(
+      (id): [string, (Image & { crops: Crop[] })[]] => [
+        String(id),
+        grouped.get(id) ?? [],
+      ],
+    ),
+  );
+
+  return { byProductionId };
 }
 
 /**

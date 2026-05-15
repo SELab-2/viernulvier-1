@@ -57,7 +57,7 @@ export interface CmsTagGridRow {
   tagTypeId: number;
   tagType: string;
   public: boolean;
-  productionCount: number;
+  productions: number[];
 }
 
 export type TagInlineEditableField = "name" | "tagType" | "public";

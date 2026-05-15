@@ -18,6 +18,9 @@ import type { ZodTypeProvider } from "fastify-type-provider-zod";
  */
 export default async function registerRoutes(server: FastifyInstance) {
   server = server.withTypeProvider<ZodTypeProvider>();
+  // Media before production: `GET /api/v1/production/images` must not be
+  // captured by `GET /api/v1/production/:id` (which would treat "images" as an id).
+  await server.register(mediaRoutes);
   await server.register(productionRoutes);
   await server.register(authRoutes);
   await server.register(eventRoutes);
@@ -26,6 +29,5 @@ export default async function registerRoutes(server: FastifyInstance) {
   await server.register(tagTypeRoutes);
   await server.register(hallRoutes);
   await server.register(blogRoutes);
-  await server.register(mediaRoutes);
   await server.register(blogPostRoutes);
 }

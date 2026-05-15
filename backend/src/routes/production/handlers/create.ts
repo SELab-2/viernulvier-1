@@ -1,8 +1,9 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared/index.js";
-import { getMetadata, parseSchema } from "@/routes/helpers.js";
+import { getMetadata, parseSchema, HttpError, HttpServerError } from "@/routes/helpers.js";
 import { CreateProductionBodySchema } from "./body-schema.js";
 import { getFieldValue, getNullableFieldValue } from "./field-utils.js";
+import { getProductionById } from "./fetch.js";
 
 const RequiredCreateColumns = [
   "title",
@@ -27,9 +28,12 @@ const NullableCreateColumns = [
 ] as const;
 /**
  * Creates a new production and returns the created record.
+ * Also creates production_tag relations for each tag ID in the input.
+ * All operations are wrapped in a transaction — if any part fails, the entire
+ * operation is rolled back and nothing is inserted.
  *
  * @param server - The Fastify instance, used for database access and logging.
- * @param request - The Fastify request, expected to contain a production body.
+ * @param request - The Fastify request, expected to contain a production body with optional tags array.
  * @returns The created production, or `null` if the insert failed or parsing failed.
  */
 export async function createProduction(
@@ -39,6 +43,7 @@ export async function createProduction(
   const body = parseSchema(server, CreateProductionBodySchema, request.body);
 
   const { admin, current_time } = getMetadata(request);
+  const tags = body.tags ?? [];
 
   const fields: string[] = [];
   const placeholders: string[] = [];
@@ -63,39 +68,60 @@ export async function createProduction(
   placeholders.push(`$${i++}`, `$${i++}`, `$${i++}`, `$${i++}`);
   values.push(admin, admin, current_time, current_time);
 
-  const insertResult = await server.pg.query<Omit<ProductionWithBackwardsRefs, "events" | "tags" | "blogposts">>(
-    `INSERT INTO production (${fields.join(", ")})
-     VALUES (${placeholders.join(", ")})
-     RETURNING 
-       id,
-       old_id,
-       finalized,
-       supertitle,
-       title,
-       artist,
-       tagline,
-       teaser,
-       description,
-       description_extra,
-       description_2,
-       video_1,
-       video_2,
-       quote,
-       quote_source,
-       programme,
-       info`,
-    values,
-  );
+  const client = await server.pg.connect();
 
-  const row = insertResult.rows[0];
-  if (!row) return null;
+  try {
+    await client.query("BEGIN");
 
-  // Newly created productions have no events, tags, or blogposts
-  return {
-    ...row,
-    events: [],
-    tags: [],
-    blogposts: [],
-  } as ProductionWithBackwardsRefs;
+    // Insert production within transaction
+    const insertResult = await client.query<Omit<ProductionWithBackwardsRefs, "events" | "tags" | "blogposts">>(
+      `INSERT INTO production (${fields.join(", ")})
+       VALUES (${placeholders.join(", ")})
+       RETURNING 
+         id,
+         old_id,
+         finalized,
+         supertitle,
+         title,
+         artist,
+         tagline,
+         teaser,
+         description,
+         description_extra,
+         description_2,
+         video_1,
+         video_2,
+         quote,
+         quote_source,
+         programme,
+         info`,
+      values,
+    );
+
+    const row = insertResult.rows[0];
+    if (!row) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    // Insert all production_tag relations within same transaction
+    for (const tag of tags) {
+      await client.query(
+        `INSERT INTO production_tag (production, tag, created_by, updated_by, created_at, updated_at)
+         VALUES ($1, $2, $3, $3, $4, $4)
+         ON CONFLICT DO NOTHING`,
+        [row.id, tag, admin, current_time],
+      );
+    }
+
+    await client.query("COMMIT");
+    return await getProductionById(server, row.id);
+  } catch (err) {
+    await client.query("ROLLBACK");
+    server.log.error(err);
+    throw new HttpError(HttpServerError.InternalServerError, "Internal server error");
+  } finally {
+    client.release();
+  }
 }
 

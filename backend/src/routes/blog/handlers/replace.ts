@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Blog } from "@viernulvier/shared/index.js";
-import { BlogSchema, serial } from "@viernulvier/shared/index.js";
+import { BlogSchema, languageMap, serial } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, buildQuery, parseSchema } from "@/routes/helpers.js";
 import { z } from "zod";
 
@@ -13,8 +13,8 @@ const replaceBlogQuery = (server: FastifyInstance) =>
      WHERE id = $5
      RETURNING id, name, description`,
     z.tuple([
-      z.string(),            // name
-      z.string().nullable(), // description
+      languageMap,            // name
+      languageMap.nullable(), // description
       z.int(),               // admin
       z.date(),              // current_time
       z.int(),               // id
