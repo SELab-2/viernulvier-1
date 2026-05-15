@@ -1,9 +1,45 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { i18n } from "@/i18n";
 import type { CreateBlogPostFormState } from "@/services/cms";
 import { buildEmptyBlogPostForm } from "@/services/cms";
 import CmsCreateBlogPostModal from "@/components/admin/cms/blogposts/CmsCreateBlogPostModal.vue";
+
+vi.mock("easymde", () => {
+  return {
+    default: class MockEasyMDE {
+      private _value = "";
+      private changeHandler: Function | null = null;
+
+      constructor(opts: any) {
+        this._value = opts?.initialValue ?? "";
+      }
+
+      value(v?: string) {
+        if (typeof v === "string") {
+          this._value = v;
+          return;
+        }
+        return this._value;
+      }
+
+      toTextArea() {}
+
+      codemirror = {
+        on: (event: string, cb: Function) => {
+          if (event === "change") {
+            this.changeHandler = cb;
+          }
+        },
+        trigger: (event: string) => {
+          if (event === "change" && this.changeHandler) {
+            this.changeHandler();
+          }
+        },
+      };
+    },
+  };
+});
 
 function mountModal(
   overrides: Partial<CreateBlogPostFormState> = {},
@@ -47,12 +83,15 @@ describe("CmsCreateBlogPostModal", () => {
     ]);
   });
 
-  it("emits update-content on content textarea input", async () => {
+  it("emits update-content on content input", async () => {
     const wrapper = mountModal();
 
-    await wrapper
-      .get('[data-testid="cms-create-blogpost-content-nl"]')
-      .setValue("Lorem ipsum");
+    const markdown = wrapper.findComponent({ name: "MarkdownEditor" });
+
+    const editor = (markdown.vm as any).editor;
+
+    editor.value("Lorem ipsum");
+    editor.codemirror?.trigger("change");
 
     const events = wrapper.emitted("update-content");
 

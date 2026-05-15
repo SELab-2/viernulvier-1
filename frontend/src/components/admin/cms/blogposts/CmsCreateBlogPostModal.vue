@@ -58,15 +58,14 @@
             <span class="cms-required">*</span>
           </legend>
 
-          <div :class="langGridClass">
+          <div class="flex flex-col gap-4">
             <label v-for="lang in visibleCreateLangs" :key="`content-${lang}`" class="cms-form-lang-field">
               <span class="cms-lang-label">{{ lang.toUpperCase() }}</span>
-              <textarea
-                :value="createForm.content[lang]"
-                class="cms-text-input cms-textarea"
+              <MarkdownEditor
+                :model-value="createForm.content[lang]"
+                :placeholder="t('cms.columns.blogpost.content')"
                 :data-testid="`cms-create-blogpost-content-${lang}`"
-                rows="6"
-                @input="emit('update-content', lang, ($event.target as HTMLTextAreaElement).value)"
+                @update:model-value="(value) => emit('update-content', lang, value)"
               />
             </label>
           </div>
@@ -153,6 +152,7 @@ import { nextTick, ref, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 import type { SupportedLang } from "@/i18n";
 import type { CreateBlogPostFormState } from "@/services/cms";
+import MarkdownEditor from "@/components/MarkdownEditor.vue";
 
 const props = defineProps<{
   open: boolean;
