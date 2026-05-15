@@ -400,7 +400,7 @@ describe("Edit on production route", () => {
     server.pg.connect = vi.fn().mockResolvedValue(mockClient);
 
     await expect(editProduction(server, {
-      params: { id: String(originalProduction["id"]) },
+      params: { id: originalProduction["id"] },
       user: { id: 1 },
       body: { title: { nl: "New Title" } },
     } as unknown as FastifyRequest)).rejects.toMatchObject({ status: 500 });
