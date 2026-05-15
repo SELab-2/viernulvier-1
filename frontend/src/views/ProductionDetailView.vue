@@ -26,12 +26,15 @@
           :banner-url="heroBannerUrl"
         />
         <DetailsSection 
-          v-if="hasDetails"
+          v-if="showDetailsSection"
           :production="production" 
           :tag-groups="tagGroups" 
-          :total-tags="totalTags" 
+          :total-tags="totalTags"
+          :performance-events="events"
+          :events-loading="eventsLoading"
+          :events-error="eventsError"
+          @retry-events="eventsRetry"
         />
-        <EventsSection :events="events" :loading="eventsLoading" :error="eventsError" @retry="eventsRetry" />
         <GallerySection :slides="gallerySlides" />
         <BlogSection />
       </template>
@@ -46,7 +49,6 @@ import AppNavbar from "@/components/nav/AppNavbar.vue";
 import AppFooter from "@/components/AppFooter.vue";
 import HeroSection from "@/components/production/HeroSection.vue";
 import DetailsSection from "@/components/production/DetailsSection.vue";
-import EventsSection from "@/components/production/EventsSection.vue";
 import GallerySection from "@/components/production/GallerySection.vue";
 import BlogSection from "@/components/production/BlogSection.vue";
 import NotFound from "@/components/NotFound.vue";
@@ -174,4 +176,12 @@ const hasDetails = computed(() => {
   );
 });
 
-</script>
+/** Show detail layout when editorial content exists or when sidebar should list performances/loading/error. */
+const showDetailsSection = computed(
+  () =>
+    !!production.value &&
+    (hasDetails.value ||
+      eventsLoading.value ||
+      events.value.length > 0 ||
+      eventsError.value !== null),
+);</script>
