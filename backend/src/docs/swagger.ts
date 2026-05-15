@@ -12,6 +12,12 @@ import {
 } from "fastify-type-provider-zod";
 import path from "path";
 
+/**
+ * This module registers a validator an a serializer that use zod schemas to preform
+ * their respective rolls. It also then parses them in a way that can be read by OpenAPI
+ * to create a Swagger docs site.
+ */
+
 export default fp(async (server: FastifyInstance) => {
   server.setValidatorCompiler(validatorCompiler);
   server.setSerializerCompiler(serializerCompiler);
@@ -45,11 +51,16 @@ export default fp(async (server: FastifyInstance) => {
     return reply;
   });
 
+
+  /**
+   * Here we set the description that is then shown on the docs page.
+   * We also declare the version of OpenAPI our documentation uses.
+   */
   server.register(swagger, {
     openapi: {
       info: {
-        title: "Archief Viernulvier",
-        description: "Een archief voor de viernulvier",
+        title: "Archive  VierNulVier",
+        description: "An Archive for VierNulVier",
         version: "1.0.0",
       },
       servers: [],

@@ -27,7 +27,7 @@ import {
   editOwnPasswordAdminDocs,
   replaceAdminDocs,
   loginDocs,
-  logoutDocs
+  logoutDocs,
 } from "./docs/index.js";
 
 /**
