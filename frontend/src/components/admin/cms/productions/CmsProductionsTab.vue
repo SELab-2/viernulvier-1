@@ -238,7 +238,7 @@ import {
   type CreateFormState,
   type EditorPanelState,
   type InlineEditableField,
-  type LongField,
+  type ProductionLongField,
   type CmsProductionGridRow,
   extractEventIds,
   makeEditorValues,
@@ -389,7 +389,7 @@ const inlineFieldToApi: Record<InlineEditableField, keyof ProductionWithBackward
   teaser: "teaser",
 };
 
-const longGridFieldToApi: Record<"descriptionOne" | "descriptionTwo" | "media", LongField> = {
+const longGridFieldToApi: Record<"descriptionOne" | "descriptionTwo" | "media", ProductionLongField> = {
   descriptionOne: "description",
   descriptionTwo: "description_2",
   media: "video_1",
@@ -978,7 +978,7 @@ async function saveEditorPanel(): Promise<void> {
     await Promise.all(
       targetRows.map(async (target) => {
         await persistProductionPatch(target, {
-          [editorPanel.value?.apiField as LongField]: payload,
+          [editorPanel.value?.apiField as ProductionLongField]: payload,
         });
       }),
     );

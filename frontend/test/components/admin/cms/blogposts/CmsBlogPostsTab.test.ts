@@ -59,6 +59,14 @@ function mountTab() {
   });
 }
 
+const mockPost = {
+  id: 1,
+  title: { en: "Hello", nl: "Hallo", fr: "Bonjour" },
+  content: { en: "World", nl: "Wereld", fr: "Monde" },
+  published_at: null,
+  productions: [],
+} as any;
+
 // -------------------------
 // tests
 // -------------------------
@@ -368,6 +376,162 @@ describe("CmsBlogPostsTab", () => {
       } as any);
 
       expect(true).toBe(true); // just ensures no crash
+    });
+  });
+
+  describe("editor panel", () => {
+    async function mountWithPost() {
+      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([mockPost]);
+      const wrapper = mountTab();
+      await flushPromises();
+      return wrapper;
+    }
+
+    it("is closed by default", async () => {
+      const wrapper = await mountWithPost();
+      expect(wrapper.vm.__test.editorPanel.value).toBeNull();
+    });
+
+    it("opens for the title column on cell click", async () => {
+      const wrapper = await mountWithPost();
+      const row = wrapper.vm.__test.rowData.value[0];
+
+      wrapper.vm.__test.onCellClicked({
+        data: row,
+        colDef: { field: "title", headerName: "Title" },
+      } as any);
+
+      expect(wrapper.vm.__test.editorPanel.value).not.toBeNull();
+      expect(wrapper.vm.__test.editorPanel.value?.rowId).toBe(row.id);
+      expect(wrapper.vm.__test.editorPanel.value?.apiField).toBe("title");
+      expect(wrapper.vm.__test.editorPanel.value?.label).toBe("Title");
+    });
+
+    it("opens for the content column on cell click", async () => {
+      const wrapper = await mountWithPost();
+      const row = wrapper.vm.__test.rowData.value[0];
+
+      wrapper.vm.__test.onCellClicked({
+        data: row,
+        colDef: { field: "content", headerName: "Content" },
+      } as any);
+
+      expect(wrapper.vm.__test.editorPanel.value?.apiField).toBe("content");
+    });
+
+    it("pre-fills values from the source blogpost", async () => {
+      const wrapper = await mountWithPost();
+      const row = wrapper.vm.__test.rowData.value[0];
+
+      wrapper.vm.__test.onCellClicked({
+        data: row,
+        colDef: { field: "title", headerName: "Title" },
+      } as any);
+
+      const values = wrapper.vm.__test.editorPanel.value?.values;
+      expect(values?.en).toBe("Hello");
+      expect(values?.nl).toBe("Hallo");
+      expect(values?.fr).toBe("Bonjour");
+    });
+
+    it("ignores clicks on non-panel columns", async () => {
+      const wrapper = await mountWithPost();
+      const row = wrapper.vm.__test.rowData.value[0];
+
+      wrapper.vm.__test.onCellClicked({
+        data: row,
+        colDef: { field: "publishedAt" },
+      } as any);
+
+      expect(wrapper.vm.__test.editorPanel.value).toBeNull();
+    });
+
+    it("ignores clicks with no data or no field", async () => {
+      const wrapper = await mountWithPost();
+      const row = wrapper.vm.__test.rowData.value[0];
+
+      wrapper.vm.__test.onCellClicked({ data: null, colDef: { field: "title" } } as any);
+      wrapper.vm.__test.onCellClicked({ data: row, colDef: {} } as any);
+
+      expect(wrapper.vm.__test.editorPanel.value).toBeNull();
+    });
+
+    it("clears saveError when the panel is opened", async () => {
+      const wrapper = await mountWithPost();
+      const row = wrapper.vm.__test.rowData.value[0];
+
+      wrapper.vm.__test.saveError.value = "old error";
+      wrapper.vm.__test.onCellClicked({
+        data: row,
+        colDef: { field: "title", headerName: "Title" },
+      } as any);
+
+      expect(wrapper.vm.__test.saveError.value).toBeNull();
+    });
+
+    it("closes the panel and clears saveError", async () => {
+      const wrapper = await mountWithPost();
+      const row = wrapper.vm.__test.rowData.value[0];
+
+      wrapper.vm.__test.onCellClicked({
+        data: row,
+        colDef: { field: "title", headerName: "Title" },
+      } as any);
+      wrapper.vm.__test.saveError.value = "some error";
+
+      wrapper.vm.__test.closeEditorPanel();
+
+      expect(wrapper.vm.__test.editorPanel.value).toBeNull();
+      expect(wrapper.vm.__test.saveError.value).toBeNull();
+    });
+
+    it("saves the panel and closes it on success", async () => {
+      const updateSpy = vi.spyOn(blogposts, "updateBlogPost").mockResolvedValue({
+        ...mockPost,
+        title: { en: "Updated", nl: "Bijgewerkt", fr: "Mis à jour" },
+      } as any);
+
+      const wrapper = await mountWithPost();
+      const row = wrapper.vm.__test.rowData.value[0];
+
+      wrapper.vm.__test.onCellClicked({
+        data: row,
+        colDef: { field: "title", headerName: "Title" },
+      } as any);
+      wrapper.vm.__test.editorPanel.value!.values.en = "Updated";
+
+      await wrapper.vm.__test.saveEditorPanel();
+
+      expect(updateSpy).toHaveBeenCalledWith(
+        row.id,
+        expect.objectContaining({ title: expect.any(Object) }),
+      );
+      expect(wrapper.vm.__test.editorPanel.value).toBeNull();
+    });
+
+    it("does nothing when saveEditorPanel is called with no open panel", async () => {
+      const updateSpy = vi.spyOn(blogposts, "updateBlogPost");
+      const wrapper = await mountWithPost();
+
+      await wrapper.vm.__test.saveEditorPanel();
+
+      expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    it("does nothing when saveEditorPanel cannot find the row", async () => {
+      const updateSpy = vi.spyOn(blogposts, "updateBlogPost");
+      const wrapper = await mountWithPost();
+
+      wrapper.vm.__test.editorPanel.value = {
+        rowId: 99999,
+        apiField: "title",
+        label: "Title",
+        values: { nl: "x", en: "", fr: "" },
+      };
+
+      await wrapper.vm.__test.saveEditorPanel();
+
+      expect(updateSpy).not.toHaveBeenCalled();
     });
   });
 

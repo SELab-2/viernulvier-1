@@ -60,6 +60,7 @@
         @grid-ready="onGridReady"
         @selection-changed="onSelectionChanged"
         @cell-editing-stopped="onCellEditingStopped"
+        @cell-clicked="onCellClicked"
       />
     </template>
 
@@ -91,6 +92,15 @@
         @add-production-id="addProductionId"
         @remove-production-id="removeProductionId"
       />
+
+      <CmsEditorPanel
+        v-model:panel="editorPanel"
+        :bulk-count="editorBulkCount"
+        :save-error="saveError"
+        :is-saving="isSaving"
+        @close="closeEditorPanel"
+        @save="saveEditorPanel"
+      />
     </template>
   </CmsTabShell>
 </template>
@@ -98,12 +108,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { AgGridVue } from "ag-grid-vue3";
-import type { CellEditingStoppedEvent } from "ag-grid-community";
+import type { CellClickedEvent, CellEditingStoppedEvent } from "ag-grid-community";
 import { useI18n } from "vue-i18n";
 import type { BlogPostWithBackwardsRefs } from "@viernulvier/shared";
 import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
 import CmsRemoveConfirmModal from "@/components/admin/cms/CmsRemoveConfirmModal.vue";
 import CmsCreateBlogPostModal from "@/components/admin/cms/blogposts/CmsCreateBlogPostModal.vue";
+import CmsEditorPanel from "@/components/admin/cms/CmsEditorPanel.vue";
 import { useCmsBlogPostGrid } from "@/composables/useCmsBlogPostGrid";
 import { useCmsRemove } from "@/composables/useCmsRemove";
 import { useDarkMode } from "@/composables/useDarkMode";
@@ -114,9 +125,12 @@ import {
   applyUpdatedBlogPostToRow,
   buildBlogPostGridRows,
   buildEmptyBlogPostForm,
+  makeEditorValues,
+  toLanguageMapOrNull,
   validateCreateBlogPostForm,
   type CmsBlogPostGridRow,
   type CreateBlogPostFormState,
+  type EditorPanelState,
 } from "@/services/cms";
 
 const { t } = useI18n();
@@ -154,6 +168,10 @@ const saveError = ref<string | null>(null);
 const createError = ref<string | null>(null);
 const rowData = ref<CmsBlogPostGridRow[]>([]);
 const blogpostsData = ref<BlogPostWithBackwardsRefs[]>([]);
+const editorPanel = ref<EditorPanelState | null>(null);
+
+// Blog posts don't support bulk editing; always 1 so the bulk notice is never shown.
+const editorBulkCount = computed(() => 1);
 
 // ---------------------------------------------------------------------------
 // Localisation helpers
@@ -248,6 +266,50 @@ async function onCellEditingStopped(
   } finally {
     isSaving.value = false;
     persistGridState();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Editor panel (title / content)
+// ---------------------------------------------------------------------------
+
+function onCellClicked(event: CellClickedEvent<CmsBlogPostGridRow>): void {
+  if (!event.data || !event.colDef.field) return;
+
+  const field = event.colDef.field as "title" | "content";
+  if (field !== "title" && field !== "content") return;
+
+  const source = blogpostsData.value.find((p) => p.id === event.data!.id);
+  const currentMap = (source?.[field] ?? null) as LanguageMap | null;
+
+  editorPanel.value = {
+    rowId: event.data.id,
+    apiField: field,
+    label: event.colDef.headerName ?? field,
+    values: makeEditorValues(currentMap),
+  };
+  saveError.value = null;
+}
+
+function closeEditorPanel(): void {
+  editorPanel.value = null;
+  saveError.value = null;
+}
+
+async function saveEditorPanel(): Promise<void> {
+  if (!editorPanel.value) return;
+
+  const row = rowData.value.find((item) => item.id === editorPanel.value?.rowId);
+  if (!row) return;
+
+  const payload = toLanguageMapOrNull(editorPanel.value.values);
+  isSaving.value = true;
+  saveError.value = null;
+  try {
+    await persistBlogPostPatch(row, { [editorPanel.value.apiField]: payload });
+    closeEditorPanel();
+  } finally {
+    isSaving.value = false;
   }
 }
 
@@ -399,7 +461,12 @@ defineExpose({
     loadBlogPostsData,
     rebuildRows,
     localizeValue,
+    editorPanel,
+    editorBulkCount,
+    onCellClicked,
     onCellEditingStopped,
+    closeEditorPanel,
+    saveEditorPanel,
     openCreateModal,
     closeCreateModal,
     submitCreateBlogPost,
