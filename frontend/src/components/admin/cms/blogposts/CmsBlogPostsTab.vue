@@ -105,8 +105,8 @@
         v-model:panel="editProductionsPanel"
         :save-error="saveError"
         :is-saving="isSaving"
-        @close="closeProductionsPanel"
-        @save="saveProductionsPanel"
+        @close="closeEditProductionsPanel"
+        @save="saveEditProductionsPanel"
       />
     </template>
   </CmsTabShell>
@@ -244,7 +244,7 @@ function onCellClicked(event: CellClickedEvent<CmsBlogPostGridRow>): void {
   const field = event.colDef.field as "title" | "content" | "productions";
 
   if (field === "productions") {
-    openProductionsPanel(event.data);
+    openEditProductionsPanel(event.data);
     return;
   }
 
@@ -289,7 +289,7 @@ async function saveEditorPanel(): Promise<void> {
 // Edit productions panel (Edit list panel)
 // ---------------------------------------------------------------------------
 
-function openProductionsPanel(
+function openEditProductionsPanel(
   row: CmsBlogPostGridRow,
 ): void {
   const source = blogpostsData.value.find(
@@ -305,12 +305,12 @@ function openProductionsPanel(
   saveError.value = null;
 }
 
-function closeProductionsPanel(): void {
+function closeEditProductionsPanel(): void {
   editProductionsPanel.value = null;
   saveError.value = null;
 }
 
-async function saveProductionsPanel(): Promise<void> {
+async function saveEditProductionsPanel(): Promise<void> {
   if (!editProductionsPanel.value) return;
 
   const row = rowData.value.find(
@@ -325,7 +325,7 @@ async function saveProductionsPanel(): Promise<void> {
   try {
     await persistBlogPostPatch(row, { productions: editProductionsPanel.value.items });
     await loadBlogPostsData();
-    closeProductionsPanel();
+    closeEditProductionsPanel();
   } finally {
     isSaving.value = false;
   }
@@ -485,9 +485,9 @@ defineExpose({
     closeEditorPanel,
     saveEditorPanel,
     productionsPanel: editProductionsPanel,
-    openProductionsPanel,
-    closeProductionsPanel,
-    saveProductionsPanel,
+    openProductionsPanel: openEditProductionsPanel,
+    closeProductionsPanel: closeEditProductionsPanel,
+    saveProductionsPanel: saveEditProductionsPanel,
     openCreateModal,
     closeCreateModal,
     submitCreateBlogPost,

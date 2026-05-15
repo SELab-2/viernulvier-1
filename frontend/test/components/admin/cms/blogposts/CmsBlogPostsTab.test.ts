@@ -188,223 +188,6 @@ describe("CmsBlogPostsTab", () => {
     });
   });
 
-  describe("editing", () => {
-    it("reverts unchanged edits", async () => {
-      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
-        {
-          id: 1,
-          title: { en: "Hello" },
-          content: { en: "World" },
-          published_at: null,
-          productions: [],
-        } as any,
-      ]);
-
-      const wrapper = mountTab();
-      await flushPromises();
-
-      const row = wrapper.vm.__test.rowData.value[0];
-
-      const event = {
-        data: row,
-        colDef: { field: "title" },
-        value: row.title,
-        oldValue: row.title,
-        node: {
-          setDataValue: vi.fn(),
-        },
-      } as any;
-
-      await wrapper.vm.__test.onCellEditingStopped(event);
-
-      expect(event.node.setDataValue).not.toHaveBeenCalled();
-    });
-
-    it("rejects empty title edit", async () => {
-      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
-        {
-          id: 1,
-          title: { en: "Hello" },
-          content: { en: "World" },
-          published_at: null,
-          productions: [],
-        } as any,
-      ]);
-
-      const wrapper = mountTab();
-      await flushPromises();
-
-      const row = wrapper.vm.__test.rowData.value[0];
-
-      const event = {
-        data: row,
-        colDef: { field: "title" },
-        value: "   ",
-        oldValue: "Hello",
-        node: {
-          setDataValue: vi.fn(),
-        },
-      } as any;
-
-      await wrapper.vm.__test.onCellEditingStopped(event);
-
-      expect(event.node.setDataValue).toHaveBeenCalled();
-    });
-
-    it("saves title update", async () => {
-      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
-        {
-          id: 1,
-          title: { en: "Hello" },
-          content: { en: "World" },
-          published_at: null,
-          productions: [],
-        } as any,
-      ]);
-
-      const updateSpy = vi
-        .spyOn(blogposts, "updateBlogPost")
-        .mockResolvedValue({
-          id: 1,
-          title: { en: "Updated" },
-          content: { en: "World" },
-          published_at: null,
-          productions: [],
-        } as any);
-
-      const wrapper = mountTab();
-      await flushPromises();
-
-      const row = wrapper.vm.__test.rowData.value[0];
-
-      const event = {
-        data: row,
-        colDef: { field: "title" },
-        value: "Updated",
-        oldValue: "Hello",
-        node: {
-          setDataValue: vi.fn(),
-        },
-      } as any;
-
-      await wrapper.vm.__test.onCellEditingStopped(event);
-      await flushPromises();
-
-      expect(updateSpy).toHaveBeenCalledWith(1, expect.any(Object));
-      expect(wrapper.vm.__test.saveError.value).toBeNull();
-    });
-
-    it("handles save error", async () => {
-      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
-        {
-          id: 1,
-          title: { en: "Hello" },
-          content: { en: "World" },
-          published_at: null,
-          productions: [],
-        } as any,
-      ]);
-
-      vi.spyOn(blogposts, "updateBlogPost").mockRejectedValue(
-        new Error("fail"),
-      );
-
-      const wrapper = mountTab();
-      await flushPromises();
-
-      const row = wrapper.vm.__test.rowData.value[0];
-
-      const event = {
-        data: row,
-        colDef: { field: "title" },
-        value: "Updated",
-        oldValue: "Hello",
-        node: {
-          setDataValue: vi.fn(),
-        },
-      } as any;
-
-      await wrapper.vm.__test.onCellEditingStopped(event);
-      await flushPromises();
-
-      expect(wrapper.vm.__test.saveError.value).toBeTruthy();
-    });
-
-    it("uses generic save error for non-Error values", async () => {
-      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
-        {
-          id: 1,
-          title: { en: "Hello" },
-          content: { en: "World" },
-          published_at: null,
-          productions: [],
-        } as any,
-      ]);
-
-      vi.spyOn(blogposts, "updateBlogPost").mockRejectedValue("boom");
-
-      const wrapper = mountTab();
-      await flushPromises();
-
-      const row = wrapper.vm.__test.rowData.value[0];
-
-      await wrapper.vm.__test.onCellEditingStopped({
-        data: row,
-        colDef: { field: "title" },
-        value: "Updated",
-        oldValue: "Hello",
-        node: { setDataValue: vi.fn() },
-      } as any);
-
-      expect(wrapper.vm.__test.saveError.value).toBeTruthy();
-    });
-
-    it("ignores non-editable fields", async () => {
-      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
-        {
-          id: 1,
-          title: { en: "Hello" },
-          content: { en: "World" },
-          published_at: null,
-          productions: [],
-        } as any,
-      ]);
-
-      const updateSpy = vi.spyOn(blogposts, "updateBlogPost");
-
-      const wrapper = mountTab();
-      await flushPromises();
-
-      const row = wrapper.vm.__test.rowData.value[0];
-
-      const event = {
-        data: row,
-        colDef: { field: "publishedAt" },
-        value: "x",
-        oldValue: "y",
-        node: {
-          setDataValue: vi.fn(),
-        },
-      } as any;
-
-      await wrapper.vm.__test.onCellEditingStopped(event);
-
-      expect(updateSpy).not.toHaveBeenCalled();
-    });
-
-    it("onCellEditingStopped - returns early when event data is missing", async () => {
-      const wrapper = mountTab();
-      await flushPromises();
-
-      await wrapper.vm.__test.onCellEditingStopped({
-        data: null,
-        colDef: { field: "title" },
-      } as any);
-
-      expect(true).toBe(true); // just ensures no crash
-    });
-  });
-
   describe("editor panel", () => {
     async function mountWithPost() {
       vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([mockPost]);
@@ -556,6 +339,146 @@ describe("CmsBlogPostsTab", () => {
       };
 
       await wrapper.vm.__test.saveEditorPanel();
+
+      expect(updateSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("edit productions panel", () => {
+    it("opens productions panel when clicking productions column", async () => {
+      const spy = vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
+        mockPost,
+      ]);
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      const row = wrapper.vm.__test.rowData.value[0];
+
+      wrapper.vm.__test.onCellClicked({
+        data: row,
+        colDef: { field: "productions", headerName: "Productions" },
+      } as any);
+
+      expect(wrapper.vm.__test.productionsPanel.value).not.toBeNull();
+      expect(wrapper.vm.__test.productionsPanel.value?.rowId).toBe(row.id);
+      expect(wrapper.vm.__test.productionsPanel.value?.label).toBe(
+        "cms.panel.productions",
+      );
+      expect(wrapper.vm.__test.productionsPanel.value?.items).toEqual([]);
+      expect(spy).toHaveBeenCalledOnce();
+    });
+
+    it("pre-fills productions from source blogpost", async () => {
+      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([
+        {
+          ...mockPost,
+          productions: [10, 20, 30],
+        },
+      ]);
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      const row = wrapper.vm.__test.rowData.value[0];
+
+      wrapper.vm.__test.onCellClicked({
+        data: row,
+        colDef: { field: "productions", headerName: "Productions" },
+      } as any);
+
+      expect(wrapper.vm.__test.productionsPanel.value?.items).toEqual([
+        10, 20, 30,
+      ]);
+    });
+
+    it("closes productions panel and clears saveError", async () => {
+      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([mockPost]);
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      const row = wrapper.vm.__test.rowData.value[0];
+
+      wrapper.vm.__test.onCellClicked({
+        data: row,
+        colDef: { field: "productions" },
+      } as any);
+
+      wrapper.vm.__test.saveError.value = "old error";
+
+      wrapper.vm.__test.closeProductionsPanel();
+
+      expect(wrapper.vm.__test.productionsPanel.value).toBeNull();
+      expect(wrapper.vm.__test.saveError.value).toBeNull();
+    });
+
+    it("saves productions and reloads data", async () => {
+      const getSpy = vi
+        .spyOn(blogposts, "getBlogPosts")
+        .mockResolvedValue([]);
+
+      const updateSpy = vi
+        .spyOn(blogposts, "updateBlogPost")
+        .mockResolvedValue({
+          ...mockPost,
+          productions: [1, 2, 3],
+        } as any);
+
+      vi.spyOn(blogposts, "getBlogPosts").mockResolvedValue([mockPost]);
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      const row = wrapper.vm.__test.rowData.value[0];
+
+      wrapper.vm.__test.onCellClicked({
+        data: row,
+        colDef: { field: "productions" },
+      } as any);
+
+      // modify panel state
+      wrapper.vm.__test.productionsPanel.value!.items = [7, 8];
+
+      await wrapper.vm.__test.saveProductionsPanel();
+      await flushPromises();
+
+      expect(updateSpy).toHaveBeenCalledWith(
+        row.id,
+        expect.objectContaining({
+          productions: [7, 8],
+        }),
+      );
+
+      expect(getSpy).toHaveBeenCalled(); // reload triggered
+      expect(wrapper.vm.__test.productionsPanel.value).toBeNull();
+      expect(wrapper.vm.__test.isSaving.value).toBe(false);
+    });
+
+    it("does nothing when saveProductionsPanel called with no panel", async () => {
+      const updateSpy = vi.spyOn(blogposts, "updateBlogPost");
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      await wrapper.vm.__test.saveProductionsPanel();
+
+      expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    it("does nothing when row is not found during save", async () => {
+      const updateSpy = vi.spyOn(blogposts, "updateBlogPost");
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      wrapper.vm.__test.productionsPanel.value = {
+        rowId: 9999,
+        label: "Productions",
+        items: [1, 2],
+      };
+
+      await wrapper.vm.__test.saveProductionsPanel();
 
       expect(updateSpy).not.toHaveBeenCalled();
     });

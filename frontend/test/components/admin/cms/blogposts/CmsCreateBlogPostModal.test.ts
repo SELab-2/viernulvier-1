@@ -123,7 +123,7 @@ describe("CmsCreateBlogPostModal", () => {
       .setValue("42");
 
     await wrapper
-      .get(".cms-production-entry")
+      .get(".cms-list-entry")
       .trigger("submit");
 
     expect(wrapper.emitted("add-production-id")?.[0]).toEqual([42]);
@@ -137,7 +137,7 @@ describe("CmsCreateBlogPostModal", () => {
       .setValue("-1");
 
     await wrapper
-      .get(".cms-production-entry")
+      .get(".cms-list-entry")
       .trigger("submit");
 
     expect(wrapper.emitted("add-production-id")).toBeUndefined();
@@ -159,7 +159,7 @@ describe("CmsCreateBlogPostModal", () => {
     });
 
     await wrapper
-      .get(".cms-production-tag-remove")
+      .get(".cms-list-flair-remove")
       .trigger("click");
 
     expect(wrapper.emitted("remove-production-id")?.[0]).toEqual([12]);
