@@ -14,6 +14,7 @@ const cmsTagTypeGridStateStorageKey = "viernulvier-cms-tag-type-grid-state";
 
 /** Canonical column IDs — drives default order, column-visibility state, and CSV export. */
 const cmsTagTypeGridColumnIds = [
+  "id",
   "name",
   "tagCount",
   "tags",
@@ -52,6 +53,7 @@ export function useCmsTagTypeGrid(options: {
 
   /** Labels for the column-chooser panel; must stay in sync with columnDefs. */
   const gridColumnOptions = computed(() => [
+    { colId: "id", label: options.t("cms.columns.id") },
     { colId: "name", label: options.t("cms.columns.tagTypeName") },
     { colId: "tagCount", label: options.t("cms.columns.tagCount") },
     { colId: "tags", label: options.t("cms.columns.tagsInType") },
@@ -59,9 +61,17 @@ export function useCmsTagTypeGrid(options: {
 
   const columnDefs = computed<ColDef<CmsTagTypeGridRow>[]>(() => [
     {
+      headerName: options.t("cms.columns.id"),
+      field: "id",
+      editable: false,
+      minWidth: 50,
+      maxWidth: 100,
+      filter: "agNumberColumnFilter",
+    },
+    {
       headerName: options.t("cms.columns.tagTypeName"),
       field: "name",
-      editable: true,
+      editable: false,
       minWidth: 200,
       flex: 1,
     },

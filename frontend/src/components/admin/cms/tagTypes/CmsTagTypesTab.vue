@@ -53,13 +53,10 @@
         :column-hover-highlight="true"
         :enable-cell-text-selection="true"
         :ensure-dom-order="true"
-        :undo-redo-cell-editing="true"
-        :undo-redo-cell-editing-limit="25"
         :value-cache="true"
         :cache-quick-filter="true"
         @grid-ready="onGridReady"
         @selection-changed="onSelectionChanged"
-        @cell-editing-stopped="onCellEditingStopped"
         @cell-clicked="onCellClicked"
       />
     </template>
@@ -90,6 +87,15 @@
         @update-extra-lang="setCreateExtraLang"
       />
 
+      <CmsEditorPanel
+        v-model:panel="editorPanel"
+        :bulk-count="1"
+        :save-error="saveError"
+        :is-saving="isSaving"
+        @close="closeEditorPanel"
+        @save="saveEditorPanel"
+      />
+
       <CmsEditListPanel
         v-model:panel="editTagsPanel"
         :save-error="saveError"
@@ -104,11 +110,12 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { AgGridVue } from "ag-grid-vue3";
-import type { CellClickedEvent, CellEditingStoppedEvent } from "ag-grid-community";
+import type { CellClickedEvent } from "ag-grid-community";
 import { useI18n } from "vue-i18n";
 import type { Tag, TagType } from "@viernulvier/shared";
 import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
 import CmsRemoveConfirmModal from "@/components/admin/cms/CmsRemoveConfirmModal.vue";
+import CmsEditorPanel from "@/components/admin/cms/CmsEditorPanel.vue";
 import CmsEditListPanel, { type EditListPanelState } from "@/components/admin/cms/CmsEditListPanel.vue";
 import CmsCreateTagTypeModal from "@/components/admin/cms/tagTypes/CmsCreateTagTypeModal.vue";
 import { useCmsRemove } from "@/composables/useCmsRemove";
@@ -121,10 +128,13 @@ import {
   applyUpdatedTagTypeToRow,
   buildEmptyTagTypeForm,
   buildTagTypeGridRows,
+  makeEditorValues,
+  toLanguageMapOrNull,
   toLanguageMap,
   validateCreateTagTypeForm,
   type CmsTagTypeGridRow,
   type CreateTagTypeFormState,
+  type EditorPanelState,
 } from "@/services/cms";
 
 const { t } = useI18n();
@@ -163,6 +173,52 @@ const createError = ref<string | null>(null);
 const rowData = ref<CmsTagTypeGridRow[]>([]);
 const tagTypesData = ref<TagType[]>([]);
 const tagsData = ref<Tag[]>([]);
+
+// ---------------------------------------------------------------------------
+// Editor panel (multilingual name)
+// ---------------------------------------------------------------------------
+
+const editorPanel = ref<EditorPanelState | null>(null);
+
+function openEditorPanel(row: CmsTagTypeGridRow, headerName: string): void {
+  const source = tagTypesData.value.find((tt) => tt.id === row.id);
+  editorPanel.value = {
+    rowId: row.id,
+    apiField: "name",
+    label: headerName,
+    values: makeEditorValues(source?.name as LanguageMap | null | undefined),
+  };
+  saveError.value = null;
+}
+
+function closeEditorPanel(): void {
+  editorPanel.value = null;
+  saveError.value = null;
+}
+
+async function saveEditorPanel(): Promise<void> {
+  if (!editorPanel.value) return;
+
+  const row = rowData.value.find((r) => r.id === editorPanel.value?.rowId);
+  if (!row) return;
+
+  const payload = toLanguageMapOrNull(editorPanel.value.values);
+  isSaving.value = true;
+  saveError.value = null;
+
+  try {
+    const updated = await updateTagType(row.id, { name: payload ?? {} });
+    applyUpdatedTagTypeToRow(row, updated, localizeValue);
+    closeEditorPanel();
+  } catch (error) {
+    saveError.value =
+      error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+  } finally {
+    isSaving.value = false;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Edit tags panel (lists tag IDs belonging to this type)
@@ -231,40 +287,15 @@ async function saveEditTagsPanel(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 function onCellClicked(event: CellClickedEvent<CmsTagTypeGridRow>): void {
-  if (!event.data || event.colDef.field !== "tags") return;
-  openEditTagsPanel(event.data);
-}
-
-async function onCellEditingStopped(
-  event: CellEditingStoppedEvent<CmsTagTypeGridRow>,
-): Promise<void> {
   if (!event.data || !event.colDef.field) return;
 
-  const field = event.colDef.field;
-  const newValue = event.value;
-  const oldValue = event.oldValue;
+  if (event.colDef.field === "name") {
+    openEditorPanel(event.data, event.colDef.headerName ?? t("cms.columns.tagTypeName"));
+    return;
+  }
 
-  if (newValue === oldValue) return;
-  if (field !== "name") return;
-
-  saveError.value = null;
-  isSaving.value = true;
-
-  try {
-    const trimmed = String(newValue ?? "").trim();
-    const currentMap = (event.data.source.name ?? {}) as LanguageMap;
-    const nextMap: LanguageMap = { ...currentMap, [currentLang.value]: trimmed };
-    const updated = await updateTagType(event.data.id, { name: nextMap });
-    applyUpdatedTagTypeToRow(event.data, updated, localizeValue);
-  } catch (error) {
-    saveError.value =
-      error instanceof Error
-        ? t("cms.errors.saveFailed", { message: error.message })
-        : t("cms.errors.saveGeneric");
-    event.node.setDataValue(field, oldValue);
-  } finally {
-    isSaving.value = false;
-    persistGridState();
+  if (event.colDef.field === "tags") {
+    openEditTagsPanel(event.data);
   }
 }
 
@@ -424,7 +455,6 @@ defineExpose({
     loadData,
     rebuildRows,
     localizeValue,
-    onCellEditingStopped,
     onCellClicked,
     openCreateModal,
     closeCreateModal,
@@ -432,6 +462,10 @@ defineExpose({
     resetCreateForm,
     setCreateName,
     setCreateExtraLang,
+    editorPanel,
+    openEditorPanel,
+    closeEditorPanel,
+    saveEditorPanel,
     editTagsPanel,
     openEditTagsPanel,
     closeEditTagsPanel,

@@ -128,7 +128,7 @@ describe("CmsCreateAdminModal", () => {
 
     it("does not emit close when modal body is clicked", async () => {
       const wrapper = mountModal();
-      await wrapper.find(".cms-modal").trigger("click");
+      await wrapper.find(".cms-create-modal").trigger("click");
       expect(wrapper.emitted("close")).toBeFalsy();
     });
 
