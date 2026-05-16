@@ -24,6 +24,12 @@ describe("ProductionsLayoutToggle.vue", () => {
     expect(wrapper.emitted("update:modelValue")?.[0]).toEqual(["grid"]);
   });
 
+  it("emits the opposite mode when the list button is clicked from grid state", async () => {
+    const wrapper = mountToggle("grid");
+    await wrapper.findAll("button")[0]!.trigger("click");
+    expect(wrapper.emitted("update:modelValue")?.[0]).toEqual(["list"]);
+  });
+
   it("does not emit when clicking the already-active button is disabled", async () => {
     const wrapper = mountToggle("grid", true);
     const buttons = wrapper.findAll("button");
