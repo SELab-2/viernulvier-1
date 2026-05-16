@@ -288,6 +288,7 @@ describe("CmsTagsTab", () => {
       name: { nl: "Comedy" },
       tag_type: mockTagType.id,
       public: false,
+      productions: [],
     });
     expect(tagsService.getAllTags).toHaveBeenCalled();
     expect(api.createModalOpen.value).toBe(false);

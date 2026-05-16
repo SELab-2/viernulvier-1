@@ -60,6 +60,7 @@
         @grid-ready="onGridReady"
         @selection-changed="onSelectionChanged"
         @cell-editing-stopped="onCellEditingStopped"
+        @cell-clicked="onCellClicked"
       />
     </template>
 
@@ -92,6 +93,14 @@
         @update-public="setCreatePublic"
         @update-extra-lang="setCreateExtraLang"
       />
+
+      <CmsEditListPanel
+        v-model:panel="editProductionsPanel"
+        :save-error="saveError"
+        :is-saving="isSaving"
+        @close="closeEditProductionsPanel"
+        @save="saveEditProductionsPanel"
+      />
     </template>
   </CmsTabShell>
 </template>
@@ -99,12 +108,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { AgGridVue } from "ag-grid-vue3";
-import type { CellEditingStoppedEvent } from "ag-grid-community";
+import type { CellClickedEvent, CellEditingStoppedEvent } from "ag-grid-community";
 import { useI18n } from "vue-i18n";
 import type { Tag, TagType } from "@viernulvier/shared";
 import CmsRemoveConfirmModal from "@/components/admin/cms/CmsRemoveConfirmModal.vue";
 import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
 import CmsCreateTagModal from "@/components/admin/cms/tags/CmsCreateTagModal.vue";
+import CmsEditListPanel, { type EditListPanelState } from "@/components/admin/cms/CmsEditListPanel.vue";
 import { useCmsRemove } from "@/composables/useCmsRemove";
 import { useCmsTagGrid } from "@/composables/useCmsTagGrid";
 import { useDarkMode } from "@/composables/useDarkMode";
@@ -157,6 +167,7 @@ const createError = ref<string | null>(null);
 const rowData = ref<CmsTagGridRow[]>([]);
 const tagsData = ref<Tag[]>([]);
 const tagTypesData = ref<TagType[]>([]);
+const editProductionsPanel = ref<EditListPanelState | null>(null);
 
 const createModalOpen = ref(false);
 const createForm = ref<CreateTagFormState>(buildEmptyTagForm());
@@ -207,6 +218,10 @@ const {
   },
 });
 
+// ---------------------------------------------------------------------------
+// Editing
+// ---------------------------------------------------------------------------
+
 function rebuildRows(): void {
   rowData.value = buildTagGridRows(tagsData.value, tagTypesData.value, localizeValue);
 }
@@ -224,6 +239,17 @@ async function persistTagPatch(
         ? t("cms.errors.saveFailed", { message: error.message })
         : t("cms.errors.saveGeneric");
     throw error;
+  }
+}
+
+function onCellClicked(event: CellClickedEvent<CmsTagGridRow>): void {
+  if (!event.data || !event.colDef.field) return;
+
+  const field = event.colDef.field as "productions";
+
+  if (field === "productions") {
+    openEditProductionsPanel(event.data);
+    return;
   }
 }
 
@@ -264,6 +290,56 @@ async function onCellEditingStopped(
     persistGridState();
   }
 }
+
+// ---------------------------------------------------------------------------
+// Edit productions panel (Edit list panel)
+// ---------------------------------------------------------------------------
+
+function openEditProductionsPanel(
+  row: CmsTagGridRow,
+): void {
+  const source = tagsData.value.find(
+    (t) => t.id === row.id,
+  );
+
+  editProductionsPanel.value = {
+    rowId: row.id,
+    label: t("cms.panel.productions"),
+    items: [...(source?.productions as number[] ?? [])],
+  };
+
+  saveError.value = null;
+}
+
+function closeEditProductionsPanel(): void {
+  editProductionsPanel.value = null;
+  saveError.value = null;
+}
+
+async function saveEditProductionsPanel(): Promise<void> {
+  if (!editProductionsPanel.value) return;
+
+  const row = rowData.value.find(
+    (item) => item.id === editProductionsPanel.value?.rowId,
+  );
+
+  if (!row) return;
+
+  isSaving.value = true;
+  saveError.value = null;
+
+  try {
+    await persistTagPatch(row, { productions: editProductionsPanel.value.items });
+    await loadTagsData();
+    closeEditProductionsPanel();
+  } finally {
+    isSaving.value = false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Create modal
+// ---------------------------------------------------------------------------
 
 function resetCreateForm(): void {
   createForm.value = buildEmptyTagForm();
@@ -318,6 +394,7 @@ async function submitCreateTag(): Promise<void> {
       name: toLanguageMap(createForm.value.name),
       tag_type: createForm.value.tagTypeId as number,
       public: createForm.value.public,
+      productions: [],
     });
     await loadTagsData();
     closeCreateModal();
