@@ -109,7 +109,7 @@ export async function generateCrop(
   ctx.drawImage(img, sx, sy, sw, sh, 0, 0, crop.width, crop.height);
 
   // Convert canvas to blob
-  return new Promise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
         if (!blob) {
@@ -141,5 +141,5 @@ export async function generateAllCrops(
   type: string;
   filename: string;
 }>> {
-  return Promise.all(CMS_CROP_DEFINITIONS.map((crop) => generateCrop(imageData, crop)));
+  return await Promise.all(CMS_CROP_DEFINITIONS.map((crop) => generateCrop(imageData, crop)));
 }

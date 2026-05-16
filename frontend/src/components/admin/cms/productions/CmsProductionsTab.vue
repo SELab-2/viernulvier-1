@@ -232,7 +232,7 @@
               {{ t("cms.panel.close") }}
             </button>
             <button type="button" class="cms-side-save" :disabled="bulkEditConfirmLoading" @click="confirmBulkEdit">
-              {{ bulkEditConfirmLoading ? t("cms.panel.saving") : t("cms.actions.confirmBulkEditSubmit") }}
+              {{ bulkEditConfirmLoading ? t("general.saving") : t("cms.actions.confirmBulkEditSubmit") }}
             </button>
           </footer>
         </section>

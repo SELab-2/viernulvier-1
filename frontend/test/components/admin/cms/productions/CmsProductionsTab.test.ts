@@ -8,6 +8,8 @@ import * as productionsService from "@/services/productions";
 import * as tagsService from "@/services/tags";
 import * as hallsService from "@/services/halls";
 import * as eventsService from "@/services/events";
+import * as imagesService from "@/services/images";
+import * as mediaUploadService from "@/services/cms/media-upload";
 
 vi.mock("@/services/productions", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/services/productions")>();
@@ -36,6 +38,17 @@ vi.mock("@/services/events", () => ({
   deleteEvent: vi.fn(),
   getEvent: vi.fn(),
   updateEvent: vi.fn(),
+}));
+
+vi.mock("@/services/images", () => ({
+  getImagesByProduction: vi.fn(),
+  getImage: vi.fn(),
+  deleteImage: vi.fn(),
+}));
+
+vi.mock("@/services/cms/media-upload", () => ({
+  uploadImageWithCrops: vi.fn(),
+  uploadCrops: vi.fn(),
 }));
 
 const gridStub = defineComponent({
@@ -130,10 +143,19 @@ describe("CmsProductionsTab", () => {
       info: { nl: "" },
       production: mockProduction.id,
     } as never);
+    vi.mocked(imagesService.getImagesByProduction).mockResolvedValue([]);
+    vi.mocked(mediaUploadService.uploadImageWithCrops).mockResolvedValue({
+      id: 999,
+      production: mockProduction.id,
+      res: null,
+      old_id: null,
+      crops: [],
+    } as never);
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllEnvs();
   });
 
   async function mountTab() {
@@ -752,6 +774,7 @@ describe("CmsProductionsTab", () => {
   it("covers additional guard branches and media preview edge cases", async () => {
     const wrapper = await mountTab();
     const api = (wrapper.vm as any).$?.exposed.__test;
+    const state = (wrapper.vm as any).$.setupState as any;
 
     api.openMediaPreview("   ", "Empty");
     expect(api.mediaPreview.value).toBeNull();
@@ -759,6 +782,12 @@ describe("CmsProductionsTab", () => {
     api.addMedia("image");
     const imageMedia = api.createForm.value.media.find((m: { type: string }) => m.type === "image");
     await api.onMediaFileChange(imageMedia.id, { target: { files: [], value: "x" } } as unknown as Event);
+
+    state.updateMediaUrl(imageMedia.id, "https://example.com/image.jpg");
+    expect(imageMedia.url).toBe("https://example.com/image.jpg");
+
+    state.updateMediaUrl("missing-id", "https://example.com/ignored.jpg");
+    expect(imageMedia.url).toBe("https://example.com/image.jpg");
 
     api.removeConfirmOpen.value = true;
     api.gridApi.value = {
@@ -1164,5 +1193,126 @@ describe("CmsProductionsTab", () => {
     expect(api.bulkEditConfirmOpen.value).toBe(true);
     await api.confirmBulkEdit();
     expect(api.bulkEditConfirmLoading.value).toBe(false);
+  });
+
+  it("lazily loads production images and syncs gallery previews outside test mode", async () => {
+    vi.stubEnv("MODE", "development");
+    vi.mocked(imagesService.getImagesByProduction).mockResolvedValueOnce([
+      {
+        id: 201,
+        crops: [{ id: 1, image: 201, type: "cms_thumbnail", url: "/media/crops/thumb-a.jpg", old_id: null }],
+      },
+      {
+        id: 202,
+        crops: [
+          { id: 2, image: 202, type: "cms", url: "/media/crops/cms-b.jpg", old_id: null },
+          { id: 3, image: 202, type: "cms_wide", url: "/media/crops/wide-b.jpg", old_id: null },
+        ],
+      },
+    ] as never);
+
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    await flushPromises();
+    await flushPromises();
+
+    api.onCellClicked({
+      data: api.rowData.value[0],
+      colDef: { field: "imageMedia", headerName: "Images" },
+    });
+
+    await flushPromises();
+
+    expect(api.mediaPreview.value?.kind).toBe("gallery");
+    expect(api.mediaPreview.value?.images).toHaveLength(2);
+
+    await wrapper.findAll("button.cms-media-gallery-thumb")[1].trigger("click");
+    expect(api.mediaPreview.value?.imageId).toBe(202);
+
+    await wrapper.findAll("div.cms-media-gallery-nav button")[0].trigger("click");
+    expect(api.mediaPreview.value?.imageId).toBe(201);
+  });
+
+  it("covers media preview save/remove guards and upload path", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const state = (wrapper.vm as any).$.setupState as any;
+    const confirmSpy = vi.spyOn(window, "confirm");
+
+    api.openMediaPreview("https://player.vimeo.com/video/12345678901", "Vimeo", {
+      productionId: mockProduction.id,
+      mediaField: "video_1",
+    });
+
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
+    expect(api.mediaPreview.value?.url).toContain("player.vimeo.com/video/12345678901");
+
+    state.mediaPreviewEditUrl = "https://vimeo.com/12345678901";
+    await state.saveMediaVideoUrl();
+    expect(productionsService.updateProduction).toHaveBeenCalledWith(
+      mockProduction.id,
+      expect.objectContaining({ video_1: { nl: "https://vimeo.com/12345678901" } }),
+    );
+
+    api.openMediaPreview("https://example.com/image.jpg", "Image", {
+      productionId: mockProduction.id,
+      imageId: 321,
+    });
+
+    confirmSpy.mockReturnValue(false);
+    await state.removeMediaImage();
+    expect(imagesService.deleteImage).not.toHaveBeenCalled();
+
+    confirmSpy.mockReturnValue(true);
+    await state.removeMediaImage();
+
+    api.openMediaPreview("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "Video", {
+      productionId: mockProduction.id,
+      mediaField: "video_2",
+    });
+
+    state.mediaPreviewEditUrl = "https://youtu.be/dQw4w9WgXcQ";
+    await state.saveMediaVideoUrl();
+
+    confirmSpy.mockReturnValue(true);
+    await state.removeMediaVideo();
+    expect(productionsService.updateProduction).toHaveBeenCalledWith(
+      mockProduction.id,
+      expect.objectContaining({ video_2: null }),
+    );
+
+    class FileReaderMock {
+      onload: null | (() => void) = null;
+      onerror: null | (() => void) = null;
+      result = "data:mock;base64,abc";
+
+      readAsDataURL() {
+        this.onload?.();
+      }
+    }
+
+    const originalFileReader = (globalThis as typeof globalThis & { FileReader?: typeof FileReader }).FileReader;
+    (globalThis as typeof globalThis & { FileReader?: typeof FileReader }).FileReader = FileReaderMock as never;
+
+    api.openMediaPreview("https://example.com/upload.jpg", "Image", {
+      productionId: mockProduction.id,
+      imageId: 777,
+    });
+
+    await state.onMediaPreviewImageSelected({
+      target: {
+        files: [new File(["x"], "upload.png", { type: "image/png" })],
+        value: "upload.png",
+      },
+    } as never);
+
+    expect(mediaUploadService.uploadImageWithCrops).toHaveBeenCalledWith(
+      mockProduction.id,
+      "data:mock;base64,abc",
+    );
+
+    (globalThis as typeof globalThis & { FileReader?: typeof FileReader }).FileReader = originalFileReader;
+    confirmSpy.mockRestore();
   });
 });

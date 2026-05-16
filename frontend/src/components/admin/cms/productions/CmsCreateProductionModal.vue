@@ -122,8 +122,8 @@
                   v-if="createForm.media.length > 1"
                   type="button"
                   class="cms-media-item-remove"
-                  @click="emit('remove-media', mediaItem.id)"
                   :title="t('general.delete')"
+                  @click="emit('remove-media', mediaItem.id)"
                 >
                   ✕
                 </button>
@@ -157,16 +157,16 @@
             <button
               type="button"
               class="cms-media-add-btn"
-              @click="emit('add-media', 'image')"
               :title="t('cms.create.media.addImage')"
+              @click="emit('add-media', 'image')"
             >
               + {{ t("cms.create.media.addImage") }}
             </button>
             <button
               type="button"
               class="cms-media-add-btn"
-              @click="emit('add-media', 'video')"
               :title="t('cms.create.media.addVideo')"
+              @click="emit('add-media', 'video')"
             >
               + {{ t("cms.create.media.addVideo") }}
             </button>
