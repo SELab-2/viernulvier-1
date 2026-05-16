@@ -43,6 +43,7 @@ export function useCmsTagGrid(options: {
   };
 
   const gridColumnOptions = computed(() => [
+    { colId: "id", label: options.t("cms.columns.id") },
     { colId: "name", label: options.t("cms.columns.tagName") },
     { colId: "tagType", label: options.t("cms.columns.tagType") },
     { colId: "public", label: options.t("cms.columns.public") },
@@ -50,6 +51,12 @@ export function useCmsTagGrid(options: {
   ] as const);
 
   const columnDefs = computed<ColDef<CmsTagGridRow>[]>(() => [
+    {
+      headerName: options.t("cms.columns.id"),
+      field: "id",
+      minWidth: 50,
+      maxWidth: 100,
+    },
     {
       headerName: options.t("cms.columns.tagName"),
       field: "name",
