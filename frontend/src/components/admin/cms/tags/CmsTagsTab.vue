@@ -304,7 +304,7 @@ function openEditProductionsPanel(
 
   editProductionsPanel.value = {
     rowId: row.id,
-    label: t("cms.panel.productions"),
+    label: t("cms.columns.blogpost.productions"),
     items: [...(source?.productions as number[] ?? [])],
   };
 
@@ -448,6 +448,11 @@ defineExpose({
     rebuildRows,
     localizeValue,
     onCellEditingStopped,
+    onCellClicked,
+    editProductionsPanel,
+    openEditProductionsPanel,
+    closeEditProductionsPanel,
+    saveEditProductionsPanel,
     openCreateModal,
     closeCreateModal,
     submitCreateTag,
