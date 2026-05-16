@@ -72,7 +72,7 @@ describe("ProductionDetailsSection", () => {
   describe("sidebar", () => {
     it("does not render sidebar when empty", () => {
       const wrapper = mountComponent();
-      expect(wrapper.find(".lg\\:col-span-4").exists()).toBe(false);
+      expect(wrapper.find(".lg\\:col-span-5").exists()).toBe(false);
     });
 
     it("renders sidebar when tags exist", () => {

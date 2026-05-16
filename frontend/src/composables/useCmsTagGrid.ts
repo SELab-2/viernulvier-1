@@ -10,7 +10,7 @@ const cmsTagGridColumnIds = [
   "name",
   "tagType",
   "public",
-  "productionCount",
+  "productions",
 ] as const;
 
 export function useCmsTagGrid(options: {
@@ -47,7 +47,7 @@ export function useCmsTagGrid(options: {
     { colId: "name", label: options.t("cms.columns.tagName") },
     { colId: "tagType", label: options.t("cms.columns.tagType") },
     { colId: "public", label: options.t("cms.columns.public") },
-    { colId: "productionCount", label: options.t("cms.columns.productionCount") },
+    { colId: "productions", label: options.t("cms.columns.productions") },
   ] as const);
 
   const columnDefs = computed<ColDef<CmsTagGridRow>[]>(() => [
@@ -81,12 +81,11 @@ export function useCmsTagGrid(options: {
       maxWidth: 140,
     },
     {
-      headerName: options.t("cms.columns.productionCount"),
-      field: "productionCount",
+      headerName: options.t("cms.columns.productions"),
+      field: "productions",
       editable: false,
-      minWidth: 140,
-      maxWidth: 180,
-      filter: "agNumberColumnFilter",
+      minWidth: 200,
+      flex: 1,
     },
   ]);
 

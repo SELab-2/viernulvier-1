@@ -4,9 +4,16 @@
     <div class="mx-auto max-w-7xl px-6 py-24 md:px-12">
       <section class="flex flex-col gap-16 lg:grid lg:grid-cols-12 lg:gap-x-16 lg:gap-y-24">
 
-        <!-- Sidebar — marginalia first, then a tag drawer below. -->
-        <aside v-if="hasSidebarContent" class="lg:col-start-9 lg:col-span-4">
+        <!-- Sidebar: performances (event rows), teaser/extra, then tags. -->
+        <aside v-if="hasSidebarContent" class="lg:col-start-8 lg:col-span-5">
           <div class="sticky top-32 h-fit space-y-8">
+            <ProductionDetailSidebarEvents
+              v-if="showPerformanceBlock"
+              :events="performanceEvents"
+              :loading="eventsLoading"
+              :error="eventsError"
+              @retry="emit('retryEvents')"
+            />
 
             <div
               v-if="teaser || description_extra"
@@ -182,17 +189,32 @@ import { computed, ref } from "vue";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import { useI18n } from "vue-i18n";
 import { normalizeQuote, parseAndSanitizeContent } from "@/utils/parsers";
+import ProductionDetailSidebarEvents from "@/components/production/ProductionDetailSidebarEvents.vue";
+import type { EnrichedEvent } from "@/composables/useProductionEvents";
 
 const { t } = useI18n();
+
+const emit = defineEmits<{ retryEvents: [] }>();
+
 const currentLang = computed(
   () => i18n.global.locale.value as SupportedLang,
 );
 
-const props = defineProps<{
-  production: ProductionWithBackwardsRefs;
-  tagGroups: { label: string; tags: string[] }[];
-  totalTags: number;
-}>();
+const props = withDefaults(
+  defineProps<{
+    production: ProductionWithBackwardsRefs;
+    tagGroups: { label: string; tags: string[] }[];
+    totalTags: number;
+    performanceEvents?: EnrichedEvent[];
+    eventsLoading?: boolean;
+    eventsError?: Error | null;
+  }>(),
+  {
+    performanceEvents: () => [],
+    eventsLoading: false,
+    eventsError: null,
+  },
+);
 
 const tProd = (map: LanguageMap | null | undefined) =>
   localizeOrEmpty(map ?? {}, currentLang.value);
@@ -213,17 +235,24 @@ const info = computed(() => parseField(props.production.info));
 
 const tagsExpanded = ref(true);
 
+const showPerformanceBlock = computed(
+  () =>
+    props.eventsLoading ||
+    props.eventsError !== null ||
+    props.performanceEvents.length > 0,
+);
+
 const hasSidebarContent = computed(() => {
   const hasTags = props.tagGroups && props.tagGroups.length > 0;
   const hasTeaserText = !!teaser.value;
   const hasExtraText = !!description_extra.value;
 
-  return hasTags || hasTeaserText || hasExtraText;
+  return hasTags || hasTeaserText || hasExtraText || showPerformanceBlock.value;
 });
 
 const mainContentClass = computed(() => {
   return hasSidebarContent.value
-    ? "lg:col-start-1 lg:col-span-8"
+    ? "lg:col-start-1 lg:col-span-7"
     : "lg:col-span-12";
 });
 </script>
@@ -243,16 +272,19 @@ const mainContentClass = computed(() => {
 }
 
 /*
- * Drop cap on the lead paragraph. We target the first letter of the first
- * child element because v-html wraps the description in a <p>, so plain
- * `.article-lead::first-letter` would otherwise miss it.
+ * Drop cap on the lead paragraph. The `> :first-child` variant covers the
+ * case where v-html wraps the description in a <p>; the bare selector
+ * covers plain-text content. Using a direct-child combinator (not a
+ * descendant selector) is essential — otherwise every element that
+ * happens to be a first child (e.g. an <a> that is the only child of its
+ * parent <p>) would also get a drop cap.
  *
  * Modern browsers (Safari, Chrome 110+) honour `initial-letter`, which
  * sizes the cap so it spans exactly N body lines AND aligns the cap's
  * top to the first line's top and its baseline to the Nth line's baseline.
  * Older browsers fall back to a float-based cap.
  */
-.article-lead :first-child::first-letter,
+.article-lead > :first-child::first-letter,
 .article-lead::first-letter {
   font-family: var(--font-serif);
   font-weight: 700;
@@ -263,7 +295,7 @@ const mainContentClass = computed(() => {
 }
 
 @supports not ((initial-letter: 3) or (-webkit-initial-letter: 3)) {
-  .article-lead :first-child::first-letter,
+  .article-lead > :first-child::first-letter,
   .article-lead::first-letter {
     float: left;
     font-size: 4.8em;

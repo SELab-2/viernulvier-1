@@ -12,7 +12,7 @@ describe("useCmsTagGrid", () => {
     const name = columnDefs.value.find((c) => c.field === "name");
     const tagType = columnDefs.value.find((c) => c.field === "tagType");
     const publicField = columnDefs.value.find((c) => c.field === "public");
-    const productionCount = columnDefs.value.find((c) => c.field === "productionCount");
+    const productions = columnDefs.value.find((c) => c.field === "productions");
 
     expect(id?.editable).toBe(false);
     expect(name?.editable).toBe(true);
@@ -20,8 +20,7 @@ describe("useCmsTagGrid", () => {
     expect(tagType?.editable).toBe(false);
     expect(publicField?.editable).toBe(true);
     expect(publicField?.cellEditor).toBe("agCheckboxCellEditor");
-    expect(productionCount?.editable).toBe(false);
-    expect(productionCount?.filter).toBe("agNumberColumnFilter");
+    expect(productions?.editable).toBe(false);
   });
 
   it("builds translated column options", () => {
@@ -32,7 +31,7 @@ describe("useCmsTagGrid", () => {
       { colId: "name", label: "cms.columns.tagName" },
       { colId: "tagType", label: "cms.columns.tagType" },
       { colId: "public", label: "cms.columns.public" },
-      { colId: "productionCount", label: "cms.columns.productionCount" },
+      { colId: "productions", label: "cms.columns.productions" },
     ]);
   });
 
