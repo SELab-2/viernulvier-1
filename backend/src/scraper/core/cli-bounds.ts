@@ -20,8 +20,14 @@ export function extractBoundsFromStatsReport(report: string): Date | null {
   const match = secondLine.match(/before=(\d{4}-\d{2}-\d{2}T[\d:\.Z]+)/);
   if (match?.[1]) {
     try {
-      return new Date(match[1]);
+      const date = new Date(match[1]);
+      // Check if the date is valid (not NaN/Invalid Date)
+      if (isNaN(date.getTime())) {
+        return null;
+      }
+      return date;
     } catch {
+      /* c8 ignore next */
       return null;
     }
   }
@@ -61,7 +67,7 @@ export function pastNDaysBounds(numDays: number): ViernulvierEventStartBounds {
 /**
  * Get today's midnight (start of calendar day) in {@link ARCHIVE_TIME_ZONE}.
  */
-function getTodayMidnightUtc(): Date {
+export function getTodayMidnightUTC(): Date {
   const tz = ARCHIVE_TIME_ZONE;
   const todayYmd = formatYmdInTimeZone(new Date(), tz);
   return startOfCalendarDayUtc(todayYmd, tz);
@@ -80,7 +86,7 @@ export async function resolveScrapeBoundsFromArgs(): Promise<{
   label: string;
 }> {
   const args = process.argv.slice(2);
-  const todayMidnight = getTodayMidnightUtc();
+  const todayMidnight = getTodayMidnightUTC();
 
   // Default to historical
   if (args.length === 0) {
