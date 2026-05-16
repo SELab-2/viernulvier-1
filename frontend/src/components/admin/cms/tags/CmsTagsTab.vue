@@ -169,7 +169,11 @@ const {
   applyQuickFilter,
   persistGridState,
   gridApi,
-} = useCmsTagGrid({ isDark, t });
+} = useCmsTagGrid({
+  isDark,
+  t,
+  getTagTypeLabels: () => tagTypesData.value.map((tt) => localizeValue(tt.name) || `#${tt.id}`),
+});
 
 const isLoading = ref(false);
 const isSaving = ref(false);
@@ -304,6 +308,13 @@ async function onCellEditingStopped(
   try {
     if (field === "public") {
       await persistTagPatch(event.data, { public: Boolean(newValue) });
+    } else if (field === "tagType") {
+      const tagType = tagTypesData.value.find((tt) => localizeValue(tt.name) === newValue || String(tt.id) === newValue);
+      if (!tagType) {
+        event.node.setDataValue(field, oldValue);
+        return;
+      }
+      await persistTagPatch(event.data, { tag_type: tagType.id });
     } else {
       event.node.setDataValue(field, oldValue);
       return;

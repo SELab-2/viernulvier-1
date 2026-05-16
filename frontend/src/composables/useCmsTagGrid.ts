@@ -16,6 +16,7 @@ const cmsTagGridColumnIds = [
 export function useCmsTagGrid(options: {
   isDark: Ref<boolean>;
   t: TranslateFunction;
+  getTagTypeLabels: () => string[]
 }) {
   const base = useCmsGridBase<CmsTagGridRow>({
     isDark: options.isDark,
@@ -68,7 +69,10 @@ export function useCmsTagGrid(options: {
     {
       headerName: options.t("cms.columns.tagType"),
       field: "tagType",
-      editable: false,
+      editable: true,
+      cellEditor: "agSelectCellEditor",
+      cellEditorParams: () => ({ values: options.getTagTypeLabels() }),
+      singleClickEdit: true,
       minWidth: 160,
     },
     {

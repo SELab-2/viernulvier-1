@@ -357,6 +357,42 @@ describe("CmsTagsTab", () => {
     expect(api.saveError.value).toBeTruthy();
   });
 
+  it("reverts the tag type when the label does not match any tag type", async () => {
+    const wrapper = mountTab();
+    await flushPromises();
+    const api = (wrapper.vm as any).__test;
+    const row = api.rowData.value[0];
+    const setDataValue = vi.fn();
+
+    await api.onCellEditingStopped({
+      data: row,
+      colDef: { field: "tagType" },
+      value: "NonExistentType",
+      oldValue: "Genre",
+      node: { setDataValue },
+    });
+
+    expect(tagsService.updateTag).not.toHaveBeenCalled();
+    expect(setDataValue).toHaveBeenCalledWith("tagType", "Genre");
+  });
+
+  it("persists a tag type change when the label matches a known tag type", async () => {
+    const wrapper = mountTab();
+    await flushPromises();
+    const api = (wrapper.vm as any).__test;
+    const row = api.rowData.value[0];
+
+    await api.onCellEditingStopped({
+      data: row,
+      colDef: { field: "tagType" },
+      value: "Genre",
+      oldValue: "OldType",
+      node: { setDataValue: vi.fn() },
+    });
+
+    expect(tagsService.updateTag).toHaveBeenCalledWith(row.id, { tag_type: mockTagType.id });
+  });
+
   describe("onCellClicked", () => {
     it("opens the edit productions panel when clicking the productions column", async () => {
       const wrapper = mountTab();

@@ -4,7 +4,7 @@ import { useCmsTagGrid } from "@/composables/useCmsTagGrid";
 
 describe("useCmsTagGrid", () => {
   it("declares the tag column definitions", () => {
-    const { columnDefs } = useCmsTagGrid({ isDark: ref(false), t: (key) => key });
+    const { columnDefs } = useCmsTagGrid({ isDark: ref(false), t: (key) => key, getTagTypeLabels: () => ["test"] });
 
     expect(columnDefs.value).toHaveLength(5);
 
@@ -17,14 +17,14 @@ describe("useCmsTagGrid", () => {
     expect(id?.editable).toBe(false);
     expect(name?.editable).toBe(false);
     expect(name?.flex).toBe(1);
-    expect(tagType?.editable).toBe(false);
+    expect(tagType?.editable).toBe(true);
     expect(publicField?.editable).toBe(true);
     expect(publicField?.cellEditor).toBe("agCheckboxCellEditor");
     expect(productions?.editable).toBe(false);
   });
 
   it("builds translated column options", () => {
-    const { gridColumnOptions } = useCmsTagGrid({ isDark: ref(false), t: (key) => key });
+    const { gridColumnOptions } = useCmsTagGrid({ isDark: ref(false), t: (key) => key, getTagTypeLabels: () => ["test"] });
 
     expect(gridColumnOptions.value).toEqual([
       { colId: "id", label: "cms.columns.id" },
@@ -36,7 +36,7 @@ describe("useCmsTagGrid", () => {
   });
 
   it("exposes a pinned selection column definition", () => {
-    const { selectionColumnDef } = useCmsTagGrid({ isDark: ref(false), t: (key) => key });
+    const { selectionColumnDef } = useCmsTagGrid({ isDark: ref(false), t: (key) => key, getTagTypeLabels: () => ["test"] });
 
     expect(selectionColumnDef.width).toBe(48);
     expect(selectionColumnDef.pinned).toBe("left");
@@ -44,10 +44,19 @@ describe("useCmsTagGrid", () => {
   });
 
   it("provides a non-editable defaultColDef with floating filter", () => {
-    const { defaultColDef } = useCmsTagGrid({ isDark: ref(false), t: (key) => key });
+    const { defaultColDef } = useCmsTagGrid({ isDark: ref(false), t: (key) => key, getTagTypeLabels: () => ["test"] });
 
     expect(defaultColDef.editable).toBe(false);
     expect(defaultColDef.sortable).toBe(true);
     expect(defaultColDef.floatingFilter).toBe(true);
+  });
+
+  it("cellEditorParams for tagType returns the labels from getTagTypeLabels", () => {
+    const { columnDefs } = useCmsTagGrid({ isDark: ref(false), t: (key) => key, getTagTypeLabels: () => ["Genre", "Style"] });
+
+    const tagType = columnDefs.value.find((c) => c.field === "tagType");
+    const params = (tagType?.cellEditorParams as () => { values: string[] })();
+
+    expect(params.values).toEqual(["Genre", "Style"]);
   });
 });
