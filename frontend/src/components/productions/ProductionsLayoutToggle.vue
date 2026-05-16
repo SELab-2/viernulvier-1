@@ -96,7 +96,7 @@ function select(mode: ProductionsLayoutMode) {
 }
 
 .productions-layout-toggle__btn {
-  @apply flex size-9 cursor-pointer items-center justify-center bg-transparent text-ink-tertiary transition hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-50;
+  @apply flex h-full min-h-9 w-9 cursor-pointer items-center justify-center bg-transparent text-ink-tertiary transition hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-50;
 }
 
 .productions-layout-toggle__btn + .productions-layout-toggle__btn {
