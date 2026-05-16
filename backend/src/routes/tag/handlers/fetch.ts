@@ -207,6 +207,25 @@ const fetchTagsVisibleByProductionQuery = (server: FastifyInstance) =>
   );
 
 /**
+ * Internal helper to fetch a single tag by ID with linked production IDs.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param id - The tag ID to fetch.
+ * @returns The tag with productions, or `null` if not found or parsing failed.
+ */
+export async function getTagById(
+  server: FastifyInstance,
+  id: string | number,
+): Promise<Tag | null> {
+  const rows = await fetchTagByIdQuery(server)(Number(id));
+  const row = rows[0];
+  if (!row) return null;
+  const byTag = await fetchProductionIdsByTagIds(server, [row.id]);
+  const merged = tagsFromDbRows([row], byTag, true);
+  return parseSchema(server, TagSchema, merged[0], ParseContext.Database);
+}
+
+/**
  * Fetches a single tag by ID (including non-public tags), with linked production IDs.
  *
  * @param server - The Fastify instance, used for database access and logging.

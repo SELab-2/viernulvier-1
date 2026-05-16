@@ -1,4 +1,5 @@
 import { ref, type Ref } from "vue";
+import { ApiError } from "@/services/api";
 
 type TranslateFunction = (key: string, params?: Record<string, unknown>) => string;
 
@@ -8,6 +9,7 @@ export interface UseCmsRemoveOptions<TRow> {
   deleteFn: (id: number) => Promise<void>;
   rowToId: (row: TRow) => number;
   t: TranslateFunction;
+  onConflictMessage?: string;
   /** Called after all selected rows have been deleted successfully. */
   onSuccess?: () => void | Promise<void>;
 }
@@ -53,10 +55,14 @@ export function useCmsRemove<TRow>(options: UseCmsRemoveOptions<TRow>) {
       await options.onSuccess?.();
       closeRemoveConfirm();
     } catch (error) {
-      removeConfirmError.value =
-        error instanceof Error
-          ? options.t("cms.errors.saveFailed", { message: error.message })
-          : options.t("cms.errors.saveGeneric");
+      if (error instanceof ApiError && error.status === 409 && options.onConflictMessage) {
+        removeConfirmError.value = options.onConflictMessage;
+      } else {
+        removeConfirmError.value =
+          error instanceof Error
+            ? options.t("cms.errors.saveFailed", { message: error.message })
+            : options.t("cms.errors.saveGeneric");
+      }
     } finally {
       removeConfirmLoading.value = false;
     }

@@ -133,6 +133,10 @@ export default {
       admin: {
         noAdmins: "Aucun admin trouvé",
         addAdmin: "+ Ajouter un Admin",
+        removeAdmin: "Supprimer les admins sélectionnés",
+        confirmRemoveDialogTitle: "Supprimer l'admin? | Supprimer les admins?",
+        confirmRemoveBody: "Cette action supprimera définitivement {count} admin sélectionnés. Cette opération est irréversible. | Cette action supprimera définitivement {count} admins sélectionnés. Cette opération est irréversible.",
+        cannotRemoveSelf: "Vous ne pouvez pas vous supprimer.",
       },
     },
     create: {
@@ -203,6 +207,7 @@ export default {
     },
   },
   productionsPage: {
+    kicker: "Les archives",
     heading: "Productions",
     intro:
       "Tous les spectacles de l’archive en un coup d’œil.",

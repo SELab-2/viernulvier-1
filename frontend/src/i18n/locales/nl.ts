@@ -133,6 +133,10 @@ export default {
       admin: {
         noAdmins: "Geen admins gevonden.",
         addAdmin: "+ Admin toevoegen",
+        removeAdmin: "Geselecteerde admins verwijderen",
+        confirmRemoveDialogTitle: "Admin verwijderen? | Admins verwijderen?",
+        confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde admin. Dit kan niet ongedaan worden gemaakt. | Hiermee verwijder je definitief {count} geselecteerde admins. Dit kan niet ongedaan worden gemaakt.",
+        cannotRemoveSelf: "Je kan jezelf niet verwijderen.",
       },
     },
     create: {
@@ -203,6 +207,7 @@ export default {
     },
   },
   productionsPage: {
+    kicker: "Het archief",
     heading: "Producties",
     intro:
       "Alle voorstellingen uit het archief op een rij.",
