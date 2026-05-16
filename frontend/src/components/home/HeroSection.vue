@@ -61,7 +61,7 @@
           {{ t("hero.searchLabel") }}
         </label>
         <div
-          class="flex items-stretch border-2 border-ink-on-inv bg-surface-0 text-ink-primary shadow-[0_2px_0_0_var(--surface-inv-border)]"
+          class="flex items-stretch border-2 border-surface-3 bg-surface-0 text-ink-primary shadow-[0_2px_0_0_var(--surface-inv-border)]"
         >
           <input
             id="home-search"
