@@ -20,7 +20,14 @@
         </div>
       </section>
 
-      <section class="mx-auto max-w-7xl px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+      <section
+        :class="[
+          'mx-auto pb-20 pt-8',
+          layoutMode === 'grid'
+            ? 'max-w-7xl px-4 sm:px-6 lg:px-8'
+            : 'max-w-5xl px-6 lg:px-10',
+        ]"
+      >
         <div v-if="!loading" class="mb-4 space-y-3">
           <div
             class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-stretch sm:gap-3"
@@ -102,6 +109,10 @@
               :sort-dir="sortDir"
               :disabled="listLoading || loadError"
               @sort-change="(p) => void applyProductionsSortChange(p)"
+            />
+            <ProductionsLayoutToggle
+              v-model="layoutMode"
+              :disabled="loadError"
             />
           </div>
           <div
@@ -406,6 +417,7 @@
 
           <div v-else>
             <div
+              v-if="layoutMode === 'grid'"
               class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3"
             >
               <ProductionGridCard
@@ -415,10 +427,20 @@
                 :production="p"
                 :date-summary="dateSummaryFor(p.id)"
                 :tag-chips="tagChipsFor(p)"
-                :halls-text="hallsTextFor(p.id)"
                 :thumbnail-url="thumbnailFor(p.id)"
               />
             </div>
+            <ProductionListCard
+              v-for="(p, idx) in productions"
+              v-else
+              :key="`${currentPage}-${idx}-${p.id}`"
+              :row-index="idx"
+              :production="p"
+              :date-summary="dateSummaryFor(p.id)"
+              :tag-chips="tagChipsFor(p)"
+              :halls-text="hallsTextFor(p.id)"
+              :thumbnail-url="thumbnailFor(p.id)"
+            />
 
             <nav
               v-if="totalPages > 1"
@@ -513,6 +535,10 @@ import {
 import AppFooter from "@/components/AppFooter.vue";
 import AppNavbar from "@/components/nav/AppNavbar.vue";
 import ProductionGridCard from "@/components/productions/ProductionGridCard.vue";
+import ProductionListCard from "@/components/productions/ProductionListCard.vue";
+import ProductionsLayoutToggle, {
+  type ProductionsLayoutMode,
+} from "@/components/productions/ProductionsLayoutToggle.vue";
 import ProductionsDateFilter from "@/components/productions/ProductionsDateFilter.vue";
 import ProductionsSortControl from "@/components/productions/ProductionsSortControl.vue";
 import { useDarkMode } from "@/composables/useDarkMode";
@@ -547,6 +573,28 @@ const PAGE_SIZE = 30;
 
 /** Same cap as the list API, extra terms are ignored client-side. */
 const MAX_SEARCH_TERMS = 20;
+
+/** localStorage key persisting the user's preferred layout across visits. */
+const LAYOUT_STORAGE_KEY = "productionsLayout";
+const DEFAULT_LAYOUT_MODE: ProductionsLayoutMode = "list";
+
+function readPersistedLayoutMode(): ProductionsLayoutMode {
+  try {
+    const raw = window.localStorage.getItem(LAYOUT_STORAGE_KEY);
+    if (raw === "list" || raw === "grid") return raw;
+  } catch {
+    // localStorage may be unavailable (private mode, SSR-like jsdom paths) — fall through.
+  }
+  return DEFAULT_LAYOUT_MODE;
+}
+
+function writePersistedLayoutMode(mode: ProductionsLayoutMode): void {
+  try {
+    window.localStorage.setItem(LAYOUT_STORAGE_KEY, mode);
+  } catch {
+    // Ignore — preference is non-critical.
+  }
+}
 
 /**
  * Safety fallback when widths are not measurable (e.g. JSDOM tests).
@@ -830,6 +878,10 @@ const appliedSearchTerms = ref<string[]>([]);
 const searchDraft = ref("");
 const sortBy = ref<ProductionSortBy>("date");
 const sortDir = ref<ProductionSortDir>("desc");
+const layoutMode = ref<ProductionsLayoutMode>(readPersistedLayoutMode());
+watch(layoutMode, (mode) => {
+  writePersistedLayoutMode(mode);
+});
 /**
  * Total matching the current list query; updated on each successful fetch.
  * While search/filter list loads we keep the previous value so the results line

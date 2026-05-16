@@ -4,7 +4,7 @@ import { createMemoryHistory, createRouter } from "vue-router";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { routes } from "@/router/routes";
 import { i18n } from "@/i18n";
-import ProductionGridCard from "@/components/productions/ProductionGridCard.vue";
+import ProductionListCard from "@/components/productions/ProductionListCard.vue";
 import type { ProductionDateSummary } from "@/utils/productionsOverview";
 import type { ProductionTagChip } from "@/utils/tagDisplay";
 
@@ -34,41 +34,45 @@ async function mountCard(props: {
   production?: ProductionWithBackwardsRefs;
   dateSummary?: ProductionDateSummary;
   tagChips?: ProductionTagChip[];
+  hallsText?: string;
 }) {
   const router = createRouter({ history: createMemoryHistory(), routes });
   await router.push("/nl/productions");
   await router.isReady();
 
-  const wrapper = mount(ProductionGridCard, {
+  const wrapper = mount(ProductionListCard, {
     props: {
       production: props.production ?? baseProduction,
       dateSummary: props.dateSummary ?? { line: null, moreCount: 0 },
       tagChips: props.tagChips ?? [],
+      hallsText: props.hallsText ?? "",
     },
     global: { plugins: [router, i18n] },
   });
   return wrapper;
 }
 
-describe("ProductionGridCard.vue", () => {
+describe("ProductionListCard.vue", () => {
   afterEach(() => {
     i18n.global.locale.value = "nl";
   });
 
-  it("renders title in the card body", async () => {
+  it("renders title and applies title padding when a date line exists", async () => {
     const wrapper = await mountCard({
       dateSummary: { line: "wo 01.01.2000", moreCount: 0 },
     });
     const h2 = wrapper.get("h2");
     expect(h2.text()).toContain("Titel");
+    expect(h2.classes().some((c) => c.includes("pr-["))).toBe(true);
     wrapper.unmount();
   });
 
-  it("renders the date line when present", async () => {
+  it("omits title padding when there is no date line", async () => {
     const wrapper = await mountCard({
-      dateSummary: { line: "wo 01.01.2000", moreCount: 0 },
+      dateSummary: { line: null, moreCount: 0 },
     });
-    expect(wrapper.text()).toContain("wo 01.01.2000");
+    const h2 = wrapper.get("h2");
+    expect(h2.classes().some((c) => c.includes("pr-[12rem]"))).toBe(false);
     wrapper.unmount();
   });
 
@@ -92,6 +96,13 @@ describe("ProductionGridCard.vue", () => {
     wrapper.unmount();
   });
 
+  it("shows hall row when hallsText is set", async () => {
+    const wrapper = await mountCard({ hallsText: "Zaal A" });
+    expect(wrapper.text()).toContain("Zaal A");
+    expect(wrapper.find("svg").exists()).toBe(true);
+    wrapper.unmount();
+  });
+
   it("applies genre chip styling for isGenre and outline for other tags", async () => {
     const wrapper = await mountCard({
       tagChips: [
@@ -108,21 +119,6 @@ describe("ProductionGridCard.vue", () => {
   it("renders no tag row when tagChips is empty", async () => {
     const wrapper = await mountCard({ tagChips: [] });
     expect(wrapper.findAll("span.rounded-full")).toHaveLength(0);
-    wrapper.unmount();
-  });
-
-  it("caps visible tag chips and shows a “+n” indicator for the rest", async () => {
-    const wrapper = await mountCard({
-      tagChips: [
-        { tagId: 1, label: "T1", isGenre: false },
-        { tagId: 2, label: "T2", isGenre: false },
-        { tagId: 3, label: "T3", isGenre: false },
-        { tagId: 4, label: "T4", isGenre: false },
-        { tagId: 5, label: "T5", isGenre: false },
-      ],
-    });
-    expect(wrapper.findAll("span.rounded-full")).toHaveLength(3);
-    expect(wrapper.text()).toMatch(/2/);
     wrapper.unmount();
   });
 });

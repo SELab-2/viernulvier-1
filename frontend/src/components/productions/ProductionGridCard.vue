@@ -8,12 +8,12 @@
     :style="{ '--production-grid-stagger': `${staggerDelayMs}ms` }"
   >
     <!--
-      Fixed aspect ratio so cards line up across the grid even when crops differ.
-      Placeholder surface shows when no thumbnail is available.
+      Wide landscape thumb so posters don't get cropped square. Object-cover keeps
+      cards a uniform height; tag/info trim below keeps total card height low.
     -->
     <div
       class="relative w-full overflow-hidden bg-surface-2"
-      style="aspect-ratio: 4 / 3"
+      style="aspect-ratio: 16 / 9"
       aria-hidden="true"
     >
       <img
@@ -26,85 +26,60 @@
       />
     </div>
 
-    <div class="flex min-w-0 flex-1 flex-col gap-3 p-4 md:p-5">
+    <div class="flex min-w-0 flex-1 flex-col gap-2 p-4 md:p-5">
       <div class="min-w-0">
         <h2
-          class="text-lg font-bold leading-tight tracking-tight text-ink-primary md:text-xl"
+          class="text-base font-bold leading-tight tracking-tight text-ink-primary md:text-lg"
         >
           {{ title }}
         </h2>
 
         <p
           v-if="artist"
-          class="mt-1 text-sm font-medium text-ink-secondary md:text-base"
+          class="mt-1 text-sm font-medium text-ink-secondary"
         >
           {{ artist }}
         </p>
       </div>
 
-      <div
-        v-if="dateSummary.line || hallsText"
-        class="flex flex-col gap-1.5 text-sm text-ink-secondary"
+      <p
+        v-if="dateSummary.line"
+        class="flex items-start gap-1.5 text-sm tabular-nums text-ink-secondary"
       >
-        <p
-          v-if="dateSummary.line"
-          class="flex items-start gap-1.5 tabular-nums"
+        <svg
+          class="mt-0.5 size-[0.9rem] shrink-0 text-ink-tertiary"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
         >
-          <svg
-            class="mt-0.5 size-[0.9rem] shrink-0 text-ink-tertiary"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <path d="M16 2v4M8 2v4M3 10h18" />
+        </svg>
+        <span class="min-w-0">
+          <span class="whitespace-nowrap">{{ dateSummary.line }}</span>
+          <span
+            v-if="dateSummary.moreCount > 0"
+            class="ml-1 whitespace-nowrap text-xs text-ink-tertiary"
           >
-            <rect x="3" y="4" width="18" height="18" rx="2" />
-            <path d="M16 2v4M8 2v4M3 10h18" />
-          </svg>
-          <span class="min-w-0">
-            <span class="whitespace-nowrap">{{ dateSummary.line }}</span>
-            <span
-              v-if="dateSummary.moreCount > 0"
-              class="ml-1 whitespace-nowrap text-xs text-ink-tertiary"
-            >
-              {{
-                t("productionsPage.morePerformances", {
-                  n: dateSummary.moreCount,
-                })
-              }}
-            </span>
+            {{
+              t("productionsPage.morePerformances", {
+                n: dateSummary.moreCount,
+              })
+            }}
           </span>
-        </p>
-
-        <p
-          v-if="hallsText"
-          class="flex items-start gap-1.5"
-        >
-          <svg
-            class="mt-0.5 size-[0.9rem] shrink-0 text-ink-tertiary"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
-          <span class="min-w-0">{{ hallsText }}</span>
-        </p>
-      </div>
+        </span>
+      </p>
 
       <div
-        v-if="tagChips.length"
+        v-if="visibleTagChips.length"
         class="mt-auto flex flex-wrap items-center gap-1.5 pt-1 text-xs"
       >
         <span
-          v-for="chip in tagChips"
+          v-for="chip in visibleTagChips"
           :key="chip.tagId"
           class="rounded-full px-2.5 py-1 font-medium"
           :class="
@@ -114,6 +89,12 @@
           "
         >
           {{ chip.label }}
+        </span>
+        <span
+          v-if="hiddenTagCount > 0"
+          class="px-1 text-xs font-medium tabular-nums text-ink-tertiary"
+        >
+          {{ t("productionsPage.moreGridTags", { n: hiddenTagCount }) }}
         </span>
       </div>
     </div>
@@ -131,12 +112,17 @@ import { localizeOrEmpty } from "@/utils/language-utils";
 import type { ProductionDateSummary } from "@/utils/productionsOverview";
 import type { ProductionTagChip } from "@/utils/tagDisplay";
 
+/**
+ * Grid cards must align in rows of equal height, so we cap the tag count
+ * to keep card heights consistent regardless of how tagged a production is.
+ */
+const MAX_VISIBLE_GRID_TAGS = 3;
+
 const props = withDefaults(
   defineProps<{
     production: ProductionWithBackwardsRefs;
     dateSummary: ProductionDateSummary;
     tagChips: ProductionTagChip[];
-    hallsText: string;
     /** Public crop URL (`/media/crops/…`) for the grid thumbnail, if any. */
     thumbnailUrl?: string | null;
     /** Used to stagger the grid entrance animation. */
@@ -146,6 +132,14 @@ const props = withDefaults(
 );
 
 const { t, locale } = useI18n();
+
+const visibleTagChips = computed(() =>
+  props.tagChips.slice(0, MAX_VISIBLE_GRID_TAGS),
+);
+
+const hiddenTagCount = computed(() =>
+  Math.max(0, props.tagChips.length - MAX_VISIBLE_GRID_TAGS),
+);
 
 /** Cap delay so long pages do not stretch the sequence too far. */
 const staggerDelayMs = computed(() =>
