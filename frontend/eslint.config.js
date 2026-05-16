@@ -1,3 +1,6 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 import pluginVue from "eslint-plugin-vue";
@@ -63,6 +66,8 @@ const sharedSettings = {
   }),
 };
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 export default defineConfig([
   // --------------------------------------------------
   // Global ignores
@@ -94,7 +99,7 @@ export default defineConfig([
       parserOptions: {
         sourceType: "module",
         project: "./tsconfig.app.json",
-        tsconfigRootDir: process.cwd(),
+        tsconfigRootDir: __dirname,
       },
     },
 
@@ -126,7 +131,7 @@ export default defineConfig([
         extraFileExtensions: [".vue"],
         sourceType: "module",
         project: "./tsconfig.app.json",
-        tsconfigRootDir: process.cwd(),
+        tsconfigRootDir: __dirname,
       },
     },
 
@@ -174,7 +179,7 @@ export default defineConfig([
       parserOptions: {
         sourceType: "module",
         project: "./tsconfig.app.json",
-        tsconfigRootDir: process.cwd(),
+        tsconfigRootDir: __dirname,
       },
     },
 

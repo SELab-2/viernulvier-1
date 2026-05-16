@@ -83,7 +83,7 @@ export default {
       tagName: "Naam",
       tagType: "Type",
       public: "Publiek",
-      productionCount: "Aantal producties",
+      productions: "Producties",
       admin: {
         username: "Gebruikersnaam",
         profilePicture: "Profielfoto",
@@ -222,6 +222,7 @@ export default {
     },
   },
   productionsPage: {
+    kicker: "Het archief",
     heading: "Producties",
     intro:
       "Alle voorstellingen uit het archief op een rij.",
@@ -234,6 +235,7 @@ export default {
       "Het eerste jaar moet op of vóór het laatste jaar liggen. Pas het bereik aan of corrigeer de link en probeer opnieuw.",
     empty: "Er staan nog geen producties in het archief.",
     morePerformances: "nog {n}",
+    moreListTags: "+{n} meer",
     showingRange: "{from}–{to} van {total}",
     prevPage: "Vorige",
     nextPage: "Volgende",
@@ -312,7 +314,7 @@ export default {
       programme: "Programma",
     },
     events: {
-      title: "Voorstellings\u00adgeschiedenis",
+      title: "Data",
       body: "Waar en wanneer vond deze productie plaats? Hier vind je een overzicht van alle speelmomenten en locaties. Misschien herken je wel een datum of plek die je is bijgebleven.",
       show_all: "Toon alle evenementen",
       show_less: "Toon minder",

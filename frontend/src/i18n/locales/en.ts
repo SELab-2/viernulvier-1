@@ -83,7 +83,7 @@ export default {
       tagName: "Name",
       tagType: "Type",
       public: "Public",
-      productionCount: "Productions",
+      productions: "Productions",
       admin: {
         username: "Username",
         profilePicture: "Profile picture",
@@ -223,6 +223,7 @@ export default {
     },
   },
   productionsPage: {
+    kicker: "The archive",
     heading: "Productions",
     intro:
       "Every show in the archive at a glance.",
@@ -234,6 +235,7 @@ export default {
       "The first year must be on or before the last year. Adjust the range or fix the link and try again.",
     empty: "No productions in the archive yet.",
     morePerformances: "{n} more",
+    moreListTags: "+{n} more",
     showingRange: "{from}–{to} of {total}",
     prevPage: "Previous",
     nextPage: "Next",
@@ -312,7 +314,7 @@ export default {
       programme: "Programme",
     },
     events: {
-      title: "Performance History",
+      title: "Dates",
       body: "Where and when did this production take place? Here you'll find an overview of all the performance dates and locations. You might recognize a date or place that stayed with you.",
       show_all: "Show All Events",
       show_less: "Show Less",
