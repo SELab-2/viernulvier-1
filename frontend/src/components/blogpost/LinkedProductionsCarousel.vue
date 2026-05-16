@@ -92,7 +92,7 @@ const scroll = (direction: 'left' | 'right') => {
 
   const firstCard = el.firstElementChild as HTMLElement | null;
   const cardWidth = firstCard?.offsetWidth ?? 350;
-  const gap = 32; 
+  const gap = parseFloat(getComputedStyle(el).gap) || 32;
   const step = el.clientWidth > 768 ? (cardWidth * 2) + (gap * 2) : el.clientWidth;
   
   el.scrollBy({
