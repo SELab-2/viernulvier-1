@@ -30,9 +30,9 @@
         <line x1="8" y1="6" x2="21" y2="6" />
         <line x1="8" y1="12" x2="21" y2="12" />
         <line x1="8" y1="18" x2="21" y2="18" />
-        <line x1="3" y1="6" x2="3.01" y2="6" />
-        <line x1="3" y1="12" x2="3.01" y2="12" />
-        <line x1="3" y1="18" x2="3.01" y2="18" />
+        <circle cx="4" cy="6" r="1.2" fill="currentColor" stroke="none" />
+        <circle cx="4" cy="12" r="1.2" fill="currentColor" stroke="none" />
+        <circle cx="4" cy="18" r="1.2" fill="currentColor" stroke="none" />
       </svg>
     </button>
     <button
@@ -96,7 +96,7 @@ function select(mode: ProductionsLayoutMode) {
 }
 
 .productions-layout-toggle__btn {
-  @apply flex size-9 cursor-pointer items-center justify-center text-ink-secondary transition hover:bg-surface-2 hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-50;
+  @apply flex size-9 cursor-pointer items-center justify-center bg-transparent text-ink-tertiary transition hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-50;
 }
 
 .productions-layout-toggle__btn + .productions-layout-toggle__btn {
@@ -104,6 +104,10 @@ function select(mode: ProductionsLayoutMode) {
 }
 
 .productions-layout-toggle__btn--active {
-  @apply bg-surface-2 text-ink-primary;
+  @apply bg-ink-primary text-surface-0 dark:bg-ink-primary dark:text-surface-0;
+}
+
+.productions-layout-toggle__btn--active:hover {
+  @apply text-surface-0;
 }
 </style>
