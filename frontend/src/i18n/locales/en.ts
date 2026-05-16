@@ -7,6 +7,7 @@ export default {
     home: "Home",
     archive: "Archive",
     productions: "Productions",
+    blog: "Blog",
     search: "Search",
     admin: {
       dashboard: "Dashboard",
@@ -339,6 +340,17 @@ export default {
       helpText: "Can't find what you're looking for in our records? For questions about our archives or specific productions, feel free to email info{'@'}viernulvier.gent. We're happy to help.",
       contactLabel: "Contact us",
     },
+  },
+  blogPostsPage: {
+    kicker: "Archive",
+    heading: "Blog Posts",
+    intro: "Reports, reflections and context around our work.",
+    loading: "Loading posts",
+    errorGeneric: "Something went wrong while loading the posts.",
+    empty: "No posts published yet.",
+    readMore: "Read more",
+    previous: "Previous",
+    next: "Next",
   },
   blogpost: {
     loading: "Loading blogpost…",

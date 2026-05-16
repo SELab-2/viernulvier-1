@@ -7,6 +7,7 @@ export default {
     home: "Accueil",
     archive: "Archives",
     productions: "Productions",
+    blog: "Blog",
     search: "Rechercher",
     admin: {
       dashboard: "Tableau de bord",
@@ -339,6 +340,17 @@ export default {
       helpText: "Vous ne trouvez pas immédiatement ce que vous cherchez dans nos archives ? Pour toute question sur notre historique ou sur une production spécifique, envoyez-nous un e-mail à info{'@'}viernulvier.gent. Nous vous aiderons avec plaisir.",
       contactLabel: "Contactez-nous",
     },
+  },
+  blogPostsPage: {
+    kicker: "Archive",
+    heading: "Articles de blog",
+    intro: "Comptes rendus, réflexions et contextes autour de notre travail.",
+    loading: "Chargement des articles",
+    errorGeneric: "Une erreur est survenue lors du chargement des articles.",
+    empty: "Aucun article publié pour le moment.",
+    readMore: "Lire la suite",
+    previous: "Précédent",
+    next: "Suivant",
   },
   blogpost: {
     loading: "Chargement de l'article…",
