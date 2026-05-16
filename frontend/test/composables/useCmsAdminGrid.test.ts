@@ -8,7 +8,7 @@ describe("useCmsAdminGrid", () => {
 
     expect(columnDefs.value).toHaveLength(3);
 
-    const id = columnDefs.value.find((c) => c.field === "username");
+    const id = columnDefs.value.find((c) => c.field === "id");
     const username = columnDefs.value.find((c) => c.field === "username");
     const superField = columnDefs.value.find((c) => c.field === "super");
 
