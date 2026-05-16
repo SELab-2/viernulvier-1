@@ -373,6 +373,7 @@ describe("CmsTagsTab", () => {
         rowId: mockPublicTag.id,
         label: expect.any(String),
         items: [1, 2, 3],
+        urlBase: "/en/productions",
       });
     });
 
@@ -405,6 +406,7 @@ describe("CmsTagsTab", () => {
         rowId: mockPublicTag.id,
         label: expect.any(String),
         items: [1, 2, 3],
+        urlBase: "/en/productions",
       });
 
       expect(api.saveError.value).toBeNull();
@@ -423,6 +425,7 @@ describe("CmsTagsTab", () => {
         rowId: mockHiddenTag.id,
         label: expect.any(String),
         items: [],
+        urlBase: "/en/productions",
       });
     });
 

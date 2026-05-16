@@ -142,6 +142,10 @@ css used for adding/editing lists (of IDs)
   @apply -mr-0.5 flex h-4 w-4 items-center justify-center rounded-full text-ink-secondary transition hover:bg-surface-2 hover:text-ink-primary;
 }
 
+.cms-list-flair-link {
+  @apply text-ink-primary underline hover:text-ink-secondary transition-colors;
+}
+
 .cms-list-create {
   @apply mt-3 space-y-3;
 }
