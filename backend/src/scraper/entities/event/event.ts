@@ -27,7 +27,7 @@ import {
  * If both are omitted, {@link scrapeAllEvents} defaults to `{ before: new Date() }`.
  */
 export type { ViernulvierEventStartBounds } from "./event-bounds.js";
-export * from "./zoned-day.js";
+export * from "../../core/zoned-day.js";
 
 /**
  * Supplies default `{ before: new Date() }` when the caller passes an empty bounds object.
