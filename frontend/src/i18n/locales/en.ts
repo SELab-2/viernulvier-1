@@ -16,24 +16,26 @@ export default {
     },
   },
   hero: {
+    dateline: "Archive · Ghent",
     title: "The Archive of De Vooruit",
-    subtitle:
-      "Over 12,000 performances, concerts, films and cultural events — documented, searchable and open to everyone.",
-    cta: "Browse the archive",
+    lead:
+      "Decades of performances, concerts and films at De Vooruit — preserved, indexed and made searchable. This is the front page of the house archive: type a name, a title or a hall to pull up the file, or wander freely through the collection.",
+    searchPlaceholder: "Search a production, artist or hall…",
+    searchLabel: "Search the archive",
+    searchSubmit: "Search",
+    searchHint: "{count}+ productions on file",
+    browseAll: "Or browse all productions",
   },
-  stats: {
-    productions: "Productions",
-    events: "Events",
-    yearsOfHistory: "Years of History",
-    genres: "Genres",
-  },
-  bento: {
-    featured: {
-      label: "Featured",
-      title: "Theatre, dance & more",
-      description:
-        "Discover hundreds of productions from the rich programming of De Vooruit — from avant-garde dance to political theatre.",
-      cta: "Explore",
+  featuredBlog: {
+    eyebrow: "Featured blog post",
+    dateline: "{date} · Editorial",
+    readMore: "Read the full article",
+    imageCaption:
+      "Article image — caption will come from the blog post.",
+    placeholder: {
+      title: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+      excerpt:
+        "Aenean euismod, urna ac dignissim porta, leo arcu vehicula nibh, sed congue dolor magna nec massa. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In hac habitasse platea dictumst — donec vitae sapien ut libero venenatis faucibus.",
     },
   },
   footer: {
@@ -68,10 +70,10 @@ export default {
       productions: "Productions",
       tags: "Tags",
       admins: "Admins",
-      tagsPlaceholder: "Tag management coming soon.",
-      adminsPlaceholder: "Admin management coming soon.",
+      blogposts: "Blogposts",
     },
     columns: {
+      id: "ID",
       performer: "Artist",
       title: "Title",
       producer: "Supertitle",
@@ -85,11 +87,16 @@ export default {
       tagName: "Name",
       tagType: "Type",
       public: "Public",
-      productionCount: "Productions",
+      productions: "Productions",
       admin: {
         username: "Username",
         profilePicture: "Profile picture",
         super: "Super admin",
+      },
+      blogpost: {
+        content: "Content",
+        publishedAt: "Published at",
+        productions: "Associated productions",
       },
     },
     events: {
@@ -144,12 +151,17 @@ export default {
       expandAllEvents: "Show all events",
       collapseAllEvents: "Hide events",
       admin: {
-        noAdmins: "No admins found.",
-        addAdmin: "+ Add Admin",
+        addAdmin: "+ Add admin",
         removeAdmin: "Remove selected admins",
         confirmRemoveDialogTitle: "Remove admin? | Remove admins?",
         confirmRemoveBody: "This will permanently delete {count} selected admin. This cannot be undone. | This will permanently delete {count} selected admins. This cannot be undone.",
         cannotRemoveSelf: "You cannot remove yourself.",
+      },
+      blogpost: {
+        addBlogpost: "+ Add blogpost",
+        removeBlogpost: "Remove selected blogposts",
+        confirmRemoveDialogTitle: "Remove blogpost? | Remove blogposts?",
+        confirmRemoveBody: "This will permanently delete {count} selected blogpost. This cannot be undone. | This will permanently delete {count} selected blogposts. This cannot be undone.",
       },
     },
     create: {
@@ -198,12 +210,17 @@ export default {
         requiredOneLanguage: "Fill at least 1 language for: {field}",
         imageRequired: "Fill at least one image URL (in any language).",
         tagTypeRequired: "Select a tag type.",
+        invalidId: "Invalid ID",
       },
       admin: {
         adminTitle: "New admin",
         adminPassword: "Password",
-        // TODO: adminPasswordHint: "The new admin can change their password after logging in via their profile.",
+        adminPasswordHint: "The new admin can change their password after logging in via their profile.",
         submitAdmin: "Add admin",
+      },
+      blogpost: {
+        title: "New blogpost",
+        submit: "Add blogpost",
       },
     },
     panel: {
@@ -235,6 +252,7 @@ export default {
     },
   },
   productionsPage: {
+    kicker: "The archive",
     heading: "Productions",
     intro:
       "Every show in the archive at a glance.",
@@ -246,6 +264,7 @@ export default {
       "The first year must be on or before the last year. Adjust the range or fix the link and try again.",
     empty: "No productions in the archive yet.",
     morePerformances: "{n} more",
+    moreListTags: "+{n} more",
     showingRange: "{from}–{to} of {total}",
     prevPage: "Previous",
     nextPage: "Next",
@@ -324,7 +343,7 @@ export default {
       programme: "Programme",
     },
     events: {
-      title: "Performance History",
+      title: "Dates",
       body: "Where and when did this production take place? Here you'll find an overview of all the performance dates and locations. You might recognize a date or place that stayed with you.",
       show_all: "Show All Events",
       show_less: "Show Less",

@@ -165,9 +165,7 @@ const kicker = computed(() => {
   return parts.join(" · ");
 });
 
-/** Compact run-period + running-time strip placed below the deck.
- *  Reviewer asked for both back on the page after the previous
- *  redesign moved them down to EventsSection. */
+/** Compact run-period + running-time strip placed below the deck. */
 const dateMetaLine = computed(() => {
   const stats = props.eventStats;
   if (!stats) return "";

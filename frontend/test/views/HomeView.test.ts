@@ -4,18 +4,6 @@ import { createMemoryHistory, createRouter } from "vue-router";
 import { routes } from "@/router/routes";
 import { i18n } from "@/i18n";
 import HomeView from "@/views/HomeView.vue";
-import MarkdownEditor from "@/components/MarkdownEditor.vue";
-
-vi.mock("easymde", () => ({
-  default: vi.fn().mockImplementation(function () {
-    return {
-      codemirror: { on: vi.fn() },
-      value: vi.fn().mockReturnValue(""),
-      toTextArea: vi.fn(),
-    };
-  }),
-}));
-vi.mock("easymde/dist/easymde.min.css", () => ({}));
 
 // ─── Mock matchMedia (jsdom does not provide it) ────────────────────────────
 
@@ -77,23 +65,14 @@ describe("HomeView.vue", () => {
       expect(wrapper.find("h1").exists()).toBe(true);
     });
 
-    it("includes at least three content sections", () => {
-      expect(wrapper.findAll("section").length).toBeGreaterThanOrEqual(3);
+    it("includes the hero section and the featured-blog section", () => {
+      // Two editorial sections: HeroSection (masthead + search) and
+      // FeaturedBlogSection (lead article). The footer is not a <section>.
+      expect(wrapper.findAll("section").length).toBeGreaterThanOrEqual(2);
     });
 
     it("includes the footer", () => {
       expect(wrapper.find("footer").exists()).toBe(true);
     });
   });
-
-  // ── MarkdownEditor v-model ────────────────────────────────────────────────
-
-  describe("markdown editor preview", () => {
-    it("updates previewContent when MarkdownEditor emits update:modelValue", async () => {
-      const editor = wrapper.findComponent(MarkdownEditor);
-      await editor.vm.$emit("update:modelValue", "hello");
-      // No error thrown — the v-model setter is exercised
-    });
-  });
-
 });

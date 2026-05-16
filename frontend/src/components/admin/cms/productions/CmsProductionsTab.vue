@@ -4,7 +4,6 @@
     v-model:column-chooser-open="columnChooserOpen"
     :row-count="rowData.length"
     loaded-count-key="cms.actions.loadedCount"
-    empty-state-key="cms.actions.noRows"
     :is-loading="isLoading"
     :load-error="loadError"
     :selected-count="selectedCount"
@@ -95,56 +94,14 @@
         @event-row-enter="onEventRowEnter"
       />
 
-      <aside v-if="editorPanel" class="cms-side-panel">
-        <div class="cms-side-header">
-          <h2 class="text-lg font-semibold text-ink-primary">
-            {{ editorPanel.label }}
-          </h2>
-          <button
-            type="button"
-            class="cms-side-close"
-            @click="closeEditorPanel"
-          >
-            {{ t("cms.panel.close") }}
-          </button>
-        </div>
-
-        <div class="cms-side-body">
-          <p v-if="editorBulkCount > 1" class="text-xs text-ink-secondary">
-            {{ t("cms.panel.bulkNotice", { count: editorBulkCount }) }}
-          </p>
-
-          <label
-            v-for="lang in languages"
-            :key="lang"
-            class="cms-side-field"
-          >
-            <span class="text-xs font-semibold uppercase tracking-wide text-ink-secondary">
-              {{ lang.toUpperCase() }}
-            </span>
-            <textarea
-              v-model="editorPanel.values[lang]"
-              class="cms-side-textarea"
-              rows="5"
-            />
-          </label>
-
-          <p v-if="saveError" class="text-sm text-red-700">
-            {{ saveError }}
-          </p>
-        </div>
-
-        <div class="cms-side-footer">
-          <button
-            type="button"
-            class="cms-side-save"
-            :disabled="isSaving"
-            @click="saveEditorPanel"
-          >
-            {{ isSaving ? t("general.saving") : t("cms.panel.save") }}
-          </button>
-        </div>
-      </aside>
+      <CmsEditorPanel
+        v-model:panel="editorPanel"
+        :bulk-count="editorBulkCount"
+        :save-error="saveError"
+        :is-saving="isSaving"
+        @close="closeEditorPanel"
+        @save="saveEditorPanel"
+      />
 
       <CmsTagDrawer
         :show="tagEditorPanel !== null"
@@ -320,11 +277,12 @@ import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
 import CmsCreateEventModal from "@/components/admin/cms/productions/CmsCreateEventModal.vue";
 import CmsEventsDrawer from "@/components/admin/cms/productions/CmsEventsDrawer.vue";
 import CmsTagDrawer from "@/components/admin/cms/CmsTagDrawer.vue";
+import CmsEditorPanel from "@/components/admin/cms/CmsEditorPanel.vue";
 import CmsCreateProductionModal from "@/components/admin/cms/productions/CmsCreateProductionModal.vue";
 import { useCmsProductionGrid } from "@/composables/useCmsProductionGrid";
 import { useCmsRemove } from "@/composables/useCmsRemove";
 import { useDarkMode } from "@/composables/useDarkMode";
-import { i18n, SUPPORTED_LANGS, type SupportedLang } from "@/i18n";
+import { i18n, type SupportedLang } from "@/i18n";
 import {
   bulkUpdateProductions,
   createProduction,
@@ -356,7 +314,7 @@ import {
   type CreateFormState,
   type EditorPanelState,
   type InlineEditableField,
-  type LongField,
+  type ProductionLongField,
   type CmsProductionGridRow,
   extractEventIds,
   makeEditorValues,
@@ -425,6 +383,7 @@ const mediaPreviewEditUrl = ref("");
 const imagesByProductionId = ref(new Map<number, Array<{ id: number; url: string }>>());
 const imageLoadRequestToken = ref(0);
 const languages = SUPPORTED_LANGS as ReadonlyArray<SupportedLang>;
+const mediaPreview = ref<{ url: string; kind: "image" | "video" | "youtube"; label: string } | null>(null);
 const createExtraLangs = ref({ en: false, fr: false });
 const visibleCreateLangs = computed<SupportedLang[]>(() => {
   const result: SupportedLang[] = ["nl"];
@@ -545,6 +504,7 @@ const inlineFieldToApi: Record<InlineEditableField, keyof ProductionWithBackward
 };
 
 const longGridFieldToApi: Record<"descriptionOne" | "descriptionTwo", LongField> = {
+const longGridFieldToApi: Record<"descriptionOne" | "descriptionTwo" | "media", ProductionLongField> = {
   descriptionOne: "description",
   descriptionTwo: "description_2",
 };
@@ -1557,6 +1517,13 @@ async function saveEditorPanel(): Promise<void> {
     await persistBulkProductionPatch(targetRows, {
       [editorPanel.value?.apiField as LongField]: payload,
     });
+    await Promise.all(
+      targetRows.map(async (target) => {
+        await persistProductionPatch(target, {
+          [editorPanel.value?.apiField as ProductionLongField]: payload,
+        });
+      }),
+    );
   } finally {
     isSaving.value = false;
   }

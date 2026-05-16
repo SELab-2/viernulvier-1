@@ -23,9 +23,6 @@ vi.mock("@/components/production/HeroSection.vue", () => ({
 vi.mock("@/components/production/DetailsSection.vue", () => ({
   default: defineComponent({ template: '<div data-testid="details-section" />' }),
 }));
-vi.mock("@/components/production/EventsSection.vue", () => ({
-  default: defineComponent({ template: '<div data-testid="events-section" />' }),
-}));
 vi.mock("@/components/production/GallerySection.vue", () => ({
   default: defineComponent({ template: '<div data-testid="gallery-section" />' }),
 }));
@@ -45,8 +42,15 @@ vi.mock("@/composables/useTagGroups", () => ({
 }));
 
 const mockEvents = ref<any[]>([]);
+const mockEventsLoading = ref(false);
+const mockEventsError = ref<Error | null>(null);
 vi.mock("@/composables/useProductionEvents", () => ({
-  useProductionEvents: () => ({ events: mockEvents }),
+  useProductionEvents: () => ({
+    events: mockEvents,
+    loading: mockEventsLoading,
+    error: mockEventsError,
+    retry: vi.fn(),
+  }),
 }));
 
 // ─── Mock vue-router ──────────────────────────────────────────────────────────
@@ -85,6 +89,8 @@ describe("ProductionDetail", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockEvents.value = [];
+    mockEventsLoading.value = false;
+    mockEventsError.value = null;
     mockTagGroups.value = [];
     mockTotalTags.value = 0;
     mockGetImagesForProductionOrEmpty.mockResolvedValue([]);
@@ -145,18 +151,27 @@ describe("ProductionDetail", () => {
 
       expect(wrapper.find('[data-testid="hero-section"]').exists()).toBe(true);
       expect(wrapper.find('[data-testid="details-section"]').exists()).toBe(true);
-      expect(wrapper.find('[data-testid="events-section"]').exists()).toBe(true);
       expect(wrapper.find('[data-testid="gallery-section"]').exists()).toBe(true);
       expect(wrapper.find('[data-testid="blog-section"]').exists()).toBe(true);
     });
 
-    it("does not render details-section when all fields are empty", async () => {
+    it("does not render details-section when all fields are empty and there are no performances", async () => {
       mockGetProduction.mockResolvedValue(makeProduction());
 
       const wrapper = mountComponent();
       await flushPromises();
 
       expect(wrapper.find('[data-testid="details-section"]').exists()).toBe(false);
+    });
+
+    it("renders details-section when editorial fields are empty but performances exist", async () => {
+      mockGetProduction.mockResolvedValue(makeProduction());
+      mockEvents.value = [makeEvent("2024-06-01T19:00:00", "2024-06-01T21:30:00")];
+
+      const wrapper = mountComponent();
+      await flushPromises();
+
+      expect(wrapper.find('[data-testid="details-section"]').exists()).toBe(true);
     });
 
     it("calls getProduction with the numeric id from the route", async () => {

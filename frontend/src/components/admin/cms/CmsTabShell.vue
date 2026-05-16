@@ -50,13 +50,6 @@
       {{ saveError }}
     </p>
 
-    <p
-      v-if="!isLoading && !loadError && rowCount === 0"
-      class="rounded-md border border-surface-3 bg-surface-0 px-4 py-3 text-sm text-ink-secondary"
-    >
-      {{ t(emptyStateKey) }}
-    </p>
-
     <slot name="modals" />
   </div>
 </template>
@@ -74,7 +67,6 @@ interface ColumnOption {
 defineProps<{
   rowCount: number;
   loadedCountKey: string;
-  emptyStateKey: string;
   isLoading: boolean;
   loadError: string | null;
   saveError?: string | null;

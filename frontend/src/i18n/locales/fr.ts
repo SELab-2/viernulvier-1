@@ -16,24 +16,26 @@ export default {
     },
   },
   hero: {
+    dateline: "Archives · Gand",
     title: "Les Archives de Vooruit",
-    subtitle:
-      "Plus de 12 000 spectacles, concerts, films et événements culturels — documentés, consultables et accessibles à tous.",
-    cta: "Parcourir les archives",
+    lead:
+      "Des décennies de spectacles, concerts et films de Vooruit — conservés, classés et consultables. Voici la une des archives de la maison : tapez un nom, un titre ou une salle pour ouvrir la fiche, ou parcourez librement la collection.",
+    searchPlaceholder: "Cherchez une production, un artiste ou une salle…",
+    searchLabel: "Fouiller les archives",
+    searchSubmit: "Chercher",
+    searchHint: "{count}+ productions répertoriées",
+    browseAll: "Ou parcourir toutes les productions",
   },
-  stats: {
-    productions: "Productions",
-    events: "Evenements",
-    yearsOfHistory: "Ans d'histoire",
-    genres: "Genres",
-  },
-  bento: {
-    featured: {
-      label: "À la une",
-      title: "Théâtre, danse & plus",
-      description:
-        "Découvrez des centaines de productions de la riche programmation de De Vooruit — de la danse d'avant-garde au théâtre politique.",
-      cta: "Explorer",
+  featuredBlog: {
+    eyebrow: "Article à la une",
+    dateline: "{date} · Rédaction",
+    readMore: "Lire l'article complet",
+    imageCaption:
+      "Illustration de l'article — la légende viendra de la publication.",
+    placeholder: {
+      title: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+      excerpt:
+        "Aenean euismod, urna ac dignissim porta, leo arcu vehicula nibh, sed congue dolor magna nec massa. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In hac habitasse platea dictumst — donec vitae sapien ut libero venenatis faucibus.",
     },
   },
   footer: {
@@ -68,10 +70,10 @@ export default {
       productions: "Productions",
       tags: "Tags",
       admins: "Admins",
-      tagsPlaceholder: "La gestion des tags arrive bientôt.",
-      adminsPlaceholder: "La gestion des admins arrive bientôt.",
+      blogposts: "Articles",
     },
     columns: {
+      id: "ID",
       performer: "Artiste",
       title: "Titre",
       producer: "Supertitre",
@@ -85,11 +87,16 @@ export default {
       tagName: "Nom",
       tagType: "Type",
       public: "Public",
-      productionCount: "Productions",
+      productions: "Productions",
       admin: {
         username: "Nom d'utilisateur",
         profilePicture: "Photo de profil",
         super: "Super admin",
+      },
+      blogpost: {
+        content: "Contenu",
+        publishedAt: "Publié à",
+        productions: "Productions associées",
       },
     },
     events: {
@@ -144,12 +151,17 @@ export default {
       expandAllEvents: "Afficher tous les evenements",
       collapseAllEvents: "Masquer les evenements",
       admin: {
-        noAdmins: "Aucun admin trouvé",
         addAdmin: "+ Ajouter un Admin",
         removeAdmin: "Supprimer les admins sélectionnés",
         confirmRemoveDialogTitle: "Supprimer l'admin? | Supprimer les admins?",
-        confirmRemoveBody: "Cette action supprimera définitivement {count} admin sélectionnés. Cette opération est irréversible. | Cette action supprimera définitivement {count} admins sélectionnés. Cette opération est irréversible.",
+        confirmRemoveBody: "Cette action supprimera définitivement {count} admin sélectionné. Cette opération est irréversible. | Cette action supprimera définitivement {count} admins sélectionnés. Cette opération est irréversible.",
         cannotRemoveSelf: "Vous ne pouvez pas vous supprimer.",
+      },
+      blogpost: {
+        addBlogpost: "+ Ajouter un article",
+        removeBlogpost: "Supprimer les articles sélectionnés",
+        confirmRemoveDialogTitle: "Supprimer l'article? | Supprimer les articles?",
+        confirmRemoveBody: "Cette action supprimera définitivement {count} article sélectionné. Cette opération est irréversible. | Cette action supprimera définitivement {count} articles sélectionnés. Cette opération est irréversible.",
       },
     },
     create: {
@@ -197,12 +209,17 @@ export default {
         requiredOneLanguage: "Remplissez au moins 1 langue pour: {field}",
         imageRequired: "Remplissez au moins une URL d'image (dans n'importe quelle langue).",
         tagTypeRequired: "Sélectionnez un type de tag.",
+        invalidId: "ID non valide",
       },
       admin: {
         adminTitle: "Nouvel admin",
         adminPassword: "Mot de passe",
-        // TODO: adminPasswordHint: "Le nouvel admin peut modifier son mot de passe après connexion via son profil.",
+        adminPasswordHint: "Le nouvel admin peut modifier son mot de passe après connexion via son profil.",
         submitAdmin: "Ajouter l'admin",
+      },
+      blogpost: {
+        title: "Nouvel article",
+        submit: "Ajouter l'article",
       },
     },
     panel: {
@@ -234,6 +251,7 @@ export default {
     },
   },
   productionsPage: {
+    kicker: "Les archives",
     heading: "Productions",
     intro:
       "Tous les spectacles de l’archive en un coup d’œil.",
@@ -246,6 +264,7 @@ export default {
       "La première année doit être antérieure ou égale à la dernière. Ajustez la plage ou le lien et réessayez.",
     empty: "Aucune production dans les archives pour l’instant.",
     morePerformances: "{n} de plus",
+    moreListTags: "+{n} de plus",
     showingRange: "{from}–{to} sur {total}",
     prevPage: "Précédent",
     nextPage: "Suivant",
@@ -324,7 +343,7 @@ export default {
       programme: "Programme",
     },
     events: {
-      title: "Historique des représentations",
+      title: "Dates",
       body: "Où et quand cette production a-t-elle eu lieu ? Vous trouverez ici un aperçu de toutes les dates et des lieux de représentation. Peut-être reconnaîtrez-vous une date ou un endroit qui vous est resté en mémoire.",
       show_all: "Afficher tous les événements",
       show_less: "Afficher moins",

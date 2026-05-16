@@ -60,7 +60,15 @@ export interface CmsTagGridRow {
   tagTypeId: number;
   tagType: string;
   public: boolean;
-  productionCount: number;
+  productions: number[];
+}
+
+export interface CmsBlogPostGridRow {
+  id: number;
+  title: string;
+  content: string;
+  publishedAt: string | null;
+  productions: number[];
 }
 
 export type TagInlineEditableField = "name" | "tagType" | "public";
@@ -72,6 +80,14 @@ export interface CreateTagFormState {
 }
 
 export type LongField = "teaser" | "description" | "description_2";
+export interface CreateBlogPostFormState {
+  title: Record<SupportedLang, string>;
+  content: Record<SupportedLang, string>;
+  productions: number[];
+}
+
+export type ProductionLongField = "teaser" | "description" | "description_2" | "video_1";
+export type BlogPostLongField = "title" | "content";
 
 export type CreateFieldKey =
   | "title"
@@ -120,7 +136,7 @@ export interface CreateAdminFormState {
 
 export interface EditorPanelState {
   rowId: number;
-  apiField: LongField;
+  apiField: ProductionLongField | BlogPostLongField;
   label: string;
   values: Record<SupportedLang, string>;
 }
