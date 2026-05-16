@@ -332,6 +332,17 @@ export default {
     publishedOn: "Gepubliceerd op {date}",
     backToHome: "Terug naar home",
   },
+  errors: {
+    notFound: {
+      kicker: "Dossier nr. 404 · Niet in de collectie",
+      title: "Pagina niet gevonden",
+      description: "Deze pagina konden we niet voor je terugvinden. Misschien is hij verplaatst, hernoemd of nooit opgenomen in het archief. Keer terug naar het overzicht en ontdek wat er wél in onze collectie bewaard is.",
+      buttonLabel: "Terug naar het archief",
+      helpTitle: "Hulp nodig?",
+      helpText: "Vind je niet meteen wat je zoekt? Voor vragen over ons archief kun je altijd een mailtje sturen naar info{'@'}viernulvier.gent. We helpen je graag verder.",
+      contactLabel: "Contacteer ons",
+    },
+  },
   admin: {
     login: {
       title: "Meld u aan om verder te gaan",

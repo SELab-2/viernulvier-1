@@ -332,6 +332,17 @@ export default {
     publishedOn: "Published on {date}",
     backToHome: "Back to home",
   },
+  errors: {
+    notFound: {
+      kicker: "File no. 404 · Not in the collection",
+      title: "Page not found",
+      description: "We couldn't find this page for you. It may have been moved, renamed, or never made it into the archive. Return to the overview and discover what is preserved in our collection.",
+      buttonLabel: "Back to the archive",
+      helpTitle: "Need help?",
+      helpText: "Can't find what you're looking for? For questions about our archive, feel free to email info{'@'}viernulvier.gent. We're happy to help.",
+      contactLabel: "Contact us",
+    },
+  },
   admin: {
     login: {
       title: "Sign in to continue",

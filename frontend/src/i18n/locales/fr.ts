@@ -332,6 +332,17 @@ export default {
     publishedOn: "Publié le {date}",
     backToHome: "Retour à l'accueil",
   },
+  errors: {
+    notFound: {
+      kicker: "Dossier nº 404 · Hors collection",
+      title: "Page introuvable",
+      description: "Nous n'avons pas pu trouver cette page. Elle a peut-être été déplacée, renommée ou n'a jamais été ajoutée aux archives. Retournez à la vue d'ensemble et découvrez ce qui est conservé dans notre collection.",
+      buttonLabel: "Retour aux archives",
+      helpTitle: "Besoin d'aide ?",
+      helpText: "Vous ne trouvez pas ce que vous cherchez ? Pour toute question sur nos archives, envoyez-nous un e-mail à info{'@'}viernulvier.gent. Nous serons ravis de vous aider.",
+      contactLabel: "Contactez-nous",
+    },
+  },
   admin: {
     login: {
       title: "Connectez-vous pour continuer",
