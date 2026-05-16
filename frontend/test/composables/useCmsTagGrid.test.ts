@@ -15,7 +15,7 @@ describe("useCmsTagGrid", () => {
     const productions = columnDefs.value.find((c) => c.field === "productions");
 
     expect(id?.editable).toBe(false);
-    expect(name?.editable).toBe(true);
+    expect(name?.editable).toBe(false);
     expect(name?.flex).toBe(1);
     expect(tagType?.editable).toBe(false);
     expect(publicField?.editable).toBe(true);

@@ -61,7 +61,7 @@ export function useCmsTagGrid(options: {
     {
       headerName: options.t("cms.columns.tagName"),
       field: "name",
-      editable: true,
+      editable: false,
       minWidth: 200,
       flex: 1,
     },

@@ -93,6 +93,15 @@
         @update-public="setCreatePublic"
         @update-extra-lang="setCreateExtraLang"
       />
+      
+      <CmsEditorPanel
+        v-model:panel="editorPanel"
+        :bulk-count="editorBulkCount"
+        :save-error="saveError"
+        :is-saving="isSaving"
+        @close="closeEditorPanel"
+        @save="saveEditorPanel"
+      />
 
       <CmsEditListPanel
         v-model:panel="editProductionsPanel"
@@ -112,6 +121,7 @@ import type { CellClickedEvent, CellEditingStoppedEvent } from "ag-grid-communit
 import { useI18n } from "vue-i18n";
 import type { Tag, TagType } from "@viernulvier/shared";
 import CmsRemoveConfirmModal from "@/components/admin/cms/CmsRemoveConfirmModal.vue";
+import CmsEditorPanel from "@/components/admin/cms/CmsEditorPanel.vue";
 import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
 import CmsCreateTagModal from "@/components/admin/cms/tags/CmsCreateTagModal.vue";
 import CmsEditListPanel, { type EditListPanelState } from "@/components/admin/cms/CmsEditListPanel.vue";
@@ -126,9 +136,12 @@ import {
   buildEmptyTagForm,
   buildTagGridRows,
   toLanguageMap,
+  makeEditorValues,
+  toLanguageMapOrNull,
   validateCreateTagForm,
   type CmsTagGridRow,
   type CreateTagFormState,
+  type EditorPanelState,
 } from "@/services/cms";
 
 const { t } = useI18n();
@@ -167,7 +180,11 @@ const createError = ref<string | null>(null);
 const rowData = ref<CmsTagGridRow[]>([]);
 const tagsData = ref<Tag[]>([]);
 const tagTypesData = ref<TagType[]>([]);
+const editorPanel = ref<EditorPanelState | null>(null);
 const editProductionsPanel = ref<EditListPanelState | null>(null);
+
+// Tags don't support bulk editing; always 1 so the bulk notice is never shown.
+const editorBulkCount = computed(() => 1);
 
 const createModalOpen = ref(false);
 const createForm = ref<CreateTagFormState>(buildEmptyTagForm());
@@ -245,12 +262,25 @@ async function persistTagPatch(
 function onCellClicked(event: CellClickedEvent<CmsTagGridRow>): void {
   if (!event.data || !event.colDef.field) return;
 
-  const field = event.colDef.field as "productions";
+  const field = event.colDef.field as "name" | "productions";
 
   if (field === "productions") {
     openEditProductionsPanel(event.data);
     return;
   }
+
+  if (field !== "name") return;
+
+  const source = tagsData.value.find((p) => p.id === event.data!.id);
+  const currentMap = (source?.[field] ?? null) as LanguageMap | null;
+
+  editorPanel.value = {
+    rowId: event.data.id,
+    apiField: field,
+    label: event.colDef.headerName ?? field,
+    values: makeEditorValues(currentMap),
+  };
+  saveError.value = null;
 }
 
 async function onCellEditingStopped(
@@ -272,12 +302,7 @@ async function onCellEditingStopped(
   isSaving.value = true;
 
   try {
-    if (field === "name") {
-      const trimmed = String(newValue ?? "").trim();
-      const currentMap = (event.data.source.name ?? {}) as LanguageMap;
-      const nextMap: LanguageMap = { ...currentMap, [currentLang.value]: trimmed };
-      await persistTagPatch(event.data, { name: nextMap });
-    } else if (field === "public") {
+    if (field === "public") {
       await persistTagPatch(event.data, { public: Boolean(newValue) });
     } else {
       event.node.setDataValue(field, oldValue);
@@ -288,6 +313,29 @@ async function onCellEditingStopped(
   } finally {
     isSaving.value = false;
     persistGridState();
+  }
+}
+
+function closeEditorPanel(): void {
+  editorPanel.value = null;
+  saveError.value = null;
+}
+
+async function saveEditorPanel(): Promise<void> {
+  if (!editorPanel.value) return;
+
+  const row = rowData.value.find((item) => item.id === editorPanel.value?.rowId);
+  if (!row) return;
+
+  const payload = toLanguageMapOrNull(editorPanel.value.values);
+  isSaving.value = true;
+  saveError.value = null;
+  try {
+    await persistTagPatch(row, { [editorPanel.value.apiField]: payload });
+    await loadTagsData();
+    closeEditorPanel();
+  } finally {
+    isSaving.value = false;
   }
 }
 
@@ -456,6 +504,9 @@ defineExpose({
     openEditProductionsPanel,
     closeEditProductionsPanel,
     saveEditProductionsPanel,
+    editorPanel,
+    closeEditorPanel,
+    saveEditorPanel,
     openCreateModal,
     closeCreateModal,
     submitCreateTag,
