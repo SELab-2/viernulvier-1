@@ -417,7 +417,7 @@ async function submitCreateBlogPost(): Promise<void> {
 
   try {
     await createBlogPost({
-      blog: 1,
+      blog: 1, // NOTE: when actual blog collections are implemented, remove this hardcoded id
       title: createForm.value.title,
       content: createForm.value.content,
       published_at: new Date().toISOString(),

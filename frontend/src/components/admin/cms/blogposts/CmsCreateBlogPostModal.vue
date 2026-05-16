@@ -83,7 +83,7 @@
               <input
                 ref="productionInput"
                 v-model="productionDraft"
-                type="number"
+                type="text"
                 inputmode="numeric"
                 class="cms-text-input"
                 data-testid="cms-create-blogpost-production-input"

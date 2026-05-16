@@ -92,7 +92,7 @@ export default {
       blogpost: {
         content: "Contenu",
         publishedAt: "Publié à",
-        productions: "Production associés",
+        productions: "Productions associées",
       },
     },
     events: {
@@ -194,7 +194,7 @@ export default {
         submitAdmin: "Ajouter l'admin",
       },
       blogpost: {
-        title: "Nouvel articles",
+        title: "Nouvel article",
         submit: "Ajouter l'article",
       },
     },
