@@ -5,16 +5,25 @@ on:
     branches:
       - staging
     paths:
-      - 'DOCS/**' 
+      - 'DOCS/**'
 
 jobs:
   sync-wiki:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Action
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Sync to Wiki
-        uses: decathlon/wiki-page-creator-action@v1
-        with:
-          wiki_folder: DOCS
+        run: |
+          git clone https://github.com/${{ github.repository }}.wiki.git wiki
+          cp -r DOCS/* wiki/
+          cd wiki
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .
+          git commit -m "Update wiki from docs" || exit 0
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
