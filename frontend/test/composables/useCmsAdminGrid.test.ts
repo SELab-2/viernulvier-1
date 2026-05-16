@@ -12,7 +12,7 @@ describe("useCmsAdminGrid", () => {
     const username = columnDefs.value.find((c) => c.field === "username");
     const superField = columnDefs.value.find((c) => c.field === "super");
 
-    expect(id?.editable).toBe(true);
+    expect(id?.editable).toBe(false);
     expect(username?.editable).toBe(true);
     expect(username?.flex).toBe(1);
     expect(superField?.editable).toBe(true);
