@@ -1,0 +1,21 @@
+name: Sync Docs to Wiki
+
+on:
+  push:
+    branches:
+      - staging
+    paths:
+      - 'docs/**' 
+
+jobs:
+  sync-wiki:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Action
+        uses: actions/checkout@v4
+
+      - name: Sync to Wiki
+        uses: AndrewSchloss/github-wiki-action@v4
+        with:
+          wiki_folder: docs
+          github_token: ${{ secrets.GITHUB_TOKEN }}
