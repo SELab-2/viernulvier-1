@@ -1,10 +1,10 @@
-import type { Admin, Event as ArchiveEvent, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
+import type { Admin, Event as ArchiveEvent, ProductionWithBackwardsRefs, Tag, TagType, BlogPostWithBackwardsRefs } from "@viernulvier/shared";
 import { collectProductionTagsByIdMap } from "@/services/productions";
 import { tagTypeIsGenre } from "@/utils/tagDisplay";
 import { localizeWithFallback, type LanguageMap } from "@/utils/language-utils";
 import { toLocalDateTimeInput } from "./date";
 import { extractEventIds } from "./helpers";
-import type { CmsAdminGridRow, CmsEventGridRow, CmsProductionGridRow, CreateAdminFormState, CmsTagGridRow } from "./types";
+import type { CmsAdminGridRow, CmsEventGridRow, CmsProductionGridRow, CreateAdminFormState, CmsTagGridRow, CmsBlogPostGridRow } from "./types";
 
 function filterProductionTagLabels(
   productionTags: Tag[],
@@ -217,6 +217,42 @@ export function buildEmptyAdminForm(): CreateAdminFormState {
     password: "",
     super: false,
   };
+}
+
+/** Maps a single {@link BlogPostWithBackwardsRefs} to a flat grid row for the current locale. */
+export function buildBlogPostGridRow(
+  blogpost: BlogPostWithBackwardsRefs,
+  localize: (map: LanguageMap | null | undefined) => string,
+): CmsBlogPostGridRow {
+  return {
+    id: blogpost.id,
+    title: localize(blogpost.title as LanguageMap | null | undefined) || "",
+    content: localize(blogpost.content as LanguageMap | null | undefined) || "",
+    publishedAt: blogpost.published_at ? new Date(blogpost.published_at).toISOString() : null,
+    productions: blogpost.productions as number[],
+  };
+}
+ 
+/** Converts an array of blogposts into grid rows. Called on load and on locale change. */
+export function buildBlogPostGridRows(
+  blogposts: BlogPostWithBackwardsRefs[],
+  localize: (map: LanguageMap | null | undefined) => string,
+): CmsBlogPostGridRow[] {
+  return blogposts.map((blogpost) => buildBlogPostGridRow(blogpost, localize));
+}
+ 
+/**
+ * Mutates a row in-place after a PATCH so AgGrid preserves selection and scroll state.
+ *
+ * `published_at` and `productions` can't be updated.
+*/
+export function applyUpdatedBlogPostToRow(
+  row: CmsBlogPostGridRow,
+  updated: BlogPostWithBackwardsRefs,
+  localize: (map: LanguageMap | null | undefined) => string,
+): void {
+  row.title = localize(updated.title as LanguageMap | null | undefined) || "";
+  row.content = localize(updated.content as LanguageMap | null | undefined) || "";
 }
  
  

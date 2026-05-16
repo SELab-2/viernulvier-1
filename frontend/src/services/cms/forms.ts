@@ -1,7 +1,7 @@
 import type { SupportedLang } from "@/i18n";
 import type { LanguageMap } from "@/utils/language-utils";
 import { emptyLangRecord } from "./helpers";
-import type { CmsCreateFieldConfig, CreateFormState, CreateTagFormState } from "./types";
+import type { CmsCreateFieldConfig, CreateBlogPostFormState, CreateFormState, CreateTagFormState } from "./types";
 
 /**
  * Field definitions used to render the create-production modal dynamically.
@@ -100,6 +100,27 @@ export function validateCreateTagForm(
   }
   if (form.tagTypeId === null || form.tagTypeId <= 0) {
     return t("cms.create.validation.tagTypeRequired");
+  }
+  return null;
+}
+
+export function buildEmptyBlogPostForm(): CreateBlogPostFormState {
+  return {
+    title: { nl: "", en: "", fr: "" },
+    content: { nl: "", en: "", fr: "" },
+    productions: [],
+  };
+}
+
+export function validateCreateBlogPostForm(
+  form: CreateBlogPostFormState,
+  t: (key: string, params?: Record<string, unknown>) => string,
+): string | null {
+  if (!hasAnyLanguageValue(form.title)) {
+    return t("cms.create.validation.requiredOneLanguage");
+  }
+  if (!hasAnyLanguageValue(form.content)) {
+    return t("cms.create.validation.requiredOneLanguage");
   }
   return null;
 }

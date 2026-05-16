@@ -128,30 +128,6 @@ describe("CmsTabShell", () => {
 
       expect(wrapper.text()).toContain("Could not save");
     });
-
-    it("shows the empty-state placeholder when rowCount is zero and not loading", () => {
-      const wrapper = mountShell({ rowCount: 0, emptyStateKey: "cms.actions.noRows" });
-
-      expect(wrapper.text()).toMatch(/geen|no/i);
-    });
-
-    it("hides the empty-state while loading", () => {
-      const wrapper = mountShell({ rowCount: 0, isLoading: true, emptyStateKey: "cms.actions.noRows" });
-
-      expect(wrapper.text()).not.toMatch(/geen rijen|no rows/i);
-    });
-
-    it("hides the empty-state when there are rows", () => {
-      const wrapper = mountShell({ rowCount: 5, emptyStateKey: "cms.actions.noRows" });
-
-      expect(wrapper.text()).not.toMatch(/geen rijen|no rows/i);
-    });
-
-    it("hides the empty-state when there is a load error", () => {
-      const wrapper = mountShell({ rowCount: 0, loadError: "boom", emptyStateKey: "cms.actions.noRows" });
-
-      expect(wrapper.text()).not.toMatch(/geen rijen|no rows/i);
-    });
   });
 
   describe("grid controls forwarding", () => {

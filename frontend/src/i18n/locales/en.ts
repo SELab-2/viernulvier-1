@@ -67,10 +67,10 @@ export default {
       productions: "Productions",
       tags: "Tags",
       admins: "Admins",
-      tagsPlaceholder: "Tag management coming soon.",
-      adminsPlaceholder: "Admin management coming soon.",
+      blogposts: "Blogposts",
     },
     columns: {
+      id: "ID",
       performer: "Artist",
       title: "Title",
       producer: "Supertitle",
@@ -88,6 +88,11 @@ export default {
         username: "Username",
         profilePicture: "Profile picture",
         super: "Super admin",
+      },
+      blogpost: {
+        content: "Content",
+        publishedAt: "Published at",
+        productions: "Associated productions",
       },
     },
     events: {
@@ -131,12 +136,17 @@ export default {
       expandAllEvents: "Show all events",
       collapseAllEvents: "Hide events",
       admin: {
-        noAdmins: "No admins found.",
-        addAdmin: "+ Add Admin",
+        addAdmin: "+ Add admin",
         removeAdmin: "Remove selected admins",
         confirmRemoveDialogTitle: "Remove admin? | Remove admins?",
         confirmRemoveBody: "This will permanently delete {count} selected admin. This cannot be undone. | This will permanently delete {count} selected admins. This cannot be undone.",
         cannotRemoveSelf: "You cannot remove yourself.",
+      },
+      blogpost: {
+        addBlogpost: "+ Add blogpost",
+        removeBlogpost: "Remove selected blogposts",
+        confirmRemoveDialogTitle: "Remove blogpost? | Remove blogposts?",
+        confirmRemoveBody: "This will permanently delete {count} selected blogpost. This cannot be undone. | This will permanently delete {count} selected blogposts. This cannot be undone.",
       },
     },
     create: {
@@ -176,12 +186,17 @@ export default {
         requiredOneLanguage: "Fill at least 1 language for: {field}",
         imageRequired: "Fill at least one image URL (in any language).",
         tagTypeRequired: "Select a tag type.",
+        invalidId: "Invalid ID",
       },
       admin: {
         adminTitle: "New admin",
         adminPassword: "Password",
-        // TODO: adminPasswordHint: "The new admin can change their password after logging in via their profile.",
+        adminPasswordHint: "The new admin can change their password after logging in via their profile.",
         submitAdmin: "Add admin",
+      },
+      blogpost: {
+        title: "New blogpost",
+        submit: "Add blogpost",
       },
     },
     panel: {

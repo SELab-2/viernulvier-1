@@ -103,6 +103,7 @@ watch(
   font-size: 0.9375rem;
   line-height: 1.6;
   padding: 4px 8px;
+  min-height: 220px;
 }
 
 .markdown-editor :deep(.CodeMirror-cursor) {
