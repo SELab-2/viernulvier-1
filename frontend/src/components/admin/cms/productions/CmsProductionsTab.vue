@@ -382,8 +382,6 @@ const mediaPreview = ref<CmsMediaPreview | null>(null);
 const mediaPreviewEditUrl = ref("");
 const imagesByProductionId = ref(new Map<number, Array<{ id: number; url: string }>>());
 const imageLoadRequestToken = ref(0);
-const languages = SUPPORTED_LANGS as ReadonlyArray<SupportedLang>;
-const mediaPreview = ref<{ url: string; kind: "image" | "video" | "youtube"; label: string } | null>(null);
 const createExtraLangs = ref({ en: false, fr: false });
 const visibleCreateLangs = computed<SupportedLang[]>(() => {
   const result: SupportedLang[] = ["nl"];
@@ -503,8 +501,7 @@ const inlineFieldToApi: Record<InlineEditableField, keyof ProductionWithBackward
   teaser: "teaser",
 };
 
-const longGridFieldToApi: Record<"descriptionOne" | "descriptionTwo", LongField> = {
-const longGridFieldToApi: Record<"descriptionOne" | "descriptionTwo" | "media", ProductionLongField> = {
+const longGridFieldToApi: Record<"descriptionOne" | "descriptionTwo", ProductionLongField> = {
   descriptionOne: "description",
   descriptionTwo: "description_2",
 };
@@ -1253,6 +1250,21 @@ async function persistBulkProductionPatch(
   }
 }
 
+async function persistProductionPatch(
+  target: CmsProductionGridRow,
+  patch: Record<string, unknown>,
+): Promise<void> {
+  try {
+    await updateProduction(target.id, patch as Parameters<typeof updateProduction>[1]);
+  } catch (error) {
+    saveError.value =
+      error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+    throw error;
+  }
+}
+
 async function saveInlineBulkUpdate(
   primaryRow: CmsProductionGridRow,
   apiField: keyof ProductionWithBackwardsRefs,
@@ -1500,7 +1512,7 @@ async function saveEditorPanel(): Promise<void> {
       saveError.value = null;
       try {
         await persistBulkProductionPatch(targetRows, {
-          [editorPanel.value?.apiField as LongField]: payload,
+          [editorPanel.value?.apiField as ProductionLongField]: payload,
         });
         closeEditorPanel();
         showSaveSuccess(t("cms.feedback.saveSuccess"));
@@ -1515,7 +1527,7 @@ async function saveEditorPanel(): Promise<void> {
   saveError.value = null;
   try {
     await persistBulkProductionPatch(targetRows, {
-      [editorPanel.value?.apiField as LongField]: payload,
+      [editorPanel.value?.apiField as ProductionLongField]: payload,
     });
     await Promise.all(
       targetRows.map(async (target) => {

@@ -1,8 +1,7 @@
 import type { SupportedLang } from "@/i18n";
 import type { LanguageMap } from "@/utils/language-utils";
 import { emptyLangRecord } from "./helpers";
-import type { CmsCreateFieldConfig, CreateFormState, CreateTagFormState, CreateFormMediaItem } from "./types";
-import type { CmsCreateFieldConfig, CreateBlogPostFormState, CreateFormState, CreateTagFormState } from "./types";
+import type { CmsCreateFieldConfig, CreateFormState, CreateTagFormState, CreateFormMediaItem, CreateBlogPostFormState } from "./types";
 
 /**
  * Field definitions used to render the create-production modal dynamically.

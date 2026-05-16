@@ -111,7 +111,7 @@ import { useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 import type { CmsMediaPreview } from "@/services/cms/media-preview";
 
-const props = defineProps<{
+defineProps<{
   mediaPreview: CmsMediaPreview | null;
   mediaPreviewEditUrl: string;
   isSaving: boolean;

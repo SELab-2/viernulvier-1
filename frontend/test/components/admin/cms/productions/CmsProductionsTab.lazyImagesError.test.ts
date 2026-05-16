@@ -3,7 +3,6 @@ import { mount, flushPromises } from "@vue/test-utils";
 import { defineComponent } from "vue";
 import { i18n } from "@/i18n";
 import CmsProductionsTab from "@/components/admin/cms/productions/CmsProductionsTab.vue";
-import * as productionsService from "@/services/productions";
 import * as imagesService from "@/services/images";
 import * as tagsService from "@/services/tags";
 import * as hallsService from "@/services/halls";

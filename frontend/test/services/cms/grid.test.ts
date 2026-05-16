@@ -182,7 +182,7 @@ describe("cms grid helpers", () => {
     const tagType = { id: 7, name: { nl: "TagTypeName" } } as unknown as TagType;
     const row = buildTagGridRow(tag, new Map(), (m) => m?.nl ?? "");
     expect(row.tagType).toBe("#7");
-    expect(row.productionCount).toBe(2);
+    expect(row.productions.length).toBe(2);
 
     const rows = buildTagGridRows([tag], [tagType], (m) => m?.nl ?? "");
     expect(rows[0].tagType).toBe("TagTypeName");
