@@ -170,7 +170,7 @@ const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 const route = useRoute();
 const router = useRouter();
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 10;
 
 
 const allPosts = ref<BlogPostWithBackwardsRefs[]>([]);
