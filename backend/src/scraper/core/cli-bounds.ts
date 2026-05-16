@@ -107,13 +107,11 @@ export async function resolveScrapeBoundsFromArgs(): Promise<{
 
   if (mode === "days") {
     if (args.length < 2) {
-      console.error("Error: days mode requires a number argument: 'days <N>'");
-      process.exit(1);
+      throw new Error("Error: days mode requires a number argument: 'days <N>'");
     }
     const numDays = parseInt(args[1]!, 10);
     if (isNaN(numDays) || numDays <= 0) {
-      console.error(`Error: invalid number of days: ${args[1]}`);
-      process.exit(1);
+      throw new Error(`Error: invalid number of days: ${args[1]}`);
     }
     const bounds = pastNDaysBounds(numDays);
     return {
@@ -122,8 +120,7 @@ export async function resolveScrapeBoundsFromArgs(): Promise<{
     };
   }
 
-  console.error(
+  throw new Error(
     `Error: unknown mode '${mode}'. Use: historical | last | days <N>`,
   );
-  process.exit(1);
 }
