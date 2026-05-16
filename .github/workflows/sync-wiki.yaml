@@ -5,7 +5,7 @@ on:
     branches:
       - staging
     paths:
-      - 'docs/**'
+      - 'docs/**' 
 
 jobs:
   sync-wiki:
