@@ -17,13 +17,18 @@ jobs:
 
       - name: Sync to Wiki
         run: |
-          git clone https://github.com/${{ github.repository }}.wiki.git wiki
+          # Clone with authentication token
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git wiki
+          
+          # Copy docs
           cp -r DOCS/* wiki/
+          
+          # Configure git
           cd wiki
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Commit and push
           git add .
-          git commit -m "Update wiki from docs" || exit 0
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          git commit -m "Update wiki from docs - $(date)" || echo "No changes to commit"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git
