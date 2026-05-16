@@ -779,6 +779,19 @@ describe("CmsProductionsTab", () => {
     api.openMediaPreview("   ", "Empty");
     expect(api.mediaPreview.value).toBeNull();
 
+    api.imagesByProductionId.value = new Map([
+      [api.rowData.value[0].id, [{ id: 501, url: "https://example.com/single.jpg" }]],
+    ]);
+    api.rebuildRows();
+    api.onCellClicked({
+      data: api.rowData.value[0],
+      colDef: { field: "imageMedia", headerName: "Images" },
+    });
+    expect(api.mediaPreview.value?.kind).toBe("image");
+
+    state.syncGalleryPreview(1);
+    expect(api.mediaPreview.value?.kind).toBe("image");
+
     api.addMedia("image");
     const imageMedia = api.createForm.value.media.find((m: { type: string }) => m.type === "image");
     await api.onMediaFileChange(imageMedia.id, { target: { files: [], value: "x" } } as unknown as Event);
@@ -788,6 +801,47 @@ describe("CmsProductionsTab", () => {
 
     state.updateMediaUrl("missing-id", "https://example.com/ignored.jpg");
     expect(imageMedia.url).toBe("https://example.com/image.jpg");
+
+    api.mediaPreview.value = {
+      kind: "image",
+      url: "",
+      label: "Image",
+      productionId: mockProduction.id,
+    } as never;
+    await state.onMediaPreviewImageSelected({
+      target: {
+        files: [new File(["x"], "upload.png", { type: "image/png" })],
+        value: "upload.png",
+      },
+    } as never);
+    expect(api.mediaPreview.value?.url).toBe("");
+
+    api.mediaPreview.value = {
+      kind: "iframe",
+      url: "https://example.com/video",
+      label: "Video",
+      productionId: mockProduction.id,
+    } as never;
+    await state.saveMediaVideoUrl();
+    expect(productionsService.updateProduction).toHaveBeenCalledTimes(0);
+
+    api.mediaPreview.value = {
+      kind: "image",
+      url: "https://example.com/image.jpg",
+      label: "Image",
+      productionId: mockProduction.id,
+    } as never;
+    await state.removeMediaImage();
+    expect(imagesService.deleteImage).toHaveBeenCalledTimes(0);
+
+    api.mediaPreview.value = {
+      kind: "iframe",
+      url: "https://example.com/video",
+      label: "Video",
+      productionId: mockProduction.id,
+    } as never;
+    await state.removeMediaVideo();
+    expect(productionsService.updateProduction).toHaveBeenCalledTimes(0);
 
     api.removeConfirmOpen.value = true;
     api.gridApi.value = {
@@ -987,6 +1041,37 @@ describe("CmsProductionsTab", () => {
 
     expect(productionsService.createProduction).toHaveBeenCalledWith(
       expect.objectContaining({ tags: [1, 2] }),
+    );
+  });
+
+  it("submits external image media and a video url without uploading images", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    api.openCreateModal();
+    await flushPromises();
+
+    api.addMedia("image");
+    api.addMedia("video");
+
+    const imageMedia = api.createForm.value.media.find((m: { type: string }) => m.type === "image");
+    const videoMedia = api.createForm.value.media.find((m: { type: string }) => m.type === "video");
+
+    imageMedia.url = "https://example.com/external.jpg";
+    videoMedia.url = "https://example.com/video.mp4";
+
+    api.createForm.value.title.nl = "Title";
+    api.createForm.value.artist.nl = "Artist";
+    api.createForm.value.tagline.nl = "Tagline";
+    api.createForm.value.teaser.nl = "Teaser";
+
+    await api.submitCreateProduction();
+
+    expect(mediaUploadService.uploadImageWithCrops).not.toHaveBeenCalled();
+    expect(productionsService.createProduction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        video_2: { nl: "https://example.com/video.mp4" },
+      }),
     );
   });
 
