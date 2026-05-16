@@ -220,6 +220,7 @@ export default {
       "La première année doit être antérieure ou égale à la dernière. Ajustez la plage ou le lien et réessayez.",
     empty: "Aucune production dans les archives pour l’instant.",
     morePerformances: "{n} de plus",
+    moreListTags: "+{n} de plus",
     moreGridTags: "+{n}",
     layoutToggleLabel: "Affichage",
     layoutListLabel: "Vue liste",
