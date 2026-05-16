@@ -9,7 +9,10 @@ import BlogPostDetailView from "@/views/BlogPostDetailView.vue";
 
 vi.mock("@/services/blogposts", () => ({ getBlogPost: vi.fn() }));
 vi.mock("@/services/productions", () => ({ getProduction: vi.fn() }));
-vi.mock("@/services/media", () => ({ getImagesForProductionOrEmpty: vi.fn() }));
+vi.mock("@/services/media", () => ({
+  getImagesForProductionOrEmpty: vi.fn(),
+  getImagesForProductionsOrEmpty: vi.fn(),
+}));
 vi.mock("@/services/events", () => ({ getEvents: vi.fn() }));
 
 vi.mock("@/components/nav/AppNavbar.vue", () => ({
@@ -24,7 +27,7 @@ vi.mock("@/components/blogpost/LinkedProductionsCarousel.vue", () => ({
 
 import { getBlogPost } from "@/services/blogposts";
 import { getProduction } from "@/services/productions";
-import { getImagesForProductionOrEmpty } from "@/services/media";
+import { getImagesForProductionOrEmpty, getImagesForProductionsOrEmpty } from "@/services/media";
 import { getEvents } from "@/services/events";
 
 const makePost = (overrides: Partial<BlogPostWithBackwardsRefs> = {}): BlogPostWithBackwardsRefs =>
@@ -71,6 +74,7 @@ async function mountView(id = "1") {
 describe("BlogPostDetailView.vue", () => {
   beforeEach(() => {
     vi.mocked(getImagesForProductionOrEmpty).mockResolvedValue([]);
+    vi.mocked(getImagesForProductionsOrEmpty).mockResolvedValue(new Map());
     vi.mocked(getEvents).mockResolvedValue([]);
   });
 
@@ -193,6 +197,30 @@ describe("BlogPostDetailView.vue", () => {
     const link = wrapper.find('[role="alert"] a');
     expect(link.exists()).toBe(true);
     expect(link.text()).toBe(i18n.global.t("blogpost.backToHome"));
+    wrapper.unmount();
+  });
+
+  it("shows the not-found error when the id is not a valid integer", async () => {
+    const wrapper = await mountView("abc");
+    await flushPromises();
+
+    const alert = wrapper.find('[role="alert"]');
+    expect(alert.exists()).toBe(true);
+    expect(alert.text()).toContain(i18n.global.t("blogpost.notFound"));
+    expect(wrapper.find("article").exists()).toBe(false);
+    expect(getBlogPost).not.toHaveBeenCalled();
+    wrapper.unmount();
+  });
+
+  it("shows the not-found error when the id is less than or equal to zero", async () => {
+    const wrapper = await mountView("0");
+    await flushPromises();
+
+    const alert = wrapper.find('[role="alert"]');
+    expect(alert.exists()).toBe(true);
+    expect(alert.text()).toContain(i18n.global.t("blogpost.notFound"));
+    expect(wrapper.find("article").exists()).toBe(false);
+    expect(getBlogPost).not.toHaveBeenCalled();
     wrapper.unmount();
   });
 

@@ -61,6 +61,7 @@
           :productions="linkedProductions" 
           :thumbnails="thumbnailUrlByProductionId"
           :date-ranges="dateRangeByProductionId" 
+          :is-loading="loadingProductions" 
         />
 
       </article>
@@ -86,7 +87,7 @@ import { localizeOrEmpty } from "@/utils/language-utils";
 import { parseAndSanitizeMd } from "@/utils/parsers";
 import { getProduction } from "@/services/productions";
 import LinkedProductionsCarousel from "@/components/blogpost/LinkedProductionsCarousel.vue";
-import { getImagesForProductionOrEmpty } from "@/services/media";
+import { getImagesForProductionOrEmpty, getImagesForProductionsOrEmpty } from "@/services/media";
 import { pickProductionListThumbnailUrl } from "@/utils/productionThumbnails";
 import { getEvents } from "@/services/events";
 
@@ -98,6 +99,7 @@ const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 const post = ref<BlogPostWithBackwardsRefs | null>(null);
 const loading = ref<boolean>(true);
 const error = ref<"not-found" | "generic" | null>(null);
+const loadingProductions = ref<boolean>(false);
 
 const title = computed(() => localizeOrEmpty(post.value?.title ?? {}, currentLang.value));
 const bodyHtml = computed(() => {
@@ -117,40 +119,60 @@ const dateRangeByProductionId = ref(new Map<number, string>());
 
 async function loadPost() {
   loading.value = true;
+  error.value = null;
+  post.value = null;
+  linkedProductions.value = [];
+  thumbnailUrlByProductionId.value.clear();
+  dateRangeByProductionId.value.clear();
+  loadingProductions.value = false;
+
+  const numericId = Number(props.id);
+  if (!Number.isInteger(numericId) || numericId <= 0) {
+    error.value = "not-found";
+    loading.value = false;
+    return;
+  }
+
   try {
     const data = await getBlogPost(Number(props.id));
     post.value = data;
 
+    loading.value = false;
+
     const ids = (data.productions || []) as number[];
     if (ids.length === 0) return;
 
+    loadingProductions.value = true;
+
     const results = await Promise.allSettled(ids.map(id => getProduction(id)));
-    
     linkedProductions.value = results
       .filter((r): r is PromiseFulfilledResult<ProductionWithBackwardsRefs> => r.status === 'fulfilled')
       .map(r => r.value);
 
-    await Promise.all(linkedProductions.value.map(async (prod) => {
-      const [images, eventsResult] = await Promise.allSettled([
-        getImagesForProductionOrEmpty(prod.id),
-        getEvents(prod.id),
-      ]);
+    const validProdIds = linkedProductions.value.map(prod => prod.id);
 
-      if (images.status === 'fulfilled') {
-        thumbnailUrlByProductionId.value.set(prod.id, pickProductionListThumbnailUrl(images.value));
-      }
+    const [imagesMap, ...eventsResults] = await Promise.all([
+      getImagesForProductionsOrEmpty(validProdIds),
+      ...validProdIds.map(id => getEvents(id).catch(() => [])),
+    ]);
+    
+    linkedProductions.value.forEach((prod, index) => {
+      const images = imagesMap.get(prod.id) || [];
+      thumbnailUrlByProductionId.value.set(prod.id, pickProductionListThumbnailUrl(images));
 
-      if (eventsResult.status === 'fulfilled') {
-        dateRangeByProductionId.value.set(prod.id, formatYearRange(eventsResult.value));
+      const events = eventsResults[index] || [];
+      if (events.length > 0) {
+        dateRangeByProductionId.value.set(prod.id, formatYearRange(events));
       } else {
         dateRangeByProductionId.value.set(prod.id, "");
       }
-    }));
+    });
 
   } catch (err) {
     error.value = (err instanceof ApiError && err.status === 404) ? "not-found" : "generic";
-  } finally {
     loading.value = false;
+  } finally {
+    loadingProductions.value = false;
   }
 }
 
