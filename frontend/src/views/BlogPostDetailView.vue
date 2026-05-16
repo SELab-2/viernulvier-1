@@ -87,7 +87,7 @@ import { localizeOrEmpty } from "@/utils/language-utils";
 import { parseAndSanitizeMd } from "@/utils/parsers";
 import { getProduction } from "@/services/productions";
 import LinkedProductionsCarousel from "@/components/blogpost/LinkedProductionsCarousel.vue";
-import { getImagesForProductionOrEmpty, getImagesForProductionsOrEmpty } from "@/services/media";
+import { getImagesForProductionsOrEmpty } from "@/services/media";
 import { pickProductionListThumbnailUrl } from "@/utils/productionThumbnails";
 import { getEvents } from "@/services/events";
 
