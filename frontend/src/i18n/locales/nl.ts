@@ -15,24 +15,26 @@ export default {
     },
   },
   hero: {
+    dateline: "Archief · Gent",
     title: "Het Archief van De Vooruit",
-    subtitle:
-      "Meer dan 12.000 voorstellingen, concerten, films en culturele evenementen — gedocumenteerd, doorzoekbaar en voor iedereen toegankelijk.",
-    cta: "Doorzoek het archief",
+    lead:
+      "Decennia aan voorstellingen, concerten en films uit De Vooruit — bewaard, ontsloten en doorzoekbaar. Dit is de voorpagina van het huisarchief: typ een naam, een titel of een zaal om de fiche op te zoeken, of blader vrij door de collectie.",
+    searchPlaceholder: "Zoek een productie, artiest of zaal…",
+    searchLabel: "Doorzoek het archief",
+    searchSubmit: "Zoek",
+    searchHint: "{count}+ producties doorzoekbaar",
+    browseAll: "Of bekijk alle producties",
   },
-  stats: {
-    productions: "Producties",
-    events: "Evenementen",
-    yearsOfHistory: "Jaar geschiedenis",
-    genres: "Genres",
-  },
-  bento: {
-    featured: {
-      label: "Uitgelicht",
-      title: "Theater, dans & meer",
-      description:
-        "Ontdek honderden producties uit de rijke programmering van De Vooruit — van avant-garde dans tot politiek theater.",
-      cta: "Verkennen",
+  featuredBlog: {
+    eyebrow: "Uitgelichte blogpost",
+    dateline: "{date} · Redactie",
+    readMore: "Lees het volledige artikel",
+    imageCaption:
+      "Beeld bij het artikel — bijschrift volgt uit de blogpost.",
+    placeholder: {
+      title: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+      excerpt:
+        "Aenean euismod, urna ac dignissim porta, leo arcu vehicula nibh, sed congue dolor magna nec massa. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In hac habitasse platea dictumst — donec vitae sapien ut libero venenatis faucibus.",
     },
   },
   footer: {

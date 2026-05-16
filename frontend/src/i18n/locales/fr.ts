@@ -15,24 +15,26 @@ export default {
     },
   },
   hero: {
+    dateline: "Archives · Gand",
     title: "Les Archives de Vooruit",
-    subtitle:
-      "Plus de 12 000 spectacles, concerts, films et événements culturels — documentés, consultables et accessibles à tous.",
-    cta: "Parcourir les archives",
+    lead:
+      "Des décennies de spectacles, concerts et films de Vooruit — conservés, classés et consultables. Voici la une des archives de la maison : tapez un nom, un titre ou une salle pour ouvrir la fiche, ou parcourez librement la collection.",
+    searchPlaceholder: "Cherchez une production, un artiste ou une salle…",
+    searchLabel: "Fouiller les archives",
+    searchSubmit: "Chercher",
+    searchHint: "{count}+ productions répertoriées",
+    browseAll: "Ou parcourir toutes les productions",
   },
-  stats: {
-    productions: "Productions",
-    events: "Evenements",
-    yearsOfHistory: "Ans d'histoire",
-    genres: "Genres",
-  },
-  bento: {
-    featured: {
-      label: "À la une",
-      title: "Théâtre, danse & plus",
-      description:
-        "Découvrez des centaines de productions de la riche programmation de De Vooruit — de la danse d'avant-garde au théâtre politique.",
-      cta: "Explorer",
+  featuredBlog: {
+    eyebrow: "Article à la une",
+    dateline: "{date} · Rédaction",
+    readMore: "Lire l'article complet",
+    imageCaption:
+      "Illustration de l'article — la légende viendra de la publication.",
+    placeholder: {
+      title: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+      excerpt:
+        "Aenean euismod, urna ac dignissim porta, leo arcu vehicula nibh, sed congue dolor magna nec massa. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In hac habitasse platea dictumst — donec vitae sapien ut libero venenatis faucibus.",
     },
   },
   footer: {

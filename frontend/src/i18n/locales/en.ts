@@ -15,24 +15,26 @@ export default {
     },
   },
   hero: {
+    dateline: "Archive · Ghent",
     title: "The Archive of De Vooruit",
-    subtitle:
-      "Over 12,000 performances, concerts, films and cultural events — documented, searchable and open to everyone.",
-    cta: "Browse the archive",
+    lead:
+      "Decades of performances, concerts and films at De Vooruit — preserved, indexed and made searchable. This is the front page of the house archive: type a name, a title or a hall to pull up the file, or wander freely through the collection.",
+    searchPlaceholder: "Search a production, artist or hall…",
+    searchLabel: "Search the archive",
+    searchSubmit: "Search",
+    searchHint: "{count}+ productions on file",
+    browseAll: "Or browse all productions",
   },
-  stats: {
-    productions: "Productions",
-    events: "Events",
-    yearsOfHistory: "Years of History",
-    genres: "Genres",
-  },
-  bento: {
-    featured: {
-      label: "Featured",
-      title: "Theatre, dance & more",
-      description:
-        "Discover hundreds of productions from the rich programming of De Vooruit — from avant-garde dance to political theatre.",
-      cta: "Explore",
+  featuredBlog: {
+    eyebrow: "Featured blog post",
+    dateline: "{date} · Editorial",
+    readMore: "Read the full article",
+    imageCaption:
+      "Article image — caption will come from the blog post.",
+    placeholder: {
+      title: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+      excerpt:
+        "Aenean euismod, urna ac dignissim porta, leo arcu vehicula nibh, sed congue dolor magna nec massa. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In hac habitasse platea dictumst — donec vitae sapien ut libero venenatis faucibus.",
     },
   },
   footer: {
