@@ -341,12 +341,13 @@ export default {
     },
   },
   blogpost: {
-    loading: "Blogpost laden…",
+    loading: "Blogpost laden",
     notFound: "Blogpost niet gevonden",
     notFoundDescription: "Deze blogpost bestaat niet of is niet meer beschikbaar.",
     errorGeneric: "Er is iets misgegaan bij het laden van deze blogpost.",
     publishedOn: "Gepubliceerd op {date}",
     backToHome: "Terug naar home",
+    relatedProductions: "Gerelateerde producties",
   },
   admin: {
     login: {
