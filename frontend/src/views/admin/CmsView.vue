@@ -39,6 +39,17 @@
           <button
             type="button"
             class="cms-tab"
+            :class="{ 'cms-tab-active': activeTab === 'tagTypes' }"
+            role="tab"
+            data-testid="cms-tab-tag-types"
+            :aria-selected="activeTab === 'tagTypes'"
+            @click="activeTab = 'tagTypes'"
+          >
+            {{ t("cms.tabs.tagTypes") }}
+          </button>
+          <button
+            type="button"
+            class="cms-tab"
             :class="{ 'cms-tab-active': activeTab === 'admins' }"
             role="tab"
             data-testid="cms-tab-admins"
@@ -58,24 +69,13 @@
           >
             {{ t("cms.tabs.blogposts") }}
           </button>
-          <button
-            type="button"
-            class="cms-tab"
-            :class="{ 'cms-tab-active': activeTab === 'tagTypes' }"
-            role="tab"
-            data-testid="cms-tab-tag-types"
-            :aria-selected="activeTab === 'tagTypes'"
-            @click="activeTab = 'tagTypes'"
-          >
-            {{ t("cms.tabs.tagTypes") }}
-          </button>
         </div>
 
         <CmsProductionsTab v-if="activeTab === 'productions'" />
         <CmsTagsTab v-else-if="activeTab === 'tags'" />
+        <CmsTagTypesTab v-else-if="activeTab === 'tagTypes'" />
         <CmsAdminsTab v-else-if="activeTab === 'admins'" />
-        <CmsBlogPostsTab v-else-if="activeTab === 'blogposts'" />
-        <CmsTagTypesTab v-else />
+        <CmsBlogPostsTab v-else />
       </div>
     </main>
 
