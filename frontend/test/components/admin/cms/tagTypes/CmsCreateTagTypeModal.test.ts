@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
-import { i18n } from "@/i18n";
+import { i18n, type SupportedLang } from "@/i18n";
 import type { CreateTagTypeFormState } from "@/services/cms";
 import { buildEmptyTagTypeForm } from "@/services/cms";
 import CmsCreateTagTypeModal from "@/components/admin/cms/tagTypes/CmsCreateTagTypeModal.vue";
 
 function mountModal(
-  overrides: Partial<{ open: boolean; createError: string | null; isCreating: boolean; createExtraLangs: { en: boolean; fr: boolean }; visibleCreateLangs: string[] }> = {},
+  overrides: Partial<{ open: boolean; createError: string | null; isCreating: boolean; createExtraLangs: { en: boolean; fr: boolean }; visibleCreateLangs: SupportedLang[] }> = {},
 ) {
   return mount(CmsCreateTagTypeModal, {
     global: { plugins: [i18n] },
@@ -134,7 +134,7 @@ describe("CmsCreateTagTypeModal", () => {
     });
 
     it("renders inputs for each visible lang", () => {
-      const wrapper = mountModal({ visibleCreateLangs: ["nl", "en", "fr"] as any });
+      const wrapper = mountModal({ visibleCreateLangs: ["nl", "en", "fr"] });
       expect(wrapper.find('[data-testid="cms-create-tag-type-name-nl"]').exists()).toBe(true);
       expect(wrapper.find('[data-testid="cms-create-tag-type-name-en"]').exists()).toBe(true);
       expect(wrapper.find('[data-testid="cms-create-tag-type-name-fr"]').exists()).toBe(true);
