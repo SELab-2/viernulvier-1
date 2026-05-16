@@ -6,13 +6,15 @@ describe("useCmsTagGrid", () => {
   it("declares the tag column definitions", () => {
     const { columnDefs } = useCmsTagGrid({ isDark: ref(false), t: (key) => key });
 
-    expect(columnDefs.value).toHaveLength(4);
+    expect(columnDefs.value).toHaveLength(5);
 
+    const id = columnDefs.value.find((c) => c.field === "id");
     const name = columnDefs.value.find((c) => c.field === "name");
     const tagType = columnDefs.value.find((c) => c.field === "tagType");
     const publicField = columnDefs.value.find((c) => c.field === "public");
     const productionCount = columnDefs.value.find((c) => c.field === "productionCount");
 
+    expect(id?.editable).toBe(false);
     expect(name?.editable).toBe(true);
     expect(name?.flex).toBe(1);
     expect(tagType?.editable).toBe(false);
@@ -26,6 +28,7 @@ describe("useCmsTagGrid", () => {
     const { gridColumnOptions } = useCmsTagGrid({ isDark: ref(false), t: (key) => key });
 
     expect(gridColumnOptions.value).toEqual([
+      { colId: "id", label: "cms.columns.id" },
       { colId: "name", label: "cms.columns.tagName" },
       { colId: "tagType", label: "cms.columns.tagType" },
       { colId: "public", label: "cms.columns.public" },

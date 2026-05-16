@@ -54,6 +54,7 @@ export function useCmsTagGrid(options: {
     {
       headerName: options.t("cms.columns.id"),
       field: "id",
+      editable: false,
       minWidth: 50,
       maxWidth: 100,
     },
