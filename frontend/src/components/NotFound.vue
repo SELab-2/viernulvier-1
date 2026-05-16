@@ -73,7 +73,7 @@ withDefaults(defineProps<Props>(), {
   title: undefined,
   description: undefined,
   buttonLabel: undefined,
-  buttonLink: '/productions',
+  buttonLink: '/',
   helpTitle: undefined,
   helpText: undefined,
   contactLabel: undefined,
