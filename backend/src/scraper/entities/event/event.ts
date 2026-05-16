@@ -370,7 +370,7 @@ export async function scrapeAllEvents(
   for (let page = 1; page <= totalPages; page++) {
     const data = await fetchEventsPage(page, authToken, resolved);
     for (const event of data.member) {
-      console.log(`Processing event ${event["@id"]} (${page}/${totalPages})`);
+      console.log(`Processing store-front event ${event["@id"]} (${page}/${totalPages})`);
       try {
         await ensureEventImported(event, authToken, loginToken, stats);
       } catch (err) {
