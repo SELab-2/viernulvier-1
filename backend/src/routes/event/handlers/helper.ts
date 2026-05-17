@@ -1,4 +1,4 @@
-import z, { unknown } from "zod";
+import z from "zod";
 
 import { EventSchema, EventSchemaWithoutPrice, serial } from "@viernulvier/shared/index.js";
 import { buildQuery } from "@/routes/helpers.js";
