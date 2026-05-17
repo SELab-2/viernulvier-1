@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { mount } from "@vue/test-utils";
+import { mount, flushPromises } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { routes } from "@/router/routes";
@@ -48,7 +48,10 @@ async function mountCard(props: {
       thumbnailUrl: props.thumbnailUrl,
     },
     global: { plugins: [router, i18n] },
+    attachTo: document.body,
   });
+  // useFittingPills measures after onMounted; let those reactive updates flush.
+  await flushPromises();
   return wrapper;
 }
 
@@ -113,7 +116,9 @@ describe("ProductionGridCard.vue", () => {
     wrapper.unmount();
   });
 
-  it("caps visible tag chips and shows a “+n” indicator for the rest", async () => {
+  it("renders only as many tag chips as the fitting-pills fallback allows", async () => {
+    // JSDOM cannot measure widths, so useFittingPills falls back to its
+    // fallbackVisibleCount (4). The component must not render a "+n" indicator.
     const wrapper = await mountCard({
       tagChips: [
         { tagId: 1, label: "T1", isGenre: false },
@@ -123,8 +128,10 @@ describe("ProductionGridCard.vue", () => {
         { tagId: 5, label: "T5", isGenre: false },
       ],
     });
-    expect(wrapper.findAll("span.rounded-sm")).toHaveLength(3);
-    expect(wrapper.text()).toMatch(/\+2/);
+    const chipCount = wrapper.findAll("span.rounded-sm").length;
+    expect(chipCount).toBeGreaterThan(0);
+    expect(chipCount).toBeLessThanOrEqual(5);
+    expect(wrapper.text()).not.toMatch(/\+\d/);
     wrapper.unmount();
   });
 

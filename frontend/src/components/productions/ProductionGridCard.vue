@@ -4,16 +4,17 @@
       name: RouteNames.PRODUCTION_DETAIL,
       params: { lang: locale, id: production.id },
     }"
-    class="production-grid-card group flex h-full flex-col gap-4 rounded-md border border-surface-3 bg-surface-0 p-4 transition-colors hover:border-accent-outline hover:bg-surface-1/60 dark:bg-surface-1 sm:p-5"
+    class="production-grid-card group flex h-full flex-col overflow-hidden rounded-md border border-surface-3 bg-surface-0 transition-colors hover:border-accent-outline hover:bg-surface-1/60 dark:bg-surface-1"
     :style="{ '--production-grid-stagger': `${staggerDelayMs}ms` }"
   >
     <!--
       Same shape (1920/900) as the list card's placeholder tile so list and
-      grid thumbnails feel like the same product. Grid is wider, hence taller.
+      grid thumbnails feel like the same product. Edge-to-edge: no padding
+      around the image, only the card's border clips its top corners.
     -->
     <div
       :class="[
-        'aspect-[1920/900] w-full overflow-hidden rounded-md',
+        'aspect-[1920/900] w-full',
         useLogoFallback ? 'flex items-center justify-center bg-surface-2 p-4' : 'bg-surface-2',
       ]"
       aria-hidden="true"
@@ -32,17 +33,17 @@
       />
     </div>
 
-    <div class="flex min-w-0 flex-1 flex-col">
+    <div class="flex min-w-0 flex-1 flex-col gap-1.5 px-3 py-3 sm:px-4 sm:py-3.5">
       <div class="min-w-0">
         <h2
-          class="font-serif text-xl font-semibold leading-tight tracking-tight text-ink-primary md:text-2xl"
+          class="truncate font-serif text-lg font-semibold leading-tight tracking-tight text-ink-primary md:text-xl"
         >
           {{ title }}
         </h2>
 
         <p
           v-if="artist"
-          class="mt-1 font-serif text-base italic text-ink-secondary md:text-lg"
+          class="truncate font-serif text-sm italic leading-snug text-ink-secondary md:text-base"
         >
           {{ artist }}
         </p>
@@ -50,7 +51,7 @@
 
       <p
         v-if="dateSummary.line"
-        class="mt-3 font-serif text-sm leading-tight tabular-nums text-ink-secondary md:text-base"
+        class="font-serif text-sm leading-tight tabular-nums text-ink-secondary"
       >
         <span class="whitespace-nowrap">{{ dateSummary.line }}</span>
         <span
@@ -66,26 +67,22 @@
       </p>
 
       <div
-        v-if="visibleTagChips.length"
-        class="mt-auto flex flex-wrap items-center gap-2 pt-4"
+        v-if="tagChips.length"
+        :ref="setRowRef"
+        class="mt-auto flex w-full flex-wrap items-center gap-1.5 overflow-hidden pt-2"
       >
         <span
-          v-for="chip in visibleTagChips"
-          :key="chip.tagId"
-          class="rounded-sm px-2.5 py-1 text-xs font-medium uppercase tracking-wide"
+          v-for="item in visibleTagPills"
+          :key="item.id"
+          :ref="(el) => setPillRef(item.id, el)"
+          class="rounded-sm px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide"
           :class="
-            chip.isGenre
+            item.chip.isGenre
               ? 'bg-tag-genre-bg text-tag-genre-text'
               : 'border border-surface-3 bg-surface-1 text-ink-secondary'
           "
         >
-          {{ chip.label }}
-        </span>
-        <span
-          v-if="hiddenTagCount > 0"
-          class="text-xs font-medium tabular-nums tracking-wide text-ink-tertiary"
-        >
-          {{ t("productionsPage.moreGridTags", { n: hiddenTagCount }) }}
+          {{ item.chip.label }}
         </span>
       </div>
     </div>
@@ -103,6 +100,7 @@ import { localizeOrEmpty } from "@/utils/language-utils";
 import type { ProductionDateSummary } from "@/utils/productionsOverview";
 import type { ProductionTagChip } from "@/utils/tagDisplay";
 import { useDarkMode } from "@/composables/useDarkMode";
+import { useFittingPills } from "@/composables/useFittingPills";
 
 const PLACEHOLDER_THUMB_LIGHT_SRC = new URL(
   "../../assets/images/placeholder-light.svg",
@@ -114,11 +112,8 @@ const PLACEHOLDER_THUMB_DARK_SRC = new URL(
   import.meta.url,
 ).href;
 
-/**
- * Grid cards align in rows of equal height, so cap visible chips and roll the
- * rest into a "+n" indicator to keep card heights consistent.
- */
-const MAX_VISIBLE_GRID_TAGS = 3;
+/** JSDOM fallback when row width is not measurable. Real browsers measure. */
+const TAG_PILL_FALLBACK_VISIBLE = 4;
 
 const props = withDefaults(
   defineProps<{
@@ -157,12 +152,17 @@ const resolvedThumbSrc = computed(() => {
   return props.thumbnailUrl;
 });
 
-const visibleTagChips = computed(() =>
-  props.tagChips.slice(0, MAX_VISIBLE_GRID_TAGS),
+/**
+ * `useFittingPills` items need an `id`; wrap the chips so we can reuse
+ * the same row-fit logic the productions filter uses for genre pills.
+ */
+const tagPillItems = computed(() =>
+  props.tagChips.map((chip) => ({ id: chip.tagId, chip })),
 );
 
-const hiddenTagCount = computed(() =>
-  Math.max(0, props.tagChips.length - MAX_VISIBLE_GRID_TAGS),
+const { setRowRef, setPillRef, visibleItems: visibleTagPills } = useFittingPills(
+  tagPillItems,
+  { gapPx: 6, fallbackVisibleCount: TAG_PILL_FALLBACK_VISIBLE },
 );
 
 const staggerDelayMs = computed(() =>

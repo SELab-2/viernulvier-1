@@ -221,7 +221,6 @@ export default {
     empty: "No productions in the archive yet.",
     morePerformances: "{n} more",
     moreListTags: "+{n} more",
-    moreGridTags: "+{n}",
     layoutToggleLabel: "Layout",
     layoutListLabel: "List view",
     layoutGridLabel: "Grid view",

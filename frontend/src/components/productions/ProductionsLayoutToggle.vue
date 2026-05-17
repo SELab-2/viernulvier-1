@@ -104,10 +104,6 @@ function select(mode: ProductionsLayoutMode) {
 }
 
 .productions-layout-toggle__btn--active {
-  @apply bg-ink-primary text-surface-0 dark:bg-ink-primary dark:text-surface-0;
-}
-
-.productions-layout-toggle__btn--active:hover {
-  @apply text-surface-0;
+  @apply bg-surface-2 text-ink-primary;
 }
 </style>

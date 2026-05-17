@@ -221,7 +221,6 @@ export default {
     empty: "Er staan nog geen producties in het archief.",
     morePerformances: "nog {n}",
     moreListTags: "+{n} meer",
-    moreGridTags: "+{n}",
     layoutToggleLabel: "Weergave",
     layoutListLabel: "Lijstweergave",
     layoutGridLabel: "Rasterweergave",
