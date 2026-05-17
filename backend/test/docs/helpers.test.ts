@@ -1,5 +1,5 @@
 import { CombinedRequestSchema, RequestBody, RequestDescription, RequestError, RequestParams, RequestResponse, requestSchema, RequestTag } from "@/docs/helpers.js";
-import { describe, expect, expectTypeOf, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import z from "zod";
 
 describe(RequestDescription, () => {
