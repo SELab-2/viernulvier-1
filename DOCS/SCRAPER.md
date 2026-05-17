@@ -63,7 +63,6 @@ The script reads its configuration from the repository root `.env` file.
 - `VIERNULVIER_API_ORIGIN` - external archive API origin, default `https://www.viernulvier.gent`
 - `VIERNULVIER_LOCAL_API_URL` - local API base URL, default `http://localhost:3000`
 - `SCRAPER_ADMIN_USERNAME` / `SCRAPER_ADMIN_PASSWORD` - login used for protected `POST` requests, defaults `admin` / `password`
-- `SCRAPE_EVENTS_WINDOW` - internal event window selector used by the script implementation
 
 ## Notes
 
