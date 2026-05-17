@@ -1,13 +1,6 @@
 <template>
-  <!--
-    Featured blog post on the landing page. Reads as the "lead article"
-    on the front page of the archive. The placeholder below mirrors the
-    shape of a real `BlogPostWithBackwardsRefs` so that, once the
-    backend lookup is wired up, only the data source needs to change.
-  -->
   <section class="bg-surface-1 px-6 py-20 lg:px-10 lg:py-24">
     <div class="mx-auto max-w-3xl">
-      <!-- Eyebrow with thin rules -->
       <div
         class="mb-8 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
       >
@@ -22,8 +15,30 @@
         />
       </div>
 
+      <!-- Skeleton while loading -->
+      <div v-if="loading" role="status" :aria-label="t('featuredBlog.loading')" aria-live="polite">
+        <div class="border border-surface-3 bg-surface-0 px-6 py-10 md:px-12 md:py-12">
+          <div class="mb-5 h-2 w-32 animate-pulse rounded-sm bg-surface-3" />
+          <div class="space-y-2.5">
+            <div class="h-8 w-full animate-pulse rounded-sm bg-surface-3 md:h-10" />
+            <div class="h-8 w-4/5 animate-pulse rounded-sm bg-surface-3 md:h-10" />
+          </div>
+          <div class="mt-8 space-y-2">
+            <div class="h-4 w-full animate-pulse rounded-sm bg-surface-3" />
+            <div class="h-4 w-full animate-pulse rounded-sm bg-surface-3" />
+            <div class="h-4 w-full animate-pulse rounded-sm bg-surface-3" />
+            <div class="h-4 w-3/5 animate-pulse rounded-sm bg-surface-3" />
+          </div>
+          <div class="mt-10 h-3 w-24 animate-pulse rounded-sm bg-surface-3" />
+        </div>
+      </div>
+
+      <!-- Error or post not found: section disappears silently -->
+      <template v-else-if="error || !post" />
+
       <!-- Editorial card -->
       <article
+        v-else
         class="border border-surface-3 bg-surface-0 px-6 py-10 md:px-12 md:py-12"
       >
         <!-- Dateline -->
@@ -37,41 +52,39 @@
         <h2
           class="font-serif text-3xl font-semibold leading-[1.1] tracking-tight text-ink-primary md:text-4xl"
         >
-          {{ title }}
+          <RouterLink
+            :to="{
+              name: RouteNames.BLOG_POST_DETAIL,
+              params: { lang: currentLang, id: post.id },
+            }"
+            class="underline decoration-1 decoration-ink-tertiary underline-offset-[6px] transition hover:decoration-ink-primary"
+          >
+            {{ title }}
+          </RouterLink>
         </h2>
 
-        <!--
-          Lead image with caption. Sits between the title and the
-          excerpt the way a magazine article opens.
-
-          PLACEHOLDER: the real `BlogPost` schema has no image field —
-          images live inside the markdown of `content`. Wire this up
-          later by either (a) parsing the first image from `content`,
-          or (b) extending the schema with a lead-image FK.
-        -->
-        <figure class="mt-8">
+        <!-- Lead image: only rendered when the markdown content contains one -->
+        <figure v-if="leadImageUrl" class="mt-8">
           <img
-            src="@/assets/images/bento.webp"
-            alt=""
-            width="2400"
-            height="1600"
+            :src="leadImageUrl"
+            :alt="leadImageAlt"
             class="block w-full"
             loading="lazy"
             decoding="async"
           />
           <figcaption
+            v-if="leadImageAlt"
             class="mt-3 font-serif text-sm italic leading-snug text-ink-secondary"
           >
-            {{ t("featuredBlog.imageCaption") }}
+            {{ leadImageAlt }}
           </figcaption>
         </figure>
 
         <!-- Excerpt with drop-cap -->
-        <p
+        <div
           class="article-lead mt-8 font-serif text-base leading-[1.7] text-ink-primary md:text-lg text-justify hyphens-auto"
-        >
-          {{ excerpt }}
-        </p>
+          v-html="excerpt"
+        />
 
         <!-- Read-more link -->
         <RouterLink
@@ -102,7 +115,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { RouterLink } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { i18n, type SupportedLang } from "@/i18n";
@@ -110,6 +123,8 @@ import { RouteNames } from "@/router/routeNames";
 import type { BlogPostWithBackwardsRefs } from "@viernulvier/shared";
 import { localizeOrEmpty } from "@/utils/language-utils";
 import { formatDate } from "@/utils/date";
+import { getBlogPost } from "@/services/blogposts";
+import { extractFirstMdImage, parseFirstParagraphMd } from "@/utils/parsers";
 
 const { t, locale } = useI18n();
 
@@ -117,43 +132,40 @@ const currentLang = computed(
   () => i18n.global.locale.value as SupportedLang,
 );
 
-/**
- * Placeholder blogpost shaped exactly like a real
- * `BlogPostWithBackwardsRefs` returned by `getBlogPost`.
- * Swap this for a real fetch (e.g. `getFeaturedBlogPost()`)
- * once the endpoint exists; no template changes needed.
- *
- * NOTE: real blogposts store markdown/HTML in `content`. The
- * placeholder uses plain text so the excerpt renders as-is.
- * When wiring real data, parse and truncate `content` here.
- */
-const post = computed<BlogPostWithBackwardsRefs>(() => ({
-  id: 1,
-  blog: { id: 1 },
-  title: {
-    nl: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
-    en: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
-    fr: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
-  },
-  content: {
-    nl: "Aenean euismod, urna ac dignissim porta, leo arcu vehicula nibh, sed congue dolor magna nec massa. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In hac habitasse platea dictumst — donec vitae sapien ut libero venenatis faucibus.",
-    en: "Aenean euismod, urna ac dignissim porta, leo arcu vehicula nibh, sed congue dolor magna nec massa. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In hac habitasse platea dictumst — donec vitae sapien ut libero venenatis faucibus.",
-    fr: "Aenean euismod, urna ac dignissim porta, leo arcu vehicula nibh, sed congue dolor magna nec massa. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In hac habitasse platea dictumst — donec vitae sapien ut libero venenatis faucibus.",
-  },
-  published_at: new Date("2026-04-21"),
-  productions: [],
-}));
+const FEATURED_POST_ID = 1;
+
+const post = ref<BlogPostWithBackwardsRefs | null>(null);
+const loading = ref(true);
+const error = ref(false);
+
+onMounted(async () => {
+  try {
+    post.value = await getBlogPost(FEATURED_POST_ID);
+  } catch {
+    error.value = true;
+  } finally {
+    loading.value = false;
+  }
+});
+
+const rawContent = computed(() =>
+  post.value ? localizeOrEmpty(post.value.content, currentLang.value) : "",
+);
 
 const title = computed(() =>
-  localizeOrEmpty(post.value.title, currentLang.value),
+  post.value ? localizeOrEmpty(post.value.title, currentLang.value) : "",
 );
 
-const excerpt = computed(() =>
-  localizeOrEmpty(post.value.content, currentLang.value),
-);
+const leadImage = computed(() => extractFirstMdImage(rawContent.value));
+
+const leadImageUrl = computed(() => leadImage.value?.src ?? null);
+
+const leadImageAlt = computed(() => leadImage.value?.alt ?? "");
+
+const excerpt = computed(() => parseFirstParagraphMd(rawContent.value));
 
 const datelineText = computed(() => {
-  if (!post.value.published_at) {
+  if (!post.value?.published_at) {
     return t("featuredBlog.dateline", { date: "" });
   }
   return t("featuredBlog.dateline", {
@@ -168,8 +180,13 @@ const datelineText = computed(() => {
 /*
  * Drop cap on the excerpt — same recipe as ProductionDetail's
  * DetailsSection so the editorial vocabulary stays consistent.
+ * Targets the <p> rendered by v-html via :deep().
  */
-.article-lead::first-letter {
+.article-lead :deep(p) {
+  margin: 0;
+}
+
+.article-lead :deep(p)::first-letter {
   font-family: var(--font-serif);
   font-weight: 700;
   color: var(--ink-primary);
@@ -179,7 +196,7 @@ const datelineText = computed(() => {
 }
 
 @supports not ((initial-letter: 3) or (-webkit-initial-letter: 3)) {
-  .article-lead::first-letter {
+  .article-lead :deep(p)::first-letter {
     float: left;
     font-size: 4.8em;
     line-height: 1;
