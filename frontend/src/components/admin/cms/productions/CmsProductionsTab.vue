@@ -196,6 +196,7 @@ import type {
   CellKeyDownEvent,
 } from "ag-grid-community";
 import { useI18n } from "vue-i18n";
+import { useRouter } from "vue-router";
 import type { Event as ArchiveEvent, Hall, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
 import CmsRemoveConfirmModal from "@/components/admin/cms/CmsRemoveConfirmModal.vue";
 import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
@@ -208,10 +209,12 @@ import { useCmsProductionGrid } from "@/composables/useCmsProductionGrid";
 import { useCmsRemove } from "@/composables/useCmsRemove";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
+import { RouteNames } from "@/router/routeNames";
 import {
   createProduction,
   deleteProduction,
   extractProductionTagIds,
+  getProduction,
   getProductions,
   updateProduction,
 } from "@/services/productions";
@@ -248,6 +251,7 @@ import {
 
 const { t } = useI18n();
 const { isDark } = useDarkMode();
+const router = useRouter();
 
 const {
   agThemeVars,
@@ -777,7 +781,13 @@ async function persistProductionPatch(
 ): Promise<void> {
   try {
     const updated = await updateProduction(row.id, patch as never);
-    applyUpdatedProductionToRow(row, updated, localizeValue);
+    try {
+      const refreshed = await getProduction(row.id);
+      applyUpdatedProductionToRow(row, refreshed, localizeValue);
+    } catch {
+      // Fallback for environments/tests where absolute API base URL is unavailable.
+      applyUpdatedProductionToRow(row, updated, localizeValue);
+    }
   } catch (error) {
     saveError.value =
       error instanceof Error
@@ -917,6 +927,15 @@ function onWindowKeyDown(event: KeyboardEvent): void {
 
 function onCellClicked(event: CellClickedEvent<CmsProductionGridRow>): void {
   if (!event.data) {
+    return;
+  }
+
+  if (event.colDef.field === "id") {
+    const route = router.resolve({
+      name: RouteNames.PRODUCTION_DETAIL,
+      params: { id: event.data.id },
+    });
+    window.open(route.href, "_blank", "noopener");
     return;
   }
 

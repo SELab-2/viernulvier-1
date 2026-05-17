@@ -57,6 +57,7 @@ type TranslateFunction = (key: string, params?: Record<string, unknown>) => stri
 
 const cmsGridStateStorageKey = "viernulvier-cms-grid-state-v2";
 const cmsGridColumnIds = [
+  "id",
   "eventsAction",
   "performer",
   "title",
@@ -204,6 +205,7 @@ export function useCmsProductionGrid(options: {
   };
 
   const gridColumnOptions = computed(() => [
+    { colId: "id", label: "ID" },
     { colId: "eventsAction", label: "Events" },
     { colId: "performer", label: options.t("cms.columns.performer") },
     { colId: "title", label: options.t("cms.columns.title") },
@@ -217,6 +219,20 @@ export function useCmsProductionGrid(options: {
   ] as const);
 
   const columnDefs = computed<ColDef<CmsProductionGridRow>[]>(() => [
+    {
+      headerName: "ID",
+      field: "id",
+      editable: false,
+      minWidth: 90,
+      maxWidth: 120,
+      cellClass: "cms-production-id-cell",
+      cellStyle: {
+        color: "var(--color-accent, #2563eb)",
+        cursor: "pointer",
+        fontWeight: "600",
+        textDecoration: "underline",
+      },
+    },
     {
       headerName: "Events",
       colId: "eventsAction",
