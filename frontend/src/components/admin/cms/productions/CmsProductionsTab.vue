@@ -1275,7 +1275,7 @@ async function saveEditorPanel(): Promise<void> {
   saveError.value = null;
   try {
     await persistBulkProductionPatch(targetRows, {
-      [editorPanel.value?.apiField as LongField]: payload,
+      [editorPanel.value?.apiField as ProductionLongField]: payload,
     });
   } finally {
     isSaving.value = false;
