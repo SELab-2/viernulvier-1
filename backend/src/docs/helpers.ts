@@ -91,10 +91,10 @@ export function requestSchema(...requestSchemas: AbstractRequestSchema[]) {
  * ```
  */
 export class RequestError extends AbstractRequestSchema {
-  constructor(statusCode: HttpServerError | HttpClientError) {
+  constructor(statusCode: HttpServerError | HttpClientError, defaultMsg?: string) {
     super({
       response: {
-        [statusCode]: z.object({error: z.string(), code: z.string().optional()}),
+        [statusCode]: z.object({error: z.string().default(defaultMsg ?? "error"), code: z.string().optional().describe("Additional info about the error.")}),
       },
     })
   }
@@ -253,9 +253,9 @@ export class RequestSecurity extends RequestMultiAuthSecurity {
  * These are the default error messages that all endpoints can produce.
  */
 export const DefaultRequestErrorMessages = new CombinedRequestSchema(
-  new RequestError(HttpClientError.NotFound),
-  new RequestError(HttpClientError.BadRequest),
-  new RequestError(HttpServerError.InternalServerError),
+  new RequestError(HttpClientError.NotFound, "Not Found"),
+  new RequestError(HttpClientError.BadRequest, "Bad Request"),
+  new RequestError(HttpServerError.InternalServerError, "Internal Server Error"),
 );
 /**
  * A simple helper for any request that does a lookup by id.
@@ -270,6 +270,6 @@ export const requestById = new RequestParams(
  */
 export const protectedRequest = new CombinedRequestSchema(
   new RequestSecurity("Login Session"),
-  new RequestError(HttpClientError.Unauthorized),
-  new RequestError(HttpClientError.Forbidden),
+  new RequestError(HttpClientError.Unauthorized, "Unauthorized"),
+  new RequestError(HttpClientError.Forbidden, "Forbidden"),
 );
