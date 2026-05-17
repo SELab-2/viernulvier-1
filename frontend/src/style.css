@@ -8,6 +8,9 @@
 /* CMS modal/panel/form layout styles */
 @import "@/assets/stylesheets/cms-view.css";
 
+/* Shared styles for CMS "create" modal dialogs */
+@import "@/assets/stylesheets/cms-create-modal.css";
+
 /* Shared app typography and design tokens */
 @import "@/assets/fonts/inter.css";
 @import "@/assets/stylesheets/design-tokens.css";

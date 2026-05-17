@@ -70,6 +70,7 @@ export default {
       tags: "Tags",
       admins: "Admins",
       blogposts: "Blogposts",
+      tagTypes: "Tag types",
     },
     columns: {
       id: "ID",
@@ -96,6 +97,9 @@ export default {
         publishedAt: "Gepubliceerd op",
         productions: "Bijhorende producties",
       },
+      tagTypeName: "Naam",
+      tagCount: "Aantal tags",
+      tagsInType: "Tags",
     },
     events: {
       date: "Datum",
@@ -150,6 +154,13 @@ export default {
         confirmRemoveDialogTitle: "Blogpost verwijderen? | Blogposts verwijderen?",
         confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde blogpost. Dit kan niet ongedaan worden gemaakt. | Hiermee verwijder je definitief {count} geselecteerde blogposts. Dit kan niet ongedaan worden gemaakt.",
       },
+      addTagType: "+ Tag type toevoegen",
+      removeTagType: "Geselecteerde tag types verwijderen",
+      loadedTagTypesCount: "Tag types geladen: {count}",
+      tagType: {
+        confirmRemoveDialogTitle: "Tag type verwijderen?",
+        confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde tag type(s). Dit kan niet ongedaan worden gemaakt.",
+      },
     },
     create: {
       title: "Nieuwe productie",
@@ -199,6 +210,8 @@ export default {
         title: "Nieuwe blogpost",
         submit: "Blogpost toevoegen",
       },
+      tagTypeTitle: "Nieuw tag type",
+      submitTagType: "Tag type toevoegen",
     },
     panel: {
       close: "Sluit",
@@ -218,6 +231,7 @@ export default {
       saveSuccess: "Wijzigingen opgeslagen",
       removeSuccess: "Productie verwijderd",
       removeTagSuccess: "Tag verwijderd",
+      removeTagTypeSuccess: "Tag type verwijderd",
     },
     admin: {
       noPermission: "Je hebt geen toestemming om admins te beheren.",
