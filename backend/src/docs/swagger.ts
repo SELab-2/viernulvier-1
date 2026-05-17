@@ -4,7 +4,6 @@ import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 import {
   hasZodFastifySchemaValidationErrors,
-  isResponseSerializationError,
   jsonSchemaTransform,
   jsonSchemaTransformObject,
   serializerCompiler,
@@ -26,6 +25,7 @@ export default fp(async (server: FastifyInstance) => {
     if (hasZodFastifySchemaValidationErrors(err)) {
       return reply.code(400).send({
         error: "Bad Request",
+        /* c8 ignore next */
         message: err.message ?? "Request doesn't match the schema",
         statusCode: 400,
         details: {

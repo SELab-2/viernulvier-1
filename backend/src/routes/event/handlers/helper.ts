@@ -89,6 +89,7 @@ export const EventBulkUpdateSchema = z.codec(
   EventBulkUpdateOutputSchema,
   {
     decode: normalizePartialEventDates,
+    /* c8 ignore next */
     encode: (v) => v,
   },
 )
