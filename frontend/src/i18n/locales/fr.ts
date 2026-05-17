@@ -342,7 +342,6 @@ export default {
     },
   },
   blogPostsPage: {
-    kicker: "Archive",
     heading: "Articles de blog",
     intro: "Comptes rendus, réflexions et contextes autour de notre travail.",
     loading: "Chargement des articles",

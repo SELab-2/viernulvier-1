@@ -6,13 +6,6 @@
       <section class="border-b border-surface-3 bg-surface-1 py-10 md:py-14">
         <div class="mx-auto max-w-6xl px-6 lg:px-10">
           <div class="mx-auto max-w-3xl text-center">
-            <div
-              class="mb-5 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
-            >
-              <span class="h-px w-8 bg-ink-tertiary opacity-50" aria-hidden="true" />
-              <span class="whitespace-nowrap">{{ t("blogPostsPage.kicker") }}</span>
-              <span class="h-px w-8 bg-ink-tertiary opacity-50" aria-hidden="true" />
-            </div>
             <h1
               class="font-serif text-3xl font-semibold leading-tight tracking-tight text-ink-primary md:text-4xl"
             >
@@ -170,7 +163,7 @@ const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 const route = useRoute();
 const router = useRouter();
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 6;
 
 
 const allPosts = ref<BlogPostWithBackwardsRefs[]>([]);

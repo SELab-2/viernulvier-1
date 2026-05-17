@@ -342,7 +342,6 @@ export default {
     },
   },
   blogPostsPage: {
-    kicker: "Archief",
     heading: "Blogposts",
     intro: "Verslagen, reflecties en achtergronden bij ons werk.",
     loading: "Blogposts worden geladen",
