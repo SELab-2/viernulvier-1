@@ -67,6 +67,8 @@ export function useCmsBlogPostGrid(options: {
       field: "id",
       minWidth: 50,
       maxWidth: 100,
+      cellRenderer: (params: { value: number }) =>
+        `<a href="/blog/post/${params.value}" class="text-ink-primary underline hover:text-ink-secondary transition-colors">${params.value}</a>`,
     },
     {
       headerName: options.t("cms.columns.title"),
