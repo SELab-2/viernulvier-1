@@ -13,7 +13,7 @@ pnpm run scrape last
 pnpm run scrape days 7
 ```
 
-If you need to reach a backend running inside Docker, run it inside that container instead:
+If you need to reach a backend running inside Docker without outside connection, run it inside that container instead:
 
 ```bash
 docker compose exec backend pnpm run scrape days 7
