@@ -67,6 +67,7 @@ const cmsGridColumnIds = [
   "tags",
   "descriptionOne",
   "descriptionTwo",
+  "imageMedia",
   "media",
 ] as const;
 
@@ -157,6 +158,23 @@ function renderMediaCell(value: unknown): string {
   return `<span class="cms-media-text">${label}</span>`;
 }
 
+function renderImageMediaCell(
+  params: ICellRendererParams<CmsProductionGridRow, unknown>,
+  t: TranslateFunction,
+): string {
+  const urls = params.data?.imageMediaUrls ?? [];
+  if (urls.length === 0) {
+    return "";
+  }
+
+  const count = urls.length;
+  const countLabel = count === 1
+    ? t("cms.create.media.imageCountOne")
+    : t("cms.create.media.imageCountOther", { count });
+
+  return `<span class="cms-media-text">${escapeHtml(countLabel)}</span>`;
+}
+
 /**
  * CMS productions grid: layers production-specific column defs, cell styling
  * for empty/finalized rows, and a custom CSV cell processor on top of the
@@ -165,8 +183,34 @@ function renderMediaCell(value: unknown): string {
 export function useCmsProductionGrid(options: {
   isDark: Ref<boolean>;
   t: TranslateFunction;
+  getPrimaryTagOptions?: () => Array<{ id: number; label: string }>;
+  // Backwards-compatible: older tests/usage provide just labels.
   getPrimaryTagLabels?: () => string[];
 }) {
+  const primaryTagLabelById = computed(() => {
+    const optionsEntries = options.getPrimaryTagOptions?.() ?? [];
+    if (optionsEntries.length > 0) {
+      return new Map(optionsEntries.map((entry) => [entry.id, entry.label] as const));
+    }
+
+    const labels = options.getPrimaryTagLabels?.() ?? [];
+    return new Map(labels.map((label, idx) => [idx + 1, label] as const));
+  });
+
+  function formatPrimaryTag(value: unknown): string {
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      return trimmed.length === 0 ? "-" : trimmed;
+    }
+
+    const id = Number(value ?? 0);
+    if (!Number.isFinite(id) || id === 0) {
+      return "-";
+    }
+
+    return primaryTagLabelById.value.get(id) ?? `#${id}`;
+  }
+
   const base = useCmsGridBase<CmsProductionGridRow>({
     isDark: options.isDark,
     storageKey: cmsGridStateStorageKey,
@@ -177,6 +221,10 @@ export function useCmsProductionGrid(options: {
       if (params.column.getColId() === "tags") {
         const data = params.node?.data as CmsProductionGridRow | undefined;
         return JSON.stringify(data?.source.tags ?? []);
+      }
+
+      if (params.column.getColId() === "genres") {
+        return formatPrimaryTag(params.value);
       }
 
       return String(params.value ?? "");
@@ -215,6 +263,7 @@ export function useCmsProductionGrid(options: {
     { colId: "tags", label: options.t("cms.columns.tags") },
     { colId: "descriptionOne", label: options.t("cms.columns.descriptionOne") },
     { colId: "descriptionTwo", label: options.t("cms.columns.descriptionTwo") },
+    { colId: "imageMedia", label: options.t("cms.columns.imageMedia") },
     { colId: "media", label: options.t("cms.columns.media") },
   ] as const);
 
@@ -226,12 +275,8 @@ export function useCmsProductionGrid(options: {
       minWidth: 90,
       maxWidth: 120,
       cellClass: "cms-production-id-cell",
-      cellStyle: {
-        color: "var(--color-accent, #2563eb)",
-        cursor: "pointer",
-        fontWeight: "600",
-        textDecoration: "underline",
-      },
+      cellRenderer: (params: { value: number }) =>
+        `<a href="/productions/${params.value}" class="text-ink-primary underline hover:text-ink-secondary transition-colors">${params.value}</a>`,
     },
     {
       headerName: "Events",
@@ -279,9 +324,20 @@ export function useCmsProductionGrid(options: {
       editable: true,
       singleClickEdit: true,
       cellEditor: "agSelectCellEditor",
-      cellEditorParams: () => ({
-        values: options.getPrimaryTagLabels?.() ?? [],
-      }),
+      cellEditorParams: () => {
+        // If labels-only provider exists, return labels array for backward
+        // compatibility with older tests and consumers.
+        if (options.getPrimaryTagLabels) {
+          return { values: options.getPrimaryTagLabels() };
+        }
+
+        return {
+          values: [0, ...(options.getPrimaryTagOptions?.().map((entry) => entry.id) ?? [])],
+          formatValue: formatPrimaryTag,
+        };
+      },
+      valueFormatter: ({ value }) => formatPrimaryTag(value),
+      filterValueGetter: (params) => formatPrimaryTag(params.data?.genres),
       minWidth: 120,
     },
     {
@@ -308,6 +364,14 @@ export function useCmsProductionGrid(options: {
       wrapText: true,
       autoHeight: true,
       valueFormatter: ({ value }) => truncateValue(String(value ?? "")),
+    },
+    {
+      headerName: options.t("cms.columns.imageMedia"),
+      field: "imageMedia",
+      editable: false,
+      minWidth: 150,
+      cellClass: "cms-truncate-cell",
+      cellRenderer: (params: ICellRendererParams<CmsProductionGridRow, unknown>) => renderImageMediaCell(params, options.t),
     },
     {
       headerName: options.t("cms.columns.media"),
