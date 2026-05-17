@@ -48,7 +48,7 @@ export default fp(async (server: FastifyInstance) => {
       });
     }
 
-    return reply;
+    return server.errorHandler(err, req, reply);
   });
 
 

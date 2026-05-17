@@ -54,7 +54,7 @@ import {
  */
 export default function authRoutes(server: FastifyInstance) {
   const protect = { preValidation: [server.authorize()] };
-  const protectSuper = { preHandler: [server.authorize({ super: true })] };
+  const protectSuper = { preValidation: [server.authorize({ super: true })] };
 
   server.get(
     "/api/v1/auth",
