@@ -89,11 +89,11 @@ describe("NotFound.vue", () => {
   // ── Routing ──────────────────────────────────────────────────────────────
 
   describe("routing", () => {
-    it("defaults to /productions link", async () => {
+    it("defaults to the root link", async () => {
       ({ wrapper } = await mountComponent());
 
       const link = wrapper.find("a");
-      expect(link.attributes("href")).toBe("/productions");
+      expect(link.attributes("href")).toBe("/");
     });
 
     it("uses custom buttonLink when provided", async () => {

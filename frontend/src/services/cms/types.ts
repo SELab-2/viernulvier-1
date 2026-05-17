@@ -1,4 +1,4 @@
-import type { Admin, ProductionWithBackwardsRefs, Tag } from "@viernulvier/shared";
+import type { Admin, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
 import type { SupportedLang } from "@/i18n";
 
 /** Shared timing/location fields for CMS linked-event forms and rows. */
@@ -58,7 +58,28 @@ export interface CmsTagGridRow {
   tagTypeId: number;
   tagType: string;
   public: boolean;
-  productionCount: number;
+  productions: number[];
+}
+
+export interface CmsBlogPostGridRow {
+  id: number;
+  title: string;
+  content: string;
+  publishedAt: string | null;
+  productions: number[];
+}
+
+export interface CmsTagTypeGridRow {
+  id: number;
+  source: TagType;
+  name: string;
+  tagCount: number;
+  /** IDs of tags that currently belong to this tag type. */
+  tags: number[];
+}
+
+export interface CreateTagTypeFormState {
+  name: Record<SupportedLang, string>;
 }
 
 export type TagInlineEditableField = "name" | "tagType" | "public";
@@ -69,7 +90,15 @@ export interface CreateTagFormState {
   public: boolean;
 }
 
-export type LongField = "teaser" | "description" | "description_2" | "video_1";
+export interface CreateBlogPostFormState {
+  title: Record<SupportedLang, string>;
+  content: Record<SupportedLang, string>;
+  productions: number[];
+}
+
+export type ProductionLongField = "teaser" | "description" | "description_2" | "video_1";
+export type BlogPostLongField = "title" | "content";
+export type TagTypeLongField = "name";
 
 export type CreateFieldKey =
   | "title"
@@ -106,7 +135,7 @@ export interface CreateAdminFormState {
 
 export interface EditorPanelState {
   rowId: number;
-  apiField: LongField;
+  apiField: ProductionLongField | BlogPostLongField | TagTypeLongField;
   label: string;
   values: Record<SupportedLang, string>;
 }

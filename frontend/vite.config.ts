@@ -39,7 +39,11 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx,vue}"],
-      exclude: ["**/*.d.ts"],
+      exclude: [
+        "**/*.d.ts",
+        /** Markup-only glyphs */
+        "src/components/icons/**",
+      ],
       thresholds: {
         "src/**/*.{ts,tsx,vue}": {
           statements: 80,

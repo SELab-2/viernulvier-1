@@ -108,8 +108,8 @@ describe("ProductionsView.vue", () => {
       items: [mockProduction],
       total: 1,
     });
-    vi.spyOn(mediaService, "getImagesForProductionOrEmpty").mockResolvedValue(
-      [],
+    vi.spyOn(mediaService, "getImagesForProductionsOrEmpty").mockResolvedValue(
+      new Map([[mockProduction.id, []]]),
     );
     vi.spyOn(tagsService, "getTags").mockResolvedValue([mockTag]);
     vi.spyOn(tagsService, "getTagTypes").mockResolvedValue([mockTagTypeGenre]);
@@ -143,7 +143,7 @@ describe("ProductionsView.vue", () => {
     const { wrapper } = await mountView();
     expect(wrapper.text()).toContain("Producties");
     expect(productionsService.getProductions).toHaveBeenCalledWith({
-      limit: 20,
+      limit: 18,
       offset: 0,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
@@ -240,7 +240,7 @@ describe("ProductionsView.vue", () => {
     await flushPromises();
 
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
-      limit: 20,
+      limit: 18,
       offset: 0,
       search: ["voorstelling"],
       ...DEFAULT_LIST_FETCH_OPTS,
@@ -258,7 +258,7 @@ describe("ProductionsView.vue", () => {
 
     const { wrapper } = await mountView("/nl/productions?search=gezelschap");
     expect(getProductionsSpy).toHaveBeenCalledWith({
-      limit: 20,
+      limit: 18,
       offset: 0,
       search: ["gezelschap"],
       ...DEFAULT_LIST_FETCH_OPTS,
@@ -282,8 +282,8 @@ describe("ProductionsView.vue", () => {
     await flushPromises();
 
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
-      limit: 20,
-      offset: 40,
+      limit: 18,
+      offset: 36,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
 
@@ -330,8 +330,8 @@ describe("ProductionsView.vue", () => {
     await flushPromises();
 
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
-      limit: 20,
-      offset: 20,
+      limit: 18,
+      offset: 18,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
 
@@ -355,8 +355,8 @@ describe("ProductionsView.vue", () => {
     await flushPromises();
 
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
-      limit: 20,
-      offset: 40,
+      limit: 18,
+      offset: 36,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
     expect((field.element as HTMLInputElement).value).toBe("3");
@@ -478,8 +478,8 @@ describe("ProductionsView.vue", () => {
 
     const { wrapper, router } = await mountView("/nl/productions?page=3");
     expect(getProductionsSpy).toHaveBeenCalledWith({
-      limit: 20,
-      offset: 40,
+      limit: 18,
+      offset: 36,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
     expect(router.currentRoute.value.query.page).toBe("3");
@@ -511,8 +511,8 @@ describe("ProductionsView.vue", () => {
     const { wrapper, router } = await mountView("/nl/productions?page=99");
     expect(router.currentRoute.value.query.page).toBe("3");
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
-      limit: 20,
-      offset: 40,
+      limit: 18,
+      offset: 36,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
     wrapper.unmount();
@@ -527,8 +527,8 @@ describe("ProductionsView.vue", () => {
 
     const { wrapper, router } = await mountView("/nl/productions?page=2");
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
-      limit: 20,
-      offset: 20,
+      limit: 18,
+      offset: 18,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
 
@@ -539,7 +539,7 @@ describe("ProductionsView.vue", () => {
     await flushPromises();
 
     expect(getProductionsSpy).toHaveBeenLastCalledWith({
-      limit: 20,
+      limit: 18,
       offset: 0,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
@@ -752,7 +752,7 @@ describe("ProductionsView.vue", () => {
     await clearAll!.trigger("click");
     await flushPromises();
     expect(getSpy).toHaveBeenLastCalledWith({
-      limit: 20,
+      limit: 18,
       offset: 0,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
@@ -768,7 +768,7 @@ describe("ProductionsView.vue", () => {
     await removeChip.trigger("click");
     await flushPromises();
     expect(getSpy).toHaveBeenLastCalledWith({
-      limit: 20,
+      limit: 18,
       offset: 0,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
@@ -868,7 +868,7 @@ describe("ProductionsView.vue", () => {
     await wrapper.find('[aria-label="Jaarbereik verwijderen"]').trigger("click");
     await flushPromises();
     expect(getSpy).toHaveBeenLastCalledWith({
-      limit: 20,
+      limit: 18,
       offset: 0,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
@@ -886,7 +886,7 @@ describe("ProductionsView.vue", () => {
       .trigger("click");
     await flushPromises();
     expect(getSpy).toHaveBeenLastCalledWith({
-      limit: 20,
+      limit: 18,
       offset: 0,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
@@ -904,7 +904,7 @@ describe("ProductionsView.vue", () => {
     await genreBtn!.trigger("click");
     await flushPromises();
     expect(getSpy).toHaveBeenLastCalledWith({
-      limit: 20,
+      limit: 18,
       offset: 0,
       ...DEFAULT_LIST_FETCH_OPTS,
     });
@@ -934,7 +934,7 @@ describe("ProductionsView.vue", () => {
       "/nl/productions?page=2&sortBy=name&sortDir=asc",
     );
     expect(getSpy).toHaveBeenLastCalledWith(
-      expect.objectContaining({ limit: 20, offset: 20 }),
+      expect.objectContaining({ limit: 18, offset: 18 }),
     );
 
     const dimBtn = wrapper.find("#productions-sort-dimension");
