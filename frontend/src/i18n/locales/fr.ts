@@ -71,6 +71,7 @@ export default {
       tags: "Tags",
       admins: "Admins",
       blogposts: "Articles",
+      tagTypes: "Types de tags",
     },
     columns: {
       id: "ID",
@@ -97,6 +98,9 @@ export default {
         publishedAt: "Publié à",
         productions: "Productions associées",
       },
+      tagTypeName: "Nom",
+      tagCount: "Nombre de tags",
+      tagsInType: "Tags",
     },
     events: {
       date: "Date",
@@ -151,6 +155,13 @@ export default {
         confirmRemoveDialogTitle: "Supprimer l'article? | Supprimer les articles?",
         confirmRemoveBody: "Cette action supprimera définitivement {count} article sélectionné. Cette opération est irréversible. | Cette action supprimera définitivement {count} articles sélectionnés. Cette opération est irréversible.",
       },
+      addTagType: "+ Ajouter un type de tag",
+      removeTagType: "Supprimer les types de tags sélectionnés",
+      loadedTagTypesCount: "Types de tags chargés: {count}",
+      tagType: {
+        confirmRemoveDialogTitle: "Supprimer le type de tag ?",
+        confirmRemoveBody: "Cette action supprimera définitivement {count} type(s) de tag sélectionné(s). Cette opération est irréversible.",
+      },
     },
     create: {
       title: "Nouvelle production",
@@ -200,6 +211,8 @@ export default {
         title: "Nouvel article",
         submit: "Ajouter l'article",
       },
+      tagTypeTitle: "Nouveau type de tag",
+      submitTagType: "Ajouter le type de tag",
     },
     panel: {
       close: "Fermer",
@@ -219,6 +232,7 @@ export default {
       saveSuccess: "Modifications enregistrees",
       removeSuccess: "Production supprimee",
       removeTagSuccess: "Tag supprimé",
+      removeTagTypeSuccess: "Type de tag supprimé",
     },
     admin: {
       noPermission: "Vous n'avez pas la permission de administrer les admins.",
@@ -239,6 +253,9 @@ export default {
     empty: "Aucune production dans les archives pour l’instant.",
     morePerformances: "{n} de plus",
     moreListTags: "+{n} de plus",
+    layoutToggleLabel: "Affichage",
+    layoutListLabel: "Vue liste",
+    layoutGridLabel: "Vue grille",
     showingRange: "{from}–{to} sur {total}",
     prevPage: "Précédent",
     nextPage: "Suivant",
@@ -333,6 +350,7 @@ export default {
       all: "Tous les articles",
     },
     notFound: {
+      kicker: "Dossier nº 404 · Hors collection",
       title: "Production introuvable",
       description: "Nous n'avons pas pu trouver cette production. Heureusement, il reste encore beaucoup à découvrir : revenez à la vue d'ensemble et replongez dans l'historique complet de nos productions.",
       buttonLabel: "Retour aux productions",
@@ -352,12 +370,24 @@ export default {
     next: "Suivant",
   },
   blogpost: {
-    loading: "Chargement de l'article…",
+    loading: "Chargement de l'article",
     notFound: "Article introuvable",
     notFoundDescription: "Cet article n'existe pas ou n'est plus disponible.",
     errorGeneric: "Une erreur s'est produite lors du chargement de cet article.",
     publishedOn: "Publié le {date}",
     backToHome: "Retour à l'accueil",
+    relatedProductions: "Productions associées",
+  },
+  errors: {
+    notFound: {
+      kicker: "Dossier nº 404 · Hors collection",
+      title: "Page introuvable",
+      description: "Nous n'avons pas pu trouver cette page. Elle a peut-être été déplacée, renommée ou n'a jamais été ajoutée aux archives. Retournez à la vue d'ensemble et découvrez ce qui est conservé dans notre collection.",
+      buttonLabel: "Retour aux archives",
+      helpTitle: "Besoin d'aide ?",
+      helpText: "Vous ne trouvez pas ce que vous cherchez ? Pour toute question sur nos archives, envoyez-nous un e-mail à info{'@'}viernulvier.gent. Nous serons ravis de vous aider.",
+      contactLabel: "Contactez-nous",
+    },
   },
   admin: {
     login: {

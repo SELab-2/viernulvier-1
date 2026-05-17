@@ -71,6 +71,7 @@ export default {
       tags: "Tags",
       admins: "Admins",
       blogposts: "Blogposts",
+      tagTypes: "Tag types",
     },
     columns: {
       id: "ID",
@@ -97,6 +98,9 @@ export default {
         publishedAt: "Published at",
         productions: "Associated productions",
       },
+      tagTypeName: "Name",
+      tagCount: "Tag count",
+      tagsInType: "Tags",
     },
     events: {
       date: "Date",
@@ -151,6 +155,13 @@ export default {
         confirmRemoveDialogTitle: "Remove blogpost? | Remove blogposts?",
         confirmRemoveBody: "This will permanently delete {count} selected blogpost. This cannot be undone. | This will permanently delete {count} selected blogposts. This cannot be undone.",
       },
+      addTagType: "+ Add tag type",
+      removeTagType: "Remove selected tag types",
+      loadedTagTypesCount: "Tag types loaded: {count}",
+      tagType: {
+        confirmRemoveDialogTitle: "Remove tag type?",
+        confirmRemoveBody: "This will permanently delete {count} selected tag type(s). This cannot be undone.",
+      },
     },
     create: {
       title: "New production",
@@ -201,6 +212,8 @@ export default {
         title: "New blogpost",
         submit: "Add blogpost",
       },
+      tagTypeTitle: "New tag type",
+      submitTagType: "Add tag type",
     },
     panel: {
       close: "Close",
@@ -220,6 +233,7 @@ export default {
       saveSuccess: "Changes saved successfully",
       removeSuccess: "Production removed successfully",
       removeTagSuccess: "Tag removed successfully",
+      removeTagTypeSuccess: "Tag type removed successfully",
     },
     admin: {
       noPermission: "You don't have permissions to manage admins.",
@@ -239,6 +253,9 @@ export default {
     empty: "No productions in the archive yet.",
     morePerformances: "{n} more",
     moreListTags: "+{n} more",
+    layoutToggleLabel: "Layout",
+    layoutListLabel: "List view",
+    layoutGridLabel: "Grid view",
     showingRange: "{from}–{to} of {total}",
     prevPage: "Previous",
     nextPage: "Next",
@@ -333,6 +350,7 @@ export default {
       all: "All articles",
     },
     notFound: {
+      kicker: "File no. 404 · Not in the collection",
       title: "Production not found",
       description: "We couldn't find this specific production for you. Luckily, there's plenty more to discover: return to the overview and dive back into our full history of productions.",
       buttonLabel: "Back to productions",
@@ -352,12 +370,24 @@ export default {
     next: "Next",
   },
   blogpost: {
-    loading: "Loading blogpost…",
+    loading: "Loading blogpost",
     notFound: "Blogpost not found",
     notFoundDescription: "This blogpost does not exist or is no longer available.",
     errorGeneric: "Something went wrong while loading this blogpost.",
     publishedOn: "Published on {date}",
     backToHome: "Back to home",
+    relatedProductions: "Related productions",
+  },
+  errors: {
+    notFound: {
+      kicker: "File no. 404 · Not in the collection",
+      title: "Page not found",
+      description: "We couldn't find this page for you. It may have been moved, renamed, or never made it into the archive. Return to the overview and discover what is preserved in our collection.",
+      buttonLabel: "Back to the archive",
+      helpTitle: "Need help?",
+      helpText: "Can't find what you're looking for? For questions about our archive, feel free to email info{'@'}viernulvier.gent. We're happy to help.",
+      contactLabel: "Contact us",
+    },
   },
   admin: {
     login: {
