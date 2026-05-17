@@ -1,10 +1,11 @@
-import type { Admin, Event as ArchiveEvent, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
+import type { Admin, Event as ArchiveEvent, ProductionWithBackwardsRefs, Tag, TagType, BlogPostWithBackwardsRefs } from "@viernulvier/shared";
+
 import { collectProductionTagsByIdMap } from "@/services/productions";
 import { tagTypeIsGenre } from "@/utils/tagDisplay";
 import { localizeWithFallback, type LanguageMap } from "@/utils/language-utils";
 import { toLocalDateTimeInput } from "./date";
 import { extractEventIds } from "./helpers";
-import type { CmsAdminGridRow, CmsEventGridRow, CmsProductionGridRow, CreateAdminFormState, CmsTagGridRow } from "./types";
+import type { CmsAdminGridRow, CmsEventGridRow, CmsProductionGridRow, CreateAdminFormState, CmsTagGridRow, CmsBlogPostGridRow, CmsTagTypeGridRow } from "./types";
 
 function filterProductionTagLabels(
   productionTags: Tag[],
@@ -218,5 +219,86 @@ export function buildEmptyAdminForm(): CreateAdminFormState {
     super: false,
   };
 }
+
+/** Maps a single {@link BlogPostWithBackwardsRefs} to a flat grid row for the current locale. */
+export function buildBlogPostGridRow(
+  blogpost: BlogPostWithBackwardsRefs,
+  localize: (map: LanguageMap | null | undefined) => string,
+): CmsBlogPostGridRow {
+  return {
+    id: blogpost.id,
+    title: localize(blogpost.title as LanguageMap | null | undefined) || "",
+    content: localize(blogpost.content as LanguageMap | null | undefined) || "",
+    publishedAt: blogpost.published_at ? new Date(blogpost.published_at).toISOString() : null,
+    productions: blogpost.productions as number[],
+  };
+}
  
+/** Converts an array of blogposts into grid rows. Called on load and on locale change. */
+export function buildBlogPostGridRows(
+  blogposts: BlogPostWithBackwardsRefs[],
+  localize: (map: LanguageMap | null | undefined) => string,
+): CmsBlogPostGridRow[] {
+  return blogposts.map((blogpost) => buildBlogPostGridRow(blogpost, localize));
+}
  
+/**
+ * Mutates a row in-place after a PATCH so AgGrid preserves selection and scroll state.
+ *
+ * `published_at` and `productions` can't be updated.
+*/
+export function applyUpdatedBlogPostToRow(
+  row: CmsBlogPostGridRow,
+  updated: BlogPostWithBackwardsRefs,
+  localize: (map: LanguageMap | null | undefined) => string,
+): void {
+  row.title = localize(updated.title as LanguageMap | null | undefined) || "";
+  row.content = localize(updated.content as LanguageMap | null | undefined) || "";
+}
+
+/**
+ * Builds a single CMS tag-type grid row.
+ *
+ * `tags` contains the IDs of all tags whose `tag_type` matches this tag type.
+ */
+export function buildTagTypeGridRow(
+  tagType: TagType,
+  tagsByType: Map<number, Tag[]>,
+  localize: (map: LanguageMap | null | undefined) => string,
+): CmsTagTypeGridRow {
+  const belongingTags = tagsByType.get(tagType.id) ?? [];
+  return {
+    id: tagType.id,
+    source: tagType,
+    name: localizeWithFallback(tagType.name, localize) || `#${tagType.id}`,
+    tagCount: belongingTags.length,
+    tags: belongingTags.map((t) => t.id),
+  };
+}
+
+/** Converts all tag types into grid rows, grouping tags by type up front. */
+export function buildTagTypeGridRows(
+  tagTypes: TagType[],
+  tags: Tag[],
+  localize: (map: LanguageMap | null | undefined) => string,
+): CmsTagTypeGridRow[] {
+  const tagsByType = new Map<number, Tag[]>();
+  for (const tag of tags) {
+    const typeId = Number(tag.tag_type);
+    if (!Number.isFinite(typeId)) continue;
+    const current = tagsByType.get(typeId) ?? [];
+    current.push(tag);
+    tagsByType.set(typeId, current);
+  }
+  return tagTypes.map((tagType) => buildTagTypeGridRow(tagType, tagsByType, localize));
+}
+
+/** Mutates a tag-type row in-place after a PATCH to avoid losing AG Grid selection state. */
+export function applyUpdatedTagTypeToRow(
+  row: CmsTagTypeGridRow,
+  updated: TagType,
+  localize: (map: LanguageMap | null | undefined) => string,
+): void {
+  row.source = updated;
+  row.name = localizeWithFallback(updated.name, localize) || `#${updated.id}`;
+}

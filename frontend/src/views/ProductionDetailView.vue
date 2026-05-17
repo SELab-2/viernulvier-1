@@ -9,7 +9,15 @@
       </div>
 
       <div v-else-if="notFound" class="grow flex flex-col">
-        <NotFound />
+        <NotFound
+          :kicker="t('production.notFound.kicker')"
+          :title="t('production.notFound.title')"
+          :description="t('production.notFound.description')"
+          :button-label="t('production.notFound.buttonLabel')"
+          :help-title="t('production.notFound.helpTitle')"
+          :help-text="t('production.notFound.helpText')"
+          :contact-label="t('production.notFound.contactLabel')"
+        />
       </div>
 
       <div v-else-if="error" class="grow flex items-center justify-center">
@@ -26,12 +34,15 @@
           :banner-url="heroBannerUrl"
         />
         <DetailsSection 
-          v-if="hasDetails"
+          v-if="showDetailsSection"
           :production="production" 
           :tag-groups="tagGroups" 
-          :total-tags="totalTags" 
+          :total-tags="totalTags"
+          :performance-events="events"
+          :events-loading="eventsLoading"
+          :events-error="eventsError"
+          @retry-events="eventsRetry"
         />
-        <EventsSection :events="events" :loading="eventsLoading" :error="eventsError" @retry="eventsRetry" />
         <GallerySection :slides="gallerySlides" />
         <BlogSection />
       </template>
@@ -46,11 +57,11 @@ import AppNavbar from "@/components/nav/AppNavbar.vue";
 import AppFooter from "@/components/AppFooter.vue";
 import HeroSection from "@/components/production/HeroSection.vue";
 import DetailsSection from "@/components/production/DetailsSection.vue";
-import EventsSection from "@/components/production/EventsSection.vue";
 import GallerySection from "@/components/production/GallerySection.vue";
 import BlogSection from "@/components/production/BlogSection.vue";
 import NotFound from "@/components/NotFound.vue";
 import { ref, onMounted, computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import type { ImageWithCrops } from "@/services/media";
 import { getImagesForProductionOrEmpty } from "@/services/media";
@@ -68,6 +79,7 @@ import { useTagGroups } from "@/composables/useTagGroups";
 import { useProductionEvents } from "@/composables/useProductionEvents";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 
+const { t } = useI18n();
 const { isDark } = useDarkMode();
 
 const route = useRoute();
@@ -174,4 +186,12 @@ const hasDetails = computed(() => {
   );
 });
 
-</script>
+/** Show detail layout when editorial content exists or when sidebar should list performances/loading/error. */
+const showDetailsSection = computed(
+  () =>
+    !!production.value &&
+    (hasDetails.value ||
+      eventsLoading.value ||
+      events.value.length > 0 ||
+      eventsError.value !== null),
+);</script>

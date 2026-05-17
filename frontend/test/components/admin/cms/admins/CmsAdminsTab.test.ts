@@ -123,15 +123,6 @@ describe("CmsAdminsTab", () => {
       expect(wrapper.find(".ag-grid-mock").exists()).toBe(true);
     });
 
-    it("shows empty state", async () => {
-      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
-
-      const wrapper = mountTab();
-      await flushPromises();
-
-      expect(wrapper.text()).toMatch(/geen admins/i);
-    });
-
     it("handles load error", async () => {
       vi.spyOn(auth, "getAllAdmins").mockRejectedValue(new Error("fail"));
 

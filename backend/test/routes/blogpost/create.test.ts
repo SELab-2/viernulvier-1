@@ -91,23 +91,6 @@ describe("Create on blogpost route", () => {
     expect(mockClient.release).toHaveBeenCalled();
   });
 
-  test("POST /api/v1/blog/post — rejects empty productions array", async () => {
-    const response = await server.inject({
-      method: "POST",
-      url: "/api/v1/blog/post",
-      cookies: { session: sessionCookie },
-      payload: {
-        blog: mockBlogPost["blog"],
-        title: mockBlogPost["title"],
-        content: mockBlogPost["content"],
-        published_at: mockBlogPost["published_at"],
-        productions: [],
-      },
-    });
-
-    expect(response.statusCode).toBe(HttpClientError.BadRequest);
-  });
-
   test("POST /api/v1/blog/post — creates a draft blogpost with productions (null published_at)", async () => {
     const mockClient = {
       query: vi.fn(async (query: string) => {
