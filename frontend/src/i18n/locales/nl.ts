@@ -332,6 +332,7 @@ export default {
       all: "Alle artikelen",
     },
     notFound: {
+      kicker: "Dossier nr. 404 · Niet in de collectie",
       title: "Productie niet gevonden",
       description: "Deze productie konden we niet voor je vinden. Gelukkig valt er nog genoeg anders te ontdekken: keer terug naar het overzicht en duik opnieuw in onze volledige historiek van producties.",
       buttonLabel: "Terug naar producties",
@@ -348,6 +349,17 @@ export default {
     publishedOn: "Gepubliceerd op {date}",
     backToHome: "Terug naar home",
     relatedProductions: "Gerelateerde producties",
+  },
+  errors: {
+    notFound: {
+      kicker: "Dossier nr. 404 · Niet in de collectie",
+      title: "Pagina niet gevonden",
+      description: "Deze pagina konden we niet voor je terugvinden. Misschien is hij verplaatst, hernoemd of nooit opgenomen in het archief. Keer terug naar het overzicht en ontdek wat er wél in onze collectie bewaard is.",
+      buttonLabel: "Terug naar het archief",
+      helpTitle: "Hulp nodig?",
+      helpText: "Vind je niet meteen wat je zoekt? Voor vragen over ons archief kun je altijd een mailtje sturen naar info{'@'}viernulvier.gent. We helpen je graag verder.",
+      contactLabel: "Contacteer ons",
+    },
   },
   admin: {
     login: {
