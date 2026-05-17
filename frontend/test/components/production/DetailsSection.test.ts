@@ -1,29 +1,10 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { mount } from "@vue/test-utils";
-import { createI18n } from "vue-i18n";
+import { i18n } from "@/i18n";
 import { nextTick } from "vue";
 
 import ProductionDetailsSection from "@/components/production/DetailsSection.vue";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
-
-// ─────────────────────────────────────────────────────────────
-// i18n
-// ─────────────────────────────────────────────────────────────
-
-const i18n = createI18n({
-  legacy: false,
-  locale: "nl",
-  messages: {
-    nl: {
-      production: {
-        details: {
-          tags: "Tags",
-          extraInfo: "Extra info",
-        },
-      },
-    },
-  },
-});
 
 // ─────────────────────────────────────────────────────────────
 // base data
@@ -91,7 +72,7 @@ describe("ProductionDetailsSection", () => {
   describe("sidebar", () => {
     it("does not render sidebar when empty", () => {
       const wrapper = mountComponent();
-      expect(wrapper.find(".lg\\:col-span-4").exists()).toBe(false);
+      expect(wrapper.find(".lg\\:col-span-5").exists()).toBe(false);
     });
 
     it("renders sidebar when tags exist", () => {
@@ -99,7 +80,9 @@ describe("ProductionDetailsSection", () => {
         tagGroups: [{ label: "Genre", tags: ["Dance"] }],
       });
 
-      expect(wrapper.text()).toContain("Tags");
+      const t = i18n.global.t;
+
+      expect(wrapper.text()).toContain(t("production.details.tags"));
     });
 
     it("renders sidebar when teaser exists", () => {
@@ -312,7 +295,9 @@ describe("ProductionDetailsSection", () => {
         tagGroups: [{ label: "Genre", tags: ["Dance"] }],
       });
 
-      expect(wrapper.text()).toContain("Tags");
+      const t = i18n.global.t;
+
+      expect(wrapper.text()).toContain(t("production.details.tags"));
     });
   });
 });

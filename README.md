@@ -14,6 +14,7 @@ VIERNULVIER has been a cornerstone of Ghent's cultural scene for over a century,
 | [Database Documentation](DOCS/DATABASE.md)         | Database schema (EER)                                                |
 | [Frontend Mock](frontend/mock/README.md)           | Design mock-ups and domain model                                     |
 | [Legacy data imports](data/imports/README.md)      | CSV import scripts (`import:productions`, `import:events`), formats, and run examples |
+| [Scraper Documentation](DOCS/SCRAPER.md)           | Usage, different modes, environment variables, extra notes           |
 | [Frontend Design System](frontend/DESIGN.md)       | Colour palette, design tokens, typography, and component guidelines |
 
 

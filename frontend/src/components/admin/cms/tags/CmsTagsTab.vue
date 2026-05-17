@@ -4,7 +4,6 @@
     v-model:column-chooser-open="columnChooserOpen"
     :row-count="rowData.length"
     loaded-count-key="cms.actions.loadedTagsCount"
-    empty-state-key="cms.actions.noTags"
     :is-loading="isLoading"
     :load-error="loadError"
     :save-error="saveError"
@@ -337,7 +336,10 @@ async function loadTagsData(): Promise<void> {
   loadError.value = null;
 
   try {
-    const [tags, tagTypes] = await Promise.all([getAllTags(), getTagTypes()]);
+    const [tags, tagTypes] = await Promise.all([
+      getAllTags(undefined, { includeProductions: true }),
+      getTagTypes(),
+    ]);
     tagsData.value = tags;
     tagTypesData.value = tagTypes;
     rebuildRows();

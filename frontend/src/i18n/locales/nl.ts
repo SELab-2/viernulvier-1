@@ -15,24 +15,26 @@ export default {
     },
   },
   hero: {
+    dateline: "Archief · Gent",
     title: "Het Archief van De Vooruit",
-    subtitle:
-      "Meer dan 12.000 voorstellingen, concerten, films en culturele evenementen — gedocumenteerd, doorzoekbaar en voor iedereen toegankelijk.",
-    cta: "Doorzoek het archief",
+    lead:
+      "Decennia aan voorstellingen, concerten en films uit De Vooruit — bewaard, ontsloten en doorzoekbaar. Dit is de voorpagina van het huisarchief: typ een naam, een titel of een zaal om de fiche op te zoeken, of blader vrij door de collectie.",
+    searchPlaceholder: "Zoek een productie, artiest of zaal…",
+    searchLabel: "Doorzoek het archief",
+    searchSubmit: "Zoek",
+    searchHint: "{count}+ producties doorzoekbaar",
+    browseAll: "Of bekijk alle producties",
   },
-  stats: {
-    productions: "Producties",
-    events: "Evenementen",
-    yearsOfHistory: "Jaar geschiedenis",
-    genres: "Genres",
-  },
-  bento: {
-    featured: {
-      label: "Uitgelicht",
-      title: "Theater, dans & meer",
-      description:
-        "Ontdek honderden producties uit de rijke programmering van De Vooruit — van avant-garde dans tot politiek theater.",
-      cta: "Verkennen",
+  featuredBlog: {
+    eyebrow: "Uitgelichte blogpost",
+    dateline: "{date} · Redactie",
+    readMore: "Lees het volledige artikel",
+    imageCaption:
+      "Beeld bij het artikel — bijschrift volgt uit de blogpost.",
+    placeholder: {
+      title: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+      excerpt:
+        "Aenean euismod, urna ac dignissim porta, leo arcu vehicula nibh, sed congue dolor magna nec massa. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In hac habitasse platea dictumst — donec vitae sapien ut libero venenatis faucibus.",
     },
   },
   footer: {
@@ -67,10 +69,11 @@ export default {
       productions: "Producties",
       tags: "Tags",
       admins: "Admins",
-      tagsPlaceholder: "Tagbeheer komt binnenkort.",
-      adminsPlaceholder: "Adminbeheer komt binnenkort.",
+      blogposts: "Blogposts",
+      tagTypes: "Tag types",
     },
     columns: {
+      id: "ID",
       performer: "Artiest",
       title: "Titel",
       producer: "Supertitel",
@@ -83,12 +86,20 @@ export default {
       tagName: "Naam",
       tagType: "Type",
       public: "Publiek",
-      productionCount: "Aantal producties",
+      productions: "Producties",
       admin: {
         username: "Gebruikersnaam",
         profilePicture: "Profielfoto",
         super: "Super admin",
       },
+      blogpost: {
+        content: "Inhoud",
+        publishedAt: "Gepubliceerd op",
+        productions: "Bijhorende producties",
+      },
+      tagTypeName: "Naam",
+      tagCount: "Aantal tags",
+      tagsInType: "Tags",
     },
     events: {
       date: "Datum",
@@ -131,12 +142,24 @@ export default {
       expandAllEvents: "Toon alle events",
       collapseAllEvents: "Verberg events",
       admin: {
-        noAdmins: "Geen admins gevonden.",
         addAdmin: "+ Admin toevoegen",
         removeAdmin: "Geselecteerde admins verwijderen",
         confirmRemoveDialogTitle: "Admin verwijderen? | Admins verwijderen?",
         confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde admin. Dit kan niet ongedaan worden gemaakt. | Hiermee verwijder je definitief {count} geselecteerde admins. Dit kan niet ongedaan worden gemaakt.",
         cannotRemoveSelf: "Je kan jezelf niet verwijderen.",
+      },
+      blogpost: {
+        addBlogpost: "+ Blogpost toevoegen",
+        removeBlogpost: "Geselecteerde blogposts verwijderen",
+        confirmRemoveDialogTitle: "Blogpost verwijderen? | Blogposts verwijderen?",
+        confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde blogpost. Dit kan niet ongedaan worden gemaakt. | Hiermee verwijder je definitief {count} geselecteerde blogposts. Dit kan niet ongedaan worden gemaakt.",
+      },
+      addTagType: "+ Tag type toevoegen",
+      removeTagType: "Geselecteerde tag types verwijderen",
+      loadedTagTypesCount: "Tag types geladen: {count}",
+      tagType: {
+        confirmRemoveDialogTitle: "Tag type verwijderen?",
+        confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde tag type(s). Dit kan niet ongedaan worden gemaakt.",
       },
     },
     create: {
@@ -175,13 +198,20 @@ export default {
         requiredOneLanguage: "Vul minstens 1 taal in voor: {field}",
         imageRequired: "Vul minstens een afbeelding URL in (in eender welke taal).",
         tagTypeRequired: "Selecteer een tag-type.",
+        invalidId: "Ongeldig ID",
       },
       admin: {
         adminTitle: "Nieuwe admin",
         adminPassword: "Wachtwoord",
-        // TODO: adminPasswordHint: "De nieuwe admin kan zijn wachtwoord na het inloggen wijzigen via zijn profiel.",
+        adminPasswordHint: "De nieuwe admin kan zijn wachtwoord na het inloggen wijzigen via zijn profiel.",
         submitAdmin: "Admin toevoegen",
       },
+      blogpost: {
+        title: "Nieuwe blogpost",
+        submit: "Blogpost toevoegen",
+      },
+      tagTypeTitle: "Nieuw tag type",
+      submitTagType: "Tag type toevoegen",
     },
     panel: {
       close: "Sluit",
@@ -201,6 +231,7 @@ export default {
       saveSuccess: "Wijzigingen opgeslagen",
       removeSuccess: "Productie verwijderd",
       removeTagSuccess: "Tag verwijderd",
+      removeTagTypeSuccess: "Tag type verwijderd",
     },
     admin: {
       noPermission: "Je hebt geen toestemming om admins te beheren.",
@@ -221,6 +252,9 @@ export default {
     empty: "Er staan nog geen producties in het archief.",
     morePerformances: "nog {n}",
     moreListTags: "+{n} meer",
+    layoutToggleLabel: "Weergave",
+    layoutListLabel: "Lijstweergave",
+    layoutGridLabel: "Rasterweergave",
     showingRange: "{from}–{to} van {total}",
     prevPage: "Vorige",
     nextPage: "Volgende",
@@ -299,7 +333,7 @@ export default {
       programme: "Programma",
     },
     events: {
-      title: "Voorstellings\u00adgeschiedenis",
+      title: "Data",
       body: "Waar en wanneer vond deze productie plaats? Hier vind je een overzicht van alle speelmomenten en locaties. Misschien herken je wel een datum of plek die je is bijgebleven.",
       show_all: "Toon alle evenementen",
       show_less: "Toon minder",
@@ -316,6 +350,7 @@ export default {
       readMore: "Lees meer",
     },
     notFound: {
+      kicker: "Dossier nr. 404 · Niet in de collectie",
       title: "Productie niet gevonden",
       description: "Deze productie konden we niet voor je vinden. Gelukkig valt er nog genoeg anders te ontdekken: keer terug naar het overzicht en duik opnieuw in onze volledige historiek van producties.",
       buttonLabel: "Terug naar producties",
@@ -325,12 +360,24 @@ export default {
     },
   },
   blogpost: {
-    loading: "Blogpost laden…",
+    loading: "Blogpost laden",
     notFound: "Blogpost niet gevonden",
     notFoundDescription: "Deze blogpost bestaat niet of is niet meer beschikbaar.",
     errorGeneric: "Er is iets misgegaan bij het laden van deze blogpost.",
     publishedOn: "Gepubliceerd op {date}",
     backToHome: "Terug naar home",
+    relatedProductions: "Gerelateerde producties",
+  },
+  errors: {
+    notFound: {
+      kicker: "Dossier nr. 404 · Niet in de collectie",
+      title: "Pagina niet gevonden",
+      description: "Deze pagina konden we niet voor je terugvinden. Misschien is hij verplaatst, hernoemd of nooit opgenomen in het archief. Keer terug naar het overzicht en ontdek wat er wél in onze collectie bewaard is.",
+      buttonLabel: "Terug naar het archief",
+      helpTitle: "Hulp nodig?",
+      helpText: "Vind je niet meteen wat je zoekt? Voor vragen over ons archief kun je altijd een mailtje sturen naar info{'@'}viernulvier.gent. We helpen je graag verder.",
+      contactLabel: "Contacteer ons",
+    },
   },
   admin: {
     login: {

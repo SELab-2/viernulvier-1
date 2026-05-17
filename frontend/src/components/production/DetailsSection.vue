@@ -4,9 +4,16 @@
     <div class="mx-auto max-w-7xl px-6 py-24 md:px-12">
       <section class="flex flex-col gap-16 lg:grid lg:grid-cols-12 lg:gap-x-16 lg:gap-y-24">
 
-        <!-- Sidebar — marginalia first, then a tag drawer below. -->
-        <aside v-if="hasSidebarContent" class="lg:col-start-9 lg:col-span-4">
+        <!-- Sidebar: performances (event rows), teaser/extra, then tags. -->
+        <aside v-if="hasSidebarContent" class="lg:col-start-8 lg:col-span-5">
           <div class="sticky top-32 h-fit space-y-8">
+            <ProductionDetailSidebarEvents
+              v-if="showPerformanceBlock"
+              :events="performanceEvents"
+              :loading="eventsLoading"
+              :error="eventsError"
+              @retry="emit('retryEvents')"
+            />
 
             <div
               v-if="teaser || description_extra"
@@ -182,17 +189,32 @@ import { computed, ref } from "vue";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import { useI18n } from "vue-i18n";
 import { normalizeQuote, parseAndSanitizeContent } from "@/utils/parsers";
+import ProductionDetailSidebarEvents from "@/components/production/ProductionDetailSidebarEvents.vue";
+import type { EnrichedEvent } from "@/composables/useProductionEvents";
 
 const { t } = useI18n();
+
+const emit = defineEmits<{ retryEvents: [] }>();
+
 const currentLang = computed(
   () => i18n.global.locale.value as SupportedLang,
 );
 
-const props = defineProps<{
-  production: ProductionWithBackwardsRefs;
-  tagGroups: { label: string; tags: string[] }[];
-  totalTags: number;
-}>();
+const props = withDefaults(
+  defineProps<{
+    production: ProductionWithBackwardsRefs;
+    tagGroups: { label: string; tags: string[] }[];
+    totalTags: number;
+    performanceEvents?: EnrichedEvent[];
+    eventsLoading?: boolean;
+    eventsError?: Error | null;
+  }>(),
+  {
+    performanceEvents: () => [],
+    eventsLoading: false,
+    eventsError: null,
+  },
+);
 
 const tProd = (map: LanguageMap | null | undefined) =>
   localizeOrEmpty(map ?? {}, currentLang.value);
@@ -213,17 +235,24 @@ const info = computed(() => parseField(props.production.info));
 
 const tagsExpanded = ref(true);
 
+const showPerformanceBlock = computed(
+  () =>
+    props.eventsLoading ||
+    props.eventsError !== null ||
+    props.performanceEvents.length > 0,
+);
+
 const hasSidebarContent = computed(() => {
   const hasTags = props.tagGroups && props.tagGroups.length > 0;
   const hasTeaserText = !!teaser.value;
   const hasExtraText = !!description_extra.value;
 
-  return hasTags || hasTeaserText || hasExtraText;
+  return hasTags || hasTeaserText || hasExtraText || showPerformanceBlock.value;
 });
 
 const mainContentClass = computed(() => {
   return hasSidebarContent.value
-    ? "lg:col-start-1 lg:col-span-8"
+    ? "lg:col-start-1 lg:col-span-7"
     : "lg:col-span-12";
 });
 </script>

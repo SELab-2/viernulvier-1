@@ -201,7 +201,22 @@ describe("useProductionEvents", () => {
       expect(events.value[0].maxPrice).toBe(15);
     });
 
-    it("calculates min/max for multiple prices", async () => {
+    it("uses the lowest paid tier as min when a free (0) tier exists", async () => {
+      mockGetEvents.mockResolvedValue([makeEvent({ id: 1 })]);
+      mockGetEventPrices.mockResolvedValue([
+        makePrice(1, 0),
+        makePrice(1, 15),
+        makePrice(1, 25),
+      ]);
+
+      const { events } = mountComposable();
+      await flushPromises();
+
+      expect(events.value[0].minPrice).toBe(15);
+      expect(events.value[0].maxPrice).toBe(25);
+    });
+
+    it("still uses true min/max when no zero tier", async () => {
       mockGetEvents.mockResolvedValue([makeEvent({ id: 1 })]);
       mockGetEventPrices.mockResolvedValue([
         makePrice(1, 20),
@@ -213,6 +228,34 @@ describe("useProductionEvents", () => {
       await flushPromises();
 
       expect(events.value[0].minPrice).toBe(5);
+      expect(events.value[0].maxPrice).toBe(20);
+    });
+
+    it("keeps min at 0 when it is the only distinct tier", async () => {
+      mockGetEvents.mockResolvedValue([makeEvent({ id: 1 })]);
+      mockGetEventPrices.mockResolvedValue([
+        makePrice(1, 0),
+        makePrice(1, 0),
+      ]);
+
+      const { events } = mountComposable();
+      await flushPromises();
+
+      expect(events.value[0].minPrice).toBe(0);
+      expect(events.value[0].maxPrice).toBe(0);
+    });
+
+    it("rounds fractional tier amounts to whole euros before min/max", async () => {
+      mockGetEvents.mockResolvedValue([makeEvent({ id: 1 })]);
+      mockGetEventPrices.mockResolvedValue([
+        makePrice(1, 14.4),
+        makePrice(1, 19.8),
+      ]);
+
+      const { events } = mountComposable();
+      await flushPromises();
+
+      expect(events.value[0].minPrice).toBe(14);
       expect(events.value[0].maxPrice).toBe(20);
     });
 
