@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Crop, Image } from "@viernulvier/shared/index.js";
-import { serial, stringToInt } from "@viernulvier/shared/index.js";
+import { stringToInt } from "@viernulvier/shared/index.js";
 import {
   HttpClientError,
   HttpError,

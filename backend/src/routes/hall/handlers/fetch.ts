@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Hall, HallWithMeta } from "@viernulvier/shared/index.js";
-import { HallSchema, serial, stringToInt } from "@viernulvier/shared/index.js";
+import { HallSchema, serial} from "@viernulvier/shared/index.js";
 import { parseParams, parseSchema, buildQuery } from "@/routes/helpers.js";
 import z from "zod";
 

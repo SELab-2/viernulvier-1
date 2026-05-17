@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { unknown } from "zod";
 
 import { EventSchema, EventSchemaWithoutPrice, serial } from "@viernulvier/shared/index.js";
 import { buildQuery } from "@/routes/helpers.js";
@@ -32,7 +32,6 @@ const EventBulkUpdateInputSchema = EventBulkUpdateOutputSchema.extend({
 
 type EventBulkUpdateInput =  z.infer<typeof EventBulkUpdateInputSchema>
 
-
 /**
  * Normalizes date fields on event create/replace/edit payloads to `Date` instances.
  *
@@ -56,8 +55,12 @@ type EventBulkUpdateInput =  z.infer<typeof EventBulkUpdateInputSchema>
  * // normalized.ends_at is undefined (not provided)
  * // normalized.doors_at is undefined (not provided)
  */
-export function normalizePartialEventDates(value: EventBulkUpdateInput): EventBulkUpdateOutput {
+export function normalizePartialEventDates(value: EventBulkUpdateInput): EventBulkUpdateOutput
+export function normalizePartialEventDates<T>(value: T): T
+export function normalizePartialEventDates<T>(value: EventBulkUpdateInput | T): EventBulkUpdateOutput | T {
   if (!value || typeof value !== "object") return value;
+
+  value = value as EventBulkUpdateInput;
 
   function parseDate(dateValue: z.infer<typeof DateTypeAny>): Date | undefined
   function parseDate(dateValue: z.infer<z.ZodNullable<typeof DateTypeAny>>): Date | undefined | null

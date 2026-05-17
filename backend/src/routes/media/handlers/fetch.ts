@@ -8,7 +8,6 @@ import type {
 import {
   ImageSchema,
   CropSchema,
-  serial,
   stringToInt,
 } from "@viernulvier/shared/index.js";
 import { parseParams, parseSchema, ParseContext } from "@/routes/helpers.js";
