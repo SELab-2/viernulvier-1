@@ -57,7 +57,7 @@
               name: RouteNames.BLOG_POST_DETAIL,
               params: { lang: currentLang, id: post.id },
             }"
-            class="underline decoration-1 decoration-ink-tertiary underline-offset-[6px] transition hover:decoration-ink-primary"
+            class="hover:underline decoration-1 decoration-ink-tertiary underline-offset-[6px] transition hover:decoration-ink-primary"
           >
             {{ title }}
           </RouterLink>
