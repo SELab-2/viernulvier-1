@@ -34,6 +34,7 @@ async function mountCard(props: {
   production?: ProductionWithBackwardsRefs;
   dateSummary?: ProductionDateSummary;
   tagChips?: ProductionTagChip[];
+  thumbnailUrl?: string | null | undefined;
 }) {
   const router = createRouter({ history: createMemoryHistory(), routes });
   await router.push("/nl/productions");
@@ -44,6 +45,7 @@ async function mountCard(props: {
       production: props.production ?? baseProduction,
       dateSummary: props.dateSummary ?? { line: null, moreCount: 0 },
       tagChips: props.tagChips ?? [],
+      thumbnailUrl: props.thumbnailUrl,
     },
     global: { plugins: [router, i18n] },
   });
@@ -99,15 +101,15 @@ describe("ProductionGridCard.vue", () => {
         { tagId: 2, label: "Vooruit", isGenre: false },
       ],
     });
-    const chips = wrapper.findAll("span.rounded-full");
+    const chips = wrapper.findAll("span.rounded-sm");
     expect(chips[0]!.classes().join(" ")).toMatch(/tag-genre-bg/);
-    expect(chips[1]!.classes().join(" ")).toMatch(/border-ink-primary/);
+    expect(chips[1]!.classes().join(" ")).toMatch(/border-surface-3/);
     wrapper.unmount();
   });
 
   it("renders no tag row when tagChips is empty", async () => {
     const wrapper = await mountCard({ tagChips: [] });
-    expect(wrapper.findAll("span.rounded-full")).toHaveLength(0);
+    expect(wrapper.findAll("span.rounded-sm")).toHaveLength(0);
     wrapper.unmount();
   });
 
@@ -121,8 +123,30 @@ describe("ProductionGridCard.vue", () => {
         { tagId: 5, label: "T5", isGenre: false },
       ],
     });
-    expect(wrapper.findAll("span.rounded-full")).toHaveLength(3);
-    expect(wrapper.text()).toMatch(/2/);
+    expect(wrapper.findAll("span.rounded-sm")).toHaveLength(3);
+    expect(wrapper.text()).toMatch(/\+2/);
+    wrapper.unmount();
+  });
+
+  it("renders the crop thumbnail when a URL is provided", async () => {
+    const wrapper = await mountCard({ thumbnailUrl: "/media/crops/abc.webp" });
+    const img = wrapper.get("img");
+    expect(img.attributes("src")).toBe("/media/crops/abc.webp");
+    expect(img.classes()).toContain("object-cover");
+    wrapper.unmount();
+  });
+
+  it("falls back to the placeholder when thumbnailUrl is null", async () => {
+    const wrapper = await mountCard({ thumbnailUrl: null });
+    const img = wrapper.get("img");
+    expect(img.attributes("src")).toMatch(/placeholder/);
+    expect(img.classes()).toContain("object-contain");
+    wrapper.unmount();
+  });
+
+  it("omits the thumbnail image while loading (thumbnailUrl undefined)", async () => {
+    const wrapper = await mountCard({ thumbnailUrl: undefined });
+    expect(wrapper.find("img").exists()).toBe(false);
     wrapper.unmount();
   });
 });

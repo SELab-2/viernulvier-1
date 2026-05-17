@@ -7,10 +7,6 @@
     class="production-list-card group -mx-3 flex items-stretch gap-4 border-b border-surface-3 px-3 py-8 transition-colors last:border-b-0 hover:bg-surface-1/60 sm:-mx-4 sm:gap-6 sm:px-4 md:-mx-5 md:gap-8 md:px-5"
     :style="{ '--production-list-stagger': `${staggerDelayMs}ms` }"
   >
-    <!--
-      Fixed width (~2× list column), natural height: no min-height/grey when a crop URL exists.
-      Placeholder grey + min-height only when there is no thumbnail. max-h caps extreme ratios.
-    -->
     <div
       class="relative w-52 shrink-0 self-start sm:w-60 md:w-72"
       aria-hidden="true"
@@ -18,16 +14,21 @@
       <div
         :class="[
           'overflow-hidden rounded-md',
-          thumbnailUrl
-            ? 'bg-transparent'
-            : 'min-h-28 bg-surface-2 sm:min-h-32 md:min-h-36',
+          thumbLoading || useLogoFallback
+            ? 'aspect-[1920/900] w-full bg-surface-2'
+            : 'bg-transparent',
+          useLogoFallback ? 'flex items-center justify-center p-4' : '',
         ]"
       >
         <img
-          v-if="thumbnailUrl"
-          :src="thumbnailUrl"
+          v-if="resolvedThumbSrc"
+          :src="resolvedThumbSrc"
           alt=""
-          class="block h-auto w-full max-h-96 object-contain object-left"
+          :class="
+            useLogoFallback
+              ? 'block h-auto max-h-11 w-auto max-w-[50%] object-contain opacity-90 sm:max-h-12'
+              : 'block h-auto w-full max-h-96 rounded-md object-contain object-left'
+          "
           loading="lazy"
           decoding="async"
         />
@@ -73,19 +74,7 @@
           v-if="hallsText"
           class="mt-3 flex items-start gap-1 text-sm text-ink-secondary"
         >
-          <svg
-            class="mt-0.5 size-[0.9rem] shrink-0 text-ink-tertiary"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
+          <MapPinOutlineIcon class="mt-0.5 size-[0.9rem] shrink-0 text-ink-tertiary" />
           <span>{{ hallsText }}</span>
         </p>
       </div>
@@ -124,9 +113,21 @@ import { useI18n } from "vue-i18n";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import type { SupportedLang } from "@/i18n";
 import { RouteNames } from "@/router/routeNames";
+import MapPinOutlineIcon from "@/components/icons/MapPinOutlineIcon.vue";
 import { localizeOrEmpty } from "@/utils/language-utils";
 import type { ProductionDateSummary } from "@/utils/productionsOverview";
 import type { ProductionTagChip } from "@/utils/tagDisplay";
+import { useDarkMode } from "@/composables/useDarkMode";
+
+const PLACEHOLDER_THUMB_LIGHT_SRC = new URL(
+  "../../assets/images/placeholder-light.svg",
+  import.meta.url,
+).href;
+
+const PLACEHOLDER_THUMB_DARK_SRC = new URL(
+  "../../assets/images/placeholder-dark.svg",
+  import.meta.url,
+).href;
 
 /** Beyond this count, remaining tags are summarized as localized “+n more”. */
 const MAX_VISIBLE_LIST_TAGS = 5;
@@ -137,13 +138,39 @@ const props = withDefaults(
     dateSummary: ProductionDateSummary;
     tagChips: ProductionTagChip[];
     hallsText: string;
-    /** Public crop URL (`/media/crops/…`) for the list thumbnail, if any. */
-    thumbnailUrl?: string | null;
+    /**
+     * Crop URL when set; theme placeholder when `null` (no list media);
+     * loading tile when `undefined`.
+     */
+    thumbnailUrl?: string | null | undefined;
     /** Used to stagger the row entrance animation on the productions list. */
     rowIndex?: number;
   }>(),
-  { rowIndex: 0, thumbnailUrl: null },
+  { rowIndex: 0, thumbnailUrl: undefined },
 );
+
+const thumbLoading = computed(() => props.thumbnailUrl === undefined);
+
+const useLogoFallback = computed(
+  () => props.thumbnailUrl === null || props.thumbnailUrl === "",
+);
+
+const { isDark } = useDarkMode();
+
+/** Placeholder graphic when there is no usable list crop (light vs dark). */
+const placeholderThumbSrc = computed(() =>
+  isDark.value ? PLACEHOLDER_THUMB_DARK_SRC : PLACEHOLDER_THUMB_LIGHT_SRC,
+);
+
+const resolvedThumbSrc = computed(() => {
+  if (props.thumbnailUrl === undefined) {
+    return null;
+  }
+  if (props.thumbnailUrl === null || props.thumbnailUrl === "") {
+    return placeholderThumbSrc.value;
+  }
+  return props.thumbnailUrl;
+});
 
 const { t, locale } = useI18n();
 

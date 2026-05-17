@@ -37,14 +37,7 @@
         </div>
       </section>
 
-      <section
-        :class="[
-          'mx-auto pb-20 pt-8',
-          layoutMode === 'grid'
-            ? 'max-w-7xl px-4 sm:px-6 lg:px-8'
-            : 'max-w-5xl px-6 lg:px-10',
-        ]"
-      >
+      <section class="mx-auto max-w-[82rem] px-6 pb-20 pt-10 lg:px-10">
         <div v-if="!loading" class="mb-4 space-y-3">
           <div
             class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-stretch sm:gap-3"
@@ -593,28 +586,6 @@ const PAGE_SIZE = 30;
 /** Same cap as the list API, extra terms are ignored client-side. */
 const MAX_SEARCH_TERMS = 20;
 
-/** localStorage key persisting the user's preferred layout across visits. */
-const LAYOUT_STORAGE_KEY = "productionsLayout";
-const DEFAULT_LAYOUT_MODE: ProductionsLayoutMode = "list";
-
-function readPersistedLayoutMode(): ProductionsLayoutMode {
-  try {
-    const raw = window.localStorage.getItem(LAYOUT_STORAGE_KEY);
-    if (raw === "list" || raw === "grid") return raw;
-  } catch {
-    // localStorage may be unavailable (private mode, SSR-like jsdom paths) — fall through.
-  }
-  return DEFAULT_LAYOUT_MODE;
-}
-
-function writePersistedLayoutMode(mode: ProductionsLayoutMode): void {
-  try {
-    window.localStorage.setItem(LAYOUT_STORAGE_KEY, mode);
-  } catch {
-    // Ignore — preference is non-critical.
-  }
-}
-
 /**
  * Safety fallback when widths are not measurable (e.g. JSDOM tests).
  * Real browsers use measured row fit, not this cap.
@@ -897,10 +868,7 @@ const appliedSearchTerms = ref<string[]>([]);
 const searchDraft = ref("");
 const sortBy = ref<ProductionSortBy>("date");
 const sortDir = ref<ProductionSortDir>("desc");
-const layoutMode = ref<ProductionsLayoutMode>(readPersistedLayoutMode());
-watch(layoutMode, (mode) => {
-  writePersistedLayoutMode(mode);
-});
+const layoutMode = ref<ProductionsLayoutMode>("list");
 /**
  * Total matching the current list query; updated on each successful fetch.
  * While search/filter list loads we keep the previous value so the results line
@@ -955,10 +923,11 @@ const tagsById = ref(new Map<number, Tag>());
 const tagTypesById = ref(new Map<number, TagType>());
 const hallsById = ref(new Map<number, Hall>());
 
-function thumbnailFor(productionId: number): string | null {
+/** `undefined` while thumbnails not loaded yet; `null` when loaded but no usable crop URL. */
+function thumbnailFor(productionId: number): string | null | undefined {
   const m = thumbnailUrlByProductionId.value;
   if (!m.has(productionId)) {
-    return null;
+    return undefined;
   }
   return m.get(productionId) ?? null;
 }

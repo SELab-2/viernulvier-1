@@ -4,39 +4,45 @@
       name: RouteNames.PRODUCTION_DETAIL,
       params: { lang: locale, id: production.id },
     }"
-    class="production-grid-card group flex h-full flex-col overflow-hidden rounded-md border border-surface-3 bg-surface-0 transition-colors hover:border-accent-outline hover:bg-surface-1/60 dark:bg-surface-1"
+    class="production-grid-card group flex h-full flex-col gap-4 rounded-md border border-surface-3 bg-surface-0 p-4 transition-colors hover:border-accent-outline hover:bg-surface-1/60 dark:bg-surface-1 sm:p-5"
     :style="{ '--production-grid-stagger': `${staggerDelayMs}ms` }"
   >
     <!--
-      Wide landscape thumb so posters don't get cropped square. Object-cover keeps
-      cards a uniform height; tag/info trim below keeps total card height low.
+      Same shape (1920/900) as the list card's placeholder tile so list and
+      grid thumbnails feel like the same product. Grid is wider, hence taller.
     -->
     <div
-      class="relative w-full overflow-hidden bg-surface-2"
-      style="aspect-ratio: 16 / 9"
+      :class="[
+        'aspect-[1920/900] w-full overflow-hidden rounded-md',
+        useLogoFallback ? 'flex items-center justify-center bg-surface-2 p-4' : 'bg-surface-2',
+      ]"
       aria-hidden="true"
     >
       <img
-        v-if="thumbnailUrl"
-        :src="thumbnailUrl"
+        v-if="resolvedThumbSrc"
+        :src="resolvedThumbSrc"
         alt=""
-        class="absolute inset-0 block h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+        :class="
+          useLogoFallback
+            ? 'block h-auto max-h-12 w-auto max-w-[50%] object-contain opacity-90 sm:max-h-14'
+            : 'block h-full w-full object-cover'
+        "
         loading="lazy"
         decoding="async"
       />
     </div>
 
-    <div class="flex min-w-0 flex-1 flex-col gap-2 p-4 md:p-5">
+    <div class="flex min-w-0 flex-1 flex-col">
       <div class="min-w-0">
         <h2
-          class="text-base font-bold leading-tight tracking-tight text-ink-primary md:text-lg"
+          class="font-serif text-xl font-semibold leading-tight tracking-tight text-ink-primary md:text-2xl"
         >
           {{ title }}
         </h2>
 
         <p
           v-if="artist"
-          class="mt-1 text-sm font-medium text-ink-secondary"
+          class="mt-1 font-serif text-base italic text-ink-secondary md:text-lg"
         >
           {{ artist }}
         </p>
@@ -44,55 +50,40 @@
 
       <p
         v-if="dateSummary.line"
-        class="flex items-start gap-1.5 text-sm tabular-nums text-ink-secondary"
+        class="mt-3 font-serif text-sm leading-tight tabular-nums text-ink-secondary md:text-base"
       >
-        <svg
-          class="mt-0.5 size-[0.9rem] shrink-0 text-ink-tertiary"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
+        <span class="whitespace-nowrap">{{ dateSummary.line }}</span>
+        <span
+          v-if="dateSummary.moreCount > 0"
+          class="ml-1 whitespace-nowrap font-sans text-xs not-italic text-ink-tertiary"
         >
-          <rect x="3" y="4" width="18" height="18" rx="2" />
-          <path d="M16 2v4M8 2v4M3 10h18" />
-        </svg>
-        <span class="min-w-0">
-          <span class="whitespace-nowrap">{{ dateSummary.line }}</span>
-          <span
-            v-if="dateSummary.moreCount > 0"
-            class="ml-1 whitespace-nowrap text-xs text-ink-tertiary"
-          >
-            {{
-              t("productionsPage.morePerformances", {
-                n: dateSummary.moreCount,
-              })
-            }}
-          </span>
+          {{
+            t("productionsPage.morePerformances", {
+              n: dateSummary.moreCount,
+            })
+          }}
         </span>
       </p>
 
       <div
         v-if="visibleTagChips.length"
-        class="mt-auto flex flex-wrap items-center gap-1.5 pt-1 text-xs"
+        class="mt-auto flex flex-wrap items-center gap-2 pt-4"
       >
         <span
           v-for="chip in visibleTagChips"
           :key="chip.tagId"
-          class="rounded-full px-2.5 py-1 font-medium"
+          class="rounded-sm px-2.5 py-1 text-xs font-medium uppercase tracking-wide"
           :class="
             chip.isGenre
               ? 'bg-tag-genre-bg text-tag-genre-text'
-              : 'border border-ink-primary bg-transparent text-ink-primary'
+              : 'border border-surface-3 bg-surface-1 text-ink-secondary'
           "
         >
           {{ chip.label }}
         </span>
         <span
           v-if="hiddenTagCount > 0"
-          class="px-1 text-xs font-medium tabular-nums text-ink-tertiary"
+          class="text-xs font-medium tabular-nums tracking-wide text-ink-tertiary"
         >
           {{ t("productionsPage.moreGridTags", { n: hiddenTagCount }) }}
         </span>
@@ -111,10 +102,21 @@ import { RouteNames } from "@/router/routeNames";
 import { localizeOrEmpty } from "@/utils/language-utils";
 import type { ProductionDateSummary } from "@/utils/productionsOverview";
 import type { ProductionTagChip } from "@/utils/tagDisplay";
+import { useDarkMode } from "@/composables/useDarkMode";
+
+const PLACEHOLDER_THUMB_LIGHT_SRC = new URL(
+  "../../assets/images/placeholder-light.svg",
+  import.meta.url,
+).href;
+
+const PLACEHOLDER_THUMB_DARK_SRC = new URL(
+  "../../assets/images/placeholder-dark.svg",
+  import.meta.url,
+).href;
 
 /**
- * Grid cards must align in rows of equal height, so we cap the tag count
- * to keep card heights consistent regardless of how tagged a production is.
+ * Grid cards align in rows of equal height, so cap visible chips and roll the
+ * rest into a "+n" indicator to keep card heights consistent.
  */
 const MAX_VISIBLE_GRID_TAGS = 3;
 
@@ -123,15 +125,37 @@ const props = withDefaults(
     production: ProductionWithBackwardsRefs;
     dateSummary: ProductionDateSummary;
     tagChips: ProductionTagChip[];
-    /** Public crop URL (`/media/crops/…`) for the grid thumbnail, if any. */
-    thumbnailUrl?: string | null;
+    /**
+     * Crop URL when set; theme placeholder when `null` (no list media);
+     * loading tile when `undefined`.
+     */
+    thumbnailUrl?: string | null | undefined;
     /** Used to stagger the grid entrance animation. */
     rowIndex?: number;
   }>(),
-  { rowIndex: 0, thumbnailUrl: null },
+  { rowIndex: 0, thumbnailUrl: undefined },
 );
 
+const useLogoFallback = computed(
+  () => props.thumbnailUrl === null || props.thumbnailUrl === "",
+);
+
+const { isDark } = useDarkMode();
 const { t, locale } = useI18n();
+
+const placeholderThumbSrc = computed(() =>
+  isDark.value ? PLACEHOLDER_THUMB_DARK_SRC : PLACEHOLDER_THUMB_LIGHT_SRC,
+);
+
+const resolvedThumbSrc = computed(() => {
+  if (props.thumbnailUrl === undefined) {
+    return null;
+  }
+  if (props.thumbnailUrl === null || props.thumbnailUrl === "") {
+    return placeholderThumbSrc.value;
+  }
+  return props.thumbnailUrl;
+});
 
 const visibleTagChips = computed(() =>
   props.tagChips.slice(0, MAX_VISIBLE_GRID_TAGS),
@@ -141,7 +165,6 @@ const hiddenTagCount = computed(() =>
   Math.max(0, props.tagChips.length - MAX_VISIBLE_GRID_TAGS),
 );
 
-/** Cap delay so long pages do not stretch the sequence too far. */
 const staggerDelayMs = computed(() =>
   Math.min((props.rowIndex ?? 0) * 40, 520),
 );
