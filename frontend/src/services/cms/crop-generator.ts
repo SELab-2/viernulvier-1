@@ -9,10 +9,10 @@ export interface CropDefinition {
   type: string;
   /** Target width in pixels. */
   width: number;
-  /** Target height in pixels. */
+  /** Target height in pixels. For 'native' fit, this is ignored. */
   height: number;
-  /** How to fit the image: 'cover' (crop) or 'contain' (letterbox). */
-  fit: "cover" | "contain";
+  /** How to fit the image: 'cover' (crop to exact dimensions), 'contain' (letterbox), or 'native' (scale to width preserving aspect ratio). */
+  fit: "cover" | "contain" | "native";
 }
 
 /**
@@ -21,22 +21,34 @@ export interface CropDefinition {
  */
 export const CMS_CROP_DEFINITIONS: CropDefinition[] = [
   {
-    type: "cms",
-    width: 800,
+    type: "FE3_header",
+    width: 1920,
+    height: 900,
+    fit: "cover",
+  },
+  {
+    type: "FE3_home_featuredWide",
+    width: 1920,
     height: 600,
     fit: "cover",
   },
   {
-    type: "cms_thumbnail",
-    width: 300,
-    height: 300,
-    fit: "cover",
+    type: "FE3_boxed",
+    width: 1920,
+    height: 0, // calculated from image aspect ratio
+    fit: "native",
   },
   {
-    type: "cms_wide",
-    width: 1600,
-    height: 900,
-    fit: "cover",
+    type: "nb_header",
+    width: 500,
+    height: 0, // calculated from image aspect ratio
+    fit: "native",
+  },
+  {
+    type: "cms",
+    width: 100,
+    height: 0, // calculated from image aspect ratio
+    fit: "native",
   },
 ];
 
@@ -78,11 +90,13 @@ export async function generateCrop(
     throw new Error("Failed to get canvas context");
   }
 
-  // Calculate source region based on fit mode
+  // Calculate source region and destination dimensions based on fit mode
   let sx = 0;
   let sy = 0;
   let sw = img.naturalWidth;
   let sh = img.naturalHeight;
+  let dw = crop.width;
+  let dh = crop.height;
 
   if (crop.fit === "cover") {
     // Calculate scaling to cover the target aspect ratio
@@ -91,22 +105,26 @@ export async function generateCrop(
 
     if (imageAspect > targetAspect) {
       // Image is wider, crop sides
-      sw = (img.naturalHeight * targetAspect);
+      sw = img.naturalHeight * targetAspect;
       sx = (img.naturalWidth - sw) / 2;
     } else {
       // Image is taller, crop top/bottom
-      sh = (img.naturalWidth / targetAspect);
+      sh = img.naturalWidth / targetAspect;
       sy = (img.naturalHeight - sh) / 2;
     }
-  }
-  // For 'contain' mode, we'll draw with letterboxing (white background)
-  else {
+  } else if (crop.fit === "native") {
+    // Scale to width, preserving aspect ratio
+    const scale = crop.width / img.naturalWidth;
+    dh = Math.round(img.naturalHeight * scale);
+    canvas.height = dh;
+  } else {
+    // contain mode - letterbox with white background
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, crop.width, crop.height);
   }
 
   // Draw the image
-  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, crop.width, crop.height);
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, dw, dh);
 
   // Convert canvas to blob
   return await new Promise((resolve, reject) => {

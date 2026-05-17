@@ -71,9 +71,11 @@ describe("cms/crop-generator", () => {
 
   it("exposes the CMS crop definitions", () => {
     expect(CMS_CROP_DEFINITIONS).toEqual([
-      { type: "cms", width: 800, height: 600, fit: "cover" },
-      { type: "cms_thumbnail", width: 300, height: 300, fit: "cover" },
-      { type: "cms_wide", width: 1600, height: 900, fit: "cover" },
+      { type: "FE3_header", width: 1920, height: 900, fit: "cover" },
+      { type: "FE3_home_featuredWide", width: 1920, height: 600, fit: "cover" },
+      { type: "FE3_boxed", width: 1920, height: 0, fit: "native" },
+      { type: "nb_header", width: 500, height: 0, fit: "native" },
+      { type: "cms", width: 100, height: 0, fit: "native" },
     ]);
   });
 
@@ -167,6 +169,40 @@ describe("cms/crop-generator", () => {
     expect(context.drawImage).toHaveBeenCalledWith(expect.any(MockImage), 0, 0, 400, 200, 0, 0, 300, 300);
   });
 
+  it("generates native aspect ratio crops scaled to target width", async () => {
+    MockImage.naturalWidth = 2000;
+    MockImage.naturalHeight = 1000;
+    const canvas = createCanvasMock();
+    createElementSpy.mockImplementation(((tagName: string, options?: ElementCreationOptions) => {
+      if (tagName === "canvas") {
+        return canvas;
+      }
+      return originalCreateElement(tagName, options);
+    }) as typeof document.createElement);
+
+    const result = await generateCrop("data:image/png;base64,native", {
+      type: "cms",
+      width: 100,
+      height: 0,
+      fit: "native",
+    });
+
+    const context = canvas.__context;
+    expect(result.type).toBe("cms");
+    expect(canvas.height).toBe(50); // 100 * (1000 / 2000)
+    expect(context.drawImage).toHaveBeenCalledTimes(1);
+
+    const call = context.drawImage.mock.calls[0] as [MockImage, number, number, number, number, number, number, number, number];
+    expect(call[1]).toBe(0); // sx
+    expect(call[2]).toBe(0); // sy
+    expect(call[3]).toBe(2000); // sw
+    expect(call[4]).toBe(1000); // sh
+    expect(call[5]).toBe(0); // dx
+    expect(call[6]).toBe(0); // dy
+    expect(call[7]).toBe(100); // dw
+    expect(call[8]).toBe(50); // dh
+  });
+
   it("rejects when the image cannot be loaded", async () => {
     MockImage.mode = "error";
     const canvas = createCanvasMock();
@@ -242,10 +278,12 @@ describe("cms/crop-generator", () => {
 
     const results = await generateAllCrops("data:image/png;base64,all");
 
-    expect(results).toHaveLength(3);
+    expect(results).toHaveLength(5);
     expect(results.map((crop) => crop.type)).toEqual(CMS_CROP_DEFINITIONS.map((definition) => definition.type));
-    expect(results[0]?.filename).toContain("crop-cms-");
-    expect(results[1]?.filename).toContain("crop-cms_thumbnail-");
-    expect(results[2]?.filename).toContain("crop-cms_wide-");
+    expect(results[0]?.filename).toContain("crop-FE3_header-");
+    expect(results[1]?.filename).toContain("crop-FE3_home_featuredWide-");
+    expect(results[2]?.filename).toContain("crop-FE3_boxed-");
+    expect(results[3]?.filename).toContain("crop-nb_header-");
+    expect(results[4]?.filename).toContain("crop-cms-");
   });
 });
