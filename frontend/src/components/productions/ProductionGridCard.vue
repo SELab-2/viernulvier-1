@@ -33,17 +33,17 @@
       />
     </div>
 
-    <div class="flex min-w-0 flex-1 flex-col gap-1.5 px-3 py-3 sm:px-4 sm:py-3.5">
+    <div class="flex min-w-0 flex-1 flex-col gap-2.5 px-3 py-3 sm:px-4 sm:py-3.5">
       <div class="min-w-0">
         <h2
-          class="truncate font-serif text-lg font-semibold leading-tight tracking-tight text-ink-primary md:text-xl"
+          class="truncate font-serif text-xl font-semibold leading-tight tracking-tight text-ink-primary md:text-[1.3125rem]"
         >
           {{ title }}
         </h2>
 
         <p
           v-if="artist"
-          class="truncate font-serif text-sm italic leading-snug text-ink-secondary md:text-base"
+          class="mt-1 truncate font-serif text-sm italic leading-snug text-ink-secondary md:text-base"
         >
           {{ artist }}
         </p>
@@ -51,25 +51,30 @@
 
       <p
         v-if="dateSummary.line"
-        class="font-serif text-sm leading-tight tabular-nums text-ink-secondary"
+        class="flex items-start gap-1 font-serif text-sm leading-tight tabular-nums text-ink-secondary"
       >
-        <span class="whitespace-nowrap">{{ dateSummary.line }}</span>
-        <span
-          v-if="dateSummary.moreCount > 0"
-          class="ml-1 whitespace-nowrap font-sans text-xs not-italic text-ink-tertiary"
-        >
-          {{
-            t("productionsPage.morePerformances", {
-              n: dateSummary.moreCount,
-            })
-          }}
+        <EventCalendarIcon
+          class="mt-0.5 size-[0.9rem] shrink-0 text-ink-tertiary"
+        />
+        <span class="min-w-0">
+          <span class="whitespace-nowrap">{{ dateSummary.line }}</span>
+          <span
+            v-if="dateSummary.moreCount > 0"
+            class="whitespace-nowrap font-sans text-xs not-italic text-ink-tertiary"
+          >
+            ({{
+              t("productionsPage.morePerformances", {
+                n: dateSummary.moreCount,
+              })
+            }})
+          </span>
         </span>
       </p>
 
       <div
         v-if="tagChips.length"
         :ref="setRowRef"
-        class="mt-auto flex w-full flex-wrap items-center gap-1.5 overflow-hidden pt-2"
+        class="mt-auto flex w-full flex-wrap items-center gap-1.5 overflow-hidden pt-1.5"
       >
         <span
           v-for="item in visibleTagPills"
@@ -96,6 +101,7 @@ import { useI18n } from "vue-i18n";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import type { SupportedLang } from "@/i18n";
 import { RouteNames } from "@/router/routeNames";
+import EventCalendarIcon from "@/components/icons/EventCalendarIcon.vue";
 import { localizeOrEmpty } from "@/utils/language-utils";
 import type { ProductionDateSummary } from "@/utils/productionsOverview";
 import type { ProductionTagChip } from "@/utils/tagDisplay";
