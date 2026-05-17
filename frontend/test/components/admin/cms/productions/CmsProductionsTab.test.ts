@@ -280,6 +280,37 @@ describe("CmsProductionsTab", () => {
     expect(productionsService.bulkUpdateProductions).toHaveBeenCalled();
   });
 
+  it("sends explicit empty strings when clearing one locale in the editor panel", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = api.rowData.value[0];
+
+    api.editorPanel.value = {
+      rowId: row.id,
+      apiField: "description",
+      label: "Description",
+      values: {
+        nl: "",
+        en: "Keep me",
+        fr: "Keep me too",
+      },
+    };
+
+    await api.saveEditorPanel();
+
+    expect(productionsService.bulkUpdateProductions).toHaveBeenCalledTimes(1);
+    expect(productionsService.bulkUpdateProductions).toHaveBeenCalledWith({
+      ids: [row.id],
+      data: {
+        description: {
+          nl: "",
+          en: "Keep me",
+          fr: "Keep me too",
+        },
+      },
+    });
+  });
+
   it("opens create event from the events drawer and media action click", async () => {
     const wrapper = await mountTab();
     const api = (wrapper.vm as any).$?.exposed.__test;

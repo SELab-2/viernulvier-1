@@ -527,6 +527,14 @@ function setCurrentLanguageValue(
   };
 }
 
+function toEditableLanguageMap(values: Record<SupportedLang, string>): LanguageMap {
+  return {
+    nl: values.nl.trim(),
+    en: values.en.trim(),
+    fr: values.fr.trim(),
+  };
+}
+
 function getProductionEditKey(rowId: number, field: string): string {
   return `${rowId}:${field}`;
 }
@@ -1250,21 +1258,6 @@ async function persistBulkProductionPatch(
   }
 }
 
-async function persistProductionPatch(
-  target: CmsProductionGridRow,
-  patch: Record<string, unknown>,
-): Promise<void> {
-  try {
-    await updateProduction(target.id, patch as Parameters<typeof updateProduction>[1]);
-  } catch (error) {
-    saveError.value =
-      error instanceof Error
-        ? t("cms.errors.saveFailed", { message: error.message })
-        : t("cms.errors.saveGeneric");
-    throw error;
-  }
-}
-
 async function saveInlineBulkUpdate(
   primaryRow: CmsProductionGridRow,
   apiField: keyof ProductionWithBackwardsRefs,
@@ -1502,7 +1495,7 @@ async function saveEditorPanel(): Promise<void> {
     return;
   }
 
-  const payload = toLanguageMapOrNull(editorPanel.value.values);
+  const payload = toEditableLanguageMap(editorPanel.value.values);
   const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], row);
 
   // Show confirmation if editing multiple rows
@@ -1529,13 +1522,6 @@ async function saveEditorPanel(): Promise<void> {
     await persistBulkProductionPatch(targetRows, {
       [editorPanel.value?.apiField as ProductionLongField]: payload,
     });
-    await Promise.all(
-      targetRows.map(async (target) => {
-        await persistProductionPatch(target, {
-          [editorPanel.value?.apiField as ProductionLongField]: payload,
-        });
-      }),
-    );
   } finally {
     isSaving.value = false;
   }
