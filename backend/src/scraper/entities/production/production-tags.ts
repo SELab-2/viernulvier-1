@@ -42,9 +42,13 @@ function normalizeUseAs(raw: unknown): "genre" | "tag" | null {
 function nameMapForGenre(g: ViernulvierGenreJSON): Record<string, string> | null {
   const fromName = coerceLanguageMap(g.name);
   if (fromName) {
-    const sanitized: Record<string, string> = {};
+    const sanitized = Object.create(null) as Record<string, string>;
     for (const lang of SCRAPER_LANGUAGE_KEYS) {
+      // lang is from a known set of keys, not user input
+      // eslint-disable-next-line security/detect-object-injection
       const t = plainTextFromHtmlish(fromName[lang] ?? "");
+      // lang is from a known set of keys, not user input
+      // eslint-disable-next-line security/detect-object-injection
       if (t !== "") sanitized[lang] = t;
     }
     if (Object.keys(sanitized).length > 0) return sanitized;
@@ -106,7 +110,8 @@ async function loadOrCreateTagTypes(
   for (const key of ["genre", "tag"] as const) {
     const found = types.find((t) => tagTypeMatchesCanonical(t, key));
     if (found) {
-      out[key] = found.id;
+      if (key === "genre") out.genre = found.id;
+      else out.tag = found.id;
       continue;
     }
     const body = {
@@ -125,7 +130,8 @@ async function loadOrCreateTagTypes(
       throw new Error(`POST /tag/type (${key}): ${created.status} ${text}`);
     }
     const row = (await created.json()) as TagType;
-    out[key] = row.id;
+    if (key === "genre") out.genre = row.id;
+    else out.tag = row.id;
     if (stats !== undefined) {
       stats.tags.tagTypesCreated++;
     }
@@ -389,7 +395,7 @@ async function syncProductionGenreTagsInner(
       continue;
     }
 
-    const tagTypeId = tagTypes[useAs];
+    const tagTypeId = useAs === "genre" ? tagTypes.genre : tagTypes.tag;
     const nameMap = nameMapForGenre(genreJson);
     if (nameMap === null) {
       if (scraperVerbose()) {
@@ -463,7 +469,7 @@ export async function scrapeTagsByIds(
       continue;
     }
 
-    const tagTypeId = tagTypes[useAs];
+    const tagTypeId = useAs === "genre" ? tagTypes.genre : tagTypes.tag;
     const nameMap = nameMapForGenre(genreJson);
     if (nameMap === null) {
       if (scraperVerbose()) {
