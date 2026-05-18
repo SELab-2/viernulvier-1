@@ -389,9 +389,11 @@ export default {
     loading: "Loading blogpost",
     notFound: "Blogpost not found",
     notFoundDescription: "This blogpost does not exist or is no longer available.",
-    errorGeneric: "Something went wrong while loading this blogpost.",
+    errorGenericKicker: "Oops!",
+    errorGenericTitle: "Something went wrong",
+    errorGenericDescription: "We couldn't load this blogpost. Please try again later.",
     publishedOn: "Published on {date}",
-    backToHome: "Back to home",
+    backToBlog: "Back to all blog posts",
     relatedProductions: "Related productions",
   },
   errors: {
