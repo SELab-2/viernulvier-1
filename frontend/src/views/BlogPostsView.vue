@@ -1,4 +1,4 @@
-<!-- eslint-disable vue/no-v-html -- All v-html bindings in this file render strings produced by parseAndSanitizeContent, which routes HTML through DOMPurify. -->
+<!-- eslint-disable vue/no-v-html -- All v-html bindings in this file render strings produced by parseAndSanitizeMd, which routes HTML through DOMPurify. -->
 <template>
   <div class="flex min-h-screen flex-col bg-surface-0">
     <AppNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
@@ -73,7 +73,7 @@
               <h2
                 class="mt-1 font-serif text-xl font-semibold leading-snug tracking-tight text-ink-primary md:text-2xl"
               >
-                {{ localizeWithFallback(post.title, (map) => localizeOrEmpty(map ?? {}, currentLang)) }}
+                {{ localizeWithFallback(post.title, (map) => localizeOrEmpty(map, currentLang)) }}
               </h2>
 
               <div
@@ -204,7 +204,7 @@ watch(totalPages, (total) => {
 
 
 function getPreview(content: LanguageMap): string {
-  const raw = localizeWithFallback(content, (map) => localizeOrEmpty(map ?? {}, currentLang.value));
+  const raw = localizeWithFallback(content, (map) => localizeOrEmpty(map, currentLang.value));
   return parseAndSanitizeMd(raw);
 }
 
