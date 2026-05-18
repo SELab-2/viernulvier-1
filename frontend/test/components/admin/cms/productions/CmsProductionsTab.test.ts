@@ -1934,6 +1934,181 @@ describe("CmsProductionsTab", () => {
     expect(api.mediaPreview.value?.kind).toBe("iframe");
   });
 
+  it("parses vimeo player URL and bare vimeo URL without digits", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const state = (wrapper.vm as any).$.setupState as any;
+
+    state.openMediaPreview("https://player.vimeo.com/video/987654", "Vimeo", {
+      productionId: mockProduction.id,
+      mediaField: "video_1",
+    });
+    expect(api.mediaPreview.value?.url).toContain("https://player.vimeo.com/video/987654");
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
+
+    state.openMediaPreview("https://vimeo.com/no-digits", "Vimeo", {
+      productionId: mockProduction.id,
+      mediaField: "video_1",
+    });
+    expect(api.mediaPreview.value?.url).toBe("https://vimeo.com/no-digits");
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
+  });
+
+  it("clears the primary genre tag when set to 0", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = api.rowData.value[0];
+
+    await api.onCellEditingStopped({
+      data: row,
+      value: 0,
+      oldValue: 1,
+      colDef: { field: "genres" },
+      node: { setDataValue: vi.fn() },
+    });
+
+    expect(productionsService.updateProduction).toHaveBeenCalled();
+    const lastCall = (productionsService.updateProduction as any).mock.calls.at(-1);
+    expect(lastCall?.[1]?.tags).toEqual(expect.not.arrayContaining([1]));
+  });
+
+  it("ignores no-op genre edits where value equals previous and non-finite values", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = api.rowData.value[0];
+    const setDataValue = vi.fn();
+
+    // no-op: same value
+    await api.onCellEditingStopped({
+      data: row,
+      colDef: { field: "genres" },
+      value: undefined,
+      oldValue: undefined,
+      node: { setDataValue },
+    });
+    expect(setDataValue).not.toHaveBeenCalled();
+
+    // non-finite: NaN reverts
+    await api.onCellEditingStopped({
+      data: row,
+      colDef: { field: "genres" },
+      value: Number.NaN,
+      oldValue: 1,
+      node: { setDataValue },
+    });
+    expect(setDataValue).toHaveBeenCalledWith("genres", 1);
+  });
+
+  it("resolves mediaField from video_2 when media cell value matches video_2", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = {
+      ...api.rowData.value[0],
+      media: "https://example.com/clip2.mp4",
+      source: {
+        ...api.rowData.value[0].source,
+        video_1: null,
+        video_2: { nl: "https://example.com/clip2.mp4" },
+      },
+    };
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "media", headerName: "Media" },
+    });
+
+    expect(api.mediaPreview.value?.mediaField).toBe("video_2");
+  });
+
+  it("falls back to video_2 as preferred field when only video_2 is set on empty media cell", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = {
+      ...api.rowData.value[0],
+      media: "",
+      source: {
+        ...api.rowData.value[0].source,
+        video_1: null,
+        video_2: { nl: "https://example.com/v2.mp4" },
+      },
+    };
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "media", headerName: "Media" },
+    });
+
+    expect(api.mediaPreview.value?.mediaField).toBe("video_2");
+  });
+
+  it("opens image gallery preview when imageMedia cell has images", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    api.imagesByProductionId.value = new Map([
+      [mockProduction.id, [
+        { id: 1, url: "/a.jpg" },
+        { id: 2, url: "/b.jpg" },
+      ]],
+    ]);
+    api.rebuildRows();
+
+    api.onCellClicked({
+      data: api.rowData.value[0],
+      colDef: { field: "imageMedia", headerName: "Images" },
+    });
+
+    expect(api.mediaPreview.value?.kind).toBe("gallery");
+    expect(api.mediaPreview.value?.images?.length).toBe(2);
+  });
+
+  it("onMediaFileChange is a no-op when mediaId does not match", async () => {
+    class FileReaderMock {
+      onload: null | (() => void) = null;
+      onerror: null | (() => void) = null;
+      result = "data:image/png;base64,xyz";
+      readAsDataURL() {
+        this.onload?.();
+      }
+    }
+    const originalFileReader = (globalThis as any).FileReader;
+    (globalThis as any).FileReader = FileReaderMock;
+
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    api.addMedia("image");
+    const before = api.createForm.value.media[0]?.url;
+
+    await api.onMediaFileChange("media-does-not-exist", {
+      target: {
+        files: [new File(["x"], "x.png", { type: "image/png" })],
+        value: "x",
+      },
+    } as unknown as Event);
+
+    expect(api.createForm.value.media[0]?.url).toBe(before);
+
+    (globalThis as any).FileReader = originalFileReader;
+  });
+
+  it("surfaces generic error string when persistBulkProductionPatch rejects with non-Error", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const state = (wrapper.vm as any).$.setupState as any;
+    const row = api.rowData.value[0];
+
+    vi.spyOn(productionsService, "bulkUpdateProductions").mockRejectedValueOnce("boom");
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "descriptionOne", headerName: "Description" },
+    });
+
+    await expect(api.saveEditorPanel()).rejects.toBeDefined();
+    expect(state.saveError).toBeTruthy();
+  });
+
   it("covers escapeXml default callback branch", async () => {
     const wrapper = await mountTab();
     const state = (wrapper.vm as any).$.setupState as any;

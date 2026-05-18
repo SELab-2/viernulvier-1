@@ -143,6 +143,69 @@ describe("CmsMediaPreviewModal", () => {
     expect(img.attributes("src")).toBe(placeholderDataUrl);
   });
 
+  it("disables gallery nav buttons when only one image is present", () => {
+    const mediaPreview = {
+      kind: "gallery",
+      url: "/m1.jpg",
+      label: "G",
+      images: [{ id: 1, url: "/m1.jpg" }],
+      currentImageIndex: 0,
+      productionId: 1,
+    } as any;
+
+    const wrapper = mount(CmsMediaPreviewModal, { props: { mediaPreview, mediaPreviewEditUrl: "", isSaving: false }, global: { plugins: [i18n] } });
+
+    const navButtons = wrapper.findAll(".cms-media-gallery-nav button");
+    expect(navButtons.length).toBe(2);
+    expect((navButtons[0].element as HTMLButtonElement).disabled).toBe(true);
+    expect((navButtons[1].element as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("falls back to 0 when gallery currentImageIndex is undefined", async () => {
+    const mediaPreview = {
+      kind: "gallery",
+      url: "/m1.jpg",
+      label: "G",
+      images: [{ id: 1, url: "/m1.jpg" }, { id: 2, url: "/m2.jpg" }],
+      productionId: 1,
+    } as any;
+
+    const wrapper = mount(CmsMediaPreviewModal, { props: { mediaPreview, mediaPreviewEditUrl: "", isSaving: false }, global: { plugins: [i18n] } });
+
+    const count = wrapper.find(".cms-media-gallery-count");
+    expect(count.text()).toContain("1 / 2");
+
+    const thumbs = wrapper.findAll("button.cms-media-gallery-thumb");
+    expect(thumbs[0].classes()).toContain("active");
+    expect(thumbs[1].classes()).not.toContain("active");
+
+    // Click prev/next while currentImageIndex is undefined to exercise the `?? 0` fallback
+    const navButtons = wrapper.findAll(".cms-media-gallery-nav button");
+    await navButtons[0].trigger("click");
+    await navButtons[1].trigger("click");
+    const events = wrapper.emitted()["sync-gallery-preview"] ?? [];
+    expect(events).toEqual([[-1], [1]]);
+  });
+
+  it("renders gallery without images and disables nav buttons", () => {
+    const mediaPreview = {
+      kind: "gallery",
+      url: "/m1.jpg",
+      label: "G",
+      productionId: 1,
+    } as any;
+
+    const wrapper = mount(CmsMediaPreviewModal, { props: { mediaPreview, mediaPreviewEditUrl: "", isSaving: false }, global: { plugins: [i18n] } });
+
+    const navButtons = wrapper.findAll(".cms-media-gallery-nav button");
+    expect(navButtons.length).toBe(2);
+    expect((navButtons[0].element as HTMLButtonElement).disabled).toBe(true);
+    expect((navButtons[1].element as HTMLButtonElement).disabled).toBe(true);
+
+    const count = wrapper.find(".cms-media-gallery-count");
+    expect(count.text()).toContain("0");
+  });
+
   it("enables add-image button only when productionId exists on placeholder", () => {
     const placeholderDataUrl = "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27800%27%20height%3D%27450%27%20viewBox%3D%270%200%20800%20450%27%3E%3Crect%20width%3D%27100%25%27%20height%3D%27100%25%27%20fill%3D%27%23f3f4f6%27/%3E%3Ctext%20x%3D%2750%25%27%20y%3D%2750%25%27%20fill%3D%27%23374151%27%20font-family%3D%27Arial%2C%20Helvetica%2C%20sans-serif%27%20font-size%3D%2724%27%20dominant-baseline%3D%27middle%27%20text-anchor%3D%27middle%27%3ENo%20media%3C/text%3E%3C/svg%3E";
     
