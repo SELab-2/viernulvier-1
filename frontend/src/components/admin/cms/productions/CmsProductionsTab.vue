@@ -1060,6 +1060,7 @@ async function persistBulkProductionPatch(
         applyUpdatedProductionToRow(row, updated, localizeValue);
       }
     }
+    gridApi.value?.applyTransaction({ update: targetRows });
   } catch (error) {
     saveError.value =
       error instanceof Error
