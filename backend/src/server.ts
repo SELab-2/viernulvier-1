@@ -6,6 +6,8 @@ import multipartPlugin from "./plugins/multipart.js";
 import authorizePlugin from "./plugins/authorize.js";
 import registerRoutes from "./routes/registerRoutes.js";
 import swaggerPlugin from "./docs/swagger.js";
+import http from "http";
+import https from "https";
 
 /**
  * Creates a server instance and registers the standard plugins.
@@ -65,6 +67,22 @@ export function getPort() {
  * @internal
  */
 export async function start(): Promise<FastifyInstance> {
+  http.globalAgent = new http.Agent({
+    keepAlive: true,
+    keepAliveMsecs: 1000,
+    maxSockets: 500,
+    maxFreeSockets: 10,
+    timeout: 60000,
+  });
+
+  https.globalAgent = new https.Agent({
+    keepAlive: true,
+    keepAliveMsecs: 1000,
+    maxSockets: 500,
+    maxFreeSockets: 10,
+    timeout: 60000,
+  });
+
   const server = createServer();
 
   try {

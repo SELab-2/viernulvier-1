@@ -38,6 +38,7 @@
     "lint:fix": "eslint . --fix",
     "check": "pnpm run build && pnpm run coverage && pnpm run lint",
     "create-admin": "tsx scripts/create-admin.ts",
+    "create-default-blog": "tsx scripts/create-default-blog.ts",
     "import:productions": "tsx scripts/import-productions-legacy.ts",
     "import:events": "tsx scripts/import-events-legacy.ts",
     "generate-secret": "tsx scripts/generate-secret.ts"
