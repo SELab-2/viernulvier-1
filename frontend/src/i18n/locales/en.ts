@@ -7,6 +7,7 @@ export default {
     home: "Home",
     archive: "Archive",
     productions: "Productions",
+    blog: "Blog",
     search: "Search",
     admin: {
       dashboard: "Dashboard",
@@ -15,24 +16,26 @@ export default {
     },
   },
   hero: {
+    dateline: "Archive · Ghent",
     title: "The Archive of De Vooruit",
-    subtitle:
-      "Over 12,000 performances, concerts, films and cultural events — documented, searchable and open to everyone.",
-    cta: "Browse the archive",
+    lead:
+      "Decades of performances, concerts and films at De Vooruit — preserved, indexed and made searchable. This is the front page of the house archive: type a name, a title or a hall to pull up the file, or wander freely through the collection.",
+    searchPlaceholder: "Search a production, artist or hall…",
+    searchLabel: "Search the archive",
+    searchSubmit: "Search",
+    searchHint: "{count}+ productions on file",
+    browseAll: "Or browse all productions",
   },
-  stats: {
-    productions: "Productions",
-    events: "Events",
-    yearsOfHistory: "Years of History",
-    genres: "Genres",
-  },
-  bento: {
-    featured: {
-      label: "Featured",
-      title: "Theatre, dance & more",
-      description:
-        "Discover hundreds of productions from the rich programming of De Vooruit — from avant-garde dance to political theatre.",
-      cta: "Explore",
+  featuredBlog: {
+    eyebrow: "Featured blog post",
+    dateline: "{date} · Editorial",
+    readMore: "Read the full article",
+    imageCaption:
+      "Article image — caption will come from the blog post.",
+    placeholder: {
+      title: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+      excerpt:
+        "Aenean euismod, urna ac dignissim porta, leo arcu vehicula nibh, sed congue dolor magna nec massa. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In hac habitasse platea dictumst — donec vitae sapien ut libero venenatis faucibus.",
     },
   },
   footer: {
@@ -68,6 +71,7 @@ export default {
       tags: "Tags",
       admins: "Admins",
       blogposts: "Blogposts",
+      tagTypes: "Tag types",
     },
     columns: {
       id: "ID",
@@ -77,6 +81,7 @@ export default {
       teaser: "Teaser",
       genres: "Primary Tag",
       tags: "Additional Tags",
+      imageMedia: "Image Media",
       descriptionOne: "Description",
       descriptionTwo: "Description 2",
       media: "Media",
@@ -94,6 +99,9 @@ export default {
         publishedAt: "Published at",
         productions: "Associated productions",
       },
+      tagTypeName: "Name",
+      tagCount: "Tag count",
+      tagsInType: "Tags",
     },
     events: {
       date: "Date",
@@ -112,6 +120,19 @@ export default {
         confirmRemoveDialogTitle: "Remove productions?",
         confirmRemoveBody: "This will permanently delete {count} selected productions. This cannot be undone.",
       },
+      confirmBulkEditDialogTitle: "Edit multiple productions?",
+      confirmBulkEditBody: "You're about to update {count} productions with the same data.",
+      confirmBulkEditSubmit: "Yes, update",
+      confirmBulkEditCancelInfo: "If you close, the bulk edit is cancelled. Select a single production if you want to edit just one.",
+      bulkEditTagsModeTitle: "Bulk edit tags",
+      bulkEditTagsModeBody: "How should the tag changes be applied to {count} productions?",
+      bulkEditTagsModeReplace: "Replace tags",
+      bulkEditTagsModeReplaceDescription: "Use one fixed tag set for all selected productions.",
+      bulkEditTagsModeDiff: "Apply add/remove changes",
+      bulkEditTagsModeDiffDescription: "Keep existing tags and only apply the listed additions and removals.",
+      bulkEditTagsPreviewTags: "Replace Tags:",
+      bulkEditTagsPreviewAdd: "Add:",
+      bulkEditTagsPreviewRemove: "Remove:",
       addTag: "+ Add Tag",
       removeTag: "Remove selected tags",
       tag: {
@@ -147,6 +168,13 @@ export default {
         removeBlogpost: "Remove selected blogposts",
         confirmRemoveDialogTitle: "Remove blogpost? | Remove blogposts?",
         confirmRemoveBody: "This will permanently delete {count} selected blogpost. This cannot be undone. | This will permanently delete {count} selected blogposts. This cannot be undone.",
+      },
+      addTagType: "+ Add tag type",
+      removeTagType: "Remove selected tag types",
+      loadedTagTypesCount: "Tag types loaded: {count}",
+      tagType: {
+        confirmRemoveDialogTitle: "Remove tag type?",
+        confirmRemoveBody: "This will permanently delete {count} selected tag type(s). This cannot be undone.",
       },
     },
     create: {
@@ -198,10 +226,13 @@ export default {
         title: "New blogpost",
         submit: "Add blogpost",
       },
+      tagTypeTitle: "New tag type",
+      submitTagType: "Add tag type",
     },
     panel: {
       close: "Close",
       save: "Save",
+      saving: "Saving...",
       saveAction: "Save Changes",
       saveHint: "Changes are only applied after clicking Save Changes.",
       text: "Text",
@@ -217,6 +248,7 @@ export default {
       saveSuccess: "Changes saved successfully",
       removeSuccess: "Production removed successfully",
       removeTagSuccess: "Tag removed successfully",
+      removeTagTypeSuccess: "Tag type removed successfully",
     },
     admin: {
       noPermission: "You don't have permissions to manage admins.",
@@ -236,6 +268,9 @@ export default {
     empty: "No productions in the archive yet.",
     morePerformances: "{n} more",
     moreListTags: "+{n} more",
+    layoutToggleLabel: "Layout",
+    layoutListLabel: "List view",
+    layoutGridLabel: "Grid view",
     showingRange: "{from}–{to} of {total}",
     prevPage: "Previous",
     nextPage: "Next",
@@ -330,6 +365,7 @@ export default {
       all: "All articles",
     },
     notFound: {
+      kicker: "File no. 404 · Not in the collection",
       title: "Production not found",
       description: "We couldn't find this specific production for you. Luckily, there's plenty more to discover: return to the overview and dive back into our full history of productions.",
       buttonLabel: "Back to productions",
@@ -338,13 +374,36 @@ export default {
       contactLabel: "Contact us",
     },
   },
+  blogPostsPage: {
+    heading: "Blog Posts",
+    intro: "Reports, reflections and context around our work.",
+    loading: "Loading posts",
+    errorGeneric: "Something went wrong while loading the posts.",
+    empty: "No posts published yet.",
+    readMore: "Read more",
+    previous: "Previous",
+    next: "Next",
+    pagination: "Pagination",
+  },
   blogpost: {
-    loading: "Loading blogpost…",
+    loading: "Loading blogpost",
     notFound: "Blogpost not found",
     notFoundDescription: "This blogpost does not exist or is no longer available.",
     errorGeneric: "Something went wrong while loading this blogpost.",
     publishedOn: "Published on {date}",
     backToHome: "Back to home",
+    relatedProductions: "Related productions",
+  },
+  errors: {
+    notFound: {
+      kicker: "File no. 404 · Not in the collection",
+      title: "Page not found",
+      description: "We couldn't find this page for you. It may have been moved, renamed, or never made it into the archive. Return to the overview and discover what is preserved in our collection.",
+      buttonLabel: "Back to the archive",
+      helpTitle: "Need help?",
+      helpText: "Can't find what you're looking for? For questions about our archive, feel free to email info{'@'}viernulvier.gent. We're happy to help.",
+      contactLabel: "Contact us",
+    },
   },
   admin: {
     login: {

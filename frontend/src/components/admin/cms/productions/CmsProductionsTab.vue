@@ -59,7 +59,7 @@
         :row-height="42"
         :loading="isLoading"
         :row-selection="rowSelection"
-        :suppress-row-click-selection="false"
+        :suppress-row-click-selection="true"
         :column-hover-highlight="true"
         :enable-cell-text-selection="true"
         :ensure-dom-order="true"
@@ -107,7 +107,7 @@
         :show="tagEditorPanel !== null"
         :panel="tagEditorPanel"
         :additional-tag-groups="additionalTagGroups"
-        :bulk-count="0"
+        :bulk-count="tagEditorBulkCount"
         :save-error="saveError"
         :is-saving="isSaving"
         @close="closeTagEditorPanel"
@@ -162,6 +162,118 @@
         @confirm="confirmRemove"
       />
 
+      <div v-if="bulkEditConfirmOpen" class="cms-modal-overlay" @click.self="closeBulkEditConfirm">
+        <section class="cms-modal cms-remove-modal" role="dialog" aria-modal="true">
+          <header class="cms-modal-header">
+            <h2 class="text-xl font-bold text-ink-primary">
+              {{ t("cms.actions.confirmBulkEditDialogTitle") }}
+            </h2>
+            <button type="button" class="cms-side-close" @click="closeBulkEditConfirm">
+              {{ t("cms.panel.close") }}
+            </button>
+          </header>
+
+          <div class="cms-modal-body">
+            <p class="text-sm text-ink-secondary">
+              {{ t("cms.actions.confirmBulkEditBody", { count: bulkEditConfirmCount }) }}
+            </p>
+            <p class="text-xs text-ink-secondary/70 mt-3">
+              {{ t("cms.actions.confirmBulkEditCancelInfo") }}
+            </p>
+          </div>
+
+          <footer class="cms-modal-footer">
+            <button type="button" class="cms-side-close" :disabled="bulkEditConfirmLoading" @click="closeBulkEditConfirm">
+              {{ t("cms.panel.close") }}
+            </button>
+            <button type="button" class="cms-side-save" :disabled="bulkEditConfirmLoading" @click="confirmBulkEdit">
+              {{ bulkEditConfirmLoading ? t("cms.panel.saving") : t("cms.actions.confirmBulkEditSubmit") }}
+            </button>
+          </footer>
+        </section>
+      </div>
+
+      <div v-if="secondaryTagBulkModeOpen" class="cms-modal-overlay" @click.self="closeSecondaryTagBulkMode">
+        <section class="cms-modal cms-remove-modal" role="dialog" aria-modal="true">
+          <header class="cms-modal-header">
+            <h2 class="text-xl font-bold text-ink-primary">
+              {{ t("cms.actions.bulkEditTagsModeTitle") }}
+            </h2>
+            <button type="button" class="cms-side-close" :disabled="secondaryTagBulkModeLoading" @click="closeSecondaryTagBulkMode">
+              {{ t("cms.panel.close") }}
+            </button>
+          </header>
+
+          <div class="cms-modal-body">
+            <p class="text-sm text-ink-secondary">
+              {{ t("cms.actions.bulkEditTagsModeBody", { count: secondaryTagBulkModeCount }) }}
+            </p>
+
+            <div class="mt-4 grid gap-4 md:grid-cols-2">
+              <button
+                type="button"
+                class="cms-choice-card"
+                :disabled="secondaryTagBulkModeLoading"
+                @click="confirmSecondaryTagBulkReplace"
+              >
+                <div class="cms-choice-card-header">
+                  <div>
+                    <div class="font-semibold text-ink-primary">
+                      {{ t("cms.actions.bulkEditTagsModeReplace") }}
+                    </div>
+                    <div class="mt-1 text-sm text-ink-secondary">
+                      {{ t("cms.actions.bulkEditTagsModeReplaceDescription") }}
+                    </div>
+                  </div>
+                  <span class="cms-choice-card-badge">1</span>
+                </div>
+
+                <div v-if="secondaryTagBulkModeTagsPreview" class="mt-3 text-sm">
+                  <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewTags') }}</div>
+                  <div class="mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeTagsPreview }}</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                class="cms-choice-card"
+                :disabled="secondaryTagBulkModeLoading"
+                @click="confirmSecondaryTagBulkDiff"
+              >
+                <div class="cms-choice-card-header">
+                  <div>
+                    <div class="font-semibold text-ink-primary">
+                      {{ t("cms.actions.bulkEditTagsModeDiff") }}
+                    </div>
+                    <div class="mt-1 text-sm text-ink-secondary">
+                      {{ t("cms.actions.bulkEditTagsModeDiffDescription") }}
+                    </div>
+                  </div>
+                  <span class="cms-choice-card-badge">2</span>
+                </div>
+
+                <div class="mt-3 space-y-2 text-sm">
+                  <div v-if="secondaryTagBulkModeAddedPreview">
+                    <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewAdd') }}</div>
+                    <div class="mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeAddedPreview }}</div>
+                  </div>
+                  <div v-if="secondaryTagBulkModeRemovedPreview">
+                    <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewRemove') }}</div>
+                    <div class="mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeRemovedPreview }}</div>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <footer class="cms-modal-footer">
+            <button type="button" class="cms-side-close" :disabled="secondaryTagBulkModeLoading" @click="closeSecondaryTagBulkMode">
+              {{ t("general.cancel") }}
+            </button>
+          </footer>
+        </section>
+      </div>
+
       <div v-if="mediaPreview" class="cms-modal-overlay" @click.self="closeMediaPreview">
         <section class="cms-modal cms-media-modal" role="dialog" aria-modal="true">
           <header class="cms-modal-header">
@@ -209,6 +321,7 @@ import { useCmsRemove } from "@/composables/useCmsRemove";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
 import {
+  bulkUpdateProductions,
   createProduction,
   deleteProduction,
   extractProductionTagIds,
@@ -218,7 +331,7 @@ import {
 import { createEvent, deleteEvent, getEvent, updateEvent } from "@/services/events";
 import { getHall, getHalls } from "@/services/halls";
 import { getAllTags, getTagTypes } from "@/services/tags";
-import { localizeOrEmpty, localizeWithFallback, type LanguageMap } from "@/utils/language-utils";
+import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import {
   buildEventGridRows,
   buildProductionGridRows,
@@ -249,6 +362,8 @@ import {
 const { t } = useI18n();
 const { isDark } = useDarkMode();
 
+const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
+
 const {
   agThemeVars,
   autoSizeGridColumns,
@@ -274,10 +389,11 @@ const {
 } = useCmsProductionGrid({
   isDark,
   t,
-  getPrimaryTagLabels: () =>
+  getPrimaryTagOptions: () =>
     createTagGroups.value
       .filter((group) => group.isGenre)
-      .flatMap((group) => group.tags.map((tag) => tag.label)),
+      .flatMap((group) => group.tags),
+  currentLang,
 });
 
 const isLoading = ref(false);
@@ -291,6 +407,10 @@ const rowData = ref<CmsProductionGridRow[]>([]);
 const editorPanel = ref<EditorPanelState | null>(null);
 const createModalOpen = ref(false);
 const createEventModalOpen = ref(false);
+const bulkEditConfirmOpen = ref(false);
+const bulkEditConfirmLoading = ref(false);
+const bulkEditConfirmCount = ref(0);
+const pendingBulkEditAction = ref<(() => Promise<void>) | null>(null);
 const mediaPreview = ref<{ url: string; kind: "image" | "video" | "youtube"; label: string } | null>(null);
 const createExtraLangs = ref({ en: false, fr: false });
 const visibleCreateLangs = computed<SupportedLang[]>(() => {
@@ -332,7 +452,6 @@ const eventRowSnapshots = ref(new Map<number, CmsEventGridRow>());
 const pendingProductionEnterCommits = ref(new Set<string>());
 const activeProductionEditKey = ref<string | null>(null);
 
-const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 const editorBulkCount = computed(() => {
   if (!editorPanel.value) {
     return 0;
@@ -380,7 +499,29 @@ const tagEditorPanel = ref<{
   rowId: number;
   label: string;
   selectedTagIds: number[];
+  initialSelectedTagIds: number[];
 } | null>(null);
+
+const tagEditorBulkCount = computed(() => {
+  if (!tagEditorPanel.value) {
+    return 0;
+  }
+
+  const row = rowData.value.find((item) => item.id === tagEditorPanel.value?.rowId);
+  if (!row) {
+    return 0;
+  }
+
+  return getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], row).length;
+});
+
+const secondaryTagBulkModeOpen = ref(false);
+const secondaryTagBulkModeLoading = ref(false);
+const secondaryTagBulkModeCount = ref(0);
+const secondaryTagBulkModeTagsPreview = ref("");
+const secondaryTagBulkModeAddedPreview = ref("");
+const secondaryTagBulkModeRemovedPreview = ref("");
+const pendingSecondaryTagBulkRows = ref<CmsProductionGridRow[]>([]);
 
 const inlineFieldToApi: Record<InlineEditableField, keyof ProductionWithBackwardsRefs> = {
   performer: "artist",
@@ -398,24 +539,6 @@ const longGridFieldToApi: Record<"descriptionOne" | "descriptionTwo" | "media", 
 const genreTagTypeIds = computed(
   () => new Set(createTagGroups.value.filter((group) => group.isGenre).map((group) => group.tagTypeId)),
 );
-
-function findGenreTagIdByLabel(label: string): number | null {
-  const normalized = label.trim().toLowerCase();
-  if (!normalized) {
-    return null;
-  }
-
-  const genreTypeIds = genreTagTypeIds.value;
-  const match = tagsData.value.find((tag) => {
-    const tagTypeId = Number(tag.tag_type);
-    if (!genreTypeIds.has(tagTypeId)) {
-      return false;
-    }
-    return localizeWithFallback(tag.name, localizeValue).trim().toLowerCase() === normalized;
-  });
-
-  return match?.id ?? null;
-}
 
 function localizeValue(map: LanguageMap | null | undefined): string {
   if (!map) {
@@ -436,6 +559,18 @@ function setCurrentLanguageValue(
 
 function getProductionEditKey(rowId: number, field: string): string {
   return `${rowId}:${field}`;
+}
+
+function formatTagNames(tagIds: number[], maxCount: number = 5): string {
+  const tags = tagIds
+    .slice(0, maxCount)
+    .map((tagId) => tagsData.value.find((t) => t.id === tagId)?.name[currentLang.value] || `Tag ${tagId}`)
+    .filter(Boolean);
+  const result = tags.join(", ");
+  if (tagIds.length > maxCount) {
+    return `${result} +${tagIds.length - maxCount}`;
+  }
+  return result;
 }
 
 function snapshotEventRows(rows: CmsEventGridRow[]): void {
@@ -516,6 +651,7 @@ function toggleCreateTag(tagId: number, selected: boolean): void {
 function closeTagEditorPanel(): void {
   tagEditorPanel.value = null;
   saveError.value = null;
+  closeSecondaryTagBulkMode();
 }
 
 function openTagEditorPanel(row: CmsProductionGridRow): void {
@@ -530,6 +666,7 @@ function openTagEditorPanel(row: CmsProductionGridRow): void {
     rowId: row.id,
     label: row.title || t("cms.columns.tags"),
     selectedTagIds: selectedAdditionalTagIds,
+    initialSelectedTagIds: selectedAdditionalTagIds,
   };
   saveError.value = null;
 }
@@ -562,6 +699,27 @@ async function saveTagEditorPanel(): Promise<void> {
     return;
   }
 
+  const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], row);
+
+  if (targetRows.length > 1) {
+    openBulkEditConfirm(targetRows.length, async () => {
+      // Compute tag previews for the modal
+      const desiredTagIds = [...new Set(tagEditorPanel.value!.selectedTagIds)];
+      const initialTagIds = [...new Set(tagEditorPanel.value!.initialSelectedTagIds)];
+      const addedTagIds = desiredTagIds.filter((tagId) => !initialTagIds.includes(tagId));
+      const removedTagIds = initialTagIds.filter((tagId) => !desiredTagIds.includes(tagId));
+
+      secondaryTagBulkModeTagsPreview.value = formatTagNames(desiredTagIds);
+      secondaryTagBulkModeAddedPreview.value = formatTagNames(addedTagIds);
+      secondaryTagBulkModeRemovedPreview.value = formatTagNames(removedTagIds);
+
+      pendingSecondaryTagBulkRows.value = targetRows;
+      secondaryTagBulkModeCount.value = targetRows.length;
+      secondaryTagBulkModeOpen.value = true;
+    });
+    return;
+  }
+
   const genreTypeIds = genreTagTypeIds.value;
   const currentTagIds = extractProductionTagIds(row.source);
   const existingGenreTagIds = currentTagIds.filter((tagId) => {
@@ -586,6 +744,93 @@ async function saveTagEditorPanel(): Promise<void> {
   } finally {
     isSaving.value = false;
   }
+}
+
+function closeSecondaryTagBulkMode(): void {
+  secondaryTagBulkModeOpen.value = false;
+  secondaryTagBulkModeLoading.value = false;
+  secondaryTagBulkModeCount.value = 0;
+  secondaryTagBulkModeTagsPreview.value = "";
+  secondaryTagBulkModeAddedPreview.value = "";
+  secondaryTagBulkModeRemovedPreview.value = "";
+  pendingSecondaryTagBulkRows.value = [];
+}
+
+async function applySecondaryTagBulkEdit(mode: "replace" | "diff"): Promise<void> {
+  if (!tagEditorPanel.value) {
+    closeSecondaryTagBulkMode();
+    return;
+  }
+
+  const targetRows = pendingSecondaryTagBulkRows.value;
+  if (targetRows.length === 0) {
+    closeSecondaryTagBulkMode();
+    return;
+  }
+
+  const desiredAdditionalTagIds = [...new Set(tagEditorPanel.value.selectedTagIds)];
+  const initialAdditionalTagIds = [...new Set(tagEditorPanel.value.initialSelectedTagIds)];
+  const addedTagIds = desiredAdditionalTagIds.filter((tagId) => !initialAdditionalTagIds.includes(tagId));
+  const removedTagIds = initialAdditionalTagIds.filter((tagId) => !desiredAdditionalTagIds.includes(tagId));
+  const genreTypeIds = genreTagTypeIds.value;
+
+  secondaryTagBulkModeLoading.value = true;
+  isSaving.value = true;
+  saveError.value = null;
+
+  try {
+    await Promise.all(
+      targetRows.map(async (targetRow) => {
+        const currentTagIds = extractProductionTagIds(targetRow.source);
+        const existingGenreTagIds = currentTagIds.filter((tagId) => {
+          const tag = tagsData.value.find((item) => item.id === tagId);
+          return tag ? genreTypeIds.has(Number(tag.tag_type)) : false;
+        });
+
+        const existingAdditionalTagIds = currentTagIds.filter((tagId) => {
+          const tag = tagsData.value.find((item) => item.id === tagId);
+          return tag ? !genreTypeIds.has(Number(tag.tag_type)) : false;
+        });
+
+        const nextAdditionalTagIds =
+          mode === "replace"
+            ? desiredAdditionalTagIds
+            : Array.from(
+              new Set(
+                existingAdditionalTagIds
+                  .filter((tagId) => !removedTagIds.includes(tagId))
+                  .concat(addedTagIds),
+              ),
+            );
+
+        await updateProduction(targetRow.id, {
+          tags: [...existingGenreTagIds, ...nextAdditionalTagIds],
+        });
+      }),
+    );
+
+    await loadCmsData();
+    closeSecondaryTagBulkMode();
+    closeTagEditorPanel();
+    showSaveSuccess(t("cms.feedback.saveSuccess"));
+  } catch (error) {
+    saveError.value =
+      error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+    throw error;
+  } finally {
+    secondaryTagBulkModeLoading.value = false;
+    isSaving.value = false;
+  }
+}
+
+async function confirmSecondaryTagBulkReplace(): Promise<void> {
+  await applySecondaryTagBulkEdit("replace");
+}
+
+async function confirmSecondaryTagBulkDiff(): Promise<void> {
+  await applySecondaryTagBulkEdit("diff");
 }
 
 async function loadEventsForProduction(production: ProductionWithBackwardsRefs): Promise<ArchiveEvent[]> {
@@ -637,6 +882,34 @@ async function loadDetailRowsForProduction(
 function closeEditorPanel(): void {
   editorPanel.value = null;
   saveError.value = null;
+}
+
+function openBulkEditConfirm(count: number, action: () => Promise<void>): void {
+  bulkEditConfirmCount.value = count;
+  pendingBulkEditAction.value = action;
+  bulkEditConfirmOpen.value = true;
+}
+
+function closeBulkEditConfirm(): void {
+  bulkEditConfirmOpen.value = false;
+  bulkEditConfirmLoading.value = false;
+  pendingBulkEditAction.value = null;
+}
+
+async function confirmBulkEdit(): Promise<void> {
+  if (!pendingBulkEditAction.value) {
+    closeBulkEditConfirm();
+    return;
+  }
+
+  bulkEditConfirmLoading.value = true;
+  try {
+    await pendingBulkEditAction.value();
+    closeBulkEditConfirm();
+  } catch {
+    // Error is already handled in the action
+    bulkEditConfirmLoading.value = false;
+  }
 }
 
 function showSaveSuccess(message: string): void {
@@ -771,13 +1044,22 @@ async function submitCreateProduction(): Promise<void> {
   }
 }
 
-async function persistProductionPatch(
-  row: CmsProductionGridRow,
+async function persistBulkProductionPatch(
+  targetRows: CmsProductionGridRow[],
   patch: Record<string, unknown>,
 ): Promise<void> {
   try {
-    const updated = await updateProduction(row.id, patch as never);
-    applyUpdatedProductionToRow(row, updated, localizeValue);
+    const updatedRows = await bulkUpdateProductions({
+      ids: targetRows.map((row) => row.id),
+      data: patch as never,
+    });
+
+    for (const row of targetRows) {
+      const updated = updatedRows.find((item) => item.id === row.id);
+      if (updated) {
+        applyUpdatedProductionToRow(row, updated, localizeValue);
+      }
+    }
   } catch (error) {
     saveError.value =
       error instanceof Error
@@ -793,16 +1075,28 @@ async function saveInlineBulkUpdate(
   newValue: string,
 ): Promise<void> {
   const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], primaryRow);
+  const nextMap = { [currentLang.value]: newValue };
+
+  // Show confirmation if editing multiple rows
+  if (targetRows.length > 1) {
+    openBulkEditConfirm(targetRows.length, async () => {
+      isSaving.value = true;
+      saveError.value = null;
+      try {
+        await persistBulkProductionPatch(targetRows, { [apiField]: nextMap });
+        showSaveSuccess(t("cms.feedback.saveSuccess"));
+      } finally {
+        isSaving.value = false;
+      }
+    });
+    return;
+  }
+
   isSaving.value = true;
   saveError.value = null;
   try {
-    await Promise.all(
-      targetRows.map(async (row) => {
-        const currentMap = row.source[apiField] as LanguageMap | null | undefined;
-        const nextMap = setCurrentLanguageValue(currentMap, newValue);
-        await persistProductionPatch(row, { [apiField]: nextMap });
-      }),
-    );
+    await persistBulkProductionPatch(targetRows, { [apiField]: nextMap });
+    showSaveSuccess(t("cms.feedback.saveSuccess"));
   } finally {
     isSaving.value = false;
   }
@@ -817,39 +1111,68 @@ async function onCellEditingStopped(
 
   const field = event.colDef.field as InlineEditableField;
   if (event.colDef.field === "genres") {
-    const newLabel = String(event.value ?? "").trim();
-    const oldLabel = String(event.oldValue ?? "").trim();
+    const newGenreId = Number(event.value ?? 0);
+    const oldGenreId = Number(event.oldValue ?? 0);
     const editKey = getProductionEditKey(event.data.id, event.colDef.field);
     pendingProductionEnterCommits.value.delete(editKey);
     activeProductionEditKey.value = null;
 
-    if (newLabel === oldLabel) {
+    if (newGenreId === oldGenreId) {
       return;
     }
 
-    const selectedGenreTagId = findGenreTagIdByLabel(newLabel);
-    if (selectedGenreTagId === null) {
-      event.node.setDataValue("genres", oldLabel);
+    if (!Number.isFinite(newGenreId)) {
+      event.node.setDataValue("genres", oldGenreId);
       return;
     }
 
+    const selectedGenreTagId = newGenreId === 0 ? null : newGenreId;
     const genreTypeIds = genreTagTypeIds.value;
-    const currentTagIds = extractProductionTagIds(event.data.source);
-    const nonGenreTagIds = currentTagIds.filter((tagId) => {
-      const tag = tagsData.value.find((item) => item.id === tagId);
-      return !tag || !genreTypeIds.has(Number(tag.tag_type));
-    });
+
+    const persistPrimaryTagForRow = async (row: CmsProductionGridRow): Promise<void> => {
+      const currentTagIds = extractProductionTagIds(row.source);
+      const nonGenreTagIds = currentTagIds.filter((tagId) => {
+        const tag = tagsData.value.find((item) => item.id === tagId);
+        return !tag || !genreTypeIds.has(Number(tag.tag_type));
+      });
+
+      await updateProduction(row.id, {
+        tags: [...(selectedGenreTagId ? [selectedGenreTagId] : []), ...nonGenreTagIds],
+      });
+    };
+
+    const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], event.data);
+    if (targetRows.length > 1) {
+      openBulkEditConfirm(targetRows.length, async () => {
+        isSaving.value = true;
+        saveError.value = null;
+        try {
+          for (const row of targetRows) {
+            await persistPrimaryTagForRow(row);
+          }
+          await loadCmsData();
+          showSaveSuccess(t("cms.feedback.saveSuccess"));
+        } catch (error) {
+          saveError.value =
+            error instanceof Error
+              ? t("cms.errors.saveFailed", { message: error.message })
+              : t("cms.errors.saveGeneric");
+          throw error;
+        } finally {
+          isSaving.value = false;
+        }
+      });
+      return;
+    }
 
     isSaving.value = true;
     saveError.value = null;
     try {
-      await updateProduction(event.data.id, {
-        tags: [selectedGenreTagId, ...nonGenreTagIds],
-      });
+      await persistPrimaryTagForRow(event.data);
       await loadCmsData();
       showSaveSuccess(t("cms.feedback.saveSuccess"));
     } catch {
-      event.node.setDataValue("genres", oldLabel);
+      event.node.setDataValue("genres", oldGenreId);
     } finally {
       isSaving.value = false;
       persistGridState();
@@ -972,16 +1295,30 @@ async function saveEditorPanel(): Promise<void> {
   const payload = toLanguageMapOrNull(editorPanel.value.values);
   const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], row);
 
+  // Show confirmation if editing multiple rows
+  if (targetRows.length > 1) {
+    openBulkEditConfirm(targetRows.length, async () => {
+      isSaving.value = true;
+      saveError.value = null;
+      try {
+        await persistBulkProductionPatch(targetRows, {
+          [editorPanel.value?.apiField as ProductionLongField]: payload,
+        });
+        closeEditorPanel();
+        showSaveSuccess(t("cms.feedback.saveSuccess"));
+      } finally {
+        isSaving.value = false;
+      }
+    });
+    return;
+  }
+
   isSaving.value = true;
   saveError.value = null;
   try {
-    await Promise.all(
-      targetRows.map(async (target) => {
-        await persistProductionPatch(target, {
-          [editorPanel.value?.apiField as ProductionLongField]: payload,
-        });
-      }),
-    );
+    await persistBulkProductionPatch(targetRows, {
+      [editorPanel.value?.apiField as ProductionLongField]: payload,
+    });
   } finally {
     isSaving.value = false;
   }
@@ -1164,7 +1501,7 @@ async function loadCmsData(): Promise<void> {
 
   try {
     const [productionsPage, tags, tagTypes, halls] = await Promise.all([
-      getProductions(),
+      getProductions({ lang: currentLang.value }),
       getAllTags(),
       getTagTypes(),
       getHalls(),
@@ -1194,9 +1531,21 @@ async function loadCmsData(): Promise<void> {
 defineExpose({
   __test: {
     rowData,
+    tagsData,
+    tagTypesData,
+    hallsData,
+    createTagGroups,
+    genreTagTypeIds,
+    quickFilterText,
+    columnChooserOpen,
+    gridColumnOptions,
+    columnDefs,
     selectedCount,
     gridApi,
     createForm,
+    createExtraLangs,
+    visibleCreateLangs,
+    langGridClass,
     createModalOpen,
     createEventModalOpen,
     removeConfirmOpen,
@@ -1204,6 +1553,13 @@ defineExpose({
     removeConfirmError,
     mediaPreview,
     tagEditorPanel,
+    tagEditorBulkCount,
+    secondaryTagBulkModeOpen,
+    secondaryTagBulkModeLoading,
+    secondaryTagBulkModeCount,
+    secondaryTagBulkModeTagsPreview,
+    secondaryTagBulkModeAddedPreview,
+    secondaryTagBulkModeRemovedPreview,
     additionalTagGroups,
     createError,
     eventsPanelError,
@@ -1215,6 +1571,10 @@ defineExpose({
     selectedEventRows,
     localizeValue,
     setCurrentLanguageValue,
+    getProductionEditKey,
+    formatTagNames,
+    snapshotEventRows,
+    revertEventRow,
     resetCreateForm,
     resetCreateLinkedEventForm,
     openCreateModal,
@@ -1246,11 +1606,20 @@ defineExpose({
     closeTagEditorPanel,
     toggleTagEditorTag,
     saveTagEditorPanel,
+    closeSecondaryTagBulkMode,
+    confirmSecondaryTagBulkReplace,
+    confirmSecondaryTagBulkDiff,
     closeEventsPanel,
     closeEditorPanel,
     saveEditorPanel,
     rebuildRows,
     loadCmsData,
+    bulkEditConfirmOpen,
+    bulkEditConfirmCount,
+    bulkEditConfirmLoading,
+    openBulkEditConfirm,
+    closeBulkEditConfirm,
+    confirmBulkEdit,
   },
 });
 
@@ -1333,5 +1702,52 @@ img.cms-media-preview-large {
 iframe.cms-media-preview-large {
   height: 100%;
   aspect-ratio: 16 / 9;
+}
+
+.cms-choice-card {
+  border: 1px solid var(--surface-3);
+  border-radius: 0.75rem;
+  background: var(--surface-0);
+  padding: 1rem;
+  text-align: left;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease;
+}
+
+.cms-choice-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cms-choice-card-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  padding: 0 0.5rem;
+  background: var(--surface-2);
+  color: var(--ink-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.cms-choice-card:hover:not(:disabled) {
+  border-color: var(--accent-outline);
+  background: var(--surface-1);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.08);
+}
+
+.cms-choice-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 </style>

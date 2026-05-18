@@ -39,6 +39,17 @@
           <button
             type="button"
             class="cms-tab"
+            :class="{ 'cms-tab-active': activeTab === 'tagTypes' }"
+            role="tab"
+            data-testid="cms-tab-tag-types"
+            :aria-selected="activeTab === 'tagTypes'"
+            @click="activeTab = 'tagTypes'"
+          >
+            {{ t("cms.tabs.tagTypes") }}
+          </button>
+          <button
+            type="button"
+            class="cms-tab"
             :class="{ 'cms-tab-active': activeTab === 'admins' }"
             role="tab"
             data-testid="cms-tab-admins"
@@ -62,6 +73,7 @@
 
         <CmsProductionsTab v-if="activeTab === 'productions'" />
         <CmsTagsTab v-else-if="activeTab === 'tags'" />
+        <CmsTagTypesTab v-else-if="activeTab === 'tagTypes'" />
         <CmsAdminsTab v-else-if="activeTab === 'admins'" />
         <CmsBlogPostsTab v-else />
       </div>
@@ -81,16 +93,17 @@ import CmsAdminsTab from "@/components/admin/cms/admins/CmsAdminsTab.vue";
 import CmsProductionsTab from "@/components/admin/cms/productions/CmsProductionsTab.vue";
 import CmsTagsTab from "@/components/admin/cms/tags/CmsTagsTab.vue";
 import CmsBlogPostsTab from "@/components/admin/cms/blogposts/CmsBlogPostsTab.vue";
+import CmsTagTypesTab from "@/components/admin/cms/tagTypes/CmsTagTypesTab.vue";
 import { useDarkMode } from "@/composables/useDarkMode";
 
-type CmsTabId = "productions" | "tags" | "admins" | "blogposts";
+type CmsTabId = "productions" | "tags" | "admins" | "blogposts" | "tagTypes";
 
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 const { isDark, toggleDark } = useDarkMode();
 
-const validTabs = ["productions", "tags", "admins", "blogposts"] as const;
+const validTabs = ["productions", "tags", "admins", "blogposts", "tagTypes"] as const;
 
 const activeTab = computed({
   get(): CmsTabId {

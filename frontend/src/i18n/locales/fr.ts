@@ -7,6 +7,7 @@ export default {
     home: "Accueil",
     archive: "Archives",
     productions: "Productions",
+    blog: "Blog",
     search: "Rechercher",
     admin: {
       dashboard: "Tableau de bord",
@@ -15,24 +16,26 @@ export default {
     },
   },
   hero: {
+    dateline: "Archives · Gand",
     title: "Les Archives de Vooruit",
-    subtitle:
-      "Plus de 12 000 spectacles, concerts, films et événements culturels — documentés, consultables et accessibles à tous.",
-    cta: "Parcourir les archives",
+    lead:
+      "Des décennies de spectacles, concerts et films de Vooruit — conservés, classés et consultables. Voici la une des archives de la maison : tapez un nom, un titre ou une salle pour ouvrir la fiche, ou parcourez librement la collection.",
+    searchPlaceholder: "Cherchez une production, un artiste ou une salle…",
+    searchLabel: "Fouiller les archives",
+    searchSubmit: "Chercher",
+    searchHint: "{count}+ productions répertoriées",
+    browseAll: "Ou parcourir toutes les productions",
   },
-  stats: {
-    productions: "Productions",
-    events: "Evenements",
-    yearsOfHistory: "Ans d'histoire",
-    genres: "Genres",
-  },
-  bento: {
-    featured: {
-      label: "À la une",
-      title: "Théâtre, danse & plus",
-      description:
-        "Découvrez des centaines de productions de la riche programmation de De Vooruit — de la danse d'avant-garde au théâtre politique.",
-      cta: "Explorer",
+  featuredBlog: {
+    eyebrow: "Article à la une",
+    dateline: "{date} · Rédaction",
+    readMore: "Lire l'article complet",
+    imageCaption:
+      "Illustration de l'article — la légende viendra de la publication.",
+    placeholder: {
+      title: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+      excerpt:
+        "Aenean euismod, urna ac dignissim porta, leo arcu vehicula nibh, sed congue dolor magna nec massa. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In hac habitasse platea dictumst — donec vitae sapien ut libero venenatis faucibus.",
     },
   },
   footer: {
@@ -68,6 +71,7 @@ export default {
       tags: "Tags",
       admins: "Admins",
       blogposts: "Articles",
+      tagTypes: "Types de tags",
     },
     columns: {
       id: "ID",
@@ -77,6 +81,7 @@ export default {
       teaser: "Teaser",
       genres: "Tag principal",
       tags: "Tags additionnels",
+      imageMedia: "Média image",
       descriptionOne: "Description",
       descriptionTwo: "Description 2",
       media: "Media",
@@ -94,6 +99,9 @@ export default {
         publishedAt: "Publié à",
         productions: "Productions associées",
       },
+      tagTypeName: "Nom",
+      tagCount: "Nombre de tags",
+      tagsInType: "Tags",
     },
     events: {
       date: "Date",
@@ -112,6 +120,19 @@ export default {
         confirmRemoveDialogTitle: "Supprimer les productions ?",
         confirmRemoveBody: "Cette action supprimera définitivement {count} productions sélectionnées. Cette opération est irréversible.",
       },
+      confirmBulkEditDialogTitle: "Modifier plusieurs productions ?",
+      confirmBulkEditBody: "Vous êtes sur le point de mettre à jour {count} productions avec les mêmes données.",
+      confirmBulkEditSubmit: "Oui, mettre à jour",
+      confirmBulkEditCancelInfo: "Si vous fermez, la modification groupée est annulée. Sélectionnez une seule production si vous voulez n’en modifier qu’une.",
+      bulkEditTagsModeTitle: "Modification groupée des tags",
+      bulkEditTagsModeBody: "Comment appliquer les modifications de tags à {count} productions ?",
+      bulkEditTagsModeReplace: "Remplacer les tags",
+      bulkEditTagsModeReplaceDescription: "Utiliser un ensemble de tags fixe pour toutes les productions sélectionnées.",
+      bulkEditTagsModeDiff: "Appliquer les ajouts/suppressions",
+      bulkEditTagsModeDiffDescription: "Conserver les tags existants et n’appliquer que les ajouts et suppressions listés.",
+      bulkEditTagsPreviewTags: "Remplacer Tags:",
+      bulkEditTagsPreviewAdd: "Ajouter:",
+      bulkEditTagsPreviewRemove: "Supprimer:",
       addTag: "+ Ajouter un tag",
       removeTag: "Supprimer les tags sélectionnés",
       tag: {
@@ -147,6 +168,13 @@ export default {
         removeBlogpost: "Supprimer les articles sélectionnés",
         confirmRemoveDialogTitle: "Supprimer l'article? | Supprimer les articles?",
         confirmRemoveBody: "Cette action supprimera définitivement {count} article sélectionné. Cette opération est irréversible. | Cette action supprimera définitivement {count} articles sélectionnés. Cette opération est irréversible.",
+      },
+      addTagType: "+ Ajouter un type de tag",
+      removeTagType: "Supprimer les types de tags sélectionnés",
+      loadedTagTypesCount: "Types de tags chargés: {count}",
+      tagType: {
+        confirmRemoveDialogTitle: "Supprimer le type de tag ?",
+        confirmRemoveBody: "Cette action supprimera définitivement {count} type(s) de tag sélectionné(s). Cette opération est irréversible.",
       },
     },
     create: {
@@ -197,10 +225,13 @@ export default {
         title: "Nouvel article",
         submit: "Ajouter l'article",
       },
+      tagTypeTitle: "Nouveau type de tag",
+      submitTagType: "Ajouter le type de tag",
     },
     panel: {
       close: "Fermer",
       save: "Enregistrer",
+      saving: "Enregistrement...",
       saveAction: "Enregistrer les modifications",
       saveHint: "Les changements ne sont appliques qu'apres avoir clique sur Enregistrer les modifications.",
       text: "Texte",
@@ -216,6 +247,7 @@ export default {
       saveSuccess: "Modifications enregistrees",
       removeSuccess: "Production supprimee",
       removeTagSuccess: "Tag supprimé",
+      removeTagTypeSuccess: "Type de tag supprimé",
     },
     admin: {
       noPermission: "Vous n'avez pas la permission de administrer les admins.",
@@ -236,6 +268,9 @@ export default {
     empty: "Aucune production dans les archives pour l’instant.",
     morePerformances: "{n} de plus",
     moreListTags: "+{n} de plus",
+    layoutToggleLabel: "Affichage",
+    layoutListLabel: "Vue liste",
+    layoutGridLabel: "Vue grille",
     showingRange: "{from}–{to} sur {total}",
     prevPage: "Précédent",
     nextPage: "Suivant",
@@ -330,6 +365,7 @@ export default {
       all: "Tous les articles",
     },
     notFound: {
+      kicker: "Dossier nº 404 · Hors collection",
       title: "Production introuvable",
       description: "Nous n'avons pas pu trouver cette production. Heureusement, il reste encore beaucoup à découvrir : revenez à la vue d'ensemble et replongez dans l'historique complet de nos productions.",
       buttonLabel: "Retour aux productions",
@@ -338,13 +374,36 @@ export default {
       contactLabel: "Contactez-nous",
     },
   },
+  blogPostsPage: {
+    heading: "Articles de blog",
+    intro: "Comptes rendus, réflexions et contextes autour de notre travail.",
+    loading: "Chargement des articles",
+    errorGeneric: "Une erreur est survenue lors du chargement des articles.",
+    empty: "Aucun article publié pour le moment.",
+    readMore: "Lire la suite",
+    previous: "Précédent",
+    next: "Suivant",
+    pagination: "Pagination",
+  },
   blogpost: {
-    loading: "Chargement de l'article…",
+    loading: "Chargement de l'article",
     notFound: "Article introuvable",
     notFoundDescription: "Cet article n'existe pas ou n'est plus disponible.",
     errorGeneric: "Une erreur s'est produite lors du chargement de cet article.",
     publishedOn: "Publié le {date}",
     backToHome: "Retour à l'accueil",
+    relatedProductions: "Productions associées",
+  },
+  errors: {
+    notFound: {
+      kicker: "Dossier nº 404 · Hors collection",
+      title: "Page introuvable",
+      description: "Nous n'avons pas pu trouver cette page. Elle a peut-être été déplacée, renommée ou n'a jamais été ajoutée aux archives. Retournez à la vue d'ensemble et découvrez ce qui est conservé dans notre collection.",
+      buttonLabel: "Retour aux archives",
+      helpTitle: "Besoin d'aide ?",
+      helpText: "Vous ne trouvez pas ce que vous cherchez ? Pour toute question sur nos archives, envoyez-nous un e-mail à info{'@'}viernulvier.gent. Nous serons ravis de vous aider.",
+      contactLabel: "Contactez-nous",
+    },
   },
   admin: {
     login: {

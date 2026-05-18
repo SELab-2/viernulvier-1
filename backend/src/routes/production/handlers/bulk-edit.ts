@@ -57,7 +57,11 @@ export async function bulkEditProductions(
 
   const addField = (column: string, value: unknown) => {
     if (value === undefined) return;
-    fields.push(`${column} = $${i++}`);
+
+    fields.push(
+      `${column} = CASE WHEN $${i}::jsonb IS NULL THEN NULL ELSE COALESCE(${column}, '{}'::jsonb) || $${i}::jsonb END`,
+    );
+    i += 1;
     values.push(value);
   };
 

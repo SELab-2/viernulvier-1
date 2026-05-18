@@ -2,8 +2,22 @@ import { useRoute, useRouter } from "vue-router";
 import {
   i18n,
   saveLanguagePreference,
+  SUPPORTED_LANGS,
   type SupportedLang,
 } from "@/i18n";
+
+/**
+ * Returns the path with any leading supported-language prefix stripped.
+ * Used when swapping locales on routes that don't expose a `lang` param
+ * (e.g. the 404 catch-all) so we don't accumulate prefixes on each switch.
+ */
+function stripLangPrefix(path: string): string {
+  const match = path.match(/^\/([^/]+)(\/.*)?$/);
+  if (match && SUPPORTED_LANGS.includes(match[1] as SupportedLang)) {
+    return match[2] ?? "/";
+  }
+  return path;
+}
 
 /**
  * Composable for switching the application language.
@@ -41,8 +55,11 @@ export function useLocale() {
       return;
     }
 
-    // Fallback for routes without a `lang` param (e.g. "/" before guard redirect).
-    const path = route.path === "/" ? `/${lang}` : `/${lang}${route.path}`;
+    // Fallback for routes without a `lang` param (e.g. "/" before guard
+    // redirect, or the 404 catch-all on a path like "/en/test"). Strip any
+    // existing lang prefix first so repeated switches don't accumulate.
+    const stripped = stripLangPrefix(route.path);
+    const path = stripped === "/" ? `/${lang}` : `/${lang}${stripped}`;
     void router.push({
       path,
       query: route.query,

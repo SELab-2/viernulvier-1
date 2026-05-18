@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
 import { defineComponent, nextTick } from "vue";
 import type { Hall, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
@@ -13,8 +13,10 @@ vi.mock("@/services/productions", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/services/productions")>();
   return {
     ...actual,
+    getProduction: vi.fn(),
     getProductions: vi.fn(),
     createProduction: vi.fn(),
+    bulkUpdateProductions: vi.fn(),
     updateProduction: vi.fn(),
     deleteProduction: vi.fn(),
   };
@@ -127,8 +129,10 @@ const mockHall = {
 describe("CmsProductionsTab", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(productionsService, "getProduction").mockResolvedValue(mockProduction);
     vi.spyOn(productionsService, "getProductions").mockResolvedValue({ items: [mockProduction], total: 1 });
     vi.spyOn(productionsService, "createProduction").mockResolvedValue(mockProduction);
+    vi.spyOn(productionsService, "bulkUpdateProductions").mockResolvedValue([mockProduction]);
     vi.spyOn(productionsService, "updateProduction").mockResolvedValue(mockProduction);
     vi.spyOn(productionsService, "deleteProduction").mockResolvedValue(undefined);
     vi.spyOn(tagsService, "getAllTags").mockResolvedValue([mockPublicTag, mockHiddenTag]);
@@ -154,6 +158,10 @@ describe("CmsProductionsTab", () => {
       info: { nl: "" },
       production: mockProduction.id,
     } as never);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   async function mountTab() {
@@ -198,6 +206,36 @@ describe("CmsProductionsTab", () => {
     expect(api.createModalOpen.value).toBe(false);
   });
 
+  it("covers create modal field and tag emitters", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    api.openCreateModal();
+    await flushPromises();
+
+    const createModal = wrapper.findComponent({ name: "CmsCreateProductionModal" });
+    createModal.vm.$emit("update-form-field", "title", "nl", "Titel");
+    createModal.vm.$emit("update-extra-lang", "en", true);
+    createModal.vm.$emit("update-extra-lang", "en", false);
+    createModal.vm.$emit("update-primary-tag", 1);
+    createModal.vm.$emit("toggle-tag", 2, true);
+    createModal.vm.$emit("toggle-tag", 2, false);
+
+    api.createForm.value.artist.nl = "Artist";
+    api.createForm.value.tagline.nl = "Tagline";
+    api.createForm.value.teaser.nl = "Teaser";
+    api.createForm.value.video_1.nl = "data:image/png;base64,abc";
+
+    await api.submitCreateProduction();
+
+    expect(productionsService.createProduction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: { nl: "Titel" },
+        tags: [1],
+      }),
+    );
+  });
+
   it("opens editor panel and saves long text", async () => {
     const wrapper = await mountTab();
     const api = (wrapper.vm as any).$?.exposed.__test;
@@ -210,7 +248,162 @@ describe("CmsProductionsTab", () => {
 
     expect(api.editorPanel.value).toBeTruthy();
     await api.saveEditorPanel();
-    expect(productionsService.updateProduction).toHaveBeenCalled();
+    expect(productionsService.bulkUpdateProductions).toHaveBeenCalled();
+  });
+
+  it("opens create event from the events drawer and media action click", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = {
+      ...api.rowData.value[0],
+      source: { ...api.rowData.value[0].source, events: [100] },
+    };
+
+    api.onCellClicked({
+      data: row,
+      colDef: { colId: "eventsAction" },
+    });
+    await flushPromises();
+
+    const eventsDrawer = wrapper.findComponent({ name: "CmsEventsDrawer" });
+    eventsDrawer.vm.$emit("open-create-event");
+    await flushPromises();
+
+    expect(api.createEventModalOpen.value).toBe(true);
+  });
+
+  it("covers save success timeout and media youtube preview detection", async () => {
+    vi.useFakeTimers();
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = {
+      ...api.rowData.value[0],
+      media: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    };
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "media", headerName: "Media" },
+    });
+    expect(api.mediaPreview.value?.kind).toBe("youtube");
+
+    api.onCellClicked({
+      data: api.rowData.value[0],
+      colDef: { field: "descriptionOne", headerName: "Description" },
+    });
+    await api.saveEditorPanel();
+    expect(wrapper.text()).toContain("✓");
+
+    vi.advanceTimersByTime(3000);
+    await flushPromises();
+    expect(wrapper.text()).not.toContain("✓");
+    vi.useRealTimers();
+  });
+
+  it("opens media preview from a media cell click", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = {
+      ...api.rowData.value[0],
+      media: "https://example.com/preview.jpg",
+    };
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "media", headerName: "Media" },
+    });
+
+    expect(api.mediaPreview.value?.kind).toBe("image");
+  });
+
+  it("opens bulk edit confirmation when saving long text for multiple selected rows", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = api.rowData.value[0];
+    const secondRow = {
+      ...row,
+      id: row.id + 1,
+      source: { ...row.source, id: row.id + 1 },
+    };
+
+    api.gridApi.value = {
+      getSelectedRows: () => [row, secondRow],
+    };
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "descriptionOne", headerName: "Description" },
+    });
+
+    await api.saveEditorPanel();
+
+    expect(api.bulkEditConfirmOpen.value).toBe(true);
+    expect(api.bulkEditConfirmCount.value).toBe(2);
+
+    await api.confirmBulkEdit();
+
+    expect(productionsService.bulkUpdateProductions).toHaveBeenCalled();
+    expect(api.bulkEditConfirmOpen.value).toBe(false);
+  });
+
+  it("covers inline bulk edit confirmation and revert on save failure", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = api.rowData.value[0];
+    const otherRow = { ...row, id: row.id + 10, source: { ...row.source, id: row.id + 10 } };
+    const setDataValue = vi.fn();
+
+    api.gridApi.value = {
+      getSelectedRows: () => [row, otherRow],
+      getState: vi.fn(() => ({})),
+      getColumnState: vi.fn(() => []),
+      setState: vi.fn(),
+      setGridOption: vi.fn(),
+      sizeColumnsToFit: vi.fn(),
+    };
+
+    api.onProductionCellKeyDown({
+      data: row,
+      colDef: { field: "performer" },
+      event: new KeyboardEvent("keydown", { key: "Enter" }),
+    });
+
+    await api.onCellEditingStopped({
+      data: row,
+      value: "New Artist",
+      oldValue: "Artist",
+      colDef: { field: "performer" },
+      node: { setDataValue },
+    });
+
+    expect(api.bulkEditConfirmOpen.value).toBe(true);
+    await api.confirmBulkEdit();
+    expect(productionsService.bulkUpdateProductions).toHaveBeenCalled();
+
+    vi.spyOn(productionsService, "bulkUpdateProductions").mockRejectedValueOnce(new Error("fail"));
+    api.gridApi.value = {
+      getSelectedRows: () => [row],
+      getState: vi.fn(() => ({})),
+      getColumnState: vi.fn(() => []),
+      setState: vi.fn(),
+      setGridOption: vi.fn(),
+      sizeColumnsToFit: vi.fn(),
+    };
+    api.onProductionCellKeyDown({
+      data: row,
+      colDef: { field: "performer" },
+      event: new KeyboardEvent("keydown", { key: "Enter" }),
+    });
+
+    await api.onCellEditingStopped({
+      data: row,
+      value: "Changed Artist",
+      oldValue: "Artist",
+      colDef: { field: "performer" },
+      node: { setDataValue },
+    });
+
+    expect(setDataValue).toHaveBeenCalledWith("performer", "Artist");
   });
 
   it("handles inline edit commit and revert branches", async () => {
@@ -241,7 +434,7 @@ describe("CmsProductionsTab", () => {
       colDef: { field: "performer" },
       node: { setDataValue: vi.fn() },
     });
-    expect(productionsService.updateProduction).toHaveBeenCalled();
+    expect(productionsService.bulkUpdateProductions).toHaveBeenCalled();
   });
 
   it("opens events panel and handles save/remove event", async () => {
@@ -312,6 +505,23 @@ describe("CmsProductionsTab", () => {
     api.selectedEventsProductionId.value = 99999;
     await api.refreshEventsPanelForSelectedProduction();
     expect(api.selectedEventsProductionId.value).toBeNull();
+  });
+
+  it("covers the event-row enter shortcut", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = api.rowData.value[0];
+
+    row.source.events = [100];
+    await api.showEventsForProduction(row);
+
+    const firstEventRow = api.selectedEventRows.value[0];
+    const updateEvent = vi.spyOn(eventsService, "updateEvent");
+
+    api.onEventRowEnter(firstEventRow);
+    await flushPromises();
+
+    expect(updateEvent).toHaveBeenCalled();
   });
 
   it("covers file upload handlers", async () => {
@@ -502,6 +712,44 @@ describe("CmsProductionsTab", () => {
     expect(api.createEventModalOpen.value).toBe(false);
   });
 
+  it("covers multi-row genre bulk edit confirmation", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = api.rowData.value[0];
+    const otherRow = { ...row, id: row.id + 20, source: { ...row.source, id: row.id + 20 } };
+
+    api.gridApi.value = {
+      getSelectedRows: () => [row, otherRow],
+    };
+
+    await api.onCellEditingStopped({
+      data: row,
+      value: 3,
+      oldValue: 1,
+      colDef: { field: "genres" },
+      node: { setDataValue: vi.fn() },
+    });
+
+    expect(api.bulkEditConfirmOpen.value).toBe(true);
+    await api.confirmBulkEdit();
+    expect(productionsService.updateProduction).toHaveBeenCalled();
+
+    vi.spyOn(productionsService, "updateProduction").mockRejectedValueOnce(new Error("save failed"));
+    api.gridApi.value = {
+      getSelectedRows: () => [row, otherRow],
+    };
+
+    await api.onCellEditingStopped({
+      data: row,
+      value: 4,
+      oldValue: 1,
+      colDef: { field: "genres" },
+      node: { setDataValue: vi.fn() },
+    });
+
+    await api.confirmBulkEdit();
+  });
+
   it("covers show events error branch", async () => {
     vi.spyOn(eventsService, "getEvent").mockRejectedValueOnce(new Error("cannot load event"));
 
@@ -592,7 +840,7 @@ describe("CmsProductionsTab", () => {
     };
     await api.saveEditorPanel();
 
-    vi.spyOn(productionsService, "updateProduction").mockRejectedValueOnce(new Error("cannot save"));
+    vi.spyOn(productionsService, "bulkUpdateProductions").mockRejectedValueOnce(new Error("cannot save"));
     api.onCellClicked({
       data: row,
       colDef: { field: "descriptionOne", headerName: "Description" },
@@ -619,8 +867,18 @@ describe("CmsProductionsTab", () => {
       node: { setDataValue },
     });
 
-    expect(productionsService.updateProduction).not.toHaveBeenCalledWith(row.id, expect.anything());
+    expect(productionsService.bulkUpdateProductions).not.toHaveBeenCalled();
     expect(setDataValue).not.toHaveBeenCalled();
+  });
+
+  it("covers the onProductionCellEditingStarted guard branch", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    api.onProductionCellEditingStarted({ data: null, colDef: { field: "performer" } });
+    api.onProductionCellEditingStarted({ data: api.rowData.value[0], colDef: {} as never });
+
+    expect(api.editorPanel.value).toBeNull();
   });
 
   it("covers remaining edge branches: empty/cached events, getHall fetch, generic errors and watcher", async () => {
@@ -747,6 +1005,74 @@ describe("CmsProductionsTab", () => {
     expect(api.tagEditorPanel.value).toBeTruthy();
   });
 
+  it("covers secondary tag bulk-mode guard branches", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = api.rowData.value[0];
+
+    api.openTagEditorPanel(row);
+    await api.confirmSecondaryTagBulkReplace();
+    expect(api.secondaryTagBulkModeOpen.value).toBe(false);
+
+    api.closeTagEditorPanel();
+    await api.confirmSecondaryTagBulkDiff();
+    expect(api.secondaryTagBulkModeOpen.value).toBe(false);
+  });
+
+  it("covers secondary tag bulk replace and diff flows", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = api.rowData.value[0];
+    const otherRow = { ...row, id: row.id + 30, source: { ...row.source, id: row.id + 30 } };
+
+    api.gridApi.value = {
+      getSelectedRows: () => [row, otherRow],
+    };
+
+    api.openTagEditorPanel(row);
+    api.toggleTagEditorTag(1, true);
+    await api.saveTagEditorPanel();
+    await api.confirmBulkEdit();
+    await api.confirmSecondaryTagBulkReplace();
+    expect(productionsService.updateProduction).toHaveBeenCalled();
+
+    vi.mocked(productionsService.updateProduction).mockClear();
+    api.gridApi.value = {
+      getSelectedRows: () => [row, otherRow],
+    };
+    api.openTagEditorPanel(row);
+    api.toggleTagEditorTag(1, true);
+    await api.saveTagEditorPanel();
+    await api.confirmBulkEdit();
+    await api.confirmSecondaryTagBulkDiff();
+    expect(productionsService.updateProduction).toHaveBeenCalled();
+  });
+
+  it("covers secondary tag bulk-mode failure handling", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = api.rowData.value[0];
+    const otherRow = { ...row, id: row.id + 31, source: { ...row.source, id: row.id + 31 } };
+
+    api.gridApi.value = {
+      getSelectedRows: () => [row, otherRow],
+      getState: vi.fn(() => ({})),
+      getColumnState: vi.fn(() => []),
+      setState: vi.fn(),
+      setGridOption: vi.fn(),
+      sizeColumnsToFit: vi.fn(),
+    };
+
+    vi.spyOn(productionsService, "updateProduction").mockRejectedValueOnce(new Error("bulk failed"));
+
+    api.openTagEditorPanel(row);
+    api.toggleTagEditorTag(1, true);
+    await api.saveTagEditorPanel();
+    await api.confirmBulkEdit();
+
+    await expect(api.confirmSecondaryTagBulkReplace()).rejects.toThrow("bulk failed");
+  });
+
   it("covers genres edit branch with unchanged, invalid, success and failure paths", async () => {
     const comedyTag = {
       id: 3,
@@ -764,8 +1090,8 @@ describe("CmsProductionsTab", () => {
 
     await api.onCellEditingStopped({
       data: row,
-      value: "PublicTag",
-      oldValue: "PublicTag",
+      value: 1,
+      oldValue: 1,
       colDef: { field: "genres" },
       node: { setDataValue },
     });
@@ -773,16 +1099,16 @@ describe("CmsProductionsTab", () => {
     await api.onCellEditingStopped({
       data: row,
       value: "Unknown",
-      oldValue: "PublicTag",
+      oldValue: 1,
       colDef: { field: "genres" },
       node: { setDataValue },
     });
-    expect(setDataValue).toHaveBeenCalledWith("genres", "PublicTag");
+    expect(setDataValue).toHaveBeenCalledWith("genres", 1);
 
     await api.onCellEditingStopped({
       data: row,
-      value: "Comedy",
-      oldValue: "PublicTag",
+      value: 3,
+      oldValue: 1,
       colDef: { field: "genres" },
       node: { setDataValue: vi.fn() },
     });
@@ -795,12 +1121,12 @@ describe("CmsProductionsTab", () => {
     const revertSpy = vi.fn();
     await api.onCellEditingStopped({
       data: row,
-      value: "Comedy",
-      oldValue: "PublicTag",
+      value: 3,
+      oldValue: 1,
       colDef: { field: "genres" },
       node: { setDataValue: revertSpy },
     });
-    expect(revertSpy).toHaveBeenCalledWith("genres", "PublicTag");
+    expect(revertSpy).toHaveBeenCalledWith("genres", 1);
   });
 
   it("opens tag editor from tags cell click and covers unmount cleanup", async () => {
@@ -812,5 +1138,33 @@ describe("CmsProductionsTab", () => {
     expect(api.tagEditorPanel.value?.rowId).toBe(row.id);
 
     wrapper.unmount();
+  });
+
+  it("bulk edit confirm helpers and confirmBulkEdit branches", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    // close when no pending action
+    api.openBulkEditConfirm(0, null as any);
+    expect(api.bulkEditConfirmOpen.value).toBe(true);
+    await api.confirmBulkEdit();
+    expect(api.bulkEditConfirmOpen.value).toBe(false);
+
+    // success path: pending action runs
+    let ran = false;
+    api.openBulkEditConfirm(2, async () => {
+      ran = true;
+    });
+    expect(api.bulkEditConfirmOpen.value).toBe(true);
+    await api.confirmBulkEdit();
+    expect(ran).toBe(true);
+
+    // failure path: action throws, loading flag resets
+    api.openBulkEditConfirm(2, async () => {
+      throw new Error("fail");
+    });
+    expect(api.bulkEditConfirmOpen.value).toBe(true);
+    await api.confirmBulkEdit();
+    expect(api.bulkEditConfirmLoading.value).toBe(false);
   });
 });

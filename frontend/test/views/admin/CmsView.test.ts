@@ -8,6 +8,8 @@ import { RouteNames } from "@/router/routeNames";
 import CmsProductionsTab from "@/components/admin/cms/productions/CmsProductionsTab.vue";
 import CmsTagsTab from "@/components/admin/cms/tags/CmsTagsTab.vue";
 import CmsAdminsTab from "@/components/admin/cms/admins/CmsAdminsTab.vue";
+import CmsBlogPostsTab from "@/components/admin/cms/blogposts/CmsBlogPostsTab.vue";
+import CmsTagTypesTab from "@/components/admin/cms/tagTypes/CmsTagTypesTab.vue";
 
 vi.mock("@/services/productions", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/services/productions")>();
@@ -20,11 +22,21 @@ vi.mock("@/services/productions", async (importOriginal) => {
 });
 
 vi.mock("@/services/tags", () => ({
-  getAllTags: vi.fn(),
+  getAllTags: vi.fn().mockResolvedValue([]),
   getTagsForProduction: vi.fn(),
   getTagTypes: vi.fn().mockResolvedValue([]),
   updateTag: vi.fn(),
   deleteTag: vi.fn(),
+  deleteTagType: vi.fn(),
+  updateTagType: vi.fn(),
+  createTagType: vi.fn(),
+}));
+
+vi.mock("@/services/blogposts", () => ({
+  getBlogPosts: vi.fn().mockResolvedValue([]),
+  createBlogPost: vi.fn(),
+  updateBlogPost: vi.fn(),
+  deleteBlogPost: vi.fn(),
 }));
 
 vi.mock("@/services/halls", () => ({
@@ -56,7 +68,7 @@ vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
   dispatchEvent: vi.fn(),
 })));
 
-type CmsTab = "productions" | "tags" | "admins";
+type CmsTab = "productions" | "tags" | "admins" | "blogposts" | "tag-types";
 
 describe("CmsView", () => {
   let testRouter: ReturnType<typeof createRouter>;
@@ -167,6 +179,55 @@ describe("CmsView", () => {
     await clickTab(wrapper, "tags");
     await clickTab(wrapper, "productions");
     expectSelected(wrapper, "productions");
+  });
+
+  it("switches to the blogposts tab", async () => {
+    const wrapper = mountView();
+    await clickTab(wrapper, "blogposts");
+    expectSelected(wrapper, "blogposts");
+    expect(wrapper.findComponent(CmsBlogPostsTab).exists()).toBe(true);
+    expect(wrapper.findComponent(CmsProductionsTab).exists()).toBe(false);
+  });
+
+  it("switches to the tag-types tab", async () => {
+    const wrapper = mountView();
+    await clickTab(wrapper, "tag-types");
+    expectSelected(wrapper, "tag-types");
+    expect(wrapper.findComponent(CmsTagTypesTab).exists()).toBe(true);
+    expect(wrapper.findComponent(CmsProductionsTab).exists()).toBe(false);
+  });
+
+  it("reads tagTypes tab from URL query param", async () => {
+    testRouter.push({ path: "/en/admin/cms", query: { tab: "tagTypes" } });
+    await testRouter.isReady();
+
+    const wrapper = mountView();
+    await flushPromises();
+
+    expect(wrapper.get('[data-testid="cms-tab-tag-types"]').attributes("aria-selected")).toBe("true");
+    expect(wrapper.findComponent(CmsTagTypesTab).exists()).toBe(true);
+  });
+
+  it("reads blogposts tab from URL query param", async () => {
+    testRouter.push({ path: "/en/admin/cms", query: { tab: "blogposts" } });
+    await testRouter.isReady();
+
+    const wrapper = mountView();
+    await flushPromises();
+
+    expect(wrapper.get('[data-testid="cms-tab-blogposts"]').attributes("aria-selected")).toBe("true");
+    expect(wrapper.findComponent(CmsBlogPostsTab).exists()).toBe(true);
+  });
+
+  it("defaults to productions tab for an invalid query param value", async () => {
+    testRouter.push({ path: "/en/admin/cms", query: { tab: "nonexistent" } });
+    await testRouter.isReady();
+
+    const wrapper = mountView();
+    await flushPromises();
+
+    expect(wrapper.get('[data-testid="cms-tab-productions"]').attributes("aria-selected")).toBe("true");
+    expect(wrapper.findComponent(CmsProductionsTab).exists()).toBe(true);
   });
 
   it("handles dark mode toggle event", async () => {

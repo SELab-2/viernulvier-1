@@ -1,4 +1,4 @@
-<!-- eslint-disable vue/no-v-html -- All v-html bindings in this file render strings produced by parseAndSanitizeContent, which routes HTML through DOMPurify. -->
+<!-- eslint-disable vue/no-v-html -- v-html strings come from parseAndSanitizeContent (DOMPurify). Quote lines use normalizePlainText + text interpolation. -->
 <template>
   <div class="bg-surface-1 text-ink-primary">
     <div class="mx-auto max-w-7xl px-6 py-24 md:px-12">
@@ -21,12 +21,12 @@
             >
               <div
                 v-if="teaser"
-                class="font-serif text-base italic leading-relaxed text-ink-primary md:text-lg"
+                class="detail-rich-text font-serif text-base italic leading-relaxed text-ink-primary md:text-lg"
                 v-html="teaser"
               />
               <div
                 v-if="description_extra"
-                class="font-serif text-sm leading-relaxed text-ink-secondary"
+                class="detail-rich-text font-serif text-sm leading-relaxed text-ink-secondary"
                 :class="{ 'mt-3': teaser }"
                 v-html="description_extra"
               />
@@ -94,7 +94,7 @@
           <!-- Lead paragraph — drop cap on first letter, justified -->
           <div
             v-if="description"
-            class="article-lead font-serif text-lg leading-[1.7] text-ink-primary md:text-xl whitespace-pre-line text-justify hyphens-auto"
+            class="article-lead detail-rich-text font-serif text-lg leading-[1.7] text-ink-primary md:text-xl text-justify hyphens-auto"
             v-html="description"
           />
 
@@ -141,7 +141,7 @@
           <!-- Continuation — slightly smaller, secondary ink, like an addendum -->
           <div
             v-if="description_2"
-            class="font-serif text-base leading-[1.7] text-ink-secondary whitespace-pre-line text-justify hyphens-auto"
+            class="detail-rich-text font-serif text-base leading-[1.7] text-ink-secondary text-justify hyphens-auto"
             v-html="description_2"
           />
         </div>
@@ -157,7 +157,7 @@
                 {{ t("production.details.extraInfo") }}
               </h3>
               <div
-                class="font-serif text-sm leading-[1.7] text-ink-secondary whitespace-pre-line"
+                class="detail-rich-text font-serif text-sm leading-[1.7] text-ink-secondary"
                 v-html="info"
               />
             </div>
@@ -170,7 +170,7 @@
                 {{ t("production.details.programme") }}
               </h3>
               <div
-                class="font-serif text-sm leading-[1.7] text-ink-primary whitespace-pre-line"
+                class="detail-rich-text font-serif text-sm leading-[1.7] text-ink-primary"
                 v-html="programme"
               />
             </div>
@@ -188,7 +188,7 @@ import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { computed, ref } from "vue";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import { useI18n } from "vue-i18n";
-import { normalizeQuote, parseAndSanitizeContent } from "@/utils/parsers";
+import { normalizeQuote, parseAndSanitizeContent, normalizePlainText } from "@/utils/parsers";
 import ProductionDetailSidebarEvents from "@/components/production/ProductionDetailSidebarEvents.vue";
 import type { EnrichedEvent } from "@/composables/useProductionEvents";
 
@@ -228,8 +228,12 @@ const teaser = computed(() => parseField(props.production.teaser));
 const description = computed(() => parseField(props.production.description));
 const description_extra = computed(() => parseField(props.production.description_extra));
 const description_2 = computed(() => parseField(props.production.description_2));
-const quote = computed(() => normalizeQuote(parseField(props.production.quote)));
-const quote_source = computed(() => parseField(props.production.quote_source));
+const quote = computed(() =>
+  normalizeQuote(normalizePlainText(tProd(props.production.quote))),
+);
+const quote_source = computed(() =>
+  normalizePlainText(tProd(props.production.quote_source)),
+);
 const programme = computed(() => parseField(props.production.programme));
 const info = computed(() => parseField(props.production.info));
 
@@ -269,6 +273,63 @@ const mainContentClass = computed(() => {
 
 :deep(a:hover) {
   text-decoration-thickness: 2px;
+}
+
+/*
+ * Wrapper: `white-space: normal` so literal `\n` only between tags does not add
+ * phantom bands (we minify those in the parser). `pre-line` on p/li keeps rare
+ * in-flow line breaks from the CMS.
+ *
+ * Preflight zeros margins on p/ul/li outside `.prose`; this block is not
+ * `.prose`, so we must restore vertical rhythm between paragraphs and lists.
+ */
+.detail-rich-text {
+  white-space: normal;
+}
+
+.detail-rich-text :deep(p),
+.detail-rich-text :deep(li) {
+  white-space: pre-line;
+}
+
+.detail-rich-text :deep(> p) {
+  @apply mb-6;
+}
+
+.detail-rich-text :deep(> p:last-child) {
+  @apply mb-0;
+}
+
+.detail-rich-text :deep(> ul),
+.detail-rich-text :deep(> ol) {
+  @apply mb-6 list-disc pl-6;
+}
+
+.detail-rich-text :deep(> ol) {
+  list-style: decimal;
+}
+
+.detail-rich-text :deep(> ul:last-child),
+.detail-rich-text :deep(> ol:last-child) {
+  @apply mb-0;
+}
+
+.detail-rich-text :deep(li) {
+  @apply mb-1.5;
+}
+
+.detail-rich-text :deep(li:last-child) {
+  @apply mb-0;
+}
+
+/*
+ * Inter-tag `\r\n` used to show as blank bands under `whitespace-pre-line`; the
+ * parser minifies those away. `<hr>` does not participate in newline “runs”,
+ * but Preflight often leaves `<hr>` with no vertical margin, so the gap below
+ * the rule must come from CSS (same band as paragraph spacing).
+ */
+.detail-rich-text :deep(> hr) {
+  @apply my-6 w-full border-0 border-t border-surface-3;
 }
 
 /*

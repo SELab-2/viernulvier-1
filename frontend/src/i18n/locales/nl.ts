@@ -7,6 +7,7 @@ export default {
     home: "Home",
     archive: "Archief",
     productions: "Producties",
+    blog: "Blog",
     search: "Zoeken",
     admin: {
       dashboard: "Dashboard",
@@ -15,24 +16,26 @@ export default {
     },
   },
   hero: {
+    dateline: "Archief · Gent",
     title: "Het Archief van De Vooruit",
-    subtitle:
-      "Meer dan 12.000 voorstellingen, concerten, films en culturele evenementen — gedocumenteerd, doorzoekbaar en voor iedereen toegankelijk.",
-    cta: "Doorzoek het archief",
+    lead:
+      "Decennia aan voorstellingen, concerten en films uit De Vooruit — bewaard, ontsloten en doorzoekbaar. Dit is de voorpagina van het huisarchief: typ een naam, een titel of een zaal om de fiche op te zoeken, of blader vrij door de collectie.",
+    searchPlaceholder: "Zoek een productie, artiest of zaal…",
+    searchLabel: "Doorzoek het archief",
+    searchSubmit: "Zoek",
+    searchHint: "{count}+ producties doorzoekbaar",
+    browseAll: "Of bekijk alle producties",
   },
-  stats: {
-    productions: "Producties",
-    events: "Evenementen",
-    yearsOfHistory: "Jaar geschiedenis",
-    genres: "Genres",
-  },
-  bento: {
-    featured: {
-      label: "Uitgelicht",
-      title: "Theater, dans & meer",
-      description:
-        "Ontdek honderden producties uit de rijke programmering van De Vooruit — van avant-garde dans tot politiek theater.",
-      cta: "Verkennen",
+  featuredBlog: {
+    eyebrow: "Uitgelichte blogpost",
+    dateline: "{date} · Redactie",
+    readMore: "Lees het volledige artikel",
+    imageCaption:
+      "Beeld bij het artikel — bijschrift volgt uit de blogpost.",
+    placeholder: {
+      title: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+      excerpt:
+        "Aenean euismod, urna ac dignissim porta, leo arcu vehicula nibh, sed congue dolor magna nec massa. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In hac habitasse platea dictumst — donec vitae sapien ut libero venenatis faucibus.",
     },
   },
   footer: {
@@ -68,6 +71,7 @@ export default {
       tags: "Tags",
       admins: "Admins",
       blogposts: "Blogposts",
+      tagTypes: "Tag types",
     },
     columns: {
       id: "ID",
@@ -77,6 +81,7 @@ export default {
       teaser: "Teaser",
       genres: "Primaire tag",
       tags: "Extra tags",
+      imageMedia: "Beeldmedia",
       descriptionOne: "Beschrijving",
       descriptionTwo: "Beschrijving 2",
       media: "Media",
@@ -94,6 +99,9 @@ export default {
         publishedAt: "Gepubliceerd op",
         productions: "Bijhorende producties",
       },
+      tagTypeName: "Naam",
+      tagCount: "Aantal tags",
+      tagsInType: "Tags",
     },
     events: {
       date: "Datum",
@@ -112,6 +120,19 @@ export default {
         confirmRemoveDialogTitle: "Producties verwijderen?",
         confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde producties. Dit kan niet ongedaan worden gemaakt.",
       },
+      confirmBulkEditDialogTitle: "Meerdere producties bewerken?",
+      confirmBulkEditBody: "Je bent op het punt om {count} producties met dezelfde gegevens bij te werken.",
+      confirmBulkEditSubmit: "Ja, bijwerken",
+      confirmBulkEditCancelInfo: "Als je sluit, wordt de bulkbewerking geannuleerd. Selecteer één productie als je er maar één wilt bewerken.",
+      bulkEditTagsModeTitle: "Tags in bulk bewerken",
+      bulkEditTagsModeBody: "Hoe wil je de tag-wijzigingen toepassen op {count} producties?",
+      bulkEditTagsModeReplace: "Tags vervangen",
+      bulkEditTagsModeReplaceDescription: "Gebruik één vaste tagset voor alle geselecteerde producties.",
+      bulkEditTagsModeDiff: "Toevoegen/verwijderen toepassen",
+      bulkEditTagsModeDiffDescription: "Behoud bestaande tags en pas alleen de genoemde toevoegingen en verwijderingen toe.",
+      bulkEditTagsPreviewTags: "Vervang Tags:",
+      bulkEditTagsPreviewAdd: "Toevoegen:",
+      bulkEditTagsPreviewRemove: "Verwijderen:",
       addTag: "+ Voeg Tag Toe",
       removeTag: "Geselecteerde tags verwijderen",
       tag: {
@@ -147,6 +168,13 @@ export default {
         removeBlogpost: "Geselecteerde blogposts verwijderen",
         confirmRemoveDialogTitle: "Blogpost verwijderen? | Blogposts verwijderen?",
         confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde blogpost. Dit kan niet ongedaan worden gemaakt. | Hiermee verwijder je definitief {count} geselecteerde blogposts. Dit kan niet ongedaan worden gemaakt.",
+      },
+      addTagType: "+ Tag type toevoegen",
+      removeTagType: "Geselecteerde tag types verwijderen",
+      loadedTagTypesCount: "Tag types geladen: {count}",
+      tagType: {
+        confirmRemoveDialogTitle: "Tag type verwijderen?",
+        confirmRemoveBody: "Hiermee verwijder je definitief {count} geselecteerde tag type(s). Dit kan niet ongedaan worden gemaakt.",
       },
     },
     create: {
@@ -197,10 +225,13 @@ export default {
         title: "Nieuwe blogpost",
         submit: "Blogpost toevoegen",
       },
+      tagTypeTitle: "Nieuw tag type",
+      submitTagType: "Tag type toevoegen",
     },
     panel: {
       close: "Sluit",
       save: "Opslaan",
+      saving: "Opslaan...",
       saveAction: "Wijzigingen Opslaan",
       saveHint: "Wijzigingen worden pas toegepast nadat je op Wijzigingen Opslaan klikt.",
       text: "Tekst",
@@ -216,6 +247,7 @@ export default {
       saveSuccess: "Wijzigingen opgeslagen",
       removeSuccess: "Productie verwijderd",
       removeTagSuccess: "Tag verwijderd",
+      removeTagTypeSuccess: "Tag type verwijderd",
     },
     admin: {
       noPermission: "Je hebt geen toestemming om admins te beheren.",
@@ -236,6 +268,9 @@ export default {
     empty: "Er staan nog geen producties in het archief.",
     morePerformances: "nog {n}",
     moreListTags: "+{n} meer",
+    layoutToggleLabel: "Weergave",
+    layoutListLabel: "Lijstweergave",
+    layoutGridLabel: "Rasterweergave",
     showingRange: "{from}–{to} van {total}",
     prevPage: "Vorige",
     nextPage: "Volgende",
@@ -330,6 +365,7 @@ export default {
       all: "Alle artikelen",
     },
     notFound: {
+      kicker: "Dossier nr. 404 · Niet in de collectie",
       title: "Productie niet gevonden",
       description: "Deze productie konden we niet voor je vinden. Gelukkig valt er nog genoeg anders te ontdekken: keer terug naar het overzicht en duik opnieuw in onze volledige historiek van producties.",
       buttonLabel: "Terug naar producties",
@@ -338,13 +374,36 @@ export default {
       contactLabel: "Contacteer ons",
     },
   },
+  blogPostsPage: {
+    heading: "Blogposts",
+    intro: "Verslagen, reflecties en achtergronden bij ons werk.",
+    loading: "Blogposts worden geladen",
+    errorGeneric: "Er liep iets mis bij het laden van de blogposts.",
+    empty: "Nog geen blogposts gepubliceerd.",
+    readMore: "Lees verder",
+    previous: "Vorige",
+    next: "Volgende",
+    pagination: "Paginering",
+  },
   blogpost: {
-    loading: "Blogpost laden…",
+    loading: "Blogpost laden",
     notFound: "Blogpost niet gevonden",
     notFoundDescription: "Deze blogpost bestaat niet of is niet meer beschikbaar.",
     errorGeneric: "Er is iets misgegaan bij het laden van deze blogpost.",
     publishedOn: "Gepubliceerd op {date}",
     backToHome: "Terug naar home",
+    relatedProductions: "Gerelateerde producties",
+  },
+  errors: {
+    notFound: {
+      kicker: "Dossier nr. 404 · Niet in de collectie",
+      title: "Pagina niet gevonden",
+      description: "Deze pagina konden we niet voor je terugvinden. Misschien is hij verplaatst, hernoemd of nooit opgenomen in het archief. Keer terug naar het overzicht en ontdek wat er wél in onze collectie bewaard is.",
+      buttonLabel: "Terug naar het archief",
+      helpTitle: "Hulp nodig?",
+      helpText: "Vind je niet meteen wat je zoekt? Voor vragen over ons archief kun je altijd een mailtje sturen naar info{'@'}viernulvier.gent. We helpen je graag verder.",
+      contactLabel: "Contacteer ons",
+    },
   },
   admin: {
     login: {
