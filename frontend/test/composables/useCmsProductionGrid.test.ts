@@ -87,12 +87,43 @@ describe("useCmsProductionGrid", () => {
         | (() => { values: string[] })
         | undefined;
       expect(withParams?.().values).toEqual(["Genre A", "Genre B"]);
+      const withValueFormatter = withLabels.columnDefs.value.find((c) => c.field === "genres")?.valueFormatter as
+        | ((params: { value: unknown }) => string)
+        | undefined;
+      expect(withValueFormatter?.({ value: 1 })).toBe("Genre A");
 
       const withoutLabels = useCmsProductionGrid({ isDark: ref(false), t: (key) => key, currentLang: ref('nl') });
       const withoutParams = withoutLabels.columnDefs.value.find((c) => c.field === "genres")?.cellEditorParams as
         | (() => { values: string[] })
         | undefined;
       expect(withoutParams?.().values).toEqual([0]);
+    });
+
+    it("formats primary tag ids with label and fallback values", () => {
+      const grid = useCmsProductionGrid({
+        isDark: ref(false),
+        t: (key) => key,
+        getPrimaryTagOptions: () => [{ id: 7, label: "Genre X" }],
+      });
+
+      const genresCol = grid.columnDefs.value.find((c) => c.field === "genres");
+      const params = genresCol?.cellEditorParams as
+        | (() => { values: number[]; formatValue: (value: unknown) => string })
+        | undefined;
+      expect(params?.().values).toEqual([0, 7]);
+
+      const valueFormatter = genresCol?.valueFormatter as
+        | ((params: { value: unknown }) => string)
+        | undefined;
+      expect(valueFormatter?.({ value: 7 })).toBe("Genre X");
+      expect(valueFormatter?.({ value: 0 })).toBe("-");
+      expect(valueFormatter?.({ value: Number.NaN })).toBe("-");
+      expect(params?.().formatValue(7)).toBe("Genre X");
+
+      const filterValueGetter = genresCol?.filterValueGetter as
+        | ((params: { data?: { genres?: unknown } }) => string)
+        | undefined;
+      expect(filterValueGetter?.({ data: { genres: 7 } })).toBe("Genre X");
     });
 
     it("uses primary tag options for genre formatting and editor values", () => {
@@ -185,10 +216,17 @@ describe("useCmsProductionGrid", () => {
 
       const serializedGenre = arg.processCellCallback({
         column: { getColId: () => "genres" },
-        node: null,
+        node: { data: { source: { tags: [] } } },
         value: 7,
       });
       expect(serializedGenre).toBe("Genre A");
+
+      const serializedGenreFallback = arg.processCellCallback({
+        column: { getColId: () => "genres" },
+        node: null,
+        value: 7,
+      });
+      expect(serializedGenreFallback).toBe("Genre A");
 
       const plainValue = arg.processCellCallback({
         column: { getColId: () => "title" },

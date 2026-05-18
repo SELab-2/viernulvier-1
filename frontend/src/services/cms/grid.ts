@@ -4,6 +4,7 @@ import { collectProductionTagsByIdMap } from "@/services/productions";
 import { tagTypeIsGenre } from "@/utils/tagDisplay";
 import { localizeWithFallback, type LanguageMap } from "@/utils/language-utils";
 import { toLocalDateTimeInput } from "./date";
+import { resolveBulkTargetRows } from "./bulk-edit";
 import { extractEventIds } from "./helpers";
 import type { CmsAdminGridRow, CmsEventGridRow, CmsProductionGridRow, CreateAdminFormState, CmsTagGridRow, CmsBlogPostGridRow, CmsTagTypeGridRow } from "./types";
 
@@ -67,7 +68,8 @@ export function buildProductionGridRow(
   const eventIds = extractEventIds(production.events as unknown[]);
 
   const productionTags = collectProductionTagsByIdMap(production, tagById);
-  const genreLabels = filterProductionTagLabels(productionTags, genreTagTypeIds, true, localize);
+  const primaryGenreTagId =
+    productionTags.find((tag) => genreTagTypeIds.has(Number(tag.tag_type)))?.id ?? 0;
   const additionalLabels = filterProductionTagLabels(productionTags, genreTagTypeIds, false, localize);
 
   return {
@@ -77,7 +79,7 @@ export function buildProductionGridRow(
     title: localize(production.title) || "",
     producer: localize(production.supertitle) || "",
     teaser: localize(production.teaser) || "",
-    genres: genreLabels.slice(0, 1).join(", ") || "-",
+    genres: primaryGenreTagId,
     tags: additionalLabels.join(", ") || "-",
     descriptionOne: localize(production.description) || "",
     descriptionTwo: localize(production.description_2) || "",
@@ -182,14 +184,7 @@ export function getBulkTargetRows(
   selectedRows: CmsProductionGridRow[],
   primaryRow: CmsProductionGridRow,
 ): CmsProductionGridRow[] {
-  if (
-    selectedRows.length > 1
-    && selectedRows.some((row) => row.id === primaryRow.id)
-  ) {
-    return selectedRows;
-  }
-
-  return [primaryRow];
+  return resolveBulkTargetRows(selectedRows, primaryRow);
 }
  
 export function buildAdminGridRow(admin: Admin): CmsAdminGridRow {
