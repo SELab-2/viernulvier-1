@@ -363,6 +363,7 @@ export default {
       title: "Verwante artikelen",
       body: "Achtergrondverhalen, interviews en notities uit het archief bij deze productie.",
       all: "Alle artikelen",
+      readMore: "Lees meer",
     },
     notFound: {
       kicker: "Dossier nr. 404 · Niet in de collectie",
