@@ -328,7 +328,7 @@ describe("Replace on production route", () => {
     });
 
     const response = await replaceProduction(server, {
-      params: { id: String(replacedProduction.id) },
+      params: { id: replacedProduction.id },
       user: { id: 1 },
       body: {
         old_id: replacedProduction.old_id,
