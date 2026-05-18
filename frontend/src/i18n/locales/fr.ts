@@ -389,9 +389,11 @@ export default {
     loading: "Chargement de l'article",
     notFound: "Article introuvable",
     notFoundDescription: "Cet article n'existe pas ou n'est plus disponible.",
-    errorGeneric: "Une erreur s'est produite lors du chargement de cet article.",
+    errorGenericKicker: "Oups !",
+    errorGenericTitle: "Une erreur est survenue",
+    errorGenericDescription: "Nous n'avons pas pu charger cet article. Veuillez réessayer plus tard.",
     publishedOn: "Publié le {date}",
-    backToHome: "Retour à l'accueil",
+    backToBlog: "Retour à tous les articles",
     relatedProductions: "Productions associées",
   },
   errors: {
