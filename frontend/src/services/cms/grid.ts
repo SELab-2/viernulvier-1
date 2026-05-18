@@ -134,8 +134,6 @@ export function applyUpdatedProductionToRow(
   row.teaser = localize(updated.teaser) || "";
   row.descriptionOne = localize(updated.description) || "";
   row.descriptionTwo = localize(updated.description_2) || "";
-  row.imageMedia = "";
-  row.imageMediaUrls = [];
   row.media = localize(updated.video_1) || localize(updated.video_2) || "";
 }
 

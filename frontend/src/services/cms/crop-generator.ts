@@ -95,6 +95,8 @@ export async function generateCrop(
   let sy = 0;
   let sw = img.naturalWidth;
   let sh = img.naturalHeight;
+  let dx = 0;
+  let dy = 0;
   let dw = crop.width;
   let dh = crop.height;
 
@@ -118,13 +120,18 @@ export async function generateCrop(
     dh = Math.round(img.naturalHeight * scale);
     canvas.height = dh;
   } else {
-    // contain mode - letterbox with white background
+    // contain mode - scale to fit within target dimensions, letterbox with white
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, crop.width, crop.height);
+    const scale = Math.min(crop.width / img.naturalWidth, crop.height / img.naturalHeight);
+    dw = Math.round(img.naturalWidth * scale);
+    dh = Math.round(img.naturalHeight * scale);
+    dx = Math.round((crop.width - dw) / 2);
+    dy = Math.round((crop.height - dh) / 2);
   }
 
   // Draw the image
-  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, dw, dh);
+  ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
 
   // Convert canvas to blob
   return await new Promise((resolve, reject) => {

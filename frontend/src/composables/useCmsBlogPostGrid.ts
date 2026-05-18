@@ -69,8 +69,10 @@ export function useCmsBlogPostGrid(options: {
       field: "id",
       minWidth: 50,
       maxWidth: 100,
-      cellRenderer: (params: { value: number }) =>
-        `<a href="/${options.currentLang.value}/blog/post/${params.value}" target="_blank" rel="noopener noreferrer" class="text-ink-primary underline hover:text-ink-secondary transition-colors">${params.value}</a>`,
+      cellRenderer: (params: { value: number }) => {
+        const lang = options.currentLang.value.replace(/[&<>"']/g, "");
+        return `<a href="/${lang}/blog/post/${params.value}" target="_blank" rel="noopener noreferrer" class="text-ink-primary underline hover:text-ink-secondary transition-colors">${params.value}</a>`;
+      },
     },
     {
       headerName: options.t("cms.columns.title"),

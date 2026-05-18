@@ -52,7 +52,7 @@ export function resolvePreferredCropUrl(
 
 export function isImagePreviewUrl(url: string): boolean {
   const value = url.trim().toLowerCase();
-  return /^(data:image\/|https?:\/\/.*\.(?:png|jpe?g|gif|webp|svg)(?:\?.*)?$|https?:\/\/.*\/media\/crops\/|\/media\/crops\/|media\/crops\/)/.test(value);
+  return /^(data:image\/|https?:\/\/.*\.(?:png|jpe?g|gif|webp|svg)(?:\?.*)?$|https?:\/\/.*\/media\/crops\/|\/media\/crops\/)/.test(value);
 }
 
 export function isVideoPreviewUrl(url: string): boolean {

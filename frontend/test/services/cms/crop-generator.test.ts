@@ -166,7 +166,9 @@ describe("cms/crop-generator", () => {
 
     const context = canvas.__context;
     expect(context.fillRect).toHaveBeenCalledWith(0, 0, 300, 300);
-    expect(context.drawImage).toHaveBeenCalledWith(expect.any(MockImage), 0, 0, 400, 200, 0, 0, 300, 300);
+    // 400×200 image in a 300×300 canvas: scale = min(300/400, 300/200) = 0.75
+    // dw = 300, dh = 150, centered → dx = 0, dy = 75
+    expect(context.drawImage).toHaveBeenCalledWith(expect.any(MockImage), 0, 0, 400, 200, 0, 75, 300, 150);
   });
 
   it("generates native aspect ratio crops scaled to target width", async () => {
