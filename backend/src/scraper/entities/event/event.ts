@@ -137,7 +137,7 @@ async function fetchEventsListMeta(
 /** 
  * In-process cache: legacy hall id → local DB id (avoids repeat `scrapeHallById` work per run). 
  */
-const hallIdByOldId: Record<number, number> = {};
+const hallIdByOldId = new Map<number, number>();
 
 const skippedHallOldIds = new Set<number>();
 
@@ -151,7 +151,7 @@ async function resolveHallId(
   stats: ScrapeRunStats,
 ): Promise<number | null> {
   if (skippedHallOldIds.has(oldId)) return null;
-  const cached = hallIdByOldId[oldId];
+  const cached = hallIdByOldId.get(oldId);
   if (cached !== undefined) {
     stats.halls.reusedExisting++;
     return cached;
@@ -161,14 +161,14 @@ async function resolveHallId(
     skippedHallOldIds.add(oldId);
     return null;
   }
-  hallIdByOldId[oldId] = id;
+  hallIdByOldId.set(oldId, id);
   return id;
 }
 
 /** 
  * In-process cache: legacy production id → local DB id. 
  */
-const productionIdByOldId: Record<number, number> = {};
+const productionIdByOldId = new Map<number, number>();
 
 /** Legacy production ids that cannot be imported (404, no title, or local `POST` failed); do not retry every event. */
 const skippedProductionOldIds = new Set<number>();
@@ -183,7 +183,7 @@ async function resolveProductionId(
   stats: ScrapeRunStats,
 ): Promise<number | null> {
   if (skippedProductionOldIds.has(oldId)) return null;
-  const cached = productionIdByOldId[oldId];
+  const cached = productionIdByOldId.get(oldId);
   if (cached !== undefined) {
     stats.productions.reusedExisting++;
     await syncProductionGenreTagsFromViernulvier(
@@ -200,7 +200,7 @@ async function resolveProductionId(
     skippedProductionOldIds.add(oldId);
     return null;
   }
-  productionIdByOldId[oldId] = id;
+  productionIdByOldId.set(oldId, id);
   return id;
 }
 

@@ -133,15 +133,15 @@ async function loadOrCreateTagTypes(
   return out as Record<"genre" | "tag", number>;
 }
 
-const genreResourceByOldId: Record<number, ViernulvierGenreJSON> = {};
+const genreResourceByOldId = new Map<number, ViernulvierGenreJSON>();
 const tagLocalIdByTypeAndGenreOldId = new Map<string, number>();
 
 async function fetchViernulvierGenreJson(
   genreOldId: number,
   authToken: string,
 ): Promise<ViernulvierGenreJSON | null> {
-  const cached = genreResourceByOldId[genreOldId];
-  if (cached) return cached;
+  const cached = genreResourceByOldId.get(genreOldId);
+  if (cached !== undefined) return cached;
 
   const url = viernulvierApiUrl(`/api/v1/genres/${genreOldId}`);
   const res = await fetch(url, {
@@ -156,7 +156,7 @@ async function fetchViernulvierGenreJson(
     return null;
   }
   const json = (await res.json()) as ViernulvierGenreJSON;
-  genreResourceByOldId[genreOldId] = json;
+  genreResourceByOldId.set(genreOldId, json);
   return json;
 }
 
@@ -269,22 +269,22 @@ async function linkProductionToTag(
   return allLinked;
 }
 
-const productionJsonByOldId: Record<number, ProductionDocumentForTags> = {};
+const productionJsonByOldId = new Map<number, ProductionDocumentForTags>();
 
 /** Lets {@link scrapeProductionById} warm the cache so a follow-up sync avoids a second GET. */
 export function rememberViernulvierProductionJson(
   productionOldId: number,
   json: ProductionDocumentForTags,
 ): void {
-  productionJsonByOldId[productionOldId] = json;
+  productionJsonByOldId.set(productionOldId, json);
 }
 
 async function getViernulvierProductionJson(
   productionOldId: number,
   authToken: string,
 ): Promise<ProductionDocumentForTags | null> {
-  const cached = productionJsonByOldId[productionOldId];
-  if (cached) return cached;
+  const cached = productionJsonByOldId.get(productionOldId);
+  if (cached !== undefined) return cached;
 
   const url = viernulvierApiUrl(`/api/v1/productions/${productionOldId}`);
   const res = await fetch(url, {
@@ -298,7 +298,7 @@ async function getViernulvierProductionJson(
     return null;
   }
   const json = (await res.json()) as ProductionDocumentForTags;
-  productionJsonByOldId[productionOldId] = json;
+  productionJsonByOldId.set(productionOldId, json);
   return json;
 }
 
@@ -316,7 +316,7 @@ export async function syncProductionGenreTagsWithPayload(
   const productionOldId =
     oldSeg !== undefined ? Number.parseInt(oldSeg, 10) : Number.NaN;
   if (Number.isFinite(productionOldId)) {
-    productionJsonByOldId[productionOldId] = production;
+    productionJsonByOldId.set(productionOldId, production);
   }
   await syncProductionGenreTagsInner(
     localProductionId,
@@ -438,7 +438,6 @@ export async function scrapeTagsByIds(
   const tagTypes = await ensureScraperTagTypeIds(jwt, stats);
   const refs = normalizeGenresField(genres);
   const out: number[] = [];
-
 
   for (const ref of refs) {
     const iri = hydraIriString(ref);
