@@ -243,4 +243,37 @@ describe("CmsProductionsTab helpers", () => {
     api.revertEventRow(orphanRow);
     expect(orphanRow.startsAt).toBe("x");
   });
+
+  it("getPrimaryTagOptions filters to genre groups and flattens tags correctly", async () => {
+    const wrapper = mount(CmsProductionsTab, { global: { plugins: [i18n], stubs: { AgGridVue: gridStub, CmsTabShell: tabShellStub, CmsEditorPanel: editorPanelStub } } });
+    await flushPromises();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    // Set up mixed tag data: one genre type (id=1), one non-genre type (id=2)
+    api.tagTypesData.value = [
+      { id: 1, name: { en: "Genre", nl: "Genre", fr: "Genre" } },
+      { id: 2, name: { en: "Theme", nl: "Thema", fr: "Theme" } },
+    ];
+    api.tagsData.value = [
+      { id: 10, old_id: null, name: { en: "Drama" }, tag_type: 1, public: true },
+      { id: 11, old_id: null, name: { en: "Comedy" }, tag_type: 1, public: true },
+      { id: 20, old_id: null, name: { en: "Indoor" }, tag_type: 2, public: true },
+    ];
+
+    // Access genres column and invoke cellEditorParams to trigger getPrimaryTagOptions callback
+    const genresColumn = api.columnDefs.value.find((column: any) => column.field === "genres");
+    const editorParams = genresColumn?.cellEditorParams?.();
+
+    // cellEditorParams should have values from getPrimaryTagOptions callback
+    // which filters to genres only and flattens the tags
+    expect(editorParams.values).toBeDefined();
+    expect(editorParams.values).toContain(0); // placeholder for empty value
+    expect(editorParams.values).toContain(10); // Drama (genre tag)
+    expect(editorParams.values).toContain(11); // Comedy (genre tag)
+    expect(editorParams.values).not.toContain(20); // Indoor (non-genre tag, should be filtered out)
+
+    // Verify genreTagTypeIds is populated correctly
+    expect(api.genreTagTypeIds.value.has(1)).toBe(true);
+    expect(api.genreTagTypeIds.value.has(2)).toBe(false);
+  });
 });

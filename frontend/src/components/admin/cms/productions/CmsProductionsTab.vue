@@ -1534,6 +1534,8 @@ defineExpose({
     tagsData,
     tagTypesData,
     hallsData,
+    createTagGroups,
+    genreTagTypeIds,
     quickFilterText,
     columnChooserOpen,
     gridColumnOptions,
