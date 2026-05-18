@@ -1704,7 +1704,6 @@ describe("CmsProductionsTab", () => {
   it("covers remaining media preview modal transitions", async () => {
     const wrapper = await mountTab();
     const api = (wrapper.vm as any).$?.exposed.__test;
-    const state = (wrapper.vm as any).$.setupState as any;
 
     // Open video placeholder
     api.onCellClicked({
@@ -1857,11 +1856,11 @@ describe("CmsProductionsTab", () => {
   it("keeps image map unchanged when lazy image response is stale", async () => {
     vi.stubEnv("MODE", "development");
 
-    let resolveImages: ((value: Array<{ id: number; crops: Array<{ type: string; url: string }> }>) => void) | null = null;
+    let resolveImages: ((value: Array<{ id: number; crops: Array<{ type: string; url: string }> }>) => void) | undefined;
     vi.mocked(imagesService.getImagesByProduction).mockImplementation(
       () =>
         new Promise((resolve) => {
-          resolveImages = resolve as typeof resolveImages;
+          resolveImages = resolve as (value: Array<{ id: number; crops: Array<{ type: string; url: string }> }>) => void;
         }) as never,
     );
 
@@ -1875,5 +1874,75 @@ describe("CmsProductionsTab", () => {
     await flushPromises();
 
     expect(api.imagesByProductionId.value.size).toBe(0);
+  });
+
+  it("renders secondary-tag preview content in both bulk mode modal variants", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    api.secondaryTagBulkModeOpen.value = true;
+    api.secondaryTagBulkModeTagsPreview.value = "Drama, Comedy";
+    api.secondaryTagBulkModeAddedPreview.value = "+ Theme A";
+    api.secondaryTagBulkModeRemovedPreview.value = "- Theme B";
+    await nextTick();
+
+    const html = wrapper.html();
+    expect(html).toContain("Drama, Comedy");
+    expect(html).toContain("+ Theme A");
+    expect(html).toContain("- Theme B");
+    // Two modal variants are currently rendered; both should contain preview sections.
+    expect(wrapper.findAll(".cms-modal-overlay").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("covers secondary-tag bulk diff with unknown tag ids and vimeo regular URL parsing", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const state = (wrapper.vm as any).$.setupState as any;
+
+    const row = api.rowData.value[0];
+    row.source.tags = [1 as never, 2 as never, 999 as never];
+    const otherRow = {
+      ...row,
+      id: row.id + 55,
+      source: {
+        ...row.source,
+        id: row.id + 55,
+        tags: [1 as never, 2 as never, 999 as never],
+      },
+    };
+
+    api.gridApi.value = {
+      getSelectedRows: () => [row, otherRow],
+      getState: vi.fn(() => ({})),
+      getColumnState: vi.fn(() => []),
+      setState: vi.fn(),
+      setGridOption: vi.fn(),
+      sizeColumnsToFit: vi.fn(),
+    };
+
+    api.openTagEditorPanel(row);
+    api.toggleTagEditorTag(1, true);
+    await api.saveTagEditorPanel();
+    await api.confirmBulkEdit();
+    await api.confirmSecondaryTagBulkDiff();
+
+    state.openMediaPreview("https://vimeo.com/123456789", "Vimeo", {
+      productionId: mockProduction.id,
+      mediaField: "video_1",
+    });
+    expect(api.mediaPreview.value?.url).toContain("https://player.vimeo.com/video/123456789");
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
+  });
+
+  it("covers escapeXml default callback branch", async () => {
+    const wrapper = await mountTab();
+    const state = (wrapper.vm as any).$.setupState as any;
+
+    const fakeUnsafe = {
+      replace: (_regex: RegExp, cb: (character: string) => string) => cb("x"),
+    };
+
+    const result = state.escapeXml(fakeUnsafe as never);
+    expect(result).toBe("x");
   });
 });

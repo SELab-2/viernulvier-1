@@ -145,4 +145,19 @@ describe("CmsCreateProductionModal.vue", () => {
     expect(wrapper.emitted("update-media-url")?.length).toBe(1);
     expect(wrapper.emitted("close")?.length).toBeGreaterThanOrEqual(2);
   });
+
+  it("emits remove-media when deleting a media item", async () => {
+    const wrapper = mountModal({
+      createForm: buildForm({
+        media: [
+          { id: "media-1", type: "image", url: "", isUploaded: false },
+          { id: "media-2", type: "video", url: "https://example.com/video", isUploaded: false },
+        ],
+      }),
+    });
+
+    await wrapper.get("button.cms-media-item-remove").trigger("click");
+
+    expect(wrapper.emitted("remove-media")?.[0]).toEqual(["media-1"]);
+  });
 });
