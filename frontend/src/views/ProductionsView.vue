@@ -120,6 +120,10 @@
               :disabled="listLoading || loadError"
               @sort-change="(p) => void applyProductionsSortChange(p)"
             />
+            <ProductionsLayoutToggle
+              v-model="layoutMode"
+              :disabled="loadError"
+            />
           </div>
           <div
             v-if="
@@ -422,8 +426,23 @@
           </p>
 
           <div v-else>
+            <div
+              v-if="layoutMode === 'grid'"
+              class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3"
+            >
+              <ProductionGridCard
+                v-for="(p, idx) in productions"
+                :key="`${currentPage}-${idx}-${p.id}`"
+                :row-index="idx"
+                :production="p"
+                :date-summary="dateSummaryFor(p.id)"
+                :tag-chips="tagChipsFor(p)"
+                :thumbnail-url="thumbnailFor(p.id)"
+              />
+            </div>
             <ProductionListCard
               v-for="(p, idx) in productions"
+              v-else
               :key="`${currentPage}-${idx}-${p.id}`"
               :row-index="idx"
               :production="p"
@@ -527,7 +546,11 @@ import {
 } from "@viernulvier/shared";
 import AppFooter from "@/components/AppFooter.vue";
 import AppNavbar from "@/components/nav/AppNavbar.vue";
+import ProductionGridCard from "@/components/productions/ProductionGridCard.vue";
 import ProductionListCard from "@/components/productions/ProductionListCard.vue";
+import ProductionsLayoutToggle, {
+  type ProductionsLayoutMode,
+} from "@/components/productions/ProductionsLayoutToggle.vue";
 import ProductionsDateFilter from "@/components/productions/ProductionsDateFilter.vue";
 import ProductionsSortControl from "@/components/productions/ProductionsSortControl.vue";
 import { useDarkMode } from "@/composables/useDarkMode";
@@ -558,7 +581,7 @@ import {
   tagMapById,
 } from "@/utils/productionsOverview";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 18;
 
 /** Same cap as the list API, extra terms are ignored client-side. */
 const MAX_SEARCH_TERMS = 20;
@@ -845,6 +868,7 @@ const appliedSearchTerms = ref<string[]>([]);
 const searchDraft = ref("");
 const sortBy = ref<ProductionSortBy>("date");
 const sortDir = ref<ProductionSortDir>("desc");
+const layoutMode = ref<ProductionsLayoutMode>("list");
 /**
  * Total matching the current list query; updated on each successful fetch.
  * While search/filter list loads we keep the previous value so the results line

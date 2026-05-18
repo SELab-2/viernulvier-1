@@ -189,6 +189,118 @@
               {{ t("cms.panel.close") }}
             </button>
             <button type="button" class="cms-side-save" :disabled="bulkEditConfirmLoading" @click="confirmBulkEdit">
+              {{ bulkEditConfirmLoading ? t("cms.panel.saving") : t("cms.actions.confirmBulkEditSubmit") }}
+            </button>
+          </footer>
+        </section>
+      </div>
+
+      <div v-if="secondaryTagBulkModeOpen" class="cms-modal-overlay" @click.self="closeSecondaryTagBulkMode">
+        <section class="cms-modal cms-remove-modal" role="dialog" aria-modal="true">
+          <header class="cms-modal-header">
+            <h2 class="text-xl font-bold text-ink-primary">
+              {{ t("cms.actions.bulkEditTagsModeTitle") }}
+            </h2>
+            <button type="button" class="cms-side-close" :disabled="secondaryTagBulkModeLoading" @click="closeSecondaryTagBulkMode">
+              {{ t("cms.panel.close") }}
+            </button>
+          </header>
+
+          <div class="cms-modal-body">
+            <p class="text-sm text-ink-secondary">
+              {{ t("cms.actions.bulkEditTagsModeBody", { count: secondaryTagBulkModeCount }) }}
+            </p>
+
+            <div class="mt-4 grid gap-4 md:grid-cols-2">
+              <button
+                type="button"
+                class="cms-choice-card"
+                :disabled="secondaryTagBulkModeLoading"
+                @click="confirmSecondaryTagBulkReplace"
+              >
+                <div class="cms-choice-card-header">
+                  <div>
+                    <div class="font-semibold text-ink-primary">
+                      {{ t("cms.actions.bulkEditTagsModeReplace") }}
+                    </div>
+                    <div class="mt-1 text-sm text-ink-secondary">
+                      {{ t("cms.actions.bulkEditTagsModeReplaceDescription") }}
+                    </div>
+                  </div>
+                  <span class="cms-choice-card-badge">1</span>
+                </div>
+
+                <div v-if="secondaryTagBulkModeTagsPreview" class="mt-3 text-sm">
+                  <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewTags') }}</div>
+                  <div class="mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeTagsPreview }}</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                class="cms-choice-card"
+                :disabled="secondaryTagBulkModeLoading"
+                @click="confirmSecondaryTagBulkDiff"
+              >
+                <div class="cms-choice-card-header">
+                  <div>
+                    <div class="font-semibold text-ink-primary">
+                      {{ t("cms.actions.bulkEditTagsModeDiff") }}
+                    </div>
+                    <div class="mt-1 text-sm text-ink-secondary">
+                      {{ t("cms.actions.bulkEditTagsModeDiffDescription") }}
+                    </div>
+                  </div>
+                  <span class="cms-choice-card-badge">2</span>
+                </div>
+
+                <div class="mt-3 space-y-2 text-sm">
+                  <div v-if="secondaryTagBulkModeAddedPreview">
+                    <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewAdd') }}</div>
+                    <div class="mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeAddedPreview }}</div>
+                  </div>
+                  <div v-if="secondaryTagBulkModeRemovedPreview">
+                    <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewRemove') }}</div>
+                    <div class="mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeRemovedPreview }}</div>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <footer class="cms-modal-footer">
+            <button type="button" class="cms-side-close" :disabled="secondaryTagBulkModeLoading" @click="closeSecondaryTagBulkMode">
+              {{ t("general.cancel") }}
+            </button>
+          </footer>
+        </section>
+      </div>
+
+      <div v-if="mediaPreview" class="cms-modal-overlay" @click.self="closeMediaPreview">
+        <section class="cms-modal cms-media-modal" role="dialog" aria-modal="true">
+          <header class="cms-modal-header">
+            <h2 class="text-xl font-bold text-ink-primary">
+              {{ t("cms.actions.confirmBulkEditDialogTitle") }}
+            </h2>
+            <button type="button" class="cms-side-close" @click="closeBulkEditConfirm">
+              {{ t("cms.panel.close") }}
+            </button>
+          </header>
+
+          <div class="cms-modal-body">
+            <p class="text-sm text-ink-secondary">
+              {{ t("cms.actions.confirmBulkEditBody", { count: bulkEditConfirmCount }) }}
+            </p>
+            <p class="text-xs text-ink-secondary/70 mt-3">
+              {{ t("cms.actions.confirmBulkEditCancelInfo") }}
+            </p>
+          </div>
+
+          <footer class="cms-modal-footer">
+            <button type="button" class="cms-side-close" :disabled="bulkEditConfirmLoading" @click="closeBulkEditConfirm">
+              {{ t("cms.panel.close") }}
+            </button>
+            <button type="button" class="cms-side-save" :disabled="bulkEditConfirmLoading" @click="confirmBulkEdit">
               {{ bulkEditConfirmLoading ? t("general.saving") : t("cms.actions.confirmBulkEditSubmit") }}
             </button>
           </footer>
@@ -332,6 +444,8 @@ import { uploadImageWithCrops } from "@/services/cms/media-upload";
 const { t } = useI18n();
 const { isDark } = useDarkMode();
 
+const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
+
 const {
   agThemeVars,
   autoSizeGridColumns,
@@ -361,6 +475,7 @@ const {
     createTagGroups.value
       .filter((group) => group.isGenre)
       .flatMap((group) => group.tags),
+  currentLang,
 });
 
 const isLoading = ref(false);
@@ -382,6 +497,7 @@ const mediaPreview = ref<CmsMediaPreview | null>(null);
 const mediaPreviewEditUrl = ref("");
 const imagesByProductionId = ref(new Map<number, Array<{ id: number; url: string }>>());
 const imageLoadRequestToken = ref(0);
+const mediaPreview = ref<{ url: string; kind: "image" | "video" | "youtube"; label: string } | null>(null);
 const createExtraLangs = ref({ en: false, fr: false });
 const visibleCreateLangs = computed<SupportedLang[]>(() => {
   const result: SupportedLang[] = ["nl"];
@@ -422,7 +538,6 @@ const eventRowSnapshots = ref(new Map<number, CmsEventGridRow>());
 const pendingProductionEnterCommits = ref(new Set<string>());
 const activeProductionEditKey = ref<string | null>(null);
 
-const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 const editorBulkCount = computed(() => {
   if (!editorPanel.value) {
     return 0;
@@ -784,6 +899,35 @@ async function applySecondaryTagBulkEdit(mode: "replace" | "diff"): Promise<void
         tags: [...existingGenreTagIds, ...nextAdditionalTagIds],
       });
     }
+    await Promise.all(
+      targetRows.map(async (targetRow) => {
+        const currentTagIds = extractProductionTagIds(targetRow.source);
+        const existingGenreTagIds = currentTagIds.filter((tagId) => {
+          const tag = tagsData.value.find((item) => item.id === tagId);
+          return tag ? genreTypeIds.has(Number(tag.tag_type)) : false;
+        });
+
+        const existingAdditionalTagIds = currentTagIds.filter((tagId) => {
+          const tag = tagsData.value.find((item) => item.id === tagId);
+          return tag ? !genreTypeIds.has(Number(tag.tag_type)) : false;
+        });
+
+        const nextAdditionalTagIds =
+          mode === "replace"
+            ? desiredAdditionalTagIds
+            : Array.from(
+              new Set(
+                existingAdditionalTagIds
+                  .filter((tagId) => !removedTagIds.includes(tagId))
+                  .concat(addedTagIds),
+              ),
+            );
+
+        await updateProduction(targetRow.id, {
+          tags: [...existingGenreTagIds, ...nextAdditionalTagIds],
+        });
+      }),
+    );
 
     await loadCmsData();
     closeSecondaryTagBulkMode();
@@ -864,6 +1008,35 @@ function openBulkEditConfirm(count: number, action: () => Promise<void>): void {
   bulkEditConfirmCount.value = count;
   pendingBulkEditAction.value = action;
   bulkEditConfirmOpen.value = true;
+}
+
+function closeBulkEditConfirm(): void {
+  bulkEditConfirmOpen.value = false;
+  bulkEditConfirmLoading.value = false;
+  pendingBulkEditAction.value = null;
+}
+
+async function confirmBulkEdit(): Promise<void> {
+  if (!pendingBulkEditAction.value) {
+    closeBulkEditConfirm();
+    return;
+  }
+
+  bulkEditConfirmLoading.value = true;
+  try {
+    await pendingBulkEditAction.value();
+    closeBulkEditConfirm();
+  } catch {
+    // Error is already handled in the action
+    bulkEditConfirmLoading.value = false;
+  }
+}
+
+function showSaveSuccess(message: string): void {
+  saveSuccess.value = message;
+  setTimeout(() => {
+    saveSuccess.value = null;
+  }, 3000);
 }
 
 function closeBulkEditConfirm(): void {
@@ -1249,6 +1422,17 @@ async function persistBulkProductionPatch(
     });
     // Reload all data to ensure grid styling is fully refreshed
     await loadCmsData();
+    const updatedRows = await bulkUpdateProductions({
+      ids: targetRows.map((row) => row.id),
+      data: patch as never,
+    });
+
+    for (const row of targetRows) {
+      const updated = updatedRows.find((item) => item.id === row.id);
+      if (updated) {
+        applyUpdatedProductionToRow(row, updated, localizeValue);
+      }
+    }
   } catch (error) {
     saveError.value =
       error instanceof Error
@@ -1705,7 +1889,7 @@ async function loadCmsData(): Promise<void> {
 
   try {
     const [productionsPage, tags, tagTypes, halls] = await Promise.all([
-      getProductions(),
+      getProductions({ lang: currentLang.value }),
       getAllTags(),
       getTagTypes(),
       getHalls(),
@@ -1779,9 +1963,21 @@ async function loadCmsData(): Promise<void> {
 defineExpose({
   __test: {
     rowData,
+    tagsData,
+    tagTypesData,
+    hallsData,
+    createTagGroups,
+    genreTagTypeIds,
+    quickFilterText,
+    columnChooserOpen,
+    gridColumnOptions,
+    columnDefs,
     selectedCount,
     gridApi,
     createForm,
+    createExtraLangs,
+    visibleCreateLangs,
+    langGridClass,
     createModalOpen,
     createEventModalOpen,
     removeConfirmOpen,
@@ -1809,6 +2005,10 @@ defineExpose({
     selectedEventRows,
     localizeValue,
     setCurrentLanguageValue,
+    getProductionEditKey,
+    formatTagNames,
+    snapshotEventRows,
+    revertEventRow,
     resetCreateForm,
     resetCreateLinkedEventForm,
     openCreateModal,
@@ -1909,4 +2109,81 @@ onBeforeUnmount(() => {
   max-height: 88px;
 }
 
+.cms-media-preview-body {
+  min-width: 600px;
+  min-height: 500px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cms-media-preview-large {
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+img.cms-media-preview-large {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+iframe.cms-media-preview-large {
+  height: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.cms-choice-card {
+  border: 1px solid var(--surface-3);
+  border-radius: 0.75rem;
+  background: var(--surface-0);
+  padding: 1rem;
+  text-align: left;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease;
+}
+
+.cms-choice-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cms-choice-card-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  padding: 0 0.5rem;
+  background: var(--surface-2);
+  color: var(--ink-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.cms-choice-card:hover:not(:disabled) {
+  border-color: var(--accent-outline);
+  background: var(--surface-1);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.08);
+}
+
+.cms-choice-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
 </style>

@@ -1,11 +1,20 @@
 <template>
-  <div class="flex min-h-screen flex-col bg-surface-0">
+  <div class="flex min-h-screen flex-col bg-surface-0 transition-colors duration-300">
     <AppNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
 
     <main class="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
       <!-- Loading state -->
-      <div v-if="loading" class="post-loading" role="status" aria-live="polite">
-        <p class="text-ink-secondary">{{ t("blogpost.loading") }}</p>
+      <div v-if="loading" class="flex min-h-[40vh] items-center justify-center" role="status" aria-live="polite">
+        <div class="flex items-center gap-1">
+          <span class="text-[10px] font-black uppercase tracking-[0.3em] text-ink-secondary">
+            {{ t("blogpost.loading") }}
+          </span>
+          <div class="flex gap-1">
+            <span class="dot-wave">.</span>
+            <span class="dot-wave delay-100">.</span>
+            <span class="dot-wave delay-200">.</span>
+          </div>
+        </div>
       </div>
 
       <!-- Not found state -->
@@ -34,15 +43,27 @@
       </div>
 
       <!-- Happy path -->
-      <article v-else-if="post" class="post">
-        <header class="mb-8">
-          <h1 class="mb-3 text-4xl font-bold text-ink-primary">{{ title }}</h1>
-          <p v-if="formattedPublishedAt" class="text-sm text-ink-tertiary">
-            {{ t("blogpost.publishedOn", { date: formattedPublishedAt }) }}
-          </p>
+      <article v-else-if="post" class="animate-fade-up">
+
+        <header class="mb-16">
+          <div v-if="formattedPublishedAt" class="mb-6 text-[10px] font-black uppercase tracking-[0.3em] text-ink-tertiary">
+            {{ formattedPublishedAt }}
+          </div>
+          
+          <h1 class="font-serif text-5xl font-black italic uppercase leading-[1.05] text-ink-primary lg:text-7xl">
+            {{ title }}
+          </h1>
         </header>
 
-        <div class="post-body">{{ bodyHtml }}</div>
+        <div class="prose prose-base lg:prose-lg max-w-none text-ink-primary mb-24" v-html="bodyHtml"></div>
+
+        <LinkedProductionsCarousel 
+          :productions="linkedProductions" 
+          :thumbnails="thumbnailUrlByProductionId"
+          :date-ranges="dateRangeByProductionId" 
+          :is-loading="loadingProductions" 
+        />
+
       </article>
     </main>
 
@@ -61,49 +82,49 @@ import { getBlogPost } from "@/services/blogposts";
 import { ApiError } from "@/services/api";
 import AppNavbar from "@/components/nav/AppNavbar.vue";
 import AppFooter from "@/components/AppFooter.vue";
-import type { BlogPost } from "@viernulvier/shared";
+import type { BlogPostWithBackwardsRefs, ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { localizeOrEmpty } from "@/utils/language-utils";
-import { parseAndSanitizeContent } from "@/utils/parsers";
+import { parseAndSanitizeMd } from "@/utils/parsers";
+import { getProduction } from "@/services/productions";
+import LinkedProductionsCarousel from "@/components/blogpost/LinkedProductionsCarousel.vue";
+import { getImagesForProductionsOrEmpty } from "@/services/media";
+import { pickProductionListThumbnailUrl } from "@/utils/productionThumbnails";
+import { getEvents } from "@/services/events";
 
 const props = defineProps<{ id: string }>();
-
 const { t } = useI18n();
 const { isDark, toggleDark } = useDarkMode();
 
 const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
-
-const post = ref<BlogPost | null>(null);
+const post = ref<BlogPostWithBackwardsRefs | null>(null);
 const loading = ref<boolean>(true);
 const error = ref<"not-found" | "generic" | null>(null);
+const loadingProductions = ref<boolean>(false);
 
-const title = computed(() => 
-  localizeOrEmpty(post.value?.title ?? {}, currentLang.value),
-);
-
+const title = computed(() => localizeOrEmpty(post.value?.title ?? {}, currentLang.value));
 const bodyHtml = computed(() => {
-  const rawHtml = localizeOrEmpty(post.value?.content ?? {}, currentLang.value);
-  return parseAndSanitizeContent(rawHtml);
+  const rawMarkdown = localizeOrEmpty(post.value?.content ?? {}, currentLang.value);
+  return parseAndSanitizeMd(rawMarkdown);
 });
 
-/**
- * Formats `published_at` using the current locale. Returns an empty string
- * for unpublished posts (which shouldn't reach this component via the public
- * endpoint, but we handle it gracefully anyway).
- */
-const formattedPublishedAt = computed<string>(() => {
+const formattedPublishedAt = computed(() => {
   const publishedAt = post.value?.published_at;
   if (!publishedAt) return "";
-  return new Date(publishedAt).toLocaleDateString(currentLang.value, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return new Date(publishedAt).toLocaleDateString(currentLang.value, { year: "numeric", month: "long", day: "numeric" });
 });
+
+const linkedProductions = ref<ProductionWithBackwardsRefs[]>([]);
+const thumbnailUrlByProductionId = ref(new Map<number, string | null>());
+const dateRangeByProductionId = ref(new Map<number, string>());
 
 async function loadPost() {
   loading.value = true;
   error.value = null;
   post.value = null;
+  linkedProductions.value = [];
+  thumbnailUrlByProductionId.value.clear();
+  dateRangeByProductionId.value.clear();
+  loadingProductions.value = false;
 
   const numericId = Number(props.id);
   if (!Number.isInteger(numericId) || numericId <= 0) {
@@ -113,16 +134,61 @@ async function loadPost() {
   }
 
   try {
-    post.value = await getBlogPost(numericId);
-  } catch (err) {
-    if (err instanceof ApiError && err.isNotFound) {
-      error.value = "not-found";
-    } else {
-      error.value = "generic";
-    }
-  } finally {
+    const data = await getBlogPost(Number(props.id));
+    post.value = data;
+
     loading.value = false;
+
+    const ids = (data.productions || []) as number[];
+    if (ids.length === 0) return;
+
+    loadingProductions.value = true;
+
+    const results = await Promise.allSettled(ids.map(id => getProduction(id)));
+    linkedProductions.value = results
+      .filter((r): r is PromiseFulfilledResult<ProductionWithBackwardsRefs> => r.status === 'fulfilled')
+      .map(r => r.value);
+
+    const validProdIds = linkedProductions.value.map(prod => prod.id);
+
+    const [imagesMap, ...eventsResults] = await Promise.all([
+      getImagesForProductionsOrEmpty(validProdIds),
+      ...validProdIds.map(id => getEvents(id).catch(() => [])),
+    ]);
+    
+    linkedProductions.value.forEach((prod, index) => {
+      const images = imagesMap.get(prod.id) || [];
+      thumbnailUrlByProductionId.value.set(prod.id, pickProductionListThumbnailUrl(images));
+
+      const events = eventsResults[index] || [];
+      if (events.length > 0) {
+        dateRangeByProductionId.value.set(prod.id, formatYearRange(events));
+      } else {
+        dateRangeByProductionId.value.set(prod.id, "");
+      }
+    });
+
+  } catch (err) {
+    error.value = (err instanceof ApiError && err.status === 404) ? "not-found" : "generic";
+    loading.value = false;
+  } finally {
+    loadingProductions.value = false;
   }
+}
+
+function formatYearRange(events: { starts_at: string | Date }[]): string {
+  if (!events.length) return "";
+
+  const years = events.map(e => 
+    typeof e.starts_at === 'string' 
+      ? new Date(e.starts_at).getFullYear() 
+      : e.starts_at.getFullYear(),
+  );
+
+  const minYear = Math.min(...years);
+  const maxYear = Math.max(...years);
+
+  return minYear === maxYear ? String(minYear) : `${minYear}-${maxYear}`;
 }
 
 onMounted(loadPost);
@@ -132,17 +198,27 @@ watch(() => props.id, loadPost);
 <style scoped>
 @reference "@/style.css";
 
-.post-loading,
-.post-error {
-  @apply py-16 text-center;
+.dot-wave {
+  @apply text-[10px] font-black text-ink-secondary;
+  display: inline-block;
+  animation: dot-wave 1.4s infinite ease-in-out;
 }
 
-.back-link {
-  @apply inline-block rounded-lg bg-accent-dark px-5 py-2.5 text-sm font-semibold text-surface-0 transition hover:bg-accent-dark-hover;
+.delay-100 {
+  animation-delay: 0.2s;
 }
 
-.post-body {
-  @apply text-base leading-relaxed text-ink-primary;
-  white-space: pre-wrap;
+.delay-200 {
+  animation-delay: 0.4s;
 }
+
+@keyframes dot-wave {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-4px);
+  }
+}
+
 </style>

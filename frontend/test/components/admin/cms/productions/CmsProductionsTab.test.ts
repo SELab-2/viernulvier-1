@@ -15,6 +15,7 @@ vi.mock("@/services/productions", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/services/productions")>();
   return {
     ...actual,
+    getProduction: vi.fn(),
     getProductions: vi.fn(),
     createProduction: vi.fn(),
     bulkUpdateProductions: vi.fn(),
@@ -140,6 +141,7 @@ const mockHall = {
 describe("CmsProductionsTab", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(productionsService, "getProduction").mockResolvedValue(mockProduction);
     vi.spyOn(productionsService, "getProductions").mockResolvedValue({ items: [mockProduction], total: 1 });
     vi.spyOn(productionsService, "createProduction").mockResolvedValue(mockProduction);
     vi.spyOn(productionsService, "bulkUpdateProductions").mockResolvedValue([mockProduction]);
@@ -181,6 +183,10 @@ describe("CmsProductionsTab", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllEnvs();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   async function mountTab() {
@@ -254,6 +260,7 @@ describe("CmsProductionsTab", () => {
       url: "data:image/png;base64,abc",
       isUploaded: false,
     }];
+    api.createForm.value.video_1.nl = "data:image/png;base64,abc";
 
     await api.submitCreateProduction();
 
@@ -346,6 +353,7 @@ describe("CmsProductionsTab", () => {
       colDef: { field: "media", headerName: "Media" },
     });
     expect(api.mediaPreview.value?.kind).toBe("iframe");
+    expect(api.mediaPreview.value?.kind).toBe("youtube");
 
     api.onCellClicked({
       data: api.rowData.value[0],

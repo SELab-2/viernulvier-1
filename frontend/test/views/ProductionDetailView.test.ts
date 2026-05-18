@@ -58,6 +58,15 @@ vi.mock("vue-router", () => ({
   useRoute: () => ({ params: { id: "42" } }),
 }));
 
+// ─── Mock vue-i18n ────────────────────────────────────────────────────────────
+vi.mock("vue-i18n", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("vue-i18n")>();
+  return {
+    ...actual,
+    useI18n: () => ({ t: (key: string) => key }),
+  };
+});
+
 // ─── Mock service ─────────────────────────────────────────────────────────────
 const mockGetProduction = vi.fn();
 const mockGetImagesForProductionOrEmpty = vi.fn();

@@ -1,11 +1,12 @@
 import type { Admin, Event as ArchiveEvent, ProductionWithBackwardsRefs, Tag, TagType, BlogPostWithBackwardsRefs } from "@viernulvier/shared";
+
 import { collectProductionTagsByIdMap } from "@/services/productions";
 import { tagTypeIsGenre } from "@/utils/tagDisplay";
 import { localizeWithFallback, type LanguageMap } from "@/utils/language-utils";
 import { toLocalDateTimeInput } from "./date";
 import { resolveBulkTargetRows } from "./bulk-edit";
 import { extractEventIds } from "./helpers";
-import type { CmsAdminGridRow, CmsEventGridRow, CmsProductionGridRow, CreateAdminFormState, CmsTagGridRow, CmsBlogPostGridRow } from "./types";
+import type { CmsAdminGridRow, CmsEventGridRow, CmsProductionGridRow, CreateAdminFormState, CmsTagGridRow, CmsBlogPostGridRow, CmsTagTypeGridRow } from "./types";
 
 function filterProductionTagLabels(
   productionTags: Tag[],
@@ -87,6 +88,8 @@ export function buildProductionGridRow(
     tags: additionalLabels.join(", ") || "-",
     descriptionOne: localize(production.description) || "",
     descriptionTwo: localize(production.description_2) || "",
+    imageMedia: "",
+    imageMediaUrls: [],
     media: localize(production.video_1) || localize(production.video_2) || "",
     imageMedia: imageMediaUrl,
     imageMediaUrls,
@@ -133,6 +136,8 @@ export function applyUpdatedProductionToRow(
   row.teaser = localize(updated.teaser) || "";
   row.descriptionOne = localize(updated.description) || "";
   row.descriptionTwo = localize(updated.description_2) || "";
+  row.imageMedia = "";
+  row.imageMediaUrls = [];
   row.media = localize(updated.video_1) || localize(updated.video_2) || "";
 }
 
@@ -259,5 +264,50 @@ export function applyUpdatedBlogPostToRow(
   row.title = localize(updated.title as LanguageMap | null | undefined) || "";
   row.content = localize(updated.content as LanguageMap | null | undefined) || "";
 }
- 
- 
+
+/**
+ * Builds a single CMS tag-type grid row.
+ *
+ * `tags` contains the IDs of all tags whose `tag_type` matches this tag type.
+ */
+export function buildTagTypeGridRow(
+  tagType: TagType,
+  tagsByType: Map<number, Tag[]>,
+  localize: (map: LanguageMap | null | undefined) => string,
+): CmsTagTypeGridRow {
+  const belongingTags = tagsByType.get(tagType.id) ?? [];
+  return {
+    id: tagType.id,
+    source: tagType,
+    name: localizeWithFallback(tagType.name, localize) || `#${tagType.id}`,
+    tagCount: belongingTags.length,
+    tags: belongingTags.map((t) => t.id),
+  };
+}
+
+/** Converts all tag types into grid rows, grouping tags by type up front. */
+export function buildTagTypeGridRows(
+  tagTypes: TagType[],
+  tags: Tag[],
+  localize: (map: LanguageMap | null | undefined) => string,
+): CmsTagTypeGridRow[] {
+  const tagsByType = new Map<number, Tag[]>();
+  for (const tag of tags) {
+    const typeId = Number(tag.tag_type);
+    if (!Number.isFinite(typeId)) continue;
+    const current = tagsByType.get(typeId) ?? [];
+    current.push(tag);
+    tagsByType.set(typeId, current);
+  }
+  return tagTypes.map((tagType) => buildTagTypeGridRow(tagType, tagsByType, localize));
+}
+
+/** Mutates a tag-type row in-place after a PATCH to avoid losing AG Grid selection state. */
+export function applyUpdatedTagTypeToRow(
+  row: CmsTagTypeGridRow,
+  updated: TagType,
+  localize: (map: LanguageMap | null | undefined) => string,
+): void {
+  row.source = updated;
+  row.name = localizeWithFallback(updated.name, localize) || `#${updated.id}`;
+}

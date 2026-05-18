@@ -191,14 +191,14 @@ export async function processProductionMediaGallery(
       return;
     }
 
-    console.log(`Processing ${gallery.items.length} items from gallery...`);
+    console.log(`Processing ${gallery.items.length} items from store-front gallery...`);
 
     for (const mediaItem of gallery.items) {
       // Create image and crops
       await createImageWithCrops(mediaItem, productionId, loginToken, stats);
     }
   } catch (err) {
-    console.warn(`Error processing media gallery for production ${productionId}:`, err);
+    console.warn(`Error processing store-front media gallery for production ${productionId}:`, err);
     if (stats) stats.errors = (stats.errors ?? 0) + 1;
   }
 }

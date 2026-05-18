@@ -8,6 +8,9 @@
 /* CMS modal/panel/form layout styles */
 @import "@/assets/stylesheets/cms-view.css";
 
+/* Shared styles for CMS "create" modal dialogs */
+@import "@/assets/stylesheets/cms-create-modal.css";
+
 /* Shared app typography and design tokens */
 @import "@/assets/fonts/inter.css";
 @import "@/assets/stylesheets/design-tokens.css";
@@ -79,6 +82,32 @@
 
   #app {
     @apply min-h-screen w-full;
+  }
+
+  .prose {
+    --tw-prose-body: var(--ink-primary);
+    --tw-prose-headings: var(--ink-primary);
+    --tw-prose-links: var(--accent-dark);
+    --tw-prose-bold: var(--ink-primary);
+    --tw-prose-bullets: var(--ink-tertiary);
+    --tw-prose-quotes: var(--ink-secondary);
+    --tw-prose-quote-borders: var(--accent-dark);
+
+    h1, h2, h3, h4 {
+      font-family: var(--font-serif);
+      font-style: italic;
+      text-transform: uppercase;
+      font-weight: 900;
+      letter-spacing: -0.025em;
+    }
+
+    h1 { @apply text-4xl mb-8; }
+    h2 { @apply text-2xl mt-12 mb-4; }
+    h3 { @apply text-xl mt-8 mb-3; }
+
+    p { @apply mb-6 leading-relaxed; }
+    ul { @apply list-disc pl-6 mb-6; }
+    blockquote { @apply border-l-2 py-2 pl-8 my-10 font-serif text-2xl italic leading-snug; }
   }
 
   .ag-theme-quartz,

@@ -178,7 +178,7 @@ describe("CmsCreateBlogPostModal", () => {
   it("emits submit on save button click", async () => {
     const wrapper = mountModal();
 
-    await wrapper.get(".cms-side-save").trigger("click");
+    await wrapper.get(".cms-form-submit").trigger("click");
 
     expect(wrapper.emitted("submit")).toHaveLength(1);
   });
@@ -198,7 +198,7 @@ describe("CmsCreateBlogPostModal", () => {
     });
 
     expect(
-      (wrapper.get(".cms-side-save").element as HTMLButtonElement)
+      (wrapper.get(".cms-form-submit").element as HTMLButtonElement)
         .disabled,
     ).toBe(true);
   });

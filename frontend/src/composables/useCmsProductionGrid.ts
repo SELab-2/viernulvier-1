@@ -57,6 +57,7 @@ type TranslateFunction = (key: string, params?: Record<string, unknown>) => stri
 
 const cmsGridStateStorageKey = "viernulvier-cms-grid-state-v2";
 const cmsGridColumnIds = [
+  "id",
   "eventsAction",
   "performer",
   "title",
@@ -185,6 +186,7 @@ export function useCmsProductionGrid(options: {
   getPrimaryTagOptions?: () => Array<{ id: number; label: string }>;
   // Backwards-compatible: older tests/usage provide just labels.
   getPrimaryTagLabels?: () => string[];
+  currentLang?: Ref<string>;
 }) {
   const primaryTagLabelById = computed(() => {
     const optionsEntries = options.getPrimaryTagOptions?.() ?? [];
@@ -252,6 +254,7 @@ export function useCmsProductionGrid(options: {
   };
 
   const gridColumnOptions = computed(() => [
+    { colId: "id", label: "ID" },
     { colId: "eventsAction", label: "Events" },
     { colId: "performer", label: options.t("cms.columns.performer") },
     { colId: "title", label: options.t("cms.columns.title") },
@@ -266,6 +269,19 @@ export function useCmsProductionGrid(options: {
   ] as const);
 
   const columnDefs = computed<ColDef<CmsProductionGridRow>[]>(() => [
+    {
+      headerName: "ID",
+      field: "id",
+      editable: false,
+      minWidth: 90,
+      maxWidth: 120,
+      cellClass: "cms-production-id-cell",
+      cellRenderer: (params: { value: number }) => {
+        const lang = options.currentLang?.value ?? "";
+        const prefix = lang ? `/${lang}` : "";
+        return `<a href="${prefix}/productions/${params.value}" class="text-ink-primary underline hover:text-ink-secondary transition-colors">${params.value}</a>`;
+      },
+    },
     {
       headerName: "Events",
       colId: "eventsAction",
