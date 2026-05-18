@@ -6,11 +6,13 @@ describe("useCmsAdminGrid", () => {
   it("declares the admin column definitions", () => {
     const { columnDefs } = useCmsAdminGrid({ isDark: ref(false), t: (key) => key });
 
-    expect(columnDefs.value).toHaveLength(2);
+    expect(columnDefs.value).toHaveLength(3);
 
+    const id = columnDefs.value.find((c) => c.field === "id");
     const username = columnDefs.value.find((c) => c.field === "username");
     const superField = columnDefs.value.find((c) => c.field === "super");
 
+    expect(id?.editable).toBe(false);
     expect(username?.editable).toBe(true);
     expect(username?.flex).toBe(1);
     expect(superField?.editable).toBe(true);
@@ -22,6 +24,7 @@ describe("useCmsAdminGrid", () => {
     const { gridColumnOptions } = useCmsAdminGrid({ isDark: ref(false), t: (key) => key });
 
     expect(gridColumnOptions.value).toEqual([
+      { colId: "id", label: "cms.columns.id" },
       { colId: "username", label: "cms.columns.admin.username" },
       { colId: "super", label: "cms.columns.admin.super" },
     ]);

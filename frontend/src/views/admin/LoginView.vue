@@ -51,7 +51,7 @@
                 :type="showPassword ? 'text' : 'password'"
                 class="field-input"
                 :class="{ 'field-input--error': !!error }"
-                placeholder="antibrugge"
+                placeholder="••••••••"
                 autocomplete="current-password"
                 @keyup.enter="handleLogin"
               />

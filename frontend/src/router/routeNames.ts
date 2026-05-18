@@ -11,12 +11,12 @@ export const RouteNames = {
   PRODUCTIONS: "productions",
   PRODUCTION_DETAIL: "production-detail",
   BLOG_POST_DETAIL: "blog-post-detail",
+  BLOG_POSTS: "blog-posts",
 
   // admin
   ADMIN: "admin",
   CMS: "cms",
   LOGIN: "login",
 
-  PRINTS: "prints",
   NOT_FOUND: "not-found",
 } as const;

@@ -1,5 +1,5 @@
 import type { Admin, AdminWithMeta } from "@viernulvier/shared/index.js";
-import { AdminSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { AdminSchema, serial } from "@viernulvier/shared/index.js";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { buildQuery, parseParams, parseUser } from "@/routes/helpers.js";
 import z from "zod";
@@ -43,7 +43,7 @@ async function fetchAdmin(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Admin | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const rows = await fetchAdminById(server)(id);
   return rows[0] ?? null;
 }
@@ -59,7 +59,7 @@ async function fetchAdminWithMeta(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<AdminWithMeta | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const rows = await fetchAdminWithMetaById(server)(id);
   return rows[0] ?? null;
 }

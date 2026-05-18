@@ -265,7 +265,7 @@ async function processProductionGalleries(
 
   for (const gallery of galleries) {
     if (gallery.iri) {
-      console.log(`Processing ${gallery.type} gallery for production ${production["@id"]}...`);
+      console.log(`Processing ${gallery.type} gallery for store-front production ${production["@id"]}...`);
       await processProductionMediaGallery(
         gallery.iri,
         productionId,
@@ -355,7 +355,7 @@ export async function scrapeAllProductions(
   for (let page = 1; page <= totalPages; page++) {
     const data = await fetchProductionsPage(page, authToken);
     for (const production of data.member) {
-      console.log(`Processing production ${production["@id"]} (${page}/${totalPages})`);
+      console.log(`Processing store-front production ${production["@id"]} (${page}/${totalPages})`);
       await ensureProductionImported(production, loginToken, authToken, stats);
     }
   }

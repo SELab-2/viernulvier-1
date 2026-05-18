@@ -1,11 +1,11 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Tag } from "@viernulvier/shared/index.js";
-import { TagSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { TagSchema, serial } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, parseSchema, HttpError, HttpServerError } from "@/routes/helpers.js";
 import { getTagById } from "./fetch.js";
 import { z } from "zod";
 
-const ReplaceTagBodySchema = TagSchema.pick({
+export const ReplaceTagBodySchema = TagSchema.pick({
   old_id: true,
   name: true,
   tag_type: true,
@@ -27,7 +27,7 @@ export async function replaceTag(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Tag | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const body = parseSchema(server, ReplaceTagBodySchema, request.body);
 
   const { admin, current_time } = getMetadata(request);

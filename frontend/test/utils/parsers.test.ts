@@ -15,20 +15,25 @@ describe("parseAndSanitizeContent", () => {
     expect(parseAndSanitizeContent("")).toBe("");
   });
 
-  it("normalizes \\n escapes", () => {
+  it("normalizes \\n escapes in plain text to <br> inside a paragraph", () => {
     const input = "Hello\\nWorld";
 
     const result = parseAndSanitizeContent(input);
 
-    expect(result).toBe("Hello\nWorld");
+    expect(result).toMatch(/<p>/);
+    expect(result).toContain("Hello");
+    expect(result).toContain("World");
+    expect(result).toMatch(/<br\s*\/?>/i);
   });
 
-  it("normalizes Windows line endings", () => {
+  it("normalizes Windows line endings in plain text to <br>", () => {
     const input = "Hello\r\nWorld";
 
     const result = parseAndSanitizeContent(input);
 
-    expect(result).toBe("Hello\nWorld");
+    expect(result).toMatch(/<p>/);
+    expect(result).toContain("Hello");
+    expect(result).toContain("World");
   });
 
   it("removes standalone backslash lines (legacy CSV noise)", () => {
@@ -36,23 +41,26 @@ describe("parseAndSanitizeContent", () => {
 
     const result = parseAndSanitizeContent(input);
 
-    expect(result).toBe("Hello\n\nWorld");
+    expect(result).toMatch(/<p>/);
+    expect(result).toContain("Hello");
+    expect(result).toContain("World");
   });
 
-  it("trims whitespace", () => {
+  it("trims outer whitespace in plain text", () => {
     const input = "   hello world   ";
 
     const result = parseAndSanitizeContent(input);
 
-    expect(result).toBe("hello world");
+    expect(result).toContain("hello world");
+    expect(result).toMatch(/<p>/);
   });
 
-  it("returns plain text when no HTML is present", () => {
+  it("wraps plain text in a paragraph when no HTML is present", () => {
     const input = "Simple text";
 
     const result = parseAndSanitizeContent(input);
 
-    expect(result).toBe("Simple text");
+    expect(result).toMatch(/<p>\s*Simple text\s*<\/p>/);
   });
 
   it("returns sanitized HTML when HTML is detected", () => {
@@ -80,6 +88,53 @@ describe("parseAndSanitizeContent", () => {
 
     expect(result).toContain("<b>");
     expect(result).toContain("Hello\nWorld");
+  });
+
+  it("collapses long runs of literal newlines in plain text to at most one empty line between paragraphs", () => {
+    const input = "One\n\n\n\nTwo";
+
+    const result = parseAndSanitizeContent(input);
+
+    expect(result).toMatch(/<p>[^<]*One/);
+    expect(result).toMatch(/Two/);
+    expect(result.match(/<\/p>\s*<p>/)).toBeTruthy();
+  });
+
+  it("collapses long runs of <br> tags in HTML to at most two (one blank line)", () => {
+    const input = "<p>a</p><br/><br /><br/><br/>";
+
+    const result = parseAndSanitizeContent(input);
+
+    expect(result).toMatch(/<br\s*\/?>\s*<br\s*\/?>/i);
+    expect(result.match(/<br/gi)?.length).toBe(2);
+  });
+
+  it("strips trailing <br> before </p> so the next <p> margin is not doubled", () => {
+    const input =
+      "<p>Intro line.<br><br></p>\n<p>Next section</p>";
+
+    const result = parseAndSanitizeContent(input);
+
+    expect(result).not.toMatch(/\.<br>/);
+    expect(result).toContain("<p>Intro line.</p>");
+    expect(result).toContain("Next section");
+  });
+
+  it("minifies newline-only gaps between block tags in sanitized HTML", () => {
+    const input = "<p>Intro</p>\n<ul>\n<li>One</li>\n</ul>";
+
+    const result = parseAndSanitizeContent(input);
+
+    expect(result).toContain("</p><ul>");
+    expect(result).toContain("<li>One</li>");
+  });
+
+  it("keeps a single space between inline tags (no line break in the gap)", () => {
+    const input = "<p><a href=\"#a\">A</a> <a href=\"#b\">B</a></p>";
+
+    const result = parseAndSanitizeContent(input);
+
+    expect(result).toMatch(/<\/a> <a /);
   });
 
   it("allows YouTube embed iframes", () => {

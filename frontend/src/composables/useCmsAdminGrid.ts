@@ -7,6 +7,7 @@ type TranslateFunction = (key: string, params?: Record<string, unknown>) => stri
 
 const cmsAdminGridStateStorageKey = "viernulvier-cms-admin-grid-state";
 const cmsAdminGridColumnIds = [
+  "id",
   "username",
   // "profilePicture",
   "super",
@@ -42,12 +43,20 @@ export function useCmsAdminGrid(options: {
   };
 
   const gridColumnOptions = computed(() => [
+    { colId: "id", label: options.t("cms.columns.id") },
     { colId: "username", label: options.t("cms.columns.admin.username") },
     // { colId: "profilePicture", label: options.t("cms.columns.admin.profilePicture") },
     { colId: "super", label: options.t("cms.columns.admin.super") },
   ] as const);
 
   const columnDefs = computed<ColDef<CmsAdminGridRow>[]>(() => [
+    {
+      headerName: options.t("cms.columns.id"),
+      field: "id",
+      editable: false,
+      minWidth: 50,
+      maxWidth: 100,
+    },
     {
       headerName: options.t("cms.columns.admin.username"),
       field: "username",

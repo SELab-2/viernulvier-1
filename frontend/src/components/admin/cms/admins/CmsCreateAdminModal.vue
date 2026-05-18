@@ -1,6 +1,6 @@
 <template>
   <div v-if="open" class="cms-modal-overlay" @click.self="emit('close')">
-    <section class="cms-modal" role="dialog" aria-modal="true">
+    <section class="cms-create-modal" role="dialog" aria-modal="true">
       <header class="cms-modal-header">
         <h2 class="text-xl font-bold text-ink-primary">{{ t("cms.create.admin.adminTitle") }}</h2>
         <button type="button" class="cms-side-close" @click="emit('close')">
@@ -17,7 +17,7 @@
           <input
             :value="createForm.username"
             type="text"
-            class="cms-text-input"
+            class="cms-text-input mt-3 w-full"
             autocomplete="off"
             data-testid="cms-create-admin-username"
             @input="emit('update-username', ($event.target as HTMLInputElement).value)"
@@ -29,16 +29,13 @@
             {{ t("cms.create.admin.adminPassword") }}
             <span class="cms-required">*</span>
           </legend>
-          <!--
-          TODO:
           <p class="mb-3 text-xs text-ink-tertiary">
             {{ t("cms.create.admin.adminPasswordHint") }}
           </p>
-          -->
           <input
             :value="createForm.password"
             type="password"
-            class="cms-text-input"
+            class="cms-text-input mt-3 w-full"
             autocomplete="new-password"
             data-testid="cms-create-admin-password"
             @input="emit('update-password', ($event.target as HTMLInputElement).value)"
@@ -66,7 +63,7 @@
         </button>
         <button
           type="button"
-          class="cms-side-save"
+          class="cms-form-submit"
           :disabled="isCreating"
           data-testid="cms-create-admin-submit"
           @click="emit('submit')"
@@ -99,55 +96,3 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 </script>
-
-<style scoped>
-@reference "@/style.css";
-
-.cms-modal-overlay {
-  @apply fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4;
-}
-
-.cms-modal {
-  @apply flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-surface-3 bg-surface-0;
-}
-
-.cms-modal-header {
-  @apply flex items-center justify-between border-b border-surface-3 px-5 py-4;
-}
-
-.cms-modal-body {
-  @apply flex-1 space-y-5 overflow-y-auto px-5 py-4;
-}
-
-.cms-modal-footer {
-  @apply flex justify-end gap-2 border-t border-surface-3 px-5 py-4;
-}
-
-.cms-form-block {
-  @apply rounded-lg border border-surface-3 bg-surface-1 p-4;
-}
-
-.cms-form-legend {
-  @apply px-1 text-sm font-semibold text-ink-primary;
-}
-
-.cms-required {
-  @apply ml-1 text-red-600;
-}
-
-.cms-text-input {
-  @apply mt-3 w-full rounded-md border border-surface-3 bg-surface-0 px-3 py-2 text-sm text-ink-primary;
-}
-
-.cms-toggle-row {
-  @apply flex items-center gap-2 text-sm text-ink-primary;
-}
-
-.cms-side-close {
-  @apply rounded-md border border-surface-3 px-3 py-1.5 text-sm text-ink-secondary transition hover:bg-surface-1;
-}
-
-.cms-side-save {
-  @apply rounded-md bg-surface-inv px-4 py-2 text-sm font-semibold text-ink-on-inv transition hover:bg-surface-inv-raised disabled:cursor-not-allowed disabled:opacity-60;
-}
-</style>

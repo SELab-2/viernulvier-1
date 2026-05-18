@@ -1,85 +1,137 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { getBlogPost } from "@/services/blogposts";
-import { ApiError } from "@/services/api";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+  getBlogPost,
+  getBlogPosts,
+  getBlogPostWithMeta,
+  createBlogPost,
+  replaceBlogPost,
+  updateBlogPost,
+  deleteBlogPost,
+} from "@/services/blogposts";
+import { apiFetch } from "@/services/api";
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+vi.mock("@/services/api", () => ({
+  apiFetch: vi.fn(),
+}));
 
-function mockOk(body: unknown = {}, status = 200) {
-  return vi.fn().mockResolvedValue({
-    ok: true,
-    status,
-    statusText: "OK",
-    json: vi.fn().mockResolvedValue(body),
-  });
-}
-
-function mockError(body: unknown, status: number, statusText: string) {
-  return vi.fn().mockResolvedValue({
-    ok: false,
-    status,
-    statusText,
-    json: vi.fn().mockResolvedValue(body),
-  });
-}
-
-function lastCall(): [string, RequestInit] {
-  const calls = (fetch as ReturnType<typeof vi.fn>).mock.calls as [
-    string,
-    RequestInit,
-  ][];
-  return calls[calls.length - 1]!;
-}
+const mockedApiFetch = vi.mocked(apiFetch);
 
 const samplePost = {
   id: 42,
   blog: 1,
-  title: "Hello world",
-  content: { body: "Some text." },
+  title: { en: "Hello world" },
+  content: { en: "Some text." },
   published_at: "2026-03-15T10:00:00.000Z",
+  productions: [1],
 };
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockedApiFetch.mockResolvedValue(samplePost);
+});
 
-beforeEach(() => vi.stubGlobal("fetch", mockOk(samplePost)));
-afterEach(() => vi.unstubAllGlobals());
+describe("blogposts service", () => {
+  describe("getBlogPosts", () => {
+    it("fetches all blogposts", async () => {
+      await getBlogPosts();
 
-describe("getBlogPost", () => {
-  it("GETs /api/v1/blog/post/:id", async () => {
-    await getBlogPost(42);
-    expect(lastCall()[0]).toBe("/api/v1/blog/post/42");
-    expect(lastCall()[1].method).toBeUndefined();
-  });
-
-  it("uses the correct id in the URL", async () => {
-    await getBlogPost(7);
-    expect(lastCall()[0]).toBe("/api/v1/blog/post/7");
-  });
-
-  it("returns the parsed response body", async () => {
-    const result = await getBlogPost(42);
-    expect(result).toEqual(samplePost);
-  });
-
-  it("throws ApiError on 404", async () => {
-    vi.stubGlobal(
-      "fetch",
-      mockError({ error: "Not found" }, 404, "Not Found"),
-    );
-    await expect(getBlogPost(999)).rejects.toMatchObject({
-      status: 404,
+      expect(mockedApiFetch).toHaveBeenCalledWith("/blog/post");
     });
-    await expect(getBlogPost(999)).rejects.toBeInstanceOf(ApiError);
   });
 
-  it("throws ApiError on generic server error", async () => {
-    vi.stubGlobal(
-      "fetch",
-      mockError({ error: "Internal Server Error" }, 500, "Internal Server Error"),
-    );
-    await expect(getBlogPost(1)).rejects.toBeInstanceOf(ApiError);
+  describe("getBlogPost", () => {
+    it("fetches a single blogpost by id", async () => {
+      await getBlogPost(42);
+
+      expect(mockedApiFetch).toHaveBeenCalledWith("/blog/post/42");
+    });
+
+    it("returns the parsed response body", async () => {
+      const result = await getBlogPost(42);
+
+      expect(result).toEqual(samplePost);
+    });
+  });
+
+  describe("getBlogPostWithMeta", () => {
+    it("fetches a blogpost with metadata", async () => {
+      await getBlogPostWithMeta(42);
+
+      expect(mockedApiFetch).toHaveBeenCalledWith(
+        "/blog/post/42/meta",
+      );
+    });
+  });
+
+  describe("createBlogPost", () => {
+    it("POSTs a new blogpost", async () => {
+      const payload = {
+        blog: 1,
+        title: { en: "New post" },
+        content: { en: "Body" },
+        productions: [1],
+      };
+
+      await createBlogPost(payload);
+
+      expect(mockedApiFetch).toHaveBeenCalledWith("/blog/post", {
+        method: "POST",
+        body: payload,
+      });
+    });
+  });
+
+  describe("replaceBlogPost", () => {
+    it("PUTs a full replacement", async () => {
+      const payload = {
+        blog: 1,
+        title: { en: "Updated" },
+        content: { en: "Updated body" },
+        productions: [1],
+      };
+
+      await replaceBlogPost(42, payload);
+
+      expect(mockedApiFetch).toHaveBeenCalledWith(
+        "/blog/post/42",
+        {
+          method: "PUT",
+          body: payload,
+        },
+      );
+    });
+  });
+
+  describe("updateBlogPost", () => {
+    it("PATCHes partial updates", async () => {
+      const payload = {
+        published_at: "2026-03-20T10:00:00.000Z",
+      };
+
+      await updateBlogPost(42, payload);
+
+      expect(mockedApiFetch).toHaveBeenCalledWith(
+        "/blog/post/42",
+        {
+          method: "PATCH",
+          body: payload,
+        },
+      );
+    });
+  });
+
+  describe("deleteBlogPost", () => {
+    it("DELETEs a blogpost", async () => {
+      mockedApiFetch.mockResolvedValue(undefined);
+
+      await deleteBlogPost(42);
+
+      expect(mockedApiFetch).toHaveBeenCalledWith(
+        "/blog/post/42",
+        {
+          method: "DELETE",
+        },
+      );
+    });
   });
 });

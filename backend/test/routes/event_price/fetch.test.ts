@@ -128,7 +128,7 @@ describe("Event Price Fetch Routes", () => {
       });
 
       expect(response.statusCode).toBe(404);
-      //expect(response.json()).toEqual({ error: "Not Found" });
+      expect(response.json()).toEqual({ error: "Not Found" });
     });
 
     test("returns 401 when not authenticated", async () => {

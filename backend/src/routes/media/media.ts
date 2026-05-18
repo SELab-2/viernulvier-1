@@ -18,6 +18,7 @@ import {
   deleteCrop,
 } from "./handlers/index.js";
 import cropProxyRoute from "./proxy.js";
+import { mediaDocs } from "./docs/shared.js";
 
 /**
  * Registers media (image + crop) routes on the Fastify instance.
@@ -45,26 +46,26 @@ import cropProxyRoute from "./proxy.js";
  * @param server - The Fastify instance to register routes on.
  */
 export default function mediaRoutes(server: FastifyInstance) {
-  const protect = { preHandler: [server.authorize()] };
+  const protect = { preValidation: [server.authorize()] };
 
   // ── Images ──
-  server.get("/api/v1/production/images", replyHandler(server, fetchImagesByProductionIdsBatch));
-  server.get("/api/v1/production/:productionId/image", replyHandler(server, fetchImagesByProduction));
-  server.get("/api/v1/image/:id", replyHandler(server, fetchImage));
-  server.get("/api/v1/image/:id/meta", protect, replyHandler(server, fetchImageWithMeta));
-  server.get("/api/v1/image", replyHandler(server, fetchAllImages));
-  server.post("/api/v1/production/:productionId/image", protect, replyHandler(server, createImage));
-  server.patch("/api/v1/image/:id", protect, replyHandler(server, editImage));
-  server.put("/api/v1/image/:id", protect, replyHandler(server, replaceImage));
-  server.delete("/api/v1/image/:id", protect, replyHandler(server, deleteImage));
+  server.get("/api/v1/production/images", {schema: mediaDocs}, replyHandler(server, fetchImagesByProductionIdsBatch));
+  server.get("/api/v1/production/:productionId/image",{schema: mediaDocs}, replyHandler(server, fetchImagesByProduction));
+  server.get("/api/v1/image/:id",{schema: mediaDocs}, replyHandler(server, fetchImage));
+  server.get("/api/v1/image/:id/meta", {...protect, schema: mediaDocs }, replyHandler(server, fetchImageWithMeta));
+  server.get("/api/v1/image",{schema: mediaDocs}, replyHandler(server, fetchAllImages));
+  server.post("/api/v1/production/:productionId/image", {...protect, schema: mediaDocs }, replyHandler(server, createImage));
+  server.patch("/api/v1/image/:id", {...protect, schema: mediaDocs }, replyHandler(server, editImage));
+  server.put("/api/v1/image/:id", {...protect, schema: mediaDocs }, replyHandler(server, replaceImage));
+  server.delete("/api/v1/image/:id", {...protect, schema: mediaDocs }, replyHandler(server, deleteImage));
 
   // ── Crops ──
-  server.get("/api/v1/image/:imageId/crop", replyHandler(server, fetchCropsByImage));
-  server.get("/api/v1/image/:imageId/crop/:type", replyHandler(server, fetchCropByType));
-  server.post("/api/v1/image/:imageId/crop", protect, replyHandler(server, createCrops));
-  server.patch("/api/v1/crop/:id", protect, replyHandler(server, editCrop));
-  server.put("/api/v1/crop/:id", protect, replyHandler(server, replaceCrop));
-  server.delete("/api/v1/crop/:id", protect, replyHandler(server, deleteCrop));
+  server.get("/api/v1/image/:imageId/crop", {schema: mediaDocs}, replyHandler(server, fetchCropsByImage));
+  server.get("/api/v1/image/:imageId/crop/:type", {schema: mediaDocs}, replyHandler(server, fetchCropByType));
+  server.post("/api/v1/image/:imageId/crop", {...protect, schema: mediaDocs }, replyHandler(server, createCrops));
+  server.patch("/api/v1/crop/:id", {...protect, schema: mediaDocs }, replyHandler(server, editCrop));
+  server.put("/api/v1/crop/:id", {...protect, schema: mediaDocs }, replyHandler(server, replaceCrop));
+  server.delete("/api/v1/crop/:id", {...protect, schema: mediaDocs }, replyHandler(server, deleteCrop));
 
   cropProxyRoute(server);
 }

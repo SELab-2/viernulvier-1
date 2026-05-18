@@ -1,12 +1,24 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { BlogPostWithBackwardsRefs } from "@viernulvier/shared/index.js";
-import { BlogPostSchema, BlogPostWithBackwardsRefsSchema } from "@viernulvier/shared/index.js";
-import { getMetadata, ParseContext, parseSchema, HttpError, HttpServerError } from "@/routes/helpers.js";
+import {
+  BlogPostSchema,
+  BlogPostWithBackwardsRefsSchema,
+} from "@viernulvier/shared/index.js";
+import {
+  getMetadata,
+  ParseContext,
+  parseSchema,
+  HttpError,
+  HttpServerError,
+} from "@/routes/helpers.js";
 import { z } from "zod";
 
-
-const CreateBlogPostInputSchema = BlogPostSchema.omit({ id: true }).extend({
-  productions: z.array(z.int()).min(1, "Productions array must contain at least one production"),
+export const CreateBlogPostInputSchema = BlogPostSchema.omit({
+  id: true,
+}).extend({
+  productions: z
+    .array(z.int())
+    .min(1, "Productions array must contain at least one production"),
 });
 
 /**
@@ -37,10 +49,22 @@ export async function createBlogPost(
       `INSERT INTO blogpost (blog, title, content, published_at, created_by, updated_by, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $5, $6, $6)
        RETURNING id, blog, title, content, published_at`,
-      [body["blog"], body["title"], body["content"], body["published_at"], admin, current_time],
+      [
+        body["blog"],
+        body["title"],
+        body["content"],
+        body["published_at"],
+        admin,
+        current_time,
+      ],
     );
 
-    const blogpost = parseSchema(server, BlogPostSchema, blogpostResult.rows[0], ParseContext.Database);
+    const blogpost = parseSchema(
+      server,
+      BlogPostSchema,
+      blogpostResult.rows[0],
+      ParseContext.Database,
+    );
 
     // Insert all production_blogpost relations within same transaction
     for (const production of productions) {
@@ -60,11 +84,19 @@ export async function createBlogPost(
     const productionIds = productionsResult.rows.map((row) => row.production);
 
     await client.query("COMMIT");
-    return parseSchema(server, BlogPostWithBackwardsRefsSchema, { ...blogpost, productions: productionIds }, ParseContext.Database);
+    return parseSchema(
+      server,
+      BlogPostWithBackwardsRefsSchema,
+      { ...blogpost, productions: productionIds },
+      ParseContext.Database,
+    );
   } catch (err) {
     await client.query("ROLLBACK");
     server.log.error(err);
-    throw new HttpError(HttpServerError.InternalServerError, "Internal server error");
+    throw new HttpError(
+      HttpServerError.InternalServerError,
+      "Internal server error",
+    );
   } finally {
     client.release();
   }

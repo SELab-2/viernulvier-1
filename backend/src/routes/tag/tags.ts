@@ -13,6 +13,18 @@ import {
   fetchTagsVisible,
 } from "./handlers/index.js";
 
+import {
+  fetchTagDocs,
+  fetchTagVisibleDocs,
+  fetchTagWithMetaDocs,
+  fetchTagsDocs,
+  fetchTagsVisibleDocs,
+  createTagDocs,
+  editTagDocs,
+  deleteTagDocs,
+  replaceTagDocs,
+} from "./docs/index.js";
+
 /**
  * Registers tag routes on the Fastify instance.
  *
@@ -30,17 +42,52 @@ import {
  * @param server - The Fastify instance to register routes on.
  */
 export default function tagRoutes(server: FastifyInstance) {
-  const protect = { preHandler: [server.authorize()] };
+  const protect = { preValidation: [server.authorize()] };
 
-  server.get("/api/v1/tag/all", protect, replyHandler(server, fetchTags));
-  server.get("/api/v1/tag", replyHandler(server, fetchTagsVisible));
-  server.get("/api/v1/tag/:id/all", protect, replyHandler(server, fetchTag));
-  server.get("/api/v1/tag/:id", replyHandler(server, fetchTagVisible));
-  server.get("/api/v1/tag/:id/meta", protect, replyHandler(server, fetchTagWithMeta));
-  server.post("/api/v1/tag", protect, replyHandler(server, createTag));
+  server.get(
+    "/api/v1/tag/all",
+    { ...protect, schema: fetchTagsDocs },
+    replyHandler(server, fetchTags),
+  );
+  server.get(
+    "/api/v1/tag",
+    { schema: fetchTagsVisibleDocs },
+    replyHandler(server, fetchTagsVisible),
+  );
+  server.get(
+    "/api/v1/tag/:id/all",
+    { ...protect, schema: fetchTagDocs },
+    replyHandler(server, fetchTag),
+  );
+  server.get(
+    "/api/v1/tag/:id",
+    { schema: fetchTagVisibleDocs },
+    replyHandler(server, fetchTagVisible),
+  );
+  server.get(
+    "/api/v1/tag/:id/meta",
+    { ...protect, schema: fetchTagWithMetaDocs },
+    replyHandler(server, fetchTagWithMeta),
+  );
 
-  server.put("/api/v1/tag/:id", protect, replyHandler(server, replaceTag));
-  server.patch("/api/v1/tag/:id", protect, replyHandler(server, editTag));
-  
-  server.delete("/api/v1/tag/:id", protect, replyHandler(server, deleteTag));
+  server.post(
+    "/api/v1/tag",
+    { ...protect, schema: createTagDocs },
+    replyHandler(server, createTag),
+  );
+  server.put(
+    "/api/v1/tag/:id",
+    { ...protect, schema: replaceTagDocs },
+    replyHandler(server, replaceTag),
+  );
+  server.patch(
+    "/api/v1/tag/:id",
+    { ...protect, schema: editTagDocs },
+    replyHandler(server, editTag),
+  );
+  server.delete(
+    "/api/v1/tag/:id",
+    { ...protect, schema: deleteTagDocs },
+    replyHandler(server, deleteTag),
+  );
 }

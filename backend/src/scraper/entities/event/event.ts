@@ -27,7 +27,7 @@ import {
  * If both are omitted, {@link scrapeAllEvents} defaults to `{ before: new Date() }`.
  */
 export type { ViernulvierEventStartBounds } from "./event-bounds.js";
-export * from "./zoned-day.js";
+export * from "../../core/zoned-day.js";
 
 /**
  * Supplies default `{ before: new Date() }` when the caller passes an empty bounds object.
@@ -370,7 +370,7 @@ export async function scrapeAllEvents(
   for (let page = 1; page <= totalPages; page++) {
     const data = await fetchEventsPage(page, authToken, resolved);
     for (const event of data.member) {
-      console.log(`Processing event ${event["@id"]} (${page}/${totalPages})`);
+      console.log(`Processing store-front event ${event["@id"]} (${page}/${totalPages})`);
       try {
         await ensureEventImported(event, authToken, loginToken, stats);
       } catch (err) {

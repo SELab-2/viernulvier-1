@@ -63,3 +63,4 @@ Once the containers are running, you need to initialize the database schema.
 ## Periodic Synchronization Job
 
 The project requires a periodic sync to keep the archive updated. While the specific sync script is located in the backend, it should be triggered via a system crontab or a Docker-sidecar container.
+  
