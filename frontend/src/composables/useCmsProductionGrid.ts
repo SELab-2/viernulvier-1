@@ -186,6 +186,7 @@ export function useCmsProductionGrid(options: {
   getPrimaryTagOptions?: () => Array<{ id: number; label: string }>;
   // Backwards-compatible: older tests/usage provide just labels.
   getPrimaryTagLabels?: () => string[];
+  currentLang?: Ref<string>;
 }) {
   const primaryTagLabelById = computed(() => {
     const optionsEntries = options.getPrimaryTagOptions?.() ?? [];
@@ -275,8 +276,11 @@ export function useCmsProductionGrid(options: {
       minWidth: 90,
       maxWidth: 120,
       cellClass: "cms-production-id-cell",
-      cellRenderer: (params: { value: number }) =>
-        `<a href="/productions/${params.value}" class="text-ink-primary underline hover:text-ink-secondary transition-colors">${params.value}</a>`,
+      cellRenderer: (params: { value: number }) => {
+        const lang = options.currentLang?.value ?? "";
+        const prefix = lang ? `/${lang}` : "";
+        return `<a href="${prefix}/productions/${params.value}" class="text-ink-primary underline hover:text-ink-secondary transition-colors">${params.value}</a>`;
+      },
     },
     {
       headerName: "Events",

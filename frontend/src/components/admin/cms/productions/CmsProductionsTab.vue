@@ -250,6 +250,8 @@ import {
 const { t } = useI18n();
 const { isDark } = useDarkMode();
 
+const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
+
 const {
   agThemeVars,
   autoSizeGridColumns,
@@ -279,6 +281,7 @@ const {
     createTagGroups.value
       .filter((group) => group.isGenre)
       .flatMap((group) => group.tags.map((tag) => tag.label)),
+  currentLang,
 });
 
 const isLoading = ref(false);
@@ -333,7 +336,6 @@ const eventRowSnapshots = ref(new Map<number, CmsEventGridRow>());
 const pendingProductionEnterCommits = ref(new Set<string>());
 const activeProductionEditKey = ref<string | null>(null);
 
-const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 const editorBulkCount = computed(() => {
   if (!editorPanel.value) {
     return 0;
@@ -1171,7 +1173,7 @@ async function loadCmsData(): Promise<void> {
 
   try {
     const [productionsPage, tags, tagTypes, halls] = await Promise.all([
-      getProductions(),
+      getProductions({ lang: currentLang.value }),
       getAllTags(),
       getTagTypes(),
       getHalls(),

@@ -10,7 +10,7 @@ describe("useCmsProductionGrid", () => {
 
   describe("column definitions", () => {
     it("declares twelve production columns including id and events action", () => {
-      const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key });
+      const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key, currentLang: ref('nl') });
 
       expect(grid.columnDefs.value).toHaveLength(12);
       expect(grid.gridColumnOptions.value).toHaveLength(12);
@@ -18,7 +18,7 @@ describe("useCmsProductionGrid", () => {
       const idRenderer = grid.columnDefs.value[0]?.cellRenderer as
         | ((params: { value: number }) => string)
         | undefined;
-      expect(idRenderer?.({ value: 42 })).toContain('/productions/42');
+      expect(idRenderer?.({ value: 42 })).toContain('/nl/productions/42');
 
       const eventsValueGetter = grid.columnDefs.value.find((def) => def.colId === "eventsAction")?.valueGetter as
         | ((params: unknown) => string)
@@ -27,7 +27,7 @@ describe("useCmsProductionGrid", () => {
     });
 
     it("truncates long teaser and description values via valueFormatter", () => {
-      const defs = useCmsProductionGrid({ isDark: ref(false), t: (key) => key }).columnDefs.value;
+      const defs = useCmsProductionGrid({ isDark: ref(false), t: (key) => key, currentLang: ref('nl') }).columnDefs.value;
 
       const teaser = defs.find((d) => d.field === "teaser")?.valueFormatter as
         | ((params: { value: unknown }) => string)
@@ -48,7 +48,7 @@ describe("useCmsProductionGrid", () => {
     });
 
     it("renders media cells as escaped truncated text and hides empty values", () => {
-      const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key });
+      const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key, currentLang: ref('nl') });
 
       const mediaRenderer = grid.columnDefs.value.find((c) => c.field === "media")?.cellRenderer as
         | ((params: { value: unknown }) => string)
@@ -80,6 +80,7 @@ describe("useCmsProductionGrid", () => {
       const withLabels = useCmsProductionGrid({
         isDark: ref(false),
         t: (key) => key,
+        currentLang: ref('nl'),
         getPrimaryTagLabels: () => ["Genre A", "Genre B"],
       });
       const withParams = withLabels.columnDefs.value.find((c) => c.field === "genres")?.cellEditorParams as
@@ -87,7 +88,7 @@ describe("useCmsProductionGrid", () => {
         | undefined;
       expect(withParams?.().values).toEqual(["Genre A", "Genre B"]);
 
-      const withoutLabels = useCmsProductionGrid({ isDark: ref(false), t: (key) => key });
+      const withoutLabels = useCmsProductionGrid({ isDark: ref(false), t: (key) => key, currentLang: ref('nl') });
       const withoutParams = withoutLabels.columnDefs.value.find((c) => c.field === "genres")?.cellEditorParams as
         | (() => { values: string[] })
         | undefined;
@@ -98,6 +99,7 @@ describe("useCmsProductionGrid", () => {
       const grid = useCmsProductionGrid({
         isDark: ref(false),
         t: (key) => key,
+        currentLang: ref('nl'),
         getPrimaryTagOptions: () => [
           { id: 7, label: "Genre Seven" },
           { id: 9, label: "Genre Nine" },
@@ -130,7 +132,7 @@ describe("useCmsProductionGrid", () => {
 
   describe("defaultColDef cellStyle", () => {
     it("highlights empty cells and leaves non-empty cells untouched", () => {
-      const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key });
+      const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key, currentLang: ref('nl') });
 
       const cellStyle = grid.defaultColDef.cellStyle as
         | ((params: { value: unknown }) => Record<string, string> | null)
@@ -163,6 +165,7 @@ describe("useCmsProductionGrid", () => {
       const grid = useCmsProductionGrid({
         isDark: ref(false),
         t: (key) => key,
+        currentLang: ref('nl'),
         getPrimaryTagOptions: () => [{ id: 7, label: "Genre A" }],
       });
       grid.gridApi.value = { exportDataAsCsv } as never;
@@ -206,7 +209,7 @@ describe("useCmsProductionGrid", () => {
         sizeColumnsToFit: vi.fn(),
       };
       localStorage.setItem("viernulvier-cms-grid-state-v2", JSON.stringify({ a: 1 }));
-      const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key });
+      const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key, currentLang: ref('nl') });
 
       grid.onGridReady({ api } as never);
 
