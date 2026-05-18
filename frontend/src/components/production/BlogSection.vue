@@ -37,7 +37,7 @@
           </span>
           
           <h3 class="mt-3 font-serif text-2xl font-black italic uppercase leading-[1.05] text-ink-primary decoration-1 underline-offset-4 group-hover:underline">
-            {{ localizeOrEmpty(post.title, currentLang) }}
+            {{ localizeWithFallback(post.title, (map) => localizeOrEmpty(map ?? {}, currentLang)) }}
           </h3>
           
           <div 
@@ -66,7 +66,7 @@ import { useI18n } from "vue-i18n";
 import { RouterLink } from "vue-router";
 import type { BlogPostWithBackwardsRefs } from "@viernulvier/shared";
 import { i18n, type SupportedLang } from "@/i18n";
-import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
+import { localizeOrEmpty, localizeWithFallback, type LanguageMap } from "@/utils/language-utils";
 import { RouteNames } from "@/router/routeNames";
 import { parseAndSanitizeMd } from "@/utils/parsers";
 import { formatShortDate } from "@/utils/date";
@@ -80,7 +80,7 @@ const { t } = useI18n();
 const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 
 function getPreview(content: LanguageMap) {
-  const rawText = localizeOrEmpty(content, currentLang.value);
+  const rawText = localizeWithFallback(content, (map) => localizeOrEmpty(map ?? {}, currentLang.value));
   return parseAndSanitizeMd(rawText);
 }
 </script>
