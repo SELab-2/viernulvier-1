@@ -7,6 +7,7 @@ export default {
     home: "Home",
     archive: "Archief",
     productions: "Producties",
+    blog: "Blog",
     search: "Zoeken",
     admin: {
       dashboard: "Dashboard",
@@ -357,6 +358,17 @@ export default {
       helpText: "Vind je niet meteen wat je zoekt in onze historiek? Voor vragen over ons archief of specifieke producties kun je altijd een mailtje sturen naar info{'@'}viernulvier.gent. We helpen je graag verder.",
       contactLabel: "Contacteer ons",
     },
+  },
+  blogPostsPage: {
+    heading: "Blogposts",
+    intro: "Verslagen, reflecties en achtergronden bij ons werk.",
+    loading: "Blogposts worden geladen",
+    errorGeneric: "Er liep iets mis bij het laden van de blogposts.",
+    empty: "Nog geen blogposts gepubliceerd.",
+    readMore: "Lees verder",
+    previous: "Vorige",
+    next: "Volgende",
+    pagination: "Paginering",
   },
   blogpost: {
     loading: "Blogpost laden",
