@@ -128,7 +128,7 @@ import { useCmsRemove } from "@/composables/useCmsRemove";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
 import { getBlogPosts, createBlogPost, updateBlogPost, deleteBlogPost } from "@/services/blogposts";
-import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
+import { localizeOrEmpty, type Language, type LanguageMap } from "@/utils/language-utils";
 import {
   applyUpdatedBlogPostToRow,
   buildBlogPostGridRows,
@@ -143,6 +143,7 @@ import {
 
 const { t } = useI18n();
 const { isDark } = useDarkMode();
+const currentLang = computed<Language>(() => i18n.global.locale.value);
 
 const {
   agThemeVars,
@@ -166,7 +167,7 @@ const {
   applyQuickFilter,
   persistGridState,
   gridApi,
-} = useCmsBlogPostGrid({ isDark, t });
+} = useCmsBlogPostGrid({ isDark, t, currentLang });
 
 const isLoading = ref(false);
 const isSaving = ref(false);
@@ -185,8 +186,6 @@ const editorBulkCount = computed(() => 1);
 // ---------------------------------------------------------------------------
 // Localisation helpers
 // ---------------------------------------------------------------------------
-
-const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 
 function localizeValue(map: LanguageMap | null | undefined): string {
   if (!map) return "";
