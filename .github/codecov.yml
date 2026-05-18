@@ -1,0 +1,15 @@
+coverage:
+  status:
+    project: off
+    patch: off
+
+comment: false
+
+flags:
+  frontend:
+    paths:
+      - frontend/
+
+  backend:
+    paths:
+      - backend/

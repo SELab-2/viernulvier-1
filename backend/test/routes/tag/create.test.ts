@@ -72,7 +72,7 @@ function setupMocks(server: FastifyInstance, returnTag: Tag = mockTag, insertedI
       if (upper.startsWith("INSERT INTO PRODUCTION_TAG")) {
         return Promise.resolve({ rows: [], rowCount: 1 });
       }
-      
+
       // Fallback for unexpected queries in transaction
       return Promise.resolve({ rows: [], rowCount: 0 });
     }),
@@ -81,11 +81,11 @@ function setupMocks(server: FastifyInstance, returnTag: Tag = mockTag, insertedI
   } as any;
 
   server.pg.connect = vi.fn().mockResolvedValue(mockClient);
-  
+
   // Mock server-level queries (not in transaction) for getTagById
   server.pg.query = vi.fn((query: string) => {
     const upper = query.trim().toUpperCase();
-    
+
     // Handle TagSelect query: SELECT id, old_id, name, tag_type, public FROM tag WHERE id = $1
     if (upper.includes("SELECT") && upper.includes("FROM TAG") && upper.includes("WHERE")) {
       return Promise.resolve({
@@ -101,7 +101,7 @@ function setupMocks(server: FastifyInstance, returnTag: Tag = mockTag, insertedI
         rowCount: 1,
       });
     }
-    
+
     // Handle production_tag links query
     if (upper.includes("FROM PRODUCTION_TAG") && upper.includes("WHERE TAG")) {
       return Promise.resolve({
@@ -258,6 +258,8 @@ describe("Create tag", () => {
   });
 
   test("POST /api/v1/tag — rolls back transaction on error", async () => {
+
+    const mockRollback = vi.fn(() =>  Promise.resolve({ rows: [], rowCount: 0 }))
     const mockClient = {
       query: vi.fn().mockImplementation((query: string) => {
         const upper = query.trim().toUpperCase();
@@ -269,7 +271,12 @@ describe("Create tag", () => {
           throw new Error("Production insertion failed");
         }
 
+        if (upper === "ROLLBACK") {
+          return mockRollback();
+        }
+
         throw new Error(`Unexpected query: ${query}`);
+
       }),
       release: vi.fn(),
     };
@@ -290,6 +297,7 @@ describe("Create tag", () => {
     });
 
     expect(response.statusCode).toBe(HttpServerError.InternalServerError);
+    expect(mockRollback).toHaveBeenCalled();
     expect(mockClient.release).toHaveBeenCalled();
   });
 });

@@ -1,10 +1,10 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Hall } from "@viernulvier/shared/index.js";
-import { HallSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { HallSchema, serial } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, parseSchema, HttpError, HttpClientError, ParseContext } from "@/routes/helpers.js";
 import { z } from "zod";
 
-const EditHallBodySchema = HallSchema.omit({ id: true }).partial();
+export const EditHallBodySchema = HallSchema.omit({ id: true }).partial();
 
 /**
  * Updates an existing hall and returns the updated record.
@@ -17,7 +17,7 @@ export async function editHall(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Hall | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const body = parseSchema(server, EditHallBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
 

@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Tag } from "@viernulvier/shared/index.js";
-import { TagSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { TagSchema, serial } from "@viernulvier/shared/index.js";
 import { parseParams, buildQuery } from "@/routes/helpers.js";
 import { z } from "zod";
 
@@ -25,7 +25,7 @@ export async function deleteTag(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Tag | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const rows = await deleteTagById(server)(id);
   return rows[0] ?? null;
 }

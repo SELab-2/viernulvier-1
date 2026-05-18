@@ -1,11 +1,29 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import type { BlogPost, BlogPostWithBackwardsRefs } from "@viernulvier/shared/index.js";
-import { BlogPostSchema, BlogPostWithBackwardsRefsSchema, stringToInt } from "@viernulvier/shared/index.js";
-import { getMetadata, ParseContext, parseParams, parseSchema, HttpError, HttpServerError } from "@/routes/helpers.js";
+import type {
+  BlogPost,
+  BlogPostWithBackwardsRefs,
+} from "@viernulvier/shared/index.js";
+import {
+  BlogPostSchema,
+  BlogPostWithBackwardsRefsSchema,
+  serial,
+} from "@viernulvier/shared/index.js";
+import {
+  getMetadata,
+  ParseContext,
+  parseParams,
+  parseSchema,
+  HttpError,
+  HttpServerError,
+} from "@/routes/helpers.js";
 import { z } from "zod";
 
-const ReplaceBlogPostBodySchema = BlogPostSchema.omit({ id: true }).extend({
-  productions: z.array(z.int()).min(1, "Productions array must contain at least one production"),
+export const ReplaceBlogPostBodySchema = BlogPostSchema.omit({
+  id: true,
+}).extend({
+  productions: z
+    .array(z.int())
+    .min(1, "Productions array must contain at least one production"),
 });
 
 /**
@@ -23,7 +41,7 @@ export async function replaceBlogPost(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<BlogPostWithBackwardsRefs | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const body = parseSchema(server, ReplaceBlogPostBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
   const productions = body.productions;
@@ -39,16 +57,28 @@ export async function replaceBlogPost(
        SET blog = $1, title = $2, content = $3, published_at = $4, updated_by = $5, updated_at = $6
        WHERE id = $7
        RETURNING id, blog, title, content, published_at`,
-      [body["blog"], body["title"], body["content"], body["published_at"], admin, current_time, id],
+      [
+        body["blog"],
+        body["title"],
+        body["content"],
+        body["published_at"],
+        admin,
+        current_time,
+        id,
+      ],
     );
 
-    const blogpost = parseSchema(server, BlogPostSchema, result.rows[0], ParseContext.Database);
+    const blogpost = parseSchema(
+      server,
+      BlogPostSchema,
+      result.rows[0],
+      ParseContext.Database,
+    );
 
     // Delete existing relations
-    await client.query(
-      `DELETE FROM production_blogpost WHERE blogpost = $1`,
-      [id],
-    );
+    await client.query(`DELETE FROM production_blogpost WHERE blogpost = $1`, [
+      id,
+    ]);
 
     // Insert new relations
     for (const production of productions) {
@@ -68,11 +98,19 @@ export async function replaceBlogPost(
     const productionIds = productionsResult.rows.map((row) => row.production);
 
     await client.query("COMMIT");
-    return parseSchema(server, BlogPostWithBackwardsRefsSchema, { ...blogpost, productions: productionIds }, ParseContext.Database);
+    return parseSchema(
+      server,
+      BlogPostWithBackwardsRefsSchema,
+      { ...blogpost, productions: productionIds },
+      ParseContext.Database,
+    );
   } catch (err) {
     await client.query("ROLLBACK");
     server.log.error(err);
-    throw new HttpError(HttpServerError.InternalServerError, "Internal server error");
+    throw new HttpError(
+      HttpServerError.InternalServerError,
+      "Internal server error",
+    );
   } finally {
     client.release();
   }

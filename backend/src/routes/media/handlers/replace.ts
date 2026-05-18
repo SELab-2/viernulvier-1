@@ -9,7 +9,10 @@ import {
   parseSchema,
 } from "@/routes/helpers.js";
 import { getImageById, getCropById } from "./fetch.js";
-import { ReplaceImageBodySchema, ReplaceCropBodySchema } from "./body-schema.js";
+import {
+  ReplaceImageBodySchema,
+  ReplaceCropBodySchema,
+} from "./body-schema.js";
 import { parseMultipart } from "./multipart-helpers.js";
 import {
   uploadToS3,

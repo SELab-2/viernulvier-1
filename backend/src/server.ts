@@ -5,6 +5,7 @@ import s3Plugin from "./plugins/s3.js";
 import multipartPlugin from "./plugins/multipart.js";
 import authorizePlugin from "./plugins/authorize.js";
 import registerRoutes from "./routes/registerRoutes.js";
+import swaggerPlugin from "./docs/swagger.js";
 import http from "http";
 import https from "https";
 
@@ -24,7 +25,7 @@ export async function buildServer(): Promise<FastifyInstance> {
 
 /**
  * Create a server instance.
- * 
+ *
  * @returns Server instance.
  */
 function createServer(): FastifyInstance {
@@ -37,11 +38,13 @@ function createServer(): FastifyInstance {
 
 /**
  * Registers all standard plugins.
- * 
+ *
  * @param server - The server instance on which the plugins are registered.
  */
 async function registerPlugins(server: FastifyInstance) {
   await server.register(dbPlugin);
+  await server.register(swaggerPlugin);
+
   await server.register(jwtPlugin);
   await server.register(authorizePlugin);
   await server.register(s3Plugin);
@@ -51,7 +54,7 @@ async function registerPlugins(server: FastifyInstance) {
 
 /**
  * Gets the port that the server will listen on.
- * 
+ *
  * @internal
  */
 export function getPort() {
@@ -60,7 +63,7 @@ export function getPort() {
 
 /**
  * Starts the fastify server on a port defined by our environmental variables;
- * 
+ *
  * @internal
  */
 export async function start(): Promise<FastifyInstance> {
@@ -81,7 +84,7 @@ export async function start(): Promise<FastifyInstance> {
   });
 
   const server = createServer();
-  
+
   try {
     server.log.info("Registering plugins...");
     await registerPlugins(server);

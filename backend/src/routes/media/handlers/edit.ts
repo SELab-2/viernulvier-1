@@ -68,8 +68,8 @@ export async function editImage(
   values.push(admin, current_time, id);
 
   const result = await server.pg.query(
-    `UPDATE image SET ${fields.join(", ")} WHERE id =$${i} 
-    RETURNING id`, 
+    `UPDATE image SET ${fields.join(", ")} WHERE id =$${i}
+    RETURNING id`,
     values,
   );
 
@@ -132,8 +132,15 @@ export async function editCrop(
   // Optionally replace the file
   if (newFile) {
     const oldS3Key = extractS3Key(existing.url);
-    const newS3Key = generateS3Key("crop" + oldS3Key.slice(oldS3Key.lastIndexOf(".")));
-    await uploadToS3(server.s3.client, newS3Key, newFile.buffer, newFile.mimetype);
+    const newS3Key = generateS3Key(
+      "crop" + oldS3Key.slice(oldS3Key.lastIndexOf(".")),
+    );
+    await uploadToS3(
+      server.s3.client,
+      newS3Key,
+      newFile.buffer,
+      newFile.mimetype,
+    );
     await deleteFromS3(server.s3.client, oldS3Key);
 
     const newPath = buildCropPath(newS3Key);

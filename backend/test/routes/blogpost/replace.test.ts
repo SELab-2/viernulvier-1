@@ -258,7 +258,7 @@ describe("Replace on blogpost route", () => {
         title: replacedBlogPost["title"],
         content: replacedBlogPost["content"],
         published_at: null,
-        productions: [],
+        productions: [1],
       },
     });
 

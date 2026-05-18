@@ -6,6 +6,7 @@ describe("Event Date Normalization Helpers", () => {
   describe("normalizePartialEventDates", () => {
     test("converts only provided date string fields to Date objects", () => {
       const input = {
+        ids: [1],
         starts_at: "2026-01-01T18:00:00.000Z",
         production: 20,
       };
@@ -22,6 +23,7 @@ describe("Event Date Normalization Helpers", () => {
 
     test("preserves undefined date fields as undefined", () => {
       const input = {
+        ids: [1],
         starts_at: "2026-01-01T18:00:00.000Z",
         ends_at: undefined,
         doors_at: undefined,
@@ -38,6 +40,7 @@ describe("Event Date Normalization Helpers", () => {
 
     test("maps explicit null on nullable date fields to null", () => {
       const result = normalizePartialEventDates({
+        ids: [1],
         ends_at: null,
         doors_at: null,
         starts_at: "2026-01-01T18:00:00.000Z",
@@ -50,6 +53,7 @@ describe("Event Date Normalization Helpers", () => {
 
     test("maps invalid date strings to undefined", () => {
       const result = normalizePartialEventDates({
+        ids: [1],
         starts_at: "not-a-real-date",
       }) as Record<string, unknown>;
 
@@ -62,6 +66,7 @@ describe("Event Date Normalization Helpers", () => {
       const doorDate = new Date("2026-01-01T17:30:00.000Z");
 
       const input = {
+        ids: [1],
         starts_at: startDate,
         ends_at: endDate,
         doors_at: doorDate,
@@ -81,6 +86,7 @@ describe("Event Date Normalization Helpers", () => {
       const doorDate = new Date("2026-01-01T17:30:00.000Z");
 
       const input = {
+        ids: [1],
         starts_at: "2026-02-01T18:00:00.000Z",
         doors_at: doorDate,
       };
@@ -100,6 +106,7 @@ describe("Event Date Normalization Helpers", () => {
       const endDate = new Date("2026-01-01T20:00:00.000Z");
 
       const input = {
+        ids: [1],
         starts_at: startDate,
         ends_at: endDate,
         doors_at: undefined,
@@ -120,6 +127,7 @@ describe("Event Date Normalization Helpers", () => {
     test("handles partial doors_at as Date instance", () => {
       const doorsDate = new Date("2026-01-01T17:30:00.000Z");
       const input = {
+        ids: [1],
         doors_at: doorsDate,
         production: 30,
       };
@@ -136,6 +144,7 @@ describe("Event Date Normalization Helpers", () => {
 
     test("handles partial doors_at as date string", () => {
       const input = {
+        ids: [1],
         doors_at: "2026-01-01T17:30:00.000Z",
         hall: 8,
       };
@@ -152,6 +161,7 @@ describe("Event Date Normalization Helpers", () => {
 
     test("preserves all other fields unchanged", () => {
       const input = {
+        ids: [1],
         ends_at: "2026-01-01T20:00:00.000Z",
         production: 15,
         hall: 7,

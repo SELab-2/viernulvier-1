@@ -1,12 +1,32 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import type { BlogPost, BlogPostWithBackwardsRefs } from "@viernulvier/shared/index.js";
-import { BlogPostSchema, BlogPostWithBackwardsRefsSchema, stringToInt } from "@viernulvier/shared/index.js";
-import { getMetadata, parseParams, parseSchema, HttpError, HttpClientError, HttpServerError, ParseContext } from "@/routes/helpers.js";
+import type {
+  BlogPost,
+  BlogPostWithBackwardsRefs,
+} from "@viernulvier/shared/index.js";
+import {
+  BlogPostSchema,
+  BlogPostWithBackwardsRefsSchema,
+  serial,
+} from "@viernulvier/shared/index.js";
+import {
+  getMetadata,
+  parseParams,
+  parseSchema,
+  HttpError,
+  HttpClientError,
+  HttpServerError,
+  ParseContext,
+} from "@/routes/helpers.js";
 import { z } from "zod";
 
-const EditBlogPostBodySchema = BlogPostSchema.omit({ id: true }).partial().extend({
-  productions: z.array(z.int()).min(1, "Productions array must contain at least one production").optional(),
-});
+export const EditBlogPostBodySchema = BlogPostSchema.omit({ id: true })
+  .partial()
+  .extend({
+    productions: z
+      .array(z.int())
+      .min(1, "Productions array must contain at least one production")
+      .optional(),
+  });
 
 /**
  * Updates an existing blogpost and returns the updated record.
@@ -22,7 +42,7 @@ export async function editBlogPost(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<BlogPostWithBackwardsRefs | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const body = parseSchema(server, EditBlogPostBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
   const productions = body.productions;
@@ -61,7 +81,12 @@ export async function editBlogPost(
       values,
     );
 
-    const blogpost = parseSchema(server, BlogPostSchema, result.rows[0], ParseContext.Database);
+    const blogpost = parseSchema(
+      server,
+      BlogPostSchema,
+      result.rows[0],
+      ParseContext.Database,
+    );
 
     // Update production_blogpost relations if productions array is provided
     if (productions !== undefined) {
@@ -90,11 +115,19 @@ export async function editBlogPost(
     const productionIds = productionsResult.rows.map((row) => row.production);
 
     await client.query("COMMIT");
-    return parseSchema(server, BlogPostWithBackwardsRefsSchema, { ...blogpost, productions: productionIds }, ParseContext.Database);
+    return parseSchema(
+      server,
+      BlogPostWithBackwardsRefsSchema,
+      { ...blogpost, productions: productionIds },
+      ParseContext.Database,
+    );
   } catch (err) {
     await client.query("ROLLBACK");
     server.log.error(err);
-    throw new HttpError(HttpServerError.InternalServerError, "Internal server error");
+    throw new HttpError(
+      HttpServerError.InternalServerError,
+      "Internal server error",
+    );
   } finally {
     client.release();
   }
