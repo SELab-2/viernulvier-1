@@ -420,6 +420,7 @@ import {
   toLanguageMapOrNull,
   validateCreateProductionForm,
   getBulkTargetRows,
+  applyUpdatedProductionToRow,
   type CmsCreateLinkedEventForm,
   type CmsEventGridRow,
   type CreateFieldKey,
@@ -497,7 +498,6 @@ const mediaPreview = ref<CmsMediaPreview | null>(null);
 const mediaPreviewEditUrl = ref("");
 const imagesByProductionId = ref(new Map<number, Array<{ id: number; url: string }>>());
 const imageLoadRequestToken = ref(0);
-const mediaPreview = ref<{ url: string; kind: "image" | "video" | "youtube"; label: string } | null>(null);
 const createExtraLangs = ref({ en: false, fr: false });
 const visibleCreateLangs = computed<SupportedLang[]>(() => {
   const result: SupportedLang[] = ["nl"];
@@ -1039,42 +1039,24 @@ function showSaveSuccess(message: string): void {
   }, 3000);
 }
 
-function closeBulkEditConfirm(): void {
-  bulkEditConfirmOpen.value = false;
-  bulkEditConfirmLoading.value = false;
-  pendingBulkEditAction.value = null;
-}
-
-async function confirmBulkEdit(): Promise<void> {
-  if (!pendingBulkEditAction.value) {
-    closeBulkEditConfirm();
-    return;
-  }
-
-  bulkEditConfirmLoading.value = true;
-  try {
-    await pendingBulkEditAction.value();
-    closeBulkEditConfirm();
-  } catch {
-    // Error is already handled in the action
-    bulkEditConfirmLoading.value = false;
-  }
-}
-
-function showSaveSuccess(message: string): void {
-  saveSuccess.value = message;
-  setTimeout(() => {
-    saveSuccess.value = null;
-  }, 3000);
-}
-
 function openMediaPreview(
   url: string,
   label: string,
   options: { imageId?: number; productionId?: number; mediaField?: "video_1" | "video_2" } = {},
 ): void {
   const trimmed = url.trim();
+  // If there's no URL, open a placeholder so the user can add media.
   if (!trimmed) {
+    const placeholder = createPlaceholderImageDataUrl(t("cms.panel.noMedia"));
+    if (options.mediaField) {
+      // For video fields, show the iframe view (blank) but keep mediaField so the input appears.
+      mediaPreview.value = { url: "about:blank", kind: "iframe", label, productionId: options.productionId, mediaField: options.mediaField };
+      mediaPreviewEditUrl.value = "";
+      return;
+    }
+
+    mediaPreview.value = { url: placeholder, kind: "image", label, imageId: options.imageId, productionId: options.productionId };
+    mediaPreviewEditUrl.value = "";
     return;
   }
 
@@ -1140,6 +1122,16 @@ function openImageGalleryPreview(
 ): void {
   const normalized = images.filter((image) => image.url.trim().length > 0);
   if (normalized.length === 0) {
+    // Show placeholder image so the user can add one
+    const placeholder = createPlaceholderImageDataUrl(t("cms.panel.noMedia"));
+    mediaPreview.value = {
+      url: placeholder,
+      kind: "image",
+      label,
+      productionId,
+      images: [],
+    };
+    mediaPreviewEditUrl.value = "";
     return;
   }
 
@@ -1153,6 +1145,32 @@ function openImageGalleryPreview(
     currentImageIndex: 0,
   };
   mediaPreviewEditUrl.value = "";
+}
+
+function createPlaceholderImageDataUrl(text: string, width = 800, height = 450): string {
+  const bg = "#f3f4f6";
+  const fg = "#374151";
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}' viewBox='0 0 ${width} ${height}'><rect width='100%' height='100%' fill='${bg}'/><text x='50%' y='50%' fill='${fg}' font-family='Arial, Helvetica, sans-serif' font-size='24' dominant-baseline='middle' text-anchor='middle'>${escapeXml(text)}</text></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+function escapeXml(unsafe: string): string {
+  return unsafe.replace(/[&<>\"']/g, (c) => {
+    switch (c) {
+    case "&":
+      return "&amp;";
+    case "<":
+      return "&lt;";
+    case ">":
+      return "&gt;";
+    case '"':
+      return "&quot;";
+    case "'":
+      return "&apos;";
+    default:
+      return c;
+    }
+  });
 }
 
 function syncGalleryPreview(nextIndex: number): void {
@@ -1636,6 +1654,9 @@ function onCellClicked(event: CellClickedEvent<CmsProductionGridRow>): void {
       openImageGalleryPreview(images, event.colDef.headerName ?? t("cms.columns.imageMedia"), event.data.id);
       return;
     }
+    // Open placeholder preview so users can add an image for productions with no images yet
+    openImageGalleryPreview([], event.colDef.headerName ?? t("cms.columns.imageMedia"), event.data.id);
+    return;
   }
 
   if (event.colDef.field === "media") {
@@ -1650,6 +1671,15 @@ function onCellClicked(event: CellClickedEvent<CmsProductionGridRow>): void {
       });
       return;
     }
+    // No media present: open placeholder preview and prefer editing video_1 (fall back to video_2 if present)
+    const video1 = localizeValue(event.data.source.video_1);
+    const video2 = localizeValue(event.data.source.video_2);
+    const preferredField = video1 ? "video_1" : video2 ? "video_2" : "video_1";
+    openMediaPreview("", event.colDef.headerName ?? t("cms.columns.media"), {
+      productionId: event.data.id,
+      mediaField: preferredField as "video_1" | "video_2",
+    });
+    return;
   }
 
   const gridField = event.colDef.field as "descriptionOne" | "descriptionTwo";

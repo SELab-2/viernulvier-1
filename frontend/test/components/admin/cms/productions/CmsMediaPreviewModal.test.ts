@@ -104,4 +104,58 @@ describe("CmsMediaPreviewModal", () => {
     await input.trigger("change");
     expect(wrapper.emitted()["image-selected"]).toBeTruthy();
   });
+
+  it("renders placeholder image with 'No media' text when URL contains SVG placeholder", () => {
+    const placeholderDataUrl = "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27800%27%20height%3D%27450%27%20viewBox%3D%270%200%20800%20450%27%3E%3Crect%20width%3D%27100%25%27%20height%3D%27100%25%27%20fill%3D%27%23f3f4f6%27/%3E%3Ctext%20x%3D%2750%25%27%20y%3D%2750%25%27%20fill%3D%27%23374151%27%20font-family%3D%27Arial%2C%20Helvetica%2C%20sans-serif%27%20font-size%3D%2724%27%20dominant-baseline%3D%27middle%27%20text-anchor%3D%27middle%27%3ENo%20media%3C/text%3E%3C/svg%3E";
+    const mediaPreview = { kind: "image", url: placeholderDataUrl, label: "Images", productionId: 1 } as any;
+    const wrapper = mount(CmsMediaPreviewModal, { props: { mediaPreview, mediaPreviewEditUrl: "", isSaving: false }, global: { plugins: [i18n] } });
+
+    const img = wrapper.find("img.cms-media-preview-large");
+    expect(img.exists()).toBe(true);
+    expect(img.attributes("src")).toBe(placeholderDataUrl);
+    
+    // add image button should be visible
+    const addBtn = wrapper.find("button.cms-side-save");
+    expect(addBtn.exists()).toBe(true);
+    // Button text will be translated based on the current locale
+    expect(addBtn.text()).toBeTruthy();
+  });
+
+  it("shows blank iframe with URL input for video placeholder", () => {
+    const mediaPreview = { kind: "iframe", url: "about:blank", label: "Media", mediaField: "video_1", productionId: 1 } as any;
+    const wrapper = mount(CmsMediaPreviewModal, { props: { mediaPreview, mediaPreviewEditUrl: "", isSaving: false }, global: { plugins: [i18n] } });
+
+    const iframe = wrapper.find("iframe.cms-media-preview-large");
+    expect(iframe.exists()).toBe(true);
+    expect(iframe.attributes("src")).toBe("about:blank");
+
+    const input = wrapper.find("input.cms-media-url-input");
+    expect(input.exists()).toBe(true);
+  });
+
+  it("placeholder image for gallery kind when URL is empty", () => {
+    const placeholderDataUrl = "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27800%27%20height%3D%27450%27%20viewBox%3D%270%200%20800%20450%27%3E%3Crect%20width%3D%27100%25%27%20height%3D%27100%25%27%20fill%3D%27%23f3f4f6%27/%3E%3Ctext%20x%3D%2750%25%27%20y%3D%2750%25%27%20fill%3D%27%23374151%27%20font-family%3D%27Arial%2C%20Helvetica%2C%20sans-serif%27%20font-size%3D%2724%27%20dominant-baseline%3D%27middle%27%20text-anchor%3D%27middle%27%3ENo%20media%3C/text%3E%3C/svg%3E";
+    const mediaPreview = { kind: "gallery", url: placeholderDataUrl, label: "Images", images: [], productionId: 1 } as any;
+    const wrapper = mount(CmsMediaPreviewModal, { props: { mediaPreview, mediaPreviewEditUrl: "", isSaving: false }, global: { plugins: [i18n] } });
+
+    const img = wrapper.find("img.cms-media-preview-large");
+    expect(img.exists()).toBe(true);
+    expect(img.attributes("src")).toBe(placeholderDataUrl);
+  });
+
+  it("enables add-image button only when productionId exists on placeholder", () => {
+    const placeholderDataUrl = "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27800%27%20height%3D%27450%27%20viewBox%3D%270%200%20800%20450%27%3E%3Crect%20width%3D%27100%25%27%20height%3D%27100%25%27%20fill%3D%27%23f3f4f6%27/%3E%3Ctext%20x%3D%2750%25%27%20y%3D%2750%25%27%20fill%3D%27%23374151%27%20font-family%3D%27Arial%2C%20Helvetica%2C%20sans-serif%27%20font-size%3D%2724%27%20dominant-baseline%3D%27middle%27%20text-anchor%3D%27middle%27%3ENo%20media%3C/text%3E%3C/svg%3E";
+    
+    // Without productionId, add button should not show
+    let mediaPreview = { kind: "image", url: placeholderDataUrl, label: "Images" } as any;
+    let wrapper = mount(CmsMediaPreviewModal, { props: { mediaPreview, mediaPreviewEditUrl: "", isSaving: false }, global: { plugins: [i18n] } });
+    let addBtn = wrapper.findAll("button.cms-side-save");
+    expect(addBtn.length).toBe(0);
+
+    // With productionId, add button should show
+    mediaPreview = { kind: "image", url: placeholderDataUrl, label: "Images", productionId: 42 } as any;
+    wrapper = mount(CmsMediaPreviewModal, { props: { mediaPreview, mediaPreviewEditUrl: "", isSaving: false }, global: { plugins: [i18n] } });
+    addBtn = wrapper.findAll("button.cms-side-save");
+    expect(addBtn.length).toBeGreaterThan(0);
+  });
 });

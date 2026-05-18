@@ -9,11 +9,13 @@ describe("useCmsProductionGrid", () => {
   });
 
   describe("column definitions", () => {
-    it("declares eleven production columns including the events action", () => {
+    it("declares twelve production columns including the events action", () => {
       const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key });
 
-      expect(grid.columnDefs.value).toHaveLength(11);
-      expect(grid.gridColumnOptions.value).toHaveLength(11);
+      expect(grid.columnDefs.value).toHaveLength(12);
+      expect(grid.gridColumnOptions.value).toHaveLength(12);
+    });
+
     it("declares twelve production columns including id and events action", () => {
       const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key, currentLang: ref('nl') });
 
@@ -201,9 +203,8 @@ describe("useCmsProductionGrid", () => {
       const grid = useCmsProductionGrid({
         isDark: ref(false),
         t: (key) => key,
-        getPrimaryTagOptions: () => [{ id: 7, label: "Genre X" }],
-        currentLang: ref('nl'),
         getPrimaryTagOptions: () => [{ id: 7, label: "Genre A" }],
+        currentLang: ref('nl'),
       });
       grid.gridApi.value = { exportDataAsCsv } as never;
 
@@ -225,7 +226,6 @@ describe("useCmsProductionGrid", () => {
         node: { data: { source: { tags: [] } } },
         value: 7,
       });
-      expect(serializedGenre).toBe("Genre X");
       expect(serializedGenre).toBe("Genre A");
 
       const serializedGenreFallback = arg.processCellCallback({

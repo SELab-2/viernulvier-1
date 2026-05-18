@@ -88,11 +88,9 @@ export function buildProductionGridRow(
     tags: additionalLabels.join(", ") || "-",
     descriptionOne: localize(production.description) || "",
     descriptionTwo: localize(production.description_2) || "",
-    imageMedia: "",
-    imageMediaUrls: [],
-    media: localize(production.video_1) || localize(production.video_2) || "",
     imageMedia: imageMediaUrl,
     imageMediaUrls,
+    media: localize(production.video_1) || localize(production.video_2) || "",
     events: eventIds,
   };
 }

@@ -38,8 +38,6 @@ export interface CmsProductionGridRow {
   imageMedia: string;
   imageMediaUrls: string[];
   media: string;
-  imageMedia: string;
-  imageMediaUrls: string[];
   events: number[];
 }
 
