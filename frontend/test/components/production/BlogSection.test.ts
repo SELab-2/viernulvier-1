@@ -232,5 +232,16 @@ describe("BlogSection", () => {
       expect(wrapper.find("h3").text()).toBe("Alleen Nederlands");
       wrapper.unmount();
     });
+    
+    it("falls back to another language for content when the active locale has an empty string value", async () => {
+      i18n.global.locale.value = "fr";
+      appI18n.global.locale.value = "fr";
+      const wrapper = await mountSection({
+        blogPosts: [makePost(1, { content: { nl: "Nederlandse inhoud", fr: "" } })],
+      });
+
+      expect(wrapper.find(".prose-flat").text()).toContain("Nederlandse inhoud");
+      wrapper.unmount();
+    });
   });
 });
