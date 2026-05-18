@@ -54,8 +54,8 @@ COPY --from=build /app/backend/migrations ./migrations
 COPY backend/docker-entrypoint.sh /docker-entrypoint.sh
 
 # This is needed so swagger ui can serve its static files.
-RUN mkdir -p ./backend/static
-RUN cp -r ./node_modules/@fastify/swagger-ui/static/* ./backend/static/
+RUN mkdir -p ./dist/backend/static
+RUN cp -r ./node_modules/@fastify/swagger-ui/static/* ./static/
 
 RUN chmod +x /docker-entrypoint.sh
 
