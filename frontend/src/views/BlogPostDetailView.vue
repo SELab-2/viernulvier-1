@@ -94,14 +94,14 @@ const loadingProductions = ref<boolean>(false);
 const title = computed(() => 
   localizeWithFallback(
     post.value?.title, 
-    (map) => localizeOrEmpty(map, currentLang.value)
-  )
+    (map) => localizeOrEmpty(map, currentLang.value),
+  ),
 );
 
 const bodyHtml = computed(() => {
   const rawMarkdown = localizeWithFallback(
     post.value?.content, 
-    (map) => localizeOrEmpty(map, currentLang.value)
+    (map) => localizeOrEmpty(map, currentLang.value),
   );
   return parseAndSanitizeMd(rawMarkdown);
 });
