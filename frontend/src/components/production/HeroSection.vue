@@ -27,12 +27,12 @@
           class="mb-6 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
         >
           <span
-            class="h-px w-8 bg-ink-tertiary opacity-50"
+            class="h-px w-8 shrink-0 bg-ink-tertiary opacity-50"
             aria-hidden="true"
           />
-          <span class="whitespace-nowrap">{{ kicker }}</span>
+          <span class="min-w-0 break-words text-center">{{ kicker }}</span>
           <span
-            class="h-px w-8 bg-ink-tertiary opacity-50"
+            class="h-px w-8 shrink-0 bg-ink-tertiary opacity-50"
             aria-hidden="true"
           />
         </div>

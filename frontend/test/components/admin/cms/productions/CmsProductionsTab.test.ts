@@ -13,6 +13,7 @@ vi.mock("@/services/productions", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/services/productions")>();
   return {
     ...actual,
+    getProduction: vi.fn(),
     getProductions: vi.fn(),
     createProduction: vi.fn(),
     bulkUpdateProductions: vi.fn(),
@@ -128,6 +129,7 @@ const mockHall = {
 describe("CmsProductionsTab", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(productionsService, "getProduction").mockResolvedValue(mockProduction);
     vi.spyOn(productionsService, "getProductions").mockResolvedValue({ items: [mockProduction], total: 1 });
     vi.spyOn(productionsService, "createProduction").mockResolvedValue(mockProduction);
     vi.spyOn(productionsService, "bulkUpdateProductions").mockResolvedValue([mockProduction]);

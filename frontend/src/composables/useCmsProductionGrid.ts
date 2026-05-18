@@ -57,6 +57,7 @@ type TranslateFunction = (key: string, params?: Record<string, unknown>) => stri
 
 const cmsGridStateStorageKey = "viernulvier-cms-grid-state-v2";
 const cmsGridColumnIds = [
+  "id",
   "eventsAction",
   "performer",
   "title",
@@ -66,6 +67,7 @@ const cmsGridColumnIds = [
   "tags",
   "descriptionOne",
   "descriptionTwo",
+  "imageMedia",
   "media",
 ] as const;
 
@@ -156,6 +158,23 @@ function renderMediaCell(value: unknown): string {
   return `<span class="cms-media-text">${label}</span>`;
 }
 
+function renderImageMediaCell(
+  params: ICellRendererParams<CmsProductionGridRow, unknown>,
+  t: TranslateFunction,
+): string {
+  const urls = params.data?.imageMediaUrls ?? [];
+  if (urls.length === 0) {
+    return "";
+  }
+
+  const count = urls.length;
+  const countLabel = count === 1
+    ? t("cms.create.media.imageCountOne")
+    : t("cms.create.media.imageCountOther", { count });
+
+  return `<span class="cms-media-text">${escapeHtml(countLabel)}</span>`;
+}
+
 /**
  * CMS productions grid: layers production-specific column defs, cell styling
  * for empty/finalized rows, and a custom CSV cell processor on top of the
@@ -167,6 +186,7 @@ export function useCmsProductionGrid(options: {
   getPrimaryTagOptions?: () => Array<{ id: number; label: string }>;
   // Backwards-compatible: older tests/usage provide just labels.
   getPrimaryTagLabels?: () => string[];
+  currentLang?: Ref<string>;
 }) {
   const primaryTagLabelById = computed(() => {
     const optionsEntries = options.getPrimaryTagOptions?.() ?? [];
@@ -234,6 +254,7 @@ export function useCmsProductionGrid(options: {
   };
 
   const gridColumnOptions = computed(() => [
+    { colId: "id", label: "ID" },
     { colId: "eventsAction", label: "Events" },
     { colId: "performer", label: options.t("cms.columns.performer") },
     { colId: "title", label: options.t("cms.columns.title") },
@@ -243,10 +264,24 @@ export function useCmsProductionGrid(options: {
     { colId: "tags", label: options.t("cms.columns.tags") },
     { colId: "descriptionOne", label: options.t("cms.columns.descriptionOne") },
     { colId: "descriptionTwo", label: options.t("cms.columns.descriptionTwo") },
+    { colId: "imageMedia", label: options.t("cms.columns.imageMedia") },
     { colId: "media", label: options.t("cms.columns.media") },
   ] as const);
 
   const columnDefs = computed<ColDef<CmsProductionGridRow>[]>(() => [
+    {
+      headerName: "ID",
+      field: "id",
+      editable: false,
+      minWidth: 90,
+      maxWidth: 120,
+      cellClass: "cms-production-id-cell",
+      cellRenderer: (params: { value: number }) => {
+        const lang = options.currentLang?.value ?? "";
+        const prefix = lang ? `/${lang}` : "";
+        return `<a href="${prefix}/productions/${params.value}" class="text-ink-primary underline hover:text-ink-secondary transition-colors">${params.value}</a>`;
+      },
+    },
     {
       headerName: "Events",
       colId: "eventsAction",
@@ -333,6 +368,14 @@ export function useCmsProductionGrid(options: {
       wrapText: true,
       autoHeight: true,
       valueFormatter: ({ value }) => truncateValue(String(value ?? "")),
+    },
+    {
+      headerName: options.t("cms.columns.imageMedia"),
+      field: "imageMedia",
+      editable: false,
+      minWidth: 150,
+      cellClass: "cms-truncate-cell",
+      cellRenderer: (params: ICellRendererParams<CmsProductionGridRow, unknown>) => renderImageMediaCell(params, options.t),
     },
     {
       headerName: options.t("cms.columns.media"),

@@ -325,6 +325,7 @@ import {
   createProduction,
   deleteProduction,
   extractProductionTagIds,
+  getProduction,
   getProductions,
   updateProduction,
 } from "@/services/productions";
@@ -361,6 +362,8 @@ import {
 const { t } = useI18n();
 const { isDark } = useDarkMode();
 
+const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
+
 const {
   agThemeVars,
   autoSizeGridColumns,
@@ -390,6 +393,7 @@ const {
     createTagGroups.value
       .filter((group) => group.isGenre)
       .flatMap((group) => group.tags),
+  currentLang,
 });
 
 const isLoading = ref(false);
@@ -448,7 +452,6 @@ const eventRowSnapshots = ref(new Map<number, CmsEventGridRow>());
 const pendingProductionEnterCommits = ref(new Set<string>());
 const activeProductionEditKey = ref<string | null>(null);
 
-const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 const editorBulkCount = computed(() => {
   if (!editorPanel.value) {
     return 0;
@@ -1046,12 +1049,14 @@ async function persistBulkProductionPatch(
   patch: Record<string, unknown>,
 ): Promise<void> {
   try {
-    await bulkUpdateProductions({
-      ids: targetRows.map((row) => row.id),
-      data: patch,
-    });
-    // Reload all data to ensure grid styling is fully refreshed
-    await loadCmsData();
+    const updated = await updateProduction(row.id, patch as never);
+    try {
+      const refreshed = await getProduction(row.id);
+      applyUpdatedProductionToRow(row, refreshed, localizeValue);
+    } catch {
+      // Fallback for environments/tests where absolute API base URL is unavailable.
+      applyUpdatedProductionToRow(row, updated, localizeValue);
+    }
   } catch (error) {
     saveError.value =
       error instanceof Error
@@ -1493,7 +1498,7 @@ async function loadCmsData(): Promise<void> {
 
   try {
     const [productionsPage, tags, tagTypes, halls] = await Promise.all([
-      getProductions(),
+      getProductions({ lang: currentLang.value }),
       getAllTags(),
       getTagTypes(),
       getHalls(),
