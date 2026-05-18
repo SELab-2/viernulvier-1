@@ -26,6 +26,58 @@ const NullableCreateColumns = [
   "programme",
   "info",
 ] as const;
+
+type CreateProductionDbClient = {
+  query<T>(text: string, values?: unknown[]): Promise<{ rows: T[] }>;
+};
+
+function buildCreateProductionInsertData(
+  body: Record<string, unknown>,
+  admin: number,
+  currentTime: Date,
+): { fields: string[]; placeholders: string[]; values: unknown[] } {
+  const fields: string[] = [];
+  const placeholders: string[] = [];
+  const values: unknown[] = [];
+  let i = 1;
+
+  const addField = (column: string, value: unknown) => {
+    fields.push(column);
+    placeholders.push(`$${i++}`);
+    values.push(value);
+  };
+
+  for (const column of RequiredCreateColumns) {
+    addField(column, getFieldValue(body, column));
+  }
+  for (const column of NullableCreateColumns) {
+    addField(column, getNullableFieldValue(body, column));
+  }
+
+  fields.push("created_by", "updated_by", "created_at", "updated_at");
+  placeholders.push(`$${i++}`, `$${i++}`, `$${i++}`, `$${i++}`);
+  values.push(admin, admin, currentTime, currentTime);
+
+  return { fields, placeholders, values };
+}
+
+async function insertCreatedProduction(
+  client: CreateProductionDbClient,
+  body: Record<string, unknown>,
+  admin: number,
+  currentTime: Date,
+): Promise<{ id: number } | null> {
+  const { fields, placeholders, values } = buildCreateProductionInsertData(body, admin, currentTime);
+
+  const insertResult = await client.query<{ id: number }>(
+    `INSERT INTO production (${fields.join(", ")})
+     VALUES (${placeholders.join(", ")})
+     RETURNING id`,
+    values,
+  );
+
+  return insertResult.rows[0] ?? null;
+}
 /**
  * Creates a new production and returns the created record.
  * Also creates production_tag relations for each tag ID in the input.
@@ -46,47 +98,18 @@ export async function createProduction(
   const tagIds = [...new Set(body.tags ?? [])];
   const useTransaction = tagIds.length > 0;
 
-  if (useTransaction) {
-    const client = await server.pg.connect();
-    try {
-      await client.query("BEGIN");
+  const client = await server.pg.connect();
 
-      const fields: string[] = [];
-      const placeholders: string[] = [];
-      const values: unknown[] = [];
-      let i = 1;
+  try {
+    await client.query("BEGIN");
 
-      const addField = (column: string, value: unknown) => {
-        fields.push(column);
-        placeholders.push(`$${i++}`);
-        values.push(value);
-      };
+    const row = await insertCreatedProduction(client, body, admin, current_time);
+    if (!row) {
+      await client.query("ROLLBACK");
+      return null;
+    }
 
-      for (const column of RequiredCreateColumns) {
-        addField(column, getFieldValue(body, column));
-      }
-      for (const column of NullableCreateColumns) {
-        addField(column, getNullableFieldValue(body, column));
-      }
-
-      // Metadata
-      fields.push("created_by", "updated_by", "created_at", "updated_at");
-      placeholders.push(`$${i++}`, `$${i++}`, `$${i++}`, `$${i++}`);
-      values.push(admin, admin, current_time, current_time);
-
-      const insertResult = await client.query<{ id: number }>(
-        `INSERT INTO production (${fields.join(", ")})
-         VALUES (${placeholders.join(", ")})
-         RETURNING id`,
-        values,
-      );
-
-      const row = insertResult.rows[0];
-      if (!row) {
-        await client.query("ROLLBACK");
-        return null;
-      }
-
+    if (useTransaction) {
       await client.query(
         `INSERT INTO production_tag (production, tag, created_by, updated_by, created_at, updated_at)
          SELECT $1, t, $2, $2, $3, $3
@@ -94,75 +117,6 @@ export async function createProduction(
          ON CONFLICT DO NOTHING`,
         [row.id, admin, current_time, tagIds],
       );
-
-      await client.query("COMMIT");
-      return await getProductionById(server, row.id);
-    } catch (err) {
-      await client.query("ROLLBACK");
-      server.log.error(err);
-      throw err;
-    } finally {
-      client.release();
-    }
-  }
-
-  const fields: string[] = [];
-  const placeholders: string[] = [];
-  const values: unknown[] = [];
-  let i = 1;
-
-  const addField = (column: string, value: unknown) => {
-    fields.push(column);
-    placeholders.push(`$${i++}`);
-    values.push(value);
-  };
-
-  for (const column of RequiredCreateColumns) {
-    addField(column, getFieldValue(body, column));
-  }
-  for (const column of NullableCreateColumns) {
-    addField(column, getNullableFieldValue(body, column));
-  }
-
-  // Metadata
-  fields.push("created_by", "updated_by", "created_at", "updated_at");
-  placeholders.push(`$${i++}`, `$${i++}`, `$${i++}`, `$${i++}`);
-  values.push(admin, admin, current_time, current_time);
-
-  const client = await server.pg.connect();
-
-  try {
-    await client.query("BEGIN");
-
-    // Insert production within transaction
-    const insertResult = await client.query<Omit<ProductionWithBackwardsRefs, "events" | "tags" | "blogposts">>(
-      `INSERT INTO production (${fields.join(", ")})
-       VALUES (${placeholders.join(", ")})
-       RETURNING 
-         id,
-         old_id,
-         finalized,
-         supertitle,
-         title,
-         artist,
-         tagline,
-         teaser,
-         description,
-         description_extra,
-         description_2,
-         video_1,
-         video_2,
-         quote,
-         quote_source,
-         programme,
-         info`,
-      values,
-    );
-
-    const row = insertResult.rows[0];
-    if (!row) {
-      await client.query("ROLLBACK");
-      return null;
     }
 
     await client.query("COMMIT");
@@ -170,6 +124,9 @@ export async function createProduction(
   } catch (err) {
     await client.query("ROLLBACK");
     server.log.error(err);
+    if (useTransaction) {
+      throw err;
+    }
     throw new HttpError(HttpServerError.InternalServerError, "Internal server error");
   } finally {
     client.release();

@@ -209,34 +209,66 @@
               {{ t("cms.actions.bulkEditTagsModeBody", { count: secondaryTagBulkModeCount }) }}
             </p>
 
-            <div class="mt-3 text-sm">
-              <div v-if="secondaryTagBulkModeTagsPreview">
-                <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewTags') }}</div>
-                <div class="ml-2 mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeTagsPreview }}</div>
-              </div>
+            <div class="mt-4 grid gap-4 md:grid-cols-2">
+              <button
+                type="button"
+                class="cms-choice-card"
+                :disabled="secondaryTagBulkModeLoading"
+                @click="confirmSecondaryTagBulkReplace"
+              >
+                <div class="cms-choice-card-header">
+                  <div>
+                    <div class="font-semibold text-ink-primary">
+                      {{ t("cms.actions.bulkEditTagsModeReplace") }}
+                    </div>
+                    <div class="mt-1 text-sm text-ink-secondary">
+                      {{ t("cms.actions.bulkEditTagsModeReplaceDescription") }}
+                    </div>
+                  </div>
+                  <span class="cms-choice-card-badge">1</span>
+                </div>
 
-              <div v-if="secondaryTagBulkModeAddedPreview || secondaryTagBulkModeRemovedPreview" class="mt-2">
-                <div v-if="secondaryTagBulkModeAddedPreview">
-                  <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewAdd') }}</div>
-                  <div class="ml-2 mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeAddedPreview }}</div>
+                <div v-if="secondaryTagBulkModeTagsPreview" class="mt-3 text-sm">
+                  <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewTags') }}</div>
+                  <div class="mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeTagsPreview }}</div>
                 </div>
-                <div v-if="secondaryTagBulkModeRemovedPreview" class="mt-1">
-                  <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewRemove') }}</div>
-                  <div class="ml-2 mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeRemovedPreview }}</div>
+              </button>
+
+              <button
+                type="button"
+                class="cms-choice-card"
+                :disabled="secondaryTagBulkModeLoading"
+                @click="confirmSecondaryTagBulkDiff"
+              >
+                <div class="cms-choice-card-header">
+                  <div>
+                    <div class="font-semibold text-ink-primary">
+                      {{ t("cms.actions.bulkEditTagsModeDiff") }}
+                    </div>
+                    <div class="mt-1 text-sm text-ink-secondary">
+                      {{ t("cms.actions.bulkEditTagsModeDiffDescription") }}
+                    </div>
+                  </div>
+                  <span class="cms-choice-card-badge">2</span>
                 </div>
-              </div>
+
+                <div class="mt-3 space-y-2 text-sm">
+                  <div v-if="secondaryTagBulkModeAddedPreview">
+                    <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewAdd') }}</div>
+                    <div class="mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeAddedPreview }}</div>
+                  </div>
+                  <div v-if="secondaryTagBulkModeRemovedPreview">
+                    <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewRemove') }}</div>
+                    <div class="mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeRemovedPreview }}</div>
+                  </div>
+                </div>
+              </button>
             </div>
           </div>
 
           <footer class="cms-modal-footer">
             <button type="button" class="cms-side-close" :disabled="secondaryTagBulkModeLoading" @click="closeSecondaryTagBulkMode">
               {{ t("general.cancel") }}
-            </button>
-            <button type="button" class="cms-side-close" :disabled="secondaryTagBulkModeLoading" @click="confirmSecondaryTagBulkReplace">
-              {{ t("cms.actions.bulkEditTagsModeReplace") }}
-            </button>
-            <button type="button" class="cms-side-save" :disabled="secondaryTagBulkModeLoading" @click="confirmSecondaryTagBulkDiff">
-              {{ t("cms.actions.bulkEditTagsModeDiff") }}
             </button>
           </footer>
         </section>
@@ -744,33 +776,35 @@ async function applySecondaryTagBulkEdit(mode: "replace" | "diff"): Promise<void
   saveError.value = null;
 
   try {
-    for (const targetRow of targetRows) {
-      const currentTagIds = extractProductionTagIds(targetRow.source);
-      const existingGenreTagIds = currentTagIds.filter((tagId) => {
-        const tag = tagsData.value.find((item) => item.id === tagId);
-        return tag ? genreTypeIds.has(Number(tag.tag_type)) : false;
-      });
+    await Promise.all(
+      targetRows.map(async (targetRow) => {
+        const currentTagIds = extractProductionTagIds(targetRow.source);
+        const existingGenreTagIds = currentTagIds.filter((tagId) => {
+          const tag = tagsData.value.find((item) => item.id === tagId);
+          return tag ? genreTypeIds.has(Number(tag.tag_type)) : false;
+        });
 
-      const existingAdditionalTagIds = currentTagIds.filter((tagId) => {
-        const tag = tagsData.value.find((item) => item.id === tagId);
-        return tag ? !genreTypeIds.has(Number(tag.tag_type)) : false;
-      });
+        const existingAdditionalTagIds = currentTagIds.filter((tagId) => {
+          const tag = tagsData.value.find((item) => item.id === tagId);
+          return tag ? !genreTypeIds.has(Number(tag.tag_type)) : false;
+        });
 
-      const nextAdditionalTagIds =
-        mode === "replace"
-          ? desiredAdditionalTagIds
-          : Array.from(
-            new Set(
-              existingAdditionalTagIds
-                .filter((tagId) => !removedTagIds.includes(tagId))
-                .concat(addedTagIds),
-            ),
-          );
+        const nextAdditionalTagIds =
+          mode === "replace"
+            ? desiredAdditionalTagIds
+            : Array.from(
+              new Set(
+                existingAdditionalTagIds
+                  .filter((tagId) => !removedTagIds.includes(tagId))
+                  .concat(addedTagIds),
+              ),
+            );
 
-      await updateProduction(targetRow.id, {
-        tags: [...existingGenreTagIds, ...nextAdditionalTagIds],
-      });
-    }
+        await updateProduction(targetRow.id, {
+          tags: [...existingGenreTagIds, ...nextAdditionalTagIds],
+        });
+      }),
+    );
 
     await loadCmsData();
     closeSecondaryTagBulkMode();
@@ -1644,5 +1678,52 @@ img.cms-media-preview-large {
 iframe.cms-media-preview-large {
   height: 100%;
   aspect-ratio: 16 / 9;
+}
+
+.cms-choice-card {
+  border: 1px solid var(--surface-3);
+  border-radius: 0.75rem;
+  background: var(--surface-0);
+  padding: 1rem;
+  text-align: left;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease;
+}
+
+.cms-choice-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cms-choice-card-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  padding: 0 0.5rem;
+  background: var(--surface-2);
+  color: var(--ink-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.cms-choice-card:hover:not(:disabled) {
+  border-color: var(--accent-outline);
+  background: var(--surface-1);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.08);
+}
+
+.cms-choice-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 </style>
