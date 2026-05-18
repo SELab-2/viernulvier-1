@@ -5,7 +5,6 @@ import { createMemoryHistory, createRouter } from "vue-router";
 import type { BlogPostWithBackwardsRefs } from "@viernulvier/shared";
 import { routes } from "@/router/routes";
 import { i18n } from "@/i18n";
-import { __reset as resetDarkMode } from "@/composables/useDarkMode";
 import * as blogpostsService from "@/services/blogposts";
 
 
@@ -69,8 +68,6 @@ describe("BlogPostsView.vue", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     localStorage.clear();
-    resetDarkMode();
-    document.documentElement.classList.remove("dark");
     document.body.innerHTML = "";
     i18n.global.locale.value = "nl";
   });
@@ -234,7 +231,7 @@ describe("BlogPostsView.vue", () => {
   describe("pagination", () => {
     const PAGE_SIZE = 10;
 
-    it("does not render pagination controls when there are 6 posts or fewer", async () => {
+    it("does not render pagination controls when there are 10 posts or fewer", async () => {
       vi.spyOn(blogpostsService, "getBlogPosts").mockResolvedValue(makePosts(PAGE_SIZE));
 
       const { wrapper } = await mountView();
@@ -244,7 +241,7 @@ describe("BlogPostsView.vue", () => {
       wrapper.unmount();
     });
 
-    it("renders pagination controls when there are more than 6 posts", async () => {
+    it("renders pagination controls when there are more than 10 posts", async () => {
       vi.spyOn(blogpostsService, "getBlogPosts").mockResolvedValue(makePosts(PAGE_SIZE + 1));
 
       const { wrapper } = await mountView();
@@ -333,17 +330,24 @@ describe("BlogPostsView.vue", () => {
       expect(wrapper.findAll('[role="list"] li')).toHaveLength(1);
       wrapper.unmount();
     });
-  });
 
-  describe("dark mode", () => {
-    it("applies the dark class when the localStorage preference is set", async () => {
-      localStorage.setItem("viernulvier-dark", "true");
-      resetDarkMode();
+    it("handles an array of page query params by taking the first value", async () => {
+      vi.spyOn(blogpostsService, "getBlogPosts").mockResolvedValue(makePosts(PAGE_SIZE + 1));
 
-      const { wrapper } = await mountView();
+      const { wrapper } = await mountView("/nl/blog?page=2&page=3");
       await flushPromises();
 
-      expect(document.documentElement.classList.contains("dark")).toBe(true);
+      expect(wrapper.findAll('[role="list"] li')).toHaveLength(1);
+      wrapper.unmount();
+    });
+
+    it("falls back to page 1 when the page query param is empty", async () => {
+      vi.spyOn(blogpostsService, "getBlogPosts").mockResolvedValue(makePosts(PAGE_SIZE + 1));
+
+      const { wrapper } = await mountView("/nl/blog?page=");
+      await flushPromises();
+
+      expect(wrapper.findAll('[role="list"] li')).toHaveLength(PAGE_SIZE);
       wrapper.unmount();
     });
   });

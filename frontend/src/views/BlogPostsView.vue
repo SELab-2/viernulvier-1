@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-v-html -- All v-html bindings in this file render strings produced by parseAndSanitizeContent, which routes HTML through DOMPurify. -->
 <template>
   <div class="flex min-h-screen flex-col bg-surface-0">
     <AppNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
@@ -72,7 +73,7 @@
               <h2
                 class="mt-1 font-serif text-xl font-semibold leading-snug tracking-tight text-ink-primary md:text-2xl"
               >
-                {{ localizeOrEmpty(post.title, currentLang) }}
+                {{ localizeWithFallback(post.title, (map) => localizeOrEmpty(map ?? {}, currentLang)) }}
               </h2>
 
               <div
@@ -80,8 +81,8 @@
                 v-html="getPreview(post.content)"
               />
 
-              <div class="mt-4 flex w-fit items-center gap-2 border-b border-ink-primary pb-1">
-                <span class="text-[10px] font-bold uppercase tracking-widest text-ink-primary">
+              <div class="mt-4 flex w-fit items-center gap-2 border-b border-ink-primary pb-1 text-ink-primary">
+                <span class="text-[10px] font-bold uppercase tracking-widest">
                   {{ t("blogPostsPage.readMore") }}
                 </span>
                 <svg
@@ -107,7 +108,7 @@
           v-if="totalPages > 1"
           class="mt-10 flex items-center justify-between border-t border-surface-3 pt-8"
           role="group"
-          aria-label="Paginering"
+          :aria-label="t('blogPostsPage.pagination')"
         >
           <button
             type="button"
@@ -151,7 +152,7 @@ import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
 import { RouteNames } from "@/router/routeNames";
 import { getBlogPosts } from "@/services/blogposts";
-import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
+import { localizeOrEmpty, localizeWithFallback, type LanguageMap } from "@/utils/language-utils";
 import { parseAndSanitizeMd } from "@/utils/parsers";
 import { formatShortDate } from "@/utils/date";
 
@@ -180,7 +181,8 @@ const posts = computed(() =>
 );
 
 const currentPage = computed(() => {
-  const p = parseInt(route.query.page as string);
+  const pageQuery = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
+  const p = parseInt(pageQuery as string, 10);
   return isNaN(p) || p < 1 ? 1 : p;
 });
 
@@ -202,7 +204,7 @@ watch(totalPages, (total) => {
 
 
 function getPreview(content: LanguageMap): string {
-  const raw = localizeOrEmpty(content, currentLang.value);
+  const raw = localizeWithFallback(content, (map) => localizeOrEmpty(map ?? {}, currentLang.value));
   return parseAndSanitizeMd(raw);
 }
 

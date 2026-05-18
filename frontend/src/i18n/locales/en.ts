@@ -368,6 +368,7 @@ export default {
     readMore: "Read more",
     previous: "Previous",
     next: "Next",
+    pagination: "Pagination",
   },
   blogpost: {
     loading: "Loading blogpost",
