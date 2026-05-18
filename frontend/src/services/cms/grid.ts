@@ -81,6 +81,8 @@ export function buildProductionGridRow(
     tags: additionalLabels.join(", ") || "-",
     descriptionOne: localize(production.description) || "",
     descriptionTwo: localize(production.description_2) || "",
+    imageMedia: "",
+    imageMediaUrls: [],
     media: localize(production.video_1) || localize(production.video_2) || "",
     events: eventIds,
   };
@@ -122,6 +124,8 @@ export function applyUpdatedProductionToRow(
   row.teaser = localize(updated.teaser) || "";
   row.descriptionOne = localize(updated.description) || "";
   row.descriptionTwo = localize(updated.description_2) || "";
+  row.imageMedia = "";
+  row.imageMediaUrls = [];
   row.media = localize(updated.video_1) || localize(updated.video_2) || "";
 }
 
