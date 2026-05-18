@@ -59,7 +59,7 @@
         :loading="isLoading"
         :row-selection="rowSelection"
         :selection-column-def="selectionColumnDef"
-        :suppress-row-click-selection="false"
+        :suppress-row-click-selection="true"
         :column-hover-highlight="true"
         :enable-cell-text-selection="true"
         :ensure-dom-order="true"

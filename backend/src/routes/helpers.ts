@@ -1,10 +1,24 @@
 import { AdminSchema } from "@viernulvier/shared/index.js";
 import { primaryKey } from "@viernulvier/shared/types/helpers.js";
-import {
-  type FastifyInstance,
-  type FastifyRequest,
-  type FastifyReply,
+import type {
+  FastifyInstance,
+  FastifyRequest,
+  FastifyReply,
+  RawServerDefault,
+  RawRequestDefaultExpression,
+  RawReplyDefaultExpression,
+  FastifyBaseLogger,
 } from "fastify";
+import type { ZodTypeProvider } from "fastify-type-provider-zod";
+
+export type TypedFastifyInstance = FastifyInstance<
+  RawServerDefault,
+  RawRequestDefaultExpression<RawServerDefault>,
+  RawReplyDefaultExpression<RawServerDefault>,
+  FastifyBaseLogger,
+  ZodTypeProvider
+>;
+
 import type { QueryResult } from "pg";
 import { z } from "zod";
 
@@ -106,7 +120,7 @@ export class HttpError extends Error {
 
 export class ValidationError extends HttpError {
   constructor(public details: z.core.$ZodIssue[]) {
-    super(HttpClientError.BadRequest, "Invalid request data");
+    super(HttpClientError.BadRequest, "Bad Request");
     this.name = "ValidationError";
   }
 }
@@ -118,16 +132,22 @@ export const enum ParseContext {
 
 type ParseContextType = (typeof ParseContext)[keyof typeof ParseContext];
 
-function createParseError(context: ParseContextType, error?: z.ZodError): HttpError {
+function createParseError(
+  context: ParseContextType,
+  error?: z.ZodError,
+): HttpError {
   if (context === ParseContext.Request && error) {
     return new ValidationError(error.issues);
   }
-  return new HttpError(HttpServerError.InternalServerError, "Internal server error");
+  return new HttpError(
+    HttpServerError.InternalServerError,
+    "Internal server error",
+  );
 }
 /**
  * Uses a zod schema to validate the params and returns them as an object.
  *
- * Example: `const { id } = parseParams(request, z.object({ id: stringToInt }))`
+ * Example: `const { id } = parseParams(request, z.object({ id: serial() }))`
  *
  * Remember that all params are strings and thus must be converted to the right data type
  * with a codec. See https://zod.dev/codecs
@@ -293,12 +313,18 @@ export function replyHandler<Z extends z.ZodType>(
   return async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const result = await handler(server, request, reply);
-      if (result == NO_CONTENT) return await reply.status(HttpSuccess.NoContent).send();
+      if (result == NO_CONTENT)
+        return await reply.status(HttpSuccess.NoContent).send();
       if (!result) throw new HttpError(HttpClientError.NotFound, "Not Found");
-      return await reply.status(HttpSuccess.OK).send(result);
+
+      return await reply
+        .status(reply?.statusCode ?? HttpSuccess.OK)
+        .send(result);
     } catch (err) {
       if (err instanceof ValidationError) {
-        return await reply.status(err.status).send({ error: err.message, details: err.details });
+        return await reply
+          .status(err.status)
+          .send({ error: err.message, details: err.details });
       }
       if (err instanceof HttpError) {
         const payload =

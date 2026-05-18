@@ -27,7 +27,7 @@ test("fetchProductions uses fallback message when the first issue omits message"
     (err: unknown) =>
       err instanceof HttpError &&
       err.status === HttpClientError.BadRequest &&
-      err.message === "Invalid request data" &&
+      err.message === "Bad Request" &&
       err.code === undefined,
   );
 });

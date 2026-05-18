@@ -1,10 +1,10 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Blog } from "@viernulvier/shared/index.js";
-import { BlogSchema, languageMap, stringToInt } from "@viernulvier/shared/index.js";
+import { BlogSchema, languageMap, serial } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, buildQuery, parseSchema } from "@/routes/helpers.js";
 import { z } from "zod";
 
-const ReplaceBlogBodySchema = BlogSchema.omit({ id: true });
+export const ReplaceBlogBodySchema = BlogSchema.omit({ id: true });
 
 const replaceBlogQuery = (server: FastifyInstance) =>
   buildQuery(
@@ -34,7 +34,7 @@ export async function replaceBlog(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Blog | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const body = parseSchema(server, ReplaceBlogBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
 

@@ -5,7 +5,7 @@ import { languageMap } from "@viernulvier/shared/types/helpers.js";
 import { getMetadata, parseSchema, buildQuery } from "@/routes/helpers.js";
 import { z } from "zod";
 
-const CreateTagTypeBodySchema = TagTypeSchema.pick({
+export const CreateTagTypeBodySchema = TagTypeSchema.pick({
   name: true,
 });
 

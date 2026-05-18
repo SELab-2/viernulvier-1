@@ -10,7 +10,7 @@
     {
       "label": "docker:dev:up",
       "type": "shell",
-      "command": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
+      "command": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build",
       "isBackground": false,
       "presentation": {
         "echo": true,
@@ -43,12 +43,14 @@
       }
     },
     {
+      "label": "logs:all",
+      "dependsOn": ["logs:backend", "logs:frontend"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    },
+    {
       "label": "dev:all",
-      "dependsOn": [
-        "docker:dev:up",
-        "logs:backend",
-        "logs:frontend"
-      ],
+      "dependsOn": ["docker:dev:up", "logs:all"],
       "dependsOrder": "sequence",
       "problemMatcher": [],
       "group": {

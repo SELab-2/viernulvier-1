@@ -1,10 +1,10 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Blog } from "@viernulvier/shared/index.js";
-import { BlogSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { BlogSchema, serial } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, parseSchema, HttpError, HttpClientError, ParseContext } from "@/routes/helpers.js";
 import { z } from "zod";
 
-const EditBlogBodySchema = BlogSchema.omit({ id: true }).partial();
+export const EditBlogBodySchema = BlogSchema.omit({ id: true }).partial();
 
 /**
  * Updates an existing blog and returns the updated record.
@@ -17,7 +17,7 @@ export async function editBlog(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Blog | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const body = parseSchema(server, EditBlogBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
 

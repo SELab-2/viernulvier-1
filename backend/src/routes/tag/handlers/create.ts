@@ -5,7 +5,7 @@ import { getMetadata, parseSchema, HttpError, HttpServerError } from "@/routes/h
 import { getTagById } from "./fetch.js";
 import z from "zod";
 
-const CreateTagBodySchema = TagSchema.omit({ id: true, productions: true }).extend({
+export const CreateTagBodySchema = TagSchema.omit({ id: true, productions: true }).extend({
   productions: z.array(z.int()).optional(),
 });
 

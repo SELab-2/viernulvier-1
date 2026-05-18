@@ -1,5 +1,5 @@
 import type { Admin } from "@viernulvier/shared/index.js";
-import { AdminSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { AdminSchema, serial } from "@viernulvier/shared/index.js";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { buildQuery, getMetadata, HttpClientError, HttpError, parseParams } from "@/routes/helpers.js";
 import z from "zod";
@@ -25,7 +25,8 @@ export async function deleteAdmin(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Admin | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const { admin } = getMetadata(request);
 
   if (id == admin) {

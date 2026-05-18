@@ -123,7 +123,7 @@ describe("Event Price Create Route", () => {
       });
 
       expect(response.statusCode).toBe(400);
-      expect(response.json()).toMatchObject({ error: "Invalid request data" });
+      expect(response.json()).toMatchObject({ error: "Bad Request" });
     });
 
     test("returns 400 when required fields are missing", async () => {
@@ -137,7 +137,7 @@ describe("Event Price Create Route", () => {
       });
 
       expect(response.statusCode).toBe(400);
-      expect(response.json()).toMatchObject({ error: "Invalid request data" });
+      expect(response.json()).toMatchObject({ error: "Bad Request" });
     });
 
     test("requires authentication", async () => {

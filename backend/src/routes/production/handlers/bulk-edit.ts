@@ -6,7 +6,7 @@ import { getProductionsByIds } from "./fetch.js";
 import { PartialProductionBodySchema, ProductionIdSchema } from "./body-schema.js";
 import { getFieldValue, getNullableFieldValue, hasOwn } from "./field-utils.js";
 
-const BulkEditProductionsBodySchema = z.object({
+export const BulkEditProductionsBodySchema = z.object({
   ids: z.array(ProductionIdSchema).min(1),
   data: PartialProductionBodySchema,
 });
@@ -57,7 +57,11 @@ export async function bulkEditProductions(
 
   const addField = (column: string, value: unknown) => {
     if (value === undefined) return;
-    fields.push(`${column} = $${i++}`);
+
+    fields.push(
+      `${column} = CASE WHEN $${i}::jsonb IS NULL THEN NULL ELSE COALESCE(${column}, '{}'::jsonb) || $${i}::jsonb END`,
+    );
+    i += 1;
     values.push(value);
   };
 

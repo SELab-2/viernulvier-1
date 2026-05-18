@@ -11,6 +11,17 @@ import {
   deleteProduction,
   linkTagToProduction,
 } from "./handlers/index.js";
+import {
+  bulkEditProductionsDocs,
+  fetchProductionDocs,
+  fetchProductionsDocs,
+  fetchProductionWithMetaDocs,
+  createProductionDocs,
+  editProductionDocs,
+  deleteProductionDocs,
+  linkTagToProductionDocs,
+  replaceProductionDocs,
+} from "./docs/index.js";
 
 /**
  * Registers production routes on the Fastify instance.
@@ -29,15 +40,51 @@ import {
  * @param server - The Fastify instance to register routes on.
  */
 export default function productionRoutes(server: FastifyInstance) {
-  const protect = { preHandler: [server.authorize()] };
+  const protect = { preValidation: [server.authorize()] };
 
-  server.get("/api/v1/production", replyHandler(server, fetchProductions));
-  server.get("/api/v1/production/:id", replyHandler(server, fetchProduction));
-  server.get("/api/v1/production/:id/meta", protect, replyHandler(server, fetchProductionWithMeta));
-  server.post("/api/v1/production", protect, replyHandler(server, createProduction));
-  server.post("/api/v1/production/:id/tags", protect, replyHandler(server, linkTagToProduction));
-  server.put("/api/v1/production/:id", protect, replyHandler(server, replaceProduction));
-  server.patch("/api/v1/production/:id", protect, replyHandler(server, editProduction));
-  server.patch("/api/v1/production/bulk", protect, replyHandler(server, bulkEditProductions));
-  server.delete("/api/v1/production/:id", protect, replyHandler(server, deleteProduction));
+  server.get(
+    "/api/v1/production",
+    { schema: fetchProductionsDocs },
+    replyHandler(server, fetchProductions),
+  );
+  server.get(
+    "/api/v1/production/:id",
+    { schema: fetchProductionDocs },
+    replyHandler(server, fetchProduction),
+  );
+  server.get(
+    "/api/v1/production/:id/meta",
+    { ...protect, schema: fetchProductionWithMetaDocs },
+    replyHandler(server, fetchProductionWithMeta),
+  );
+  server.post(
+    "/api/v1/production",
+    { ...protect, schema: createProductionDocs },
+    replyHandler(server, createProduction),
+  );
+  server.post(
+    "/api/v1/production/:id/tags",
+    { ...protect, schema: linkTagToProductionDocs },
+    replyHandler(server, linkTagToProduction),
+  );
+  server.put(
+    "/api/v1/production/:id",
+    { ...protect, schema: replaceProductionDocs },
+    replyHandler(server, replaceProduction),
+  );
+  server.patch(
+    "/api/v1/production/:id",
+    { ...protect, schema: editProductionDocs },
+    replyHandler(server, editProduction),
+  );
+  server.patch(
+    "/api/v1/production/bulk",
+    { ...protect, schema: bulkEditProductionsDocs },
+    replyHandler(server, bulkEditProductions),
+  );
+  server.delete(
+    "/api/v1/production/:id",
+    { ...protect, schema: deleteProductionDocs },
+    replyHandler(server, deleteProduction),
+  );
 }

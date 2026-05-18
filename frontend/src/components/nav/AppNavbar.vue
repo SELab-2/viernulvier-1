@@ -9,6 +9,9 @@
         <NavLink :to="{ name: RouteNames.PRODUCTIONS, params: { lang: currentLang } }" class="nav-link">
           {{ t("nav.productions") }}
         </NavLink>
+        <NavLink :to="{ name: RouteNames.BLOG_POSTS, params: { lang: currentLang } }" class="nav-link">
+          {{ t("nav.blog") }}
+        </NavLink>
       </div>
     </div>
 
@@ -27,6 +30,9 @@
     </NavLink>
     <NavLink :to="{ name: RouteNames.PRODUCTIONS, params: { lang: currentLang } }" class="drawer-link" @click="menuOpen = false">
       {{ t("nav.productions") }}
+    </NavLink>
+    <NavLink :to="{ name: RouteNames.BLOG_POSTS, params: { lang: currentLang } }" class="drawer-link" @click="menuOpen = false">
+      {{ t("nav.blog") }}
     </NavLink>
     <div class="drawer-divider" />
     <NavControls :is-dark="isDark" @toggle-dark="$emit('toggle-dark')" />

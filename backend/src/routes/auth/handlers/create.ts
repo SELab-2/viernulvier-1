@@ -5,7 +5,7 @@ import { getMetadata, parseSchema, buildQuery } from "@/routes/helpers.js";
 import { z } from "zod";
 import { hashPassword, PasswordBase } from "./hash.js";
 
-const CreateAdminBodySchema = AdminSchema.pick({ username: true, super: true }).extend(PasswordBase);
+export const CreateAdminBodySchema = AdminSchema.pick({ username: true, super: true }).extend(PasswordBase);
 
 const insertAdmin = (server: FastifyInstance) =>
   buildQuery(
