@@ -53,7 +53,7 @@ async function mountSection(lang: "nl" | "fr" | "en" = "nl") {
 
 describe("FeaturedBlogSection.vue", () => {
   beforeEach(() => {
-    vi.spyOn(blogpostsService, "getBlogPost").mockResolvedValue(makePost());
+    vi.spyOn(blogpostsService, "getBlogPosts").mockResolvedValue([makePost()]);
   });
 
   afterEach(() => {
@@ -64,7 +64,7 @@ describe("FeaturedBlogSection.vue", () => {
 
   describe("loading state", () => {
     it("shows the skeleton while the post is loading", async () => {
-      vi.spyOn(blogpostsService, "getBlogPost").mockReturnValue(new Promise(() => {}));
+      vi.spyOn(blogpostsService, "getBlogPosts").mockReturnValue(new Promise(() => {}));
 
       const { wrapper } = await mountSection();
 
@@ -74,7 +74,7 @@ describe("FeaturedBlogSection.vue", () => {
     });
 
     it("shows the eyebrow text immediately, even while loading", async () => {
-      vi.spyOn(blogpostsService, "getBlogPost").mockReturnValue(new Promise(() => {}));
+      vi.spyOn(blogpostsService, "getBlogPosts").mockReturnValue(new Promise(() => {}));
 
       const { wrapper } = await mountSection();
 
@@ -93,7 +93,7 @@ describe("FeaturedBlogSection.vue", () => {
 
   describe("error state", () => {
     it("renders nothing (no article, no skeleton) when the fetch fails", async () => {
-      vi.spyOn(blogpostsService, "getBlogPost").mockRejectedValue(new ApiError(404, "Not found"));
+      vi.spyOn(blogpostsService, "getBlogPosts").mockRejectedValue(new ApiError(404, "Not found"));
 
       const { wrapper } = await mountSection();
       await flushPromises();
@@ -104,7 +104,7 @@ describe("FeaturedBlogSection.vue", () => {
     });
 
     it("still shows the eyebrow text when the fetch fails", async () => {
-      vi.spyOn(blogpostsService, "getBlogPost").mockRejectedValue(new Error("network"));
+      vi.spyOn(blogpostsService, "getBlogPosts").mockRejectedValue(new Error("network"));
 
       const { wrapper } = await mountSection();
       await flushPromises();
@@ -167,8 +167,8 @@ describe("FeaturedBlogSection.vue", () => {
     });
 
     it("omits the date when published_at is absent", async () => {
-      vi.spyOn(blogpostsService, "getBlogPost").mockResolvedValue(
-        makePost({ published_at: undefined }),
+      vi.spyOn(blogpostsService, "getBlogPosts").mockResolvedValue(
+        [makePost({ published_at: undefined })],
       );
 
       const { wrapper } = await mountSection();
@@ -179,23 +179,25 @@ describe("FeaturedBlogSection.vue", () => {
       wrapper.unmount();
     });
 
-    it("always fetches the configured FEATURED_POST_ID", async () => {
-      const spy = vi.spyOn(blogpostsService, "getBlogPost");
+    it("fetches all posts and picks the most recent one", async () => {
+      const older = makePost({ id: 1, published_at: new Date("2023-01-01") });
+      const newer = makePost({ id: 2, published_at: new Date("2024-06-01"), title: { nl: "Nieuwste post" } });
+      vi.spyOn(blogpostsService, "getBlogPosts").mockResolvedValue([older, newer]);
 
       const { wrapper } = await mountSection();
       await flushPromises();
 
-      expect(spy).toHaveBeenCalledWith(FEATURED_POST_ID);
+      expect(wrapper.find("h2").text()).toBe("Nieuwste post");
       wrapper.unmount();
     });
   });
 
   describe("lead image", () => {
     it("renders a figure when the content contains a markdown image", async () => {
-      vi.spyOn(blogpostsService, "getBlogPost").mockResolvedValue(
-        makePost({
+      vi.spyOn(blogpostsService, "getBlogPosts").mockResolvedValue(
+        [makePost({
           content: { nl: "Intro.\n\n![Een foto](https://example.com/foto.jpg)\n\nTekst." },
-        }),
+        })],
       );
 
       const { wrapper } = await mountSection();
@@ -207,10 +209,10 @@ describe("FeaturedBlogSection.vue", () => {
     });
 
     it("renders a figcaption with the alt text", async () => {
-      vi.spyOn(blogpostsService, "getBlogPost").mockResolvedValue(
-        makePost({
+      vi.spyOn(blogpostsService, "getBlogPosts").mockResolvedValue(
+        [makePost({
           content: { nl: "![Beschrijving](https://example.com/foto.jpg)" },
-        }),
+        })],
       );
 
       const { wrapper } = await mountSection();
@@ -221,10 +223,10 @@ describe("FeaturedBlogSection.vue", () => {
     });
 
     it("omits figcaption when the alt text is empty", async () => {
-      vi.spyOn(blogpostsService, "getBlogPost").mockResolvedValue(
-        makePost({
+      vi.spyOn(blogpostsService, "getBlogPosts").mockResolvedValue(
+        [makePost({
           content: { nl: "![](https://example.com/foto.jpg)" },
-        }),
+        })],
       );
 
       const { wrapper } = await mountSection();
@@ -235,8 +237,8 @@ describe("FeaturedBlogSection.vue", () => {
     });
 
     it("omits the figure when the content has no image", async () => {
-      vi.spyOn(blogpostsService, "getBlogPost").mockResolvedValue(
-        makePost({ content: { nl: "Geen afbeelding hier." } }),
+      vi.spyOn(blogpostsService, "getBlogPosts").mockResolvedValue(
+        [makePost({ content: { nl: "Geen afbeelding hier." } })],
       );
 
       const { wrapper } = await mountSection();

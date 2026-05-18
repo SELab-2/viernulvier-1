@@ -123,7 +123,7 @@ import { RouteNames } from "@/router/routeNames";
 import type { BlogPostWithBackwardsRefs } from "@viernulvier/shared";
 import { localizeOrEmpty, localizeWithFallback } from "@/utils/language-utils";
 import { formatDate } from "@/utils/date";
-import { getBlogPost } from "@/services/blogposts";
+import { getBlogPosts } from "@/services/blogposts";
 import { extractFirstMdImage, parseFirstParagraphMd } from "@/utils/parsers";
 
 const { t, locale } = useI18n();
@@ -132,15 +132,19 @@ const currentLang = computed(
   () => i18n.global.locale.value as SupportedLang,
 );
 
-const FEATURED_POST_ID = 1;
-
 const post = ref<BlogPostWithBackwardsRefs | null>(null);
 const loading = ref(true);
 const error = ref(false);
 
 onMounted(async () => {
   try {
-    post.value = await getBlogPost(FEATURED_POST_ID);
+    const posts = await getBlogPosts();
+    const sorted = [...posts].sort((a, b) => {
+      const dateA = a.published_at ? new Date(a.published_at).getTime() : 0;
+      const dateB = b.published_at ? new Date(b.published_at).getTime() : 0;
+      return dateB - dateA;
+    });
+    post.value = sorted[0] ?? null;
   } catch {
     error.value = true;
   } finally {
@@ -184,6 +188,10 @@ const datelineText = computed(() => {
  */
 .article-lead :deep(p) {
   margin: 0;
+}
+
+.article-lead {
+  overflow: hidden;
 }
 
 .article-lead :deep(p)::first-letter {
