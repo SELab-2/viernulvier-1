@@ -18,7 +18,6 @@ import {
   createProductionDocs,
   editProductionDocs,
   deleteProductionDocs,
-  linkTagToProductionDocs,
   replaceProductionDocs,
 } from "./docs/index.js";
 
