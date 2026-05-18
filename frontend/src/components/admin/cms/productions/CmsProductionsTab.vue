@@ -900,6 +900,7 @@ function closeBulkEditConfirm(): void {
 }
 
 async function confirmBulkEdit(): Promise<void> {
+  console.log(pendingBulkEditAction);
   if (!pendingBulkEditAction.value) {
     closeBulkEditConfirm();
     return;
@@ -1063,7 +1064,7 @@ async function persistBulkProductionPatch(
         applyUpdatedProductionToRow(row, updated, localizeValue);
       }
     }
-    gridApi.value?.applyTransaction({ update: targetRows });
+    gridApi.value?.applyTransactionAsync({ update: targetRows });
   } catch (error) {
     saveError.value =
       error instanceof Error
