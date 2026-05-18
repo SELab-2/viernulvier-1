@@ -325,7 +325,6 @@ import {
   createProduction,
   deleteProduction,
   extractProductionTagIds,
-  getProduction,
   getProductions,
   updateProduction,
 } from "@/services/productions";
@@ -337,6 +336,7 @@ import {
   buildEventGridRows,
   buildProductionGridRows,
   buildCmsTagGroups,
+  applyUpdatedProductionToRow,
   createProductionFields,
   buildEmptyCreateForm,
   fileToDataUrl,
@@ -1049,13 +1049,16 @@ async function persistBulkProductionPatch(
   patch: Record<string, unknown>,
 ): Promise<void> {
   try {
-    const updated = await updateProduction(row.id, patch as never);
-    try {
-      const refreshed = await getProduction(row.id);
-      applyUpdatedProductionToRow(row, refreshed, localizeValue);
-    } catch {
-      // Fallback for environments/tests where absolute API base URL is unavailable.
-      applyUpdatedProductionToRow(row, updated, localizeValue);
+    const updatedRows = await bulkUpdateProductions({
+      ids: targetRows.map((row) => row.id),
+      data: patch as never,
+    });
+
+    for (const row of targetRows) {
+      const updated = updatedRows.find((item) => item.id === row.id);
+      if (updated) {
+        applyUpdatedProductionToRow(row, updated, localizeValue);
+      }
     }
   } catch (error) {
     saveError.value =

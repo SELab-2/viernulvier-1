@@ -96,7 +96,7 @@ describe("useCmsProductionGrid", () => {
       const withoutParams = withoutLabels.columnDefs.value.find((c) => c.field === "genres")?.cellEditorParams as
         | (() => { values: string[] })
         | undefined;
-      expect(withoutParams?.().values).toEqual([00]);
+      expect(withoutParams?.().values).toEqual([0]);
     });
 
     it("formats primary tag ids with label and fallback values", () => {
@@ -194,12 +194,8 @@ describe("useCmsProductionGrid", () => {
     it("excludes the events action column and serializes tag arrays", () => {
       const exportDataAsCsv = vi.fn();
       const grid = useCmsProductionGrid({
-       
         isDark: ref(false),
-       
         t: (key) => key,
-        getPrimaryTagOptions: () => [{ id: 7, label: "Genre X" }],
-     ,
         currentLang: ref('nl'),
         getPrimaryTagOptions: () => [{ id: 7, label: "Genre A" }],
       });
@@ -223,14 +219,14 @@ describe("useCmsProductionGrid", () => {
         node: { data: { source: { tags: [] } } },
         value: 7,
       });
-      expect(serializedGenre).toBe("Genre X");
+      expect(serializedGenre).toBe("Genre A");
 
-      const serializedGenre = arg.processCellCallback({
+      const serializedGenreFallback = arg.processCellCallback({
         column: { getColId: () => "genres" },
         node: null,
         value: 7,
       });
-      expect(serializedGenre).toBe("Genre A");
+      expect(serializedGenreFallback).toBe("Genre A");
 
       const plainValue = arg.processCellCallback({
         column: { getColId: () => "title" },
