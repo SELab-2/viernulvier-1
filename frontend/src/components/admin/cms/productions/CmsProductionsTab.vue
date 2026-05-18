@@ -1531,6 +1531,9 @@ async function loadCmsData(): Promise<void> {
 defineExpose({
   __test: {
     rowData,
+    tagsData,
+    tagTypesData,
+    hallsData,
     selectedCount,
     gridApi,
     createForm,
@@ -1559,6 +1562,10 @@ defineExpose({
     selectedEventRows,
     localizeValue,
     setCurrentLanguageValue,
+    getProductionEditKey,
+    formatTagNames,
+    snapshotEventRows,
+    revertEventRow,
     resetCreateForm,
     resetCreateLinkedEventForm,
     openCreateModal,
