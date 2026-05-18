@@ -335,7 +335,7 @@ export async function scrapeAllHalls(
   for (let page = 1; page <= totalPages; page++) {
     const data = await fetchHallsPage(page, authToken);
     for (const hall of data.member) {
-      console.log(`Processing hall ${hall["@id"]} (${page}/${totalPages})`);
+      console.log(`Processing store-front hall ${hall["@id"]} (${page}/${totalPages})`);
       await ensureHallImported(hall, loginToken, authToken);
     }
   }
