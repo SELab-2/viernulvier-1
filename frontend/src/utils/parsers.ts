@@ -1,6 +1,8 @@
 import MarkdownIt from "markdown-it";
 import DOMPurify from "dompurify";
 
+const VIERNULLVIER_CMS_ORIGIN = "https://www.viernulvier.gent";
+
 function normalize(input: string): string {
   return input
     .replace(/\\r\\n/g, "\n")
@@ -54,6 +56,26 @@ function sanitizeHtml(input: string): string {
   });
 }
 
+/** After DOMPurify: root-relative `/cms_files/…` on `<img>` becomes absolute (template parse handles messy CMS markup). */
+function rewriteCmsFileImgSrc(html: string): string {
+  if (!html.includes("cms_files") || typeof document === "undefined") {
+    return html;
+  }
+  try {
+    const tpl = document.createElement("template");
+    tpl.innerHTML = html;
+    tpl.content.querySelectorAll("img[src]").forEach((img) => {
+      const src = img.getAttribute("src")?.trim();
+      if (src?.startsWith("/cms_files/")) {
+        img.setAttribute("src", `${VIERNULLVIER_CMS_ORIGIN}${src}`);
+      }
+    });
+    return tpl.innerHTML;
+  } catch {
+    return html;
+  }
+}
+
 export function parseAndSanitizeContent(
   input: string | null | undefined,
 ): string {
@@ -64,7 +86,7 @@ export function parseAndSanitizeContent(
   if (!normalized) return "";
 
   if (isHtml(normalized)) {
-    return sanitizeHtml(normalized);
+    return rewriteCmsFileImgSrc(sanitizeHtml(normalized));
   }
 
   return normalized;
@@ -89,5 +111,5 @@ export function parseAndSanitizeMd(input: string | null | undefined): string {
 
   const rawHtml = md.render(input);
 
-  return sanitizeHtml(rawHtml);
+  return rewriteCmsFileImgSrc(sanitizeHtml(rawHtml));
 }
