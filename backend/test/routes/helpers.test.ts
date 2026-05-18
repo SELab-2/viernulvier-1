@@ -215,7 +215,7 @@ describe(parseUser, () => {
   });
 
   test("Error", () => {
-    expect(() => parseUser(generateExampleRequest({ id: "not a number" }))).toThrow("Invalid request data");
+    expect(() => parseUser(generateExampleRequest({ id: "not a number" }))).toThrow("Bad Request");
   });
 });
 

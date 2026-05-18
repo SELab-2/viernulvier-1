@@ -33,7 +33,7 @@ beforeAll(async () => {
 beforeEach(async () => {
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     const isMeta = query.toLowerCase().includes("created_at") || query.toLowerCase().includes("updated_at");
-    
+
     const id = params?.[0] !== undefined ? Number(params[0]) : undefined;
 
     if (isMeta) {
@@ -121,7 +121,7 @@ describe("Fetch on auth route", () => {
       expect(response.statusCode).toBe(200);
       expect(AdminSchema.withMeta().parse(response.json())).toEqual(admin);
     });
-    
+
     test("GET /api/v1/auth/:id/meta — returns 404 when admin not found", async () => {
       const id = 123456;
 

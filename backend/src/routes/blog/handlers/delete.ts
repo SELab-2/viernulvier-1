@@ -1,5 +1,5 @@
 import type { Blog } from "@viernulvier/shared/index.js";
-import { BlogSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { BlogSchema, serial } from "@viernulvier/shared/index.js";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { parseParams, buildQuery } from "@/routes/helpers.js";
 import { z } from "zod";
@@ -24,7 +24,7 @@ export async function deleteBlog(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Blog | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const rows = await deleteBlogById(server)(id);
   return rows[0] ?? null;
 }

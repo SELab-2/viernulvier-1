@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { TagType, TagTypeWithMeta } from "@viernulvier/shared/index.js";
-import { TagTypeSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { TagTypeSchema, serial } from "@viernulvier/shared/index.js";
 import { parseParams, buildQuery } from "@/routes/helpers.js";
 import { z } from "zod";
 
@@ -40,7 +40,7 @@ async function fetchTagType(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<TagType | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const rows = await fetchTagTypeByIdQuery(server)(id);
   return rows[0] ?? null;
 }
@@ -56,7 +56,7 @@ async function fetchTagTypeWithMeta(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<TagTypeWithMeta | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const rows = await fetchTagTypeWithMetaByIdQuery(server)(id);
   return rows[0] ?? null;
 }

@@ -1,14 +1,20 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Admin } from "@viernulvier/shared/index.js";
-import { AdminSchema, stringToInt } from "@viernulvier/shared/index.js";
-import { getMetadata, parseParams, parseSchema, ParseContext, NO_CONTENT } from "@/routes/helpers.js";
+import { AdminSchema, serial } from "@viernulvier/shared/index.js";
+import {
+  getMetadata,
+  parseParams,
+  parseSchema,
+  ParseContext,
+  NO_CONTENT,
+} from "@/routes/helpers.js";
 import z from "zod";
 import { hashPassword, PasswordBase, zPassword } from "./hash.js";
 import { checkCredentials } from "./login.js";
 
-const EditAdminBodySchema = AdminSchema.pick({ username: true, super: true }).extend(PasswordBase).partial();
+export const EditAdminBodySchema = AdminSchema.pick({ username: true, super: true }).extend(PasswordBase).partial();
 
-const EditOwnPasswordSchema = z.object({
+export const EditOwnPasswordSchema = z.object({
   oldPassword: zPassword,
   newPassword: zPassword,
 });
@@ -24,7 +30,7 @@ export async function editAdmin(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Admin | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const body = parseSchema(server, EditAdminBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
 
@@ -56,7 +62,14 @@ export async function editAdmin(
     values,
   );
 
-  return parseSchema(server, z.array(AdminSchema), result.rows, ParseContext.Database)[0] ?? null;
+  return (
+    parseSchema(
+      server,
+      z.array(AdminSchema),
+      result.rows,
+      ParseContext.Database,
+    )[0] ?? null
+  );
 }
 
 /**
@@ -82,10 +95,10 @@ export async function editOwnPassword(
 
   // note: I won't update the updated by, since it doesn't change anything to the admin schema or any of the fields visible in the CMS.
 
-  await server.pg.query(
-    `UPDATE admin SET password = $1 WHERE id = $2`,
-    [hashedPassword, admin],
-  );
+  await server.pg.query(`UPDATE admin SET password = $1 WHERE id = $2`, [
+    hashedPassword,
+    admin,
+  ]);
 
   return NO_CONTENT;
 }

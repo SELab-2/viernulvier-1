@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Blog, BlogWithMeta } from "@viernulvier/shared/index.js";
-import { BlogSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { BlogSchema, serial } from "@viernulvier/shared/index.js";
 import { parseParams, buildQuery } from "@/routes/helpers.js";
 import z from "zod";
 
@@ -62,7 +62,7 @@ export async function fetchBlog(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Blog | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   return await getBlogById(server, id);
 }
 
@@ -77,7 +77,7 @@ export async function fetchBlogWithMeta(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<BlogWithMeta | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const rows = await fetchBlogWithMetaByIdQuery(server)(id);
   return rows[0] ?? null;
 }

@@ -1,10 +1,10 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { TagType } from "@viernulvier/shared/index.js";
-import { TagTypeSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { TagTypeSchema, serial } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, parseSchema, ParseContext } from "@/routes/helpers.js";
 import { z } from "zod";
 
-const EditTagTypeBodySchema = TagTypeSchema.pick({
+export const EditTagTypeBodySchema = TagTypeSchema.pick({
   name: true,
 }).partial();
 
@@ -19,7 +19,7 @@ export async function editTagType(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<TagType | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const body = parseSchema(server, EditTagTypeBodySchema, request.body);
 
   const { admin, current_time } = getMetadata(request);
