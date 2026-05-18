@@ -1,6 +1,10 @@
 # viernulvier-archive
 
-[![codecov](https://codecov.io/gh/SELab-2/viernulvier-1/graph/badge.svg?token=oL38uWkygX)](https://codecov.io/gh/SELab-2/viernulvier-1)
+[![codecov (overall)](https://codecov.io/gh/SELab-2/viernulvier-1/graph/badge.svg)](https://codecov.io/gh/SELab-2/viernulvier-1)
+
+[![frontend coverage](https://codecov.io/gh/SELab-2/viernulvier-1/graph/badge.svg?flag=frontend)](https://codecov.io/gh/SELab-2/viernulvier-1)
+
+[![backend coverage](https://codecov.io/gh/SELab-2/viernulvier-1/graph/badge.svg?flag=backend)](https://codecov.io/gh/SELab-2/viernulvier-1)
 
 The **viernulvier-archive** is the codebase for the archival website of [VIERNULVIER](https://viernulvier.gent) — the arts centre housed in the iconic De Vooruit building in Ghent, Belgium.
 

@@ -2,7 +2,7 @@ import z from "zod";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 
 import { buildQuery, parseParams } from "@/routes/helpers.js";
-import { EventPriceSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { EventPriceSchema, serial } from "@viernulvier/shared/index.js";
 import type { EventPrice, EventPriceWithMeta } from "@viernulvier/shared/index.js";
 
 /**
@@ -17,7 +17,7 @@ export async function fetchEventPrice(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<EventPrice | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const result = await buildQuery(server,
     `SELECT id, event, amount::float
     FROM event_price WHERE id = $1`,
@@ -40,7 +40,7 @@ export async function fetchEventPriceWithMeta(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<EventPriceWithMeta | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const result = await buildQuery(
     server,
     `SELECT id, event, amount::float, created_at, updated_at, created_by, updated_by

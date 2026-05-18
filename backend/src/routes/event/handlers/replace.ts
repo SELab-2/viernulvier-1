@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import z from "zod";
 
 import { getMetadata, ParseContext, parseParams, parseSchema } from "@/routes/helpers.js";
-import { stringToInt } from "@viernulvier/shared/index.js";
+import { serial } from "@viernulvier/shared/index.js";
 import type { Event } from "@viernulvier/shared/index.js";
 import { EventCreateSchema, updateEvent, normalizePartialEventDates } from "./helper.js";
 
@@ -21,7 +21,7 @@ export async function replaceEvent(
 ): Promise<Event | null> {
   const normalizedBody = normalizePartialEventDates(request.body);
   const body = parseSchema(server, EventCreateSchema, normalizedBody, ParseContext.Request);
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
 
   const { admin, current_time } = getMetadata(request);
 

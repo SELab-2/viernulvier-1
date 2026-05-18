@@ -41,7 +41,6 @@ describe("Delete on blogpost route", () => {
       url: `/api/v1/blog/post/${mockBlogPost["id"]}`,
       cookies: { session: sessionCookie },
     });
-
     expect(response.statusCode).toBe(HttpSuccess.OK);
     expect(BlogPostSchema.parse(response.json())).toMatchObject({ id: mockBlogPost["id"], title: mockBlogPost["title"] });
   });

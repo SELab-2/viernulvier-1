@@ -12,8 +12,7 @@ export {
   PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE,
 };
 
-/** Parsed query for `GET /production` (pagination, search, filters, optional `old_id`). */
-export const ProductionListQuerySchema = z
+export const ProductionListQuerySchemaNoRefinements = z
   .object({
     limit: z.coerce.number().int().positive().max(MAX_PAGE_SIZE).optional(),
     offset: z.coerce.number().int().min(0).optional(),
@@ -28,6 +27,10 @@ export const ProductionListQuerySchema = z
     sortDir: z.enum(["asc", "desc"]).optional(),
     lang: z.enum(["nl", "fr", "en"]).optional(),
   })
+
+
+/** Parsed query for `GET /production` (pagination, search, filters, optional `old_id`). */
+export const ProductionListQuerySchema = ProductionListQuerySchemaNoRefinements
   .refine(
     (q) => q.limit !== undefined || q.offset === undefined || q.offset === 0,
     { message: "`offset` requires `limit`" },

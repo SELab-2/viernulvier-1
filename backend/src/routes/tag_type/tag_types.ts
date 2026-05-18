@@ -11,6 +11,16 @@ import {
   fetchTagTypeWithMeta,
 } from "./handlers/index.js";
 
+import {
+  fetchTagTypeDocs,
+  fetchTagTypeWithMetaDocs,
+  fetchTagTypesDocs,
+  createTagTypeDocs,
+  editTagTypeDocs,
+  deleteTagTypeDocs,
+  replaceTagTypeDocs,
+} from "./docs/index.js";
+
 /**
  * Registers tag type routes on the Fastify instance.
  *
@@ -26,15 +36,43 @@ import {
  * @param server - The Fastify instance to register routes on.
  */
 export default function tagTypeRoutes(server: FastifyInstance) {
-  const protect = { preHandler: [server.authorize()] };
+  const protect = { preValidation: [server.authorize()] };
 
-  server.get("/api/v1/tag/type", replyHandler(server, fetchTagTypes));
-  server.get("/api/v1/tag/type/:id", replyHandler(server, fetchTagType));
-  server.get("/api/v1/tag/type/:id/meta", protect, replyHandler(server, fetchTagTypeWithMeta));
-  server.post("/api/v1/tag/type", protect, replyHandler(server, createTagType));
+  server.get(
+    "/api/v1/tag/type",
+    {schema: fetchTagTypesDocs },
+    replyHandler(server, fetchTagTypes),
+  );
+  server.get(
+    "/api/v1/tag/type/:id",
+    {schema: fetchTagTypeDocs },
+    replyHandler(server, fetchTagType),
+  );
+  server.get(
+    "/api/v1/tag/type/:id/meta",
+    { ...protect, schema: fetchTagTypeWithMetaDocs },
+    replyHandler(server, fetchTagTypeWithMeta),
+  );
+  server.post(
+    "/api/v1/tag/type",
+    {...protect, schema: createTagTypeDocs },
+    replyHandler(server, createTagType),
+  );
 
-  server.patch("/api/v1/tag/type/:id", protect, replyHandler(server, editTagType));
-  server.put("/api/v1/tag/type/:id", protect, replyHandler(server, replaceTagType));
+  server.patch(
+    "/api/v1/tag/type/:id",
+    { ...protect, schema: editTagTypeDocs },
+    replyHandler(server, editTagType),
+  );
+  server.put(
+    "/api/v1/tag/type/:id",
+    { ...protect, schema: replaceTagTypeDocs },
+    replyHandler(server, replaceTagType),
+  );
 
-  server.delete("/api/v1/tag/type/:id", protect, replyHandler(server, deleteTagType));
+  server.delete(
+    "/api/v1/tag/type/:id",
+    { ...protect, schema: deleteTagTypeDocs },
+    replyHandler(server, deleteTagType),
+  );
 }

@@ -1,11 +1,14 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { QueryResult } from "pg";
-import type {ProductionWithBackwardsRefs, ProductionWithMeta} from "@viernulvier/shared/index.js";
+import type {
+  ProductionWithBackwardsRefs,
+  ProductionWithMeta,
+} from "@viernulvier/shared/index.js";
 import {
   ProductionSchema,
   ProductionSchemaWithBackwardsRefs,
   productionListErrorCodeForMessage,
-  stringToInt,
+  serial,
 } from "@viernulvier/shared/index.js";
 import {
   HttpClientError,
@@ -63,7 +66,14 @@ export async function getProductionById(
     [id],
   );
 
-  return parseSchema(server, z.array(ProductionSchemaWithBackwardsRefs), result.rows, ParseContext.Database)[0] ?? null;
+  return (
+    parseSchema(
+      server,
+      z.array(ProductionSchemaWithBackwardsRefs),
+      result.rows,
+      ParseContext.Database,
+    )[0] ?? null
+  );
 }
 
 /**
@@ -86,7 +96,12 @@ export async function getProductionsByIds(
     [ids],
   );
 
-  return parseSchema(server, z.array(ProductionSchemaWithBackwardsRefs), result.rows, ParseContext.Database);
+  return parseSchema(
+    server,
+    z.array(ProductionSchemaWithBackwardsRefs),
+    result.rows,
+    ParseContext.Database,
+  );
 }
 
 /**
@@ -100,7 +115,7 @@ export async function fetchProduction(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<ProductionWithBackwardsRefs | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   return await getProductionById(server, id);
 }
 
@@ -115,7 +130,7 @@ export async function fetchProductionWithMeta(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<ProductionWithMeta | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const result = await server.pg.query<ProductionWithMeta>(
     `SELECT
        p.id,
@@ -144,7 +159,14 @@ export async function fetchProductionWithMeta(
     [id],
   );
 
-  return parseSchema(server, z.array(ProductionSchema.withMeta()), result.rows, ParseContext.Database)[0] ?? null;
+  return (
+    parseSchema(
+      server,
+      z.array(ProductionSchema.withMeta()),
+      result.rows,
+      ParseContext.Database,
+    )[0] ?? null
+  );
 }
 
 export type PaginatedProductions = {
@@ -253,8 +275,7 @@ export async function fetchProductions(
   const parsedQuery = ProductionListQuerySchema.safeParse(request.query);
   if (!parsedQuery.success) {
     server.log.error(parsedQuery.error);
-    const msg =
-      parsedQuery.error.issues[0]?.message ?? "Invalid request data";
+    const msg = parsedQuery.error.issues[0]?.message ?? "Bad Request";
     const code = productionListErrorCodeForMessage(msg);
     throw new HttpError(HttpClientError.BadRequest, msg, code);
   }

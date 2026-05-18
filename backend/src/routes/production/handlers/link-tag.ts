@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import { stringToInt } from "@viernulvier/shared/types/helpers.js";
+import { serial } from "@viernulvier/shared/types/helpers.js";
 import { getMetadata, parseParams, parseSchema } from "@/routes/helpers.js";
 import z from "zod";
 
@@ -16,7 +16,7 @@ export async function linkTagToProduction(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<{ linked: boolean } | null> {
-  const { id: productionId } = parseParams(request, z.object({ id: stringToInt }));
+  const { id: productionId } = parseParams(request, z.object({ id: serial() }));
   const body = parseSchema(server, LinkProductionTagBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
 

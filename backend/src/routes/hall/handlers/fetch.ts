@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Hall, HallWithMeta } from "@viernulvier/shared/index.js";
-import { HallSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { HallSchema, serial} from "@viernulvier/shared/index.js";
 import { parseParams, parseSchema, buildQuery } from "@/routes/helpers.js";
 import z from "zod";
 
@@ -46,8 +46,8 @@ const fetchHallByOldIdQuery = (server: FastifyInstance) =>
     HallSchema,
   );
 
-const HallsListQuerySchema = z.object({
-  old_id: stringToInt.optional(),
+export const HallsListQuerySchema = z.object({
+  old_id: serial().optional(),
 });
 
 /**
@@ -76,7 +76,7 @@ export async function fetchHall(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Hall | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   return await getHallById(server, id);
 }
 
@@ -91,7 +91,7 @@ export async function fetchHallWithMeta(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<HallWithMeta | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const rows = await fetchHallWithMetaByIdQuery(server)(id);
   return rows[0] ?? null;
 }

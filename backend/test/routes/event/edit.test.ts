@@ -114,7 +114,7 @@ describe("Event Edit Routes", () => {
       });
 
       expect(response.statusCode).toBe(400);
-      expect(response.json()).toMatchObject({ error: "Invalid request data" });
+      expect(response.json()).toMatchObject({ error: "Bad Request" });
     });
 
     test("returns 404 when event not in database", async () => {
@@ -277,7 +277,7 @@ describe("Event Edit Routes", () => {
       expect(listResponse.statusCode).toBe(200);
       expect(listResponse.json()).toHaveLength(3);
       const events = listResponse.json();
-      
+
       // Event 1 should be updated
       expect(events[0]!.id).toBe(1);
       expect(events[0]!.production).toBe(555);
