@@ -14,6 +14,32 @@ vi.mock("@/services/tags", () => ({
   deleteTag: vi.fn(),
 }));
 
+vi.mock("easymde", () => {
+  return {
+    default: class MockEasyMDE {
+      private _value = "";
+
+      constructor(opts: any) {
+        this._value = opts?.initialValue ?? "";
+      }
+
+      value(v?: string) {
+        if (typeof v === "string") {
+          this._value = v;
+          return;
+        }
+        return this._value;
+      }
+
+      toTextArea() {}
+
+      codemirror = {
+        on: (_event: string, _cb: Function) => {},
+      };
+    },
+  };
+});
+
 const gridStub = defineComponent({
   name: "AgGridVue",
   props: { rowData: { type: Array, default: () => [] } },
@@ -96,29 +122,6 @@ describe("CmsTagsTab", () => {
 
     expect(tagsService.updateTag).toHaveBeenCalledWith(row.id, { public: false });
     expect(row.public).toBe(false);
-  });
-
-  it("persists a name change under the current language", async () => {
-    const updated = { ...mockPublicTag, name: { ...mockPublicTag.name, en: "Tragedy" } };
-    vi.spyOn(tagsService, "updateTag").mockResolvedValueOnce(updated as never);
-
-    i18n.global.locale.value = "en";
-    const wrapper = mountTab();
-    await flushPromises();
-    const api = (wrapper.vm as any).__test;
-    const row = api.rowData.value.find((r: any) => r.id === mockPublicTag.id);
-
-    await api.onCellEditingStopped({
-      data: row,
-      colDef: { field: "name" },
-      value: "Tragedy",
-      oldValue: "Drama",
-      node: { setDataValue: vi.fn() },
-    });
-
-    expect(tagsService.updateTag).toHaveBeenCalledWith(row.id, {
-      name: expect.objectContaining({ en: "Tragedy" }),
-    });
   });
 
   it("ignores non-editable fields", async () => {
@@ -288,6 +291,7 @@ describe("CmsTagsTab", () => {
       name: { nl: "Comedy" },
       tag_type: mockTagType.id,
       public: false,
+      productions: [],
     });
     expect(tagsService.getAllTags).toHaveBeenCalled();
     expect(api.createModalOpen.value).toBe(false);
@@ -351,6 +355,330 @@ describe("CmsTagsTab", () => {
     });
 
     expect(api.saveError.value).toBeTruthy();
+  });
+
+  it("reverts the tag type when the label does not match any tag type", async () => {
+    const wrapper = mountTab();
+    await flushPromises();
+    const api = (wrapper.vm as any).__test;
+    const row = api.rowData.value[0];
+    const setDataValue = vi.fn();
+
+    await api.onCellEditingStopped({
+      data: row,
+      colDef: { field: "tagType" },
+      value: "NonExistentType",
+      oldValue: "Genre",
+      node: { setDataValue },
+    });
+
+    expect(tagsService.updateTag).not.toHaveBeenCalled();
+    expect(setDataValue).toHaveBeenCalledWith("tagType", "Genre");
+  });
+
+  it("persists a tag type change when the label matches a known tag type", async () => {
+    const wrapper = mountTab();
+    await flushPromises();
+    const api = (wrapper.vm as any).__test;
+    const row = api.rowData.value[0];
+
+    await api.onCellEditingStopped({
+      data: row,
+      colDef: { field: "tagType" },
+      value: "Genre",
+      oldValue: "OldType",
+      node: { setDataValue: vi.fn() },
+    });
+
+    expect(tagsService.updateTag).toHaveBeenCalledWith(row.id, { tag_type: mockTagType.id });
+  });
+
+  describe("onCellClicked", () => {
+    it("opens the edit productions panel when clicking the productions column", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+
+      const api = (wrapper.vm as any).__test;
+      const row = api.rowData.value.find((r: any) => r.id === mockPublicTag.id);
+
+      expect(api.editProductionsPanel.value).toBeNull();
+
+      api.onCellClicked({
+        data: row,
+        colDef: { field: "productions" },
+      });
+
+      expect(api.editProductionsPanel.value).toEqual({
+        rowId: mockPublicTag.id,
+        label: expect.any(String),
+        items: [1, 2, 3],
+        urlBase: "/en/productions",
+      });
+    });
+
+    it("does nothing when clicking a non-productions column", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+
+      const api = (wrapper.vm as any).__test;
+
+      api.onCellClicked({
+        data: api.rowData.value[0],
+        colDef: { field: "name" },
+      });
+
+      expect(api.editProductionsPanel.value).toBeNull();
+    });
+  });
+
+  describe("editorPanel", () => {
+    it("closeEditorPanel clears panel state and save errors", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.editorPanel.value = {
+        rowId: 10,
+        apiField: "name",
+        values: { en: "Drama", nl: "", fr: "" },
+      };
+      api.saveError.value = "boom";
+
+      api.closeEditorPanel();
+
+      expect(api.editorPanel.value).toBeNull();
+      expect(api.saveError.value).toBeNull();
+    });
+
+    it("saves the editor panel, reloads data and closes the panel", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      const row = api.rowData.value.find((r: any) => r.id === mockPublicTag.id);
+
+      api.editorPanel.value = {
+        rowId: row.id,
+        apiField: "name",
+        values: { en: "Updated", nl: "Bijgewerkt", fr: "" },
+      };
+
+      (tagsService.getAllTags as any).mockClear();
+
+      await api.saveEditorPanel();
+      await flushPromises();
+
+      expect(tagsService.updateTag).toHaveBeenCalledWith(row.id, {
+        name: { en: "Updated", nl: "Bijgewerkt" },
+      });
+      expect(tagsService.getAllTags).toHaveBeenCalled();
+      expect(api.editorPanel.value).toBeNull();
+      expect(api.isSaving.value).toBe(false);
+    });
+
+    it("does nothing when saving without an open panel", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.editorPanel.value = null;
+
+      await api.saveEditorPanel();
+
+      expect(tagsService.updateTag).not.toHaveBeenCalled();
+    });
+
+    it("does nothing when the panel references a missing row", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.editorPanel.value = {
+        rowId: 9999,
+        apiField: "name",
+        values: { en: "Ghost", nl: "", fr: "" },
+      };
+
+      await api.saveEditorPanel();
+
+      expect(tagsService.updateTag).not.toHaveBeenCalled();
+    });
+
+    it("keeps the panel open and surfaces an error when saving fails", async () => {
+      vi.spyOn(tagsService, "updateTag").mockRejectedValueOnce(new Error("boom"));
+
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      const row = api.rowData.value.find((r: any) => r.id === mockPublicTag.id);
+
+      api.editorPanel.value = {
+        rowId: row.id,
+        apiField: "name",
+        values: { en: "Broken", nl: "", fr: "" },
+      };
+
+      await expect(api.saveEditorPanel()).rejects.toThrow();
+
+      expect(api.saveError.value).toMatch(/boom|fail|fout/i);
+      expect(api.editorPanel.value).not.toBeNull();
+      expect(api.isSaving.value).toBe(false);
+    });
+
+    it("sets isSaving to false even when saving fails", async () => {
+      vi.spyOn(tagsService, "updateTag").mockRejectedValueOnce(new Error("oops"));
+
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      const row = api.rowData.value.find((r: any) => r.id === mockPublicTag.id);
+
+      api.editorPanel.value = {
+        rowId: row.id,
+        apiField: "name",
+        values: { en: "Test", nl: "", fr: "" },
+      };
+
+      await api.saveEditorPanel().catch(() => {});
+
+      expect(api.isSaving.value).toBe(false);
+    });
+  });
+
+  describe("editProductionsPanel", () => {
+    it("opens the productions panel with the current production ids", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      const row = api.rowData.value.find((r: any) => r.id === mockPublicTag.id);
+
+      api.openEditProductionsPanel(row);
+
+      expect(api.editProductionsPanel.value).toEqual({
+        rowId: mockPublicTag.id,
+        label: expect.any(String),
+        items: [1, 2, 3],
+        urlBase: "/en/productions",
+      });
+
+      expect(api.saveError.value).toBeNull();
+    });
+
+    it("opens with an empty list when the tag has no productions", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      const row = api.rowData.value.find((r: any) => r.id === mockHiddenTag.id);
+
+      api.openEditProductionsPanel(row);
+
+      expect(api.editProductionsPanel.value).toEqual({
+        rowId: mockHiddenTag.id,
+        label: expect.any(String),
+        items: [],
+        urlBase: "/en/productions",
+      });
+    });
+
+    it("closeEditProductionsPanel clears panel state and save errors", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.editProductionsPanel.value = {
+        rowId: 10,
+        label: "Productions",
+        items: [1],
+      };
+
+      api.saveError.value = "boom";
+
+      api.closeEditProductionsPanel();
+
+      expect(api.editProductionsPanel.value).toBeNull();
+      expect(api.saveError.value).toBeNull();
+    });
+
+    it("saves productions changes, reloads data and closes the panel", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      const row = api.rowData.value.find((r: any) => r.id === mockPublicTag.id);
+
+      api.editProductionsPanel.value = {
+        rowId: row.id,
+        label: "Productions",
+        items: [5, 6],
+      };
+
+      (tagsService.getAllTags as any).mockClear();
+
+      await api.saveEditProductionsPanel();
+      await flushPromises();
+
+      expect(tagsService.updateTag).toHaveBeenCalledWith(row.id, {
+        productions: [5, 6],
+      });
+
+      expect(tagsService.getAllTags).toHaveBeenCalled();
+      expect(api.editProductionsPanel.value).toBeNull();
+      expect(api.isSaving.value).toBe(false);
+    });
+
+    it("does nothing when saving without an open panel", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.editProductionsPanel.value = null;
+
+      await api.saveEditProductionsPanel();
+
+      expect(tagsService.updateTag).not.toHaveBeenCalled();
+    });
+
+    it("does nothing when the panel references a missing row", async () => {
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      api.editProductionsPanel.value = {
+        rowId: 9999,
+        label: "Productions",
+        items: [1],
+      };
+
+      await api.saveEditProductionsPanel();
+
+      expect(tagsService.updateTag).not.toHaveBeenCalled();
+    });
+
+    it("keeps the panel open when saving productions fails", async () => {
+      vi.spyOn(tagsService, "updateTag").mockRejectedValueOnce(new Error("boom"));
+
+      const wrapper = mountTab();
+      await flushPromises();
+      const api = (wrapper.vm as any).__test;
+
+      const row = api.rowData.value.find((r: any) => r.id === mockPublicTag.id);
+
+      api.editProductionsPanel.value = {
+        rowId: row.id,
+        label: "Productions",
+        items: [7, 8],
+      };
+
+      await expect(api.saveEditProductionsPanel()).rejects.toThrow();
+
+      expect(api.saveError.value).toMatch(/boom|fail|fout/i);
+      expect(api.editProductionsPanel.value).not.toBeNull();
+      expect(api.isSaving.value).toBe(false);
+    });
   });
 
   describe("delete flow", () => {

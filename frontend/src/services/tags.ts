@@ -48,6 +48,8 @@ export interface CreateTagInput {
   tag_type: number;
   /** Whether this tag is visible to the public. */
   public: boolean;
+  /** Linked productions */
+  productions: number[];
 }
 
 /**
