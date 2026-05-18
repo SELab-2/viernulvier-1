@@ -121,7 +121,7 @@ import { useI18n } from "vue-i18n";
 import { i18n, type SupportedLang } from "@/i18n";
 import { RouteNames } from "@/router/routeNames";
 import type { BlogPostWithBackwardsRefs } from "@viernulvier/shared";
-import { localizeOrEmpty } from "@/utils/language-utils";
+import { localizeOrEmpty, localizeWithFallback } from "@/utils/language-utils";
 import { formatDate } from "@/utils/date";
 import { getBlogPost } from "@/services/blogposts";
 import { extractFirstMdImage, parseFirstParagraphMd } from "@/utils/parsers";
@@ -149,11 +149,11 @@ onMounted(async () => {
 });
 
 const rawContent = computed(() =>
-  post.value ? localizeOrEmpty(post.value.content, currentLang.value) : "",
+  localizeWithFallback(post.value?.content, (map) => localizeOrEmpty(map, currentLang.value))
 );
 
 const title = computed(() =>
-  post.value ? localizeOrEmpty(post.value.title, currentLang.value) : "",
+  localizeWithFallback(post.value?.title, (map) => localizeOrEmpty(map, currentLang.value))
 );
 
 const leadImage = computed(() => extractFirstMdImage(rawContent.value));
