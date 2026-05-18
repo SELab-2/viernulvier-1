@@ -1,4 +1,8 @@
 export default {
+  general: {
+    cancel: "Cancel",
+    saving: "Saving...",
+  },
   nav: {
     home: "Home",
     archive: "Archive",
@@ -11,31 +15,47 @@ export default {
     },
   },
   hero: {
+    dateline: "Archive · Ghent",
     title: "The Archive of De Vooruit",
-    subtitle:
-      "Over 12,000 performances, concerts, films and cultural events — documented, searchable and open to everyone.",
-    cta: "Browse the archive",
+    lead:
+      "Decades of performances, concerts and films at De Vooruit — preserved, indexed and made searchable. This is the front page of the house archive: type a name, a title or a hall to pull up the file, or wander freely through the collection.",
+    searchPlaceholder: "Search a production, artist or hall…",
+    searchLabel: "Search the archive",
+    searchSubmit: "Search",
+    searchHint: "{count}+ productions on file",
+    browseAll: "Or browse all productions",
   },
-  stats: {
-    productions: "Productions",
-    events: "Events",
-    yearsOfHistory: "Years of History",
-    genres: "Genres",
-  },
-  bento: {
-    featured: {
-      label: "Featured",
-      title: "Theatre, dance & more",
-      description:
-        "Discover hundreds of productions from the rich programming of De Vooruit — from avant-garde dance to political theatre.",
-      cta: "Explore",
+  featuredBlog: {
+    eyebrow: "Featured blog post",
+    dateline: "{date} · Editorial",
+    readMore: "Read the full article",
+    imageCaption:
+      "Article image — caption will come from the blog post.",
+    placeholder: {
+      title: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+      excerpt:
+        "Aenean euismod, urna ac dignissim porta, leo arcu vehicula nibh, sed congue dolor magna nec massa. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In hac habitasse platea dictumst — donec vitae sapien ut libero venenatis faucibus.",
     },
   },
   footer: {
-    copyright: "© {year} VierNulVier / De Vooruit. All rights reserved.",
-    privacy: "Privacy Policy",
-    terms: "Terms of Use",
-    contact: "Contact",
+    titles: {
+      organization: "Organization",
+      contact: "Contact",
+      navigation: "Navigation",
+      connect: "Follow us",
+    },
+    address: {
+      city: "9000 Ghent",
+      country: "Belgium",
+    },
+    contact: {
+      phone: "+32 (0)9 267 28 20",
+    },
+    nav: {
+      home: "Index",
+      productions: "Productions",
+      blog: "Blog posts",
+    },
   },
   date: {
     doorsOpen: "Doors open at",
@@ -49,10 +69,11 @@ export default {
       productions: "Productions",
       tags: "Tags",
       admins: "Admins",
-      tagsPlaceholder: "Tag management coming soon.",
-      adminsPlaceholder: "Admin management coming soon.",
+      blogposts: "Blogposts",
+      tagTypes: "Tag types",
     },
     columns: {
+      id: "ID",
       performer: "Artist",
       title: "Title",
       producer: "Supertitle",
@@ -65,12 +86,20 @@ export default {
       tagName: "Name",
       tagType: "Type",
       public: "Public",
-      productionCount: "Productions",
+      productions: "Productions",
       admin: {
         username: "Username",
         profilePicture: "Profile picture",
         super: "Super admin",
       },
+      blogpost: {
+        content: "Content",
+        publishedAt: "Published at",
+        productions: "Associated productions",
+      },
+      tagTypeName: "Name",
+      tagCount: "Tag count",
+      tagsInType: "Tags",
     },
     events: {
       date: "Date",
@@ -84,11 +113,17 @@ export default {
     actions: {
       addProduction: "+ Add Production",
       removeProduction: "Remove selected productions",
-      confirmRemoveDialogTitle: "Remove productions?",
-      confirmRemoveBody: "This will permanently delete {count} selected productions. This cannot be undone.",
-      confirmRemoveCancel: "Cancel",
       confirmRemoveSubmit: "Remove permanently",
+      production: {
+        confirmRemoveDialogTitle: "Remove productions?",
+        confirmRemoveBody: "This will permanently delete {count} selected productions. This cannot be undone.",
+      },
       addTag: "+ Add Tag",
+      removeTag: "Remove selected tags",
+      tag: {
+        confirmRemoveDialogTitle: "Remove tag? | Remove tags?",
+        confirmRemoveBody: "This will permanently delete {count} selected tags. This cannot be undone.",
+      },
       searchPlaceholder: "Search across all columns...",
       selectedCount: "Selected: {count}",
       loadedCount: "Rows loaded: {count}",
@@ -107,8 +142,24 @@ export default {
       expandAllEvents: "Show all events",
       collapseAllEvents: "Hide events",
       admin: {
-        noAdmins: "No admins found.",
-        addAdmin: "+ Add Admin",
+        addAdmin: "+ Add admin",
+        removeAdmin: "Remove selected admins",
+        confirmRemoveDialogTitle: "Remove admin? | Remove admins?",
+        confirmRemoveBody: "This will permanently delete {count} selected admin. This cannot be undone. | This will permanently delete {count} selected admins. This cannot be undone.",
+        cannotRemoveSelf: "You cannot remove yourself.",
+      },
+      blogpost: {
+        addBlogpost: "+ Add blogpost",
+        removeBlogpost: "Remove selected blogposts",
+        confirmRemoveDialogTitle: "Remove blogpost? | Remove blogposts?",
+        confirmRemoveBody: "This will permanently delete {count} selected blogpost. This cannot be undone. | This will permanently delete {count} selected blogposts. This cannot be undone.",
+      },
+      addTagType: "+ Add tag type",
+      removeTagType: "Remove selected tag types",
+      loadedTagTypesCount: "Tag types loaded: {count}",
+      tagType: {
+        confirmRemoveDialogTitle: "Remove tag type?",
+        confirmRemoveBody: "This will permanently delete {count} selected tag type(s). This cannot be undone.",
       },
     },
     create: {
@@ -118,7 +169,6 @@ export default {
       selectTagType: "Choose a type...",
       finalized: "Mark as finalized",
       languages: "Extra languages",
-      cancel: "Cancel",
       submit: "Add production",
       saving: "Adding...",
       tags: {
@@ -149,20 +199,26 @@ export default {
         requiredOneLanguage: "Fill at least 1 language for: {field}",
         imageRequired: "Fill at least one image URL (in any language).",
         tagTypeRequired: "Select a tag type.",
+        invalidId: "Invalid ID",
       },
       admin: {
         adminTitle: "New admin",
         adminPassword: "Password",
-        // TODO: adminPasswordHint: "The new admin can change their password after logging in via their profile.",
+        adminPasswordHint: "The new admin can change their password after logging in via their profile.",
         submitAdmin: "Add admin",
       },
+      blogpost: {
+        title: "New blogpost",
+        submit: "Add blogpost",
+      },
+      tagTypeTitle: "New tag type",
+      submitTagType: "Add tag type",
     },
     panel: {
       close: "Close",
       save: "Save",
       saveAction: "Save Changes",
       saveHint: "Changes are only applied after clicking Save Changes.",
-      saving: "Saving...",
       text: "Text",
       bulkNotice: "Change will be applied to {count} selected productions.",
     },
@@ -175,12 +231,15 @@ export default {
     feedback: {
       saveSuccess: "Changes saved successfully",
       removeSuccess: "Production removed successfully",
+      removeTagSuccess: "Tag removed successfully",
+      removeTagTypeSuccess: "Tag type removed successfully",
     },
     admin: {
       noPermission: "You don't have permissions to manage admins.",
     },
   },
   productionsPage: {
+    kicker: "The archive",
     heading: "Productions",
     intro:
       "Every show in the archive at a glance.",
@@ -192,6 +251,10 @@ export default {
       "The first year must be on or before the last year. Adjust the range or fix the link and try again.",
     empty: "No productions in the archive yet.",
     morePerformances: "{n} more",
+    moreListTags: "+{n} more",
+    layoutToggleLabel: "Layout",
+    layoutListLabel: "List view",
+    layoutGridLabel: "Grid view",
     showingRange: "{from}–{to} of {total}",
     prevPage: "Previous",
     nextPage: "Next",
@@ -201,6 +264,11 @@ export default {
     searchLabel: "Search productions",
     searchPlaceholder: "Title, artist, venue, description…",
     searchButton: "Search",
+    sortByLabel: "Sort productions",
+    sortNameShort: "Name",
+    sortDateShort: "Date",
+    sortMetricMenuAria: "Choose name or date sort",
+    toggleSortDirectionAria: "Reverse sort direction",
     activeSearchLabel: "Search:",
     clearAllSearches: "Clear all searches",
     clearAllFilters: "Clear all filters",
@@ -214,7 +282,9 @@ export default {
     tagFiltersHeading: "Tags",
     viewMoreTagFilters: "Show more",
     viewLessTagFilters: "Show less",
-    selectDates: "Select dates",
+    expandFiltersPanelAria: "Expand filters",
+    collapseFiltersPanelAria: "Collapse filters",
+    selectDates: "Choose dates",
     filterByYearRange: "Filter by years",
     yearRangeIntro:
       "Limit productions to show years in this range (based on performance dates).",
@@ -240,13 +310,30 @@ export default {
     hero: {
       dateRange: "Run",
       runningTime: "Running Time",
+      bannerImageAlt: "Page banner image",
+    },
+    gallery: {
+      title: "Images",
+      intro: "A selection from this production’s media archive.",
+      prev: "Previous image",
+      next: "Next image",
+      goToScreen: "Go to screen {n} of {total}",
+      screenDotsGroupLabel: "Scroll positions in the gallery",
+      carouselLabel: "Image gallery for this production",
+      carouselRegion: "carousel",
+      openLightbox: "View larger image",
+      lightboxTitle: "Enlarged image",
+      closeLightbox: "Close enlarged image",
+      lightboxExpandMore: "Show extra-large view",
+      lightboxShrinkView: "Show standard enlarged view",
     },
     details: {
       tags: "Tags",
       extraInfo: "Extra Info",
+      programme: "Programme",
     },
     events: {
-      title: "Performance History",
+      title: "Dates",
       body: "Where and when did this production take place? Here you'll find an overview of all the performance dates and locations. You might recognize a date or place that stayed with you.",
       show_all: "Show All Events",
       show_less: "Show Less",
@@ -256,7 +343,13 @@ export default {
       error_body: "We couldn't retrieve the performance data from the archive.",
       retry: "Try again",
     },
+    blog: {
+      title: "Related articles",
+      body: "Background stories, interviews and notes from the archive that relate to this production.",
+      all: "All articles",
+    },
     notFound: {
+      kicker: "File no. 404 · Not in the collection",
       title: "Production not found",
       description: "We couldn't find this specific production for you. Luckily, there's plenty more to discover: return to the overview and dive back into our full history of productions.",
       buttonLabel: "Back to productions",
@@ -266,12 +359,24 @@ export default {
     },
   },
   blogpost: {
-    loading: "Loading blogpost…",
+    loading: "Loading blogpost",
     notFound: "Blogpost not found",
     notFoundDescription: "This blogpost does not exist or is no longer available.",
     errorGeneric: "Something went wrong while loading this blogpost.",
     publishedOn: "Published on {date}",
     backToHome: "Back to home",
+    relatedProductions: "Related productions",
+  },
+  errors: {
+    notFound: {
+      kicker: "File no. 404 · Not in the collection",
+      title: "Page not found",
+      description: "We couldn't find this page for you. It may have been moved, renamed, or never made it into the archive. Return to the overview and discover what is preserved in our collection.",
+      buttonLabel: "Back to the archive",
+      helpTitle: "Need help?",
+      helpText: "Can't find what you're looking for? For questions about our archive, feel free to email info{'@'}viernulvier.gent. We're happy to help.",
+      contactLabel: "Contact us",
+    },
   },
   admin: {
     login: {
@@ -291,6 +396,17 @@ export default {
       quickActions: "Quick actions",
       openCms: "Open CMS",
       logout: "Logout",
+      changePassword: "Change password",
+    },
+    changePassword: {
+      oldPassword: "Old password",
+      newPassword: "New password",
+      confirmPassword: "Confirm password",
+      update: "Update",
+      tooShortError: "Password must be at least 8 characters.",
+      wrongOldPasswordError: "Old password is wrong.",
+      dontMatchError: "Passwords do not match.",
+      failedToUpdate: "Failed to update password",
     },
   },
   time: {

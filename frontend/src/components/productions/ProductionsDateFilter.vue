@@ -3,10 +3,10 @@
     <button
       type="button"
       :class="[
-        'inline-flex cursor-pointer items-center gap-2 rounded-full border border-surface-3 px-4 py-2 text-sm font-medium text-ink-primary transition disabled:opacity-100',
+        'box-border inline-flex h-11 min-h-11 cursor-pointer items-center gap-2 rounded-md border px-4 py-0 text-sm font-medium text-ink-primary transition disabled:opacity-100',
         hasActiveDateFilter
-          ? 'bg-surface-2 ring-1 ring-inset ring-accent-outline/40 hover:bg-surface-2 dark:bg-surface-2 dark:hover:bg-surface-2'
-          : 'bg-surface-0 hover:bg-surface-2 dark:bg-surface-1',
+          ? 'border-accent-outline bg-surface-2 hover:bg-surface-2 dark:bg-surface-2 dark:hover:bg-surface-2'
+          : 'border-surface-3 bg-surface-0 hover:bg-surface-2 dark:bg-surface-1',
       ]"
       :disabled="disabled"
       :aria-expanded="panelOpen"
@@ -29,13 +29,15 @@
 
     <div
       v-if="panelOpen"
-      class="absolute left-0 z-30 mt-2 w-[min(100vw-2rem,36rem)] max-h-[min(85vh,32rem)] origin-top-left overflow-y-auto rounded-xl border border-surface-3 bg-surface-1 p-4 shadow-lg"
+      class="absolute left-0 z-30 mt-2 w-[min(100vw-2rem,36rem)] max-h-[min(85vh,32rem)] origin-top-left overflow-y-auto rounded-lg border border-surface-3 bg-surface-1 p-4 shadow-lg"
       role="dialog"
       :aria-label="t('productionsPage.selectDates')"
       @click.stop
     >
       <section class="space-y-3">
-        <h3 class="text-sm font-semibold text-ink-primary">
+        <h3
+          class="text-xs font-semibold uppercase tracking-[0.15em] text-ink-primary"
+        >
           {{ t("productionsPage.filterByYearRange") }}
         </h3>
         <p class="text-xs leading-snug text-ink-secondary">
@@ -115,23 +117,25 @@
         :aria-label="t('productionsPage.dateFilterOrDividerAria')"
       >
         <div
-          class="h-px min-w-0 flex-1 bg-ink-secondary/25 dark:bg-ink-secondary/30"
+          class="h-px min-w-0 flex-1 bg-ink-tertiary opacity-50"
           aria-hidden="true"
         />
         <span
-          class="shrink-0 px-3 text-xs font-bold uppercase tracking-wide text-ink-secondary select-none"
+          class="shrink-0 select-none px-3 text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
           aria-hidden="true"
         >
           {{ t("productionsPage.dateFilterOrDivider") }}
         </span>
         <div
-          class="h-px min-w-0 flex-1 bg-ink-secondary/25 dark:bg-ink-secondary/30"
+          class="h-px min-w-0 flex-1 bg-ink-tertiary opacity-50"
           aria-hidden="true"
         />
       </div>
 
       <section class="space-y-3">
-        <h3 class="text-sm font-semibold text-ink-primary">
+        <h3
+          class="text-xs font-semibold uppercase tracking-[0.15em] text-ink-primary"
+        >
           {{ t("productionsPage.filterByDateRange") }}
         </h3>
         <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
@@ -174,7 +178,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import {
   committedYearRangeFromThumbs,
@@ -221,8 +225,8 @@ const hasActiveDateFilter = computed(
 );
 
 const { t } = useI18n();
-const dateFilterRoot = ref<HTMLElement | null>(null);
-const yearTrackRef = ref<HTMLElement | null>(null);
+const dateFilterRoot = useTemplateRef<HTMLElement>("dateFilterRoot");
+const yearTrackRef = useTemplateRef<HTMLElement>("yearTrackRef");
 const panelOpen = ref(false);
 
 const localFrom = ref(props.minYear);
@@ -429,6 +433,7 @@ onUnmounted(() => {
   pointer-events: auto;
   width: 1.125rem;
   height: 1.125rem;
+  margin-top: -0.375rem;
   border-radius: 9999px;
   border: 2px solid var(--color-accent-outline, #2563eb);
   background: var(--color-surface-0, #fff);
@@ -456,6 +461,8 @@ onUnmounted(() => {
 }
 
 .year-range-thumb::-webkit-slider-runnable-track {
+  -webkit-appearance: none;
+  appearance: none;
   background: transparent;
   height: 0.375rem;
 }

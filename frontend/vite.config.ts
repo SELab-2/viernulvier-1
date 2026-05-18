@@ -25,6 +25,11 @@ export default defineConfig({
         target: `http://backend:${process.env["BACKEND_PORT"] ?? "3000"}`,
         changeOrigin: true,
       },
+      /** Same as backend `cropProxyRoute` — crop URLs are `/media/crops/…`. */
+      "/media": {
+        target: `http://backend:${process.env["BACKEND_PORT"] ?? "3000"}`,
+        changeOrigin: true,
+      },
     },
   },
   test: {
@@ -33,8 +38,13 @@ export default defineConfig({
     setupFiles: ["./test/setup.ts"],
     coverage: {
       provider: "v8",
+      reporter: ["text", "html", "lcov"],
       include: ["src/**/*.{ts,tsx,vue}"],
-      exclude: ["**/*.d.ts"],
+      exclude: [
+        "**/*.d.ts",
+        /** Markup-only glyphs */
+        "src/components/icons/**",
+      ],
       thresholds: {
         "src/**/*.{ts,tsx,vue}": {
           statements: 80,

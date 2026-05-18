@@ -1,29 +1,30 @@
 /**
  * Thin CLI entry for the archive scraper. Implementation lives in `src/scraper/`.
  *
- * Environment (see `src/scraper/auth.ts`, `local-api.ts`, `event.ts`):
+ * Environment (see `src/scraper/core/auth.ts`, `local-api.ts`, `event.ts`):
  *
  * - `VIERNULVIER_API_TOKEN` — API key for the archive API (`X-AUTH-TOKEN`).
  * - `VIERNULVIER_API_ORIGIN` — archive API origin (default `https://www.viernulvier.gent`).
  * - `VIERNULVIER_LOCAL_API_URL` — own API base (default `http://localhost:3000`).
  * - `SCRAPER_ADMIN_USERNAME` / `SCRAPER_ADMIN_PASSWORD` — JWT login for protected `POST`s (defaults `admin` / `password`).
- * - `SCRAPE_EVENTS_WINDOW` — `historical` | `previous-brussels-day`.
  *
  * This entrypoint is events-only: halls and productions are imported lazily while processing each event.
  *
- * `VIERNULVIER_API_TOKEN` (and other vars) are read from the repository root `.env` (see `src/scraper/load-repo-env.ts`).
+ * CLI Arguments:
+ * - `historical` (default): scrape all past events (no lower bound).
+ * - `last`: scrape since the upper bound of the last run (from stats file).
+ * - `days <N>`: scrape events from the past N days.
+ *
+ * `VIERNULVIER_API_TOKEN` (and other vars) are read from the repository root `.env` (see `src/scraper/core/load-repo-env.ts`).
  */
-import "@/scraper/load-repo-env.js";
+import "@/scraper/core/load-repo-env.js";
 import {
-  previousBrusselsDayBounds,
-  scrapeAllEvents,
-  type ViernulvierEventStartBounds,
-} from "@/scraper/event.js";
-import {
+  resolveScrapeBoundsFromArgs,
   formatRunReport,
   resolveScrapeStatsOutputPath,
   writeRunReportFile,
-} from "@/scraper/scrape-stats.js";
+} from "@/scraper/core/index.js";
+import { scrapeAllEvents } from "@/scraper/entities/index.js";
 
 function readViernulvierApiToken(): string {
   const token = process.env["VIERNULVIER_API_TOKEN"];
@@ -34,30 +35,10 @@ function readViernulvierApiToken(): string {
   return token;
 }
 
-/**
- * Which slice of the external events list to pull (`starts_at` query bounds).
- *
- * - `historical` (default): `{ before: new Date() }` — past performances only (per API semantics).
- * - `previous-brussels-day`: half-open yesterday in Europe/Brussels.
- */
-function resolveEventScrapeBounds(): ViernulvierEventStartBounds {
-  const mode = process.env["SCRAPE_EVENTS_WINDOW"]?.trim() ?? "historical";
-  if (mode === "historical") {
-    return { before: new Date() };
-  }
-  if (mode === "previous-brussels-day") {
-    return previousBrusselsDayBounds();
-  }
-  throw new Error(
-    `Unknown SCRAPE_EVENTS_WINDOW=${JSON.stringify(mode)}. Use: historical | previous-brussels-day`,
-  );
-}
-
 const viernulvierApiToken = readViernulvierApiToken();
 
 async function main() {
-  const windowLabel = process.env["SCRAPE_EVENTS_WINDOW"]?.trim() ?? "historical";
-  const eventBounds = resolveEventScrapeBounds();
+  const { bounds: eventBounds, label: windowLabel } = await resolveScrapeBoundsFromArgs();
   console.log(
     `Scraping events (lazy halls/productions)… window: ${windowLabel}; after=${eventBounds.after?.toISOString() ?? "—"} before=${eventBounds.before?.toISOString() ?? "—"}`,
   );

@@ -6,7 +6,8 @@
     "outDir": "./dist",
     "paths": {
       "@/*": ["./src/*"],
-      "@viernulvier/shared/*": ["../shared/src/*"]
+      "@viernulvier/shared/*": ["../shared/src/*"],
+      "@mocks/*": ["./test/__mocks__/*"]
     },
 
     // Environment Settings

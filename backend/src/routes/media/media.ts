@@ -2,7 +2,9 @@ import type { FastifyInstance } from "fastify";
 import { replyHandler } from "@/routes/helpers.js";
 import {
   fetchImagesByProduction,
+  fetchImagesByProductionIdsBatch,
   fetchImage,
+  fetchAllImages,
   fetchImageWithMeta,
   createImage,
   replaceImage,
@@ -22,8 +24,10 @@ import cropProxyRoute from "./proxy.js";
  *
  * @remarks
  * **Images**
- * - `GET    /api/v1/production/:productionId/image`  — list images (with crops) for a production
+ * - `GET    /api/v1/production/images`                — batch list images by production ids (`?ids=1,2`)
+ * - `GET    /api/v1/production/:productionId/image`   — list images (with crops) for a production
  * - `GET    /api/v1/image/:id`                        — single image with its crops
+ * - `GET    /api/v1/image`                            — list images with crops
  * - `GET    /api/v1/image/:id/meta`                   — single image with metadata 🔒
  * - `POST   /api/v1/production/:productionId/image`   — create image (+ oneshot crops via multipart) 🔒
  * - `PATCH  /api/v1/image/:id`                        — edit image metadata 🔒
@@ -44,9 +48,11 @@ export default function mediaRoutes(server: FastifyInstance) {
   const protect = { preHandler: [server.authorize()] };
 
   // ── Images ──
+  server.get("/api/v1/production/images", replyHandler(server, fetchImagesByProductionIdsBatch));
   server.get("/api/v1/production/:productionId/image", replyHandler(server, fetchImagesByProduction));
   server.get("/api/v1/image/:id", replyHandler(server, fetchImage));
   server.get("/api/v1/image/:id/meta", protect, replyHandler(server, fetchImageWithMeta));
+  server.get("/api/v1/image", replyHandler(server, fetchAllImages));
   server.post("/api/v1/production/:productionId/image", protect, replyHandler(server, createImage));
   server.patch("/api/v1/image/:id", protect, replyHandler(server, editImage));
   server.put("/api/v1/image/:id", protect, replyHandler(server, replaceImage));

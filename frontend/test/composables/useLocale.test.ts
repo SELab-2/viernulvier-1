@@ -121,6 +121,30 @@ describe("useLocale — setLocale()", () => {
       expect(router.currentRoute.value.path).toBe("/en/productions/42");
     });
 
+    it("preserves query parameters when switching language", async () => {
+      await router.push("/nl/productions?limit=20&offset=40&q=test");
+      const wrapper = createWrapper(router);
+      wrapper.vm.setLocale("fr");
+      await flushPromises();
+
+      expect(router.currentRoute.value.path).toBe("/fr/productions");
+      expect(router.currentRoute.value.query).toEqual({
+        limit: "20",
+        offset: "40",
+        q: "test",
+      });
+    });
+
+    it("preserves hash when switching language", async () => {
+      await router.push("/nl/productions#filters");
+      const wrapper = createWrapper(router);
+      wrapper.vm.setLocale("fr");
+      await flushPromises();
+
+      expect(router.currentRoute.value.path).toBe("/fr/productions");
+      expect(router.currentRoute.value.hash).toBe("#filters");
+    });
+
     it("navigates correctly when the path has no language prefix", async () => {
       // Covers the else branch: pathWithoutLang = route.path
       await router.push("/");
@@ -139,6 +163,48 @@ describe("useLocale — setLocale()", () => {
         expect(router.currentRoute.value.path).toBe(`/${lang}`);
       },
     );
+
+    // ── 404 fallback (no `lang` param) ──────────────────────────────────────
+    // The 404 catch-all route has no `lang` param, so setLocale falls back to
+    // stripLangPrefix() + prepend. These cases cover all four branches.
+
+    it("strips an existing lang prefix on a 404 path before prepending the new one", async () => {
+      await router.push("/en/this-page-does-not-exist");
+      const wrapper = createWrapper(router);
+      wrapper.vm.setLocale("fr");
+      await flushPromises();
+      expect(router.currentRoute.value.path).toBe("/fr/this-page-does-not-exist");
+    });
+
+    it("does not accumulate lang prefixes across multiple switches on a 404 path", async () => {
+      await router.push("/en/missing");
+      const wrapper = createWrapper(router);
+      wrapper.vm.setLocale("fr");
+      await flushPromises();
+      wrapper.vm.setLocale("nl");
+      await flushPromises();
+      expect(router.currentRoute.value.path).toBe("/nl/missing");
+    });
+
+    it("handles a bare lang prefix without a subpath (e.g. /en → /fr)", async () => {
+      // Covers `return match[2] ?? "/"` when match[2] is undefined, and the
+      // `stripped === "/"` true branch of the ternary.
+      await router.push("/en");
+      const wrapper = createWrapper(router);
+      wrapper.vm.setLocale("fr");
+      await flushPromises();
+      expect(router.currentRoute.value.path).toBe("/fr");
+    });
+
+    it("prepends the lang on a 404 path whose first segment is not a supported lang", async () => {
+      // Covers the `return path` branch of stripLangPrefix when the first
+      // path segment is not a SupportedLang.
+      await router.push("/garbage/path");
+      const wrapper = createWrapper(router);
+      wrapper.vm.setLocale("nl");
+      await flushPromises();
+      expect(router.currentRoute.value.path).toBe("/nl/garbage/path");
+    });
   });
 
   // ── All together ───────────────────────────────────────────────────────────

@@ -10,6 +10,9 @@ import {
   MOCK_META,
   imageWithCrops,
 } from "./fixtures.js";
+import { getCropById, getImageByOldId } from "@/routes/media/handlers/fetch.js";
+
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
 
 let server: FastifyInstance;
 let sessionCookie: string;
@@ -20,6 +23,29 @@ beforeAll(async () => {
 
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
+
+    // ── Image count (pagination) ──
+    if (upper.includes("COUNT(") && upper.includes("FROM IMAGE I") && !upper.includes("GROUP")) {
+      return Promise.resolve({ rows: [{ c: 2 }], rowCount: 1 });
+    }
+
+    // ── All images with LIMIT (paged list) ──
+    if (
+      upper.includes("FROM IMAGE I") &&
+      upper.includes("ORDER BY I.ID ASC") &&
+      upper.includes("LIMIT")
+    ) {
+      const limit = Number(params?.[0]);
+      const offset = Number(params?.[1] ?? 0);
+      const all = [MOCK_IMAGE_1, MOCK_IMAGE_2].sort((a, b) => a.id - b.id);
+      const rows = all.slice(offset, offset + limit);
+      return Promise.resolve({ rows, rowCount: rows.length });
+    }
+
+    // ── All images (list, no limit) ──
+    if (upper.includes("FROM IMAGE I") && upper.includes("ORDER BY I.ID ASC") && !upper.includes("WHERE")) {
+      return Promise.resolve({ rows: [MOCK_IMAGE_1, MOCK_IMAGE_2], rowCount: 2 });
+    }
 
     // ── Single image by ID ──
     if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.ID = \$1")) {
@@ -34,6 +60,41 @@ beforeAll(async () => {
         return Promise.resolve({ rows: [MOCK_IMAGE_2], rowCount: 1 });
       }
       return Promise.resolve({ rows: [], rowCount: 0 });
+    }
+
+    // ── Single image by oldId ──
+    if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.OLD_ID = \$1")) {
+      const oldId = Number(params?.[0]);
+      const img = [MOCK_IMAGE_1, MOCK_IMAGE_2].find((i) => i.old_id === oldId);
+      return Promise.resolve({
+        rows: img ? [img] : [],
+        rowCount: img ? 1 : 0,
+      });
+    }
+
+    // ── Images by production + oldId ──
+    if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.OLD_ID = \$1 AND I.PRODUCTION = \$2")) {
+      const oldId = Number(params?.[0]);
+      const prodId = Number(params?.[1]);
+      const img = [MOCK_IMAGE_1, MOCK_IMAGE_2].find(
+        (i) => i.old_id === oldId && i.production === prodId,
+      );
+      return Promise.resolve({
+        rows: img ? [img] : [],
+        rowCount: img ? 1 : 0,
+      });
+    }
+
+    // ── Images by productions (batch, ANY array) ──
+    if (upper.includes("FROM IMAGE I") && upper.includes("I.PRODUCTION = ANY($1::INT[])")) {
+      const prodIds = params?.[0] as number[];
+      const want = new Set(prodIds);
+      const rows = [MOCK_IMAGE_1, MOCK_IMAGE_2]
+        .filter((i) => want.has(i.production))
+        .sort((a, b) =>
+          a.production !== b.production ? a.production - b.production : a.id - b.id,
+        );
+      return Promise.resolve({ rows, rowCount: rows.length });
     }
 
     // ── Images by production ──
@@ -52,6 +113,29 @@ beforeAll(async () => {
         ids.includes(c.image),
       );
       return Promise.resolve({ rows: crops, rowCount: crops.length });
+    }
+
+    // ── Crop by primary key id ──
+    if (upper.includes("FROM CROP C") && upper.includes("WHERE C.ID = \$1")) {
+      const cropId = Number(params?.[0]);
+      const crop = [MOCK_CROP_1, MOCK_CROP_2, MOCK_CROP_3].find((c) => c.id === cropId);
+      return Promise.resolve({
+        rows: crop ? [crop] : [],
+        rowCount: crop ? 1 : 0,
+      });
+    }
+
+    // ── Crop by image + oldId ── CHECK THIS BEFORE IMAGE ONLY!
+    if (upper.includes("FROM CROP C") && upper.includes("WHERE C.IMAGE = \$1 AND C.OLD_ID = \$2")) {
+      const imgId = Number(params?.[0]);
+      const oldId = Number(params?.[1]);
+      const crop = [MOCK_CROP_1, MOCK_CROP_2, MOCK_CROP_3].find(
+        (c) => c.image === imgId && c.old_id === oldId,
+      );
+      return Promise.resolve({
+        rows: crop ? [crop] : [],
+        rowCount: crop ? 1 : 0,
+      });
     }
 
     // ── Crop by image + type ──
@@ -114,6 +198,120 @@ describe("Image fetch routes", () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual([]);
+  });
+
+  test("GET /api/v1/production/images -> returns keyed images with crops for multiple productions", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production/images?ids=1,9999",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      byProductionId: {
+        "1": [
+          imageWithCrops(MOCK_IMAGE_1, [MOCK_CROP_1, MOCK_CROP_2]),
+          imageWithCrops(MOCK_IMAGE_2, [MOCK_CROP_3]),
+        ],
+        "9999": [],
+      },
+    });
+  });
+
+  test("GET /api/v1/production/images -> returns empty object without ids query", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production/images",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ byProductionId: {} });
+  });
+
+  test("GET /api/v1/production/images -> empty byProductionId when ids are all unparsable", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production/images?ids=foo,,-1,007,2147483648,x",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ byProductionId: {} });
+  });
+
+  test("GET /api/v1/production/images -> trims tokens, dedupes ids, skips junk between commas", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production/images?ids=1,bad,1,9999",
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { byProductionId: Record<string, unknown> };
+    expect(Object.keys(json.byProductionId).sort()).toEqual(["1", "9999"]);
+    expect(json.byProductionId["1"]).toEqual([
+      imageWithCrops(MOCK_IMAGE_1, [MOCK_CROP_1, MOCK_CROP_2]),
+      imageWithCrops(MOCK_IMAGE_2, [MOCK_CROP_3]),
+    ]);
+    expect(json.byProductionId["9999"]).toEqual([]);
+  });
+
+  test("GET /api/v1/production/images -> only unknown productions still runs batch (empty image set)", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production/images?ids=9998,9999",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      byProductionId: {
+        "9998": [],
+        "9999": [],
+      },
+    });
+  });
+
+  test("GET /api/v1/production/images -> caps at 50 ids (extra discarded)", async () => {
+    const ids = Array.from({ length: 51 }, (_, i) => String(i + 1)).join(",");
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/production/images?ids=${encodeURIComponent(ids)}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const keys = Object.keys((response.json() as { byProductionId: Record<string, unknown> }).byProductionId);
+    expect(keys).toHaveLength(50);
+    expect(keys).not.toContain("51");
+  });
+
+  test("GET /api/v1/production/images -> accepts ids as repeated string query params (array branch)", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production/images",
+      query: { ids: ["1", "9999"] },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      byProductionId: {
+        "1": [
+          imageWithCrops(MOCK_IMAGE_1, [MOCK_CROP_1, MOCK_CROP_2]),
+          imageWithCrops(MOCK_IMAGE_2, [MOCK_CROP_3]),
+        ],
+        "9999": [],
+      },
+    });
+  });
+
+  test("GET /api/v1/production/images -> array ids skips empty trimmed segments", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production/images",
+      query: { ids: [" \t ", "", "1", "9999", "   "] },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const keys = Object.keys((response.json() as { byProductionId: Record<string, unknown> }).byProductionId)
+      .sort();
+    expect(keys).toEqual(["1", "9999"]);
   });
 
   test("GET /api/v1/image/:id -> returns a single image with crops", async () => {
@@ -210,6 +408,57 @@ describe("Image fetch routes", () => {
 
     server.pg.query = originalQuery;
   });
+
+  test("GET /api/v1/image -> returns all images with crops", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/image",
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json();
+    expect(json).toEqual([
+      imageWithCrops(MOCK_IMAGE_1, [MOCK_CROP_1, MOCK_CROP_2]),
+      imageWithCrops(MOCK_IMAGE_2, [MOCK_CROP_3]),
+    ]);
+  });
+
+  test("GET /api/v1/image?page=1&pageSize=1 -> returns totalItems and one member", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/image?page=1&pageSize=1",
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { totalItems: number; member: unknown[] };
+    expect(json.totalItems).toBe(2);
+    expect(json.member).toHaveLength(1);
+    expect(json.member[0]).toEqual(
+      imageWithCrops(MOCK_IMAGE_1, [MOCK_CROP_1, MOCK_CROP_2]),
+    );
+  });
+
+  test("GET /api/v1/image?oldId=X -> returns specific image by oldId with crops", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/image?oldId=${MOCK_IMAGE_1.old_id}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual([
+      imageWithCrops(MOCK_IMAGE_1, [MOCK_CROP_1, MOCK_CROP_2]),
+    ]);
+  });
+
+  test("GET /api/v1/image?oldId=X -> returns empty array when oldId not found", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/image?oldId=9999",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual([]);
+  });
 });
 
 describe("Crop fetch routes", () => {
@@ -260,5 +509,354 @@ describe("Crop fetch routes", () => {
     });
 
     expect(response.statusCode).toBe(404);
+  });
+
+  test("GET /api/v1/image/:imageId/crop?oldId=X -> returns specific crop by oldId", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/image/${MOCK_IMAGE_1.id}/crop?oldId=${MOCK_CROP_1.old_id}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual([MOCK_CROP_1]);
+  });
+
+  test("GET /api/v1/image/:imageId/crop?oldId=X -> returns empty when oldId not found", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/image/${MOCK_IMAGE_1.id}/crop?oldId=9999`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual([]);
+  });
+
+  test("GET /api/v1/image/:imageId/crop?oldId=X -> returns empty when oldId exists but wrong image", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/image/9999/crop?oldId=${MOCK_CROP_1.old_id}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual([]);
+  });
+});
+
+describe("Branch coverage for edge cases", () => {
+  test("GET /api/v1/image -> covers nullish coalescing in attachCropsToImages (line 84)", async () => {
+    // This tests the `cropsByImage.get(imageId) ?? []` branch
+    // Setup: query returns an image with no matching crops
+    const IMAGE_NO_CROPS = { id: 100, old_id: null, production: 1, res: "800x600" };
+
+    const originalQuery = server.pg.query;
+    server.pg.query = vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
+      const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
+
+      if (upper.includes("FROM IMAGE I") && upper.includes("ORDER BY I.ID ASC") && !upper.includes("WHERE") && !upper.includes("LIMIT")) {
+        return Promise.resolve({ rows: [IMAGE_NO_CROPS], rowCount: 1 });
+      }
+
+      // Return empty crops - triggers the `?? []` fallback when building cropsByImage map
+      if (upper.includes("FROM CROP C") && upper.includes("ANY(\\$1::INT[])")) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/image",
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json();
+    expect(json).toHaveLength(1);
+    expect(json[0]).toEqual({ ...IMAGE_NO_CROPS, crops: [] });
+    expect(Array.isArray(json[0].crops)).toBe(true);
+
+    server.pg.query = originalQuery;
+  });
+
+  test("GET /api/v1/image?page=1 -> covers pagination count edge case (line 251-256)", async () => {
+    // This tests the `countR.rows[0]?.c ?? 0` branch when count query returns results
+    const originalQuery = server.pg.query;
+    server.pg.query = vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
+      const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
+
+      if (upper.includes("COUNT(") && upper.includes("FROM IMAGE I")) {
+        return Promise.resolve({ rows: [{ c: 5 }], rowCount: 1 });
+      }
+
+      if (upper.includes("FROM IMAGE I") && upper.includes("LIMIT")) {
+        return Promise.resolve({ rows: [MOCK_IMAGE_1, MOCK_IMAGE_2], rowCount: 2 });
+      }
+
+      if (upper.includes("FROM CROP C") && upper.includes("ANY(\\$1::INT[])")) {
+        return Promise.resolve({ rows: [MOCK_CROP_1, MOCK_CROP_2, MOCK_CROP_3], rowCount: 3 });
+      }
+
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/image?page=1&pageSize=2",
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { totalItems: number; member: unknown[] };
+    expect(json.totalItems).toBe(5);
+    expect(json.member).toHaveLength(2);
+
+    server.pg.query = originalQuery;
+  });
+
+  test("GET /api/v1/image?page=2 -> covers pagination with offset (line 251-256)", async () => {
+    // Tests that offset calculation is correct: (page - 1) * pageSize
+    const originalQuery = server.pg.query;
+    let capturedOffset: number | undefined;
+
+    server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+      const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
+
+      if (upper.includes("COUNT(") && upper.includes("FROM IMAGE I")) {
+        return Promise.resolve({ rows: [{ c: 10 }], rowCount: 1 });
+      }
+
+      if (upper.includes("FROM IMAGE I") && upper.includes("LIMIT")) {
+        capturedOffset = Number(params?.[1]);
+        return Promise.resolve({ rows: [MOCK_IMAGE_2], rowCount: 1 });
+      }
+
+      if (upper.includes("FROM CROP C") && upper.includes("ANY(\\$1::INT[])")) {
+        return Promise.resolve({ rows: [MOCK_CROP_3], rowCount: 1 });
+      }
+
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/image?page=2&pageSize=5",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(capturedOffset).toBe(5); // (2 - 1) * 5 = 5
+    const json = response.json() as { totalItems: number; member: unknown[] };
+    expect(json.totalItems).toBe(10);
+
+    server.pg.query = originalQuery;
+  });
+
+  test("GET /api/v1/image?oldId=X -> covers image not found branch (line 107)", async () => {
+    // Tests the `if (images.length === 0) return null;` branch in getImageByOldId
+    const originalQuery = server.pg.query;
+    server.pg.query = vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
+      const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
+
+      // Return empty for the oldId query
+      if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.OLD_ID = \$1")) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/image?oldId=99999",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual([]);
+
+    server.pg.query = originalQuery;
+  });
+
+  test("GET /api/v1/image/:id -> covers single image not found (line 107)", async () => {
+    // Tests when getImageById returns empty rows
+    const originalQuery = server.pg.query;
+    server.pg.query = vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
+      const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
+
+      if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.ID = \$1")) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/image/999",
+    });
+
+    expect(response.statusCode).toBe(404);
+
+    server.pg.query = originalQuery;
+  });
+
+  test("GET /api/v1/image?page=1 -> covers count result with falsy construction", async () => {
+    // Tests the optional chaining path: `countR.rows[0]?.c`
+    const originalQuery = server.pg.query;
+    server.pg.query = vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
+      const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
+
+      // COUNT query returns a row but with count value 0
+      if (upper.includes("COUNT(") && upper.includes("FROM IMAGE I")) {
+        return Promise.resolve({ rows: [{ c: 0 }], rowCount: 1 });
+      }
+
+      if (upper.includes("FROM IMAGE I") && upper.includes("LIMIT")) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/image?page=1&pageSize=10",
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { totalItems: number; member: unknown[] };
+    expect(json.totalItems).toBe(0);
+    expect(json.member).toHaveLength(0);
+
+    server.pg.query = originalQuery;
+  });
+
+  test("direct: getImageByOldId -> returns null when image not found (covers images.length === 0)", async () => {
+    const originalQuery = server.pg.query;
+    server.pg.query = vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
+      const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
+      if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.OLD_ID = \$1")) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const res = await getImageByOldId(server, 999999);
+    expect(res).toBeNull();
+
+    server.pg.query = originalQuery;
+  });
+
+  test("direct: getCropById -> returns crop when row exists", async () => {
+    const res = await getCropById(server, MOCK_CROP_2.id);
+    expect(res).toEqual(MOCK_CROP_2);
+  });
+
+  test("direct: getCropById -> returns null when row missing", async () => {
+    const res = await getCropById(server, 99_999);
+    expect(res).toBeNull();
+  });
+
+  test("direct: getImageByOldId -> returns image with crops when present (covers withCrops[0] branch)", async () => {
+    const originalQuery = server.pg.query;
+    server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+      const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
+
+      if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.OLD_ID = \$1")) {
+        return Promise.resolve({ rows: [MOCK_IMAGE_1], rowCount: 1 });
+      }
+
+      if (upper.includes("FROM CROP C") && upper.includes("ANY(\\$1::INT[])") ) {
+        const ids = params?.[0] as number[];
+        const crops = [MOCK_CROP_1, MOCK_CROP_2, MOCK_CROP_3].filter((c) => ids.includes(c.image));
+        return Promise.resolve({ rows: crops, rowCount: crops.length });
+      }
+
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const res = await getImageByOldId(server, MOCK_IMAGE_1.old_id!);
+    expect(res).not.toBeNull();
+    expect(res?.crops).toBeDefined();
+
+    server.pg.query = originalQuery;
+  });
+
+  test("GET /api/v1/image?page=1 without pageSize -> defaults pageSize and handles empty count rows", async () => {
+    const originalQuery = server.pg.query;
+    let capturedLimit: number | undefined;
+    let capturedOffset: number | undefined;
+
+    server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+      const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
+
+      if (upper.includes("COUNT(") && upper.includes("FROM IMAGE I")) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+
+      if (upper.includes("FROM IMAGE I") && upper.includes("LIMIT")) {
+        capturedLimit = Number(params?.[0]);
+        capturedOffset = Number(params?.[1] ?? 0);
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+
+      if (upper.includes("FROM CROP C") && upper.includes("ANY(\\$1::INT[])")) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const response = await server.inject({ method: "GET", url: "/api/v1/image?page=1" });
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { totalItems: number; member: unknown[] };
+    expect(json.totalItems).toBe(0);
+    expect(json.member).toHaveLength(0);
+    expect(capturedLimit).toBe(100);
+    expect(capturedOffset).toBe(0);
+
+    server.pg.query = originalQuery;
+  });
+
+  test("direct: getImageByOldId -> covers fallback branch when withCrops[0] is undefined", async () => {
+    const originalQuery = server.pg.query;
+    const originalMap = Array.prototype.map;
+
+    server.pg.query = vi.fn().mockImplementation((query: string, _params?: unknown[]) => {
+      const upper = query.replace(/\s+/g, " ").trim().toUpperCase();
+
+      if (upper.includes("FROM IMAGE I") && upper.includes("WHERE I.OLD_ID = \$1")) {
+        return Promise.resolve({ rows: [MOCK_IMAGE_1], rowCount: 1 });
+      }
+
+      if (upper.includes("FROM CROP C") && upper.includes("ANY(\\$1::INT[])")) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const mapSpy = vi.spyOn(Array.prototype, "map").mockImplementation(function (
+      this: unknown[],
+      callbackfn: (value: unknown, index: number, array: unknown[]) => unknown,
+      thisArg?: unknown,
+    ): unknown[] {
+      // Force the image-array maps inside attachCropsToImages to return empty,
+      // so getImageByOldId executes `withCrops[0] ?? null` via the nullish branch.
+      if (
+        this.length === 1 &&
+        typeof this[0] === "object" &&
+        this[0] !== null &&
+        "id" in (this[0] as Record<string, unknown>) &&
+        "production" in (this[0] as Record<string, unknown>) &&
+        "res" in (this[0] as Record<string, unknown>)
+      ) {
+        return [];
+      }
+      return originalMap.call(this, callbackfn, thisArg) as unknown[];
+    });
+
+    const res = await getImageByOldId(server, MOCK_IMAGE_1.old_id!);
+    expect(res).toBeNull();
+
+    mapSpy.mockRestore();
+    server.pg.query = originalQuery;
   });
 });

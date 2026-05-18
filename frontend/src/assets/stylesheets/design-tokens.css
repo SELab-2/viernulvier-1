@@ -40,9 +40,10 @@
   --photo-overlay: #2B2826;
   --photo-opacity: 0.55;
 
-  /* ---- Tag chips (archive list — genre vs outline, Vooruit-style) ---- */
-  --tag-genre-bg: #8224e3;
-  --tag-genre-text: #f5f0e8;
+  /* ---- Tag chips (archive list — genre vs outline) ---- */
+  /* Solid ink, not a hue. Differentiate tags by label, not by colour (§2.5). */
+  --tag-genre-bg: #2B2826;
+  --tag-genre-text: #F5F0E8;
 }
 
 /* ---- Dark mode ---- */
@@ -74,6 +75,6 @@
   --photo-overlay: #1C1A17;
   --photo-opacity: 0.65;
 
-  --tag-genre-bg: #8224e3;
-  --tag-genre-text: #f5f0e8;
+  --tag-genre-bg: #EDE8DF;
+  --tag-genre-text: #1C1A17;
 }

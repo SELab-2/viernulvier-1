@@ -25,14 +25,14 @@ function makeTag(overrides: Partial<Tag> = {}): Tag {
 const knownType: TagType = { id: 10, old_id: null, name: { en: "Genre" } } as TagType;
 
 describe("tag grid builders", () => {
-  it("builds a row with resolved tag type and production count", () => {
+  it("builds a row with resolved tag type and production ids", () => {
     const row = buildTagGridRow(
       makeTag({ productions: [1, 2, 3] as never }),
       new Map([[10, knownType]]),
       localize,
     );
     expect(row.tagType).toBe("Genre");
-    expect(row.productionCount).toBe(3);
+    expect(row.productions).toEqual([1, 2, 3]);
     expect(row.name).toBe("Drama");
   });
 
@@ -47,13 +47,13 @@ describe("tag grid builders", () => {
     expect(row.tagType).toBe("#10");
   });
 
-  it("treats non-array productions as zero", () => {
+  it("treats non-array productions as empty list", () => {
     const row = buildTagGridRow(
       makeTag({ productions: undefined as never }),
       new Map([[10, knownType]]),
       localize,
     );
-    expect(row.productionCount).toBe(0);
+    expect(row.productions).toEqual([]);
   });
 
   it("uses empty string when tag name is missing", () => {

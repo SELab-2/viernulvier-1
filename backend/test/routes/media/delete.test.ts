@@ -9,6 +9,8 @@ import {
   imageWithCrops,
 } from "./fixtures.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let sessionCookie: string;
 let s3SendMock: ReturnType<typeof vi.fn>;

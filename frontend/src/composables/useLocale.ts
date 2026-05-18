@@ -7,6 +7,19 @@ import {
 } from "@/i18n";
 
 /**
+ * Returns the path with any leading supported-language prefix stripped.
+ * Used when swapping locales on routes that don't expose a `lang` param
+ * (e.g. the 404 catch-all) so we don't accumulate prefixes on each switch.
+ */
+function stripLangPrefix(path: string): string {
+  const match = path.match(/^\/([^/]+)(\/.*)?$/);
+  if (match && SUPPORTED_LANGS.includes(match[1] as SupportedLang)) {
+    return match[2] ?? "/";
+  }
+  return path;
+}
+
+/**
  * Composable for switching the application language.
  *
  * @example
@@ -29,15 +42,29 @@ export function useLocale() {
     saveLanguagePreference(lang);
     i18n.global.locale.value = lang;
 
-    // replace current path with same path but new lang prefix
-    const currentLang = SUPPORTED_LANGS.find((l) =>
-      route.path.startsWith(`/${l}`),
-    );
-    const pathWithoutLang = currentLang
-      ? route.path.substring(currentLang.length + 1) // "/nl/productions" → "/productions"
-      : ""; // only reachable from "/", always results in "/[lang]"
+    const routeLang = typeof route.params.lang === "string" ? route.params.lang : null;
 
-    void router.push(`/${lang}${pathWithoutLang}`);
+    // Preferred path: preserve current route record + params/query/hash, only swap `lang`.
+    if (route.name && routeLang) {
+      void router.push({
+        name: route.name,
+        params: { ...route.params, lang },
+        query: route.query,
+        hash: route.hash,
+      });
+      return;
+    }
+
+    // Fallback for routes without a `lang` param (e.g. "/" before guard
+    // redirect, or the 404 catch-all on a path like "/en/test"). Strip any
+    // existing lang prefix first so repeated switches don't accumulate.
+    const stripped = stripLangPrefix(route.path);
+    const path = stripped === "/" ? `/${lang}` : `/${lang}${stripped}`;
+    void router.push({
+      path,
+      query: route.query,
+      hash: route.hash,
+    });
   }
 
   return { setLocale };

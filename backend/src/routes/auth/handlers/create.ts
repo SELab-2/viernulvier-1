@@ -3,11 +3,9 @@ import type { Admin } from "@viernulvier/shared/index.js";
 import { AdminSchema } from "@viernulvier/shared/index.js";
 import { getMetadata, parseSchema, buildQuery } from "@/routes/helpers.js";
 import { z } from "zod";
-import { hashPassword } from "./hash.js";
+import { hashPassword, PasswordBase } from "./hash.js";
 
-const CreateAdminBodySchema = AdminSchema.pick({ username: true, super: true }).extend({
-  password: z.string().min(8).max(72),
-});
+const CreateAdminBodySchema = AdminSchema.pick({ username: true, super: true }).extend(PasswordBase);
 
 const insertAdmin = (server: FastifyInstance) =>
   buildQuery(

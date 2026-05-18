@@ -74,10 +74,10 @@
 
       <footer class="cms-modal-footer">
         <button type="button" class="cms-side-close" @click="$emit('close')">
-          {{ t("cms.create.cancel") }}
+          {{ t("general.cancel") }}
         </button>
         <button type="button" class="cms-side-save" :disabled="eventsPanelLoading" @click="$emit('submit')">
-          {{ eventsPanelLoading ? t("cms.panel.saving") : "Create event" }}
+          {{ eventsPanelLoading ? t("general.saving") : "Create event" }}
         </button>
       </footer>
     </section>

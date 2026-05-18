@@ -29,6 +29,48 @@ function groupPricesForEvents(
   return grouped;
 }
 
+/** Smallest / largest amounts across tiers (amounts already rounded to whole euros). */
+function rawMinMaxAmounts(amounts: number[]): {
+  minPrice: number | null;
+  maxPrice: number | null;
+} {
+  return amounts.reduce(
+    (acc, amount) => ({
+      minPrice:
+        acc.minPrice === null ? amount : Math.min(acc.minPrice, amount),
+      maxPrice:
+        acc.maxPrice === null ? amount : Math.max(acc.maxPrice, amount),
+    }),
+    { minPrice: null as number | null, maxPrice: null as number | null },
+  );
+}
+
+/**
+ * Prices shown on cards: tier amounts rounded to whole euros; min skips a ubiquitous free (0)
+ * tier by using the second-lowest distinct amount when the lowest is 0.
+ */
+function displayPriceRange(priceRows: EventPrice[]): {
+  minPrice: number | null;
+  maxPrice: number | null;
+} {
+  if (priceRows.length === 0) {
+    return { minPrice: null, maxPrice: null };
+  }
+
+  const amounts = priceRows.map(({ amount }) => Math.round(amount));
+  const raw = rawMinMaxAmounts(amounts);
+  const sortedDistinct = [...new Set(amounts)].sort((a, b) => a - b);
+
+  let minPrice = raw.minPrice;
+  if (
+    sortedDistinct.length >= 2 &&
+    sortedDistinct[0] === 0
+  ) {
+    minPrice = sortedDistinct[1]!;
+  }
+
+  return { minPrice, maxPrice: raw.maxPrice };
+}
 /**
  * Fetches events for a production and attaches hall info and prices.
  */
@@ -71,19 +113,7 @@ export function useProductionEvents(productionId: number) {
       const hallMatch = halls.value.find((h) => h.id === event.hall);
       const priceRows = pricesByEventId.value[event.id] ?? [];
 
-      const { minPrice, maxPrice } = priceRows.reduce(
-        (acc, { amount }) => ({
-          minPrice:
-            acc.minPrice === null
-              ? amount
-              : Math.min(acc.minPrice, amount),
-          maxPrice:
-            acc.maxPrice === null
-              ? amount
-              : Math.max(acc.maxPrice, amount),
-        }),
-        { minPrice: null as number | null, maxPrice: null as number | null },
-      );
+      const { minPrice, maxPrice } = displayPriceRange(priceRows);
 
       return {
         ...event,

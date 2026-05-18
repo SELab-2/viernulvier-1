@@ -19,6 +19,6 @@
   },
   "dependencies": {
     "ag-grid-community": "^35.2.1",
-    "ag-grid-vue3": "^35.2.0"
+    "ag-grid-vue3": "^35.2.1"
   }
 }

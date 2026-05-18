@@ -1,10 +1,13 @@
 /* eslint-disable security/detect-object-injection */
-import { describe, test, expect, beforeAll, afterAll } from "vitest";
+import { describe, test, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import { vi } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import { AdminSchema } from "@viernulvier/shared/index.js";
 import { hashPassword } from "@/routes/auth/handlers/index.js";
+import { authorizeMock } from "@mocks/plugins/authorize.js";
+
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
 
 let server: FastifyInstance;
 
@@ -149,6 +152,10 @@ describe("Auth route integration", () => {
     });
   });
 
+  beforeEach(() => {
+    authorizeMock.super = false; // reset before each test
+  });
+
   afterAll(async () => {
     await server.close();
   });
@@ -171,6 +178,8 @@ describe("Auth route integration", () => {
   });
 
   test("2. POST /api/v1/auth — creates a new admin", async () => {
+    authorizeMock.super = true;
+
     const response = await server.inject({
       method: "POST",
       url: "/api/v1/auth",
@@ -188,6 +197,8 @@ describe("Auth route integration", () => {
   });
 
   test("3. PATCH /api/v1/auth/:id — edits the new admin's username and promotes him to super admin", async () => {
+    authorizeMock.super = true;
+    
     const response = await server.inject({
       method: "PATCH",
       url: `/api/v1/auth/${createdAdminId}`,
@@ -204,6 +215,8 @@ describe("Auth route integration", () => {
   });
 
   test("4. GET /api/v1/auth/:id/meta — fetches the edited admin with metadata", async () => {
+    authorizeMock.super = true;
+    
     const response = await server.inject({
       method: "GET",
       url: `/api/v1/auth/${createdAdminId}/meta`,
@@ -223,6 +236,8 @@ describe("Auth route integration", () => {
   });
 
   test("5. DELETE /api/v1/auth/:id — deletes the new admin", async () => {
+    authorizeMock.super = true;
+    
     const response = await server.inject({
       method: "DELETE",
       url: `/api/v1/auth/${createdAdminId}`,
@@ -236,6 +251,8 @@ describe("Auth route integration", () => {
   });
 
   test("6. GET /api/v1/auth/:id — returns 404 after deletion", async () => {
+    authorizeMock.super = true;
+    
     const response = await server.inject({
       method: "GET",
       url: `/api/v1/auth/${createdAdminId}`,
@@ -246,6 +263,8 @@ describe("Auth route integration", () => {
   });
 
   test("7. POST /api/v1/auth/logout — logs out and clears session cookie", async () => {
+    authorizeMock.super = true;
+    
     const response = await server.inject({
       method: "POST",
       url: "/api/v1/auth/logout",
@@ -312,5 +331,18 @@ describe("Auth route integration", () => {
     const body = AdminSchema.parse(response.json());
     expect(body.username).toBe(existingAdmin.username);
     expect(body.super).toBe(false);
+  });
+
+  test("12. GET /api/v1/auth — fetching admins is allowed when super is set to true in the same session", async () => {
+    mockDb[0]!.super = true;
+    authorizeMock.super = true;
+
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/v1/auth`,
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
   });
 });
