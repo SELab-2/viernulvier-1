@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import { i18n } from "@/i18n";
 import CmsProductionsTab from "@/components/admin/cms/productions/CmsProductionsTab.vue";
