@@ -2078,6 +2078,7 @@ defineExpose({
     closeEventsPanel,
     closeEditorPanel,
     saveEditorPanel,
+    persistBulkProductionPatch,
     rebuildRows,
     loadCmsData,
     bulkEditConfirmOpen,
