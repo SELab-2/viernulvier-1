@@ -2,12 +2,10 @@
  * AgGrid composable for the CMS blogpost tab.
  * Thin wrapper around {@link useCmsGridBase} — only defines blogpost-specific column defs.
  */
-import { computed, h, type Ref } from "vue";
-import type { ColDef, ICellRendererParams } from "ag-grid-community";
+import { computed, type Ref } from "vue";
+import type { ColDef } from "ag-grid-community";
 import type { CmsBlogPostGridRow } from "@/services/cms";
 import { useCmsGridBase } from "./useCmsGridBase";
-import { RouteNames } from "@/router/routeNames";
-import { RouterLink } from "vue-router";
 import type { Language } from "@/utils/language-utils";
 
 type TranslateFunction = (key: string, params?: Record<string, unknown>) => string;
