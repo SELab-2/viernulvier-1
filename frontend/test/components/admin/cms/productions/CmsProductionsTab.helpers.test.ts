@@ -89,9 +89,28 @@ const gridStub = defineComponent({
   template: `<div/>`,
 });
 
+const tabShellStub = defineComponent({
+  name: "CmsTabShell",
+  template: `
+    <div>
+      <slot name="header-actions" />
+      <slot name="status-banner" />
+      <slot name="grid" />
+      <slot name="modals" />
+    </div>
+  `,
+});
+
+const editorPanelStub = defineComponent({
+  name: "CmsEditorPanel",
+  props: ["panel"],
+  emits: ["update:panel", "close", "save"],
+  template: `<div />`,
+});
+
 describe("CmsProductionsTab helpers", () => {
   it("formatTagNames fallback and +N behaviour, setCurrentLanguageValue and edit key", async () => {
-    const wrapper = mount(CmsProductionsTab, { global: { plugins: [i18n], stubs: { AgGridVue: gridStub } } });
+    const wrapper = mount(CmsProductionsTab, { global: { plugins: [i18n], stubs: { AgGridVue: gridStub, CmsTabShell: tabShellStub, CmsEditorPanel: editorPanelStub } } });
     await flushPromises();
     const api = (wrapper.vm as any).$?.exposed.__test;
 
@@ -116,11 +135,45 @@ describe("CmsProductionsTab helpers", () => {
 
     // edit key
     expect(api.getProductionEditKey(12, "perf")).toBe("12:perf");
+
+    // template v-models on CmsTabShell and remove button click
+    const tabShell = wrapper.findComponent({ name: "CmsTabShell" });
+    tabShell.vm.$emit("update:quick-filter-text", "search term");
+    tabShell.vm.$emit("update:column-chooser-open", true);
+    await flushPromises();
+    expect(api.quickFilterText.value).toBe("search term");
+    expect(api.columnChooserOpen.value).toBe(true);
+
+    api.selectedCount.value = 1;
+    api.gridApi.value = {
+      getSelectedRows: () => [{ id: 42 }],
+      deselectAll: vi.fn(),
+    };
+    await flushPromises();
+    await wrapper.find("button.cms-remove-button").trigger("click");
+    await flushPromises();
+    expect(api.removeConfirmOpen.value).toBe(true);
+
+    // editor panel v-model branch
+    const editorPanel = wrapper.findComponent({ name: "CmsEditorPanel" });
+    editorPanel.vm.$emit("update:panel", {
+      rowId: 42,
+      apiField: "description",
+      label: "Description",
+      values: { nl: "A", en: "", fr: "" },
+    });
+    await flushPromises();
+    expect(api.editorPanel.value?.rowId).toBe(42);
+
+    // getPrimaryTagOptions callback path via genres cell editor params
+    const genresColumn = api.columnDefs.value.find((column: any) => column.field === "genres");
+    const editorParams = genresColumn?.cellEditorParams?.();
+    expect(editorParams.values[0]).toBe(0);
   });
 
   // snapshotEventRows and revertEventRow are internal; exercise via onEventRowFocusOut instead
   it("onEventRowFocusOut reverts values when focus leaves container", async () => {
-    const wrapper = mount(CmsProductionsTab, { global: { plugins: [i18n], stubs: { AgGridVue: gridStub } } });
+    const wrapper = mount(CmsProductionsTab, { global: { plugins: [i18n], stubs: { AgGridVue: gridStub, CmsTabShell: tabShellStub, CmsEditorPanel: editorPanelStub } } });
     await flushPromises();
     const api = (wrapper.vm as any).$?.exposed.__test;
 
@@ -135,7 +188,7 @@ describe("CmsProductionsTab helpers", () => {
   });
 
   it("resetCreateLinkedEventForm picks hall from hallsData and allows setters and toggles", async () => {
-    const wrapper = mount(CmsProductionsTab, { global: { plugins: [i18n], stubs: { AgGridVue: gridStub } } });
+    const wrapper = mount(CmsProductionsTab, { global: { plugins: [i18n], stubs: { AgGridVue: gridStub, CmsTabShell: tabShellStub, CmsEditorPanel: editorPanelStub } } });
     await flushPromises();
     const api = (wrapper.vm as any).$?.exposed.__test;
 
@@ -155,10 +208,22 @@ describe("CmsProductionsTab helpers", () => {
 
     api.createForm.value.title.nl = "T";
     expect(api.createForm.value.title.nl).toBe("T");
+
+    api.createExtraLangs.value.en = true;
+    expect(api.visibleCreateLangs.value).toEqual(["nl", "en"]);
+    expect(api.langGridClass.value).toBe("cms-lang-grid cms-lang-grid-double");
+
+    api.createExtraLangs.value.fr = true;
+    expect(api.visibleCreateLangs.value).toEqual(["nl", "en", "fr"]);
+    expect(api.langGridClass.value).toBe("cms-lang-grid");
+
+    api.createExtraLangs.value = { en: false, fr: false };
+    expect(api.visibleCreateLangs.value).toEqual(["nl"]);
+    expect(api.langGridClass.value).toBe("cms-lang-grid cms-lang-grid-single");
   });
 
   it("closeSecondaryTagBulkMode and confirmSecondaryTagBulkReplace/ Diff guards", async () => {
-    const wrapper = mount(CmsProductionsTab, { global: { plugins: [i18n], stubs: { AgGridVue: gridStub } } });
+    const wrapper = mount(CmsProductionsTab, { global: { plugins: [i18n], stubs: { AgGridVue: gridStub, CmsTabShell: tabShellStub, CmsEditorPanel: editorPanelStub } } });
     await flushPromises();
     const api = (wrapper.vm as any).$?.exposed.__test;
 
@@ -173,5 +238,9 @@ describe("CmsProductionsTab helpers", () => {
     api.tagEditorPanel.value = null;
     await api.confirmSecondaryTagBulkReplace();
     await api.confirmSecondaryTagBulkDiff();
+
+    const orphanRow = { id: 999, startsAt: "x", endsAt: "y", doorsAt: "z", hallId: 1, infoNl: "n" };
+    api.revertEventRow(orphanRow);
+    expect(orphanRow.startsAt).toBe("x");
   });
 });

@@ -80,6 +80,7 @@ export default {
       teaser: "Teaser",
       genres: "Primaire tag",
       tags: "Extra tags",
+      imageMedia: "Beeldmedia",
       descriptionOne: "Beschrijving",
       descriptionTwo: "Beschrijving 2",
       media: "Media",
@@ -229,6 +230,7 @@ export default {
     panel: {
       close: "Sluit",
       save: "Opslaan",
+      saving: "Opslaan...",
       saveAction: "Wijzigingen Opslaan",
       saveHint: "Wijzigingen worden pas toegepast nadat je op Wijzigingen Opslaan klikt.",
       text: "Tekst",

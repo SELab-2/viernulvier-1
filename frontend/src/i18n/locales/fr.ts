@@ -80,6 +80,7 @@ export default {
       teaser: "Teaser",
       genres: "Tag principal",
       tags: "Tags additionnels",
+      imageMedia: "Média image",
       descriptionOne: "Description",
       descriptionTwo: "Description 2",
       media: "Media",
@@ -229,6 +230,7 @@ export default {
     panel: {
       close: "Fermer",
       save: "Enregistrer",
+      saving: "Enregistrement...",
       saveAction: "Enregistrer les modifications",
       saveHint: "Les changements ne sont appliques qu'apres avoir clique sur Enregistrer les modifications.",
       text: "Texte",
