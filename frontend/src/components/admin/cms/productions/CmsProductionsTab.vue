@@ -523,17 +523,20 @@ const secondaryTagBulkModeAddedPreview = ref("");
 const secondaryTagBulkModeRemovedPreview = ref("");
 const pendingSecondaryTagBulkRows = ref<CmsProductionGridRow[]>([]);
 
-const inlineFieldToApi: Record<InlineEditableField, keyof ProductionWithBackwardsRefs> = {
-  performer: "artist",
-  title: "title",
-  producer: "supertitle",
+const inlineFieldToApi: Record<InlineEditableField, InlineEditableField> = {
   teaser: "teaser",
-};
+}
 
-const longGridFieldToApi: Record<"descriptionOne" | "descriptionTwo" | "media", ProductionLongField> = {
+type longGridFieldIds = "descriptionOne" | "descriptionTwo" | "media" | "performer" | "artist" | "title" | "producer";
+
+const longGridFieldToApi: Record<longGridFieldIds, ProductionLongField> = {
   descriptionOne: "description",
   descriptionTwo: "description_2",
   media: "video_1",
+  performer: "artist",
+  title: "title",
+  artist: "artist",
+  producer: "supertitle",
 };
 
 const genreTagTypeIds = computed(
@@ -1258,7 +1261,7 @@ function onCellClicked(event: CellClickedEvent<CmsProductionGridRow>): void {
     return;
   }
 
-  const gridField = event.colDef.field as "descriptionOne" | "descriptionTwo" | "media";
+  const gridField = event.colDef.field as longGridFieldIds;
   if (!(gridField in longGridFieldToApi)) {
     return;
   }
