@@ -23,16 +23,16 @@ export const routes: RouteRecordRaw[] = [
         props: true,
       },
       {
+        path: "blog",
+        name: RouteNames.BLOG_POSTS,
+        component: () => import("../views/BlogPostsView.vue"),
+      },
+      {
         path: "blog/post/:id",
         name: RouteNames.BLOG_POST_DETAIL,
         component: () => import("../views/BlogPostDetailView.vue"),
         props: true,
       },
-      //   {
-      //     path: "prints",
-      //     name: RouteNames.PRINTS,
-      //     component: () => import("../views/PrintUploadsView.vue"),
-      //   },
 
       // ADMIN
       {

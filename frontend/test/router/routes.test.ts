@@ -45,16 +45,16 @@ describe("router/routes.ts", () => {
     it.each(["nl", "fr", "en"] as const)(
       "/%s resolves to HOME",
       async (lang) => {
-        await router.push(`/${lang}`);
-        expect(router.currentRoute.value.name).toBe(RouteNames.HOME);
+        const route = router.resolve(`/${lang}`);
+        expect(route.name).toBe(RouteNames.HOME);
       },
     );
 
     it.each(["nl", "fr", "en"] as const)(
       "/%s sets the lang param correctly",
       async (lang) => {
-        await router.push(`/${lang}`);
-        expect(router.currentRoute.value.params.lang).toBe(lang);
+        const route = router.resolve(`/${lang}`);
+        expect(route.params.lang).toBe(lang);
       },
     );
   });
@@ -65,8 +65,8 @@ describe("router/routes.ts", () => {
     it.each(["nl", "fr", "en"] as const)(
       "/%s/productions resolves to PRODUCTIONS",
       async (lang) => {
-        await router.push(`/${lang}/productions`);
-        expect(router.currentRoute.value.name).toBe(RouteNames.PRODUCTIONS);
+        const route = router.resolve(`/${lang}/productions`);
+        expect(route.name).toBe(RouteNames.PRODUCTIONS);
       },
     );
   });
@@ -77,16 +77,14 @@ describe("router/routes.ts", () => {
     it.each(["nl", "fr", "en"] as const)(
       "/%s/productions/:id resolves to PRODUCTION_DETAIL",
       async (lang) => {
-        await router.push(`/${lang}/productions/42`);
-        expect(router.currentRoute.value.name).toBe(
-          RouteNames.PRODUCTION_DETAIL,
-        );
+        const route = router.resolve(`/${lang}/productions/42`);
+        expect(route.name).toBe(RouteNames.PRODUCTION_DETAIL);
       },
     );
 
     it("exposes the id as a route param", async () => {
-      await router.push("/nl/productions/42");
-      expect(router.currentRoute.value.params.id).toBe("42");
+      const route = router.resolve("/nl/productions/42");
+      expect(route.params.id).toBe("42");
     });
 
     it("has props: true so the id param is passed as a component prop", () => {
@@ -102,14 +100,14 @@ describe("router/routes.ts", () => {
     it.each(["nl", "fr", "en"] as const)(
       "/%s/admin resolves to ADMIN",
       async (lang) => {
-        await router.push(`/${lang}/admin`);
-        expect(router.currentRoute.value.name).toBe(RouteNames.ADMIN);
+        const route = router.resolve(`/${lang}/admin`);
+        expect(route.name).toBe(RouteNames.ADMIN);
       },
     );
 
     it("has requiresAdmin: true in meta", async () => {
-      await router.push("/nl/admin");
-      expect(router.currentRoute.value.meta.requiresAdmin).toBe(true);
+      const route = router.resolve("/nl/admin");
+      expect(route.meta.requiresAdmin).toBe(true);
     });
   });
 
@@ -117,14 +115,14 @@ describe("router/routes.ts", () => {
     it.each(["nl", "fr", "en"] as const)(
       "/%s/admin/cms resolves to CMS",
       async (lang) => {
-        await router.push(`/${lang}/admin/cms`);
-        expect(router.currentRoute.value.name).toBe(RouteNames.CMS);
+        const route = router.resolve(`/${lang}/admin/cms`);
+        expect(route.name).toBe(RouteNames.CMS);
       },
     );
 
     it("has requiresAdmin: true in meta", async () => {
-      await router.push("/nl/admin/cms");
-      expect(router.currentRoute.value.meta.requiresAdmin).toBe(true);
+      const route = router.resolve("/nl/admin/cms");
+      expect(route.meta.requiresAdmin).toBe(true);
     });
   });
 
@@ -132,14 +130,14 @@ describe("router/routes.ts", () => {
     it.each(["nl", "fr", "en"] as const)(
       "/%s/admin/login resolves to LOGIN",
       async (lang) => {
-        await router.push(`/${lang}/admin/login`);
-        expect(router.currentRoute.value.name).toBe(RouteNames.LOGIN);
+        const route = router.resolve(`/${lang}/admin/login`);
+        expect(route.name).toBe(RouteNames.LOGIN);
       },
     );
 
     it("does not have requiresAdmin in meta", async () => {
-      await router.push("/nl/admin/login");
-      expect(router.currentRoute.value.meta.requiresAdmin).toBeFalsy();
+      const route = router.resolve("/nl/admin/login");
+      expect(route.meta.requiresAdmin).toBeFalsy();
     });
 
     it("redirects to admin when already logged in", async () => {
@@ -161,13 +159,13 @@ describe("router/routes.ts", () => {
 
   describe("lang param validation", () => {
     it("rejects an unsupported language prefix like /de", async () => {
-      await router.push("/de");
-      expect(router.currentRoute.value.name).toBe(RouteNames.NOT_FOUND);
+      const route = router.resolve("/de");
+      expect(route.name).toBe(RouteNames.NOT_FOUND);
     });
 
     it("rejects /de/productions and falls through to NOT_FOUND", async () => {
-      await router.push("/de/productions");
-      expect(router.currentRoute.value.name).toBe(RouteNames.NOT_FOUND);
+      const route = router.resolve("/de/productions");
+      expect(route.name).toBe(RouteNames.NOT_FOUND);
     });
   });
 
@@ -175,18 +173,18 @@ describe("router/routes.ts", () => {
 
   describe("404 route", () => {
     it("catches completely unknown paths", async () => {
-      await router.push("/this/does/not/exist");
-      expect(router.currentRoute.value.name).toBe(RouteNames.NOT_FOUND);
+      const route = router.resolve("/this/does/not/exist");
+      expect(route.name).toBe(RouteNames.NOT_FOUND);
     });
 
     it("catches unknown paths with a valid lang prefix", async () => {
-      await router.push("/nl/unknown-page");
-      expect(router.currentRoute.value.name).toBe(RouteNames.NOT_FOUND);
+      const route = router.resolve("/nl/unknown-page");
+      expect(route.name).toBe(RouteNames.NOT_FOUND);
     });
 
     it("home routes do not have requiresAdmin in meta", async () => {
-      await router.push("/nl");
-      expect(router.currentRoute.value.meta.requiresAdmin).toBeFalsy();
+      const route = router.resolve("/nl");
+      expect(route.meta.requiresAdmin).toBeFalsy();
     });
   });
 });

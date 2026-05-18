@@ -41,7 +41,7 @@ export function useCmsGridBase<TRow>(options: UseCmsGridBaseOptions) {
     mode: "multiRow" as const,
     checkboxes: true,
     headerCheckbox: true,
-    enableClickSelection: true,
+    enableClickSelection: false,
   };
 
   const agThemeVars = computed<Record<string, string>>(() => {

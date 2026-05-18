@@ -17,6 +17,8 @@ function buildProduction(overrides: Partial<CmsProductionGridRow> = {}): CmsProd
     tags: "",
     descriptionOne: "",
     descriptionTwo: "",
+    imageMedia: "",
+    imageMediaUrls: [],
     media: "",
     events: [],
     ...overrides,
