@@ -153,11 +153,11 @@ onMounted(async () => {
 });
 
 const rawContent = computed(() =>
-  localizeWithFallback(post.value?.content, (map) => localizeOrEmpty(map, currentLang.value))
+  localizeWithFallback(post.value?.content, (map) => localizeOrEmpty(map, currentLang.value)),
 );
 
 const title = computed(() =>
-  localizeWithFallback(post.value?.title, (map) => localizeOrEmpty(map, currentLang.value))
+  localizeWithFallback(post.value?.title, (map) => localizeOrEmpty(map, currentLang.value)),
 );
 
 const leadImage = computed(() => extractFirstMdImage(rawContent.value));
