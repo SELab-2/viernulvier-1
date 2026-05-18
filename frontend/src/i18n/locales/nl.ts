@@ -363,6 +363,7 @@ export default {
       title: "Verwante artikelen",
       body: "Achtergrondverhalen, interviews en notities uit het archief bij deze productie.",
       all: "Alle artikelen",
+      readMore: "Lees meer",
     },
     notFound: {
       kicker: "Dossier nr. 404 · Niet in de collectie",
@@ -389,9 +390,11 @@ export default {
     loading: "Blogpost laden",
     notFound: "Blogpost niet gevonden",
     notFoundDescription: "Deze blogpost bestaat niet of is niet meer beschikbaar.",
-    errorGeneric: "Er is iets misgegaan bij het laden van deze blogpost.",
+    errorGenericKicker: "Oeps!",
+    errorGenericTitle: "Er ging iets mis",
+    errorGenericDescription: "We konden deze blogpost helaas niet laden. Probeer het later opnieuw.",
     publishedOn: "Gepubliceerd op {date}",
-    backToHome: "Terug naar home",
+    backToBlog: "Terug naar alle blogposts",
     relatedProductions: "Gerelateerde producties",
   },
   errors: {

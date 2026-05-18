@@ -44,7 +44,7 @@
           @retry-events="eventsRetry"
         />
         <GallerySection :slides="gallerySlides" />
-        <BlogSection />
+        <BlogSection :blog-posts="blogPosts" :loading="blogLoading" />
       </template>
     </main>
 
@@ -66,7 +66,7 @@ import { useRoute } from "vue-router";
 import type { ImageWithCrops } from "@/services/media";
 import { getImagesForProductionOrEmpty } from "@/services/media";
 import { getProduction } from "@/services/productions";
-import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
+import type { BlogPostWithBackwardsRefs, ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import {
   pickHighQualityImageCropUrl,
   pickProductionDetailBannerUrl,
@@ -78,6 +78,7 @@ import { ApiError } from "@/services/api";
 import { useTagGroups } from "@/composables/useTagGroups";
 import { useProductionEvents } from "@/composables/useProductionEvents";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
+import { getBlogPost } from "@/services/blogposts";
 
 const { t } = useI18n();
 const { isDark } = useDarkMode();
@@ -87,6 +88,8 @@ const id = Number(route.params.id);
 
 const production = ref<ProductionWithBackwardsRefs | null>(null);
 const productionImages = ref<ImageWithCrops[]>([]);
+const blogPosts = ref<BlogPostWithBackwardsRefs[]>([]);
+const blogLoading = ref(false);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const notFound = ref(false);
@@ -99,6 +102,13 @@ onMounted(async () => {
     ]);
     production.value = fetched;
     productionImages.value = images;
+
+    loading.value = false;
+
+    const postIds = (fetched.blogposts || []) as number[];
+    if (postIds.length > 0) {
+      void loadBlogPosts(postIds);
+    }
   } catch (e: unknown) {
     if (e instanceof ApiError && e.status === 404) {
       notFound.value = true;
@@ -107,10 +117,21 @@ onMounted(async () => {
     } else {
       error.value = "Error loading production";
     }
-  } finally {
     loading.value = false;
   }
 });
+
+async function loadBlogPosts(ids: number[]) {
+  blogLoading.value = true;
+  try {
+    const postResults = await Promise.allSettled(ids.map(id => getBlogPost(id)));
+    blogPosts.value = postResults
+      .filter((r): r is PromiseFulfilledResult<BlogPostWithBackwardsRefs> => r.status === 'fulfilled')
+      .map(r => r.value);
+  } finally {
+    blogLoading.value = false;
+  }
+}
 
 const { tagGroups, totalTags } = useTagGroups(id);
 const { events, loading: eventsLoading, error: eventsError, retry: eventsRetry } = useProductionEvents(id);

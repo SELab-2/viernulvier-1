@@ -2,8 +2,8 @@
   <div class="flex min-h-screen flex-col bg-surface-0 transition-colors duration-300">
     <AppNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
 
-    <main class="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
-      <!-- Loading state -->
+    <main v-if="loading || post" class="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
+      
       <div v-if="loading" class="flex min-h-[40vh] items-center justify-center" role="status" aria-live="polite">
         <div class="flex items-center gap-1">
           <span class="text-[10px] font-black uppercase tracking-[0.3em] text-ink-secondary">
@@ -17,39 +17,11 @@
         </div>
       </div>
 
-      <!-- Not found state -->
-      <div v-else-if="error === 'not-found'" class="post-error" role="alert">
-        <h1 class="mb-3 text-2xl font-bold text-ink-primary">
-          {{ t("blogpost.notFound") }}
-        </h1>
-        <p class="mb-6 text-ink-secondary">{{ t("blogpost.notFoundDescription") }}</p>
-        <RouterLink
-          :to="{ name: RouteNames.HOME, params: { lang: currentLang } }"
-          class="back-link"
-        >
-          {{ t("blogpost.backToHome") }}
-        </RouterLink>
-      </div>
-
-      <!-- Generic error state -->
-      <div v-else-if="error === 'generic'" class="post-error" role="alert">
-        <p class="mb-6 text-ink-secondary">{{ t("blogpost.errorGeneric") }}</p>
-        <RouterLink
-          :to="{ name: RouteNames.HOME, params: { lang: currentLang } }"
-          class="back-link"
-        >
-          {{ t("blogpost.backToHome") }}
-        </RouterLink>
-      </div>
-
-      <!-- Happy path -->
       <article v-else-if="post" class="animate-fade-up">
-
         <header class="mb-16">
           <div v-if="formattedPublishedAt" class="mb-6 text-[10px] font-black uppercase tracking-[0.3em] text-ink-tertiary">
             {{ formattedPublishedAt }}
           </div>
-          
           <h1 class="font-serif text-5xl font-black italic uppercase leading-[1.05] text-ink-primary lg:text-7xl">
             {{ title }}
           </h1>
@@ -63,9 +35,28 @@
           :date-ranges="dateRangeByProductionId" 
           :is-loading="loadingProductions" 
         />
-
       </article>
+
     </main>
+
+    <template v-else>
+      <NotFound 
+        v-if="error === 'not-found'"
+        :title="t('blogpost.notFound')"
+        :description="t('blogpost.notFoundDescription')"
+        :button-link="`/${currentLang}/blog`"
+        :button-label="t('blogpost.backToBlog')"
+      />
+
+      <NotFound 
+        v-else-if="error === 'generic'"
+        :kicker="t('blogpost.errorGenericKicker')"
+        :title="t('blogpost.errorGenericTitle')"
+        :description="t('blogpost.errorGenericDescription')"
+        :button-link="`/${currentLang}/blog`"
+        :button-label="t('blogpost.backToBlog')"
+      />
+    </template>
 
     <AppFooter />
   </div>
@@ -73,17 +64,16 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
-import { RouterLink } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
-import { RouteNames } from "@/router/routeNames";
 import { getBlogPost } from "@/services/blogposts";
 import { ApiError } from "@/services/api";
 import AppNavbar from "@/components/nav/AppNavbar.vue";
 import AppFooter from "@/components/AppFooter.vue";
+import NotFound from "@/components/NotFound.vue";
 import type { BlogPostWithBackwardsRefs, ProductionWithBackwardsRefs } from "@viernulvier/shared";
-import { localizeOrEmpty } from "@/utils/language-utils";
+import { localizeOrEmpty, localizeWithFallback } from "@/utils/language-utils";
 import { parseAndSanitizeMd } from "@/utils/parsers";
 import { getProduction } from "@/services/productions";
 import LinkedProductionsCarousel from "@/components/blogpost/LinkedProductionsCarousel.vue";
@@ -101,9 +91,18 @@ const loading = ref<boolean>(true);
 const error = ref<"not-found" | "generic" | null>(null);
 const loadingProductions = ref<boolean>(false);
 
-const title = computed(() => localizeOrEmpty(post.value?.title ?? {}, currentLang.value));
+const title = computed(() => 
+  localizeWithFallback(
+    post.value?.title, 
+    (map) => localizeOrEmpty(map, currentLang.value),
+  ),
+);
+
 const bodyHtml = computed(() => {
-  const rawMarkdown = localizeOrEmpty(post.value?.content ?? {}, currentLang.value);
+  const rawMarkdown = localizeWithFallback(
+    post.value?.content, 
+    (map) => localizeOrEmpty(map, currentLang.value),
+  );
   return parseAndSanitizeMd(rawMarkdown);
 });
 
