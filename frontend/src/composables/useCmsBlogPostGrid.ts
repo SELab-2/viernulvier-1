@@ -2,10 +2,13 @@
  * AgGrid composable for the CMS blogpost tab.
  * Thin wrapper around {@link useCmsGridBase} — only defines blogpost-specific column defs.
  */
-import { computed, type Ref } from "vue";
-import type { ColDef } from "ag-grid-community";
+import { computed, h, type Ref } from "vue";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import type { CmsBlogPostGridRow } from "@/services/cms";
 import { useCmsGridBase } from "./useCmsGridBase";
+import { RouteNames } from "@/router/routeNames";
+import { RouterLink } from "vue-router";
+import type { Language } from "@/utils/language-utils";
 
 type TranslateFunction = (key: string, params?: Record<string, unknown>) => string;
 
@@ -24,6 +27,7 @@ const cmsBlogPostGridColumnIds = [
 export function useCmsBlogPostGrid(options: {
   isDark: Ref<boolean>;
   t: TranslateFunction;
+  currentLang: Ref<Language>;
 }) {
   const base = useCmsGridBase<CmsBlogPostGridRow>({
     isDark: options.isDark,
@@ -68,7 +72,7 @@ export function useCmsBlogPostGrid(options: {
       minWidth: 50,
       maxWidth: 100,
       cellRenderer: (params: { value: number }) =>
-        `<a href="/blog/post/${params.value}" class="text-ink-primary underline hover:text-ink-secondary transition-colors">${params.value}</a>`,
+        `<a href="/${options.currentLang.value}/blog/post/${params.value}" target="_blank" rel="noopener noreferrer" class="text-ink-primary underline hover:text-ink-secondary transition-colors">${params.value}</a>`,
     },
     {
       headerName: options.t("cms.columns.title"),
