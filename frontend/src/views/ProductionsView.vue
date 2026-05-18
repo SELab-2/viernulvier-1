@@ -448,95 +448,95 @@
             </p>
 
             <div v-else>
-            <div
-              v-if="layoutMode === 'grid'"
-              class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3"
-            >
-              <ProductionGridCard
+              <div
+                v-if="layoutMode === 'grid'"
+                class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3"
+              >
+                <ProductionGridCard
+                  v-for="(p, idx) in productions"
+                  :key="`${currentPage}-${idx}-${p.id}`"
+                  :row-index="idx"
+                  :production="p"
+                  :date-summary="dateSummaryFor(p.id)"
+                  :tag-chips="tagChipsFor(p)"
+                  :thumbnail-url="thumbnailFor(p.id)"
+                />
+              </div>
+              <ProductionListCard
                 v-for="(p, idx) in productions"
+                v-else
                 :key="`${currentPage}-${idx}-${p.id}`"
                 :row-index="idx"
                 :production="p"
                 :date-summary="dateSummaryFor(p.id)"
                 :tag-chips="tagChipsFor(p)"
+                :halls-text="hallsTextFor(p.id)"
                 :thumbnail-url="thumbnailFor(p.id)"
               />
-            </div>
-            <ProductionListCard
-              v-for="(p, idx) in productions"
-              v-else
-              :key="`${currentPage}-${idx}-${p.id}`"
-              :row-index="idx"
-              :production="p"
-              :date-summary="dateSummaryFor(p.id)"
-              :tag-chips="tagChipsFor(p)"
-              :halls-text="hallsTextFor(p.id)"
-              :thumbnail-url="thumbnailFor(p.id)"
-            />
 
-            <nav
-              v-if="totalPages > 1"
-              class="productions-view__pagination"
-              aria-label="Pagination"
-            >
-              <p
-                class="text-center text-sm text-ink-secondary tabular-nums sm:text-left"
+              <nav
+                v-if="totalPages > 1"
+                class="productions-view__pagination"
+                aria-label="Pagination"
               >
-                {{
-                  t("productionsPage.showingRange", {
-                    from: rangeFrom,
-                    to: rangeTo,
-                    total: totalCount,
-                  })
-                }}
-              </p>
-              <div
-                class="productions-view__pagination-toolbar"
-                role="group"
-                :aria-label="t('productionsPage.goToPage')"
-              >
-                <button
-                  type="button"
-                  class="productions-view__pager-btn"
-                  :disabled="currentPage <= 0 || listLoading"
-                  @click="goToPage(currentPage - 1)"
+                <p
+                  class="text-center text-sm text-ink-secondary tabular-nums sm:text-left"
                 >
-                  {{ t("productionsPage.prevPage") }}
-                </button>
+                  {{
+                    t("productionsPage.showingRange", {
+                      from: rangeFrom,
+                      to: rangeTo,
+                      total: totalCount,
+                    })
+                  }}
+                </p>
                 <div
-                  class="flex items-center gap-2 text-sm tabular-nums text-ink-secondary"
+                  class="productions-view__pagination-toolbar"
+                  role="group"
+                  :aria-label="t('productionsPage.goToPage')"
                 >
-                  <span class="whitespace-nowrap">{{
-                    t("productionsPage.pageWord")
-                  }}</span>
-                  <input
-                    :value="pageNumberInput"
-                    type="text"
-                    inputmode="numeric"
-                    autocomplete="off"
-                    maxlength="6"
-                    :disabled="listLoading"
-                    :aria-label="t('productionsPage.goToPage')"
-                    class="productions-view__page-input"
-                    @input="onPageNumberInput"
-                    @keydown.enter.prevent="commitPageNumberInput"
-                    @blur="commitPageNumberInput"
-                  />
-                  <span class="whitespace-nowrap">{{
-                    t("productionsPage.pageOfTotal", { total: totalPages })
-                  }}</span>
+                  <button
+                    type="button"
+                    class="productions-view__pager-btn"
+                    :disabled="currentPage <= 0 || listLoading"
+                    @click="goToPage(currentPage - 1)"
+                  >
+                    {{ t("productionsPage.prevPage") }}
+                  </button>
+                  <div
+                    class="flex items-center gap-2 text-sm tabular-nums text-ink-secondary"
+                  >
+                    <span class="whitespace-nowrap">{{
+                      t("productionsPage.pageWord")
+                    }}</span>
+                    <input
+                      :value="pageNumberInput"
+                      type="text"
+                      inputmode="numeric"
+                      autocomplete="off"
+                      maxlength="6"
+                      :disabled="listLoading"
+                      :aria-label="t('productionsPage.goToPage')"
+                      class="productions-view__page-input"
+                      @input="onPageNumberInput"
+                      @keydown.enter.prevent="commitPageNumberInput"
+                      @blur="commitPageNumberInput"
+                    />
+                    <span class="whitespace-nowrap">{{
+                      t("productionsPage.pageOfTotal", { total: totalPages })
+                    }}</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="productions-view__pager-btn"
+                    :disabled="currentPage >= totalPages - 1 || listLoading"
+                    @click="goToPage(currentPage + 1)"
+                  >
+                    {{ t("productionsPage.nextPage") }}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  class="productions-view__pager-btn"
-                  :disabled="currentPage >= totalPages - 1 || listLoading"
-                  @click="goToPage(currentPage + 1)"
-                >
-                  {{ t("productionsPage.nextPage") }}
-                </button>
-              </div>
-            </nav>
-          </div>
+              </nav>
+            </div>
           </div>
         </div>
       </section>

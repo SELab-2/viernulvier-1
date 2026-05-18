@@ -19,7 +19,7 @@ describe("ProductionsFilterSkeleton.vue", () => {
   });
 
   it("renders placeholder elements for both filter rows", () => {
-    const wrapper = mount(ProductionsFilterSkeleton);.
+    const wrapper = mount(ProductionsFilterSkeleton);
     const rows = wrapper.find(".animate-pulse").findAll(":scope > div");
     expect(rows.length).toBeGreaterThanOrEqual(2);
   });
