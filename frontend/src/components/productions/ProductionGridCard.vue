@@ -102,7 +102,7 @@ import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import type { SupportedLang } from "@/i18n";
 import { RouteNames } from "@/router/routeNames";
 import EventCalendarIcon from "@/components/icons/EventCalendarIcon.vue";
-import { localizeOrEmpty } from "@/utils/language-utils";
+import { localizeWithFallback, localizeOrEmpty } from "@/utils/language-utils";
 import type { ProductionDateSummary } from "@/utils/productionsOverview";
 import type { ProductionTagChip } from "@/utils/tagDisplay";
 import { useDarkMode } from "@/composables/useDarkMode";
@@ -176,10 +176,10 @@ const staggerDelayMs = computed(() =>
 );
 
 const title = computed(() =>
-  localizeOrEmpty(props.production.title, locale.value as SupportedLang),
+  localizeWithFallback(props.production.title, (map) => localizeOrEmpty(map, locale.value as SupportedLang)),
 );
 const artist = computed(() =>
-  localizeOrEmpty(props.production.artist, locale.value as SupportedLang),
+  localizeWithFallback(props.production.artist, (map) => localizeOrEmpty(map, locale.value as SupportedLang)),
 );
 </script>
 
