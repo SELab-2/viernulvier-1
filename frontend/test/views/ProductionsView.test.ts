@@ -1024,4 +1024,48 @@ describe("ProductionsView.vue", () => {
     expect(router.currentRoute.value.query.page).toBeUndefined();
     wrapper.unmount();
   });
+
+  it("uses view=grid from the URL so grid layout stays selected after load", async () => {
+    const { wrapper, router } = await mountView("/nl/productions?view=grid");
+    const gridBtn = wrapper.find('[aria-label="Rasterweergave"]');
+    expect(gridBtn.attributes("aria-pressed")).toBe("true");
+    expect(router.currentRoute.value.query.view).toBe("grid");
+    wrapper.unmount();
+  });
+
+  it("adds view=grid to the URL when toggling to grid layout", async () => {
+    const { wrapper, router } = await mountView();
+    await wrapper.find('[aria-label="Rasterweergave"]').trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query.view).toBe("grid");
+    wrapper.unmount();
+  });
+
+  it("removes view from the URL when switching back to list", async () => {
+    const { wrapper, router } = await mountView("/nl/productions?view=grid");
+    await flushPromises();
+    await wrapper.find('[aria-label="Lijstweergave"]').trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query.view).toBeUndefined();
+    wrapper.unmount();
+  });
+
+  it("drops view=list after load since list uses the canonical URL without view", async () => {
+    const { wrapper, router } = await mountView("/nl/productions?view=list");
+    await flushPromises();
+    expect(router.currentRoute.value.query.view).toBeUndefined();
+    const listBtn = wrapper.find('[aria-label="Lijstweergave"]');
+    expect(listBtn.attributes("aria-pressed")).toBe("true");
+    wrapper.unmount();
+  });
+
+  it("switches layout to list when view is cleared from the URL after load", async () => {
+    const { wrapper, router } = await mountView("/nl/productions?view=grid");
+    await flushPromises();
+    await router.replace({ path: "/nl/productions", query: {} });
+    await flushPromises();
+    const listBtn = wrapper.find('[aria-label="Lijstweergave"]');
+    expect(listBtn.attributes("aria-pressed")).toBe("true");
+    wrapper.unmount();
+  });
 });
