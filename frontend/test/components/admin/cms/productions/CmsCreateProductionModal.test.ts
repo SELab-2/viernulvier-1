@@ -29,8 +29,7 @@ function buildForm(overrides: Partial<CreateFormState> = {}): CreateFormState {
     supertitle: { nl: "", fr: "", en: "" },
     description: { nl: "", fr: "", en: "" },
     description_2: { nl: "", fr: "", en: "" },
-    video_1: { nl: "", fr: "", en: "" },
-    video_2: { nl: "", fr: "", en: "" },
+    media: [],
     ...overrides,
   };
 }
@@ -84,13 +83,17 @@ describe("CmsCreateProductionModal.vue", () => {
   });
 
   it("emits file change, close and submit events", async () => {
-    const wrapper = mountModal();
+    const wrapper = mountModal({
+      createForm: buildForm({
+        media: [{ id: "media-1", type: "image", url: "", isUploaded: false }],
+      }),
+    });
 
-    await wrapper.get('input[type="file"][accept="image/*"]').trigger("change");
+    await wrapper.get('input[type="file"]').trigger("change");
     await wrapper.get(".cms-modal-overlay").trigger("click.self");
     await wrapper.get(".cms-side-save").trigger("click");
 
-    expect(wrapper.emitted("image-file-change")?.length).toBe(1);
+    expect(wrapper.emitted("media-file-change")?.length).toBe(1);
     expect(wrapper.emitted("close")?.length).toBeGreaterThan(0);
     expect(wrapper.emitted("submit")?.length).toBe(1);
   });
@@ -102,7 +105,7 @@ describe("CmsCreateProductionModal.vue", () => {
     });
 
     expect(wrapper.text()).toContain("Could not save");
-    expect(wrapper.text()).toContain(i18n.global.t("cms.create.saving"));
+    expect(wrapper.text()).toContain(i18n.global.t("general.saving"));
     expect(wrapper.get(".cms-side-save").attributes("disabled")).toBeDefined();
   });
 
@@ -123,23 +126,38 @@ describe("CmsCreateProductionModal.vue", () => {
   });
 
   it("covers fr language toggle, media url inputs and both close buttons", async () => {
-    const wrapper = mountModal({ createExtraLangs: { en: true, fr: false } });
+    const wrapper = mountModal({
+      createExtraLangs: { en: true, fr: false },
+      createForm: buildForm({
+        media: [{ id: "media-2", type: "video", url: "", isUploaded: false }],
+      }),
+    });
 
     await wrapper.findAll(".cms-language-pill")[2]?.trigger("click");
-    await wrapper.get('input[placeholder="https://example.com/image.jpg"]').setValue("https://example.com/primary.jpg");
     await wrapper
-      .findAll('input[placeholder="https://example.com/image.jpg"]')[1]
-      ?.setValue("https://example.com/secondary.jpg");
-    await wrapper
-      .get('input[placeholder="https://www.youtube.com/watch?v=..."]')
+      .get('input[placeholder="https://example.com/video"]')
       .setValue("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
     await wrapper.findAll(".cms-side-close")[0]?.trigger("click");
     await wrapper.findAll(".cms-side-close")[1]?.trigger("click");
 
     expect(wrapper.emitted("update-extra-lang")?.some((payload) => payload[0] === "fr")).toBe(true);
-    expect(wrapper.emitted("update-form-field")?.some((payload) => payload[0] === "video_1")).toBe(true);
-    expect(wrapper.emitted("update-form-field")?.some((payload) => payload[0] === "video_2")).toBe(true);
+    expect(wrapper.emitted("update-media-url")?.length).toBe(1);
     expect(wrapper.emitted("close")?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("emits remove-media when deleting a media item", async () => {
+    const wrapper = mountModal({
+      createForm: buildForm({
+        media: [
+          { id: "media-1", type: "image", url: "", isUploaded: false },
+          { id: "media-2", type: "video", url: "https://example.com/video", isUploaded: false },
+        ],
+      }),
+    });
+
+    await wrapper.get("button.cms-media-item-remove").trigger("click");
+
+    expect(wrapper.emitted("remove-media")?.[0]).toEqual(["media-1"]);
   });
 });

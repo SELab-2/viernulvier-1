@@ -3,6 +3,8 @@ import type { FastifyInstance } from "fastify";
 
 import { buildServer } from "@/server.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let storedEvents: Array<{ id: number; [key: string]: unknown }>;
 let sessionCookie: string;
@@ -88,7 +90,6 @@ describe("Event Bulk Edit Routes", () => {
         cookies: { session: sessionCookie },
         payload: { ids: [1, 3], production: 99 },
       });
-
       expect(editResponse.statusCode).toBe(200);
       expect(editResponse.json()).toEqual([
         {
@@ -299,7 +300,7 @@ describe("Event Bulk Edit Routes", () => {
       });
 
       expect(response.statusCode).toBe(400);
-      expect(response.json()).toMatchObject({ error: "Invalid request data" });
+      expect(response.json()).toMatchObject({ error: "Bad Request" });
     });
 
     test("returns 404 when any event not in database", async () => {

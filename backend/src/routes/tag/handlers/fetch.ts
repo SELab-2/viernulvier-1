@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Tag, TagWithMeta } from "@viernulvier/shared/index.js";
-import { TagSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { TagSchema, serial, stringToInt } from "@viernulvier/shared/index.js";
 import { parseParams, buildQuery, parseSchema, ParseContext } from "@/routes/helpers.js";
 import { z } from "zod";
 
@@ -13,7 +13,7 @@ FROM tag
 const TagDbRowSchema = TagSchema.omit({ productions: true });
 const TagDbRowWithMetaSchema = TagSchema.withMeta().omit({ productions: true });
 
-const TagsListQuerySchema = z
+export const TagsListQuerySchema = z
   .object({
     production: stringToInt.optional(),
     old_id: stringToInt.optional(),
@@ -207,6 +207,25 @@ const fetchTagsVisibleByProductionQuery = (server: FastifyInstance) =>
   );
 
 /**
+ * Internal helper to fetch a single tag by ID with linked production IDs.
+ *
+ * @param server - The Fastify instance, used for database access and logging.
+ * @param id - The tag ID to fetch.
+ * @returns The tag with productions, or `null` if not found or parsing failed.
+ */
+export async function getTagById(
+  server: FastifyInstance,
+  id: string | number,
+): Promise<Tag | null> {
+  const rows = await fetchTagByIdQuery(server)(Number(id));
+  const row = rows[0];
+  if (!row) return null;
+  const byTag = await fetchProductionIdsByTagIds(server, [row.id]);
+  const merged = tagsFromDbRows([row], byTag, true);
+  return parseSchema(server, TagSchema, merged[0], ParseContext.Database);
+}
+
+/**
  * Fetches a single tag by ID (including non-public tags), with linked production IDs.
  *
  * @param server - The Fastify instance, used for database access and logging.
@@ -217,7 +236,7 @@ async function fetchTag(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Tag | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const rows = await fetchTagByIdQuery(server)(id);
   const row = rows[0];
   if (!row) return null;
@@ -237,7 +256,7 @@ async function fetchTagVisible(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Tag | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const rows = await fetchTagVisibleByIdQuery(server)(id);
   const row = rows[0];
   if (!row) return null;
@@ -257,7 +276,7 @@ async function fetchTagWithMeta(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<TagWithMeta | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const rows = await fetchTagWithMetaByIdQuery(server)(id);
   const row = rows[0];
   if (!row) return null;

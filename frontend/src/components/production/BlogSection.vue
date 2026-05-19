@@ -1,70 +1,94 @@
+<!-- eslint-disable vue/no-v-html -- previews are rendered from parseAndSanitizeMd, which sanitizes markdown HTML through DOMPurify. -->
 <template>
-  <section class="border-y border-surface-3 bg-surface-0 py-24">
+  <section v-if="loading || blogPosts.length > 0" class="border-y border-surface-3 bg-surface-1 py-24">
     <div class="mx-auto max-w-7xl px-6 md:px-12">
       <div class="mb-12 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <h2 class="text-4xl font-black uppercase tracking-tighter text-ink-primary">
-            Related Blogposts
+          <h2 class="font-serif text-3xl font-semibold leading-tight tracking-tight text-ink-primary md:text-4xl">
+            {{ t("production.blog.title") }}
           </h2>
-          <p class="mt-2 text-sm tracking-wide text-ink-secondary">
-            In-depth blogposts and articles connected to this production.
+          <p class="mt-2 text-sm leading-relaxed text-ink-secondary">
+            {{ t("production.blog.body") }}
           </p>
         </div>
-        <a
-          href="#"
-          class="border-b-2 border-ink-primary text-ink-primary pb-1 text-[10px] font-bold uppercase tracking-widest"
-        >
-          All Blogposts
-        </a>
       </div>
-      
-      <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
-        <div v-for="(insight, index) in insights" :key="index" class="group cursor-pointer">
-          <div class="mb-6 aspect-video overflow-hidden bg-surface-2">
-            <img
-              :alt="insight.title"
-              class="h-full w-full object-cover grayscale transition-transform duration-700 group-hover:scale-105"
-              :src="insight.image"
-              referrerPolicy="no-referrer"
-            />
+
+      <div v-if="loading" class="grid grid-cols-1 gap-12 md:grid-cols-3" role="status" aria-busy="true">
+        <div v-for="i in 3" :key="i" class="animate-pulse">
+          <div class="mb-4 h-3 w-24 bg-surface-3"></div>
+          <div class="mb-2 h-7 w-full bg-surface-3"></div>
+          <div class="mb-6 h-7 w-2/3 bg-surface-3"></div>
+          <div class="space-y-2">
+            <div class="h-4 w-full bg-surface-2"></div>
+            <div class="h-4 w-full bg-surface-2"></div>
+            <div class="h-4 w-4/5 bg-surface-2"></div>
           </div>
-          <span class="text-[10px] font-black uppercase tracking-widest text-ink-tertiary">
-            {{ insight.category }}
-          </span>
-          <h3 class="mt-2 text-2xl font-bold text-ink-primary decoration-2 group-hover:underline">
-            {{ insight.title }}
-          </h3>
-          <p class="mt-4 text-sm leading-relaxed text-ink-secondary">
-            {{ insight.description }}
-          </p>
         </div>
+      </div>
+
+      <div v-else class="grid grid-cols-1 gap-12 md:grid-cols-3">
+        <RouterLink 
+          v-for="post in blogPosts" 
+          :key="post.id"
+          :to="{ name: RouteNames.BLOG_POST_DETAIL, params: { id: post.id, lang: currentLang } }"
+          class="group block"
+        >
+          <span class="text-[10px] font-black uppercase tracking-[0.3em] text-ink-tertiary">
+            {{ formatShortDate(post.published_at ?? "", currentLang) }}
+          </span>
+          
+          <h3 class="mt-3 font-serif text-2xl font-black italic uppercase leading-[1.05] text-ink-primary decoration-1 underline-offset-4 group-hover:underline">
+            {{ localizeWithFallback(post.title, (map) => localizeOrEmpty(map ?? {}, currentLang)) }}
+          </h3>
+          
+          <div 
+            class="mt-4 line-clamp-3 text-sm leading-relaxed text-ink-secondary prose-flat"
+            v-html="getPreview(post.content)"
+          ></div>
+          
+          <div class="mt-6 flex items-center gap-2 border-b border-ink-primary pb-1 w-fit">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-ink-primary">
+              {{ t("production.blog.readMore") }}
+            </span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </div>
+        </RouterLink>
       </div>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-const insights = [
-  {
-    category: "Essay — Oct 2024",
-    title: "Sculpting with Shadow: Elena Vance’s Lightwork",
-    description:
-      "How lighting design transformed a minimalist stage into a complex architectural maze.",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCm-IV4I29eomSGLY4WPdxEyXqZeyFa8eQPus8fFLlpWpPNqFWykEaxZ8mCN2osbnDmxdBjCVc5PxCUZVb55mBD9LBRQYmF6S4sCDcLd2RgsEJXVh1juUvJX9rpUgkWIIYON5QIJtGE3HwurGDQC_c6hQogKZpm_1psN5p7Uo2zPQu9M1I3EjOxio2J0iOaCqZt7UfkCSXZYwRsNcnZqvaddt9ZIpd2uFgmAGgnrYT6nm_OwyKdHSsq2V8TE7uldF4abQK2bepI5GbV",
-  },
-  {
-    category: "Interview — Sep 2024",
-    title: "Marina Kostova on the Power of Structural Voids",
-    description:
-      "A conversation about the skeletal frame, negative space, and the dancer's endurance.",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBvVM2WYuziq9ZRq9DFQzHhahGLZGPSJOcmI0dG0rqKNLFrtc7scqYC6AIPf0RPnuD_MZJnEpe0L96NUtVK6A4-QbPNf5-ZZFWD4pYcSOhwBATNu4XeMRgbnkRWjzD9jWWKNd30gL6RG6f_DSMT0CkHkf2tO4RX9cCfCba2L8ekdqqcKxCxBxqOcMpXKH6SV6McWGVuvpmvM8FnqogxodboFv9M56KtICF45QsgOsR2qzAdaoySRErUkW4NnWbepTE13OTYNzUw1wd7",
-  },
-  {
-    category: "Archive Note — Nov 2024",
-    title: "Technical Rider Analysis: Touring Constraints",
-    description:
-      "A deep dive into the logistical complexity of the Silent Architecture stage setup.",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDAELbkcJldyjugHjgd0h1DiQBz-dMKMI1oh5JB_BU6E_QcyLxTQUYoI3XbsSrTMli814TYD-pPIrUrfrNCbNubX4H4TL-CmTg6c3iMjCJREg6drknoETRDZR53yLc2QYRMqVm70Ck68xWVmn53gdGS0RAp5Xe2x5SCtzc0L4ZdFEvcWhe3LCb3aASmliKyR9WGALoxcH0CoJT1BCK2SHaOkCOjlR4T71_j-nqBc6OiPgqpqF128DAgf8ChsJ7f8BLjPYhYUrupJ84p",
-  },
-];
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+import { RouterLink } from "vue-router";
+import type { BlogPostWithBackwardsRefs } from "@viernulvier/shared";
+import { i18n, type SupportedLang } from "@/i18n";
+import { localizeOrEmpty, localizeWithFallback, type LanguageMap } from "@/utils/language-utils";
+import { RouteNames } from "@/router/routeNames";
+import { parseAndSanitizeMd } from "@/utils/parsers";
+import { formatShortDate } from "@/utils/date";
+
+defineProps<{
+  blogPosts: BlogPostWithBackwardsRefs[];
+  loading: boolean;
+}>();
+
+const { t } = useI18n();
+const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
+
+function getPreview(content: LanguageMap) {
+  const rawText = localizeWithFallback(content, (map) => localizeOrEmpty(map ?? {}, currentLang.value));
+  return parseAndSanitizeMd(rawText);
+}
 </script>
+
+<style scoped>
+.prose-flat :deep(p) {
+  display: inline;
+  margin: 0;
+}
+</style>

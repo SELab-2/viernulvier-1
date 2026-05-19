@@ -4,6 +4,8 @@ import type { FastifyInstance } from "fastify";
 import { buildServer } from "@/server.js";
 import type { EventPrice } from "@viernulvier/shared/index.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let storedEventPrices: EventPrice[];
 let sessionCookie: string;
@@ -108,7 +110,7 @@ describe("Event Price Replace Route", () => {
     });
 
     expect(response.statusCode).toBe(400);
-    expect(response.json()).toMatchObject({ error: "Invalid request data" });
+    expect(response.json()).toMatchObject({ error: "Bad Request" });
   });
 
   test("returns 400 when amount is invalid", async () => {
@@ -123,7 +125,7 @@ describe("Event Price Replace Route", () => {
     });
 
     expect(response.statusCode).toBe(400);
-    expect(response.json()).toMatchObject({ error: "Invalid request data" });
+    expect(response.json()).toMatchObject({ error: "Bad Request" });
   });
 
   test("requires authentication", async () => {

@@ -1,7 +1,7 @@
 import type { SupportedLang } from "@/i18n";
 import type { LanguageMap } from "@/utils/language-utils";
 import { emptyLangRecord } from "./helpers";
-import type { CmsCreateFieldConfig, CreateFormState, CreateTagFormState } from "./types";
+import type { CmsCreateFieldConfig, CreateFormState, CreateTagFormState, CreateFormMediaItem, CreateBlogPostFormState, CreateTagTypeFormState } from "./types";
 
 /**
  * Field definitions used to render the create-production modal dynamically.
@@ -29,8 +29,22 @@ export function buildEmptyCreateForm(): CreateFormState {
     supertitle: emptyLangRecord(),
     description: emptyLangRecord(),
     description_2: emptyLangRecord(),
-    video_1: emptyLangRecord(),
-    video_2: emptyLangRecord(),
+    media: [],
+  };
+}
+
+/**
+ * Creates a new media item with a unique client ID.
+ */
+export function createMediaItem(
+  type: "image" | "video",
+  url: string = "",
+): CreateFormMediaItem {
+  return {
+    id: `media-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    type,
+    url,
+    isUploaded: false,
   };
 }
 
@@ -104,6 +118,45 @@ export function validateCreateTagForm(
   return null;
 }
 
+export function buildEmptyBlogPostForm(): CreateBlogPostFormState {
+  return {
+    title: { nl: "", en: "", fr: "" },
+    content: { nl: "", en: "", fr: "" },
+    productions: [],
+  };
+}
+
+export function validateCreateBlogPostForm(
+  form: CreateBlogPostFormState,
+  t: (key: string, params?: Record<string, unknown>) => string,
+): string | null {
+  if (!hasAnyLanguageValue(form.title)) {
+    return t("cms.create.validation.requiredOneLanguage");
+  }
+  if (!hasAnyLanguageValue(form.content)) {
+    return t("cms.create.validation.requiredOneLanguage");
+  }
+  return null;
+}
+
+export function buildEmptyTagTypeForm(): CreateTagTypeFormState {
+  return {
+    name: emptyLangRecord(),
+  };
+}
+
+export function validateCreateTagTypeForm(
+  form: CreateTagTypeFormState,
+  t: (key: string, params?: Record<string, unknown>) => string,
+): string | null {
+  if (!hasAnyLanguageValue(form.name)) {
+    return t("cms.create.validation.requiredOneLanguage", {
+      field: t("cms.columns.tagTypeName"),
+    });
+  }
+  return null;
+}
+
 export function validateCreateProductionForm(
   form: CreateFormState,
   t: (key: string, params?: Record<string, unknown>) => string,
@@ -123,7 +176,7 @@ export function validateCreateProductionForm(
     }
   }
 
-  if (!hasAnyLanguageValue(form.video_1) && !hasAnyLanguageValue(form.video_2)) {
+  if (form.media.length === 0 || !form.media.some((m) => m.url.trim().length > 0)) {
     return t("cms.create.validation.imageRequired");
   }
   return null;

@@ -1,107 +1,134 @@
 <template>
-  <section class="relative flex min-h-[70vh] w-full items-end overflow-hidden">
-    <div class="absolute inset-0 z-0 bg-surface-inv">
+  <!-- Editorial header for a production page. -->
+  <article class="relative bg-surface-1">
+    <!-- Full-bleed photograph, or minimal top spacer when no hero crop exists -->
+    <div
+      v-if="bannerUrl"
+      class="relative w-full overflow-hidden bg-surface-inv h-[45vh] md:h-[55vh]"
+    >
       <img
-        alt="Contemporary dance performance"
-        class="h-full w-full object-cover grayscale contrast-125"
-        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDU21ewyTmp0aPBEaU9xMGtqD-vLtugWzQIgeF5cNgkw3uvYnZCH2696RoNKJ-kPMsE9zWgEZnutEMH-J-JJfxTKGmKYwRmPRlTakVaNy15qZ9KQXigCvuBMADoZpkjjd9YYLpjteDwWRYyjupc87R0EJsRbW2MzKJN0p2HzFbO65oUEoM7xAE0CfFOdMkaUI45I3xa5PPVHFIdzJkm4Mtz8Y1xX_3ALsoeMsj0C_QTlHCfJnFU0vs_2s95CJhFPdbRZSLDLIPgysph"
+        :src="bannerUrl"
+        :alt="heroImageAlt"
+        class="h-full w-full object-cover object-center"
+        loading="eager"
+        decoding="async"
         referrerPolicy="no-referrer"
       />
-      <div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent"></div>
     </div>
-    
-    <div class="relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-between gap-12 px-6 pb-20 md:flex-row md:items-end md:px-12">
-      <div class="opacity-0 animate-fade-up max-w-4xl">
-        <div class="mb-4 flex flex-col gap-2">
-          <span class="text-sm font-bold uppercase tracking-[0.3em] text-ink-on-inv opacity-70">
-            {{ content.supertitle }}
-          </span>
-          <span class="italic text-3xl font-bold tracking-tighter text-ink-on-inv md:text-4xl">
-            {{ content.artist }}
-          </span>
+    <div
+      v-else
+      class="bg-surface-1 pt-20 md:pt-25"
+      aria-hidden="true"
+    />
+
+    <!-- Letterpress card: overlaps the photograph, or stacks under the spacer when image-less -->
+    <header
+      :class="[
+        'relative z-10 mx-auto max-w-2xl px-6 md:max-w-3xl md:px-0',
+        bannerUrl ? '-mt-40 md:-mt-56' : '',
+      ]"
+    >
+      <div
+        class="border border-ink-primary bg-surface-0 px-6 py-8 text-center opacity-0 animate-fade-up md:px-12 md:py-10"
+      >
+        <!-- Kicker: thin rule on each side, small caps in the middle -->
+        <div
+          v-if="kicker"
+          class="mb-6 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
+        >
+          <span
+            class="h-px w-8 shrink-0 bg-ink-tertiary opacity-50"
+            aria-hidden="true"
+          />
+          <span class="min-w-0 break-words text-center">{{ kicker }}</span>
+          <span
+            class="h-px w-8 shrink-0 bg-ink-tertiary opacity-50"
+            aria-hidden="true"
+          />
         </div>
-        
-        <div class="space-y-4">
-          <h1 class="text-[clamp(2.5rem,8vw,8rem)] font-black uppercase leading-[0.9] tracking-tighter text-ink-on-inv wrap-break-word">
-            {{ content.title }}
-          </h1>
-          <p class="italic text-xl font-light leading-tight text-ink-on-inv opacity-90 md:text-2xl">
-            {{ content.tagline }}
-          </p>
-        </div>
+
+        <!-- Artist (primary identifier in this archive) -->
+        <p
+          v-if="content.artist"
+          class="mb-3 font-serif italic text-xl font-medium text-ink-primary md:text-2xl"
+        >
+          {{ content.artist }}
+        </p>
+
+        <!-- Title -->
+        <h1
+          class="font-serif text-3xl font-semibold leading-[1.05] tracking-tight text-ink-primary md:text-5xl"
+        >
+          {{ content.title }}
+        </h1>
+
+        <!-- Deck / tagline -->
+        <p
+          v-if="content.tagline"
+          class="mt-4 font-serif text-lg font-light italic leading-snug text-ink-secondary md:text-xl"
+        >
+          {{ content.tagline }}
+        </p>
+
+        <!--
+          Run period + running time. Compact, sober, no caps.
+          Format: "12.4.1987 — 14.4.1987 · 1 u 30"
+        -->
+        <p
+          v-if="dateMetaLine"
+          class="mt-5 text-xs tracking-[0.12em] text-ink-secondary md:text-sm"
+        >
+          {{ dateMetaLine }}
+        </p>
       </div>
+    </header>
 
-      <div class="opacity-0 animate-fade-in flex flex-col gap-6 text-ink-on-inv md:items-end">
-        <div class="flex flex-col gap-1 items-start md:items-end">
-  
-          <span class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">
-            {{ t("production.hero.dateRange") }}
-          </span>
-  
-          <div class="flex flex-col items-start md:items-end text-xl font-bold tracking-tight leading-tight">
-            <template v-if="showDateRange">
-              <span>{{ dateLabels.start }}</span>
-              <span>—</span>
-              <span>{{ dateLabels.end }}</span>
-            </template>
-
-            <template v-else>
-              <span>{{ dateLabels.start }}</span>
-            </template>
-          </div>
-
-        </div>
-        
-        <div class="flex flex-col gap-1 md:items-end">
-          <span class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">
-            {{ t("production.hero.runningTime") }}
-          </span>
-          <span class="text-xl font-bold tracking-tight">
-            {{ formatDurationMinutesI18n(eventStats?.durationMinutes, t) }}
-          </span>
-        </div>
-        
-        <div class="flex flex-wrap gap-3 pt-4 md:justify-end">
-          <template v-if="genreTags.length > 0">
-            <span 
-              v-for="tag in genreTags" 
-              :key="tag"
-              class="border border-surface-0 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-ink-on-inv"
-            >
-              {{ tag }}
-            </span>
-          </template>
-        </div>
-      </div>
-    </div>
-  </section>
+    <!-- Breathing room before the next section -->
+  </article>
 </template>
 
 <script setup lang="ts">
 import { type SupportedLang } from "@/i18n";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { computed } from "vue";
-import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
+import { localizeWithFallback, localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import { useI18n } from "vue-i18n";
-import { formatDurationMinutesI18n, formatNumericDate } from "@/utils/date";
+import {
+  formatDurationMinutesI18n,
+  formatNumericDate,
+} from "@/utils/date";
+import type { ProductionTagChip } from "@/utils/tagDisplay";
 
 interface Props {
   production: ProductionWithBackwardsRefs;
-  tagGroups: { label: string; tags: string[] }[];
+  tagGroups: { label: string; tags: ProductionTagChip[] }[];
   eventStats: {
     firstDate: Date;
     lastDate: Date;
     durationMinutes: number | null;
     hasMultipleDays: boolean;
   } | null;
+  /** First gallery image (`FE3_home_featuredWide` crop); when null, compact surface spacer (no faux banner). */
+  bannerUrl?: string | null;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  bannerUrl: null,
+});
 const { t, locale } = useI18n();
+
+const heroImageAlt = computed(() => {
+  const lang = locale.value as SupportedLang;
+  return (
+    localizeWithFallback(props.production.title ?? {}, (map) => localizeOrEmpty(map, lang)).trim() ||
+    t("production.hero.bannerImageAlt")
+  );
+});
 
 const content = computed(() => {
   const lang = locale.value as SupportedLang;
-  const translate = (map?: LanguageMap | null) => localizeOrEmpty(map ?? {}, lang);
+  const translate = (map?: LanguageMap | null) =>
+    localizeWithFallback(map ?? {}, (fallbackMap) => localizeOrEmpty(fallbackMap, lang));
 
   return {
     artist: translate(props.production.artist),
@@ -111,21 +138,65 @@ const content = computed(() => {
   };
 });
 
-const genreTags = computed(() => {
-  const genreGroup = props.tagGroups.find(group => {
-    return group.label.toLowerCase().includes('genre'); 
-  });
-  
-  return genreGroup ? genreGroup.tags : [];
+/** Primary genre tag, when one is available. */
+const primaryGenre = computed(() => {
+  const genreGroup = props.tagGroups.find((g) =>
+    g.label.toLowerCase().includes("genre"),
+  );
+  return genreGroup?.tags[0].label ?? "";
 });
 
-const showDateRange = computed(() =>
-  props.eventStats?.hasMultipleDays ?? false,
-);
+/** Year of the first event, used as the dateline in the kicker. */
+const year = computed(() => {
+  const first = props.eventStats?.firstDate;
+  if (!first) return "";
+  return String(first.getFullYear());
+});
 
-const dateLabels = computed(() => ({
-  start: props.eventStats?.firstDate ? formatNumericDate(props.eventStats.firstDate, locale.value) : "",
-  end: props.eventStats?.lastDate ? formatNumericDate(props.eventStats.lastDate, locale.value) : "",
-}));
+/** Compose the dateline-style kicker from supertitle, genre and year.
+ *  Empty parts are skipped; duplicates are collapsed so we never print
+ *  e.g. "Theater · Theater · 1987". */
+const kicker = computed(() => {
+  const parts: string[] = [];
+  const seen = new Set<string>();
 
+  for (const part of [
+    content.value.supertitle,
+    primaryGenre.value,
+    year.value,
+  ]) {
+    const trimmed = part?.trim();
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    parts.push(trimmed);
+  }
+
+  return parts.join(" · ");
+});
+
+/** Compact run-period + running-time strip placed below the deck. */
+const dateMetaLine = computed(() => {
+  const stats = props.eventStats;
+  if (!stats) return "";
+
+  const parts: string[] = [];
+
+  if (stats.firstDate) {
+    const start = formatNumericDate(stats.firstDate, locale.value);
+    if (stats.hasMultipleDays && stats.lastDate) {
+      const end = formatNumericDate(stats.lastDate, locale.value);
+      parts.push(`${start} — ${end}`);
+    } else {
+      parts.push(start);
+    }
+  }
+
+  if (stats.durationMinutes !== null && stats.durationMinutes > 0) {
+    parts.push(formatDurationMinutesI18n(stats.durationMinutes, t));
+  }
+
+  return parts.join(" · ");
+});
 </script>

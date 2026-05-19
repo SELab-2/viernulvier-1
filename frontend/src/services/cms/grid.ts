@@ -1,10 +1,12 @@
-import type { Admin, Event as ArchiveEvent, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
+import type { Admin, Event as ArchiveEvent, ProductionWithBackwardsRefs, Tag, TagType, BlogPostWithBackwardsRefs } from "@viernulvier/shared";
+
 import { collectProductionTagsByIdMap } from "@/services/productions";
 import { tagTypeIsGenre } from "@/utils/tagDisplay";
 import { localizeWithFallback, type LanguageMap } from "@/utils/language-utils";
 import { toLocalDateTimeInput } from "./date";
+import { resolveBulkTargetRows } from "./bulk-edit";
 import { extractEventIds } from "./helpers";
-import type { CmsAdminGridRow, CmsEventGridRow, CmsProductionGridRow, CreateAdminFormState, CmsTagGridRow } from "./types";
+import type { CmsAdminGridRow, CmsEventGridRow, CmsProductionGridRow, CreateAdminFormState, CmsTagGridRow, CmsBlogPostGridRow, CmsTagTypeGridRow } from "./types";
 
 function filterProductionTagLabels(
   productionTags: Tag[],
@@ -62,12 +64,18 @@ export function buildProductionGridRow(
   tagById: Map<number, Tag>,
   genreTagTypeIds: Set<number>,
   localize: (map: LanguageMap | null | undefined) => string,
+  imagesByProductionId?: Map<number, Array<{ id: number; url: string }>>,
 ): CmsProductionGridRow {
   const eventIds = extractEventIds(production.events as unknown[]);
 
   const productionTags = collectProductionTagsByIdMap(production, tagById);
-  const genreLabels = filterProductionTagLabels(productionTags, genreTagTypeIds, true, localize);
+  const primaryGenreTagId =
+    productionTags.find((tag) => genreTagTypeIds.has(Number(tag.tag_type)))?.id ?? 0;
   const additionalLabels = filterProductionTagLabels(productionTags, genreTagTypeIds, false, localize);
+
+  const productionImages = imagesByProductionId?.get(production.id) ?? [];
+  const imageMediaUrl = productionImages.length > 0 ? productionImages[0].url : "";
+  const imageMediaUrls = productionImages.map((image) => image.url);
 
   return {
     id: production.id,
@@ -76,10 +84,12 @@ export function buildProductionGridRow(
     title: localize(production.title) || "",
     producer: localize(production.supertitle) || "",
     teaser: localize(production.teaser) || "",
-    genres: genreLabels.slice(0, 1).join(", ") || "-",
+    genres: primaryGenreTagId,
     tags: additionalLabels.join(", ") || "-",
     descriptionOne: localize(production.description) || "",
     descriptionTwo: localize(production.description_2) || "",
+    imageMedia: imageMediaUrl,
+    imageMediaUrls,
     media: localize(production.video_1) || localize(production.video_2) || "",
     events: eventIds,
   };
@@ -93,6 +103,7 @@ export function buildProductionGridRows(
   tags: Tag[],
   tagTypes: TagType[],
   localize: (map: LanguageMap | null | undefined) => string,
+  imagesByProductionId?: Map<number, Array<{ id: number; url: string }>>,
 ): CmsProductionGridRow[] {
   const tagById = new Map(tags.map((tag) => [tag.id, tag]));
   const genreTagTypeIds = new Set(
@@ -101,7 +112,9 @@ export function buildProductionGridRows(
       .map((tagType) => tagType.id),
   );
 
-  return productions.map((production) => buildProductionGridRow(production, tagById, genreTagTypeIds, localize));
+  return productions.map((production) =>
+    buildProductionGridRow(production, tagById, genreTagTypeIds, localize, imagesByProductionId),
+  );
 }
 
 /**
@@ -137,7 +150,7 @@ export function buildTagGridRow(
 ): CmsTagGridRow {
   const tagTypeId = Number(tag.tag_type);
   const tagType = tagTypeById.get(tagTypeId);
-  const productionIds = Array.isArray(tag.productions) ? tag.productions : [];
+  const productionIds = Array.isArray(tag.productions) ? (tag.productions as number[]) : [];
 
   return {
     id: tag.id,
@@ -146,7 +159,7 @@ export function buildTagGridRow(
     tagTypeId,
     tagType: tagType ? localize(tagType.name) || `#${tagTypeId}` : `#${tagTypeId}`,
     public: tag.public,
-    productionCount: productionIds.length,
+    productions: productionIds,
   };
 }
 
@@ -177,14 +190,7 @@ export function getBulkTargetRows(
   selectedRows: CmsProductionGridRow[],
   primaryRow: CmsProductionGridRow,
 ): CmsProductionGridRow[] {
-  if (
-    selectedRows.length > 1
-    && selectedRows.some((row) => row.id === primaryRow.id)
-  ) {
-    return selectedRows;
-  }
-
-  return [primaryRow];
+  return resolveBulkTargetRows(selectedRows, primaryRow);
 }
  
 export function buildAdminGridRow(admin: Admin): CmsAdminGridRow {
@@ -218,5 +224,86 @@ export function buildEmptyAdminForm(): CreateAdminFormState {
     super: false,
   };
 }
+
+/** Maps a single {@link BlogPostWithBackwardsRefs} to a flat grid row for the current locale. */
+export function buildBlogPostGridRow(
+  blogpost: BlogPostWithBackwardsRefs,
+  localize: (map: LanguageMap | null | undefined) => string,
+): CmsBlogPostGridRow {
+  return {
+    id: blogpost.id,
+    title: localize(blogpost.title as LanguageMap | null | undefined) || "",
+    content: localize(blogpost.content as LanguageMap | null | undefined) || "",
+    publishedAt: blogpost.published_at ? new Date(blogpost.published_at).toISOString() : null,
+    productions: blogpost.productions as number[],
+  };
+}
  
+/** Converts an array of blogposts into grid rows. Called on load and on locale change. */
+export function buildBlogPostGridRows(
+  blogposts: BlogPostWithBackwardsRefs[],
+  localize: (map: LanguageMap | null | undefined) => string,
+): CmsBlogPostGridRow[] {
+  return blogposts.map((blogpost) => buildBlogPostGridRow(blogpost, localize));
+}
  
+/**
+ * Mutates a row in-place after a PATCH so AgGrid preserves selection and scroll state.
+ *
+ * `published_at` and `productions` can't be updated.
+*/
+export function applyUpdatedBlogPostToRow(
+  row: CmsBlogPostGridRow,
+  updated: BlogPostWithBackwardsRefs,
+  localize: (map: LanguageMap | null | undefined) => string,
+): void {
+  row.title = localize(updated.title as LanguageMap | null | undefined) || "";
+  row.content = localize(updated.content as LanguageMap | null | undefined) || "";
+}
+
+/**
+ * Builds a single CMS tag-type grid row.
+ *
+ * `tags` contains the IDs of all tags whose `tag_type` matches this tag type.
+ */
+export function buildTagTypeGridRow(
+  tagType: TagType,
+  tagsByType: Map<number, Tag[]>,
+  localize: (map: LanguageMap | null | undefined) => string,
+): CmsTagTypeGridRow {
+  const belongingTags = tagsByType.get(tagType.id) ?? [];
+  return {
+    id: tagType.id,
+    source: tagType,
+    name: localizeWithFallback(tagType.name, localize) || `#${tagType.id}`,
+    tagCount: belongingTags.length,
+    tags: belongingTags.map((t) => t.id),
+  };
+}
+
+/** Converts all tag types into grid rows, grouping tags by type up front. */
+export function buildTagTypeGridRows(
+  tagTypes: TagType[],
+  tags: Tag[],
+  localize: (map: LanguageMap | null | undefined) => string,
+): CmsTagTypeGridRow[] {
+  const tagsByType = new Map<number, Tag[]>();
+  for (const tag of tags) {
+    const typeId = Number(tag.tag_type);
+    if (!Number.isFinite(typeId)) continue;
+    const current = tagsByType.get(typeId) ?? [];
+    current.push(tag);
+    tagsByType.set(typeId, current);
+  }
+  return tagTypes.map((tagType) => buildTagTypeGridRow(tagType, tagsByType, localize));
+}
+
+/** Mutates a tag-type row in-place after a PATCH to avoid losing AG Grid selection state. */
+export function applyUpdatedTagTypeToRow(
+  row: CmsTagTypeGridRow,
+  updated: TagType,
+  localize: (map: LanguageMap | null | undefined) => string,
+): void {
+  row.source = updated;
+  row.name = localizeWithFallback(updated.name, localize) || `#${updated.id}`;
+}

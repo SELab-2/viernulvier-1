@@ -48,6 +48,8 @@ export interface CreateTagInput {
   tag_type: number;
   /** Whether this tag is visible to the public. */
   public: boolean;
+  /** Linked productions */
+  productions: number[];
 }
 
 /**
@@ -127,11 +129,20 @@ export async function getTag(id: number): Promise<Tag> {
  * Fetches all tags (including hidden ones).
  * Can be filtered by production ID.
  * @param productionId - Optional ID to get all tags for a specific production.
+ * @param options.includeProductions - When true, each tag includes a `productions` id list.
+ * @param options.includeProductionCount - When true, each tag includes `production_count`.
  * @throws {ApiError} 401 — unauthenticated.
  */
-export async function getAllTags(productionId?: number): Promise<Tag[]> {
-  const url = productionId ? `/tag/all?production=${productionId}` : "/tag/all";
-  return await apiFetch<Tag[]>(url);
+export async function getAllTags(
+  productionId?: number,
+  options?: { includeProductions?: boolean; includeProductionCount?: boolean },
+): Promise<Tag[]> {
+  const params = new URLSearchParams();
+  if (productionId !== undefined) params.set("production", String(productionId));
+  if (options?.includeProductions) params.set("includeProductions", "true");
+  if (options?.includeProductionCount) params.set("includeProductionCount", "true");
+  const qs = params.toString();
+  return await apiFetch<Tag[]>(qs ? `/tag/all?${qs}` : "/tag/all");
 }
 
 /**

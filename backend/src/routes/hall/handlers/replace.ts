@@ -1,10 +1,10 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Hall } from "@viernulvier/shared/index.js";
-import { HallSchema, languageMap, stringToInt } from "@viernulvier/shared/index.js";
+import { HallSchema, languageMap, serial } from "@viernulvier/shared/index.js";
 import { getMetadata, parseParams, buildQuery, parseSchema } from "@/routes/helpers.js";
 import { z } from "zod";
 
-const ReplaceHallBodySchema = HallSchema.omit({ id: true });
+export const ReplaceHallBodySchema = HallSchema.omit({ id: true });
 
 const replaceHallQuery = (server: FastifyInstance) =>
   buildQuery(
@@ -35,7 +35,7 @@ export async function replaceHall(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Hall | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const body = parseSchema(server, ReplaceHallBodySchema, request.body);
   const { admin, current_time } = getMetadata(request);
 

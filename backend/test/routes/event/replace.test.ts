@@ -3,6 +3,8 @@ import type { FastifyInstance } from "fastify";
 
 import { buildServer } from "@/server.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let storedEvents: Array<{ id: number; [key: string]: unknown }>;
 let sessionCookie: string;
@@ -125,7 +127,7 @@ describe("Event Replace Routes", () => {
       });
 
       expect(response.statusCode).toBe(400);
-      expect(response.json()).toMatchObject({ error: "Invalid request data" });
+      expect(response.json()).toMatchObject({ error: "Bad Request" });
     });
 
     test("returns 404 when event does not exist", async () => {
@@ -175,7 +177,7 @@ describe("Event Replace Routes", () => {
       old_id: 12354,
     };
 
-    
+
     test("replaces one event", async () => {
       const replaceResponse = await server.inject({
         method: "PUT",
@@ -212,7 +214,7 @@ describe("Event Replace Routes", () => {
       expect(listResponse.statusCode).toBe(200);
       const events = listResponse.json();
       expect(events).toHaveLength(3);
-      
+
       // Check first event (the replaced one) has updated data and metadata
       expect(events[0]!.id).toBe(1);
       expect(events[0]!.old_id).toBe(replacement.old_id);
@@ -222,7 +224,7 @@ describe("Event Replace Routes", () => {
       expect(events[0]!.production).toBe(replacement.production);
       expect(events[0]!.hall).toBe(replacement.hall);
       expect(events[0]!.info).toEqual(replacement.info);
-      
+
       // Check other events are unchanged
       expect(events[1]!.id).toBe(2);
       expect(events[2]!.id).toBe(3);

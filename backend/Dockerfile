@@ -1,6 +1,6 @@
 FROM --platform=$BUILDPLATFORM node:24 AS base
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.30.3
 
 WORKDIR /app
 
@@ -35,7 +35,7 @@ COPY . .
 
 RUN pnpm install
 
-# RUN pnpm --filter shared build 
+# RUN pnpm --filter shared build
 RUN pnpm --filter backend build
 
 
@@ -52,6 +52,11 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/backend/migrations ./migrations
 
 COPY backend/docker-entrypoint.sh /docker-entrypoint.sh
+
+# This is needed so swagger ui can serve its static files.
+RUN mkdir -p ./static
+RUN cp -r ./node_modules/@fastify/swagger-ui/static/* ./static/
+
 RUN chmod +x /docker-entrypoint.sh
 
 EXPOSE 80

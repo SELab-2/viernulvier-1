@@ -5,7 +5,7 @@
  */
 
 .cms-add-button {
-  @apply inline-flex w-fit items-center rounded-full border border-transparent bg-surface-inv px-5 py-2.5 text-sm font-semibold text-ink-on-inv transition hover:bg-surface-inv-raised;
+  @apply inline-flex w-fit items-center rounded-full border border-transparent bg-accent-dark px-5 py-2.5 text-sm font-semibold text-surface-0 transition hover:bg-accent-dark-hover;
 }
 
 .cms-remove-button {
@@ -13,7 +13,7 @@
 }
 
 .cms-side-panel {
-  @apply fixed right-0 top-0 z-50 flex h-screen w-full max-w-xl flex-col border-l border-surface-3 bg-surface-0 p-5 shadow-2xl;
+  @apply fixed right-0 top-0 z-50 flex h-screen w-full max-w-4xl flex-col border-l border-surface-3 bg-surface-0 p-5 shadow-2xl;
 }
 
 .cms-side-overlay {
@@ -34,10 +34,6 @@
 
 .cms-side-field {
   @apply flex flex-col gap-2;
-}
-
-.cms-side-textarea {
-  @apply min-h-28 rounded-md border border-surface-3 bg-surface-1 p-3 text-sm text-ink-primary;
 }
 
 .cms-tag-selector-grid {
@@ -69,7 +65,7 @@
 }
 
 .cms-side-save {
-  @apply inline-flex w-full items-center justify-center rounded-md bg-surface-inv px-4 py-3 text-sm font-semibold text-ink-on-inv shadow-sm transition hover:bg-surface-inv-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ink-primary disabled:cursor-not-allowed disabled:opacity-60;
+  @apply inline-flex w-full items-center justify-center rounded-md bg-accent-dark px-4 py-3 text-sm font-semibold text-surface-0 shadow-sm transition hover:bg-accent-dark-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ink-primary disabled:cursor-not-allowed disabled:opacity-60;
 }
 
 .cms-modal-overlay {
@@ -97,7 +93,7 @@
 }
 
 .cms-media-modal {
-  @apply max-w-4xl;
+  @apply max-w-4xl max-h-[calc(100vh-2rem)];
 }
 
 .cms-media-preview-body {
@@ -126,4 +122,38 @@
 
 .cms-tab-placeholder {
   @apply rounded-md border border-dashed border-surface-3 bg-surface-0 p-8 text-center;
+}
+
+/**
+
+css used for adding/editing lists (of IDs)
+
+*/
+
+.cms-list-flairs {
+  @apply flex flex-wrap items-center gap-2;
+}
+
+.cms-list-flair {
+  @apply flex items-center gap-1 rounded-full border border-surface-3 bg-surface-0 px-2.5 py-1 text-xs font-semibold text-ink-primary;
+}
+
+.cms-list-flair-remove {
+  @apply -mr-0.5 flex h-4 w-4 items-center justify-center rounded-full text-ink-secondary transition hover:bg-surface-2 hover:text-ink-primary;
+}
+
+.cms-list-flair-link {
+  @apply text-ink-primary underline hover:text-ink-secondary transition-colors;
+}
+
+.cms-list-create {
+  @apply mt-3 space-y-3;
+}
+
+.cms-list-entry {
+  @apply flex gap-2;
+}
+
+.cms-list-add {
+  @apply rounded-md bg-accent-dark px-4 py-2 text-sm font-semibold text-surface-0 transition hover:bg-accent-dark-hover;
 }

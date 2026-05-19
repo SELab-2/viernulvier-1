@@ -4,6 +4,8 @@ import type { FastifyInstance } from "fastify";
 import { buildServer } from "@/server.js";
 import type { EventPrice } from "@viernulvier/shared/index.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let storedEventPrices: EventPrice[];
 let sessionCookie: string;
@@ -126,7 +128,7 @@ describe("Event Price Fetch Routes", () => {
       });
 
       expect(response.statusCode).toBe(404);
-      //expect(response.json()).toEqual({ error: "Not Found" });
+      expect(response.json()).toEqual({ error: "Not Found" });
     });
 
     test("returns 401 when not authenticated", async () => {

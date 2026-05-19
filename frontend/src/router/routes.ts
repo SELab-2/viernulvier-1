@@ -23,16 +23,16 @@ export const routes: RouteRecordRaw[] = [
         props: true,
       },
       {
+        path: "blog",
+        name: RouteNames.BLOG_POSTS,
+        component: () => import("../views/BlogPostsView.vue"),
+      },
+      {
         path: "blog/post/:id",
         name: RouteNames.BLOG_POST_DETAIL,
         component: () => import("../views/BlogPostDetailView.vue"),
         props: true,
       },
-      //   {
-      //     path: "prints",
-      //     name: RouteNames.PRINTS,
-      //     component: () => import("../views/PrintUploadsView.vue"),
-      //   },
 
       // ADMIN
       {
@@ -54,15 +54,14 @@ export const routes: RouteRecordRaw[] = [
             path: "login",
             name: RouteNames.LOGIN,
             component: () => import("../views/admin/LoginView.vue"),
-            beforeEnter: async (to, _, next) => {
+            beforeEnter: async (to) => {
               const authStore = useAuthStore();
               try {
                 await authStore.fetchAdmin();
                 // already logged in, redirect to admin
-                return next({ name: RouteNames.ADMIN, params: { lang: to.params.lang } });
+                return { name: RouteNames.ADMIN, params: { lang: to.params.lang } };
               } catch {
                 // not logged in, proceed to login page
-                return next();
               }
             },
           },

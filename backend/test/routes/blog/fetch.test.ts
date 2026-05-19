@@ -4,12 +4,14 @@ import type { FastifyInstance } from "fastify";
 import { BlogSchema, type Blog, type BlogWithMeta } from "@viernulvier/shared/index.js";
 import { HttpSuccess, HttpClientError } from "@/routes/helpers.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let sessionCookie: string;
 
 const mockBlogs: Array<Blog> = [
-  { id: 1, name: "Tech Blog", description: "All about tech" },
-  { id: 2, name: "Art Blog", description: null },
+  { id: 1, name: { en: "Tech Blog" }, description: { en: "All about tech" } },
+  { id: 2, name: { en: "Art Blog" }, description: null },
 ];
 
 const mockTime = new Date();

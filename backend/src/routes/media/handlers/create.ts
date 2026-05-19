@@ -10,7 +10,11 @@ import {
 } from "@/routes/helpers.js";
 import { getImageById, getCropsByImageId } from "./fetch.js";
 import { CreateImageBodySchema, CreateCropBodySchema } from "./body-schema.js";
-import { parseMultipart, insertCrops, validateCropFiles } from "./multipart-helpers.js";
+import {
+  parseMultipart,
+  insertCrops,
+  validateCropFiles,
+} from "./multipart-helpers.js";
 import z from "zod";
 
 // ── Route handlers ──
@@ -71,7 +75,14 @@ export async function createImage(
   if (!imageRow) return null;
 
   // Upload and insert crops
-  await insertCrops(server, imageRow.id, cropMappings, files, admin, current_time);
+  await insertCrops(
+    server,
+    imageRow.id,
+    cropMappings,
+    files,
+    admin,
+    current_time,
+  );
 
   return await getImageById(server, imageRow.id);
 }
@@ -89,10 +100,7 @@ export async function createCrops(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Crop[] | null> {
-  const { imageId } = parseParams(
-    request,
-    z.object({ imageId: stringToInt }),
-  );
+  const { imageId } = parseParams(request, z.object({ imageId: stringToInt }));
   const { admin, current_time } = getMetadata(request);
 
   if (!request.isMultipart()) {

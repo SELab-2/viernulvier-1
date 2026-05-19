@@ -74,10 +74,10 @@
 
       <footer class="cms-modal-footer">
         <button type="button" class="cms-side-close" @click="$emit('close')">
-          {{ t("cms.create.cancel") }}
+          {{ t("general.cancel") }}
         </button>
         <button type="button" class="cms-side-save" :disabled="eventsPanelLoading" @click="$emit('submit')">
-          {{ eventsPanelLoading ? t("cms.panel.saving") : "Create event" }}
+          {{ eventsPanelLoading ? t("general.saving") : "Create event" }}
         </button>
       </footer>
     </section>
@@ -189,6 +189,6 @@ function onTextInput(field: "startsAt" | "endsAt" | "doorsAt" | "infoNl", event:
 }
 
 .cms-side-save {
-  @apply rounded-md bg-surface-inv px-4 py-2 text-sm font-semibold text-ink-on-inv transition hover:bg-surface-inv-raised disabled:cursor-not-allowed disabled:opacity-60;
+  @apply rounded-md bg-accent-dark px-4 py-2 text-sm font-semibold text-surface-0 transition hover:bg-accent-dark-hover disabled:cursor-not-allowed disabled:opacity-60;
 }
 </style>

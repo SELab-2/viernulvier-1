@@ -9,3 +9,4 @@ data/imports/*.csv
 backend/out/
 .DS_Store
 garage-credentials/credentials.env
+db.sql

@@ -2,6 +2,9 @@ import { describe, test, expect, beforeAll, vi, afterAll } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import { AdminSchema, type Admin } from "@viernulvier/shared/index.js";
+import { authorizeMock } from "@mocks/plugins/authorize.js";
+
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
 
 let server: FastifyInstance;
 let sessionCookie: string;
@@ -21,6 +24,7 @@ const mockEditedPassword = "ILoveKarel<3";
 beforeAll(async () => {
   server = await buildServer();
   sessionCookie = server.jwt.sign({ id: 404, username: mockUsername, super: true });
+  authorizeMock.super = true;
 
   server.pg.query = vi.fn().mockImplementation((query: string, values: unknown[]) => {
     const isUpdate = query.trim().toUpperCase().startsWith("UPDATE");

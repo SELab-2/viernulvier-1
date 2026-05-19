@@ -4,6 +4,8 @@ import type { FastifyInstance } from "fastify";
 import { BlogPostSchema, type BlogPost } from "@viernulvier/shared/index.js";
 import { HttpSuccess, HttpClientError } from "@/routes/helpers.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let sessionCookie: string;
 
@@ -12,8 +14,8 @@ const mockTime = new Date();
 const mockBlogPost: BlogPost = {
   id: 1,
   blog: 1,
-  title: "Post to Delete",
-  content: { body: "Goodbye" },
+  title: { en: "Post to Delete" },
+  content: { en: "Goodbye" },
   published_at: mockTime,
 };
 
@@ -39,7 +41,6 @@ describe("Delete on blogpost route", () => {
       url: `/api/v1/blog/post/${mockBlogPost["id"]}`,
       cookies: { session: sessionCookie },
     });
-
     expect(response.statusCode).toBe(HttpSuccess.OK);
     expect(BlogPostSchema.parse(response.json())).toMatchObject({ id: mockBlogPost["id"], title: mockBlogPost["title"] });
   });

@@ -2,7 +2,7 @@ import z from "zod";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 
 import { buildQuery, parseParams, parseSchema } from "@/routes/helpers.js";
-import { EventSchema, stringToInt } from "@viernulvier/shared/index.js";
+import { EventSchema, serial, stringToInt } from "@viernulvier/shared/index.js";
 import type { Event, EventWithMeta } from "@viernulvier/shared/index.js";
 import { selectPriceSubquery } from "./helper.js";
 
@@ -18,8 +18,9 @@ export async function fetchEvent(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<Event | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
-  const result = await buildQuery(server,
+  const { id } = parseParams(request, z.object({ id: serial() }));
+  const result = await buildQuery(
+    server,
     `SELECT id, old_id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery}
     FROM event WHERE id = $1`,
     z.tuple([z.int()]),
@@ -41,7 +42,7 @@ export async function fetchEventWithMeta(
   server: FastifyInstance,
   request: FastifyRequest,
 ): Promise<EventWithMeta | null> {
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const result = await buildQuery(
     server,
     `SELECT id, old_id, starts_at, ends_at, production, hall, doors_at, info, ${selectPriceSubquery},
@@ -81,7 +82,7 @@ function parseProductionIdsFromQuery(
   return { ok: true, ids: unique };
 }
 
-const EventsListQuerySchema = z
+export const EventsListQuerySchema = z
   .object({
     production: z.union([z.string(), z.array(z.string())]).optional(),
     old_id: stringToInt.optional(),
@@ -158,7 +159,7 @@ export async function fetchEvents(
 ): Promise<Event[]> {
   const { production, old_id } = parseSchema(
     server,
-    EventsListQuerySchema,
+    EventsListQuerySchema.out,
     request.query,
   );
 

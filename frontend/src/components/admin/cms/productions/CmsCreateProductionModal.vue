@@ -112,46 +112,64 @@
         <fieldset class="cms-form-block">
           <legend class="cms-form-legend">{{ t("cms.create.media.title") }}</legend>
 
-          <div class="cms-upload-controls">
-            <label class="cms-form-lang-field">
-              <span class="cms-lang-label">{{ t("cms.create.media.uploadImage") }}</span>
-              <input type="file" accept="image/*" class="cms-text-input" @change="emit('image-file-change', $event)" />
-            </label>
+          <div class="cms-media-list">
+            <div v-for="(mediaItem, index) in createForm.media" :key="mediaItem.id" class="cms-media-item">
+              <div class="cms-media-item-header">
+                <div class="cms-media-item-type">
+                  {{ mediaItem.type === "image" ? t("cms.create.media.image") : t("cms.create.media.video") }}
+                </div>
+                <button
+                  v-if="createForm.media.length > 1"
+                  type="button"
+                  class="cms-media-item-remove"
+                  :title="t('general.delete')"
+                  @click="emit('remove-media', mediaItem.id)"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div class="cms-media-item-input">
+                <input
+                  v-if="mediaItem.type === 'image'"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  class="cms-text-input"
+                  @change="emit('media-file-change', mediaItem.id, $event)"
+                />
+                <input
+                  v-else
+                  type="url"
+                  class="cms-text-input"
+                  :value="mediaItem.url"
+                  placeholder="https://example.com/video"
+                  @input="emit('update-media-url', mediaItem.id, ($event.target as HTMLInputElement).value)"
+                />
+              </div>
+
+              <div v-if="mediaItem.url && mediaItem.type === 'image'" class="cms-media-preview-thumb">
+                <img :src="mediaItem.url" :alt="`Preview ${index + 1}`" />
+              </div>
+            </div>
           </div>
 
-          <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-            <label class="cms-form-lang-field">
-              <span class="cms-lang-label">{{ t("cms.create.fields.imagePrimary") }}</span>
-              <input
-                :value="createForm.video_1.nl"
-                type="text"
-                class="cms-text-input"
-                placeholder="https://example.com/image.jpg"
-                @input="emit('update-form-field', 'video_1', 'nl', ($event.target as HTMLInputElement).value)"
-              />
-            </label>
-
-            <label class="cms-form-lang-field">
-              <span class="cms-lang-label">{{ t("cms.create.fields.imageSecondary") }}</span>
-              <input
-                :value="createForm.video_2.nl"
-                type="text"
-                class="cms-text-input"
-                placeholder="https://example.com/image.jpg"
-                @input="emit('update-form-field', 'video_2', 'nl', ($event.target as HTMLInputElement).value)"
-              />
-            </label>
-
-            <label class="cms-form-lang-field md:col-span-2">
-              <span class="cms-lang-label">{{ t("cms.create.media.youtubeLink") }}</span>
-              <input
-                :value="createForm.video_1.nl"
-                type="text"
-                class="cms-text-input"
-                placeholder="https://www.youtube.com/watch?v=..."
-                @input="emit('update-form-field', 'video_1', 'nl', ($event.target as HTMLInputElement).value)"
-              />
-            </label>
+          <div class="cms-media-actions">
+            <button
+              type="button"
+              class="cms-media-add-btn"
+              :title="t('cms.create.media.addImage')"
+              @click="emit('add-media', 'image')"
+            >
+              + {{ t("cms.create.media.addImage") }}
+            </button>
+            <button
+              type="button"
+              class="cms-media-add-btn"
+              :title="t('cms.create.media.addVideo')"
+              @click="emit('add-media', 'video')"
+            >
+              + {{ t("cms.create.media.addVideo") }}
+            </button>
           </div>
 
           <p class="mt-2 text-xs text-ink-tertiary">
@@ -166,10 +184,10 @@
 
       <footer class="cms-modal-footer">
         <button type="button" class="cms-side-close" @click="$emit('close')">
-          {{ t("cms.create.cancel") }}
+          {{ t("general.cancel") }}
         </button>
         <button type="button" class="cms-side-save" :disabled="isCreating" @click="$emit('submit')">
-          {{ isCreating ? t("cms.create.saving") : t("cms.create.submit") }}
+          {{ isCreating ? t("general.saving") : t("cms.create.submit") }}
         </button>
       </footer>
     </section>
@@ -207,8 +225,10 @@ const emit = defineEmits<{
   "update-form-field": [field: CreateFieldKey, lang: SupportedLang, value: string];
   "update-primary-tag": [value: number | null];
   "toggle-tag": [tagId: number, selected: boolean];
-  "image-file-change": [event: Event];
-  "video-file-change": [event: Event];
+  "add-media": [type: "image" | "video"];
+  "remove-media": [mediaId: string];
+  "media-file-change": [mediaId: string, event: Event];
+  "update-media-url": [mediaId: string, url: string];
 }>();
 
 const { t } = useI18n();
@@ -297,7 +317,7 @@ function onTagToggle(tagId: number, selected: boolean): void {
 }
 
 .cms-language-pill.active {
-  @apply border-transparent bg-surface-inv text-ink-on-inv;
+  @apply border-transparent bg-accent-dark text-surface-0;
 }
 
 .cms-upload-controls {
@@ -340,6 +360,15 @@ function onTagToggle(tagId: number, selected: boolean): void {
   @apply rounded-md border border-surface-3 bg-surface-0 px-3 py-2 text-sm text-ink-primary;
 }
 
+.cms-side-textarea {
+  @apply rounded-md border border-surface-3 bg-surface-0 px-3 py-2 text-sm text-ink-primary font-sans;
+}
+
+.cms-text-input::placeholder,
+.cms-side-textarea::placeholder {
+  @apply text-ink-tertiary;
+}
+
 .cms-toggle-row {
   @apply flex items-center gap-2 text-sm text-ink-primary;
 }
@@ -349,6 +378,47 @@ function onTagToggle(tagId: number, selected: boolean): void {
 }
 
 .cms-side-save {
-  @apply rounded-md bg-surface-inv px-4 py-2 text-sm font-semibold text-ink-on-inv transition hover:bg-surface-inv-raised disabled:cursor-not-allowed disabled:opacity-60;
+  @apply rounded-md bg-accent-dark px-4 py-2 text-sm font-semibold text-surface-0 transition hover:bg-accent-dark-hover disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+/* Media list styles */
+.cms-media-list {
+  @apply space-y-3;
+}
+
+.cms-media-item {
+  @apply rounded-lg border border-surface-3 bg-surface-0 p-3;
+}
+
+.cms-media-item-header {
+  @apply mb-3 flex items-center justify-between;
+}
+
+.cms-media-item-type {
+  @apply text-xs font-semibold uppercase tracking-wide text-ink-secondary;
+}
+
+.cms-media-item-remove {
+  @apply flex h-6 w-6 items-center justify-center rounded border border-surface-3 text-sm text-ink-secondary transition hover:bg-red-100 hover:text-red-600;
+}
+
+.cms-media-item-input {
+  @apply mb-2;
+}
+
+.cms-media-preview-thumb {
+  @apply mt-2 flex max-h-32 items-center justify-center overflow-hidden rounded border border-surface-3 bg-surface-0;
+}
+
+.cms-media-preview-thumb img {
+  @apply h-full w-full object-contain;
+}
+
+.cms-media-actions {
+  @apply mt-3 flex gap-2;
+}
+
+.cms-media-add-btn {
+  @apply flex-1 rounded-md border border-surface-3 px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-surface-1;
 }
 </style>

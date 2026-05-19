@@ -1,192 +1,254 @@
 <template>
   <div class="flex min-h-screen flex-col bg-surface-0">
     <AppNavbar :is-dark="isDark" @toggle-dark="toggleDark" />
-    <main>
+    <main class="flex-1">
       <section
         ref="pageTopAnchor"
-        class="scroll-mt-16 border-b border-surface-3 bg-surface-1 py-12 md:py-16"
+        class="scroll-mt-16 border-b border-surface-3 bg-surface-1 py-10 md:py-14"
       >
-        <div class="mx-auto max-w-3xl px-6 text-center lg:px-10">
-          <h1
-            class="text-2xl font-bold tracking-tight text-ink-primary md:text-3xl"
-          >
-            {{ t("productionsPage.heading") }}
-          </h1>
-          <p
-            class="mt-4 text-sm leading-relaxed text-ink-secondary md:text-base"
-          >
-            {{ t("productionsPage.intro") }}
-          </p>
+        <div class="mx-auto max-w-6xl px-6 lg:px-10">
+          <div class="mx-auto max-w-3xl text-center">
+            <div
+              class="mb-5 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-[0.25em] text-ink-secondary"
+            >
+              <span
+                class="h-px w-8 bg-ink-tertiary opacity-50"
+                aria-hidden="true"
+              />
+              <span class="whitespace-nowrap">{{
+                t("productionsPage.kicker")
+              }}</span>
+              <span
+                class="h-px w-8 bg-ink-tertiary opacity-50"
+                aria-hidden="true"
+              />
+            </div>
+            <h1
+              class="font-serif text-3xl font-semibold leading-tight tracking-tight text-ink-primary md:text-4xl"
+            >
+              {{ t("productionsPage.heading") }}
+            </h1>
+            <p
+              class="mx-auto mt-3 max-w-2xl font-serif text-lg italic leading-snug text-ink-secondary md:text-xl"
+            >
+              {{ t("productionsPage.intro") }}
+            </p>
+          </div>
         </div>
       </section>
 
-      <section class="mx-auto max-w-4xl px-6 pb-20 pt-8 lg:px-10">
-        <div v-if="!loading" class="mb-4 space-y-3">
+      <section class="mx-auto max-w-[82rem] px-6 pb-20 pt-10 lg:px-10">
+        <ProductionsFilterSkeleton v-if="loading" />
+
+        <div v-else class="mb-4 space-y-3">
           <div
             class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-stretch sm:gap-3"
-          >
-            <label class="sr-only" for="productions-search">{{
-              t("productionsPage.searchLabel")
-            }}</label>
-            <input
-              id="productions-search"
-              v-model="searchDraft"
-              type="search"
-              autocomplete="off"
-              :disabled="listLoading || loadError"
-              :placeholder="t('productionsPage.searchPlaceholder')"
-              class="min-w-0 grow rounded-md border border-surface-3 bg-surface-0 px-3 py-2 text-base text-ink-primary placeholder:text-ink-secondary focus:border-accent-outline focus:outline-none dark:bg-surface-1"
-              :class="
-                searchAwaitingList
-                  ? 'disabled:cursor-not-allowed disabled:opacity-50'
-                  : 'disabled:opacity-100'
-              "
-              @keydown.enter.prevent="submitSearch"
-            />
-            <button
-              type="button"
-              class="shrink-0 cursor-pointer rounded-md border border-accent-outline bg-surface-0 px-4 py-2 text-base font-medium text-ink-primary transition hover:bg-surface-2"
-              :class="
-                searchAwaitingList
-                  ? 'disabled:cursor-not-allowed disabled:opacity-40'
-                  : 'disabled:opacity-100'
-              "
-              :disabled="listLoading || loadError"
-              @click="submitSearch"
-            >
-              {{ t("productionsPage.searchButton") }}
-            </button>
-          </div>
-          <div
-            v-if="searchBannerTerms.length > 0"
-            class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-2"
-          >
-            <div class="flex min-w-0 flex-wrap items-center gap-2">
-              <span class="text-sm text-ink-secondary">{{
-                t("productionsPage.activeSearchLabel")
-              }}</span>
-              <button
-                v-for="(term, idx) in searchBannerTerms"
-                :key="`${idx}-${term}`"
-                type="button"
-                :class="['max-w-full', ACTIVE_FILTER_CHIP_CLASS]"
-                :disabled="listLoading"
-                :aria-label="
-                  t('productionsPage.removeSearchTerm', { term })
-                "
-                @click="removeSearchTermAt(idx)"
-              >
-                <span class="min-w-0 truncate">{{ term }}</span>
-                <span class="text-lg leading-none text-ink-secondary" aria-hidden="true">×</span>
-              </button>
-            </div>
-            <button
-              type="button"
-              class="col-start-2 row-start-1 justify-self-end self-start pt-0.5 shrink-0 cursor-pointer text-sm font-medium text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100"
-              :disabled="listLoading || loadError"
-              @click="void clearSearchFilter()"
-            >
-              {{ t("productionsPage.clearAllSearches") }}
-            </button>
-          </div>
-
-          <div
-            class="mt-4 flex flex-wrap items-center gap-2 border-t border-surface-3 pt-4"
           >
             <ProductionsDateFilter
               v-model:year-range="explicitYearRange"
               v-model:date-from="filterDateFrom"
               v-model:date-to="filterDateTo"
+              class="shrink-0"
               :disabled="loadError"
               :min-year="filterYearBounds.minYear"
               :max-year="filterYearBounds.maxYear"
             />
-          </div>
-
-          <div
-            v-if="genreTagsForFilter.length > 0"
-            class="mt-4 space-y-3 border-t border-surface-3 pt-4"
-          >
-            <p
-              class="text-xs font-medium uppercase tracking-wide text-ink-secondary"
-            >
-              {{ t("productionsPage.genreFiltersHeading") }}
-            </p>
-            <div class="flex items-start gap-3">
-              <div class="flex min-w-0 flex-1 flex-wrap gap-2">
+            <label class="sr-only" for="productions-search">{{
+              t("productionsPage.searchLabel")
+            }}</label>
+            <div class="relative min-h-11 min-w-0 grow">
+              <div
+                class="productions-view__search-field"
+                :class="
+                  searchAwaitingList
+                    ? 'cursor-not-allowed opacity-50'
+                    : 'opacity-100'
+                "
+              >
                 <button
-                  v-for="g in visibleGenreTagsForFilter"
-                  :key="g.id"
+                  v-for="(term, idx) in appliedSearchTerms"
+                  :key="`${idx}-${term}`"
                   type="button"
-                  class="rounded-full border px-3 py-1 text-sm transition disabled:opacity-100"
-                  :class="
-                    selectedTagIds.includes(g.id)
-                      ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
-                      : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
+                  class="productions-view__search-chip"
+                  :disabled="listLoading"
+                  :aria-label="
+                    t('productionsPage.removeSearchTerm', { term })
                   "
-                  :disabled="listLoading || loadError"
-                  @click="toggleTag(g.id)"
+                  @click.stop="removeSearchTermAt(idx)"
                 >
-                  {{ g.label }}
+                  <span class="min-w-0 truncate">{{ term }}</span>
+                  <span class="text-base leading-none text-ink-secondary" aria-hidden="true">×</span>
                 </button>
+                <input
+                  id="productions-search"
+                  v-model="searchDraft"
+                  type="search"
+                  autocomplete="off"
+                  :disabled="listLoading || loadError"
+                  :placeholder="
+                    appliedSearchTerms.length > 0
+                      ? ''
+                      : t('productionsPage.searchPlaceholder')
+                  "
+                  class="productions-view__search-input"
+                  @keydown.enter.prevent="submitSearch"
+                />
               </div>
               <button
-                v-if="showGenreTagFilterExpandToggle"
                 type="button"
-                class="shrink-0 cursor-pointer pt-0.5 text-sm font-medium leading-snug text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100"
+                class="productions-view__search-submit"
+                :aria-label="t('productionsPage.searchButton')"
                 :disabled="listLoading || loadError"
-                :aria-expanded="genreTagFiltersExpanded"
-                @click="genreTagFiltersExpanded = !genreTagFiltersExpanded"
+                @click="submitSearch"
               >
-                {{
-                  genreTagFiltersExpanded
-                    ? t("productionsPage.viewLessTagFilters")
-                    : t("productionsPage.viewMoreTagFilters")
-                }}
+                <svg
+                  class="size-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
               </button>
             </div>
+            <ProductionsSortControl
+              :sort-by="sortBy"
+              :sort-dir="sortDir"
+              :disabled="listLoading || loadError"
+              @sort-change="(p) => void applyProductionsSortChange(p)"
+            />
+            <ProductionsLayoutToggle
+              v-model="layoutMode"
+              :disabled="loadError"
+            />
+          </div>
+          <div
+            v-if="
+              !filtersPanelExpanded &&
+                (genreTagsForFilter.length > 0 || showFiltersPanelExpandToggle)
+            "
+            :ref="setCompactGenreRowRef"
+            class="mt-4 flex w-full flex-wrap items-center gap-x-2 gap-y-2 border-t border-surface-3 pt-4"
+            :class="
+              genreTagsForFilter.length > 0 && showFiltersPanelExpandToggle
+                ? 'justify-between'
+                : showFiltersPanelExpandToggle
+                  ? 'justify-end'
+                  : ''
+            "
+          >
+            <div
+              v-if="genreTagsForFilter.length > 0"
+              class="flex min-w-0 flex-wrap items-center gap-2"
+            >
+              <button
+                v-for="g in compactGenreTagsForRow"
+                :key="'compact-genre-' + g.id"
+                :ref="(el) => setCompactGenrePillRef(g.id, el)"
+                type="button"
+                class="productions-view__genre-collapsed-row-pill"
+                :class="
+                  selectedTagIds.includes(g.id)
+                    ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
+                    : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
+                "
+                :disabled="listLoading || loadError"
+                @click="toggleTag(g.id)"
+              >
+                {{ g.label }}
+              </button>
+            </div>
+            <button
+              v-if="showFiltersPanelExpandToggle"
+              :ref="setCompactGenreExpandButtonRef"
+              type="button"
+              class="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md border border-surface-3 bg-surface-0 text-ink-secondary transition hover:border-accent-outline hover:bg-surface-2 hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-100 dark:bg-surface-1"
+              :disabled="listLoading || loadError"
+              :aria-expanded="false"
+              :aria-label="t('productionsPage.expandFiltersPanelAria')"
+              aria-controls="productions-extended-filters"
+              @click="filtersPanelExpanded = true"
+            >
+              <svg
+                class="size-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
           </div>
 
           <div
-            v-if="nonGenreTagsForFilter.length > 0"
-            class="mt-4 space-y-3 border-t border-surface-3 pt-4"
+            v-if="filtersPanelExpanded"
+            id="productions-extended-filters"
+            class="mt-4 space-y-4 rounded-md border border-surface-3 bg-surface-1 px-4 py-4 dark:bg-surface-1/60"
           >
-            <p
-              class="text-xs font-medium uppercase tracking-wide text-ink-secondary"
+            <ProductionsFilterPanelTagSection
+              v-for="(sec, idx) in panelFilterSections"
+              :key="'filters-panel-tags-' + sec.tagTypeId"
+              v-model:expanded="expandedTagTypePanel[sec.tagTypeId]"
+              :heading="sec.heading"
+              :visible-tags="
+                expandedTagTypePanel[sec.tagTypeId]
+                  ? sec.candidates
+                  : panelCollapsedFitVisible(idx)
+              "
+              :selected-tag-ids="selectedTagIds"
+              :show-expand-toggle="
+                panelCollapsedFitVisible(idx).length < sec.candidates.length
+              "
+              :row-binder="
+                panelSectionFitApis[idx]?.setRowRef ??
+                  noopProductionsPanelBinder
+              "
+              :pill-binder="
+                panelSectionFitApis[idx]?.setPillRef ??
+                  noopProductionsPanelPillBinder
+              "
+              :trailing-binder="
+                panelSectionFitApis[idx]?.setTrailingControlRef ??
+                  noopProductionsTrailingBinder
+              "
+              :variant="sec.isGenreType ? 'genre' : 'accent'"
+              :disabled="listLoading || loadError"
+              :bordered-top="idx > 0"
+              @toggle="toggleTag($event)"
+            />
+
+            <div
+              class="flex justify-end border-t border-surface-3/80 pt-3"
             >
-              {{ t("productionsPage.tagFiltersHeading") }}
-            </p>
-            <div class="flex items-start gap-3">
-              <div class="flex min-w-0 flex-1 flex-wrap gap-2">
-                <button
-                  v-for="g in visibleNonGenreTagsForFilter"
-                  :key="g.id"
-                  type="button"
-                  class="rounded-full border px-3 py-1 text-sm transition disabled:opacity-100"
-                  :class="
-                    selectedTagIds.includes(g.id)
-                      ? 'border-accent-outline bg-surface-1 text-ink-primary'
-                      : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
-                  "
-                  :disabled="listLoading || loadError"
-                  @click="toggleTag(g.id)"
-                >
-                  {{ g.label }}
-                </button>
-              </div>
               <button
-                v-if="showNonGenreTagFilterExpandToggle"
                 type="button"
-                class="shrink-0 cursor-pointer pt-0.5 text-sm font-medium leading-snug text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100"
+                class="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md border border-surface-3 bg-surface-0 text-ink-secondary transition hover:border-accent-outline hover:bg-surface-2 hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-100 dark:bg-surface-1"
                 :disabled="listLoading || loadError"
-                :aria-expanded="nonGenreTagFiltersExpanded"
-                @click="nonGenreTagFiltersExpanded = !nonGenreTagFiltersExpanded"
+                :aria-expanded="true"
+                :aria-label="t('productionsPage.collapseFiltersPanelAria')"
+                @click="filtersPanelExpanded = false"
               >
-                {{
-                  nonGenreTagFiltersExpanded
-                    ? t("productionsPage.viewLessTagFilters")
-                    : t("productionsPage.viewMoreTagFilters")
-                }}
+                <svg
+                  class="size-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m18 15-6-6-6 6" />
+                </svg>
               </button>
             </div>
           </div>
@@ -197,17 +259,17 @@
                 filterBannerYearRange !== null ||
                 (filterBannerDateFrom && filterBannerDateTo)
             "
-            class="mb-4 mt-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-2 border-t border-surface-3 pt-5"
+            class="productions-view__filter-banner"
           >
             <div class="flex min-w-0 flex-wrap items-center gap-2">
-              <span class="text-sm text-ink-secondary">{{
-                t("productionsPage.activeFiltersLabel")
-              }}</span>
+              <span
+                class="text-[15px] pr-1 text-ink-secondary"
+              >{{ t("productionsPage.activeFiltersLabel") }}</span>
               <button
                 v-for="tid in filterBannerTagIds"
                 :key="'tag-' + tid"
                 type="button"
-                :class="['max-w-full', ACTIVE_FILTER_CHIP_CLASS]"
+                :class="['max-w-full', 'productions-view__active-chip']"
                 :disabled="listLoading"
                 :aria-label="t('productionsPage.removeTagFilter')"
                 @click="removeTag(tid)"
@@ -218,7 +280,7 @@
               <button
                 v-if="filterBannerYearRange"
                 type="button"
-                :class="[ACTIVE_FILTER_CHIP_CLASS, 'tabular-nums']"
+                :class="['productions-view__active-chip', 'tabular-nums']"
                 :disabled="listLoading"
                 :aria-label="t('productionsPage.removeYearRangeFilter')"
                 @click="clearYearRangeFilter"
@@ -229,7 +291,7 @@
               <button
                 v-if="filterBannerDateFrom && filterBannerDateTo"
                 type="button"
-                :class="['max-w-full', ACTIVE_FILTER_CHIP_CLASS]"
+                :class="['max-w-full', 'productions-view__active-chip']"
                 :disabled="listLoading"
                 :aria-label="t('productionsPage.removeDateRangeFilter')"
                 @click="clearDateRange"
@@ -240,7 +302,7 @@
             </div>
             <button
               type="button"
-              class="col-start-2 row-start-1 justify-self-end self-start pt-0.5 shrink-0 cursor-pointer text-sm font-medium text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100"
+              class="productions-view__banner-action"
               :disabled="listLoading || loadError"
               @click="void clearAllNonSearchFilters()"
             >
@@ -251,24 +313,34 @@
 
         <p
           v-if="loadError"
-          class="rounded-md border border-surface-3 bg-surface-1 px-4 py-3 text-sm text-ink-secondary"
+          class="productions-view__alert"
           role="alert"
         >
           {{ loadErrorDetail ?? t("productionsPage.error") }}
         </p>
 
-        <p
+        <div
           v-else-if="loading"
-          class="py-16 text-center text-sm text-ink-secondary"
+          role="status"
+          :aria-label="t('productionsPage.loading')"
+          aria-live="polite"
         >
-          {{ t("productionsPage.loading") }}
-        </p>
+          <div
+            v-if="layoutMode === 'grid'"
+            class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 md:mt-8 md:gap-8 lg:grid-cols-3"
+          >
+            <ProductionGridCardSkeleton v-for="n in PAGE_SIZE" :key="n" />
+          </div>
+          <template v-else>
+            <ProductionListCardSkeleton v-for="n in PAGE_SIZE" :key="n" />
+          </template>
+        </div>
 
         <div v-else>
           <p
             v-if="displayedFilteredTotal !== null"
             :class="[
-              'mb-2 text-sm leading-normal text-ink-secondary tabular-nums',
+              'mb-2 text-sm italic leading-normal text-ink-secondary tabular-nums',
               !filterBannerHasNonSearchChips() && 'mt-6',
             ]"
             aria-live="polite"
@@ -276,107 +348,141 @@
             {{ filteredResultsCountLabel }}
           </p>
 
-          <p
-            v-if="totalCount === 0 && listLoading"
-            class="py-16 text-center text-sm text-ink-secondary"
+          <div
+            class="transition-opacity duration-200"
+            :class="{ 'opacity-50 pointer-events-none': listLoading }"
           >
-            {{ t("productionsPage.loading") }}
-          </p>
-          <p
-            v-else-if="totalCount === 0"
-            class="py-16 text-center text-sm text-ink-secondary"
-          >
-            {{ emptyStateMessage }}
-          </p>
-
-          <div v-else>
-            <ProductionListCard
-              v-for="(p, idx) in productions"
-              :key="`${currentPage}-${idx}-${p.id}`"
-              :row-index="idx"
-              :production="p"
-              :date-summary="dateSummaryFor(p.id)"
-              :tag-chips="tagChipsFor(p)"
-              :halls-text="hallsTextFor(p.id)"
-            />
-
-            <nav
-              v-if="totalPages > 1"
-              class="mt-10 grid grid-cols-1 justify-items-center gap-y-6 border-t border-surface-3 pt-8 sm:grid-cols-[1fr_auto] sm:items-center sm:justify-items-start sm:gap-x-12 sm:gap-y-0"
-              aria-label="Pagination"
-            >
-              <p class="text-center text-sm text-ink-secondary sm:text-left">
-                {{
-                  t("productionsPage.showingRange", {
-                    from: rangeFrom,
-                    to: rangeTo,
-                    total: totalCount,
-                  })
-                }}
-              </p>
+            <template v-if="listLoading && productions.length === 0">
               <div
-                class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:justify-self-end"
-                role="group"
-                :aria-label="t('productionsPage.goToPage')"
+                v-if="layoutMode === 'grid'"
+                class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 md:mt-8 md:gap-8 lg:grid-cols-3"
               >
-                <button
-                  type="button"
-                  class="cursor-pointer rounded-md border border-accent-outline bg-surface-0 px-3 py-1.5 text-sm font-medium text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
-                  :disabled="currentPage <= 0 || listLoading"
-                  @click="goToPage(currentPage - 1)"
-                >
-                  {{ t("productionsPage.prevPage") }}
-                </button>
-                <div
-                  class="flex items-center gap-2 text-sm tabular-nums text-ink-secondary"
-                >
-                  <span class="whitespace-nowrap">{{
-                    t("productionsPage.pageWord")
-                  }}</span>
-                  <input
-                    :value="pageNumberInput"
-                    type="text"
-                    inputmode="numeric"
-                    autocomplete="off"
-                    maxlength="6"
-                    :disabled="listLoading"
-                    :aria-label="t('productionsPage.goToPage')"
-                    class="min-w-6 max-w-8 shrink-0 border-0 border-b border-surface-3 bg-transparent px-0 pb-px text-center text-sm tabular-nums text-ink-secondary focus:border-ink-primary focus:text-ink-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
-                    @input="onPageNumberInput"
-                    @keydown.enter.prevent="commitPageNumberInput"
-                    @blur="commitPageNumberInput"
-                  />
-                  <span class="whitespace-nowrap">{{
-                    t("productionsPage.pageOfTotal", { total: totalPages })
-                  }}</span>
-                </div>
-                <button
-                  type="button"
-                  class="cursor-pointer rounded-md border border-accent-outline bg-surface-0 px-3 py-1.5 text-sm font-medium text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
-                  :disabled="currentPage >= totalPages - 1 || listLoading"
-                  @click="goToPage(currentPage + 1)"
-                >
-                  {{ t("productionsPage.nextPage") }}
-                </button>
+                <ProductionGridCardSkeleton v-for="n in PAGE_SIZE" :key="n" />
               </div>
-            </nav>
+              <template v-else>
+                <ProductionListCardSkeleton v-for="n in PAGE_SIZE" :key="n" />
+              </template>
+            </template>
+
+            <p
+              v-else-if="!listLoading && totalCount === 0"
+              class="py-16 text-center text-sm text-ink-secondary"
+            >
+              {{ emptyStateMessage }}
+            </p>
+
+            <div v-else>
+              <div
+                v-if="layoutMode === 'grid'"
+                class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 md:mt-8 md:gap-8 lg:grid-cols-3"
+              >
+                <ProductionGridCard
+                  v-for="(p, idx) in productions"
+                  :key="`${currentPage}-${idx}-${p.id}`"
+                  :row-index="idx"
+                  :production="p"
+                  :date-summary="dateSummaryFor(p.id)"
+                  :tag-chips="tagChipsFor(p)"
+                  :thumbnail-url="thumbnailFor(p.id)"
+                />
+              </div>
+              <ProductionListCard
+                v-for="(p, idx) in productions"
+                v-else
+                :key="`${currentPage}-${idx}-${p.id}`"
+                :row-index="idx"
+                :production="p"
+                :date-summary="dateSummaryFor(p.id)"
+                :tag-chips="tagChipsFor(p)"
+                :halls-text="hallsTextFor(p.id)"
+                :thumbnail-url="thumbnailFor(p.id)"
+              />
+
+              <nav
+                v-if="totalPages > 1"
+                class="productions-view__pagination"
+                aria-label="Pagination"
+              >
+                <p
+                  class="text-center text-sm text-ink-secondary tabular-nums sm:text-left"
+                >
+                  {{
+                    t("productionsPage.showingRange", {
+                      from: rangeFrom,
+                      to: rangeTo,
+                      total: totalCount,
+                    })
+                  }}
+                </p>
+                <div
+                  class="productions-view__pagination-toolbar"
+                  role="group"
+                  :aria-label="t('productionsPage.goToPage')"
+                >
+                  <button
+                    type="button"
+                    class="productions-view__pager-btn"
+                    :disabled="currentPage <= 0 || listLoading"
+                    @click="goToPage(currentPage - 1)"
+                  >
+                    {{ t("productionsPage.prevPage") }}
+                  </button>
+                  <div
+                    class="flex items-center gap-2 text-sm tabular-nums text-ink-secondary"
+                  >
+                    <span class="whitespace-nowrap">{{
+                      t("productionsPage.pageWord")
+                    }}</span>
+                    <input
+                      :value="pageNumberInput"
+                      type="text"
+                      inputmode="numeric"
+                      autocomplete="off"
+                      maxlength="6"
+                      :disabled="listLoading"
+                      :aria-label="t('productionsPage.goToPage')"
+                      class="productions-view__page-input"
+                      @input="onPageNumberInput"
+                      @keydown.enter.prevent="commitPageNumberInput"
+                      @blur="commitPageNumberInput"
+                    />
+                    <span class="whitespace-nowrap">{{
+                      t("productionsPage.pageOfTotal", { total: totalPages })
+                    }}</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="productions-view__pager-btn"
+                    :disabled="currentPage >= totalPages - 1 || listLoading"
+                    @click="goToPage(currentPage + 1)"
+                  >
+                    {{ t("productionsPage.nextPage") }}
+                  </button>
+                </div>
+              </nav>
+            </div>
           </div>
         </div>
       </section>
     </main>
-    <AppFooter />
+    <AppFooter v-if="!loading" />
   </div>
 </template>
 
 <script setup lang="ts">
 import {
   computed,
+  effectScope,
   nextTick,
   onMounted,
+  onUnmounted,
+  reactive,
   ref,
+  shallowRef,
   useTemplateRef,
   watch,
 } from "vue";
+import type { ComponentPublicInstance } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import type { LocationQuery, LocationQueryRaw } from "vue-router";
@@ -391,22 +497,38 @@ import {
   PRODUCTION_LIST_YEAR_RANGE_ORDER_MESSAGE,
 } from "@viernulvier/shared";
 import AppFooter from "@/components/AppFooter.vue";
-import AppNavbar from "@/components/AppNavbar.vue";
+import AppNavbar from "@/components/nav/AppNavbar.vue";
+import ProductionGridCard from "@/components/productions/ProductionGridCard.vue";
+import ProductionGridCardSkeleton from "@/components/productions/ProductionGridCardSkeleton.vue";
 import ProductionListCard from "@/components/productions/ProductionListCard.vue";
+import ProductionListCardSkeleton from "@/components/productions/ProductionListCardSkeleton.vue";
+import ProductionsFilterPanelTagSection from "@/components/productions/ProductionsFilterPanelTagSection.vue";
+import ProductionsFilterSkeleton from "@/components/productions/ProductionsFilterSkeleton.vue";
+import ProductionsLayoutToggle, {
+  type ProductionsLayoutMode,
+} from "@/components/productions/ProductionsLayoutToggle.vue";
 import ProductionsDateFilter from "@/components/productions/ProductionsDateFilter.vue";
+import ProductionsSortControl from "@/components/productions/ProductionsSortControl.vue";
 import { useDarkMode } from "@/composables/useDarkMode";
+import { useFittingPills } from "@/composables/useFittingPills";
 import { i18n, type SupportedLang } from "@/i18n";
 import { getEventsForProductions } from "@/services/events";
 import { getHalls } from "@/services/halls";
 import { ApiError } from "@/services/api";
-import { getProductions } from "@/services/productions";
+import { getImagesForProductionsOrEmpty } from "@/services/media";
+import {
+  getProductions,
+  type ProductionSortBy,
+  type ProductionSortDir,
+} from "@/services/productions";
 import { getTags, getTagTypes } from "@/services/tags";
-import { localizeOrEmpty } from "@/utils/language-utils";
+import { localizeWithFallback, localizeOrEmpty } from "@/utils/language-utils";
 import {
   sortProductionTagChipsGenresFirst,
   tagTypeIsGenre,
   type ProductionTagChip,
 } from "@/utils/tagDisplay";
+import { pickProductionListThumbnailUrl } from "@/utils/productionThumbnails";
 import {
   distinctHallNames,
   groupEventsByProductionId,
@@ -415,28 +537,73 @@ import {
   tagMapById,
 } from "@/utils/productionsOverview";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 18;
 
 /** Same cap as the list API, extra terms are ignored client-side. */
 const MAX_SEARCH_TERMS = 20;
 
-/** How many genre/tag filter chips to show before "Show more". Selected tags are always included. */
-const GENRE_FILTER_COLLAPSED_MAX = 7;
+/**
+ * Safety fallback when widths are not measurable (e.g. JSDOM tests).
+ * Real browsers use measured row fit, not this cap.
+ */
+const COMPACT_GENRE_FALLBACK_MAX = 10;
 
-const NON_GENRE_FILTER_COLLAPSED_MAX = 5;
+/** Panel tag rows: prior caps when widths are not measurable (JSDOM / first frame). */
+const PANEL_ROW_GENRE_FALLBACK_MAX = 9;
+const PANEL_ROW_NON_GENRE_FALLBACK_MAX = 6;
 
-function collapsedTagFilterList(
+/** Missing `tag_types` lookup: still filterable via `tags=`, surfaced in panel under misc heading. */
+const ORPHAN_TAG_TYPE_PANEL_ID = -1;
+
+/**
+ * Filter panel fitting runs `useFittingPills` inside a detached `EffectScope`: slots are often
+ * first created after tags load (`watch(panelFilterSections)`). Scopes own watcher teardown,
+ * ResizeObserver lifecycle, etc.
+ */
+type FilterPanelFitTag = { id: number; label: string };
+
+function createPanelFitSlot(fallbackCap: number) {
+  const scope = effectScope(true);
+  const slot = scope.run(() => {
+    const candidatesRef = ref<FilterPanelFitTag[]>([]);
+    const fitting = useFittingPills(candidatesRef, {
+      gapPx: 8,
+      fallbackVisibleCount: fallbackCap,
+      attachWindowResizeListener: false,
+    });
+    return { candidatesRef, ...fitting };
+  });
+  if (!slot) {
+    scope.stop();
+    throw new Error("createPanelFitSlot: scope.run returned undefined");
+  }
+  return { ...slot, _scope: scope };
+}
+
+type ProductionsPanelFitSlot = ReturnType<typeof createPanelFitSlot>;
+
+/** No-op ref binders when a binding is briefly unavailable (must not persist). */
+function noopProductionsPanelBinder(
+  _el: Element | ComponentPublicInstance | null,
+): void {}
+
+function noopProductionsPanelPillBinder(
+  _id: number,
+  _el: Element | ComponentPublicInstance | null,
+): void {}
+
+function noopProductionsTrailingBinder(
+  _el: Element | ComponentPublicInstance | null,
+): void {}
+
+function selectedFirstTagFilterList(
   all: { id: number; label: string }[],
   selectedIds: readonly number[],
-  max: number,
-  expanded: boolean,
 ): { id: number; label: string }[] {
-  if (expanded || all.length <= max) return all;
   const sel = new Set(selectedIds);
-  const must = all.filter((t) => sel.has(t.id));
+  const selected = all.filter((t) => sel.has(t.id));
   const rest = all.filter((t) => !sel.has(t.id));
-  if (must.length >= max) return must;
-  return [...must, ...rest.slice(0, max - must.length)];
+  return [...selected, ...rest];
 }
 
 /** 1-based page index in the URL (`?page=1` is normalized away). */
@@ -449,21 +616,24 @@ const YEAR_MIN_QUERY_KEY = "yearMin";
 const YEAR_MAX_QUERY_KEY = "yearMax";
 const FROM_QUERY_KEY = "from";
 const TO_QUERY_KEY = "to";
+const SORT_BY_QUERY_KEY = "sortBy";
+const SORT_DIR_QUERY_KEY = "sortDir";
+
+/** Present only when the grid layout is selected; list remains the canonical default (no param). */
+const VIEW_QUERY_KEY = "view";
 
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 
-/** Removable applied-filter chips: active search terms, tag/year/date summary row */
-const ACTIVE_FILTER_CHIP_CLASS =
-  "inline-flex cursor-pointer items-center gap-1 rounded-full border border-surface-3 bg-surface-0 py-1 pl-2.5 pr-1.5 text-sm text-ink-primary shadow-sm ring-1 ring-inset ring-accent-outline/25 transition hover:bg-surface-2 dark:bg-surface-1 disabled:opacity-100";
-
 const pageTopAnchor = useTemplateRef<HTMLElement>("pageTopAnchor");
 
 /** Tag IDs for list filtering — genres and non-genres share `tags=` / `tagIds` (IDs are unique). */
 const selectedTagIds = ref<number[]>([]);
-const genreTagFiltersExpanded = ref(false);
-const nonGenreTagFiltersExpanded = ref(false);
+/** Per CMS tag type (`ORPHAN_TAG_TYPE_PANEL_ID` for tags without a known type row). */
+const expandedTagTypePanel = reactive<Record<number, boolean>>({});
+/** Full genre + tag filter sections (beyond compact preview row). */
+const filtersPanelExpanded = ref(false);
 /** `null` = all years in the archive slider span; otherwise inclusive calendar-year range. */
 const explicitYearRange = ref<{ from: number; to: number } | null>(null);
 const filterDateFrom = ref<string | null>(null);
@@ -471,7 +641,7 @@ const filterDateTo = ref<string | null>(null);
 /**
  * Tag/year/date chips in the "Active filters" row. Row appears/updates after fetch
  * when adding the first non-search filter, and may stay visible (stale chips) until
- * fetch when removing the last non-search filter -> same idea as searchBannerTerms.
+ * fetch when removing the last non-search filter.
  */
 const filterBannerTagIds = ref<number[]>([]);
 const filterBannerYearRange = ref<{ from: number; to: number } | null>(null);
@@ -596,6 +766,25 @@ function readDateRangeFromRoute(): { from: string; to: string } | null {
   return { from, to: toStr };
 }
 
+function readSortByFromRoute(): ProductionSortBy {
+  const raw = route.query[SORT_BY_QUERY_KEY];
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return value === "name" ? "name" : "date";
+}
+
+function readSortDirFromRoute(): ProductionSortDir {
+  const raw = route.query[SORT_DIR_QUERY_KEY];
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return value === "asc" ? "asc" : "desc";
+}
+
+function readLayoutFromQuery(q: LocationQuery): ProductionsLayoutMode {
+  const raw = q[VIEW_QUERY_KEY];
+  const s = Array.isArray(raw) ? raw[0] : raw;
+  if (s === undefined || s === null || s === "") return "list";
+  return String(s).trim().toLowerCase() === "grid" ? "grid" : "list";
+}
+
 function queryForPage0WithBase(
   page0: number,
   baseQuery: LocationQuery,
@@ -632,6 +821,18 @@ function queryForPage0WithBase(
     delete q[FROM_QUERY_KEY];
     delete q[TO_QUERY_KEY];
   }
+  if (sortBy.value === "date" && sortDir.value === "desc") {
+    delete q[SORT_BY_QUERY_KEY];
+    delete q[SORT_DIR_QUERY_KEY];
+  } else {
+    q[SORT_BY_QUERY_KEY] = sortBy.value;
+    q[SORT_DIR_QUERY_KEY] = sortDir.value;
+  }
+  if (layoutMode.value === "grid") {
+    q[VIEW_QUERY_KEY] = "grid";
+  } else {
+    delete q[VIEW_QUERY_KEY];
+  }
   return q;
 }
 
@@ -652,23 +853,37 @@ function urlNeedsSyncForPage0(page0: number): boolean {
   return cur !== want;
 }
 
-function scrollProductionsPageToTop() {
+/** True when `view` should be omitted (list) vs `view=grid`, or stray `view=…` should be stripped. */
+function urlNeedsSyncForView(): boolean {
+  const raw = route.query[VIEW_QUERY_KEY];
+  const cur =
+    raw === undefined || raw === null || raw === ""
+      ? undefined
+      : String(Array.isArray(raw) ? raw[0] : raw).trim().toLowerCase();
+  const wantGrid = layoutMode.value === "grid";
+  if (wantGrid) {
+    return cur !== "grid";
+  }
+  return cur !== undefined;
+}
+
+/**
+ * Scroll to hero anchor after list page/filter changes (`smooth` by default).
+ * Fallback uses `documentElement` only (no duplicate `document.body` scroll).
+ */
+function scrollProductionsPageToTop(
+  behavior: ScrollBehavior = "smooth",
+): void {
   const el = pageTopAnchor.value;
   if (el && typeof el.scrollIntoView === "function") {
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.scrollIntoView({ behavior, block: "start" });
     return;
   }
   const doc = document.documentElement;
-  const body = document.body;
   if (typeof doc.scrollTo === "function") {
-    doc.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    doc.scrollTo({ top: 0, left: 0, behavior });
   } else {
     doc.scrollTop = 0;
-  }
-  if (typeof body.scrollTo === "function") {
-    body.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-  } else {
-    body.scrollTop = 0;
   }
 }
 
@@ -681,15 +896,10 @@ const productions = ref<ProductionWithBackwardsRefs[]>([]);
 const totalCount = ref(0);
 const currentPage = ref(0);
 const appliedSearchTerms = ref<string[]>([]);
-/**
- * Terms shown in the "Search:" chip row. The results count line also keys off
- * `hasActiveListFilters` so it can show while the first term’s fetch runs.
- * When clearing all terms, this stays populated until the unfiltered list has loaded,
- * so layout does not jump while stale filtered cards are still on screen.
- * When adding the first term, same as non-search filters: row appears only after fetch.
- */
-const searchBannerTerms = ref<string[]>([]);
 const searchDraft = ref("");
+const sortBy = ref<ProductionSortBy>("date");
+const sortDir = ref<ProductionSortDir>("desc");
+const layoutMode = ref<ProductionsLayoutMode>(readLayoutFromQuery(route.query));
 /**
  * Total matching the current list query; updated on each successful fetch.
  * While search/filter list loads we keep the previous value so the results line
@@ -702,6 +912,29 @@ const displayedFilteredTotal = ref<number | null>(null);
  */
 const searchAwaitingList = ref(false);
 
+async function applyProductionsSortChange(parsed: {
+  sortBy: ProductionSortBy;
+  sortDir: ProductionSortDir;
+}): Promise<void> {
+  if (loading.value) return;
+  if (parsed.sortBy === sortBy.value && parsed.sortDir === sortDir.value) return;
+
+  sortBy.value = parsed.sortBy;
+  sortDir.value = parsed.sortDir;
+
+  listLoading.value = true;
+  beginListAttempt();
+  try {
+    await fetchProductionsPageData(0);
+    await replaceRouteForPage0(0);
+    await scrollAfterPageChange();
+  } catch (err) {
+    failListAttempt(err);
+  } finally {
+    listLoading.value = false;
+  }
+}
+
 const hasActiveListFilters = computed(() => {
   if (appliedSearchTerms.value.length > 0) return true;
   if (selectedTagIds.value.length > 0) return true;
@@ -711,9 +944,44 @@ const hasActiveListFilters = computed(() => {
 });
 
 const eventsByProduction = ref(new Map<number, ProductionEvent[]>());
+/** Set after `GET /production/images` for thumbnails on the current list page. */
+const thumbnailUrlByProductionId = ref(
+  new Map<number, string | null>(),
+);
+/** Bumps on each thumbnail load; stale batches must not overwrite the map after a newer interaction. */
+let thumbnailLoadGeneration = 0;
 const tagsById = ref(new Map<number, Tag>());
 const tagTypesById = ref(new Map<number, TagType>());
 const hallsById = ref(new Map<number, Hall>());
+
+/** `undefined` while thumbnails not loaded yet; `null` when loaded but no usable crop URL. */
+function thumbnailFor(productionId: number): string | null | undefined {
+  const m = thumbnailUrlByProductionId.value;
+  if (!m.has(productionId)) {
+    return undefined;
+  }
+  return m.get(productionId) ?? null;
+}
+
+async function loadThumbnailsForProductionIds(ids: number[]): Promise<void> {
+  const gen = ++thumbnailLoadGeneration;
+  if (ids.length === 0) {
+    thumbnailUrlByProductionId.value = new Map();
+    return;
+  }
+  const byProduction = await getImagesForProductionsOrEmpty(ids);
+  if (gen !== thumbnailLoadGeneration) {
+    return;
+  }
+  const next = new Map<number, string | null>();
+  for (const id of ids) {
+    next.set(
+      id,
+      pickProductionListThumbnailUrl(byProduction.get(id) ?? []),
+    );
+  }
+  thumbnailUrlByProductionId.value = next;
+}
 
 const locale = computed(() => i18n.global.locale.value as SupportedLang);
 
@@ -740,6 +1008,9 @@ function productionsListArgs(page: number) {
   const args: Parameters<typeof getProductions>[0] = {
     limit: PAGE_SIZE,
     offset: page * PAGE_SIZE,
+    sortBy: sortBy.value,
+    sortDir: sortDir.value,
+    lang: locale.value,
   };
   if (appliedSearchTerms.value.length > 0) {
     args.search = appliedSearchTerms.value;
@@ -774,9 +1045,10 @@ async function fetchProductionsPageData(page0: number) {
   totalCount.value = total;
   currentPage.value = page0;
   displayedFilteredTotal.value = hasActiveListFilters.value ? total : null;
-  searchBannerTerms.value = [...appliedSearchTerms.value];
   syncFilterBannerFromApplied();
   eventsByProduction.value = eventsMap;
+  thumbnailUrlByProductionId.value = new Map();
+  void loadThumbnailsForProductionIds(ids);
 }
 
 function toggleTag(id: number) {
@@ -799,11 +1071,14 @@ function clearDateRange() {
   filterDateTo.value = null;
 }
 
-function scrollAfterPageChange() {
-  void nextTick();
-  requestAnimationFrame(() => {
-    scrollProductionsPageToTop();
+async function scrollAfterPageChange(): Promise<void> {
+  await nextTick();
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
   });
+  scrollProductionsPageToTop();
 }
 
 async function replaceRouteForPage0(page0: number) {
@@ -861,7 +1136,7 @@ async function applyFilterChange() {
   try {
     await fetchProductionsPageData(0);
     await replaceRouteForPage0(0);
-    scrollAfterPageChange();
+    await scrollAfterPageChange();
   } catch (err) {
     failListAttempt(err);
     syncFilterBannerFromApplied();
@@ -873,7 +1148,6 @@ async function applyFilterChange() {
 async function submitSearch() {
   const q = searchDraft.value.trim();
   if (!q) {
-    await clearSearchFilter();
     return;
   }
   const lower = q.toLowerCase();
@@ -885,25 +1159,20 @@ async function submitSearch() {
     searchDraft.value = "";
     return;
   }
-  const hadVisibleSearchPillRow = searchBannerTerms.value.length > 0;
   appliedSearchTerms.value = dedupePreserveSearchCap([
     ...appliedSearchTerms.value,
     q,
   ]);
-  if (hadVisibleSearchPillRow) {
-    searchBannerTerms.value = [...appliedSearchTerms.value];
-  }
+  searchDraft.value = "";
   listLoading.value = true;
   searchAwaitingList.value = true;
   beginListAttempt();
   try {
     await fetchProductionsPageData(0);
     await replaceRouteForPage0(0);
-    scrollAfterPageChange();
-    searchDraft.value = "";
+    await scrollAfterPageChange();
   } catch (err) {
     failListAttempt(err);
-    searchBannerTerms.value = [...appliedSearchTerms.value];
   } finally {
     listLoading.value = false;
     searchAwaitingList.value = false;
@@ -915,34 +1184,13 @@ async function removeSearchTermAt(index: number) {
   if (next.length === appliedSearchTerms.value.length) return;
   listLoading.value = true;
   beginListAttempt();
-  if (next.length > 0) {
-    searchBannerTerms.value = [...next];
-  }
   appliedSearchTerms.value = next;
   try {
     await fetchProductionsPageData(0);
     await replaceRouteForPage0(0);
-    scrollAfterPageChange();
+    await scrollAfterPageChange();
   } catch (err) {
     failListAttempt(err);
-    searchBannerTerms.value = [...appliedSearchTerms.value];
-  } finally {
-    listLoading.value = false;
-  }
-}
-
-async function clearSearchFilter() {
-  listLoading.value = true;
-  beginListAttempt();
-  appliedSearchTerms.value = [];
-  searchDraft.value = "";
-  try {
-    await fetchProductionsPageData(0);
-    await replaceRouteForPage0(0);
-    scrollAfterPageChange();
-  } catch (err) {
-    failListAttempt(err);
-    searchBannerTerms.value = [...appliedSearchTerms.value];
   } finally {
     listLoading.value = false;
   }
@@ -989,6 +1237,7 @@ async function commitPageNumberInput() {
     return;
   }
 
+  scrollProductionsPageToTop();
   await goToPage(pageOneBased - 1);
   pageNumberInput.value = String(currentPage.value + 1);
 }
@@ -1008,7 +1257,7 @@ const genreTagsForFilter = computed(() => {
   for (const tag of byId.values()) {
     const tt = tagTypesById.value.get(tag.tag_type as number);
     if (!tagTypeIsGenre(tt)) continue;
-    const label = localizeOrEmpty(tag.name, lang);
+    const label = localizeWithFallback(tag.name, (map) => localizeOrEmpty(map, lang));
     if (!label) continue;
     items.push({ id: tag.id, label });
   }
@@ -1021,50 +1270,213 @@ const genreTagsForFilter = computed(() => {
   return items;
 });
 
-const nonGenreTagsForFilter = computed(() => {
+const panelFilterSections = computed(() => {
   const lang = locale.value;
-  const items: { id: number; label: string }[] = [];
   const byId = tagsById.value;
+  const typesMap = tagTypesById.value;
+
+  const buckets = new Map<number, Tag[]>();
   for (const tag of byId.values()) {
-    const tt = tagTypesById.value.get(tag.tag_type as number);
-    if (tagTypeIsGenre(tt)) continue;
-    const label = localizeOrEmpty(tag.name, lang);
-    if (!label) continue;
-    items.push({ id: tag.id, label });
+    const rawTypeId = tag.tag_type as number;
+    const bucketKey = typesMap.has(rawTypeId)
+      ? rawTypeId
+      : ORPHAN_TAG_TYPE_PANEL_ID;
+    const arr = buckets.get(bucketKey) ?? [];
+    arr.push(tag);
+    buckets.set(bucketKey, arr);
   }
-  items.sort((a, b) => {
-    const ca = byId.get(a.id)?.production_count ?? 0;
-    const cb = byId.get(b.id)?.production_count ?? 0;
-    if (cb !== ca) return cb - ca;
-    return a.label.localeCompare(b.label, lang);
+
+  type PanelSec = {
+    tagTypeId: number;
+    heading: string;
+    isGenreType: boolean;
+    candidates: { id: number; label: string }[];
+  };
+
+  const sections: PanelSec[] = [];
+
+  for (const [typeId, tagList] of buckets) {
+    const items: { id: number; label: string }[] = [];
+    for (const tag of tagList) {
+      const label = localizeWithFallback(tag.name, (map) => localizeOrEmpty(map, lang));
+      if (!label) continue;
+      items.push({ id: tag.id, label });
+    }
+    if (items.length === 0) continue;
+
+    items.sort((a, b) => {
+      const ca = byId.get(a.id)?.production_count ?? 0;
+      const cb = byId.get(b.id)?.production_count ?? 0;
+      if (cb !== ca) return cb - ca;
+      return a.label.localeCompare(b.label, lang);
+    });
+
+    const candidates = selectedFirstTagFilterList(items, selectedTagIds.value);
+
+    let heading: string;
+    let isGenreType = false;
+    if (typeId === ORPHAN_TAG_TYPE_PANEL_ID) {
+      heading = t("productionsPage.miscTagTypesHeading");
+    } else {
+      const tt = typesMap.get(typeId)!;
+      isGenreType = tagTypeIsGenre(tt);
+      heading = localizeWithFallback(tt.name, (map) => localizeOrEmpty(map, lang)) || String(typeId);
+    }
+
+    sections.push({ tagTypeId: typeId, heading, isGenreType, candidates });
+  }
+
+  sections.sort((a, b) => {
+    if (a.isGenreType !== b.isGenreType) {
+      return Number(b.isGenreType) - Number(a.isGenreType);
+    }
+    return a.heading.localeCompare(b.heading, lang, { sensitivity: "base" });
   });
-  return items;
+
+  return sections;
 });
 
-const visibleGenreTagsForFilter = computed(() =>
-  collapsedTagFilterList(
-    genreTagsForFilter.value,
-    selectedTagIds.value,
-    GENRE_FILTER_COLLAPSED_MAX,
-    genreTagFiltersExpanded.value,
-  ),
+const compactGenreTagCandidates = computed(() =>
+  selectedFirstTagFilterList(genreTagsForFilter.value, selectedTagIds.value),
 );
 
-const visibleNonGenreTagsForFilter = computed(() =>
-  collapsedTagFilterList(
-    nonGenreTagsForFilter.value,
-    selectedTagIds.value,
-    NON_GENRE_FILTER_COLLAPSED_MAX,
-    nonGenreTagFiltersExpanded.value,
-  ),
+const {
+  setRowRef: setCompactGenreRowRef,
+  setTrailingControlRef: setCompactGenreExpandButtonRef,
+  setPillRef: setCompactGenrePillRef,
+  visibleItems: compactGenreTagsForRow,
+  recomputeVisibleCount: recomputeCompactGenreRowFit,
+} = useFittingPills(compactGenreTagCandidates, {
+  gapPx: 8,
+  trailingControlGapPx: 4,
+  fallbackVisibleCount: COMPACT_GENRE_FALLBACK_MAX,
+  attachWindowResizeListener: false,
+});
+
+const panelGenreFitSlots = new Map<number, ProductionsPanelFitSlot>();
+const panelAccentFitSlots = new Map<number, ProductionsPanelFitSlot>();
+
+const panelSectionFitApis = shallowRef<ProductionsPanelFitSlot[]>([]);
+
+function syncPanelTagSectionFitAssignments(): void {
+  const genreTypeIdsSeen = new Set<number>();
+  const accentTypeIdsSeen = new Set<number>();
+  const apis: ProductionsPanelFitSlot[] = [];
+
+  for (const sec of panelFilterSections.value) {
+    if (sec.isGenreType) {
+      genreTypeIdsSeen.add(sec.tagTypeId);
+      const slot =
+        panelGenreFitSlots.get(sec.tagTypeId) ??
+        createPanelFitSlot(PANEL_ROW_GENRE_FALLBACK_MAX);
+      panelGenreFitSlots.set(sec.tagTypeId, slot);
+      slot.candidatesRef.value = [...sec.candidates];
+      apis.push(slot);
+    } else {
+      accentTypeIdsSeen.add(sec.tagTypeId);
+      const slot =
+        panelAccentFitSlots.get(sec.tagTypeId) ??
+        createPanelFitSlot(PANEL_ROW_NON_GENRE_FALLBACK_MAX);
+      panelAccentFitSlots.set(sec.tagTypeId, slot);
+      slot.candidatesRef.value = [...sec.candidates];
+      apis.push(slot);
+    }
+  }
+
+  for (const [tagTypeId, slot] of panelGenreFitSlots) {
+    if (genreTypeIdsSeen.has(tagTypeId)) continue;
+    slot.candidatesRef.value = [];
+    slot._scope.stop();
+    panelGenreFitSlots.delete(tagTypeId);
+  }
+  for (const [tagTypeId, slot] of panelAccentFitSlots) {
+    if (accentTypeIdsSeen.has(tagTypeId)) continue;
+    slot.candidatesRef.value = [];
+    slot._scope.stop();
+    panelAccentFitSlots.delete(tagTypeId);
+  }
+
+  panelSectionFitApis.value = apis;
+}
+
+/** Explicit `.value` read: nested `ComputedRef`s in shallow slot objects do not unwrap in-template. */
+function panelCollapsedFitVisible(idx: number): FilterPanelFitTag[] {
+  const slot = panelSectionFitApis.value[idx];
+  if (!slot) return [];
+  return slot.visibleItems.value;
+}
+
+function productionsFitPillsOnWindowResize(): void {
+  recomputeCompactGenreRowFit();
+  for (const s of panelGenreFitSlots.values()) {
+    if (s.candidatesRef.value.length > 0) {
+      s.recomputeVisibleCount();
+    }
+  }
+  for (const s of panelAccentFitSlots.values()) {
+    if (s.candidatesRef.value.length > 0) {
+      s.recomputeVisibleCount();
+    }
+  }
+}
+
+watch(
+  panelFilterSections,
+  async (sections) => {
+    const seen = new Set<number>();
+    for (const s of sections) {
+      seen.add(s.tagTypeId);
+      if (!(s.tagTypeId in expandedTagTypePanel)) {
+        expandedTagTypePanel[s.tagTypeId] = false;
+      }
+    }
+    for (const key of Object.keys(expandedTagTypePanel)) {
+      const id = Number(key);
+      if (!seen.has(id)) Reflect.deleteProperty(expandedTagTypePanel, id);
+    }
+
+    syncPanelTagSectionFitAssignments();
+    await nextTick();
+    productionsFitPillsOnWindowResize();
+  },
+  { immediate: true },
 );
 
-const showGenreTagFilterExpandToggle = computed(
-  () => genreTagsForFilter.value.length > GENRE_FILTER_COLLAPSED_MAX,
-);
+watch(filtersPanelExpanded, async (opened) => {
+  if (!opened) return;
+  await nextTick();
+  await nextTick();
+  productionsFitPillsOnWindowResize();
+});
 
-const showNonGenreTagFilterExpandToggle = computed(
-  () => nonGenreTagsForFilter.value.length > NON_GENRE_FILTER_COLLAPSED_MAX,
+onMounted(() => {
+  if (typeof window === "undefined") return;
+  window.addEventListener("resize", productionsFitPillsOnWindowResize);
+});
+
+function disposeAllPanelFitScopes(): void {
+  for (const slot of panelGenreFitSlots.values()) {
+    slot._scope.stop();
+  }
+  for (const slot of panelAccentFitSlots.values()) {
+    slot._scope.stop();
+  }
+  panelGenreFitSlots.clear();
+  panelAccentFitSlots.clear();
+  panelSectionFitApis.value = [];
+}
+
+onUnmounted(() => {
+  if (typeof window !== "undefined") {
+    window.removeEventListener("resize", productionsFitPillsOnWindowResize);
+  }
+  disposeAllPanelFitScopes();
+});
+
+const showFiltersPanelExpandToggle = computed(
+  () =>
+    panelFilterSections.value.some((s) => !s.isGenreType) ||
+    compactGenreTagsForRow.value.length < compactGenreTagCandidates.value.length,
 );
 
 /** Matches backend `yearMin`/`yearMax` bounds; not derived from loaded events (list loads events per page only). */
@@ -1100,7 +1512,25 @@ const yearRangeChipSummary = computed(() => {
 function tagLabel(id: number): string {
   const tag = tagsById.value.get(id);
   if (!tag) return String(id);
-  return localizeOrEmpty(tag.name, locale.value) || String(id);
+  return localizeWithFallback(tag.name, (map) => localizeOrEmpty(map, locale.value)) || String(id);
+}
+
+/**
+ * True when any selected tag is not surfaced in the compact genre strip
+ *
+ * Used after hydration from the URL (`?tags=…`): we auto-expand the filter panel
+ * when those selections would otherwise be invisible in the collapsed row.
+ */
+function selectedIncludesNonGenreTag(): boolean {
+  for (const id of selectedTagIds.value) {
+    const tag = tagsById.value.get(id);
+    if (!tag) continue;
+    const rawTypeId = tag.tag_type as number;
+    const tt = tagTypesById.value.get(rawTypeId);
+    if (!tt) return true;
+    if (!tagTypeIsGenre(tt)) return true;
+  }
+  return false;
 }
 
 /** Skip automatic refetch when clearing every non-search filter in one go (single `applyFilterChange` instead). */
@@ -1139,6 +1569,8 @@ async function clearAllNonSearchFilters(): Promise<void> {
 onMounted(async () => {
   loading.value = true;
   beginListAttempt();
+  sortBy.value = readSortByFromRoute();
+  sortDir.value = readSortDirFromRoute();
   const initialSearch = readSearchFromRoute();
   if (initialSearch.length > 0) {
     appliedSearchTerms.value = initialSearch;
@@ -1172,6 +1604,10 @@ onMounted(async () => {
     tagTypesById.value = new Map(tagTypes.map((tt) => [tt.id, tt]));
     hallsById.value = hallMapById(halls);
 
+    if (selectedIncludesNonGenreTag()) {
+      filtersPanelExpanded.value = true;
+    }
+
     /** Events for listing cards are loaded per page (see fetchProductionsPageData), not the full catalog. */
     await fetchProductionsPageData(page0);
 
@@ -1187,7 +1623,11 @@ onMounted(async () => {
       }
     }
 
-    if (syncRouteAfterExclusiveTimeFilter || urlNeedsSyncForPage0(page0)) {
+    if (
+      syncRouteAfterExclusiveTimeFilter ||
+      urlNeedsSyncForPage0(page0) ||
+      urlNeedsSyncForView()
+    ) {
       await replaceRouteForPage0(page0);
     }
   } catch (err) {
@@ -1196,6 +1636,23 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+watch(layoutMode, async () => {
+  if (loading.value) return;
+  await replaceRouteForPage0(currentPage.value);
+});
+
+watch(
+  () => ({
+    layout: readLayoutFromQuery(route.query),
+    rawView: route.query[VIEW_QUERY_KEY],
+  }),
+  ({ layout }) => {
+    if (loading.value) return;
+    if (layout === layoutMode.value) return;
+    layoutMode.value = layout;
+  },
+);
 
 /** Refetch when `?page=` changes (browser back/forward or programmatic `router.replace`). */
 watch(
@@ -1219,7 +1676,29 @@ watch(
     beginListAttempt();
     try {
       await fetchProductionsPageData(page0);
-      scrollAfterPageChange();
+      await scrollAfterPageChange();
+    } catch (err) {
+      failListAttempt(err);
+    } finally {
+      listLoading.value = false;
+    }
+  },
+);
+
+watch(
+  () => `${readSortByFromRoute()}:${readSortDirFromRoute()}`,
+  async (next) => {
+    if (loading.value) return;
+    const [nextByRaw, nextDirRaw] = next.split(":");
+    const nextBy = nextByRaw === "date" ? "date" : "name";
+    const nextDir = nextDirRaw === "desc" ? "desc" : "asc";
+    if (nextBy === sortBy.value && nextDir === sortDir.value) return;
+    sortBy.value = nextBy;
+    sortDir.value = nextDir;
+    listLoading.value = true;
+    beginListAttempt();
+    try {
+      await fetchProductionsPageData(currentPage.value);
     } catch (err) {
       failListAttempt(err);
     } finally {
@@ -1230,12 +1709,12 @@ watch(
 
 async function goToPage(page: number) {
   if (page < 0 || page >= totalPages.value) return;
+  scrollProductionsPageToTop();
   listLoading.value = true;
   beginListAttempt();
   try {
     await fetchProductionsPageData(page);
     await replaceRouteForPage0(page);
-    scrollAfterPageChange();
   } catch (err) {
     failListAttempt(err);
   } finally {
@@ -1251,7 +1730,7 @@ function dateSummaryFor(productionId: number) {
 function hallsTextFor(productionId: number) {
   const evs = eventsByProduction.value.get(productionId);
   const names = distinctHallNames(evs, hallsById.value, locale.value);
-  return names.join(" · ");
+  return names[0] ?? "";
 }
 
 function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip[] {
@@ -1260,7 +1739,7 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
   for (const tid of production.tags as number[]) {
     const tag = tagsById.value.get(tid);
     if (!tag) continue;
-    const name = localizeOrEmpty(tag.name, lang);
+    const name = localizeWithFallback(tag.name, (map) => localizeOrEmpty(map, lang));
     if (!name) continue;
     const tagType = tagTypesById.value.get(tag.tag_type as number);
     chips.push({
@@ -1272,3 +1751,65 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
   return sortProductionTagChipsGenresFirst(chips);
 }
 </script>
+
+<style scoped>
+@reference "@/style.css";
+
+.productions-view__genre-collapsed-row-pill {  
+  @apply cursor-pointer rounded-sm border px-3 py-1.5 text-[12px] font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-100;  
+}  
+
+.productions-view__search-field {
+  @apply box-border flex min-h-11 min-w-0 w-full flex-wrap items-center gap-1.5 rounded-md border border-surface-3 bg-surface-0 py-1.5 pl-2 pr-11 text-ink-primary transition focus-within:border-accent-outline dark:bg-surface-1;
+}
+
+.productions-view__search-input {
+  @apply min-h-7 min-w-28 flex-1 border-0 bg-transparent px-1 py-0 text-base leading-normal text-ink-primary placeholder:text-ink-tertiary focus:outline-none disabled:cursor-not-allowed disabled:opacity-100;
+}
+
+.productions-view__search-input::-webkit-search-cancel-button,
+.productions-view__search-input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.productions-view__search-chip {
+  @apply inline-flex max-w-40 cursor-pointer items-center gap-1 rounded-md border border-surface-3 bg-surface-1 px-2 py-1 text-sm leading-tight text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-100 dark:bg-surface-0;
+}
+
+.productions-view__search-submit {
+  @apply absolute right-1 top-1/2 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-ink-secondary transition hover:bg-surface-2 hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-100;
+}
+
+.productions-view__banner-action {
+  @apply col-start-2 row-start-1 shrink-0 cursor-pointer justify-self-end self-center text-sm font-medium text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100;
+}
+
+.productions-view__filter-banner {
+  @apply mb-4 mt-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-2 border-t border-surface-3 pt-5;
+}
+
+.productions-view__active-chip {
+  @apply inline-flex cursor-pointer items-center gap-1.5 rounded-sm border border-surface-3 bg-surface-0 py-1 pl-2.5 pr-1.5 text-[13px] text-ink-primary transition hover:bg-surface-2 disabled:opacity-100 dark:bg-surface-1;
+}
+
+.productions-view__alert {
+  @apply rounded-md border border-surface-3 bg-surface-1 px-4 py-3 text-sm text-ink-secondary;
+}
+
+.productions-view__pagination {
+  @apply mt-10 grid grid-cols-1 justify-items-center gap-y-6 border-t border-surface-3 pt-8 sm:grid-cols-[1fr_auto] sm:items-center sm:justify-items-start sm:gap-x-12 sm:gap-y-0;
+}
+
+.productions-view__pagination-toolbar {
+  @apply flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:justify-self-end;
+}
+
+.productions-view__pager-btn {
+  @apply cursor-pointer rounded-md border border-accent-outline bg-surface-0 px-3 py-1.5 text-sm font-medium text-ink-primary transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40;
+}
+
+.productions-view__page-input {
+  @apply min-w-6 max-w-8 shrink-0 border-0 border-b border-surface-3 bg-transparent px-0 pb-px text-center text-sm tabular-nums text-ink-secondary focus:border-ink-primary focus:text-ink-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-40;
+}
+</style>

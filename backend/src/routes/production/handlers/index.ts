@@ -4,4 +4,3 @@ export { replaceProduction } from "./replace.js";
 export { editProduction } from "./edit.js";
 export { bulkEditProductions } from "./bulk-edit.js";
 export { deleteProduction } from "./delete.js";
-export { linkTagToProduction } from "./link-tag.js";

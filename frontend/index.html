@@ -4,8 +4,28 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="The online archive of VIERNULVIER. Explore a century of theatre, dance, music, performance, and nightlife."
+    />
+
     <title>VierNulVier Archive</title>
-    <!-- Font is self-hosted via src/assets/fonts/inter.css -->
+
+    <!-- open graph -->
+    <meta property="og:title" content="VierNulVier Archive" />
+    <meta property="og:description" content="The online archive of VIERNULVIER. Explore a century of theatre, dance, music, performance, and nightlife." />
+    <meta property="og:url" content="https://viernulvier-archive.be/" />
+    <meta property="og:image" content="https://viernulvier-archive.be/og-image.png" />
+
+    <!-- Inter is self-hosted via src/assets/fonts/inter.css.
+         Source Serif 4 is loaded from Google Fonts (display) for editorial
+         titles. Self-host later if we want to drop the runtime dependency. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400..700&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body class="font-['Inter','Inter_Fallback',sans-serif]">
     <script>

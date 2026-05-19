@@ -2,7 +2,7 @@ FROM node:24
 
 WORKDIR /app
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.30.3
 
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc ./
 
@@ -12,6 +12,11 @@ COPY backend/package.json ./backend/
 RUN pnpm install --frozen-lockfile
 
 COPY backend/docker-entrypoint.sh /docker-entrypoint.sh
+
+# This is needed so swagger ui can serve its static files.
+RUN mkdir -p ./backend/static
+RUN cp -r ./node_modules/@fastify/swagger-ui/static/* ./backend/static/
+
 RUN chmod +x /docker-entrypoint.sh
 
 WORKDIR /app/backend

@@ -1,12 +1,13 @@
 import z from "zod";
 
 import { createSchema } from "./metadata.js";
-import { foreignKey, primaryKey } from "./helpers.js";
+import { ForeignKey, foreignKey, languageMap, primaryKey } from "./helpers.js";
+import { ProductionSchema } from "./production.js";
 
 export const BlogSchema = createSchema({
   id: primaryKey(),
-  name: z.string(),
-  description: z.string().nullable(),
+  name: languageMap,
+  description: languageMap.nullable(),
 });
 
 export type Blog = z.infer<typeof BlogSchema>;
@@ -15,10 +16,18 @@ export type BlogWithMeta = z.infer<ReturnType<typeof BlogSchema.withMeta>>;
 export const BlogPostSchema = createSchema({
   id: primaryKey(),
   blog: foreignKey(() => BlogSchema),
-  title: z.string().max(255),
-  content: z.record(z.string(), z.unknown()),
+  title: languageMap,
+  content: languageMap,
   published_at: z.coerce.date().nullable(),
 });
 
+export const BlogPostWithBackwardsRefsSchema = createSchema({
+  ...BlogPostSchema.shape,
+  get productions(): z.ZodArray<ForeignKey<typeof ProductionSchema>> {
+    return z.array(foreignKey(() => ProductionSchema));
+  },
+});
+
 export type BlogPost = z.infer<typeof BlogPostSchema>;
-export type BlogPostWithMeta = z.infer<ReturnType<typeof BlogPostSchema.withMeta>>;
+export type BlogPostWithBackwardsRefs = z.infer<typeof BlogPostWithBackwardsRefsSchema>;
+export type BlogPostWithMeta = z.infer<ReturnType<typeof BlogPostWithBackwardsRefsSchema.withMeta>>;

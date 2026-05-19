@@ -1,6 +1,8 @@
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
+import { describe, test, expect, beforeEach, afterEach, vi } from "vitest";
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
+
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
 
 let server: FastifyInstance;
 let sessionCookie: string;
@@ -61,23 +63,32 @@ describe("Logout", () => {
   });
 
   test("POST /api/v1/auth/logout — evicts jti from denylist after token expiry", async () => {
-    const jti = server.generateJti();
-    const shortLivedCookie = server.jwt.sign(
-      { id: 404, username: "Karel", jti },
-      { expiresIn: "1s" },
-    );
+    // Use fake timers so the assertion below isn't racing against the
+    // setTimeout that the logout handler schedules. On slow CI the inject
+    // call could yield to the event loop long enough for a sub-second
+    // timer to fire before the assertion runs.
+    vi.useFakeTimers({ shouldAdvanceTime: false });
+    try {
+      const jti = server.generateJti();
+      const shortLivedCookie = server.jwt.sign(
+        { id: 404, username: "Karel", jti },
+        { expiresIn: "1s" },
+      );
 
-    await server.inject({
-      method: "POST",
-      url: "/api/v1/auth/logout",
-      cookies: { session: shortLivedCookie },
-    });
+      await server.inject({
+        method: "POST",
+        url: "/api/v1/auth/logout",
+        cookies: { session: shortLivedCookie },
+      });
 
-    expect(server.tokenDenylist.has(jti)).toBe(true);
+      expect(server.tokenDenylist.has(jti)).toBe(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+      vi.advanceTimersByTime(1500);
 
-    expect(server.tokenDenylist.has(jti)).toBe(false);
+      expect(server.tokenDenylist.has(jti)).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test("POST /api/v1/auth/logout — handles token without jti", async () => {

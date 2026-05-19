@@ -1,0 +1,135 @@
+<template>
+  <section v-if="productions.length || isLoading" class="relative left-[50%] right-[50%] ml-[-50vw] mr-[-50vw] w-screen border-y border-surface-3 bg-surface-0 py-20 mt-12 overflow-hidden">
+    <div class="mx-auto max-w-7xl px-6 md:px-12">
+      
+      <div class="mb-10 flex items-center gap-4">
+        <h2 class="text-[11px] font-black uppercase tracking-[0.3em] text-ink-primary shrink-0">
+          {{ t("blogpost.relatedProductions") }}
+        </h2>
+        <div class="h-px flex-1 bg-surface-3 opacity-50"></div>
+      </div>
+
+      <div v-if="isLoading" class="flex w-full gap-8 overflow-x-auto pb-4">
+        <div v-for="n in 3" :key="n" class="flex-none w-[85vw] md:w-[350px] animate-pulse">
+          <div class="mb-6 aspect-video w-full bg-surface-3 rounded-sm"></div>
+          <div class="flex justify-between items-center gap-2">
+            <div class="h-3 w-1/3 bg-surface-3 rounded"></div>
+            <div class="h-3 w-1/4 bg-surface-3 rounded"></div>
+          </div>
+          <div class="mt-3 h-6 w-3/4 bg-surface-3 rounded"></div>
+          <div class="mt-3 space-y-2">
+            <div class="h-3 w-full bg-surface-3 rounded"></div>
+            <div class="h-3 w-5/6 bg-surface-3 rounded"></div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="flex items-center gap-4">
+
+        <button
+          class="shrink-0 p-1 text-ink-primary transition-all hover:scale-125"
+          :class="canScrollLeft ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+          aria-label="Previous"
+          @click="scroll('left')"
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-sm">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+          </svg>
+        </button>
+
+        <div 
+          ref="scroll-container"
+          class="hide-scrollbar flex flex-1 snap-x snap-mandatory gap-8 overflow-x-auto pb-4 scroll-smooth"
+          @scroll="updateScrollState"
+        >
+          <div 
+            v-for="prod in productions" 
+            :key="prod.id"
+            class="flex-none snap-start w-[85vw] md:w-[350px]"
+          >
+            <LinkedProductionCard 
+              :production="prod" 
+              :thumbnail-url="thumbnails.get(prod.id)"
+              :date-range="dateRanges.get(prod.id)" 
+            />
+          </div>
+        </div>
+
+        <button
+          class="shrink-0 p-1 text-ink-primary transition-all hover:scale-125"
+          :class="canScrollRight ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+          aria-label="Next"
+          @click="scroll('right')"
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-sm">
+            <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+          </svg>
+        </button>
+
+      </div>
+    </div>
+  </section>
+</template>
+
+<script setup lang="ts">
+import { useTemplateRef, ref, watch, nextTick } from 'vue';
+import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
+import LinkedProductionCard from "./LinkedProductionCard.vue";
+import { useI18n } from 'vue-i18n';
+
+const props = defineProps<{
+  productions: ProductionWithBackwardsRefs[];
+  thumbnails: Map<number, string | null>;
+  dateRanges: Map<number, string>;
+  isLoading?: boolean;
+}>();
+
+const { t } = useI18n();
+
+const scrollContainer = useTemplateRef<HTMLElement>('scroll-container');
+const canScrollLeft = ref(false);
+const canScrollRight = ref(false);
+
+const updateScrollState = () => {
+  const el = scrollContainer.value;
+  if (!el) return;
+  canScrollLeft.value = el.scrollLeft > 4;
+  canScrollRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+};
+
+watch(
+  () => [props.productions, props.isLoading] as const,
+  ([productions, isLoading]) => {
+    if (!isLoading && productions.length) {
+      void nextTick(updateScrollState);
+    }
+  },
+  { immediate: true },
+);
+
+const scroll = (direction: 'left' | 'right') => {
+  const el = scrollContainer.value;
+  if (!el) return;
+
+  const firstCard = el.firstElementChild as HTMLElement | null;
+  const cardWidth = firstCard?.offsetWidth ?? 350;
+  const gap = parseFloat(getComputedStyle(el).gap) || 32;
+  const step = el.clientWidth > 768 ? (cardWidth * 2) + (gap * 2) : el.clientWidth;
+  
+  el.scrollBy({
+    left: direction === 'left' ? -step : step,
+    behavior: 'smooth',
+  });
+};
+</script>
+
+<style scoped>
+@reference "@/style.css";
+
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.drop-shadow-sm {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+</style>

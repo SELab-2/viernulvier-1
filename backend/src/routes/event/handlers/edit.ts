@@ -2,13 +2,13 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import z from "zod";
 
 import { ParseContext, getMetadata, parseParams, parseSchema } from "@/routes/helpers.js";
-import { stringToInt } from "@viernulvier/shared/index.js";
+import { serial } from "@viernulvier/shared/index.js";
 import type { Event } from "@viernulvier/shared/index.js";
 import { fetchEvent } from "./fetch.js";
 import { normalizePartialEventDates, EventCreateSchema, updateEvent } from "./helper.js";
 import type { EventCreate } from "./helper.js";
 
-const EventUpdateSchema = EventCreateSchema.partial();
+export const EventUpdateSchema = EventCreateSchema.partial();
 
 /**
  * Updates certain fields from a single event by ID in the database.
@@ -38,7 +38,7 @@ export async function editEvent(
     info: body.info ?? selectedEvent.info,
   };
 
-  const { id } = parseParams(request, z.object({ id: stringToInt }));
+  const { id } = parseParams(request, z.object({ id: serial() }));
   const { current_time, admin } = getMetadata(request);
 
   const result = await updateEvent(server)(

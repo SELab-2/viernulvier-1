@@ -4,6 +4,8 @@ import { TagTypeSchema, type TagType } from "@viernulvier/shared/index.js";
 import type { FastifyInstance } from "fastify";
 import { HttpSuccess, HttpClientError } from "@/routes/helpers.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let sessionCookie: string;
 

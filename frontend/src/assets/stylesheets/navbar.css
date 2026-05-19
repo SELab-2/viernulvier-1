@@ -17,3 +17,47 @@
 .navbar-center {
   @apply absolute left-1/2 -translate-x-1/2;
 }
+
+/* ===== NAV LEFT ===== */
+.nav-left { @apply flex items-center; }
+.nav-links { @apply hidden lg:flex items-center gap-6; }
+.logo { @apply h-6 w-auto; }
+
+/* ===== HAMBURGER ===== */
+.hamburger {
+  @apply flex lg:hidden flex-col gap-[5px] cursor-pointer p-1;
+  background: none;
+  border: none;
+}
+.hamburger span {
+  @apply block h-[1.5px] w-[18px] bg-ink-on-inv-secondary rounded-full transition-all;
+}
+.hamburger[aria-expanded="true"] span:nth-child(1) { @apply rotate-45 translate-y-[6.5px]; }
+.hamburger[aria-expanded="true"] span:nth-child(2) { @apply opacity-0; }
+.hamburger[aria-expanded="true"] span:nth-child(3) { @apply -rotate-45 -translate-y-[6.5px]; }
+
+/* ===== MOBILE DRAWER ===== */
+.mobile-drawer {
+  @apply fixed top-16 left-0 right-0 z-40 flex flex-col bg-surface-inv border-t border-surface-inv-border px-6 py-3 gap-1 shadow-xl;
+  height: auto;
+}
+.drawer-link {
+  @apply block w-full text-left px-3 py-2.5 rounded-md text-sm font-medium text-ink-on-inv-secondary transition hover:bg-surface-inv-raised hover:text-ink-on-inv;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.drawer-link.router-link-active { @apply bg-surface-inv-raised text-ink-on-inv; }
+.drawer-divider { @apply my-1 border-t border-surface-inv-border; }
+
+/* ===== DRAWER PROFILE ===== */
+.drawer-profile { @apply flex items-center gap-3 px-3 py-2; }
+.drawer-avatar-img { @apply h-9 w-9 rounded-full object-cover ring-1 ring-surface-inv-border; }
+.drawer-avatar-fallback {
+  @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-inv-raised text-xs font-semibold text-ink-on-inv ring-1 ring-surface-inv-border;
+}
+.drawer-username { @apply text-sm font-medium text-ink-on-inv truncate; }
+
+/* ===== DRAWER TRANSITION ===== */
+.drawer-enter-active, .drawer-leave-active { @apply transition-all duration-200 ease-out overflow-hidden; }
+.drawer-enter-from, .drawer-leave-to { @apply opacity-0 -translate-y-2; }

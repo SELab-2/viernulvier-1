@@ -12,6 +12,8 @@ import {
 import { getProductionsByIds } from "@/routes/production/handlers/fetch.js";
 import { productionRowWithRefs, productionRowWithRefsAlt } from "./fixtures.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let sessionCookie: string;
 
@@ -106,6 +108,7 @@ describe("Production fetch routes", () => {
     expect(json.total).toBe(1);
     const parsed = ProductionSchemaWithBackwardsRefs.array().parse(json.items);
     expect(parsed).toEqual([ProductionSchemaWithBackwardsRefs.parse(baseProduction)]);
+    expect(parsed[0]?.blogposts).toEqual([1, 3]);
   });
 
   test("GET /api/v1/production?limit=10&offset=0 -> returns a page with full total", async () => {
@@ -120,6 +123,7 @@ describe("Production fetch routes", () => {
     expect(json.total).toBe(1);
     const parsed = ProductionSchemaWithBackwardsRefs.array().parse(json.items);
     expect(parsed).toEqual([ProductionSchemaWithBackwardsRefs.parse(baseProduction)]);
+    expect(parsed[0]?.blogposts).toEqual([1, 3]);
   });
 
   test("GET /api/v1/production?offset=0 without limit -> lists all productions (offset zero allowed)", async () => {
@@ -250,6 +254,249 @@ describe("Production fetch routes", () => {
     expect(json.total).toBe(1);
   });
 
+  test("GET /api/v1/production with sort + lang -> 200", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?limit=10&offset=0&sortBy=date&sortDir=desc&lang=fr",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const json = response.json() as { items: unknown[]; total: number };
+    expect(json.total).toBe(1);
+  });
+
+  test("GET /api/v1/production with sortBy=date&sortDir=asc -> uses date ASC ordering", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+      if (upper.includes("COUNT(*)") && upper.includes("FROM PRODUCTION")) {
+        return Promise.resolve({ rows: [{ count: 1 }], rowCount: 1 });
+      }
+      if (
+        upper.includes("ORDER BY") &&
+        upper.includes("SELECT E.STARTS_AT") &&
+        upper.includes("ORDER BY E.ID ASC") &&
+        upper.includes("ASC NULLS LAST") &&
+        upper.includes("LIMIT") &&
+        upper.includes("OFFSET")
+      ) {
+        return Promise.resolve({ rows: [baseProduction], rowCount: 1 });
+      }
+      throw new Error(`Unexpected query in date-asc sort test: ${query}`);
+    });
+
+    try {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/production?limit=10&offset=0&sortBy=date&sortDir=asc",
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const json = response.json() as { items: unknown[]; total: number };
+      expect(json.total).toBe(1);
+    } finally {
+      server.pg.query = vi.fn().mockImplementation(mockProductionFetchPgQuery);
+    }
+  });
+
+  test("GET /api/v1/production with year range + sortBy=date asc -> orders by MIN(starts_at) in range", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+      const upper = query.trim().toUpperCase();
+      if (upper.includes("COUNT(*)") && upper.includes("FROM PRODUCTION")) {
+        return Promise.resolve({ rows: [{ count: 1 }], rowCount: 1 });
+      }
+      if (
+        upper.includes("ORDER BY") &&
+        upper.includes("MIN(E.STARTS_AT)") &&
+        upper.includes("EXTRACT(YEAR") &&
+        upper.includes("LIMIT") &&
+        upper.includes("OFFSET")
+      ) {
+        expect(params).toEqual([2016, 2026, 2016, 2026, 10, 0]);
+        return Promise.resolve({ rows: [baseProduction], rowCount: 1 });
+      }
+      throw new Error(`Unexpected query in year+date sort test: ${query}`);
+    });
+
+    try {
+      const response = await server.inject({
+        method: "GET",
+        url:
+          "/api/v1/production?limit=10&offset=0&yearMin=2016&yearMax=2026&sortBy=date&sortDir=asc",
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+    } finally {
+      server.pg.query = vi.fn().mockImplementation(mockProductionFetchPgQuery);
+    }
+  });
+
+  test("GET /api/v1/production with date range + sortBy=date desc -> orders by MAX(starts_at) in range without pagination", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+      const upper = query.trim().toUpperCase();
+      if (
+        upper.includes("ORDER BY") &&
+        upper.includes("MAX(E.STARTS_AT)") &&
+        upper.includes("::DATE >= $3::DATE") &&
+        upper.includes("::DATE <= $4::DATE") &&
+        !upper.includes("LIMIT") &&
+        !upper.includes("OFFSET")
+      ) {
+        expect(params).toEqual([
+          "2024-01-01",
+          "2024-12-31",
+          "2024-01-01",
+          "2024-12-31",
+        ]);
+        return Promise.resolve({ rows: [baseProduction], rowCount: 1 });
+      }
+      throw new Error(`Unexpected query in date-range desc sort test: ${query}`);
+    });
+
+    try {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/production?from=2024-01-01&to=2024-12-31&sortBy=date&sortDir=desc",
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const json = response.json() as { items: unknown[]; total: number };
+      expect(json.total).toBe(1);
+    } finally {
+      server.pg.query = vi.fn().mockImplementation(mockProductionFetchPgQuery);
+    }
+  });
+
+  test("GET /api/v1/production with year + date range + sortBy=date desc -> orders by MAX(starts_at) matching both filters", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+      const upper = query.trim().toUpperCase();
+      if (upper.includes("COUNT(*)") && upper.includes("FROM PRODUCTION")) {
+        return Promise.resolve({ rows: [{ count: 1 }], rowCount: 1 });
+      }
+      if (
+        upper.includes("ORDER BY") &&
+        upper.includes("MAX(E.STARTS_AT)") &&
+        upper.includes("EXTRACT(YEAR") &&
+        upper.includes("::DATE >= $7::DATE") &&
+        upper.includes("::DATE <= $8::DATE") &&
+        upper.includes("DESC NULLS LAST") &&
+        upper.includes("LIMIT") &&
+        upper.includes("OFFSET")
+      ) {
+        expect(params).toEqual([
+          2020,
+          2026,
+          "2024-01-01",
+          "2024-12-31",
+          2020,
+          2026,
+          "2024-01-01",
+          "2024-12-31",
+          10,
+          0,
+        ]);
+        return Promise.resolve({ rows: [baseProduction], rowCount: 1 });
+      }
+      throw new Error(`Unexpected query in year+date desc sort test: ${query}`);
+    });
+
+    try {
+      const response = await server.inject({
+        method: "GET",
+        url:
+          "/api/v1/production?limit=10&offset=0&yearMin=2020&yearMax=2026&from=2024-01-01&to=2024-12-31&sortBy=date&sortDir=desc",
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+    } finally {
+      server.pg.query = vi.fn().mockImplementation(mockProductionFetchPgQuery);
+    }
+  });
+
+  test("GET /api/v1/production with old_id + year range + sortBy=date -> keeps legacy first-event ordering", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
+      const upper = query.trim().toUpperCase();
+      if (upper.includes("COUNT(*)") && upper.includes("FROM PRODUCTION")) {
+        expect(params).toEqual([baseProduction.old_id]);
+        return Promise.resolve({ rows: [{ count: 1 }], rowCount: 1 });
+      }
+      if (
+        upper.includes("ORDER BY") &&
+        upper.includes("SELECT E.STARTS_AT") &&
+        upper.includes("ORDER BY E.ID ASC") &&
+        !upper.includes("MIN(E.STARTS_AT)") &&
+        !upper.includes("MAX(E.STARTS_AT)") &&
+        upper.includes("LIMIT") &&
+        upper.includes("OFFSET")
+      ) {
+        expect(params).toEqual([baseProduction.old_id, 10, 0]);
+        return Promise.resolve({ rows: [baseProduction], rowCount: 1 });
+      }
+      throw new Error(`Unexpected query in old-id date sort test: ${query}`);
+    });
+
+    try {
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/v1/production?old_id=${baseProduction.old_id}&limit=10&offset=0&yearMin=2016&yearMax=2026&sortBy=date`,
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+    } finally {
+      server.pg.query = vi.fn().mockImplementation(mockProductionFetchPgQuery);
+    }
+  });
+
+  test("GET /api/v1/production with sortBy=name (no lang) -> uses localized title ordering fallback", async () => {
+    server.pg.query = vi.fn().mockImplementation((query: string) => {
+      const upper = query.trim().toUpperCase();
+      if (upper.includes("COUNT(*)") && upper.includes("FROM PRODUCTION")) {
+        return Promise.resolve({ rows: [{ count: 1 }], rowCount: 1 });
+      }
+      if (
+        upper.includes("ORDER BY") &&
+        upper.includes("LOWER(COALESCE") &&
+        upper.includes("TITLE->>'NL'") &&
+        upper.includes("TITLE->>'EN'") &&
+        upper.includes("TITLE->>'FR'") &&
+        upper.includes("LIMIT") &&
+        upper.includes("OFFSET")
+      ) {
+        return Promise.resolve({ rows: [baseProduction], rowCount: 1 });
+      }
+      throw new Error(`Unexpected query in name sort fallback test: ${query}`);
+    });
+
+    try {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/production?limit=10&offset=0&sortBy=name",
+        cookies: { session: sessionCookie },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const json = response.json() as { items: unknown[]; total: number };
+      expect(json.total).toBe(1);
+    } finally {
+      server.pg.query = vi.fn().mockImplementation(mockProductionFetchPgQuery);
+    }
+  });
+
+  test("GET /api/v1/production with invalid sortBy -> 400", async () => {
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/production?limit=10&offset=0&sortBy=random",
+      cookies: { session: sessionCookie },
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
   test("GET /api/v1/production -> 400 when more than 20 comma-separated search terms", async () => {
     const search = Array.from({ length: 21 }, (_, i) => String(i)).join(",");
     const response = await server.inject({
@@ -357,6 +604,7 @@ describe("Production fetch routes", () => {
     expect(response.statusCode).toBe(200);
     const parsed = ProductionSchemaWithBackwardsRefs.parse(response.json());
     expect(parsed).toEqual(ProductionSchemaWithBackwardsRefs.parse(baseProduction));
+    expect(parsed.blogposts).toEqual([1, 3]);
   });
 
   test("GET /api/v1/production/:id -> returns 404 for unknown id", async () => {
@@ -406,7 +654,7 @@ describe("Production fetch helpers", () => {
 
   test("getProductionsByIds -> fetches with ANY(ids) in one query", async () => {
     const ids = [2, 1];
-    const { tags: _t, events: _e, ...productionCore } = baseProduction;
+    const { tags: _t, events: _e, blogposts: _b, ...productionCore } = baseProduction;
     const secondProduction: ProductionWithBackwardsRefs = productionRowWithRefsAlt({
       ...productionCore,
       id: 2,
@@ -430,6 +678,8 @@ describe("Production fetch helpers", () => {
       ProductionSchemaWithBackwardsRefs.parse(secondProduction),
       ProductionSchemaWithBackwardsRefs.parse(baseProduction),
     ]);
+    expect(result[0]?.blogposts).toEqual([2]);
+    expect(result[1]?.blogposts).toEqual([1, 3]);
   });
 });
 

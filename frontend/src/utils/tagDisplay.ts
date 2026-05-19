@@ -5,7 +5,7 @@ import { ALL_LANGUAGES, localize, type Language } from "@/utils/language-utils";
 export type ProductionTagChip = {
   tagId: number;
   label: string;
-  isGenre: boolean;
+  isGenre?: boolean;
 };
 
 /**

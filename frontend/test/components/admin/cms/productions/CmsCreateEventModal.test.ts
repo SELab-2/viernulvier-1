@@ -17,6 +17,8 @@ function buildProduction(overrides: Partial<CmsProductionGridRow> = {}): CmsProd
     tags: "",
     descriptionOne: "",
     descriptionTwo: "",
+    imageMedia: "",
+    imageMediaUrls: [],
     media: "",
     events: [],
     ...overrides,
@@ -123,7 +125,7 @@ describe("CmsCreateEventModal.vue", () => {
     });
 
     expect(wrapper.text()).toContain("Could not save");
-    expect(wrapper.text()).toContain(i18n.global.t("cms.panel.saving"));
+    expect(wrapper.text()).toContain(i18n.global.t("general.saving"));
     expect(wrapper.get(".cms-side-save").attributes("disabled")).toBeDefined();
   });
 });

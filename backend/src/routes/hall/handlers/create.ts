@@ -5,7 +5,7 @@ import { getMetadata, parseSchema, buildQuery } from "@/routes/helpers.js";
 import { z } from "zod";
 import { languageMap } from "@viernulvier/shared/types/helpers.js";
 
-const CreateHallBodySchema = HallSchema.omit({ id: true });
+export const CreateHallBodySchema = HallSchema.omit({ id: true });
 
 const insertHall = (server: FastifyInstance) =>
   buildQuery(

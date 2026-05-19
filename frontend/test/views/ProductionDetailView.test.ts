@@ -5,7 +5,7 @@ import ProductionDetailView from "@/views/ProductionDetailView.vue";
 import { ApiError } from "@/services/api";
 
 // ─── Mock child components ────────────────────────────────────────────────────
-vi.mock("@/components/AppNavbar.vue", () => ({
+vi.mock("@/components/nav/AppNavbar.vue", () => ({
   default: defineComponent({
     template: `<div data-testid="app-navbar"><button data-testid="navbar-toggle" @click="$emit('toggle-dark')" /></div>`,
     emits: ["toggle-dark"],
@@ -22,9 +22,6 @@ vi.mock("@/components/production/HeroSection.vue", () => ({
 }));
 vi.mock("@/components/production/DetailsSection.vue", () => ({
   default: defineComponent({ template: '<div data-testid="details-section" />' }),
-}));
-vi.mock("@/components/production/EventsSection.vue", () => ({
-  default: defineComponent({ template: '<div data-testid="events-section" />' }),
 }));
 vi.mock("@/components/production/GallerySection.vue", () => ({
   default: defineComponent({ template: '<div data-testid="gallery-section" />' }),
@@ -45,8 +42,15 @@ vi.mock("@/composables/useTagGroups", () => ({
 }));
 
 const mockEvents = ref<any[]>([]);
+const mockEventsLoading = ref(false);
+const mockEventsError = ref<Error | null>(null);
 vi.mock("@/composables/useProductionEvents", () => ({
-  useProductionEvents: () => ({ events: mockEvents }),
+  useProductionEvents: () => ({
+    events: mockEvents,
+    loading: mockEventsLoading,
+    error: mockEventsError,
+    retry: vi.fn(),
+  }),
 }));
 
 // ─── Mock vue-router ──────────────────────────────────────────────────────────
@@ -54,10 +58,28 @@ vi.mock("vue-router", () => ({
   useRoute: () => ({ params: { id: "42" } }),
 }));
 
+// ─── Mock vue-i18n ────────────────────────────────────────────────────────────
+vi.mock("vue-i18n", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("vue-i18n")>();
+  return {
+    ...actual,
+    useI18n: () => ({ t: (key: string) => key }),
+  };
+});
+
 // ─── Mock service ─────────────────────────────────────────────────────────────
 const mockGetProduction = vi.fn();
+const mockGetImagesForProductionOrEmpty = vi.fn();
+const mockGetBlogPost = vi.fn();
 vi.mock("@/services/productions", () => ({
   getProduction: (...args: any[]) => mockGetProduction(...args),
+}));
+vi.mock("@/services/media", () => ({
+  getImagesForProductionOrEmpty: (...args: any[]) =>
+    mockGetImagesForProductionOrEmpty(...args),
+}));
+vi.mock("@/services/blogposts", () => ({
+  getBlogPost: (...args: any[]) => mockGetBlogPost(...args),
 }));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -80,8 +102,11 @@ describe("ProductionDetail", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockEvents.value = [];
+    mockEventsLoading.value = false;
+    mockEventsError.value = null;
     mockTagGroups.value = [];
     mockTotalTags.value = 0;
+    mockGetImagesForProductionOrEmpty.mockResolvedValue([]);
   });
 
   // ── Layout ──────────────────────────────────────────────────────────────────
@@ -139,12 +164,11 @@ describe("ProductionDetail", () => {
 
       expect(wrapper.find('[data-testid="hero-section"]').exists()).toBe(true);
       expect(wrapper.find('[data-testid="details-section"]').exists()).toBe(true);
-      expect(wrapper.find('[data-testid="events-section"]').exists()).toBe(true);
       expect(wrapper.find('[data-testid="gallery-section"]').exists()).toBe(true);
       expect(wrapper.find('[data-testid="blog-section"]').exists()).toBe(true);
     });
 
-    it("does not render details-section when all fields are empty", async () => {
+    it("does not render details-section when all fields are empty and there are no performances", async () => {
       mockGetProduction.mockResolvedValue(makeProduction());
 
       const wrapper = mountComponent();
@@ -153,12 +177,45 @@ describe("ProductionDetail", () => {
       expect(wrapper.find('[data-testid="details-section"]').exists()).toBe(false);
     });
 
+    it("renders details-section when editorial fields are empty but performances exist", async () => {
+      mockGetProduction.mockResolvedValue(makeProduction());
+      mockEvents.value = [makeEvent("2024-06-01T19:00:00", "2024-06-01T21:30:00")];
+
+      const wrapper = mountComponent();
+      await flushPromises();
+
+      expect(wrapper.find('[data-testid="details-section"]').exists()).toBe(true);
+    });
+
     it("calls getProduction with the numeric id from the route", async () => {
       mockGetProduction.mockResolvedValue(makeProduction());
       mountComponent();
       await flushPromises();
 
       expect(mockGetProduction).toHaveBeenCalledWith(42);
+    });
+
+    it("loads blog posts when production data contains blogpost IDs", async () => {
+      mockGetProduction.mockResolvedValue(makeProduction({ blogposts: [101, 102] }));
+      mockGetBlogPost.mockResolvedValue({ id: 101, title: { nl: 'Blog' } });
+  
+      mountComponent();
+      await flushPromises();
+
+      expect(mockGetBlogPost).toHaveBeenCalledTimes(2);
+      expect(mockGetBlogPost).toHaveBeenCalledWith(101);
+    });
+
+    it("handles partial failure when loading blog posts", async () => {
+      mockGetProduction.mockResolvedValue(makeProduction({ blogposts: [101, 102] }));
+      mockGetBlogPost
+        .mockResolvedValueOnce({ id: 101, title: { nl: 'Success' } })
+        .mockRejectedValueOnce(new Error("Blog fail"));
+
+      const wrapper = mountComponent();
+      await flushPromises();
+
+      expect(wrapper.find('[data-testid="blog-section"]').exists()).toBe(true);
     });
   });
 
@@ -281,6 +338,42 @@ describe("ProductionDetail", () => {
 
       expect(wrapper.text()).toContain("Server error");
       expect(wrapper.find(".text-red-500").exists()).toBe(true);
+    });
+  });
+
+  // ── Images fetch (parallel with production) ───────────────────────────────
+  describe("production images fetch", () => {
+    it("requests images in parallel with production for the route id", async () => {
+      mockGetProduction.mockResolvedValue(makeProduction());
+      mountComponent();
+      await flushPromises();
+
+      expect(mockGetImagesForProductionOrEmpty).toHaveBeenCalledWith(42);
+    });
+
+    it("still renders the hero when images resolve to an empty list", async () => {
+      mockGetProduction.mockResolvedValue(makeProduction());
+      mockGetImagesForProductionOrEmpty.mockResolvedValue([]);
+      const wrapper = mountComponent();
+      await flushPromises();
+
+      expect(wrapper.find('[data-testid="hero-section"]').exists()).toBe(true);
+    });
+  });
+
+  describe("details visibility logic", () => {
+    it("shows details-section if teaser is present", async () => {
+      mockGetProduction.mockResolvedValue(makeProduction({ teaser: { nl: "Teaser text" } }));
+      const wrapper = mountComponent();
+      await flushPromises();
+      expect(wrapper.find('[data-testid="details-section"]').exists()).toBe(true);
+    });
+
+    it("ignores detail fields that only contain whitespace", async () => {
+      mockGetProduction.mockResolvedValue(makeProduction({ description: { nl: "   " } }));
+      const wrapper = mountComponent();
+      await flushPromises();
+      expect(wrapper.find('[data-testid="details-section"]').exists()).toBe(false);
     });
   });
 });

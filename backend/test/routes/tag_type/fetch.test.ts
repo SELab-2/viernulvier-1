@@ -3,6 +3,8 @@ import { buildServer } from "@/server.js";
 import { TagTypeSchema, type TagType } from "@viernulvier/shared/index.js";
 import type { FastifyInstance } from "fastify";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 let server: FastifyInstance;
 let sessionCookie: string;
 

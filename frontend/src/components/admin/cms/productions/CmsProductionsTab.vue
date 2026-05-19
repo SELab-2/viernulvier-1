@@ -4,7 +4,6 @@
     v-model:column-chooser-open="columnChooserOpen"
     :row-count="rowData.length"
     loaded-count-key="cms.actions.loadedCount"
-    empty-state-key="cms.actions.noRows"
     :is-loading="isLoading"
     :load-error="loadError"
     :selected-count="selectedCount"
@@ -27,7 +26,7 @@
           type="button"
           class="cms-remove-button"
           :disabled="selectedCount === 0"
-          @click="openRemoveProductionsConfirm"
+          @click="openRemoveConfirm"
         >
           {{ t("cms.actions.removeProduction") }}
         </button>
@@ -60,7 +59,7 @@
         :row-height="42"
         :loading="isLoading"
         :row-selection="rowSelection"
-        :suppress-row-click-selection="false"
+        :suppress-row-click-selection="true"
         :column-hover-highlight="true"
         :enable-cell-text-selection="true"
         :ensure-dom-order="true"
@@ -69,6 +68,7 @@
         :value-cache="true"
         :cache-quick-filter="true"
         :get-row-style="getProductionRowStyle"
+        :get-row-id="getRowId"
         @grid-ready="onGridReady"
         @selection-changed="onSelectionChanged"
         @cell-editing-started="onProductionCellEditingStarted"
@@ -95,62 +95,20 @@
         @event-row-enter="onEventRowEnter"
       />
 
-      <aside v-if="editorPanel" class="cms-side-panel">
-        <div class="cms-side-header">
-          <h2 class="text-lg font-semibold text-ink-primary">
-            {{ editorPanel.label }}
-          </h2>
-          <button
-            type="button"
-            class="cms-side-close"
-            @click="closeEditorPanel"
-          >
-            {{ t("cms.panel.close") }}
-          </button>
-        </div>
-
-        <div class="cms-side-body">
-          <p v-if="editorBulkCount > 1" class="text-xs text-ink-secondary">
-            {{ t("cms.panel.bulkNotice", { count: editorBulkCount }) }}
-          </p>
-
-          <label
-            v-for="lang in languages"
-            :key="lang"
-            class="cms-side-field"
-          >
-            <span class="text-xs font-semibold uppercase tracking-wide text-ink-secondary">
-              {{ lang.toUpperCase() }}
-            </span>
-            <textarea
-              v-model="editorPanel.values[lang]"
-              class="cms-side-textarea"
-              rows="5"
-            />
-          </label>
-
-          <p v-if="saveError" class="text-sm text-red-700">
-            {{ saveError }}
-          </p>
-        </div>
-
-        <div class="cms-side-footer">
-          <button
-            type="button"
-            class="cms-side-save"
-            :disabled="isSaving"
-            @click="saveEditorPanel"
-          >
-            {{ isSaving ? t("cms.panel.saving") : t("cms.panel.save") }}
-          </button>
-        </div>
-      </aside>
+      <CmsEditorPanel
+        v-model:panel="editorPanel"
+        :bulk-count="editorBulkCount"
+        :save-error="saveError"
+        :is-saving="isSaving"
+        @close="closeEditorPanel"
+        @save="saveEditorPanel"
+      />
 
       <CmsTagDrawer
         :show="tagEditorPanel !== null"
         :panel="tagEditorPanel"
         :additional-tag-groups="additionalTagGroups"
-        :bulk-count="0"
+        :bulk-count="tagEditorBulkCount"
         :save-error="saveError"
         :is-saving="isSaving"
         @close="closeTagEditorPanel"
@@ -175,8 +133,10 @@
         @update-form-field="setCreateFormField"
         @update-primary-tag="setSelectedPrimaryTag"
         @toggle-tag="toggleCreateTag"
-        @image-file-change="onImageFileChange"
-        @video-file-change="onVideoFileChange"
+        @add-media="addMedia"
+        @remove-media="removeMedia"
+        @media-file-change="onMediaFileChange"
+        @update-media-url="updateMediaUrl"
         @close="closeCreateModal"
         @submit="submitCreateProduction"
       />
@@ -194,32 +154,124 @@
         @submit="submitCreateEvent"
       />
 
-      <div v-if="removeConfirmOpen" class="cms-modal-overlay" @click.self="closeRemoveProductionsConfirm">
+      <CmsRemoveConfirmModal
+        v-if="removeConfirmOpen"
+        :is-loading="removeConfirmLoading"
+        :error="removeConfirmError"
+        :count="selectedCount"
+        title-key="cms.actions.production.confirmRemoveDialogTitle"
+        body-key="cms.actions.production.confirmRemoveBody"
+        @close="closeRemoveConfirm"
+        @confirm="confirmRemove"
+      />
+
+      <div v-if="bulkEditConfirmOpen" class="cms-modal-overlay" @click.self="closeBulkEditConfirm">
         <section class="cms-modal cms-remove-modal" role="dialog" aria-modal="true">
           <header class="cms-modal-header">
             <h2 class="text-xl font-bold text-ink-primary">
-              {{ t("cms.actions.confirmRemoveDialogTitle") }}
+              {{ t("cms.actions.confirmBulkEditDialogTitle") }}
             </h2>
-            <button type="button" class="cms-side-close" @click="closeRemoveProductionsConfirm">
+            <button type="button" class="cms-side-close" @click="closeBulkEditConfirm">
               {{ t("cms.panel.close") }}
             </button>
           </header>
 
           <div class="cms-modal-body">
             <p class="text-sm text-ink-secondary">
-              {{ t("cms.actions.confirmRemoveBody", { count: removeConfirmCount }) }}
+              {{ t("cms.actions.confirmBulkEditBody", { count: bulkEditConfirmCount }) }}
             </p>
-            <p v-if="removeConfirmError" class="text-sm text-red-700">
-              {{ removeConfirmError }}
+            <p class="text-xs text-ink-secondary/70 mt-3">
+              {{ t("cms.actions.confirmBulkEditCancelInfo") }}
             </p>
           </div>
 
           <footer class="cms-modal-footer">
-            <button type="button" class="cms-side-close" :disabled="removeConfirmLoading" @click="closeRemoveProductionsConfirm">
-              {{ t("cms.actions.confirmRemoveCancel") }}
+            <button type="button" class="cms-side-close" :disabled="bulkEditConfirmLoading" @click="closeBulkEditConfirm">
+              {{ t("general.cancel") }}
             </button>
-            <button type="button" class="cms-side-save" :disabled="removeConfirmLoading" @click="confirmRemoveProductions">
-              {{ removeConfirmLoading ? t("cms.panel.saving") : t("cms.actions.confirmRemoveSubmit") }}
+            <button type="button" class="cms-side-save" :disabled="bulkEditConfirmLoading" @click="confirmBulkEdit">
+              {{ bulkEditConfirmLoading ? t("cms.panel.saving") : t("cms.actions.confirmBulkEditSubmit") }}
+            </button>
+          </footer>
+        </section>
+      </div>
+
+      <div v-if="secondaryTagBulkModeOpen" class="cms-modal-overlay" @click.self="closeSecondaryTagBulkMode">
+        <section class="cms-modal cms-remove-modal" role="dialog" aria-modal="true">
+          <header class="cms-modal-header">
+            <h2 class="text-xl font-bold text-ink-primary">
+              {{ t("cms.actions.bulkEditTagsModeTitle") }}
+            </h2>
+            <button type="button" class="cms-side-close" :disabled="secondaryTagBulkModeLoading" @click="closeSecondaryTagBulkMode">
+              {{ t("cms.panel.close") }}
+            </button>
+          </header>
+
+          <div class="cms-modal-body">
+            <p class="text-sm text-ink-secondary">
+              {{ t("cms.actions.bulkEditTagsModeBody", { count: secondaryTagBulkModeCount }) }}
+            </p>
+
+            <div class="mt-4 grid gap-4 md:grid-cols-2">
+              <button
+                type="button"
+                class="cms-choice-card"
+                :disabled="secondaryTagBulkModeLoading"
+                @click="confirmSecondaryTagBulkReplace"
+              >
+                <div class="cms-choice-card-header">
+                  <div>
+                    <div class="font-semibold text-ink-primary">
+                      {{ t("cms.actions.bulkEditTagsModeReplace") }}
+                    </div>
+                    <div class="mt-1 text-sm text-ink-secondary">
+                      {{ t("cms.actions.bulkEditTagsModeReplaceDescription") }}
+                    </div>
+                  </div>
+                  <span class="cms-choice-card-badge">1</span>
+                </div>
+
+                <div v-if="secondaryTagBulkModeTagsPreview" class="mt-3 text-sm">
+                  <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewTags') }}</div>
+                  <div class="mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeTagsPreview }}</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                class="cms-choice-card"
+                :disabled="secondaryTagBulkModeLoading"
+                @click="confirmSecondaryTagBulkDiff"
+              >
+                <div class="cms-choice-card-header">
+                  <div>
+                    <div class="font-semibold text-ink-primary">
+                      {{ t("cms.actions.bulkEditTagsModeDiff") }}
+                    </div>
+                    <div class="mt-1 text-sm text-ink-secondary">
+                      {{ t("cms.actions.bulkEditTagsModeDiffDescription") }}
+                    </div>
+                  </div>
+                  <span class="cms-choice-card-badge">2</span>
+                </div>
+
+                <div class="mt-3 space-y-2 text-sm">
+                  <div v-if="secondaryTagBulkModeAddedPreview">
+                    <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewAdd') }}</div>
+                    <div class="mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeAddedPreview }}</div>
+                  </div>
+                  <div v-if="secondaryTagBulkModeRemovedPreview">
+                    <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewRemove') }}</div>
+                    <div class="mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeRemovedPreview }}</div>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <footer class="cms-modal-footer">
+            <button type="button" class="cms-side-close" :disabled="secondaryTagBulkModeLoading" @click="closeSecondaryTagBulkMode">
+              {{ t("general.cancel") }}
             </button>
           </footer>
         </section>
@@ -229,22 +281,95 @@
         <section class="cms-modal cms-media-modal" role="dialog" aria-modal="true">
           <header class="cms-modal-header">
             <h2 class="text-xl font-bold text-ink-primary">
-              {{ t("cms.columns.media") }}
+              {{ t("cms.actions.confirmBulkEditDialogTitle") }}
             </h2>
-            <button type="button" class="cms-side-close" @click="closeMediaPreview">
+            <button type="button" class="cms-side-close" @click="closeBulkEditConfirm">
               {{ t("cms.panel.close") }}
             </button>
           </header>
 
-          <div class="cms-modal-body cms-media-preview-body">
-            <img v-if="mediaPreview.kind === 'image'" :src="mediaPreview.url" :alt="mediaPreview.label" class="cms-media-preview-large" />
-            <iframe v-else-if="mediaPreview.kind === 'youtube'" :src="mediaPreview.url" :title="mediaPreview.label" class="cms-media-preview-large" frameborder="0" allowfullscreen></iframe>
-            <video v-else controls playsinline class="cms-media-preview-large">
-              <source :src="mediaPreview.url" />
-            </video>
+          <div class="cms-modal-body">
+            <p class="text-sm text-ink-secondary">
+              {{ t("cms.actions.confirmBulkEditBody", { count: bulkEditConfirmCount }) }}
+            </p>
+            <p class="text-xs text-ink-secondary/70 mt-3">
+              {{ t("cms.actions.confirmBulkEditCancelInfo") }}
+            </p>
           </div>
+
+          <footer class="cms-modal-footer">
+            <button type="button" class="cms-side-close" :disabled="bulkEditConfirmLoading" @click="closeBulkEditConfirm">
+              {{ t("cms.panel.close") }}
+            </button>
+            <button type="button" class="cms-side-save" :disabled="bulkEditConfirmLoading" @click="confirmBulkEdit">
+              {{ bulkEditConfirmLoading ? t("general.saving") : t("cms.actions.confirmBulkEditSubmit") }}
+            </button>
+          </footer>
         </section>
       </div>
+
+      <div v-if="secondaryTagBulkModeOpen" class="cms-modal-overlay" @click.self="closeSecondaryTagBulkMode">
+        <section class="cms-modal cms-remove-modal" role="dialog" aria-modal="true">
+          <header class="cms-modal-header">
+            <h2 class="text-xl font-bold text-ink-primary">
+              {{ t("cms.actions.bulkEditTagsModeTitle") }}
+            </h2>
+            <button type="button" class="cms-side-close" :disabled="secondaryTagBulkModeLoading" @click="closeSecondaryTagBulkMode">
+              {{ t("cms.panel.close") }}
+            </button>
+          </header>
+
+          <div class="cms-modal-body">
+            <p class="text-sm text-ink-secondary">
+              {{ t("cms.actions.bulkEditTagsModeBody", { count: secondaryTagBulkModeCount }) }}
+            </p>
+
+            <div class="mt-3 text-sm">
+              <div v-if="secondaryTagBulkModeTagsPreview">
+                <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewTags') }}</div>
+                <div class="ml-2 mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeTagsPreview }}</div>
+              </div>
+
+              <div v-if="secondaryTagBulkModeAddedPreview || secondaryTagBulkModeRemovedPreview" class="mt-2">
+                <div v-if="secondaryTagBulkModeAddedPreview">
+                  <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewAdd') }}</div>
+                  <div class="ml-2 mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeAddedPreview }}</div>
+                </div>
+                <div v-if="secondaryTagBulkModeRemovedPreview" class="mt-1">
+                  <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewRemove') }}</div>
+                  <div class="ml-2 mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeRemovedPreview }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <footer class="cms-modal-footer">
+            <button type="button" class="cms-side-close" :disabled="secondaryTagBulkModeLoading" @click="closeSecondaryTagBulkMode">
+              {{ t("general.cancel") }}
+            </button>
+            <button type="button" class="cms-side-close" :disabled="secondaryTagBulkModeLoading" @click="confirmSecondaryTagBulkReplace">
+              {{ t("cms.actions.bulkEditTagsModeReplace") }}
+            </button>
+            <button type="button" class="cms-side-save" :disabled="secondaryTagBulkModeLoading" @click="confirmSecondaryTagBulkDiff">
+              {{ t("cms.actions.bulkEditTagsModeDiff") }}
+            </button>
+          </footer>
+        </section>
+      </div>
+
+      <CmsMediaPreviewModal
+        :media-preview="mediaPreview"
+        :media-preview-edit-url="mediaPreviewEditUrl"
+        :is-saving="isSaving"
+        :save-error="saveError"
+        @close="closeMediaPreview"
+        @image-selected="onMediaPreviewImageSelected"
+        @remove-image="removeMediaImage"
+        @remove-video="removeMediaVideo"
+        @save-video-url="saveMediaVideoUrl"
+        @sync-gallery-preview="syncGalleryPreview"
+        @update:media-preview-edit-url="mediaPreviewEditUrl = $event"
+      />
     </template>
   </CmsTabShell>
 </template>
@@ -260,15 +385,20 @@ import type {
 } from "ag-grid-community";
 import { useI18n } from "vue-i18n";
 import type { Event as ArchiveEvent, Hall, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
+import CmsRemoveConfirmModal from "@/components/admin/cms/CmsRemoveConfirmModal.vue";
+import CmsMediaPreviewModal from "@/components/admin/cms/productions/CmsMediaPreviewModal.vue";
 import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
 import CmsCreateEventModal from "@/components/admin/cms/productions/CmsCreateEventModal.vue";
 import CmsEventsDrawer from "@/components/admin/cms/productions/CmsEventsDrawer.vue";
 import CmsTagDrawer from "@/components/admin/cms/CmsTagDrawer.vue";
+import CmsEditorPanel from "@/components/admin/cms/CmsEditorPanel.vue";
 import CmsCreateProductionModal from "@/components/admin/cms/productions/CmsCreateProductionModal.vue";
 import { useCmsProductionGrid } from "@/composables/useCmsProductionGrid";
+import { useCmsRemove } from "@/composables/useCmsRemove";
 import { useDarkMode } from "@/composables/useDarkMode";
-import { i18n, SUPPORTED_LANGS, type SupportedLang } from "@/i18n";
+import { i18n, type SupportedLang } from "@/i18n";
 import {
+  bulkUpdateProductions,
   createProduction,
   deleteProduction,
   extractProductionTagIds,
@@ -278,36 +408,46 @@ import {
 import { createEvent, deleteEvent, getEvent, updateEvent } from "@/services/events";
 import { getHall, getHalls } from "@/services/halls";
 import { getAllTags, getTagTypes } from "@/services/tags";
+import { getImagesByProduction, deleteImage as deleteImageService } from "@/services/images";
 import { localizeOrEmpty, localizeWithFallback, type LanguageMap } from "@/utils/language-utils";
 import {
   buildEventGridRows,
   buildProductionGridRows,
   buildCmsTagGroups,
-  applyUpdatedProductionToRow,
   createProductionFields,
   buildEmptyCreateForm,
+  createMediaItem,
   fileToDataUrl,
-  mediaToLanguageMap,
   toLanguageMap,
   toLanguageMapOrNull,
   validateCreateProductionForm,
   getBulkTargetRows,
+  applyUpdatedProductionToRow,
   type CmsCreateLinkedEventForm,
   type CmsEventGridRow,
   type CreateFieldKey,
   type CreateFormState,
   type EditorPanelState,
   type InlineEditableField,
-  type LongField,
+  type ProductionLongField,
   type CmsProductionGridRow,
   extractEventIds,
   makeEditorValues,
   toIsoStringFromLocalInput,
   toLocalDateTimeInput,
 } from "@/services/cms";
+import {
+  isImagePreviewUrl,
+  isVideoPreviewUrl,
+  resolvePreferredCropUrl,
+  type CmsMediaPreview,
+} from "@/services/cms/media-preview";
+import { uploadImageWithCrops } from "@/services/cms/media-upload";
 
 const { t } = useI18n();
 const { isDark } = useDarkMode();
+
+const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 
 const {
   agThemeVars,
@@ -319,6 +459,7 @@ const {
   exportGridCsv,
   fitGridColumns,
   getProductionRowStyle,
+  getRowId,
   gridColumnOptions,
   gridApi,
   onGridReady,
@@ -334,10 +475,11 @@ const {
 } = useCmsProductionGrid({
   isDark,
   t,
-  getPrimaryTagLabels: () =>
+  getGenreOptions: () =>
     createTagGroups.value
       .filter((group) => group.isGenre)
-      .flatMap((group) => group.tags.map((tag) => tag.label)),
+      .flatMap((group) => group.tags),
+  currentLang,
 });
 
 const isLoading = ref(false);
@@ -351,11 +493,14 @@ const rowData = ref<CmsProductionGridRow[]>([]);
 const editorPanel = ref<EditorPanelState | null>(null);
 const createModalOpen = ref(false);
 const createEventModalOpen = ref(false);
-const removeConfirmOpen = ref(false);
-const removeConfirmLoading = ref(false);
-const removeConfirmError = ref<string | null>(null);
-const mediaPreview = ref<{ url: string; kind: "image" | "video" | "youtube"; label: string } | null>(null);
-const languages = SUPPORTED_LANGS as ReadonlyArray<SupportedLang>;
+const bulkEditConfirmOpen = ref(false);
+const bulkEditConfirmLoading = ref(false);
+const bulkEditConfirmCount = ref(0);
+const pendingBulkEditAction = ref<(() => Promise<void>) | null>(null);
+const mediaPreview = ref<CmsMediaPreview | null>(null);
+const mediaPreviewEditUrl = ref("");
+const imagesByProductionId = ref(new Map<number, Array<{ id: number; url: string }>>());
+const imageLoadRequestToken = ref(0);
 const createExtraLangs = ref({ en: false, fr: false });
 const visibleCreateLangs = computed<SupportedLang[]>(() => {
   const result: SupportedLang[] = ["nl"];
@@ -396,7 +541,6 @@ const eventRowSnapshots = ref(new Map<number, CmsEventGridRow>());
 const pendingProductionEnterCommits = ref(new Set<string>());
 const activeProductionEditKey = ref<string | null>(null);
 
-const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 const editorBulkCount = computed(() => {
   if (!editorPanel.value) {
     return 0;
@@ -411,7 +555,27 @@ const selectedEventsProduction = computed(() => {
   }
   return rowData.value.find((row) => row.id === selectedEventsProductionId.value) ?? null;
 });
-const removeConfirmCount = computed(() => selectedCount.value);
+
+const {
+  removeConfirmOpen,
+  removeConfirmLoading,
+  removeConfirmError,
+  openRemoveConfirm,
+  closeRemoveConfirm,
+  confirmRemove,
+} = useCmsRemove<CmsProductionGridRow>({
+  selectedCount,
+  getSelectedRows: () => gridApi.value?.getSelectedRows() ?? [],
+  rowToId: (row) => row.id,
+  deleteFn: deleteProduction,
+  t,
+  onSuccess: async () => {
+    selectedCount.value = 0;
+    gridApi.value?.deselectAll();
+    await loadCmsData();
+    showSaveSuccess(t("cms.feedback.removeSuccess"));
+  },
+});
 
 const createFields = createProductionFields;
 
@@ -424,48 +588,56 @@ const tagEditorPanel = ref<{
   rowId: number;
   label: string;
   selectedTagIds: number[];
+  initialSelectedTagIds: number[];
 } | null>(null);
 
-const inlineFieldToApi: Record<InlineEditableField, keyof ProductionWithBackwardsRefs> = {
-  performer: "artist",
-  title: "title",
-  producer: "supertitle",
-  teaser: "teaser",
-};
+const tagEditorBulkCount = computed(() => {
+  if (!tagEditorPanel.value) {
+    return 0;
+  }
 
-const longGridFieldToApi: Record<"descriptionOne" | "descriptionTwo" | "media", LongField> = {
+  const row = rowData.value.find((item) => item.id === tagEditorPanel.value?.rowId);
+  if (!row) {
+    return 0;
+  }
+
+  return getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], row).length;
+});
+
+const secondaryTagBulkModeOpen = ref(false);
+const secondaryTagBulkModeLoading = ref(false);
+const secondaryTagBulkModeCount = ref(0);
+const secondaryTagBulkModeTagsPreview = ref("");
+const secondaryTagBulkModeAddedPreview = ref("");
+const secondaryTagBulkModeRemovedPreview = ref("");
+const pendingSecondaryTagBulkRows = ref<CmsProductionGridRow[]>([]);
+
+const inlineFieldToApi: Record<InlineEditableField, InlineEditableField> = {
+  teaser: "teaser",
+}
+
+type longGridFieldIds = "descriptionOne" | "descriptionTwo" | "media" | "performer" | "artist" | "title" | "producer" | "teaser";
+
+const longGridFieldToApi: Record<longGridFieldIds, ProductionLongField> = {
   descriptionOne: "description",
   descriptionTwo: "description_2",
   media: "video_1",
+  performer: "artist",
+  title: "title",
+  artist: "artist",
+  producer: "supertitle",
+  teaser: "teaser",
 };
 
 const genreTagTypeIds = computed(
   () => new Set(createTagGroups.value.filter((group) => group.isGenre).map((group) => group.tagTypeId)),
 );
 
-function findGenreTagIdByLabel(label: string): number | null {
-  const normalized = label.trim().toLowerCase();
-  if (!normalized) {
-    return null;
-  }
-
-  const genreTypeIds = genreTagTypeIds.value;
-  const match = tagsData.value.find((tag) => {
-    const tagTypeId = Number(tag.tag_type);
-    if (!genreTypeIds.has(tagTypeId)) {
-      return false;
-    }
-    return localizeWithFallback(tag.name, localizeValue).trim().toLowerCase() === normalized;
-  });
-
-  return match?.id ?? null;
-}
-
 function localizeValue(map: LanguageMap | null | undefined): string {
   if (!map) {
     return "";
   }
-  return localizeOrEmpty(map, currentLang.value);
+  return localizeWithFallback(map, (value) => localizeOrEmpty(value, currentLang.value));
 }
 
 function setCurrentLanguageValue(
@@ -478,8 +650,28 @@ function setCurrentLanguageValue(
   };
 }
 
+function toEditableLanguageMap(values: Record<SupportedLang, string>): LanguageMap {
+  return {
+    nl: values.nl.trim(),
+    en: values.en.trim(),
+    fr: values.fr.trim(),
+  };
+}
+
 function getProductionEditKey(rowId: number, field: string): string {
   return `${rowId}:${field}`;
+}
+
+function formatTagNames(tagIds: number[], maxCount: number = 5): string {
+  const tags = tagIds
+    .slice(0, maxCount)
+    .map((tagId) => tagsData.value.find((t) => t.id === tagId)?.name[currentLang.value] || `Tag ${tagId}`)
+    .filter(Boolean);
+  const result = tags.join(", ");
+  if (tagIds.length > maxCount) {
+    return `${result} +${tagIds.length - maxCount}`;
+  }
+  return result;
 }
 
 function snapshotEventRows(rows: CmsEventGridRow[]): void {
@@ -560,6 +752,7 @@ function toggleCreateTag(tagId: number, selected: boolean): void {
 function closeTagEditorPanel(): void {
   tagEditorPanel.value = null;
   saveError.value = null;
+  closeSecondaryTagBulkMode();
 }
 
 function openTagEditorPanel(row: CmsProductionGridRow): void {
@@ -574,6 +767,7 @@ function openTagEditorPanel(row: CmsProductionGridRow): void {
     rowId: row.id,
     label: row.title || t("cms.columns.tags"),
     selectedTagIds: selectedAdditionalTagIds,
+    initialSelectedTagIds: selectedAdditionalTagIds,
   };
   saveError.value = null;
 }
@@ -606,6 +800,27 @@ async function saveTagEditorPanel(): Promise<void> {
     return;
   }
 
+  const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], row);
+
+  if (targetRows.length > 1) {
+    openBulkEditConfirm(targetRows.length, async () => {
+      // Compute tag previews for the modal
+      const desiredTagIds = [...new Set(tagEditorPanel.value!.selectedTagIds)];
+      const initialTagIds = [...new Set(tagEditorPanel.value!.initialSelectedTagIds)];
+      const addedTagIds = desiredTagIds.filter((tagId) => !initialTagIds.includes(tagId));
+      const removedTagIds = initialTagIds.filter((tagId) => !desiredTagIds.includes(tagId));
+
+      secondaryTagBulkModeTagsPreview.value = formatTagNames(desiredTagIds);
+      secondaryTagBulkModeAddedPreview.value = formatTagNames(addedTagIds);
+      secondaryTagBulkModeRemovedPreview.value = formatTagNames(removedTagIds);
+
+      pendingSecondaryTagBulkRows.value = targetRows;
+      secondaryTagBulkModeCount.value = targetRows.length;
+      secondaryTagBulkModeOpen.value = true;
+    });
+    return;
+  }
+
   const genreTypeIds = genreTagTypeIds.value;
   const currentTagIds = extractProductionTagIds(row.source);
   const existingGenreTagIds = currentTagIds.filter((tagId) => {
@@ -630,6 +845,120 @@ async function saveTagEditorPanel(): Promise<void> {
   } finally {
     isSaving.value = false;
   }
+}
+
+function closeSecondaryTagBulkMode(): void {
+  secondaryTagBulkModeOpen.value = false;
+  secondaryTagBulkModeLoading.value = false;
+  secondaryTagBulkModeCount.value = 0;
+  secondaryTagBulkModeTagsPreview.value = "";
+  secondaryTagBulkModeAddedPreview.value = "";
+  secondaryTagBulkModeRemovedPreview.value = "";
+  pendingSecondaryTagBulkRows.value = [];
+}
+
+async function applySecondaryTagBulkEdit(mode: "replace" | "diff"): Promise<void> {
+  if (!tagEditorPanel.value) {
+    closeSecondaryTagBulkMode();
+    return;
+  }
+
+  const targetRows = pendingSecondaryTagBulkRows.value;
+  if (targetRows.length === 0) {
+    closeSecondaryTagBulkMode();
+    return;
+  }
+
+  const desiredAdditionalTagIds = [...new Set(tagEditorPanel.value.selectedTagIds)];
+  const initialAdditionalTagIds = [...new Set(tagEditorPanel.value.initialSelectedTagIds)];
+  const addedTagIds = desiredAdditionalTagIds.filter((tagId) => !initialAdditionalTagIds.includes(tagId));
+  const removedTagIds = initialAdditionalTagIds.filter((tagId) => !desiredAdditionalTagIds.includes(tagId));
+  const genreTypeIds = genreTagTypeIds.value;
+
+  secondaryTagBulkModeLoading.value = true;
+  isSaving.value = true;
+  saveError.value = null;
+
+  try {
+    for (const targetRow of targetRows) {
+      const currentTagIds = extractProductionTagIds(targetRow.source);
+      const existingGenreTagIds = currentTagIds.filter((tagId) => {
+        const tag = tagsData.value.find((item) => item.id === tagId);
+        return tag ? genreTypeIds.has(Number(tag.tag_type)) : false;
+      });
+
+      const existingAdditionalTagIds = currentTagIds.filter((tagId) => {
+        const tag = tagsData.value.find((item) => item.id === tagId);
+        return tag ? !genreTypeIds.has(Number(tag.tag_type)) : false;
+      });
+
+      const nextAdditionalTagIds =
+        mode === "replace"
+          ? desiredAdditionalTagIds
+          : Array.from(
+            new Set(
+              existingAdditionalTagIds
+                .filter((tagId) => !removedTagIds.includes(tagId))
+                .concat(addedTagIds),
+            ),
+          );
+
+      await updateProduction(targetRow.id, {
+        tags: [...existingGenreTagIds, ...nextAdditionalTagIds],
+      });
+    }
+    await Promise.all(
+      targetRows.map(async (targetRow) => {
+        const currentTagIds = extractProductionTagIds(targetRow.source);
+        const existingGenreTagIds = currentTagIds.filter((tagId) => {
+          const tag = tagsData.value.find((item) => item.id === tagId);
+          return tag ? genreTypeIds.has(Number(tag.tag_type)) : false;
+        });
+
+        const existingAdditionalTagIds = currentTagIds.filter((tagId) => {
+          const tag = tagsData.value.find((item) => item.id === tagId);
+          return tag ? !genreTypeIds.has(Number(tag.tag_type)) : false;
+        });
+
+        const nextAdditionalTagIds =
+          mode === "replace"
+            ? desiredAdditionalTagIds
+            : Array.from(
+              new Set(
+                existingAdditionalTagIds
+                  .filter((tagId) => !removedTagIds.includes(tagId))
+                  .concat(addedTagIds),
+              ),
+            );
+
+        await updateProduction(targetRow.id, {
+          tags: [...existingGenreTagIds, ...nextAdditionalTagIds],
+        });
+      }),
+    );
+
+    await loadCmsData();
+    closeSecondaryTagBulkMode();
+    closeTagEditorPanel();
+    showSaveSuccess(t("cms.feedback.saveSuccess"));
+  } catch (error) {
+    saveError.value =
+      error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+    throw error;
+  } finally {
+    secondaryTagBulkModeLoading.value = false;
+    isSaving.value = false;
+  }
+}
+
+async function confirmSecondaryTagBulkReplace(): Promise<void> {
+  await applySecondaryTagBulkEdit("replace");
+}
+
+async function confirmSecondaryTagBulkDiff(): Promise<void> {
+  await applySecondaryTagBulkEdit("diff");
 }
 
 async function loadEventsForProduction(production: ProductionWithBackwardsRefs): Promise<ArchiveEvent[]> {
@@ -683,43 +1012,31 @@ function closeEditorPanel(): void {
   saveError.value = null;
 }
 
-function openRemoveProductionsConfirm(): void {
-  if (selectedCount.value === 0) {
-    return;
-  }
-  removeConfirmError.value = null;
-  removeConfirmOpen.value = true;
+function openBulkEditConfirm(count: number, action: () => Promise<void>): void {
+  bulkEditConfirmCount.value = count;
+  pendingBulkEditAction.value = action;
+  bulkEditConfirmOpen.value = true;
 }
 
-function closeRemoveProductionsConfirm(): void {
-  removeConfirmOpen.value = false;
-  removeConfirmError.value = null;
+function closeBulkEditConfirm(): void {
+  bulkEditConfirmOpen.value = false;
+  bulkEditConfirmLoading.value = false;
+  pendingBulkEditAction.value = null;
 }
 
-async function confirmRemoveProductions(): Promise<void> {
-  const selectedRows = gridApi.value?.getSelectedRows() ?? [];
-  if (selectedRows.length === 0) {
-    closeRemoveProductionsConfirm();
+async function confirmBulkEdit(): Promise<void> {
+  if (!pendingBulkEditAction.value) {
+    closeBulkEditConfirm();
     return;
   }
 
-  removeConfirmLoading.value = true;
-  removeConfirmError.value = null;
-
+  bulkEditConfirmLoading.value = true;
   try {
-    await Promise.all(selectedRows.map((row) => deleteProduction(row.id)));
-    selectedCount.value = 0;
-    gridApi.value?.deselectAll();
-    await loadCmsData();
-    closeRemoveProductionsConfirm();
-    showSaveSuccess(t("cms.feedback.removeSuccess"));
-  } catch (error) {
-    removeConfirmError.value =
-      error instanceof Error
-        ? t("cms.errors.saveFailed", { message: error.message })
-        : t("cms.errors.saveGeneric");
-  } finally {
-    removeConfirmLoading.value = false;
+    await pendingBulkEditAction.value();
+    closeBulkEditConfirm();
+  } catch {
+    // Error is already handled in the action
+    bulkEditConfirmLoading.value = false;
   }
 }
 
@@ -730,51 +1047,301 @@ function showSaveSuccess(message: string): void {
   }, 3000);
 }
 
-function isImagePreviewUrl(url: string): boolean {
-  const value = url.trim().toLowerCase();
-  return /^(data:image\/|https?:\/\/.*\.(?:png|jpe?g|gif|webp|svg)(?:\?.*)?$)/.test(value);
-}
-
-function isVideoPreviewUrl(url: string): boolean {
-  const value = url.trim().toLowerCase();
-  if (value.includes("youtube.com") || value.includes("youtu.be")) {
-    return true;
-  }
-  return /^(data:video\/|https?:\/\/.*\.(?:webm|ogg|mov)(?:\?.*)?$)/.test(value);
-}
-
-function openMediaPreview(url: string, label: string): void {
+function openMediaPreview(
+  url: string,
+  label: string,
+  options: { imageId?: number; productionId?: number; mediaField?: "video_1" | "video_2" } = {},
+): void {
   const trimmed = url.trim();
+  // If there's no URL, open a placeholder so the user can add media.
   if (!trimmed) {
+    const placeholder = createPlaceholderImageDataUrl(t("cms.panel.noMedia"));
+    if (options.mediaField) {
+      // For video fields, show the iframe view (blank) but keep mediaField so the input appears.
+      mediaPreview.value = { url: "about:blank", kind: "iframe", label, productionId: options.productionId, mediaField: options.mediaField };
+      mediaPreviewEditUrl.value = "";
+      return;
+    }
+
+    mediaPreview.value = { url: placeholder, kind: "image", label, imageId: options.imageId, productionId: options.productionId };
+    mediaPreviewEditUrl.value = "";
     return;
   }
 
   if (isImagePreviewUrl(trimmed)) {
-    mediaPreview.value = { url: trimmed, kind: "image", label };
+    mediaPreview.value = { url: trimmed, kind: "image", label, imageId: options.imageId, productionId: options.productionId };
+    mediaPreviewEditUrl.value = "";
     return;
   }
 
+  // Handle YouTube
   if (trimmed.includes("youtube.com") || trimmed.includes("youtu.be")) {
     let videoId = "";
-    if (trimmed.includes("youtube.com/watch?v=")) {
-      videoId = trimmed.split("v=")[1]?.split("&")[0] ?? "";
-    } else if (trimmed.includes("youtu.be/")) {
-      videoId = trimmed.split("youtu.be/")[1]?.split("?")[0] ?? "";
+    // Try youtube.com/watch?v=xxxxx format
+    const watchMatch = trimmed.match(/youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})/);
+    if (watchMatch) {
+      videoId = watchMatch[1];
+    } else {
+      // Try youtu.be/xxxxx format
+      const shortMatch = trimmed.match(/youtu\.be\/([A-Za-z0-9_-]{11})/);
+      if (shortMatch) {
+        videoId = shortMatch[1];
+      }
     }
     if (videoId) {
       const embedUrl = `https://www.youtube.com/embed/${videoId}`;
-      mediaPreview.value = { url: embedUrl, kind: "youtube", label };
+      mediaPreview.value = { url: embedUrl, kind: "iframe", label, productionId: options.productionId, mediaField: options.mediaField };
+      mediaPreviewEditUrl.value = trimmed;
+      return;
     }
+  }
+
+  // Handle Vimeo
+  if (trimmed.includes("vimeo.com")) {
+    let videoId = "";
+    // Try player.vimeo.com/video/xxxxx format first
+    const playerMatch = trimmed.match(/player\.vimeo\.com\/video\/(\d+)/);
+    if (playerMatch) {
+      videoId = playerMatch[1];
+    } else {
+      // Try regular vimeo.com/xxxxx format
+      const regularMatch = trimmed.match(/vimeo\.com\/(\d+)/);
+      if (regularMatch) {
+        videoId = regularMatch[1];
+      }
+    }
+    if (videoId) {
+      const embedUrl = `https://player.vimeo.com/video/${videoId}`;
+      mediaPreview.value = { url: embedUrl, kind: "iframe", label, productionId: options.productionId, mediaField: options.mediaField };
+      mediaPreviewEditUrl.value = trimmed;
+      return;
+    }
+  }
+
+  // Generic iframe for other providers or direct video URLs
+  mediaPreview.value = { url: trimmed, kind: "iframe", label, productionId: options.productionId, mediaField: options.mediaField };
+  mediaPreviewEditUrl.value = trimmed;
+}
+
+function openImageGalleryPreview(
+  images: Array<{ id: number; url: string }>,
+  label: string,
+  productionId: number,
+): void {
+  const normalized = images.filter((image) => image.url.trim().length > 0);
+  if (normalized.length === 0) {
+    // Show placeholder image so the user can add one
+    const placeholder = createPlaceholderImageDataUrl(t("cms.panel.noMedia"));
+    mediaPreview.value = {
+      url: placeholder,
+      kind: "image",
+      label,
+      productionId,
+      images: [],
+    };
+    mediaPreviewEditUrl.value = "";
     return;
   }
 
-  if (isVideoPreviewUrl(trimmed)) {
-    mediaPreview.value = { url: trimmed, kind: "video", label };
+  mediaPreview.value = {
+    url: normalized[0]!.url,
+    kind: normalized.length > 1 ? "gallery" : "image",
+    label,
+    imageId: normalized[0]!.id,
+    productionId,
+    images: normalized,
+    currentImageIndex: 0,
+  };
+  mediaPreviewEditUrl.value = "";
+}
+
+function createPlaceholderImageDataUrl(text: string, width = 800, height = 450): string {
+  const bg = "#f3f4f6";
+  const fg = "#374151";
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}' viewBox='0 0 ${width} ${height}'><rect width='100%' height='100%' fill='${bg}'/><text x='50%' y='50%' fill='${fg}' font-family='Arial, Helvetica, sans-serif' font-size='24' dominant-baseline='middle' text-anchor='middle'>${escapeXml(text)}</text></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+function escapeXml(unsafe: string): string {
+  return unsafe.replace(/[&<>\"']/g, (c) => {
+    switch (c) {
+    case "&":
+      return "&amp;";
+    case "<":
+      return "&lt;";
+    case ">":
+      return "&gt;";
+    case '"':
+      return "&quot;";
+    case "'":
+      return "&apos;";
+    default:
+      return c;
+    }
+  });
+}
+
+function syncGalleryPreview(nextIndex: number): void {
+  const preview = mediaPreview.value;
+  if (!preview || preview.kind !== "gallery" || !preview.images || preview.images.length === 0) {
+    return;
   }
+
+  const normalizedIndex = ((nextIndex % preview.images.length) + preview.images.length) % preview.images.length;
+  const nextImage = preview.images[normalizedIndex];
+  if (!nextImage) {
+    return;
+  }
+
+  mediaPreview.value = {
+    ...preview,
+    url: nextImage.url,
+    imageId: nextImage.id,
+    currentImageIndex: normalizedIndex,
+  };
 }
 
 function closeMediaPreview(): void {
   mediaPreview.value = null;
+  mediaPreviewEditUrl.value = "";
+}
+
+const ALLOWED_IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+async function onMediaPreviewImageSelected(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  const productionId = mediaPreview.value?.productionId;
+  const label = mediaPreview.value?.label ?? t("cms.columns.imageMedia");
+  if (!file || productionId === undefined) {
+    return;
+  }
+
+  if (!ALLOWED_IMAGE_MIME_TYPES.includes(file.type)) {
+    saveError.value = t("cms.errors.unsupportedImageType", {
+      type: file.type || file.name.split(".").pop() || "?",
+    });
+    input.value = "";
+    return;
+  }
+
+  isSaving.value = true;
+  saveError.value = null;
+  try {
+    const dataUrl = await fileToDataUrl(file);
+    const uploadedImage = await uploadImageWithCrops(productionId, dataUrl);
+    await loadCmsData();
+
+    // The lazy image fetch inside loadCmsData has not completed yet, so
+    // re-fetch images for this production directly to rebuild the gallery
+    // with the existing images plus the new one.
+    const refreshedImages = await getImagesByProduction(productionId);
+    const galleryImages = refreshedImages
+      .map((img) => {
+        const url = resolvePreferredCropUrl(img.crops, window.location.origin);
+        return url ? { id: img.id, url } : null;
+      })
+      .filter((img): img is { id: number; url: string } => img !== null);
+
+    openImageGalleryPreview(galleryImages, label, productionId);
+    const focusIndex = galleryImages.findIndex((img) => img.id === uploadedImage.id);
+    if (focusIndex > 0) {
+      syncGalleryPreview(focusIndex);
+    }
+    showSaveSuccess(t("cms.feedback.mediaAddSuccess"));
+  } catch (error) {
+    saveError.value =
+      error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+  } finally {
+    input.value = "";
+    isSaving.value = false;
+  }
+}
+
+async function saveMediaVideoUrl(): Promise<void> {
+  const preview = mediaPreview.value;
+  const nextUrl = mediaPreviewEditUrl.value.trim();
+  if (!preview?.productionId || !preview.mediaField || !nextUrl) {
+    return;
+  }
+
+  isSaving.value = true;
+  saveError.value = null;
+  try {
+    await updateProduction(preview.productionId, {
+      [preview.mediaField]: { nl: nextUrl },
+    } as Parameters<typeof updateProduction>[1]);
+    await loadCmsData();
+    openMediaPreview(nextUrl, preview.label, {
+      productionId: preview.productionId,
+      mediaField: preview.mediaField,
+    });
+    showSaveSuccess(t("cms.feedback.mediaUpdateSuccess"));
+  } catch (error) {
+    saveError.value =
+      error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+  } finally {
+    isSaving.value = false;
+  }
+}
+
+async function removeMediaImage(): Promise<void> {
+  if (!mediaPreview.value?.imageId) {
+    return;
+  }
+
+  if (!confirm(t("cms.create.media.confirmDelete"))) {
+    return;
+  }
+
+  isSaving.value = true;
+  saveError.value = null;
+  try {
+    await deleteImageService(mediaPreview.value.imageId);
+    closeMediaPreview();
+    await loadCmsData();
+    showSaveSuccess(t("cms.feedback.mediaRemoveSuccess"));
+  } catch (error) {
+    saveError.value =
+      error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+  } finally {
+    isSaving.value = false;
+  }
+}
+
+async function removeMediaVideo(): Promise<void> {
+  const preview = mediaPreview.value;
+  if (!preview?.productionId || !preview.mediaField) {
+    return;
+  }
+
+  if (!confirm(t("cms.create.media.confirmDeleteVideo"))) {
+    return;
+  }
+
+  isSaving.value = true;
+  saveError.value = null;
+  try {
+    await updateProduction(preview.productionId, {
+      [preview.mediaField]: null,
+    } as Parameters<typeof updateProduction>[1]);
+    closeMediaPreview();
+    await loadCmsData();
+    showSaveSuccess(t("cms.feedback.mediaRemoveVideoSuccess"));
+  } catch (error) {
+    saveError.value =
+      error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+  } finally {
+    isSaving.value = false;
+  }
 }
 
 function resetCreateForm(): void {
@@ -795,22 +1362,32 @@ function closeCreateModal(): void {
   resetCreateForm();
 }
 
-async function onImageFileChange(event: Event): Promise<void> {
+function addMedia(type: "image" | "video"): void {
+  createForm.value.media.push(createMediaItem(type));
+}
+
+function removeMedia(mediaId: string): void {
+  createForm.value.media = createForm.value.media.filter((m) => m.id !== mediaId);
+}
+
+async function onMediaFileChange(mediaId: string, event: Event): Promise<void> {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
   if (!file) return;
+
   const dataUrl = await fileToDataUrl(file);
-  createForm.value.video_1.nl = dataUrl;
+  const mediaIndex = createForm.value.media.findIndex((m) => m.id === mediaId);
+  if (mediaIndex >= 0) {
+    createForm.value.media[mediaIndex]!.url = dataUrl;
+  }
   input.value = "";
 }
 
-async function onVideoFileChange(event: Event): Promise<void> {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  if (!file) return;
-  const dataUrl = await fileToDataUrl(file);
-  createForm.value.video_2.nl = dataUrl;
-  input.value = "";
+function updateMediaUrl(mediaId: string, url: string): void {
+  const mediaIndex = createForm.value.media.findIndex((m) => m.id === mediaId);
+  if (mediaIndex >= 0) {
+    createForm.value.media[mediaIndex]!.url = url;
+  }
 }
 
 async function submitCreateProduction(): Promise<void> {
@@ -824,7 +1401,11 @@ async function submitCreateProduction(): Promise<void> {
   createError.value = null;
 
   try {
-    await createProduction({
+    // Extract media items for API submission
+    const videoMedia = createForm.value.media.find((m) => m.type === "video");
+
+    // Create production first
+    const production = await createProduction({
       vendor_id: 0,
       box_office_id: 0,
       finalized: createForm.value.finalized,
@@ -839,9 +1420,30 @@ async function submitCreateProduction(): Promise<void> {
       supertitle: toLanguageMapOrNull(createForm.value.supertitle),
       description: toLanguageMapOrNull(createForm.value.description),
       description_2: toLanguageMapOrNull(createForm.value.description_2),
-      video_1: mediaToLanguageMap(createForm.value.video_1),
-      video_2: mediaToLanguageMap(createForm.value.video_2),
+      video_1: null,
+      video_2: videoMedia?.url?.trim() ? { nl: videoMedia.url } : null,
     });
+
+    // Upload image media items with auto-generated crops
+    for (const mediaItem of createForm.value.media) {
+      if (mediaItem.type === "image" && mediaItem.url && !mediaItem.imageId) {
+        try {
+          // Check if it's a data URL (file upload) or external URL
+          if (mediaItem.url.startsWith("data:")) {
+            const uploadedImage = await uploadImageWithCrops(production.id, mediaItem.url);
+            mediaItem.imageId = uploadedImage.id;
+            mediaItem.isUploaded = true;
+          }
+          // If it's an external URL, it's already stored in video_1 and doesn't need crops
+        } catch (error) {
+          console.error(
+            `Failed to upload image for production ${production.id}:`,
+            error,
+          );
+          // Continue with other images, but log the error
+        }
+      }
+    }
 
     await loadCmsData();
     closeCreateModal();
@@ -855,13 +1457,39 @@ async function submitCreateProduction(): Promise<void> {
   }
 }
 
-async function persistProductionPatch(
-  row: CmsProductionGridRow,
+async function persistBulkProductionPatch(
+  targetRows: CmsProductionGridRow[],
   patch: Record<string, unknown>,
 ): Promise<void> {
   try {
-    const updated = await updateProduction(row.id, patch as never);
-    applyUpdatedProductionToRow(row, updated, localizeValue);
+    const updatedRows = await bulkUpdateProductions({
+      ids: targetRows.map((row) => row.id),
+      data: patch as never,
+    });
+
+    // Sync the source-of-truth array so that rebuildRows() (triggered by a
+    // language switch) reproduces rows from the just-saved LanguageMaps, not
+    // from the pre-edit ones.
+    for (const updated of updatedRows) {
+      const idx = productionsData.value.findIndex((p) => p.id === updated.id);
+      if (idx !== -1) {
+        productionsData.value[idx] = updated;
+      }
+    }
+
+    const refreshedNodes = [];
+    for (const row of targetRows) {
+      const updated = updatedRows.find((item) => item.id === row.id);
+      if (!updated) continue;
+      applyUpdatedProductionToRow(row, updated, localizeValue);
+      const node = gridApi.value?.getRowNode?.(String(row.id));
+      if (node) refreshedNodes.push(node);
+    }
+
+    if (refreshedNodes.length > 0) {
+      gridApi.value?.refreshCells?.({ rowNodes: refreshedNodes, force: true });
+    }
+    gridApi.value?.applyTransactionAsync?.({ update: targetRows });
   } catch (error) {
     saveError.value =
       error instanceof Error
@@ -877,16 +1505,28 @@ async function saveInlineBulkUpdate(
   newValue: string,
 ): Promise<void> {
   const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], primaryRow);
+  const nextMap = { [currentLang.value]: newValue };
+
+  // Show confirmation if editing multiple rows
+  if (targetRows.length > 1) {
+    openBulkEditConfirm(targetRows.length, async () => {
+      isSaving.value = true;
+      saveError.value = null;
+      try {
+        await persistBulkProductionPatch(targetRows, { [apiField]: nextMap });
+        showSaveSuccess(t("cms.feedback.saveSuccess"));
+      } finally {
+        isSaving.value = false;
+      }
+    });
+    return;
+  }
+
   isSaving.value = true;
   saveError.value = null;
   try {
-    await Promise.all(
-      targetRows.map(async (row) => {
-        const currentMap = row.source[apiField] as LanguageMap | null | undefined;
-        const nextMap = setCurrentLanguageValue(currentMap, newValue);
-        await persistProductionPatch(row, { [apiField]: nextMap });
-      }),
-    );
+    await persistBulkProductionPatch(targetRows, { [apiField]: nextMap });
+    showSaveSuccess(t("cms.feedback.saveSuccess"));
   } finally {
     isSaving.value = false;
   }
@@ -901,39 +1541,68 @@ async function onCellEditingStopped(
 
   const field = event.colDef.field as InlineEditableField;
   if (event.colDef.field === "genres") {
-    const newLabel = String(event.value ?? "").trim();
-    const oldLabel = String(event.oldValue ?? "").trim();
+    const newGenreId = Number(event.value ?? 0);
+    const oldGenreId = Number(event.oldValue ?? 0);
     const editKey = getProductionEditKey(event.data.id, event.colDef.field);
     pendingProductionEnterCommits.value.delete(editKey);
     activeProductionEditKey.value = null;
 
-    if (newLabel === oldLabel) {
+    if (newGenreId === oldGenreId) {
       return;
     }
 
-    const selectedGenreTagId = findGenreTagIdByLabel(newLabel);
-    if (selectedGenreTagId === null) {
-      event.node.setDataValue("genres", oldLabel);
+    if (!Number.isFinite(newGenreId)) {
+      event.node.setDataValue("genres", oldGenreId);
       return;
     }
 
+    const selectedGenreTagId = newGenreId === 0 ? null : newGenreId;
     const genreTypeIds = genreTagTypeIds.value;
-    const currentTagIds = extractProductionTagIds(event.data.source);
-    const nonGenreTagIds = currentTagIds.filter((tagId) => {
-      const tag = tagsData.value.find((item) => item.id === tagId);
-      return !tag || !genreTypeIds.has(Number(tag.tag_type));
-    });
+
+    const persistPrimaryTagForRow = async (row: CmsProductionGridRow): Promise<void> => {
+      const currentTagIds = extractProductionTagIds(row.source);
+      const nonGenreTagIds = currentTagIds.filter((tagId) => {
+        const tag = tagsData.value.find((item) => item.id === tagId);
+        return !tag || !genreTypeIds.has(Number(tag.tag_type));
+      });
+
+      await updateProduction(row.id, {
+        tags: [...(selectedGenreTagId ? [selectedGenreTagId] : []), ...nonGenreTagIds],
+      });
+    };
+
+    const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], event.data);
+    if (targetRows.length > 1) {
+      openBulkEditConfirm(targetRows.length, async () => {
+        isSaving.value = true;
+        saveError.value = null;
+        try {
+          for (const row of targetRows) {
+            await persistPrimaryTagForRow(row);
+          }
+          await loadCmsData();
+          showSaveSuccess(t("cms.feedback.saveSuccess"));
+        } catch (error) {
+          saveError.value =
+            error instanceof Error
+              ? t("cms.errors.saveFailed", { message: error.message })
+              : t("cms.errors.saveGeneric");
+          throw error;
+        } finally {
+          isSaving.value = false;
+        }
+      });
+      return;
+    }
 
     isSaving.value = true;
     saveError.value = null;
     try {
-      await updateProduction(event.data.id, {
-        tags: [selectedGenreTagId, ...nonGenreTagIds],
-      });
+      await persistPrimaryTagForRow(event.data);
       await loadCmsData();
       showSaveSuccess(t("cms.feedback.saveSuccess"));
     } catch {
-      event.node.setDataValue("genres", oldLabel);
+      event.node.setDataValue("genres", oldGenreId);
     } finally {
       isSaving.value = false;
       persistGridState();
@@ -1018,17 +1687,43 @@ function onCellClicked(event: CellClickedEvent<CmsProductionGridRow>): void {
     return;
   }
 
-  const gridField = event.colDef.field as "descriptionOne" | "descriptionTwo" | "media";
+  if (event.colDef.field === "imageMedia") {
+    const images = imagesByProductionId.value.get(event.data.id) ?? [];
+    if (images.length > 0) {
+      openImageGalleryPreview(images, event.colDef.headerName ?? t("cms.columns.imageMedia"), event.data.id);
+      return;
+    }
+    // Open placeholder preview so users can add an image for productions with no images yet
+    openImageGalleryPreview([], event.colDef.headerName ?? t("cms.columns.imageMedia"), event.data.id);
+    return;
+  }
+  
+  const gridField = event.colDef.field as longGridFieldIds;
   if (!(gridField in longGridFieldToApi)) {
     return;
   }
 
-  if (gridField === "media") {
+  if (event.colDef.field === "media") {
     const value = String(event.data.media ?? "").trim();
     if (value && (isImagePreviewUrl(value) || isVideoPreviewUrl(value))) {
-      openMediaPreview(value, event.colDef.headerName ?? t("cms.columns.media"));
+      const video1 = localizeValue(event.data.source.video_1);
+      const video2 = localizeValue(event.data.source.video_2);
+      const mediaField = value === video1 && video1 ? "video_1" : value === video2 && video2 ? "video_2" : undefined;
+      openMediaPreview(value, event.colDef.headerName ?? t("cms.columns.media"), {
+        productionId: event.data.id,
+        mediaField,
+      });
       return;
     }
+    // No media present: open placeholder preview and prefer editing video_1 (fall back to video_2 if present)
+    const video1 = localizeValue(event.data.source.video_1);
+    const video2 = localizeValue(event.data.source.video_2);
+    const preferredField = video1 ? "video_1" : video2 ? "video_2" : "video_1";
+    openMediaPreview("", event.colDef.headerName ?? t("cms.columns.media"), {
+      productionId: event.data.id,
+      mediaField: preferredField as "video_1" | "video_2",
+    });
+    return;
   }
 
   const apiField = longGridFieldToApi[gridField];
@@ -1053,19 +1748,33 @@ async function saveEditorPanel(): Promise<void> {
     return;
   }
 
-  const payload = toLanguageMapOrNull(editorPanel.value.values);
+  const payload = toEditableLanguageMap(editorPanel.value.values);
   const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], row);
+
+  // Show confirmation if editing multiple rows
+  if (targetRows.length > 1) {
+    openBulkEditConfirm(targetRows.length, async () => {
+      isSaving.value = true;
+      saveError.value = null;
+      try {
+        await persistBulkProductionPatch(targetRows, {
+          [editorPanel.value?.apiField as ProductionLongField]: payload,
+        });
+        closeEditorPanel();
+        showSaveSuccess(t("cms.feedback.saveSuccess"));
+      } finally {
+        isSaving.value = false;
+      }
+    });
+    return;
+  }
 
   isSaving.value = true;
   saveError.value = null;
   try {
-    await Promise.all(
-      targetRows.map(async (target) => {
-        await persistProductionPatch(target, {
-          [editorPanel.value?.apiField as LongField]: payload,
-        });
-      }),
-    );
+    await persistBulkProductionPatch(targetRows, {
+      [editorPanel.value?.apiField as ProductionLongField]: payload,
+    });
   } finally {
     isSaving.value = false;
   }
@@ -1080,6 +1789,7 @@ function rebuildRows(): void {
     tagsData.value,
     tagTypesData.value,
     localizeValue,
+    imagesByProductionId.value,
   );
 }
 
@@ -1248,7 +1958,7 @@ async function loadCmsData(): Promise<void> {
 
   try {
     const [productionsPage, tags, tagTypes, halls] = await Promise.all([
-      getProductions(),
+      getProductions({ lang: currentLang.value }),
       getAllTags(),
       getTagTypes(),
       getHalls(),
@@ -1264,7 +1974,51 @@ async function loadCmsData(): Promise<void> {
       resetCreateLinkedEventForm();
     }
 
+    imagesByProductionId.value = new Map();
     rebuildRows();
+
+    if (import.meta.env.MODE === "test") {
+      return;
+    }
+
+    // Lazy-load images after the main CMS data has rendered.
+    const requestToken = Date.now();
+    imageLoadRequestToken.value = requestToken;
+    void (async () => {
+      const imagesMap = new Map<number, Array<{ id: number; url: string }>>();
+
+      await Promise.all(
+        productionsData.value.map(async (production) => {
+          try {
+            const images = await getImagesByProduction(production.id);
+            if (!images || images.length === 0) {
+              return;
+            }
+
+            const imageUrls = images
+              .map((img) => {
+                const preferredUrl = resolvePreferredCropUrl(img.crops, window.location.origin);
+                return preferredUrl ? { id: img.id, url: preferredUrl } : null;
+              })
+              .filter((img): img is { id: number; url: string } => img !== null);
+
+            if (imageUrls.length > 0) {
+              imagesMap.set(production.id, imageUrls);
+            }
+          } catch (error) {
+            // Silently fail for individual image loads
+            console.error(`Failed to load images for production ${production.id}:`, error);
+          }
+        }),
+      );
+
+      if (imageLoadRequestToken.value !== requestToken) {
+        return;
+      }
+
+      imagesByProductionId.value = imagesMap;
+      rebuildRows();
+    })();
   } catch (error) {
     loadError.value =
       error instanceof Error
@@ -1278,16 +2032,38 @@ async function loadCmsData(): Promise<void> {
 defineExpose({
   __test: {
     rowData,
+    productionsData,
+    tagsData,
+    tagTypesData,
+    hallsData,
+    createTagGroups,
+    genreTagTypeIds,
+    quickFilterText,
+    columnChooserOpen,
+    gridColumnOptions,
+    columnDefs,
     selectedCount,
     gridApi,
     createForm,
+    createExtraLangs,
+    visibleCreateLangs,
+    langGridClass,
     createModalOpen,
     createEventModalOpen,
     removeConfirmOpen,
     removeConfirmLoading,
     removeConfirmError,
     mediaPreview,
+    imagesByProductionId,
+    imageLoadRequestToken,
     tagEditorPanel,
+    tagEditorBulkCount,
+    secondaryTagBulkModeOpen,
+    secondaryTagBulkModeLoading,
+    secondaryTagBulkModeCount,
+    secondaryTagBulkModeTagsPreview,
+    secondaryTagBulkModeAddedPreview,
+    secondaryTagBulkModeRemovedPreview,
     additionalTagGroups,
     createError,
     eventsPanelError,
@@ -1299,13 +2075,21 @@ defineExpose({
     selectedEventRows,
     localizeValue,
     setCurrentLanguageValue,
+    getProductionEditKey,
+    formatTagNames,
+    snapshotEventRows,
+    revertEventRow,
     resetCreateForm,
     resetCreateLinkedEventForm,
     openCreateModal,
     closeCreateModal,
-    openRemoveProductionsConfirm,
-    closeRemoveProductionsConfirm,
-    confirmRemoveProductions,
+    addMedia,
+    removeMedia,
+    onMediaFileChange,
+    updateMediaUrl,
+    openRemoveConfirm,
+    closeRemoveConfirm,
+    confirmRemove,
     submitCreateProduction,
     showEventsForProduction,
     refreshEventsPanelForSelectedProduction,
@@ -1322,19 +2106,27 @@ defineExpose({
     onProductionCellEditingStarted,
     onWindowKeyDown,
     onCellEditingStopped,
-    onImageFileChange,
-    onVideoFileChange,
     openMediaPreview,
     closeMediaPreview,
     openTagEditorPanel,
     closeTagEditorPanel,
     toggleTagEditorTag,
     saveTagEditorPanel,
+    closeSecondaryTagBulkMode,
+    confirmSecondaryTagBulkReplace,
+    confirmSecondaryTagBulkDiff,
     closeEventsPanel,
     closeEditorPanel,
     saveEditorPanel,
+    persistBulkProductionPatch,
     rebuildRows,
     loadCmsData,
+    bulkEditConfirmOpen,
+    bulkEditConfirmCount,
+    bulkEditConfirmLoading,
+    openBulkEditConfirm,
+    closeBulkEditConfirm,
+    confirmBulkEdit,
   },
 });
 
@@ -1417,5 +2209,52 @@ img.cms-media-preview-large {
 iframe.cms-media-preview-large {
   height: 100%;
   aspect-ratio: 16 / 9;
+}
+
+.cms-choice-card {
+  border: 1px solid var(--surface-3);
+  border-radius: 0.75rem;
+  background: var(--surface-0);
+  padding: 1rem;
+  text-align: left;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease;
+}
+
+.cms-choice-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cms-choice-card-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  padding: 0 0.5rem;
+  background: var(--surface-2);
+  color: var(--ink-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.cms-choice-card:hover:not(:disabled) {
+  border-color: var(--accent-outline);
+  background: var(--surface-1);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.08);
+}
+
+.cms-choice-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 </style>

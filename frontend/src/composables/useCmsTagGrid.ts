@@ -10,12 +10,13 @@ const cmsTagGridColumnIds = [
   "name",
   "tagType",
   "public",
-  "productionCount",
+  "productions",
 ] as const;
 
 export function useCmsTagGrid(options: {
   isDark: Ref<boolean>;
   t: TranslateFunction;
+  getTagTypeLabels: () => string[]
 }) {
   const base = useCmsGridBase<CmsTagGridRow>({
     isDark: options.isDark,
@@ -43,24 +44,35 @@ export function useCmsTagGrid(options: {
   };
 
   const gridColumnOptions = computed(() => [
+    { colId: "id", label: options.t("cms.columns.id") },
     { colId: "name", label: options.t("cms.columns.tagName") },
     { colId: "tagType", label: options.t("cms.columns.tagType") },
     { colId: "public", label: options.t("cms.columns.public") },
-    { colId: "productionCount", label: options.t("cms.columns.productionCount") },
+    { colId: "productions", label: options.t("cms.columns.productions") },
   ] as const);
 
   const columnDefs = computed<ColDef<CmsTagGridRow>[]>(() => [
     {
+      headerName: options.t("cms.columns.id"),
+      field: "id",
+      editable: false,
+      minWidth: 50,
+      maxWidth: 100,
+    },
+    {
       headerName: options.t("cms.columns.tagName"),
       field: "name",
-      editable: true,
+      editable: false,
       minWidth: 200,
       flex: 1,
     },
     {
       headerName: options.t("cms.columns.tagType"),
       field: "tagType",
-      editable: false,
+      editable: true,
+      cellEditor: "agSelectCellEditor",
+      cellEditorParams: () => ({ values: options.getTagTypeLabels() }),
+      singleClickEdit: true,
       minWidth: 160,
     },
     {
@@ -73,12 +85,11 @@ export function useCmsTagGrid(options: {
       maxWidth: 140,
     },
     {
-      headerName: options.t("cms.columns.productionCount"),
-      field: "productionCount",
+      headerName: options.t("cms.columns.productions"),
+      field: "productions",
       editable: false,
-      minWidth: 140,
-      maxWidth: 180,
-      filter: "agNumberColumnFilter",
+      minWidth: 200,
+      flex: 1,
     },
   ]);
 

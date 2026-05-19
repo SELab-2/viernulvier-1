@@ -123,15 +123,6 @@ describe("CmsAdminsTab", () => {
       expect(wrapper.find(".ag-grid-mock").exists()).toBe(true);
     });
 
-    it("shows empty state", async () => {
-      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
-
-      const wrapper = mountTab();
-      await flushPromises();
-
-      expect(wrapper.text()).toMatch(/geen admins/i);
-    });
-
     it("handles load error", async () => {
       vi.spyOn(auth, "getAllAdmins").mockRejectedValue(new Error("fail"));
 
@@ -140,6 +131,38 @@ describe("CmsAdminsTab", () => {
 
       expect(wrapper.vm.__test.loadError.value).toBeTruthy();
       expect(wrapper.find(".ag-grid-mock").exists()).toBe(false);
+    });
+
+    it("sets generic load error when getAllAdmins rejects with a non-Error", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockRejectedValue("raw string error");
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      expect(wrapper.vm.__test.loadError.value).toBeTruthy();
+      expect(wrapper.vm.__test.loadError.value).not.toMatch(/raw string error/);
+    });
+
+    it("quickFilterText ref can be updated", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      const wrapper = mountTab();
+      await flushPromises();
+
+      wrapper.vm.__test.quickFilterText.value = "alice";
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.vm.__test.quickFilterText.value).toBe("alice");
+    });
+
+    it("columnChooserOpen ref can be updated", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      const wrapper = mountTab();
+      await flushPromises();
+
+      wrapper.vm.__test.columnChooserOpen.value = true;
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.vm.__test.columnChooserOpen.value).toBe(true);
     });
   });
 
@@ -237,6 +260,36 @@ describe("CmsAdminsTab", () => {
 
       expect(spy).not.toHaveBeenCalled();
       expect(event.node.setDataValue).toHaveBeenCalledWith("profilePicture", "y");
+    });
+
+    it("does nothing when colDef.field is missing", async () => {
+      const wrapper = mountTab();
+      const event = createEvent({ colDef: { field: undefined } });
+
+      await wrapper.vm.__test.onCellEditingStopped(event);
+
+      expect(event.node.setDataValue).not.toHaveBeenCalled();
+    });
+
+    it("reverts username when newValue is null", async () => {
+      const wrapper = mountTab();
+      const event = createEvent({ value: null });
+
+      await wrapper.vm.__test.onCellEditingStopped(event);
+
+      expect(event.node.setDataValue).toHaveBeenCalledWith("username", "old");
+    });
+
+    it("sets generic save error when updateAdmin rejects with a non-Error", async () => {
+      vi.spyOn(auth, "updateAdmin").mockRejectedValue("raw string error");
+
+      const wrapper = mountTab();
+      const event = createEvent();
+
+      await wrapper.vm.__test.onCellEditingStopped(event);
+
+      expect(wrapper.vm.__test.saveError.value).toBeTruthy();
+      expect(wrapper.vm.__test.saveError.value).not.toMatch(/raw string error/);
     });
   });
 
@@ -411,6 +464,227 @@ describe("CmsAdminsTab", () => {
       wrapper.vm.__test.openCreateModal();
 
       expect(wrapper.vm.__test.createError.value).toBeNull();
+    });
+
+    it("sets generic create error when createAdmin rejects with a non-Error", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      vi.spyOn(auth, "createAdmin").mockRejectedValue("raw string error");
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      await wrapper.vm.__test.submitCreateAdmin();
+      await flushPromises();
+
+      expect(wrapper.vm.__test.createError.value).toBeTruthy();
+      expect(wrapper.vm.__test.createError.value).not.toMatch(/raw string error/);
+    });
+  });
+
+  describe("remove modal", () => {
+    beforeEach(() => {
+      mockStoreAdmin = { ...superAdmin };
+    });
+
+    it("remove button is disabled when nothing is selected", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      const wrapper = mountTab();
+      await flushPromises();
+
+      const btn = wrapper.find('[data-testid="cms-remove-admins"]');
+      expect(btn.attributes("disabled")).toBeDefined();
+    });
+
+    it("remove button is enabled when rows are selected", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      const wrapper = mountTab();
+      await flushPromises();
+
+      wrapper.vm.__test.selectedCount.value = 2;
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.find('[data-testid="cms-remove-admins"]').attributes("disabled")).toBeUndefined();
+    });
+
+    it("remove confirm modal is hidden by default", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      const wrapper = mountTab();
+      await flushPromises();
+
+      expect(wrapper.vm.__test.removeConfirmOpen.value).toBe(false);
+    });
+
+    it("opens remove confirm when openRemoveConfirm is called", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      const wrapper = mountTab();
+      await flushPromises();
+
+      wrapper.vm.__test.selectedCount.value = 1;
+      wrapper.vm.__test.openRemoveConfirm();
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.vm.__test.removeConfirmOpen.value).toBe(true);
+    });
+
+    it("closes remove confirm when closeRemoveConfirm is called", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      const wrapper = mountTab();
+      await flushPromises();
+
+      wrapper.vm.__test.selectedCount.value = 1;
+      wrapper.vm.__test.openRemoveConfirm();
+      await wrapper.vm.$nextTick();
+      expect(wrapper.vm.__test.removeConfirmOpen.value).toBe(true); // first check if it's actually open before we close
+      wrapper.vm.__test.closeRemoveConfirm();
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.vm.__test.removeConfirmOpen.value).toBe(false);
+    });
+  });
+
+  describe("remove confirm flow", () => {
+    beforeEach(() => {
+      mockStoreAdmin = { ...superAdmin };
+    });
+
+    it("calls deleteAdmin for each selected row on confirm", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      const deleteSpy = vi.spyOn(auth, "deleteAdmin").mockResolvedValue(undefined as any);
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      vi.spyOn(wrapper.vm.__test.gridApi, "value", "get").mockReturnValue({
+        getSelectedRows: () => [
+          { id: 2, username: "alice", super: false },
+          { id: 3, username: "bob", super: false },
+        ],
+        deselectAll: vi.fn(),
+      } as any);
+      wrapper.vm.__test.selectedCount.value = 2;
+
+      await wrapper.vm.__test.confirmRemove();
+      await flushPromises();
+
+      expect(deleteSpy).toHaveBeenCalledWith(2);
+      expect(deleteSpy).toHaveBeenCalledWith(3);
+    });
+
+    it("reloads admins and deselects all after successful remove", async () => {
+      const getAllSpy = vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      vi.spyOn(auth, "deleteAdmin").mockResolvedValue(undefined as any);
+
+      const mockDeselectAll = vi.fn();
+      const wrapper = mountTab();
+      await flushPromises();
+
+      vi.spyOn(wrapper.vm.__test.gridApi, "value", "get").mockReturnValue({
+        getSelectedRows: () => [{ id: 2, username: "alice", super: false }],
+        deselectAll: mockDeselectAll,
+      } as any);
+      wrapper.vm.__test.selectedCount.value = 1;
+
+      await wrapper.vm.__test.confirmRemove();
+      await flushPromises();
+
+      // Called once on mount, once after remove
+      expect(getAllSpy).toHaveBeenCalledTimes(2);
+      expect(mockDeselectAll).toHaveBeenCalled();
+      expect(wrapper.vm.__test.selectedCount.value).toBe(0);
+    });
+
+    it("shows error and keeps modal open when delete fails", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      vi.spyOn(auth, "deleteAdmin").mockRejectedValue(new Error("Forbidden"));
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      vi.spyOn(wrapper.vm.__test.gridApi, "value", "get").mockReturnValue({
+        getSelectedRows: () => [{ id: 2, username: "alice", super: false }],
+        deselectAll: vi.fn(),
+      } as any);
+      wrapper.vm.__test.selectedCount.value = 1;
+      wrapper.vm.__test.openRemoveConfirm();
+      await wrapper.vm.$nextTick();
+
+      await wrapper.vm.__test.confirmRemove();
+      await flushPromises();
+
+      expect(wrapper.vm.__test.removeConfirmError.value).toBeTruthy();
+      expect(wrapper.vm.__test.removeConfirmOpen.value).toBe(true);
+    });
+
+    it("sets removeConfirmLoading true during deletion", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+
+      let resolve: Function;
+      const pending = new Promise((r) => (resolve = r));
+      vi.spyOn(auth, "deleteAdmin").mockReturnValue(pending as any);
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      vi.spyOn(wrapper.vm.__test.gridApi, "value", "get").mockReturnValue({
+        getSelectedRows: () => [{ id: 2, username: "alice", super: false }],
+        deselectAll: vi.fn(),
+      } as any);
+      wrapper.vm.__test.selectedCount.value = 1;
+
+      const confirmPromise = wrapper.vm.__test.confirmRemove();
+      expect(wrapper.vm.__test.removeConfirmLoading.value).toBe(true);
+
+      resolve!(undefined);
+      await confirmPromise;
+      await flushPromises();
+
+      expect(wrapper.vm.__test.removeConfirmLoading.value).toBe(false);
+    });
+
+    it("does not call deleteAdmin when no rows are selected", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      const deleteSpy = vi.spyOn(auth, "deleteAdmin").mockResolvedValue(undefined as any);
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      vi.spyOn(wrapper.vm.__test.gridApi, "value", "get").mockReturnValue({
+        getSelectedRows: () => [],
+        deselectAll: vi.fn(),
+      } as any);
+      wrapper.vm.__test.selectedCount.value = 0;
+
+      await wrapper.vm.__test.confirmRemove();
+      await flushPromises();
+
+      expect(deleteSpy).not.toHaveBeenCalled();
+    });
+
+    it("does not call deleteAdmin when gridApi is null", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      const deleteSpy = vi.spyOn(auth, "deleteAdmin").mockResolvedValue(undefined as any);
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      // gridApi.value is null before onGridReady fires in the mock environment
+      expect(wrapper.vm.__test.gridApi.value).toBeNull();
+
+      await wrapper.vm.__test.confirmRemove();
+      await flushPromises();
+
+      expect(deleteSpy).not.toHaveBeenCalled();
+    });
+
+    it("does not throw when gridApi is null during onSuccess deselectAll", async () => {
+      vi.spyOn(auth, "getAllAdmins").mockResolvedValue([]);
+      vi.spyOn(auth, "deleteAdmin").mockResolvedValue(undefined as any);
+
+      const wrapper = mountTab();
+      await flushPromises();
+
+      expect(wrapper.vm.__test.gridApi.value).toBeNull();
+      await expect(wrapper.vm.__test.confirmRemove()).resolves.not.toThrow();
     });
   });
 

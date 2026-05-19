@@ -1,6 +1,8 @@
 export {
   fetchImagesByProduction,
+  fetchImagesByProductionIdsBatch,
   fetchImage,
+  fetchAllImages,
   fetchImageWithMeta,
   fetchCropsByImage,
   fetchCropByType,

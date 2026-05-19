@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildEmptyCreateForm,
+  createMediaItem,
   createProductionFields,
   hasAnyLanguageValue,
   mediaToLanguageMap,
@@ -21,7 +22,7 @@ describe("cms/forms", () => {
 
     expect(form.finalized).toBe(false);
     expect(form.title).toEqual({ nl: "", en: "", fr: "" });
-    expect(form.video_2).toEqual({ nl: "", en: "", fr: "" });
+    expect(form.media).toEqual([]);
   });
 
   it("detects whether any language value is present", () => {
@@ -79,7 +80,7 @@ describe("cms/forms", () => {
     form.artist.en = "artist";
     form.tagline.fr = "tagline";
     form.teaser.nl = "teaser";
-    form.video_1.nl = "image-data-url";
+    form.media.push(createMediaItem("image", "image-data-url"));
 
     const result = validateCreateProductionForm(form, t);
     expect(result).toBeNull();

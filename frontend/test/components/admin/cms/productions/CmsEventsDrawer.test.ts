@@ -17,6 +17,8 @@ function buildProduction(overrides: Partial<CmsProductionGridRow> = {}): CmsProd
     tags: "",
     descriptionOne: "",
     descriptionTwo: "",
+    imageMedia: "",
+    imageMediaUrls: [],
     media: "",
     events: [],
     ...overrides,
@@ -73,7 +75,7 @@ describe("CmsEventsDrawer.vue", () => {
 
   it("renders loading, error and empty states", () => {
     const loading = mountDrawer({ eventsPanelLoading: true });
-    expect(loading.text()).toContain(i18n.global.t("cms.panel.saving"));
+    expect(loading.text()).toContain(i18n.global.t("general.loading"));
 
     const error = mountDrawer({ eventsPanelLoading: false, eventsPanelError: "Boom" });
     expect(error.text()).toContain("Boom");

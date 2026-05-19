@@ -41,7 +41,8 @@ export function useCmsGridBase<TRow>(options: UseCmsGridBaseOptions) {
     mode: "multiRow" as const,
     checkboxes: true,
     headerCheckbox: true,
-    enableClickSelection: true,
+    enableClickSelection: false,
+    selectAll: "filtered" as const,
   };
 
   const agThemeVars = computed<Record<string, string>>(() => {
@@ -126,7 +127,8 @@ export function useCmsGridBase<TRow>(options: UseCmsGridBaseOptions) {
       return false;
     }
 
-    gridApi.value.setState(state);
+    const { columnOrder: _dropped, ...safeState } = state;
+    gridApi.value.setState(safeState);
     syncColumnVisibilityFromGrid();
     return true;
   }

@@ -54,6 +54,14 @@ jobs:
         working-directory: ${{ matrix.project }}
         run: pnpm run coverage
 
+      - name: Upload coverage reports to Codecov
+        if: ${{ !matrix.skip_tests }}
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.project }}
+          fail_ci_if_error: true
+
       - name: Build
         working-directory: ${{ matrix.project }}
         run: pnpm run build

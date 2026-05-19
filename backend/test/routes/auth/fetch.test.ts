@@ -2,6 +2,9 @@ import { describe, test, expect, beforeAll, vi, afterAll, beforeEach } from "vit
 import { buildServer } from "@/server.js";
 import type { FastifyInstance } from "fastify";
 import { AdminSchema } from "@viernulvier/shared/index.js";
+import { authorizeMock } from "@mocks/plugins/authorize.js";
+
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
 
 let server: FastifyInstance;
 let sessionCookie: string;
@@ -24,12 +27,13 @@ const mockAdminsWithMeta = mockAdmins.map((admin) => ({
 beforeAll(async () => {
   server = await buildServer();
   sessionCookie = server.jwt.sign({ id: 404, username: "Karel", super: true });
+  authorizeMock.super = true;
 });
 
 beforeEach(async () => {
   server.pg.query = vi.fn().mockImplementation((query: string, params?: unknown[]) => {
     const isMeta = query.toLowerCase().includes("created_at") || query.toLowerCase().includes("updated_at");
-    
+
     const id = params?.[0] !== undefined ? Number(params[0]) : undefined;
 
     if (isMeta) {
@@ -117,7 +121,7 @@ describe("Fetch on auth route", () => {
       expect(response.statusCode).toBe(200);
       expect(AdminSchema.withMeta().parse(response.json())).toEqual(admin);
     });
-    
+
     test("GET /api/v1/auth/:id/meta — returns 404 when admin not found", async () => {
       const id = 123456;
 

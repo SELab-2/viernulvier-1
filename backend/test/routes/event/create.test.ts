@@ -3,6 +3,8 @@ import type { FastifyInstance } from "fastify";
 
 import { buildServer } from "@/server.js";
 
+vi.mock("@/plugins/authorize.js", () => import("@mocks/plugins/authorize.js"));
+
 
 let server: FastifyInstance;
 let queryMock: ReturnType<typeof vi.fn>;
@@ -107,7 +109,7 @@ describe("Event Create Routes", () => {
       });
 
       expect(response.statusCode).toBe(400);
-      expect(response.json()).toMatchObject({ error: "Invalid request data" });
+      expect(response.json()).toMatchObject({ error: "Bad Request" });
       expect(queryMock).not.toHaveBeenCalled();
     });
 
