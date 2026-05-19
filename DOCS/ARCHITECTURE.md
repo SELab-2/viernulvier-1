@@ -114,10 +114,11 @@ const AdminSchema = createSchema({
   id: primaryKey(),
   username: z.string().max(32),
   profile_picture: z.url().nullable(),
+  super: z.boolean(),
 });
 
 type Admin = z.infer<typeof AdminSchema>;
-// → { id: number; username: string; profile_picture: string | null }
+// → { id: number; username: string; profile_picture: string | null; super: boolean }
 
 type AdminWithMeta = z.infer<ReturnType<typeof AdminSchema.withMeta>>;
 // → Admin & { created_by: number; created_at: Date; updated_by: number; updated_at: Date }
