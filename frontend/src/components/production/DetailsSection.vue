@@ -78,7 +78,7 @@
                         :key="tag.tagId"
                         :href="`/${currentLang}/productions?tags=${tag.tagId}`"
                         style="text-decoration: none"
-                        class="border border-ink-tertiary/60 bg-surface-1 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink-primary hover:border-ink-primary transition-colors cursor-default"
+                        class="border border-ink-tertiary/60 bg-surface-1 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink-primary hover:border-ink-primary transition-colors"
                       >
                         {{ tag.label }}
                       </a>
