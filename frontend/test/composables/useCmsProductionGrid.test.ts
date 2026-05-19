@@ -109,7 +109,7 @@ describe("useCmsProductionGrid", () => {
         isDark: ref(false),
         t: (key) => key,
         currentLang: ref("nl"),
-        getPrimaryTagLabels: () => undefined as unknown as string[],
+        getGenreLabels: () => undefined as unknown as string[],
       });
       const undefinedLabelsFormatter = withUndefinedLabels.columnDefs.value.find((c) => c.field === "genres")?.valueFormatter as
         | ((params: { value: unknown }) => string)
