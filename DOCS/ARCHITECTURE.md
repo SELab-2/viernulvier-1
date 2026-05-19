@@ -67,9 +67,12 @@ At the root level: Docker Compose files for production and development, pnpm wor
 | Tool | Purpose |
 |------|---------|
 | **pnpm** (workspaces) | Package manager with workspace support. The three packages (`backend`, `frontend`, `shared`) are linked automatically. |
-| **TypeScript 5.9** | Strict mode across all packages. The shared package's `tsconfig.json` extends the backend's to keep compiler options consistent. |
-| **ESLint 9** | Flat config with `@typescript-eslint`, `eslint-plugin-security` (backend), `eslint-plugin-vue` (frontend), and `eslint-plugin-tsdoc` (both). |
+| **pnpm 10** | Workspace package manager used across the repo (root scripts and CI use pnpm 10). |
+| **TypeScript 6.x** | Strict mode across all packages. The shared package's `tsconfig.json` extends the backend's to keep compiler options consistent. |
+| **ESLint 10** | Flat config with `@typescript-eslint`, `eslint-plugin-security` (backend), `eslint-plugin-vue` (frontend), and `eslint-plugin-tsdoc` (both). |
 | **Vitest 4** | Test runner for both backend (Node environment) and frontend (jsdom environment). |
+
+See config files: [backend/package.json](backend/package.json), [frontend/package.json](frontend/package.json), [shared/package.json](shared/package.json).
 
 ### Workspace dependency graph
 
@@ -79,6 +82,8 @@ frontend ─depends on──▶ @viernulvier/shared
 ```
 
 The shared package exposes **raw TypeScript source** (not compiled output) via its `exports` map. This means consumers (backend via `tsx`, frontend via Vite) transpile it on-the-fly. This avoids a separate build step during development.
+
+See workspace config: [pnpm-workspace.yaml](pnpm-workspace.yaml) and root [package.json](package.json).
 
 ### Root scripts
 
@@ -96,6 +101,8 @@ The shared package exposes **raw TypeScript source** (not compiled output) via i
 ## 4. Shared Package (`@viernulvier/shared`)
 
 The shared package is the single source of truth for domain types and validation rules. It uses [Zod 4](https://zod.dev) to define schemas that serve as both **runtime validators** and **TypeScript type generators**.
+
+See the shared schema helpers: [shared/src/types/metadata.ts](shared/src/types/metadata.ts) and the package entry [shared/index.ts](shared/index.ts).
 
 ### 4.1 Domain entities
 
@@ -177,7 +184,7 @@ Passwords are hashed with **bcrypt** (12 salt rounds). The login handler uses a 
 
 ## 6. Frontend
 
-The frontend is a **Vue 3** single-page application (Composition API, `<script setup>`) built with **Vite 7** and TypeScript. It communicates with the backend through a Vite dev proxy (`/api` → backend container), which also handles cookie forwarding for authentication.
+The frontend is a **Vue 3** single-page application (Composition API, `<script setup>`) built with **Vite** (v8 in the current repo) and TypeScript. It communicates with the backend through a Vite dev proxy (`/api` → backend container), which also handles cookie forwarding for authentication.
 
 UI mockups and domain model documentation are in the `frontend/mock/` directory.
 
@@ -285,14 +292,11 @@ Same matrix build plus an **enforce-policy** job that verifies the PR source bra
 
 ### 10.4 Build & deploy (`build-and-publish.yml`)
 
-Triggered on push to `staging` or `main`:
+Triggered on push to `staging` or `main` in the current workflows:
 
-1. **Build** frontend and backend Docker images on a self-hosted ARM64 runner.
-2. **Push** images to GitHub Container Registry (GHCR) tagged with branch name + commit SHA.
-3. **Deploy** via SSH to `viernulvier-archive.be`:
-   ```
-   docker compose pull && docker compose up -d --remove-orphans
-   ```
+1. **Build** frontend and backend Docker images and push them to GitHub Container Registry (GHCR). The CI build currently targets linux/amd64 platform images in the workflows.
+2. **Push** images to GHCR (staging/main tags are used in CI).
+3. **Deploy** via SSH to the target server by running `docker compose pull` and `docker compose up -d --remove-orphans` on the host.
 
 ---
 
@@ -320,7 +324,7 @@ enhancement/* ──── Improvements to existing features
 ### 12.1 Backend
 
 - **Runner**: Vitest 4 (Node environment)
-- **Coverage threshold**: **97.5%** per file (statements, functions, branches, lines)
+- **Coverage policy**: Strict, file-specific thresholds are enforced in `backend/vitest.config.ts`; many core files require very high (100%) per-file coverage while legacy/scraper areas use relaxed thresholds (e.g. 95/90). The repository no longer uses a single 97.5% blanket threshold.
 
 Route tests use `buildServer()` to create a server instance, mock the `pg` decorator, and assert against injected HTTP requests. A global setup file configures `JWT_SECRET` for test JWT signing.
 
