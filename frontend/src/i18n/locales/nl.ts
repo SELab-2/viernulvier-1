@@ -1,6 +1,7 @@
 export default {
   general: {
     cancel: "Annuleer",
+    delete: "Verwijderen",
     saving: "Opslaan...",
   },
   nav: {
@@ -81,7 +82,7 @@ export default {
       teaser: "Teaser",
       genres: "Primaire tag",
       tags: "Extra tags",
-      imageMedia: "Beeldmedia",
+      imageMedia: "Afbeeldingen",
       descriptionOne: "Beschrijving",
       descriptionTwo: "Beschrijving 2",
       media: "Media",
@@ -204,10 +205,19 @@ export default {
       },
       media: {
         title: "Media",
+        image: "Afbeelding",
+        video: "Video",
+        addImage: "Afbeelding toevoegen",
+        addVideo: "Video toevoegen",
+        confirmDelete: "Weet je zeker dat je deze afbeelding wilt verwijderen?",
+        confirmDeleteVideo: "Weet je zeker dat je deze video wilt verwijderen?",
+        editVideoUrlPlaceholder: "Bewerk video URL",
         language: "Taal voor upload",
         uploadImage: "Upload afbeelding",
         youtubeLink: "YouTube link",
-        hint: "Je kan een afbeelding uploaden, een afbeelding/media URL invullen, of een YouTube link plakken. Minstens één afbeelding is verplicht.",
+        imageCountOne: "1 afbeelding",
+        imageCountOther: "{count} afbeeldingen",
+        hint: "Je kan meerdere afbeeldingen en video's toevoegen. Voor afbeeldingen worden automatisch verschillende formaten gegenereerd.",
       },
       validation: {
         requiredOneLanguage: "Vul minstens 1 taal in voor: {field}",
@@ -235,8 +245,7 @@ export default {
       saveAction: "Wijzigingen Opslaan",
       saveHint: "Wijzigingen worden pas toegepast nadat je op Wijzigingen Opslaan klikt.",
       text: "Tekst",
-      bulkNotice: "Wijziging wordt toegepast op {count} geselecteerde producties.",
-    },
+      bulkNotice: "Wijziging wordt toegepast op {count} geselecteerde producties.",      noMedia: "Geen media"    },
     errors: {
       loadFailed: "Kon CMS-gegevens niet laden: {message}",
       loadGeneric: "Kon CMS-gegevens niet laden.",
@@ -247,6 +256,10 @@ export default {
       saveSuccess: "Wijzigingen opgeslagen",
       removeSuccess: "Productie verwijderd",
       removeTagSuccess: "Tag verwijderd",
+      mediaRemoveSuccess: "Afbeelding verwijderd",
+      mediaRemoveVideoSuccess: "Video verwijderd",
+      mediaAddSuccess: "Afbeelding toegevoegd",
+      mediaUpdateSuccess: "Afbeelding bijgewerkt",
       removeTagTypeSuccess: "Tag type verwijderd",
     },
     admin: {
