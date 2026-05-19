@@ -3,6 +3,7 @@ import type { Tag, TagType } from "@viernulvier/shared";
 import { getTags, getTagTypes } from "@/services/tags";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import { i18n, type SupportedLang } from "@/i18n";
+import type { ProductionTagChip } from "@/utils/tagDisplay";
 
 /**
  * Fetches tags for a production and groups them by their type.
@@ -50,7 +51,7 @@ export function useTagGroups(productionId: number) {
   const tagGroups = computed(() => {
     if (!fetchedTags.value.length || !fetchedTypes.value.length) return [];
 
-    const grouped = new Map<number, string[]>();
+    const grouped = new Map<number, ProductionTagChip[]>();
 
     for (const tag of fetchedTags.value) {
       const typeId = tag.tag_type as number;
@@ -61,7 +62,11 @@ export function useTagGroups(productionId: number) {
           grouped.set(typeId, []);
         }
 
-        grouped.get(typeId)!.push(translatedName);
+        grouped.get(typeId)!.push({
+          tagId: tag.id,
+          label: translatedName,
+          isGenre: undefined,
+        });
       }
     }
 

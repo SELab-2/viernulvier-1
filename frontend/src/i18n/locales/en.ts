@@ -29,6 +29,7 @@ export default {
   },
   featuredBlog: {
     eyebrow: "Featured blog post",
+    loading: "Loading featured blog ...",
     dateline: "{date} · Editorial",
     readMore: "Read the full article",
     imageCaption:
