@@ -42,6 +42,7 @@ export function useCmsGridBase<TRow>(options: UseCmsGridBaseOptions) {
     checkboxes: true,
     headerCheckbox: true,
     enableClickSelection: false,
+    selectAll: "filtered" as const,
   };
 
   const agThemeVars = computed<Record<string, string>>(() => {
