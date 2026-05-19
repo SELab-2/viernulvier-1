@@ -8,7 +8,7 @@
       <img
         v-if="thumbnailUrl"
         :src="thumbnailUrl"
-        :alt="localizeOrEmpty(production.title, currentLang)"
+        :alt="localizeWithFallback(production.title, (map) => localizeOrEmpty(map, currentLang))"
         class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
       />
       <div v-else class="h-full w-full bg-surface-2"></div>
@@ -24,7 +24,7 @@
     </div>
 
     <h3 class="mt-2 font-serif text-2xl font-semibold leading-snug tracking-tight text-ink-primary decoration-1 underline-offset-4 group-hover:underline">
-      {{ localizeOrEmpty(production.title, currentLang) }}
+      {{ localizeWithFallback(production.title, (map) => localizeOrEmpty(map, currentLang)) }}
     </h3>
 
     <div 
@@ -39,7 +39,7 @@
 import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
-import { localizeOrEmpty } from "@/utils/language-utils";
+import { localizeWithFallback, localizeOrEmpty } from "@/utils/language-utils";
 import { i18n, type SupportedLang } from "@/i18n";
 import { RouteNames } from "@/router/routeNames";
 import { parseAndSanitizeContent } from '@/utils/parsers';
@@ -53,10 +53,10 @@ const props = defineProps<{
 const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 
 const artistName = computed(() => 
-  localizeOrEmpty(props.production.artist || {}, currentLang.value),
+  localizeWithFallback(props.production.artist || {}, (map) => localizeOrEmpty(map, currentLang.value)),
 );
 
-const description = computed(() => parseAndSanitizeContent(localizeOrEmpty(props.production.description, currentLang.value)));
+const description = computed(() => parseAndSanitizeContent(localizeWithFallback(props.production.description, (map) => localizeOrEmpty(map, currentLang.value))));
 
 </script>
 

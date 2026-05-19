@@ -89,7 +89,7 @@
 import { computed } from "vue";
 import { i18n, type SupportedLang } from "@/i18n";
 import { formatNumericDate, formatTime } from "@/utils/date";
-import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
+import { localizeWithFallback, localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import EventCalendarIcon from "@/components/icons/EventCalendarIcon.vue";
 import MapPinOutlineIcon from "@/components/icons/MapPinOutlineIcon.vue";
 import type { EnrichedEvent } from "@/composables/useProductionEvents";
@@ -100,7 +100,7 @@ defineProps<{
 
 const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 const tProd = (map: LanguageMap | null | undefined) =>
-  localizeOrEmpty(map ?? {}, currentLang.value);
+  localizeWithFallback(map ?? {}, (fallbackMap) => localizeOrEmpty(fallbackMap, currentLang.value));
 
 function formatCurrency(value: number | null) {
   if (value === null) return "";

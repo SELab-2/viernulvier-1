@@ -91,7 +91,7 @@
 import { type SupportedLang } from "@/i18n";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { computed } from "vue";
-import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
+import { localizeWithFallback, localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import { useI18n } from "vue-i18n";
 import {
   formatDurationMinutesI18n,
@@ -120,7 +120,7 @@ const { t, locale } = useI18n();
 const heroImageAlt = computed(() => {
   const lang = locale.value as SupportedLang;
   return (
-    localizeOrEmpty(props.production.title ?? {}, lang).trim() ||
+    localizeWithFallback(props.production.title ?? {}, (map) => localizeOrEmpty(map, lang)).trim() ||
     t("production.hero.bannerImageAlt")
   );
 });
@@ -128,7 +128,7 @@ const heroImageAlt = computed(() => {
 const content = computed(() => {
   const lang = locale.value as SupportedLang;
   const translate = (map?: LanguageMap | null) =>
-    localizeOrEmpty(map ?? {}, lang);
+    localizeWithFallback(map ?? {}, (fallbackMap) => localizeOrEmpty(fallbackMap, lang));
 
   return {
     artist: translate(props.production.artist),
