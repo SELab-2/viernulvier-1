@@ -127,7 +127,8 @@ export function useCmsGridBase<TRow>(options: UseCmsGridBaseOptions) {
       return false;
     }
 
-    gridApi.value.setState(state);
+    const { columnOrder: _dropped, ...safeState } = state;
+    gridApi.value.setState(safeState);
     syncColumnVisibilityFromGrid();
     return true;
   }
