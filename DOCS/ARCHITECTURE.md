@@ -146,9 +146,13 @@ The shared package also provides helpers for foreign key relationships (lazy-eva
 
 The backend is a **Fastify 5** REST API running on **Node.js 24**. It follows Fastify's plugin-based architecture.
 
+Server entry and plugin registration: [backend/src/server.ts](backend/src/server.ts).
+
 ### 5.1 Architecture
 
 On startup the server registers three plugins in order — **postgres** (connection pool via `@fastify/postgres`), **jwt** (cookie-based JWT via `@fastify/jwt` + `@fastify/cookie`), and **authorize** (a `preHandler` hook for protected routes) — followed by the route modules.
+
+Key backend helpers and plugins: [backend/src/routes/helpers.ts](backend/src/routes/helpers.ts), [backend/src/plugins/authorize.ts](backend/src/plugins/authorize.ts), [backend/src/plugins/jwt.ts](backend/src/plugins/jwt.ts).
 
 Routes are organized by domain. Each domain has its own directory under `routes/` containing route definitions and a `handlers/` folder. The current modules are:
 
@@ -180,11 +184,15 @@ The `routes/helpers.ts` module provides the core request-handling utilities:
 
 Passwords are hashed with **bcrypt** (12 salt rounds). The login handler uses a constant-time dummy comparison on failed lookups to prevent timing-based user enumeration.
 
+Password implementation: [backend/src/routes/auth/handlers/hash.ts](backend/src/routes/auth/handlers/hash.ts).
+
 ---
 
 ## 6. Frontend
 
 The frontend is a **Vue 3** single-page application (Composition API, `<script setup>`) built with **Vite** (v8 in the current repo) and TypeScript. It communicates with the backend through a Vite dev proxy (`/api` → backend container), which also handles cookie forwarding for authentication.
+
+Frontend config: [frontend/vite.config.ts](frontend/vite.config.ts) and [frontend/package.json](frontend/package.json).
 
 UI mockups and domain model documentation are in the `frontend/mock/` directory.
 
@@ -193,6 +201,8 @@ UI mockups and domain model documentation are in the `frontend/mock/` directory.
 ## 7. Database
 
 The database is **PostgreSQL 18**, managed through **Postgrator** migrations stored in `backend/migrations/`. Migrations follow the `NNN.do.<name>.sql` / `NNN.undo.<name>.sql` convention and are run via `pnpm migrate` in the backend container.
+
+See Compose and migrations: [docker-compose.yml](docker-compose.yml) and [backend/migrations](backend/migrations).
 
 Every domain table includes four audit columns (`created_at`, `updated_at`, `created_by`, `updated_by`), mirrored in the shared package's `MetadataShape` / `withMeta()` pattern. Multilingual text fields are stored as `JSONB`. Deduplication against the external VIERNULVIER API uses `vendor_id` fields.
 
@@ -249,6 +259,8 @@ Stage 3 (runtime): node:24-slim, copy only compiled output + node_modules
 Stage 1 (deps):    Install pnpm, install dependencies
 Stage 2 (build):   Run vue-tsc + vite build, output static files
 Stage 3 (runtime): Nginx, serve static files on port 80
+
+Dockerfiles and dev overlay: [backend/Dockerfile](backend/Dockerfile), [frontend/Dockerfile](frontend/Dockerfile), [docker-compose.dev.yml](docker-compose.dev.yml).
 ```
 
 ### 9.3 Development builds
@@ -298,6 +310,8 @@ Triggered on push to `staging` or `main` in the current workflows:
 2. **Push** images to GHCR (staging/main tags are used in CI).
 3. **Deploy** via SSH to the target server by running `docker compose pull` and `docker compose up -d --remove-orphans` on the host.
 
+CI workflow files: [.github/workflows/pr-main.yml](.github/workflows/pr-main.yml), [.github/workflows/pr-dev.yml](.github/workflows/pr-dev.yml), [.github/workflows/build-and-publish-stag.yml](.github/workflows/build-and-publish-stag.yml).
+
 ---
 
 ## 11. Branching Strategy
@@ -326,6 +340,8 @@ enhancement/* ──── Improvements to existing features
 - **Runner**: Vitest 4 (Node environment)
 - **Coverage policy**: Strict, file-specific thresholds are enforced in `backend/vitest.config.ts`; many core files require very high (100%) per-file coverage while legacy/scraper areas use relaxed thresholds (e.g. 95/90). The repository no longer uses a single 97.5% blanket threshold.
 
+Coverage configs: [backend/vitest.config.ts](backend/vitest.config.ts) and frontend test settings in [frontend/vite.config.ts](frontend/vite.config.ts).
+
 Route tests use `buildServer()` to create a server instance, mock the `pg` decorator, and assert against injected HTTP requests. A global setup file configures `JWT_SECRET` for test JWT signing.
 
 ### 12.2 Frontend
@@ -352,6 +368,8 @@ Defined in `.env` (copy from `.env.example`):
 | `DATABASE_URL` | `postgres://postgres@db:5432/postgres` | PostgreSQL connection string |
 | `DEBUG` | `True` | Enables Fastify debug logging when set to `"true"` |
 | `JWT_SECRET` | *(required)* | Secret for signing JWT tokens. Generate with `pnpm generate-secret`. |
+
+See environment example and generator: [.env.example](.env.example) and [backend/package.json](backend/package.json).
 
 ---
 
