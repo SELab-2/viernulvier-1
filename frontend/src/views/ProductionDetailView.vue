@@ -77,7 +77,7 @@ import { useDarkMode } from "@/composables/useDarkMode";
 import { ApiError } from "@/services/api";
 import { useTagGroups } from "@/composables/useTagGroups";
 import { useProductionEvents } from "@/composables/useProductionEvents";
-import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
+import { localizeWithFallback, localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import { getBlogPost } from "@/services/blogposts";
 
 const { t } = useI18n();
@@ -143,7 +143,7 @@ const heroBannerUrl = computed(() =>
 const gallerySlides = computed(() => {
   if (!production.value) return [];
   const lang = i18n.global.locale.value as SupportedLang;
-  const title = localizeOrEmpty(production.value.title ?? {}, lang).trim();
+  const title = localizeWithFallback(production.value.title ?? {}, (map) => localizeOrEmpty(map, lang)).trim();
   const out: { src: string; alt: string }[] = [];
   for (let i = 0; i < productionImages.value.length; i++) {
     const img = productionImages.value[i]!;

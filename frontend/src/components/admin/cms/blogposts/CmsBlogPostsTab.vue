@@ -128,7 +128,7 @@ import { useCmsRemove } from "@/composables/useCmsRemove";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { detectLanguage, i18n, type SupportedLang } from "@/i18n";
 import { getBlogPosts, createBlogPost, updateBlogPost, deleteBlogPost } from "@/services/blogposts";
-import { localizeOrEmpty, type Language, type LanguageMap } from "@/utils/language-utils";
+import { localizeWithFallback, localizeOrEmpty, type Language, type LanguageMap } from "@/utils/language-utils";
 import {
   applyUpdatedBlogPostToRow,
   buildBlogPostGridRows,
@@ -189,7 +189,7 @@ const editorBulkCount = computed(() => 1);
 
 function localizeValue(map: LanguageMap | null | undefined): string {
   if (!map) return "";
-  return localizeOrEmpty(map, currentLang.value);
+  return localizeWithFallback(map, (fallbackMap) => localizeOrEmpty(fallbackMap, currentLang.value));
 }
 
 function rebuildRows(): void {

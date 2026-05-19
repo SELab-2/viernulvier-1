@@ -408,7 +408,7 @@ import { createEvent, deleteEvent, getEvent, updateEvent } from "@/services/even
 import { getHall, getHalls } from "@/services/halls";
 import { getAllTags, getTagTypes } from "@/services/tags";
 import { getImagesByProduction, deleteImage as deleteImageService } from "@/services/images";
-import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
+import { localizeOrEmpty, localizeWithFallback, type LanguageMap } from "@/utils/language-utils";
 import {
   buildEventGridRows,
   buildProductionGridRows,
@@ -636,7 +636,7 @@ function localizeValue(map: LanguageMap | null | undefined): string {
   if (!map) {
     return "";
   }
-  return localizeOrEmpty(map, currentLang.value);
+  return localizeWithFallback(map, (value) => localizeOrEmpty(value, currentLang.value));
 }
 
 function setCurrentLanguageValue(

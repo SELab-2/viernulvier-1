@@ -188,7 +188,7 @@
 import { i18n, type SupportedLang } from "@/i18n";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import { computed, ref } from "vue";
-import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
+import { localizeWithFallback, localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import { useI18n } from "vue-i18n";
 import { normalizeQuote, parseAndSanitizeContent, normalizePlainText } from "@/utils/parsers";
 import ProductionDetailSidebarEvents from "@/components/production/ProductionDetailSidebarEvents.vue";
@@ -220,7 +220,7 @@ const props = withDefaults(
 );
 
 const tProd = (map: LanguageMap | null | undefined) =>
-  localizeOrEmpty(map ?? {}, currentLang.value);
+  localizeWithFallback(map ?? {}, (map) => localizeOrEmpty(map, currentLang.value));
 
 function parseField(map: LanguageMap | null | undefined): string {
   const value = tProd(map);
