@@ -20,8 +20,10 @@ interface UseFittingPillsOptions {
   /** Used only when widths are not measurable (e.g. JSDOM). */
   fallbackVisibleCount?: number;
   /**
-   * When false, this instance does not add a `window.resize` listener. Use when multiple
+   * When `false`, this instance does not add a `window.resize` listener. Use when multiple
    * rows share one resize handler from a parent view (Productions archive panel).
+   *
+   * @default true
    */
   attachWindowResizeListener?: boolean;
 }
@@ -38,7 +40,7 @@ export function useFittingPills<T extends { id: PillId }>(
   const gapPx = options.gapPx ?? 8;
   const trailingControlGapPx = options.trailingControlGapPx ?? gapPx;
   const fallbackVisibleCount = options.fallbackVisibleCount;
-  const attachWindowResizeListener = options.attachWindowResizeListener !== false;
+  const attachWindowResizeListener = options.attachWindowResizeListener ?? true;
 
   const rowEl = ref<HTMLElement | null>(null);
   const trailingControlEl = ref<HTMLElement | null>(null);

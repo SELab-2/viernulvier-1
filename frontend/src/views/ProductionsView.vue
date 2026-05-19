@@ -472,6 +472,7 @@
 <script setup lang="ts">
 import {
   computed,
+  effectScope,
   nextTick,
   onMounted,
   onUnmounted,
@@ -555,19 +556,28 @@ const PANEL_ROW_NON_GENRE_FALLBACK_MAX = 6;
 const ORPHAN_TAG_TYPE_PANEL_ID = -1;
 
 /**
- * Pre-bound `useFittingPills` rows for the expandable filter panel. They live here (not under
- * `v-if` children) so their lifecycle aligns with ProductionsView
+ * Filter panel fitting runs `useFittingPills` inside a detached `EffectScope`: slots are often
+ * first created after tags load (`watch(panelFilterSections)`). Scopes own watcher teardown,
+ * ResizeObserver lifecycle, etc.
  */
 type FilterPanelFitTag = { id: number; label: string };
 
 function createPanelFitSlot(fallbackCap: number) {
-  const candidatesRef = ref<FilterPanelFitTag[]>([]);
-  const fitting = useFittingPills(candidatesRef, {
-    gapPx: 8,
-    fallbackVisibleCount: fallbackCap,
-    attachWindowResizeListener: false,
+  const scope = effectScope(true);
+  const slot = scope.run(() => {
+    const candidatesRef = ref<FilterPanelFitTag[]>([]);
+    const fitting = useFittingPills(candidatesRef, {
+      gapPx: 8,
+      fallbackVisibleCount: fallbackCap,
+      attachWindowResizeListener: false,
+    });
+    return { candidatesRef, ...fitting };
   });
-  return { candidatesRef, ...fitting };
+  if (!slot) {
+    scope.stop();
+    throw new Error("createPanelFitSlot: scope.run returned undefined");
+  }
+  return { ...slot, _scope: scope };
 }
 
 type ProductionsPanelFitSlot = ReturnType<typeof createPanelFitSlot>;
@@ -1347,11 +1357,13 @@ function syncPanelTagSectionFitAssignments(): void {
   for (const [tagTypeId, slot] of panelGenreFitSlots) {
     if (genreTypeIdsSeen.has(tagTypeId)) continue;
     slot.candidatesRef.value = [];
+    slot._scope.stop();
     panelGenreFitSlots.delete(tagTypeId);
   }
   for (const [tagTypeId, slot] of panelAccentFitSlots) {
     if (accentTypeIdsSeen.has(tagTypeId)) continue;
     slot.candidatesRef.value = [];
+    slot._scope.stop();
     panelAccentFitSlots.delete(tagTypeId);
   }
 
@@ -1413,9 +1425,23 @@ onMounted(() => {
   window.addEventListener("resize", productionsFitPillsOnWindowResize);
 });
 
+function disposeAllPanelFitScopes(): void {
+  for (const slot of panelGenreFitSlots.values()) {
+    slot._scope.stop();
+  }
+  for (const slot of panelAccentFitSlots.values()) {
+    slot._scope.stop();
+  }
+  panelGenreFitSlots.clear();
+  panelAccentFitSlots.clear();
+  panelSectionFitApis.value = [];
+}
+
 onUnmounted(() => {
-  if (typeof window === "undefined") return;
-  window.removeEventListener("resize", productionsFitPillsOnWindowResize);
+  if (typeof window !== "undefined") {
+    window.removeEventListener("resize", productionsFitPillsOnWindowResize);
+  }
+  disposeAllPanelFitScopes();
 });
 
 const showFiltersPanelExpandToggle = computed(
