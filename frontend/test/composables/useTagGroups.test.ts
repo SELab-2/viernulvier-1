@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import { defineComponent } from "vue";
 import { useTagGroups } from "@/composables/useTagGroups";
+import type { ProductionTagChip } from "@/utils/tagDisplay";
 
 // ─── Mock services ────────────────────────────────────────────────────────────
 const mockGetTags     = vi.fn();
@@ -58,6 +59,11 @@ const makeTag = (id: number, typeId: number, name: Record<string, string> = { nl
 const makeTagType = (id: number, name: Record<string, string> = { nl: `Type ${id}` }) => ({
   id,
   name,
+});
+
+const makeProductionTagChip = (id: number, translatedName: string = `TAG ${id}`): ProductionTagChip => ({
+  label: translatedName,
+  tagId: id,
 });
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -176,7 +182,7 @@ describe("useTagGroups", () => {
 
       expect(tagGroups.value).toHaveLength(1);
       expect(tagGroups.value[0].label).toBe("Genre");
-      expect(tagGroups.value[0].tags).toEqual(["Jazz", "Blues"]);
+      expect(tagGroups.value[0].tags).toEqual([makeProductionTagChip(1, "Jazz"), makeProductionTagChip(2, "Blues")]);
     });
 
     it("omits types that have no matching tags", async () => {
@@ -207,8 +213,8 @@ describe("useTagGroups", () => {
       await flushPromises();
 
       expect(tagGroups.value).toHaveLength(2);
-      expect(tagGroups.value.find(g => g.label === "Genre")?.tags).toEqual(["Jazz"]);
-      expect(tagGroups.value.find(g => g.label === "Leeftijd")?.tags).toEqual(["14+"]);
+      expect(tagGroups.value.find(g => g.label === "Genre")?.tags).toEqual([makeProductionTagChip(1, "Jazz")]);
+      expect(tagGroups.value.find(g => g.label === "Leeftijd")?.tags).toEqual([makeProductionTagChip(2, "14+")]);
     });
 
     it("uses the current language for tag name localisation", async () => {
@@ -221,8 +227,8 @@ describe("useTagGroups", () => {
       const { tagGroups } = mountComposable();
       await flushPromises();
 
-      expect(tagGroups.value[0].label).toBe("Genre EN");
-      expect(tagGroups.value[0].tags[0]).toBe("Jazz EN");
+      expect(tagGroups.value[0].label).toEqual("Genre EN");
+      expect(tagGroups.value[0].tags).toEqual([makeProductionTagChip(1, "Jazz EN")]);
     });
   });
 
@@ -310,7 +316,7 @@ describe("useTagGroups", () => {
       await flushPromises();
 
       expect(tagGroups.value).toHaveLength(1);
-      expect(tagGroups.value[0].tags).toEqual(["Rock"]);
+      expect(tagGroups.value[0].tags).toEqual([makeProductionTagChip(1, "Rock")]);
     });
 
     it("resets error to null at the start of a refetch", async () => {

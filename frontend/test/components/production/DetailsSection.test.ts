@@ -104,7 +104,7 @@ describe("ProductionDetailsSection", () => {
   describe("tags accordion", () => {
     it("renders tags by default", () => {
       const wrapper = mountComponent({
-        tagGroups: [{ label: "Genre", tags: ["Dance"] }],
+        tagGroups: [{ label: "Genre", tags: [{ tagId: 1, label: "Dance", isGenre: undefined }] }],
       });
 
       expect(wrapper.text()).toContain("Dance");
@@ -112,7 +112,7 @@ describe("ProductionDetailsSection", () => {
 
     it("toggles tags visibility", async () => {
       const wrapper = mountComponent({
-        tagGroups: [{ label: "Genre", tags: ["Dance"] }],
+        tagGroups: [{ label: "Genre", tags: [{ tagId: 1, label: "Dance", isGenre: undefined }] }],
       });
 
       const button = wrapper.find("button");

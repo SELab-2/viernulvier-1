@@ -29,6 +29,7 @@ export default {
   },
   featuredBlog: {
     eyebrow: "Uitgelichte blogpost",
+    loading: "Uitgelichte blogpost laden ...",
     dateline: "{date} · Redactie",
     readMore: "Lees het volledige artikel",
     imageCaption:

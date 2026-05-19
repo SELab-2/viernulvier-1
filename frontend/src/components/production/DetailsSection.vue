@@ -75,10 +75,12 @@
                     <div class="flex flex-wrap gap-2">
                       <span
                         v-for="tag in group.tags"
-                        :key="tag"
+                        :key="tag.tagId"
                         class="border border-ink-tertiary/60 bg-surface-1 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink-primary hover:border-ink-primary transition-colors cursor-default"
                       >
-                        {{ tag }}
+                        <a class="contents" :href="`/${currentLang}/productions?tags=${tag.tagId}`">
+                          {{ tag.label }}
+                        </a>
                       </span>
                     </div>
                   </div>
@@ -191,6 +193,7 @@ import { useI18n } from "vue-i18n";
 import { normalizeQuote, parseAndSanitizeContent, normalizePlainText } from "@/utils/parsers";
 import ProductionDetailSidebarEvents from "@/components/production/ProductionDetailSidebarEvents.vue";
 import type { EnrichedEvent } from "@/composables/useProductionEvents";
+import type { ProductionTagChip } from "@/utils/tagDisplay";
 
 const { t } = useI18n();
 
@@ -203,7 +206,7 @@ const currentLang = computed(
 const props = withDefaults(
   defineProps<{
     production: ProductionWithBackwardsRefs;
-    tagGroups: { label: string; tags: string[] }[];
+    tagGroups: { label: string; tags: ProductionTagChip[] }[];
     totalTags: number;
     performanceEvents?: EnrichedEvent[];
     eventsLoading?: boolean;
