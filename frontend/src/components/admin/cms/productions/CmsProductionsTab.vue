@@ -1467,7 +1467,7 @@ async function persistBulkProductionPatch(
     if (refreshedNodes.length > 0) {
       gridApi.value?.refreshCells?.({ rowNodes: refreshedNodes, force: true });
     }
-    gridApi.value?.applyTransactionAsync({ update: targetRows });
+    gridApi.value?.applyTransactionAsync?.({ update: targetRows });
   } catch (error) {
     saveError.value =
       error instanceof Error
