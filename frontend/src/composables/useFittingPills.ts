@@ -19,6 +19,11 @@ interface UseFittingPillsOptions {
   trailingControlGapPx?: number;
   /** Used only when widths are not measurable (e.g. JSDOM). */
   fallbackVisibleCount?: number;
+  /**
+   * When false, this instance does not add a `window.resize` listener. Use when multiple
+   * rows share one resize handler from a parent view (Productions archive panel).
+   */
+  attachWindowResizeListener?: boolean;
 }
 
 /**
@@ -33,6 +38,7 @@ export function useFittingPills<T extends { id: PillId }>(
   const gapPx = options.gapPx ?? 8;
   const trailingControlGapPx = options.trailingControlGapPx ?? gapPx;
   const fallbackVisibleCount = options.fallbackVisibleCount;
+  const attachWindowResizeListener = options.attachWindowResizeListener !== false;
 
   const rowEl = ref<HTMLElement | null>(null);
   const trailingControlEl = ref<HTMLElement | null>(null);
@@ -123,7 +129,15 @@ export function useFittingPills<T extends { id: PillId }>(
     }
 
     if (!sawMeasurableWidth) {
-      visibleCount.value = computeFallbackCount(total);
+      // Pill refs missing or widths not measurable yet -> render full row once then retry.
+      if (pillElements.size === 0 && visibleCount.value === 0 && total > 0) {
+        visibleCount.value = total;
+        void nextTick(() => {
+          recomputeVisibleCount();
+        });
+      } else {
+        visibleCount.value = computeFallbackCount(total);
+      }
       return;
     }
     visibleCount.value = fit;
@@ -188,7 +202,9 @@ export function useFittingPills<T extends { id: PillId }>(
       });
       if (rowEl.value) rowResizeObserver.observe(rowEl.value);
     }
-    window.addEventListener("resize", onWindowResize);
+    if (attachWindowResizeListener && typeof window !== "undefined") {
+      window.addEventListener("resize", onWindowResize);
+    }
   });
 
   onUnmounted(() => {
@@ -196,7 +212,12 @@ export function useFittingPills<T extends { id: PillId }>(
     trailingResizeObserver = null;
     rowResizeObserver?.disconnect();
     rowResizeObserver = null;
-    window.removeEventListener("resize", onWindowResize);
+    if (
+      attachWindowResizeListener &&
+      typeof window !== "undefined"
+    ) {
+      window.removeEventListener("resize", onWindowResize);
+    }
   });
 
   return {

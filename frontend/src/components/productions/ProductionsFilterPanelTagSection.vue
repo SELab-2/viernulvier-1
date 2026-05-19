@@ -55,7 +55,7 @@ const props = withDefaults(
     visibleTags: readonly FilterPanelTag[];
     selectedTagIds: readonly number[];
     showExpandToggle: boolean;
-    /** Pass-through composable refs from `ProductionsView` so fitting logic stays parent-scoped. */
+    /** Pass-through ref binders from the row that hosts `useFittingPills`. */
     rowBinder: (el: Element | ComponentPublicInstance | null) => void;
     pillBinder: (id: number, el: Element | ComponentPublicInstance | null) => void;
     trailingBinder: (el: Element | ComponentPublicInstance | null) => void;
