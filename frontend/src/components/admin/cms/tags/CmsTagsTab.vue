@@ -93,7 +93,7 @@
         @update-public="setCreatePublic"
         @update-extra-lang="setCreateExtraLang"
       />
-      
+
       <CmsEditorPanel
         v-model:panel="editorPanel"
         :bulk-count="editorBulkCount"
@@ -269,14 +269,11 @@ function onCellClicked(event: CellClickedEvent<CmsTagGridRow>): void {
   const field = event.colDef.field as "name" | "productions";
 
   if (field === "productions") {
-    closeEditorPanel();
     openEditProductionsPanel(event.data);
     return;
   }
 
   if (field !== "name") return;
-
-  closeEditProductionsPanel();
 
   const source = tagsData.value.find((p) => p.id === event.data!.id);
   const currentMap = (source?.[field] ?? null) as LanguageMap | null;
