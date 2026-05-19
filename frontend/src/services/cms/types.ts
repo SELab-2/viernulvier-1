@@ -99,7 +99,7 @@ export interface CreateBlogPostFormState {
   productions: number[];
 }
 
-export type ProductionLongField = "artist" | "title" | "supertitle" | "description" | "description_2" | "video_1";
+export type ProductionLongField = "artist" | "title" | "supertitle" | "teaser" | "description" | "description_2" | "video_1";
 export type BlogPostLongField = "title" | "content";
 export type TagsLongField = "name";
 export type TagTypeLongField = "name";

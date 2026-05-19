@@ -83,16 +83,23 @@ describe("useCmsProductionGrid", () => {
       ).toContain("cms.create.media.imageCountOther");
     });
 
-    it("keeps production cells non-editable so clicks only use the side-panel flow", () => {
+    it("keeps long-form production cells non-editable so clicks only use the side-panel flow", () => {
       const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key, currentLang: ref('nl') });
-      const inlineFields = ["performer", "title", "producer", "teaser", "genres"];
+      const sidePanelFields = ["performer", "title", "producer", "teaser"];
 
-      for (const field of inlineFields) {
+      for (const field of sidePanelFields) {
         const column = grid.columnDefs.value.find((c) => c.field === field);
         expect(column?.editable).toBe(false);
       }
+    });
 
-      expect(grid.columnDefs.value.find((c) => c.field === "genres")?.singleClickEdit).toBeUndefined();
+    it("keeps the genres cell editable with a single-click select editor", () => {
+      const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key, currentLang: ref('nl') });
+      const genresColumn = grid.columnDefs.value.find((c) => c.field === "genres");
+
+      expect(genresColumn?.editable).toBe(true);
+      expect(genresColumn?.singleClickEdit).toBe(true);
+      expect(genresColumn?.cellEditor).toBe("agSelectCellEditor");
     });
 
     it("uses primary tag labels as genre editor values with empty fallback", () => {
