@@ -502,6 +502,47 @@ describe("CmsProductionsTab", () => {
     expect(api.bulkEditConfirmOpen.value).toBe(false);
   });
 
+  it("refreshes affected grid cells exactly once after a successful bulk patch", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = api.rowData.value[0];
+    const secondRow = {
+      ...row,
+      id: row.id + 1,
+      source: { ...row.source, id: row.id + 1 },
+    };
+
+    const fakeNodeA = { id: String(row.id) };
+    const fakeNodeB = { id: String(secondRow.id) };
+    const getRowNode = vi.fn((id: string) => (id === String(row.id) ? fakeNodeA : fakeNodeB));
+    const refreshCells = vi.fn();
+
+    api.gridApi.value = {
+      getSelectedRows: () => [row, secondRow],
+      getRowNode,
+      refreshCells,
+    };
+
+    vi.spyOn(productionsService, "bulkUpdateProductions").mockResolvedValueOnce([
+      { ...mockProduction, id: row.id },
+      { ...mockProduction, id: secondRow.id },
+    ]);
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "descriptionOne", headerName: "Description" },
+    });
+    await api.saveEditorPanel();
+    await api.confirmBulkEdit();
+
+    expect(productionsService.bulkUpdateProductions).toHaveBeenCalledTimes(1);
+    expect(refreshCells).toHaveBeenCalledTimes(1);
+    expect(refreshCells).toHaveBeenCalledWith({
+      rowNodes: [fakeNodeA, fakeNodeB],
+      force: true,
+    });
+  });
+
   it("covers inline bulk edit confirmation and revert on save failure", async () => {
     const wrapper = await mountTab();
     const api = (wrapper.vm as any).$?.exposed.__test;
