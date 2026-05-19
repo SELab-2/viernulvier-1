@@ -68,7 +68,7 @@
             v-model="query"
             type="search"
             :placeholder="t('hero.searchPlaceholder')"
-            class="min-w-0 flex-1 bg-transparent px-5 py-4 font-serif text-base text-ink-primary placeholder:font-serif placeholder:italic placeholder:text-ink-tertiary focus:outline-none md:text-lg"
+            class="min-w-0 flex-1 bg-transparent px-5 py-4 font-serif text-base text-ink-primary placeholder:font-serif placeholder:italic placeholder:text-ink-tertiary focus:outline-none md:text-lg max-sm:placeholder:text-transparent"
             autocomplete="off"
             spellcheck="false"
           />
