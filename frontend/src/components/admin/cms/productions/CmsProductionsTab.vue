@@ -900,7 +900,6 @@ function closeBulkEditConfirm(): void {
 }
 
 async function confirmBulkEdit(): Promise<void> {
-  console.log(pendingBulkEditAction);
   if (!pendingBulkEditAction.value) {
     closeBulkEditConfirm();
     return;
