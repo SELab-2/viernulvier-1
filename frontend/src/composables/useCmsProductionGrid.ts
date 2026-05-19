@@ -183,18 +183,18 @@ function renderImageMediaCell(
 export function useCmsProductionGrid(options: {
   isDark: Ref<boolean>;
   t: TranslateFunction;
-  getPrimaryTagOptions?: () => Array<{ id: number; label: string }>;
+  getGenreOptions?: () => Array<{ id: number; label: string }>;
   // Backwards-compatible: older tests/usage provide just labels.
-  getPrimaryTagLabels?: () => string[];
+  getGenreLabels?: () => string[];
   currentLang?: Ref<string>;
 }) {
   const primaryTagLabelById = computed(() => {
-    const optionsEntries = options.getPrimaryTagOptions?.() ?? [];
+    const optionsEntries = options.getGenreOptions?.() ?? [];
     if (optionsEntries.length > 0) {
       return new Map(optionsEntries.map((entry) => [entry.id, entry.label] as const));
     }
 
-    const labels = options.getPrimaryTagLabels?.() ?? [];
+    const labels = options.getGenreLabels?.() ?? [];
     return new Map(labels.map((label, idx) => [idx + 1, label] as const));
   });
 
@@ -254,8 +254,8 @@ export function useCmsProductionGrid(options: {
   };
 
   const gridColumnOptions = computed(() => [
-    { colId: "id", label: "ID" },
-    { colId: "eventsAction", label: "Events" },
+    { colId: "id", label: options.t("cms.columns.id") },
+    { colId: "eventsAction", label: options.t("cms.columns.events") },
     { colId: "performer", label: options.t("cms.columns.performer") },
     { colId: "title", label: options.t("cms.columns.title") },
     { colId: "producer", label: options.t("cms.columns.producer") },
@@ -270,23 +270,23 @@ export function useCmsProductionGrid(options: {
 
   const columnDefs = computed<ColDef<CmsProductionGridRow>[]>(() => [
     {
-      headerName: "ID",
+      headerName: options.t("cms.columns.id"),
       field: "id",
       editable: false,
       minWidth: 90,
       maxWidth: 120,
       cellClass: "cms-production-id-cell",
       cellRenderer: (params: { value: number }) => {
-        const lang = options.currentLang?.value ?? "";
+        const lang = escapeHtml(options.currentLang?.value ?? "");
         const prefix = lang ? `/${lang}` : "";
         return `<a href="${prefix}/productions/${params.value}" class="text-ink-primary underline hover:text-ink-secondary transition-colors">${params.value}</a>`;
       },
     },
     {
-      headerName: "Events",
+      headerName: options.t("cms.columns.events"),
       colId: "eventsAction",
-      minWidth: 96,
-      maxWidth: 112,
+      minWidth: 120,
+      maxWidth: 130,
       resizable: false,
       sortable: false,
       filter: false,
@@ -330,12 +330,12 @@ export function useCmsProductionGrid(options: {
       cellEditorParams: () => {
         // If labels-only provider exists, return labels array for backward
         // compatibility with older tests and consumers.
-        if (options.getPrimaryTagLabels) {
-          return { values: options.getPrimaryTagLabels() };
+        if (options.getGenreLabels) {
+          return { values: options.getGenreLabels() };
         }
 
         return {
-          values: [0, ...(options.getPrimaryTagOptions?.().map((entry) => entry.id) ?? [])],
+          values: [0, ...(options.getGenreOptions?.().map((entry) => entry.id) ?? [])],
           formatValue: formatPrimaryTag,
         };
       },
@@ -398,10 +398,15 @@ export function useCmsProductionGrid(options: {
     return undefined;
   }
 
+  function getRowId(params: { data: CmsProductionGridRow }): string {
+    return String(params.data.id);
+  }
+
   return {
     ...base,
     columnDefs,
     defaultColDef,
+    getRowId,
     getProductionRowStyle,
     gridColumnOptions,
   };

@@ -68,6 +68,7 @@
         :value-cache="true"
         :cache-quick-filter="true"
         :get-row-style="getProductionRowStyle"
+        :get-row-id="getRowId"
         @grid-ready="onGridReady"
         @selection-changed="onSelectionChanged"
         @cell-editing-started="onProductionCellEditingStarted"
@@ -132,8 +133,10 @@
         @update-form-field="setCreateFormField"
         @update-primary-tag="setSelectedPrimaryTag"
         @toggle-tag="toggleCreateTag"
-        @image-file-change="onImageFileChange"
-        @video-file-change="onVideoFileChange"
+        @add-media="addMedia"
+        @remove-media="removeMedia"
+        @media-file-change="onMediaFileChange"
+        @update-media-url="updateMediaUrl"
         @close="closeCreateModal"
         @submit="submitCreateProduction"
       />
@@ -184,7 +187,7 @@
 
           <footer class="cms-modal-footer">
             <button type="button" class="cms-side-close" :disabled="bulkEditConfirmLoading" @click="closeBulkEditConfirm">
-              {{ t("cms.panel.close") }}
+              {{ t("general.cancel") }}
             </button>
             <button type="button" class="cms-side-save" :disabled="bulkEditConfirmLoading" @click="confirmBulkEdit">
               {{ bulkEditConfirmLoading ? t("cms.panel.saving") : t("cms.actions.confirmBulkEditSubmit") }}
@@ -278,22 +281,94 @@
         <section class="cms-modal cms-media-modal" role="dialog" aria-modal="true">
           <header class="cms-modal-header">
             <h2 class="text-xl font-bold text-ink-primary">
-              {{ t("cms.columns.media") }}
+              {{ t("cms.actions.confirmBulkEditDialogTitle") }}
             </h2>
-            <button type="button" class="cms-side-close" @click="closeMediaPreview">
+            <button type="button" class="cms-side-close" @click="closeBulkEditConfirm">
               {{ t("cms.panel.close") }}
             </button>
           </header>
 
-          <div class="cms-modal-body cms-media-preview-body">
-            <img v-if="mediaPreview.kind === 'image'" :src="mediaPreview.url" :alt="mediaPreview.label" class="cms-media-preview-large" />
-            <iframe v-else-if="mediaPreview.kind === 'youtube'" :src="mediaPreview.url" :title="mediaPreview.label" class="cms-media-preview-large" frameborder="0" allowfullscreen></iframe>
-            <video v-else controls playsinline class="cms-media-preview-large">
-              <source :src="mediaPreview.url" />
-            </video>
+          <div class="cms-modal-body">
+            <p class="text-sm text-ink-secondary">
+              {{ t("cms.actions.confirmBulkEditBody", { count: bulkEditConfirmCount }) }}
+            </p>
+            <p class="text-xs text-ink-secondary/70 mt-3">
+              {{ t("cms.actions.confirmBulkEditCancelInfo") }}
+            </p>
           </div>
+
+          <footer class="cms-modal-footer">
+            <button type="button" class="cms-side-close" :disabled="bulkEditConfirmLoading" @click="closeBulkEditConfirm">
+              {{ t("cms.panel.close") }}
+            </button>
+            <button type="button" class="cms-side-save" :disabled="bulkEditConfirmLoading" @click="confirmBulkEdit">
+              {{ bulkEditConfirmLoading ? t("general.saving") : t("cms.actions.confirmBulkEditSubmit") }}
+            </button>
+          </footer>
         </section>
       </div>
+
+      <div v-if="secondaryTagBulkModeOpen" class="cms-modal-overlay" @click.self="closeSecondaryTagBulkMode">
+        <section class="cms-modal cms-remove-modal" role="dialog" aria-modal="true">
+          <header class="cms-modal-header">
+            <h2 class="text-xl font-bold text-ink-primary">
+              {{ t("cms.actions.bulkEditTagsModeTitle") }}
+            </h2>
+            <button type="button" class="cms-side-close" :disabled="secondaryTagBulkModeLoading" @click="closeSecondaryTagBulkMode">
+              {{ t("cms.panel.close") }}
+            </button>
+          </header>
+
+          <div class="cms-modal-body">
+            <p class="text-sm text-ink-secondary">
+              {{ t("cms.actions.bulkEditTagsModeBody", { count: secondaryTagBulkModeCount }) }}
+            </p>
+
+            <div class="mt-3 text-sm">
+              <div v-if="secondaryTagBulkModeTagsPreview">
+                <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewTags') }}</div>
+                <div class="ml-2 mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeTagsPreview }}</div>
+              </div>
+
+              <div v-if="secondaryTagBulkModeAddedPreview || secondaryTagBulkModeRemovedPreview" class="mt-2">
+                <div v-if="secondaryTagBulkModeAddedPreview">
+                  <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewAdd') }}</div>
+                  <div class="ml-2 mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeAddedPreview }}</div>
+                </div>
+                <div v-if="secondaryTagBulkModeRemovedPreview" class="mt-1">
+                  <div class="font-medium text-ink-primary">{{ t('cms.actions.bulkEditTagsPreviewRemove') }}</div>
+                  <div class="ml-2 mt-1 whitespace-pre-line text-ink-primary">{{ secondaryTagBulkModeRemovedPreview }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <footer class="cms-modal-footer">
+            <button type="button" class="cms-side-close" :disabled="secondaryTagBulkModeLoading" @click="closeSecondaryTagBulkMode">
+              {{ t("general.cancel") }}
+            </button>
+            <button type="button" class="cms-side-close" :disabled="secondaryTagBulkModeLoading" @click="confirmSecondaryTagBulkReplace">
+              {{ t("cms.actions.bulkEditTagsModeReplace") }}
+            </button>
+            <button type="button" class="cms-side-save" :disabled="secondaryTagBulkModeLoading" @click="confirmSecondaryTagBulkDiff">
+              {{ t("cms.actions.bulkEditTagsModeDiff") }}
+            </button>
+          </footer>
+        </section>
+      </div>
+
+      <CmsMediaPreviewModal
+        :media-preview="mediaPreview"
+        :media-preview-edit-url="mediaPreviewEditUrl"
+        :is-saving="isSaving"
+        @close="closeMediaPreview"
+        @image-selected="onMediaPreviewImageSelected"
+        @remove-image="removeMediaImage"
+        @remove-video="removeMediaVideo"
+        @save-video-url="saveMediaVideoUrl"
+        @sync-gallery-preview="syncGalleryPreview"
+        @update:media-preview-edit-url="mediaPreviewEditUrl = $event"
+      />
     </template>
   </CmsTabShell>
 </template>
@@ -310,6 +385,7 @@ import type {
 import { useI18n } from "vue-i18n";
 import type { Event as ArchiveEvent, Hall, ProductionWithBackwardsRefs, Tag, TagType } from "@viernulvier/shared";
 import CmsRemoveConfirmModal from "@/components/admin/cms/CmsRemoveConfirmModal.vue";
+import CmsMediaPreviewModal from "@/components/admin/cms/productions/CmsMediaPreviewModal.vue";
 import CmsTabShell from "@/components/admin/cms/CmsTabShell.vue";
 import CmsCreateEventModal from "@/components/admin/cms/productions/CmsCreateEventModal.vue";
 import CmsEventsDrawer from "@/components/admin/cms/productions/CmsEventsDrawer.vue";
@@ -331,20 +407,21 @@ import {
 import { createEvent, deleteEvent, getEvent, updateEvent } from "@/services/events";
 import { getHall, getHalls } from "@/services/halls";
 import { getAllTags, getTagTypes } from "@/services/tags";
+import { getImagesByProduction, deleteImage as deleteImageService } from "@/services/images";
 import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import {
   buildEventGridRows,
   buildProductionGridRows,
   buildCmsTagGroups,
-  applyUpdatedProductionToRow,
   createProductionFields,
   buildEmptyCreateForm,
+  createMediaItem,
   fileToDataUrl,
-  mediaToLanguageMap,
   toLanguageMap,
   toLanguageMapOrNull,
   validateCreateProductionForm,
   getBulkTargetRows,
+  applyUpdatedProductionToRow,
   type CmsCreateLinkedEventForm,
   type CmsEventGridRow,
   type CreateFieldKey,
@@ -358,6 +435,13 @@ import {
   toIsoStringFromLocalInput,
   toLocalDateTimeInput,
 } from "@/services/cms";
+import {
+  isImagePreviewUrl,
+  isVideoPreviewUrl,
+  resolvePreferredCropUrl,
+  type CmsMediaPreview,
+} from "@/services/cms/media-preview";
+import { uploadImageWithCrops } from "@/services/cms/media-upload";
 
 const { t } = useI18n();
 const { isDark } = useDarkMode();
@@ -374,6 +458,7 @@ const {
   exportGridCsv,
   fitGridColumns,
   getProductionRowStyle,
+  getRowId,
   gridColumnOptions,
   gridApi,
   onGridReady,
@@ -389,7 +474,7 @@ const {
 } = useCmsProductionGrid({
   isDark,
   t,
-  getPrimaryTagOptions: () =>
+  getGenreOptions: () =>
     createTagGroups.value
       .filter((group) => group.isGenre)
       .flatMap((group) => group.tags),
@@ -411,7 +496,10 @@ const bulkEditConfirmOpen = ref(false);
 const bulkEditConfirmLoading = ref(false);
 const bulkEditConfirmCount = ref(0);
 const pendingBulkEditAction = ref<(() => Promise<void>) | null>(null);
-const mediaPreview = ref<{ url: string; kind: "image" | "video" | "youtube"; label: string } | null>(null);
+const mediaPreview = ref<CmsMediaPreview | null>(null);
+const mediaPreviewEditUrl = ref("");
+const imagesByProductionId = ref(new Map<number, Array<{ id: number; url: string }>>());
+const imageLoadRequestToken = ref(0);
 const createExtraLangs = ref({ en: false, fr: false });
 const visibleCreateLangs = computed<SupportedLang[]>(() => {
   const result: SupportedLang[] = ["nl"];
@@ -557,6 +645,14 @@ function setCurrentLanguageValue(
   return {
     ...(map ?? {}),
     [currentLang.value]: newValue,
+  };
+}
+
+function toEditableLanguageMap(values: Record<SupportedLang, string>): LanguageMap {
+  return {
+    nl: values.nl.trim(),
+    en: values.en.trim(),
+    fr: values.fr.trim(),
   };
 }
 
@@ -782,6 +878,33 @@ async function applySecondaryTagBulkEdit(mode: "replace" | "diff"): Promise<void
   saveError.value = null;
 
   try {
+    for (const targetRow of targetRows) {
+      const currentTagIds = extractProductionTagIds(targetRow.source);
+      const existingGenreTagIds = currentTagIds.filter((tagId) => {
+        const tag = tagsData.value.find((item) => item.id === tagId);
+        return tag ? genreTypeIds.has(Number(tag.tag_type)) : false;
+      });
+
+      const existingAdditionalTagIds = currentTagIds.filter((tagId) => {
+        const tag = tagsData.value.find((item) => item.id === tagId);
+        return tag ? !genreTypeIds.has(Number(tag.tag_type)) : false;
+      });
+
+      const nextAdditionalTagIds =
+        mode === "replace"
+          ? desiredAdditionalTagIds
+          : Array.from(
+            new Set(
+              existingAdditionalTagIds
+                .filter((tagId) => !removedTagIds.includes(tagId))
+                .concat(addedTagIds),
+            ),
+          );
+
+      await updateProduction(targetRow.id, {
+        tags: [...existingGenreTagIds, ...nextAdditionalTagIds],
+      });
+    }
     await Promise.all(
       targetRows.map(async (targetRow) => {
         const currentTagIds = extractProductionTagIds(targetRow.source);
@@ -922,51 +1045,281 @@ function showSaveSuccess(message: string): void {
   }, 3000);
 }
 
-function isImagePreviewUrl(url: string): boolean {
-  const value = url.trim().toLowerCase();
-  return /^(data:image\/|https?:\/\/.*\.(?:png|jpe?g|gif|webp|svg)(?:\?.*)?$)/.test(value);
-}
-
-function isVideoPreviewUrl(url: string): boolean {
-  const value = url.trim().toLowerCase();
-  if (value.includes("youtube.com") || value.includes("youtu.be")) {
-    return true;
-  }
-  return /^(data:video\/|https?:\/\/.*\.(?:webm|ogg|mov)(?:\?.*)?$)/.test(value);
-}
-
-function openMediaPreview(url: string, label: string): void {
+function openMediaPreview(
+  url: string,
+  label: string,
+  options: { imageId?: number; productionId?: number; mediaField?: "video_1" | "video_2" } = {},
+): void {
   const trimmed = url.trim();
+  // If there's no URL, open a placeholder so the user can add media.
   if (!trimmed) {
+    const placeholder = createPlaceholderImageDataUrl(t("cms.panel.noMedia"));
+    if (options.mediaField) {
+      // For video fields, show the iframe view (blank) but keep mediaField so the input appears.
+      mediaPreview.value = { url: "about:blank", kind: "iframe", label, productionId: options.productionId, mediaField: options.mediaField };
+      mediaPreviewEditUrl.value = "";
+      return;
+    }
+
+    mediaPreview.value = { url: placeholder, kind: "image", label, imageId: options.imageId, productionId: options.productionId };
+    mediaPreviewEditUrl.value = "";
     return;
   }
 
   if (isImagePreviewUrl(trimmed)) {
-    mediaPreview.value = { url: trimmed, kind: "image", label };
+    mediaPreview.value = { url: trimmed, kind: "image", label, imageId: options.imageId, productionId: options.productionId };
+    mediaPreviewEditUrl.value = "";
     return;
   }
 
+  // Handle YouTube
   if (trimmed.includes("youtube.com") || trimmed.includes("youtu.be")) {
     let videoId = "";
-    if (trimmed.includes("youtube.com/watch?v=")) {
-      videoId = trimmed.split("v=")[1]?.split("&")[0] ?? "";
-    } else if (trimmed.includes("youtu.be/")) {
-      videoId = trimmed.split("youtu.be/")[1]?.split("?")[0] ?? "";
+    // Try youtube.com/watch?v=xxxxx format
+    const watchMatch = trimmed.match(/youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})/);
+    if (watchMatch) {
+      videoId = watchMatch[1];
+    } else {
+      // Try youtu.be/xxxxx format
+      const shortMatch = trimmed.match(/youtu\.be\/([A-Za-z0-9_-]{11})/);
+      if (shortMatch) {
+        videoId = shortMatch[1];
+      }
     }
     if (videoId) {
       const embedUrl = `https://www.youtube.com/embed/${videoId}`;
-      mediaPreview.value = { url: embedUrl, kind: "youtube", label };
+      mediaPreview.value = { url: embedUrl, kind: "iframe", label, productionId: options.productionId, mediaField: options.mediaField };
+      mediaPreviewEditUrl.value = trimmed;
+      return;
     }
+  }
+
+  // Handle Vimeo
+  if (trimmed.includes("vimeo.com")) {
+    let videoId = "";
+    // Try player.vimeo.com/video/xxxxx format first
+    const playerMatch = trimmed.match(/player\.vimeo\.com\/video\/(\d+)/);
+    if (playerMatch) {
+      videoId = playerMatch[1];
+    } else {
+      // Try regular vimeo.com/xxxxx format
+      const regularMatch = trimmed.match(/vimeo\.com\/(\d+)/);
+      if (regularMatch) {
+        videoId = regularMatch[1];
+      }
+    }
+    if (videoId) {
+      const embedUrl = `https://player.vimeo.com/video/${videoId}`;
+      mediaPreview.value = { url: embedUrl, kind: "iframe", label, productionId: options.productionId, mediaField: options.mediaField };
+      mediaPreviewEditUrl.value = trimmed;
+      return;
+    }
+  }
+
+  // Generic iframe for other providers or direct video URLs
+  mediaPreview.value = { url: trimmed, kind: "iframe", label, productionId: options.productionId, mediaField: options.mediaField };
+  mediaPreviewEditUrl.value = trimmed;
+}
+
+function openImageGalleryPreview(
+  images: Array<{ id: number; url: string }>,
+  label: string,
+  productionId: number,
+): void {
+  const normalized = images.filter((image) => image.url.trim().length > 0);
+  if (normalized.length === 0) {
+    // Show placeholder image so the user can add one
+    const placeholder = createPlaceholderImageDataUrl(t("cms.panel.noMedia"));
+    mediaPreview.value = {
+      url: placeholder,
+      kind: "image",
+      label,
+      productionId,
+      images: [],
+    };
+    mediaPreviewEditUrl.value = "";
     return;
   }
 
-  if (isVideoPreviewUrl(trimmed)) {
-    mediaPreview.value = { url: trimmed, kind: "video", label };
+  mediaPreview.value = {
+    url: normalized[0]!.url,
+    kind: normalized.length > 1 ? "gallery" : "image",
+    label,
+    imageId: normalized[0]!.id,
+    productionId,
+    images: normalized,
+    currentImageIndex: 0,
+  };
+  mediaPreviewEditUrl.value = "";
+}
+
+function createPlaceholderImageDataUrl(text: string, width = 800, height = 450): string {
+  const bg = "#f3f4f6";
+  const fg = "#374151";
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}' viewBox='0 0 ${width} ${height}'><rect width='100%' height='100%' fill='${bg}'/><text x='50%' y='50%' fill='${fg}' font-family='Arial, Helvetica, sans-serif' font-size='24' dominant-baseline='middle' text-anchor='middle'>${escapeXml(text)}</text></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+function escapeXml(unsafe: string): string {
+  return unsafe.replace(/[&<>\"']/g, (c) => {
+    switch (c) {
+    case "&":
+      return "&amp;";
+    case "<":
+      return "&lt;";
+    case ">":
+      return "&gt;";
+    case '"':
+      return "&quot;";
+    case "'":
+      return "&apos;";
+    default:
+      return c;
+    }
+  });
+}
+
+function syncGalleryPreview(nextIndex: number): void {
+  const preview = mediaPreview.value;
+  if (!preview || preview.kind !== "gallery" || !preview.images || preview.images.length === 0) {
+    return;
   }
+
+  const normalizedIndex = ((nextIndex % preview.images.length) + preview.images.length) % preview.images.length;
+  const nextImage = preview.images[normalizedIndex];
+  if (!nextImage) {
+    return;
+  }
+
+  mediaPreview.value = {
+    ...preview,
+    url: nextImage.url,
+    imageId: nextImage.id,
+    currentImageIndex: normalizedIndex,
+  };
 }
 
 function closeMediaPreview(): void {
   mediaPreview.value = null;
+  mediaPreviewEditUrl.value = "";
+}
+
+async function onMediaPreviewImageSelected(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  const productionId = mediaPreview.value?.productionId;
+  if (!file || productionId === undefined) {
+    return;
+  }
+
+  isSaving.value = true;
+  saveError.value = null;
+  try {
+    const dataUrl = await fileToDataUrl(file);
+    const uploadedImage = await uploadImageWithCrops(productionId, dataUrl);
+    await loadCmsData();
+    const previewUrl =
+      resolvePreferredCropUrl(uploadedImage.crops, window.location.origin) ?? mediaPreview.value?.url;
+    if (previewUrl) {
+      openMediaPreview(previewUrl, mediaPreview.value?.label ?? t("cms.columns.imageMedia"), {
+        imageId: uploadedImage.id,
+        productionId,
+      });
+    }
+    showSaveSuccess(t("cms.feedback.mediaAddSuccess"));
+  } catch (error) {
+    saveError.value =
+      error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+  } finally {
+    input.value = "";
+    isSaving.value = false;
+  }
+}
+
+async function saveMediaVideoUrl(): Promise<void> {
+  const preview = mediaPreview.value;
+  const nextUrl = mediaPreviewEditUrl.value.trim();
+  if (!preview?.productionId || !preview.mediaField || !nextUrl) {
+    return;
+  }
+
+  isSaving.value = true;
+  saveError.value = null;
+  try {
+    await updateProduction(preview.productionId, {
+      [preview.mediaField]: { nl: nextUrl },
+    } as Parameters<typeof updateProduction>[1]);
+    await loadCmsData();
+    openMediaPreview(nextUrl, preview.label, {
+      productionId: preview.productionId,
+      mediaField: preview.mediaField,
+    });
+    showSaveSuccess(t("cms.feedback.mediaUpdateSuccess"));
+  } catch (error) {
+    saveError.value =
+      error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+  } finally {
+    isSaving.value = false;
+  }
+}
+
+async function removeMediaImage(): Promise<void> {
+  if (!mediaPreview.value?.imageId) {
+    return;
+  }
+
+  if (!confirm(t("cms.create.media.confirmDelete"))) {
+    return;
+  }
+
+  isSaving.value = true;
+  saveError.value = null;
+  try {
+    await deleteImageService(mediaPreview.value.imageId);
+    closeMediaPreview();
+    await loadCmsData();
+    showSaveSuccess(t("cms.feedback.mediaRemoveSuccess"));
+  } catch (error) {
+    saveError.value =
+      error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+  } finally {
+    isSaving.value = false;
+  }
+}
+
+async function removeMediaVideo(): Promise<void> {
+  const preview = mediaPreview.value;
+  if (!preview?.productionId || !preview.mediaField) {
+    return;
+  }
+
+  if (!confirm(t("cms.create.media.confirmDeleteVideo"))) {
+    return;
+  }
+
+  isSaving.value = true;
+  saveError.value = null;
+  try {
+    await updateProduction(preview.productionId, {
+      [preview.mediaField]: null,
+    } as Parameters<typeof updateProduction>[1]);
+    closeMediaPreview();
+    await loadCmsData();
+    showSaveSuccess(t("cms.feedback.mediaRemoveVideoSuccess"));
+  } catch (error) {
+    saveError.value =
+      error instanceof Error
+        ? t("cms.errors.saveFailed", { message: error.message })
+        : t("cms.errors.saveGeneric");
+  } finally {
+    isSaving.value = false;
+  }
 }
 
 function resetCreateForm(): void {
@@ -987,22 +1340,32 @@ function closeCreateModal(): void {
   resetCreateForm();
 }
 
-async function onImageFileChange(event: Event): Promise<void> {
+function addMedia(type: "image" | "video"): void {
+  createForm.value.media.push(createMediaItem(type));
+}
+
+function removeMedia(mediaId: string): void {
+  createForm.value.media = createForm.value.media.filter((m) => m.id !== mediaId);
+}
+
+async function onMediaFileChange(mediaId: string, event: Event): Promise<void> {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
   if (!file) return;
+
   const dataUrl = await fileToDataUrl(file);
-  createForm.value.video_1.nl = dataUrl;
+  const mediaIndex = createForm.value.media.findIndex((m) => m.id === mediaId);
+  if (mediaIndex >= 0) {
+    createForm.value.media[mediaIndex]!.url = dataUrl;
+  }
   input.value = "";
 }
 
-async function onVideoFileChange(event: Event): Promise<void> {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  if (!file) return;
-  const dataUrl = await fileToDataUrl(file);
-  createForm.value.video_2.nl = dataUrl;
-  input.value = "";
+function updateMediaUrl(mediaId: string, url: string): void {
+  const mediaIndex = createForm.value.media.findIndex((m) => m.id === mediaId);
+  if (mediaIndex >= 0) {
+    createForm.value.media[mediaIndex]!.url = url;
+  }
 }
 
 async function submitCreateProduction(): Promise<void> {
@@ -1016,7 +1379,11 @@ async function submitCreateProduction(): Promise<void> {
   createError.value = null;
 
   try {
-    await createProduction({
+    // Extract media items for API submission
+    const videoMedia = createForm.value.media.find((m) => m.type === "video");
+
+    // Create production first
+    const production = await createProduction({
       vendor_id: 0,
       box_office_id: 0,
       finalized: createForm.value.finalized,
@@ -1031,9 +1398,30 @@ async function submitCreateProduction(): Promise<void> {
       supertitle: toLanguageMapOrNull(createForm.value.supertitle),
       description: toLanguageMapOrNull(createForm.value.description),
       description_2: toLanguageMapOrNull(createForm.value.description_2),
-      video_1: mediaToLanguageMap(createForm.value.video_1),
-      video_2: mediaToLanguageMap(createForm.value.video_2),
+      video_1: null,
+      video_2: videoMedia?.url?.trim() ? { nl: videoMedia.url } : null,
     });
+
+    // Upload image media items with auto-generated crops
+    for (const mediaItem of createForm.value.media) {
+      if (mediaItem.type === "image" && mediaItem.url && !mediaItem.imageId) {
+        try {
+          // Check if it's a data URL (file upload) or external URL
+          if (mediaItem.url.startsWith("data:")) {
+            const uploadedImage = await uploadImageWithCrops(production.id, mediaItem.url);
+            mediaItem.imageId = uploadedImage.id;
+            mediaItem.isUploaded = true;
+          }
+          // If it's an external URL, it's already stored in video_1 and doesn't need crops
+        } catch (error) {
+          console.error(
+            `Failed to upload image for production ${production.id}:`,
+            error,
+          );
+          // Continue with other images, but log the error
+        }
+      }
+    }
 
     await loadCmsData();
     closeCreateModal();
@@ -1057,11 +1445,27 @@ async function persistBulkProductionPatch(
       data: patch as never,
     });
 
+    // Sync the source-of-truth array so that rebuildRows() (triggered by a
+    // language switch) reproduces rows from the just-saved LanguageMaps, not
+    // from the pre-edit ones.
+    for (const updated of updatedRows) {
+      const idx = productionsData.value.findIndex((p) => p.id === updated.id);
+      if (idx !== -1) {
+        productionsData.value[idx] = updated;
+      }
+    }
+
+    const refreshedNodes = [];
     for (const row of targetRows) {
       const updated = updatedRows.find((item) => item.id === row.id);
-      if (updated) {
-        applyUpdatedProductionToRow(row, updated, localizeValue);
-      }
+      if (!updated) continue;
+      applyUpdatedProductionToRow(row, updated, localizeValue);
+      const node = gridApi.value?.getRowNode?.(String(row.id));
+      if (node) refreshedNodes.push(node);
+    }
+
+    if (refreshedNodes.length > 0) {
+      gridApi.value?.refreshCells?.({ rowNodes: refreshedNodes, force: true });
     }
     gridApi.value?.applyTransactionAsync({ update: targetRows });
   } catch (error) {
@@ -1261,17 +1665,48 @@ function onCellClicked(event: CellClickedEvent<CmsProductionGridRow>): void {
     return;
   }
 
+  if (event.colDef.field === "imageMedia") {
+    const images = imagesByProductionId.value.get(event.data.id) ?? [];
+    if (images.length > 0) {
+      openImageGalleryPreview(images, event.colDef.headerName ?? t("cms.columns.imageMedia"), event.data.id);
+      return;
+    }
+    // Open placeholder preview so users can add an image for productions with no images yet
+    openImageGalleryPreview([], event.colDef.headerName ?? t("cms.columns.imageMedia"), event.data.id);
+    return;
+  }
+  
   const gridField = event.colDef.field as longGridFieldIds;
   if (!(gridField in longGridFieldToApi)) {
     return;
   }
 
-  if (gridField === "media") {
+  if (event.colDef.field === "media") {
     const value = String(event.data.media ?? "").trim();
     if (value && (isImagePreviewUrl(value) || isVideoPreviewUrl(value))) {
-      openMediaPreview(value, event.colDef.headerName ?? t("cms.columns.media"));
+      const video1 = localizeValue(event.data.source.video_1);
+      const video2 = localizeValue(event.data.source.video_2);
+      const mediaField = value === video1 && video1 ? "video_1" : value === video2 && video2 ? "video_2" : undefined;
+      openMediaPreview(value, event.colDef.headerName ?? t("cms.columns.media"), {
+        productionId: event.data.id,
+        mediaField,
+      });
       return;
     }
+    // No media present: open placeholder preview and prefer editing video_1 (fall back to video_2 if present)
+    const video1 = localizeValue(event.data.source.video_1);
+    const video2 = localizeValue(event.data.source.video_2);
+    const preferredField = video1 ? "video_1" : video2 ? "video_2" : "video_1";
+    openMediaPreview("", event.colDef.headerName ?? t("cms.columns.media"), {
+      productionId: event.data.id,
+      mediaField: preferredField as "video_1" | "video_2",
+    });
+    return;
+  }
+
+  const gridField = event.colDef.field as "descriptionOne" | "descriptionTwo";
+  if (!(gridField in longGridFieldToApi)) {
+    return;
   }
 
   const apiField = longGridFieldToApi[gridField];
@@ -1296,7 +1731,7 @@ async function saveEditorPanel(): Promise<void> {
     return;
   }
 
-  const payload = toLanguageMapOrNull(editorPanel.value.values);
+  const payload = toEditableLanguageMap(editorPanel.value.values);
   const targetRows = getBulkTargetRows(gridApi.value?.getSelectedRows() ?? [], row);
 
   // Show confirmation if editing multiple rows
@@ -1337,6 +1772,7 @@ function rebuildRows(): void {
     tagsData.value,
     tagTypesData.value,
     localizeValue,
+    imagesByProductionId.value,
   );
 }
 
@@ -1521,7 +1957,51 @@ async function loadCmsData(): Promise<void> {
       resetCreateLinkedEventForm();
     }
 
+    imagesByProductionId.value = new Map();
     rebuildRows();
+
+    if (import.meta.env.MODE === "test") {
+      return;
+    }
+
+    // Lazy-load images after the main CMS data has rendered.
+    const requestToken = Date.now();
+    imageLoadRequestToken.value = requestToken;
+    void (async () => {
+      const imagesMap = new Map<number, Array<{ id: number; url: string }>>();
+
+      await Promise.all(
+        productionsData.value.map(async (production) => {
+          try {
+            const images = await getImagesByProduction(production.id);
+            if (!images || images.length === 0) {
+              return;
+            }
+
+            const imageUrls = images
+              .map((img) => {
+                const preferredUrl = resolvePreferredCropUrl(img.crops, window.location.origin);
+                return preferredUrl ? { id: img.id, url: preferredUrl } : null;
+              })
+              .filter((img): img is { id: number; url: string } => img !== null);
+
+            if (imageUrls.length > 0) {
+              imagesMap.set(production.id, imageUrls);
+            }
+          } catch (error) {
+            // Silently fail for individual image loads
+            console.error(`Failed to load images for production ${production.id}:`, error);
+          }
+        }),
+      );
+
+      if (imageLoadRequestToken.value !== requestToken) {
+        return;
+      }
+
+      imagesByProductionId.value = imagesMap;
+      rebuildRows();
+    })();
   } catch (error) {
     loadError.value =
       error instanceof Error
@@ -1535,6 +2015,7 @@ async function loadCmsData(): Promise<void> {
 defineExpose({
   __test: {
     rowData,
+    productionsData,
     tagsData,
     tagTypesData,
     hallsData,
@@ -1556,6 +2037,8 @@ defineExpose({
     removeConfirmLoading,
     removeConfirmError,
     mediaPreview,
+    imagesByProductionId,
+    imageLoadRequestToken,
     tagEditorPanel,
     tagEditorBulkCount,
     secondaryTagBulkModeOpen,
@@ -1583,6 +2066,10 @@ defineExpose({
     resetCreateLinkedEventForm,
     openCreateModal,
     closeCreateModal,
+    addMedia,
+    removeMedia,
+    onMediaFileChange,
+    updateMediaUrl,
     openRemoveConfirm,
     closeRemoveConfirm,
     confirmRemove,
@@ -1602,8 +2089,6 @@ defineExpose({
     onProductionCellEditingStarted,
     onWindowKeyDown,
     onCellEditingStopped,
-    onImageFileChange,
-    onVideoFileChange,
     openMediaPreview,
     closeMediaPreview,
     openTagEditorPanel,
@@ -1616,6 +2101,7 @@ defineExpose({
     closeEventsPanel,
     closeEditorPanel,
     saveEditorPanel,
+    persistBulkProductionPatch,
     rebuildRows,
     loadCmsData,
     bulkEditConfirmOpen,

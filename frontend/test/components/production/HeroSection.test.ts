@@ -5,6 +5,7 @@ import { createMemoryHistory, createRouter } from "vue-router";
 import { routes } from "@/router/routes";
 import HeroSection from "@/components/production/HeroSection.vue";
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
+import type { ProductionTagChip } from "@/utils/tagDisplay";
 
 const i18n = createI18n({
   legacy: false,
@@ -54,7 +55,7 @@ const baseProduction: ProductionWithBackwardsRefs = {
 async function mountHero(
   props: Partial<{
     production: ProductionWithBackwardsRefs;
-    tagGroups: { label: string; tags: string[] }[];
+    tagGroups: { label: string; tags: ProductionTagChip[] }[];
     eventStats: any;
     bannerUrl: string | null;
   }> = {},
@@ -97,7 +98,7 @@ describe("HeroSection.vue", () => {
       expect(img.attributes("class") || "").not.toMatch(/grayscale/);
     });
 
-    it("renders no hero image when bannerUrl is null (dark background only)", async () => {
+    it("renders no hero image when bannerUrl is null (compact spacer, surface background)", async () => {
       const wrapper = await mountHero({ bannerUrl: null });
       expect(wrapper.find("img").exists()).toBe(false);
     });
@@ -158,7 +159,7 @@ describe("HeroSection.vue", () => {
 
     it("includes the primary genre tag in the kicker", async () => {
       const wrapper = await mountHero({
-        tagGroups: [{ label: "Genre", tags: ["Dance", "Theatre"] }],
+        tagGroups: [{ label: "Genre", tags: [{ tagId: 1, label: "Dance", isGenre: undefined }, { tagId: 2, label: "Theatre", isGenre: undefined }] }],
       });
 
       // Only the primary (first) genre is shown in the kicker.
@@ -167,7 +168,7 @@ describe("HeroSection.vue", () => {
 
     it("ignores non-genre tag groups in the kicker", async () => {
       const wrapper = await mountHero({
-        tagGroups: [{ label: "Location", tags: ["Gent"] }],
+        tagGroups: [{ label: "Location", tags: [{ tagId: 3, label: "Gent", isGenre: undefined }] }],
       });
 
       expect(wrapper.text()).not.toContain("Gent");
@@ -179,7 +180,7 @@ describe("HeroSection.vue", () => {
           ...baseProduction,
           supertitle: { nl: "Theatre" },
         } as any,
-        tagGroups: [{ label: "Genre", tags: ["Theatre"] }],
+        tagGroups: [{ label: "Genre", tags: [{ tagId: 4, label: "Theatre", isGenre: undefined }] }],
         eventStats: {
           firstDate: new Date("1987-04-08"),
           lastDate: new Date("1987-04-08"),

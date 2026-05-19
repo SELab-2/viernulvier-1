@@ -188,7 +188,7 @@ describe("ProductionsView.vue", () => {
     wrapper.unmount();
   });
 
-  it("shows loading then empty state when the API returns no productions", async () => {
+  it("shows skeleton cards while the initial fetch is in flight", async () => {
     let finishFetch!: (value: ProductionListPage) => void;
     const deferred = new Promise<ProductionListPage>((resolve) => {
       finishFetch = resolve;
@@ -205,14 +205,84 @@ describe("ProductionsView.vue", () => {
     });
 
     await nextTick();
-    expect(wrapper.text()).toContain("laden");
+
+    const statusRegion = wrapper.find('[role="status"]');
+    expect(statusRegion.exists()).toBe(true);
+    expect(statusRegion.attributes("aria-live")).toBe("polite");
+
+    expect(wrapper.text()).not.toContain("laden");
+
+    const filterSkeleton = wrapper.find(".animate-pulse");
+    expect(filterSkeleton.exists()).toBe(true);
 
     finishFetch({ items: [], total: 0 });
     await flushPromises();
 
+    expect(wrapper.find('[role="status"]').exists()).toBe(false);
     expect(wrapper.text()).toContain("nog geen producties");
+
     wrapper.unmount();
     document.body.innerHTML = "";
+  });
+
+  it("shows list skeleton cards during initial load (list is always the default layout)", async () => {
+    let finishFetch!: (value: ProductionListPage) => void;
+    const deferred = new Promise<ProductionListPage>((resolve) => {
+      finishFetch = resolve;
+    });
+    vi.spyOn(productionsService, "getProductions").mockReturnValue(deferred);
+
+    const router = createRouter({ history: createMemoryHistory(), routes });
+    await router.push("/nl/productions");
+    await router.isReady();
+
+    const wrapper = mount(routerViewRoot, {
+      global: { plugins: [router, i18n] },
+      attachTo: document.body,
+    });
+
+    await nextTick();
+
+    const statusRegion = wrapper.find('[role="status"]');
+    expect(statusRegion.exists()).toBe(true);
+    expect(statusRegion.find(".grid.grid-cols-1").exists()).toBe(false);
+
+    finishFetch({ items: [mockProduction], total: 1 });
+    await flushPromises();
+    wrapper.unmount();
+    document.body.innerHTML = "";
+  });
+
+  it("dims existing cards while a page navigation fetch is in flight", async () => {
+    vi.spyOn(productionsService, "getProductions").mockResolvedValueOnce({
+      items: [mockProduction],
+      total: 45,
+    });
+
+    const { wrapper } = await mountView();
+
+    let finishPageFetch!: (value: ProductionListPage) => void;
+    const pageDeferred = new Promise<ProductionListPage>((resolve) => {
+      finishPageFetch = resolve;
+    });
+    vi.spyOn(productionsService, "getProductions").mockReturnValue(pageDeferred);
+
+    const nextBtn = wrapper.findAll("button").find((b) => b.text() === "Volgende");
+    expect(nextBtn).toBeDefined();
+    await nextBtn!.trigger("click");
+    await nextTick();
+
+    const dimmableWrapper = wrapper.find(".transition-opacity");
+    expect(dimmableWrapper.classes()).toContain("opacity-50");
+    expect(dimmableWrapper.classes()).toContain("pointer-events-none");
+    expect(dimmableWrapper.find(".animate-pulse").exists()).toBe(false);
+    expect(wrapper.text()).toContain("De voorstelling");
+
+    finishPageFetch({ items: [mockProduction], total: 45 });
+    await flushPromises();
+
+    expect(dimmableWrapper.classes()).not.toContain("opacity-50");
+    wrapper.unmount();
   });
 
   it("uses saved dark-mode preference from localStorage", async () => {
@@ -952,6 +1022,50 @@ describe("ProductionsView.vue", () => {
       }),
     );
     expect(router.currentRoute.value.query.page).toBeUndefined();
+    wrapper.unmount();
+  });
+
+  it("uses view=grid from the URL so grid layout stays selected after load", async () => {
+    const { wrapper, router } = await mountView("/nl/productions?view=grid");
+    const gridBtn = wrapper.find('[aria-label="Rasterweergave"]');
+    expect(gridBtn.attributes("aria-pressed")).toBe("true");
+    expect(router.currentRoute.value.query.view).toBe("grid");
+    wrapper.unmount();
+  });
+
+  it("adds view=grid to the URL when toggling to grid layout", async () => {
+    const { wrapper, router } = await mountView();
+    await wrapper.find('[aria-label="Rasterweergave"]').trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query.view).toBe("grid");
+    wrapper.unmount();
+  });
+
+  it("removes view from the URL when switching back to list", async () => {
+    const { wrapper, router } = await mountView("/nl/productions?view=grid");
+    await flushPromises();
+    await wrapper.find('[aria-label="Lijstweergave"]').trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query.view).toBeUndefined();
+    wrapper.unmount();
+  });
+
+  it("drops view=list after load since list uses the canonical URL without view", async () => {
+    const { wrapper, router } = await mountView("/nl/productions?view=list");
+    await flushPromises();
+    expect(router.currentRoute.value.query.view).toBeUndefined();
+    const listBtn = wrapper.find('[aria-label="Lijstweergave"]');
+    expect(listBtn.attributes("aria-pressed")).toBe("true");
+    wrapper.unmount();
+  });
+
+  it("switches layout to list when view is cleared from the URL after load", async () => {
+    const { wrapper, router } = await mountView("/nl/productions?view=grid");
+    await flushPromises();
+    await router.replace({ path: "/nl/productions", query: {} });
+    await flushPromises();
+    const listBtn = wrapper.find('[aria-label="Lijstweergave"]');
+    expect(listBtn.attributes("aria-pressed")).toBe("true");
     wrapper.unmount();
   });
 });

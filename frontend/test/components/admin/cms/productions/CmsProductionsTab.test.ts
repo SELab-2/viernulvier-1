@@ -8,6 +8,8 @@ import * as productionsService from "@/services/productions";
 import * as tagsService from "@/services/tags";
 import * as hallsService from "@/services/halls";
 import * as eventsService from "@/services/events";
+import * as imagesService from "@/services/images";
+import * as mediaUploadService from "@/services/cms/media-upload";
 
 vi.mock("@/services/productions", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/services/productions")>();
@@ -39,6 +41,16 @@ vi.mock("@/services/events", () => ({
   updateEvent: vi.fn(),
 }));
 
+vi.mock("@/services/images", () => ({
+  getImagesByProduction: vi.fn(),
+  getImage: vi.fn(),
+  deleteImage: vi.fn(),
+}));
+
+vi.mock("@/services/cms/media-upload", () => ({
+  uploadImageWithCrops: vi.fn(),
+  uploadCrops: vi.fn(),
+}));
 vi.mock("easymde", () => {
   return {
     default: class MockEasyMDE {
@@ -158,6 +170,19 @@ describe("CmsProductionsTab", () => {
       info: { nl: "" },
       production: mockProduction.id,
     } as never);
+    vi.mocked(imagesService.getImagesByProduction).mockResolvedValue([]);
+    vi.mocked(mediaUploadService.uploadImageWithCrops).mockResolvedValue({
+      id: 999,
+      production: mockProduction.id,
+      res: null,
+      old_id: null,
+      crops: [],
+    } as never);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllEnvs();
   });
 
   afterEach(() => {
@@ -199,7 +224,12 @@ describe("CmsProductionsTab", () => {
     api.createForm.value.artist.nl = "Artist";
     api.createForm.value.tagline.nl = "Tagline";
     api.createForm.value.teaser.nl = "Teaser";
-    api.createForm.value.video_1.nl = "data:image/png;base64,abc";
+    api.createForm.value.media = [{
+      id: "media-1",
+      type: "image",
+      url: "data:image/png;base64,abc",
+      isUploaded: false,
+    }];
 
     await api.submitCreateProduction();
     expect(productionsService.createProduction).toHaveBeenCalledTimes(1);
@@ -224,7 +254,13 @@ describe("CmsProductionsTab", () => {
     api.createForm.value.artist.nl = "Artist";
     api.createForm.value.tagline.nl = "Tagline";
     api.createForm.value.teaser.nl = "Teaser";
-    api.createForm.value.video_1.nl = "data:image/png;base64,abc";
+    api.createForm.value.media = [{
+      id: "media-1",
+      type: "image",
+      url: "data:image/png;base64,abc",
+      isUploaded: false,
+    }];
+    api.createForm.value.video_1 = { nl: "data:image/png;base64,abc" } as any;
 
     await api.submitCreateProduction();
 
@@ -249,6 +285,40 @@ describe("CmsProductionsTab", () => {
     expect(api.editorPanel.value).toBeTruthy();
     await api.saveEditorPanel();
     expect(productionsService.bulkUpdateProductions).toHaveBeenCalled();
+  });
+
+  it("sends explicit empty strings when clearing one locale in the editor panel", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = api.rowData.value[0];
+
+    api.editorPanel.value = {
+      rowId: row.id,
+      apiField: "description",
+      label: "Description",
+      values: {
+        nl: "",
+        en: "Keep me",
+        fr: "Keep me too",
+      },
+    };
+
+    await api.saveEditorPanel();
+
+    expect(productionsService.bulkUpdateProductions).toHaveBeenCalled();
+    const expected = {
+      ids: [row.id],
+      data: {
+        description: {
+          nl: "",
+          en: "Keep me",
+          fr: "Keep me too",
+        },
+      },
+    };
+    const calls = (productionsService.bulkUpdateProductions as any).mock.calls || [];
+    const found = calls.some((c: any) => JSON.stringify(c[0]) === JSON.stringify(expected));
+    expect(found).toBe(true);
   });
 
   it("opens create event from the events drawer and media action click", async () => {
@@ -285,7 +355,7 @@ describe("CmsProductionsTab", () => {
       data: row,
       colDef: { field: "media", headerName: "Media" },
     });
-    expect(api.mediaPreview.value?.kind).toBe("youtube");
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
 
     api.onCellClicked({
       data: api.rowData.value[0],
@@ -316,6 +386,92 @@ describe("CmsProductionsTab", () => {
     expect(api.mediaPreview.value?.kind).toBe("image");
   });
 
+  it("opens media preview with placeholder when clicking empty media cell", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = {
+      ...api.rowData.value[0],
+      media: "",
+    };
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "media", headerName: "Media" },
+    });
+
+    // Placeholder should be opened with blank iframe for video
+    expect(api.mediaPreview.value).toBeTruthy();
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
+    expect(api.mediaPreview.value?.url).toBe("about:blank");
+    expect(api.mediaPreview.value?.mediaField).toBe("video_1");
+    expect(api.mediaPreview.value?.productionId).toBe(api.rowData.value[0].id);
+  });
+
+  it("opens image preview with SVG placeholder when clicking empty image cell", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = {
+      ...api.rowData.value[0],
+      imageMedia: "",
+    };
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "imageMedia", headerName: "Images" },
+    });
+
+    // Placeholder should be opened with SVG image
+    expect(api.mediaPreview.value).toBeTruthy();
+    expect(api.mediaPreview.value?.kind).toBe("image");
+    // Check for SVG data URL (the actual text will be translated to the current locale)
+    expect(api.mediaPreview.value?.url).toContain("data:image/svg+xml");
+    expect(api.mediaPreview.value?.productionId).toBe(api.rowData.value[0].id);
+  });
+
+  it("placeholder allows adding new image when file input changes", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = {
+      ...api.rowData.value[0],
+      imageMedia: "",
+    };
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "imageMedia", headerName: "Images" },
+    });
+
+    // Verify placeholder is open
+    expect(api.mediaPreview.value?.kind).toBe("image");
+
+    // Simulate file selection
+    await vi.waitFor(() => expect(api.mediaPreview.value).toBeTruthy());
+    expect(api.mediaPreview.value?.productionId).toBe(row.id);
+  });
+
+  it("placeholder video can accept URL input and save", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = {
+      ...api.rowData.value[0],
+      media: "",
+    };
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "media", headerName: "Media" },
+    });
+
+    // Placeholder should be opened
+    expect(api.mediaPreview.value).toBeTruthy();
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
+    expect(api.mediaPreview.value?.url).toBe("about:blank");
+    
+    // Verify production and media field are set for saving
+    expect(api.mediaPreview.value?.productionId).toBe(row.id);
+    expect(api.mediaPreview.value?.mediaField).toBe("video_1");
+  });
+
   it("opens bulk edit confirmation when saving long text for multiple selected rows", async () => {
     const wrapper = await mountTab();
     const api = (wrapper.vm as any).$?.exposed.__test;
@@ -343,6 +499,94 @@ describe("CmsProductionsTab", () => {
     await api.confirmBulkEdit();
 
     expect(productionsService.bulkUpdateProductions).toHaveBeenCalled();
+  });
+
+  it("refreshes affected grid cells exactly once after a successful bulk patch", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = api.rowData.value[0];
+    const secondRow = {
+      ...row,
+      id: row.id + 1,
+      source: { ...row.source, id: row.id + 1 },
+    };
+
+    const fakeNodeA = { id: String(row.id) };
+    const fakeNodeB = { id: String(secondRow.id) };
+    const getRowNode = vi.fn((id: string) => (id === String(row.id) ? fakeNodeA : fakeNodeB));
+    const refreshCells = vi.fn();
+
+    api.gridApi.value = {
+      getSelectedRows: () => [row, secondRow],
+      getRowNode,
+      refreshCells,
+    };
+
+    vi.spyOn(productionsService, "bulkUpdateProductions").mockResolvedValueOnce([
+      { ...mockProduction, id: row.id },
+      { ...mockProduction, id: secondRow.id },
+    ]);
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "descriptionOne", headerName: "Description" },
+    });
+    await api.saveEditorPanel();
+    await api.confirmBulkEdit();
+
+    expect(productionsService.bulkUpdateProductions).toHaveBeenCalledTimes(1);
+    expect(refreshCells).toHaveBeenCalledTimes(1);
+    expect(refreshCells).toHaveBeenCalledWith({
+      rowNodes: [fakeNodeA, fakeNodeB],
+      force: true,
+    });
+  });
+
+  it("syncs productionsData after a bulk patch so a language switch keeps the new values", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = api.rowData.value[0];
+    const secondRow = {
+      ...row,
+      id: row.id + 1,
+      source: { ...row.source, id: row.id + 1 },
+    };
+    api.productionsData.value = [
+      { ...mockProduction, id: row.id },
+      { ...mockProduction, id: secondRow.id },
+    ];
+
+    const updatedA = {
+      ...mockProduction,
+      id: row.id,
+      title: { nl: "Nieuwe NL", en: "New EN", fr: "Nouveau FR" },
+    };
+    const updatedB = {
+      ...mockProduction,
+      id: secondRow.id,
+      title: { nl: "Nieuwe NL 2", en: "New EN 2", fr: "Nouveau FR 2" },
+    };
+
+    api.gridApi.value = {
+      getSelectedRows: () => [row, secondRow],
+      getRowNode: vi.fn(() => null),
+      refreshCells: vi.fn(),
+    };
+    vi.spyOn(productionsService, "bulkUpdateProductions").mockResolvedValueOnce([
+      updatedA,
+      updatedB,
+    ]);
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "descriptionOne", headerName: "Description" },
+    });
+    await api.saveEditorPanel();
+    await api.confirmBulkEdit();
+
+    const synced = api.productionsData.value;
+    expect(synced.find((p: any) => p.id === row.id).title).toEqual(updatedA.title);
+    expect(synced.find((p: any) => p.id === secondRow.id).title).toEqual(updatedB.title);
   });
 
   it("covers inline bulk edit confirmation and revert on save failure", async () => {
@@ -553,11 +797,16 @@ describe("CmsProductionsTab", () => {
       },
     } as unknown as Event;
 
-    await api.onImageFileChange(imageInputEvent);
-    await api.onVideoFileChange(videoInputEvent);
+    api.addMedia("image");
+    api.addMedia("video");
+    const imageMedia = api.createForm.value.media.find((m: { type: string }) => m.type === "image");
+    const videoMedia = api.createForm.value.media.find((m: { type: string }) => m.type === "video");
 
-    expect(api.createForm.value.video_1.nl).toContain("data:mock");
-    expect(api.createForm.value.video_2.nl).toContain("data:mock");
+    await api.onMediaFileChange(imageMedia.id, imageInputEvent);
+    await api.onMediaFileChange(videoMedia.id, videoInputEvent);
+
+    expect(imageMedia.url).toContain("data:mock");
+    expect(videoMedia.url).toContain("data:mock");
 
     (globalThis as any).FileReader = originalFileReader;
   });
@@ -601,20 +850,20 @@ describe("CmsProductionsTab", () => {
     expect(api.mediaPreview.value?.kind).toBe("image");
 
     api.openMediaPreview("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "Video");
-    expect(api.mediaPreview.value?.kind).toBe("youtube");
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
     expect(api.mediaPreview.value?.url).toContain("youtube.com/embed/");
 
     api.openMediaPreview("https://example.com/video.webm", "Video");
-    expect(api.mediaPreview.value?.kind).toBe("video");
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
 
     api.closeMediaPreview();
     expect(api.mediaPreview.value).toBeNull();
 
     api.openMediaPreview("https://example.com/file.txt", "Text");
-    expect(api.mediaPreview.value).toBeNull();
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
 
     api.openMediaPreview("https://youtu.be/", "Broken");
-    expect(api.mediaPreview.value).toBeNull();
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
   });
 
   it("covers guard branches for no-op paths", async () => {
@@ -764,12 +1013,75 @@ describe("CmsProductionsTab", () => {
   it("covers additional guard branches and media preview edge cases", async () => {
     const wrapper = await mountTab();
     const api = (wrapper.vm as any).$?.exposed.__test;
+    const state = (wrapper.vm as any).$.setupState as any;
 
     api.openMediaPreview("   ", "Empty");
-    expect(api.mediaPreview.value).toBeNull();
+    expect(api.mediaPreview.value).not.toBeNull();
+    expect(api.mediaPreview.value?.kind).toBe("image");
 
-    await api.onImageFileChange({ target: { files: [], value: "x" } } as unknown as Event);
-    await api.onVideoFileChange({ target: { files: [], value: "x" } } as unknown as Event);
+    api.imagesByProductionId.value = new Map([
+      [api.rowData.value[0].id, [{ id: 501, url: "https://example.com/single.jpg" }]],
+    ]);
+    api.rebuildRows();
+    api.onCellClicked({
+      data: api.rowData.value[0],
+      colDef: { field: "imageMedia", headerName: "Images" },
+    });
+    expect(api.mediaPreview.value?.kind).toBe("image");
+
+    state.syncGalleryPreview(1);
+    expect(api.mediaPreview.value?.kind).toBe("image");
+
+    api.addMedia("image");
+    const imageMedia = api.createForm.value.media.find((m: { type: string }) => m.type === "image");
+    await api.onMediaFileChange(imageMedia.id, { target: { files: [], value: "x" } } as unknown as Event);
+
+    state.updateMediaUrl(imageMedia.id, "https://example.com/image.jpg");
+    expect(imageMedia.url).toBe("https://example.com/image.jpg");
+
+    state.updateMediaUrl("missing-id", "https://example.com/ignored.jpg");
+    expect(imageMedia.url).toBe("https://example.com/image.jpg");
+
+    api.mediaPreview.value = {
+      kind: "image",
+      url: "",
+      label: "Image",
+      productionId: mockProduction.id,
+    } as never;
+    await state.onMediaPreviewImageSelected({
+      target: {
+        files: [new File(["x"], "upload.png", { type: "image/png" })],
+        value: "upload.png",
+      },
+    } as never);
+    expect(api.mediaPreview.value?.url).toBe("");
+
+    api.mediaPreview.value = {
+      kind: "iframe",
+      url: "https://example.com/video",
+      label: "Video",
+      productionId: mockProduction.id,
+    } as never;
+    await state.saveMediaVideoUrl();
+    expect(productionsService.updateProduction).toHaveBeenCalledTimes(0);
+
+    api.mediaPreview.value = {
+      kind: "image",
+      url: "https://example.com/image.jpg",
+      label: "Image",
+      productionId: mockProduction.id,
+    } as never;
+    await state.removeMediaImage();
+    expect(imagesService.deleteImage).toHaveBeenCalledTimes(0);
+
+    api.mediaPreview.value = {
+      kind: "iframe",
+      url: "https://example.com/video",
+      label: "Video",
+      productionId: mockProduction.id,
+    } as never;
+    await state.removeMediaVideo();
+    expect(productionsService.updateProduction).toHaveBeenCalledTimes(0);
 
     api.removeConfirmOpen.value = true;
     api.gridApi.value = {
@@ -917,13 +1229,18 @@ describe("CmsProductionsTab", () => {
     api.createForm.value.artist.nl = "Artist";
     api.createForm.value.tagline.nl = "Tagline";
     api.createForm.value.teaser.nl = "Teaser";
-    api.createForm.value.video_1.nl = "data:image/png;base64,abc";
+    api.createForm.value.media = [{
+      id: "media-1",
+      type: "image",
+      url: "data:image/png;base64,abc",
+      isUploaded: false,
+    }];
     await api.submitCreateProduction();
     expect(api.createError.value).toBeTruthy();
 
     api.onCellClicked({ data: row, colDef: {} });
     api.onCellClicked({ data: row, colDef: { field: "media", headerName: "Media" } });
-    expect(api.editorPanel.value?.apiField).toBe("video_1");
+    expect(api.editorPanel.value).toBeNull();
 
     api.onCellClicked({ data: row, colDef: { field: "descriptionOne" } });
     expect(api.editorPanel.value?.label).toBe(i18n.global.t("cms.panel.text"));
@@ -953,12 +1270,48 @@ describe("CmsProductionsTab", () => {
     api.createForm.value.artist.nl = "Artist";
     api.createForm.value.tagline.nl = "Tagline";
     api.createForm.value.teaser.nl = "Teaser";
-    api.createForm.value.video_1.nl = "data:image/png;base64,abc";
+    api.createForm.value.media = [{
+      id: "media-1",
+      type: "image",
+      url: "data:image/png;base64,abc",
+      isUploaded: false,
+    }];
 
     await api.submitCreateProduction();
 
     expect(productionsService.createProduction).toHaveBeenCalledWith(
       expect.objectContaining({ tags: [1, 2] }),
+    );
+  });
+
+  it("submits external image media and a video url without uploading images", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    api.openCreateModal();
+    await flushPromises();
+
+    api.addMedia("image");
+    api.addMedia("video");
+
+    const imageMedia = api.createForm.value.media.find((m: { type: string }) => m.type === "image");
+    const videoMedia = api.createForm.value.media.find((m: { type: string }) => m.type === "video");
+
+    imageMedia.url = "https://example.com/external.jpg";
+    videoMedia.url = "https://example.com/video.mp4";
+
+    api.createForm.value.title.nl = "Title";
+    api.createForm.value.artist.nl = "Artist";
+    api.createForm.value.tagline.nl = "Tagline";
+    api.createForm.value.teaser.nl = "Teaser";
+
+    await api.submitCreateProduction();
+
+    expect(mediaUploadService.uploadImageWithCrops).not.toHaveBeenCalled();
+    expect(productionsService.createProduction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        video_2: { nl: "https://example.com/video.mp4" },
+      }),
     );
   });
 
@@ -1165,5 +1518,693 @@ describe("CmsProductionsTab", () => {
     expect(api.bulkEditConfirmOpen.value).toBe(true);
     await api.confirmBulkEdit();
     expect(api.bulkEditConfirmLoading.value).toBe(false);
+  });
+
+  it("lazily loads production images and syncs gallery previews outside test mode", async () => {
+    vi.stubEnv("MODE", "development");
+    vi.mocked(imagesService.getImagesByProduction).mockResolvedValueOnce([
+      {
+        id: 201,
+        crops: [{ id: 1, image: 201, type: "cms_thumbnail", url: "/media/crops/thumb-a.jpg", old_id: null }],
+      },
+      {
+        id: 202,
+        crops: [
+          { id: 2, image: 202, type: "cms", url: "/media/crops/cms-b.jpg", old_id: null },
+          { id: 3, image: 202, type: "cms_wide", url: "/media/crops/wide-b.jpg", old_id: null },
+        ],
+      },
+    ] as never);
+
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    await flushPromises();
+    await flushPromises();
+
+    api.onCellClicked({
+      data: api.rowData.value[0],
+      colDef: { field: "imageMedia", headerName: "Images" },
+    });
+
+    await flushPromises();
+
+    expect(api.mediaPreview.value?.kind).toBe("gallery");
+    expect(api.mediaPreview.value?.images).toHaveLength(2);
+
+    await wrapper.findAll("button.cms-media-gallery-thumb")[1].trigger("click");
+    expect(api.mediaPreview.value?.imageId).toBe(202);
+
+    await wrapper.findAll("div.cms-media-gallery-nav button")[0].trigger("click");
+    expect(api.mediaPreview.value?.imageId).toBe(201);
+  });
+
+  it("covers media preview save/remove guards and upload path", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const state = (wrapper.vm as any).$.setupState as any;
+    const confirmSpy = vi.spyOn(window, "confirm");
+
+    api.openMediaPreview("https://player.vimeo.com/video/12345678901", "Vimeo", {
+      productionId: mockProduction.id,
+      mediaField: "video_1",
+    });
+
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
+    expect(api.mediaPreview.value?.url).toContain("player.vimeo.com/video/12345678901");
+
+    state.mediaPreviewEditUrl = "https://vimeo.com/12345678901";
+    await state.saveMediaVideoUrl();
+    expect(productionsService.updateProduction).toHaveBeenCalledWith(
+      mockProduction.id,
+      expect.objectContaining({ video_1: { nl: "https://vimeo.com/12345678901" } }),
+    );
+
+    api.openMediaPreview("https://example.com/image.jpg", "Image", {
+      productionId: mockProduction.id,
+      imageId: 321,
+    });
+
+    confirmSpy.mockReturnValue(false);
+    await state.removeMediaImage();
+    expect(imagesService.deleteImage).not.toHaveBeenCalled();
+
+    confirmSpy.mockReturnValue(true);
+    await state.removeMediaImage();
+
+    api.openMediaPreview("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "Video", {
+      productionId: mockProduction.id,
+      mediaField: "video_2",
+    });
+
+    state.mediaPreviewEditUrl = "https://youtu.be/dQw4w9WgXcQ";
+    await state.saveMediaVideoUrl();
+
+    confirmSpy.mockReturnValue(true);
+    await state.removeMediaVideo();
+    expect(productionsService.updateProduction).toHaveBeenCalledWith(
+      mockProduction.id,
+      expect.objectContaining({ video_2: null }),
+    );
+
+    class FileReaderMock {
+      onload: null | (() => void) = null;
+      onerror: null | (() => void) = null;
+      result = "data:mock;base64,abc";
+
+      readAsDataURL() {
+        this.onload?.();
+      }
+    }
+
+    const originalFileReader = (globalThis as typeof globalThis & { FileReader?: typeof FileReader }).FileReader;
+    (globalThis as typeof globalThis & { FileReader?: typeof FileReader }).FileReader = FileReaderMock as never;
+
+    api.openMediaPreview("https://example.com/upload.jpg", "Image", {
+      productionId: mockProduction.id,
+      imageId: 777,
+    });
+
+    await state.onMediaPreviewImageSelected({
+      target: {
+        files: [new File(["x"], "upload.png", { type: "image/png" })],
+        value: "upload.png",
+      },
+    } as never);
+
+    expect(mediaUploadService.uploadImageWithCrops).toHaveBeenCalledWith(
+      mockProduction.id,
+      "data:mock;base64,abc",
+    );
+
+    (globalThis as typeof globalThis & { FileReader?: typeof FileReader }).FileReader = originalFileReader;
+    confirmSpy.mockRestore();
+  });
+
+  it("covers media operations guard conditions", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const state = (wrapper.vm as any).$.setupState as any;
+
+    // Missing productionId - saveMediaVideoUrl
+    api.mediaPreview.value = {
+      kind: "iframe",
+      url: "https://example.com/video",
+      label: "Video",
+      mediaField: "video_1",
+    } as never;
+    await state.saveMediaVideoUrl();
+    expect(productionsService.updateProduction).not.toHaveBeenCalled();
+
+    // Missing mediaField - saveMediaVideoUrl
+    api.mediaPreview.value = {
+      kind: "iframe",
+      url: "https://example.com/video",
+      label: "Video",
+      productionId: mockProduction.id,
+    } as never;
+    await state.saveMediaVideoUrl();
+    expect(productionsService.updateProduction).not.toHaveBeenCalled();
+
+    // Empty URL - saveMediaVideoUrl
+    api.mediaPreview.value = {
+      kind: "iframe",
+      url: "   ",
+      label: "Video",
+      productionId: mockProduction.id,
+      mediaField: "video_1",
+    } as never;
+    await state.saveMediaVideoUrl();
+    expect(productionsService.updateProduction).not.toHaveBeenCalled();
+
+    // Missing productionId - removeMediaVideo
+    api.mediaPreview.value = {
+      kind: "iframe",
+      url: "https://example.com/video",
+      label: "Video",
+      mediaField: "video_1",
+    } as never;
+    await state.removeMediaVideo();
+    expect(productionsService.updateProduction).not.toHaveBeenCalled();
+
+    // Missing mediaField - removeMediaVideo
+    api.mediaPreview.value = {
+      kind: "iframe",
+      url: "https://example.com/video",
+      label: "Video",
+      productionId: mockProduction.id,
+    } as never;
+    await state.removeMediaVideo();
+    expect(productionsService.updateProduction).not.toHaveBeenCalled();
+
+    // Missing productionId - removeMediaImage
+    api.mediaPreview.value = {
+      kind: "image",
+      url: "https://example.com/image.jpg",
+      label: "Image",
+      imageId: 123,
+    } as never;
+    await state.removeMediaImage();
+    expect(imagesService.deleteImage).not.toHaveBeenCalled();
+
+    // Missing imageId - removeMediaImage
+    api.mediaPreview.value = {
+      kind: "image",
+      url: "https://example.com/image.jpg",
+      label: "Image",
+      productionId: mockProduction.id,
+    } as never;
+    await state.removeMediaImage();
+    expect(imagesService.deleteImage).not.toHaveBeenCalled();
+  });
+
+  it("covers submitCreateProduction with image upload error recovery", async () => {
+    vi.mocked(mediaUploadService.uploadImageWithCrops).mockRejectedValueOnce(new Error("upload failed"));
+
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    api.openCreateModal();
+    await flushPromises();
+
+    api.addMedia("image");
+    const imageMedia = api.createForm.value.media.find((m: { type: string }) => m.type === "image");
+    imageMedia.url = "data:image/png;base64,abc";
+
+    api.createForm.value.title.nl = "Title";
+    api.createForm.value.artist.nl = "Artist";
+    api.createForm.value.tagline.nl = "Tagline";
+    api.createForm.value.teaser.nl = "Teaser";
+
+    await api.submitCreateProduction();
+
+    // Production should still be created even if image upload fails
+    expect(productionsService.createProduction).toHaveBeenCalled();
+    expect(api.createModalOpen.value).toBe(false);
+  });
+
+  it("covers submitCreateProduction with non-Error exception", async () => {
+    vi.spyOn(productionsService, "createProduction").mockRejectedValueOnce("string error" as any);
+
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    api.openCreateModal();
+    api.createForm.value.title.nl = "Title";
+    api.createForm.value.artist.nl = "Artist";
+    api.createForm.value.tagline.nl = "Tagline";
+    api.createForm.value.teaser.nl = "Teaser";
+
+    await api.submitCreateProduction();
+    expect(api.createError.value).toBeTruthy();
+  });
+
+  it("covers edge cases in onMediaPreviewImageSelected", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const state = (wrapper.vm as any).$.setupState as any;
+
+    // No preview set
+    await state.onMediaPreviewImageSelected({
+      target: {
+        files: [new File(["x"], "test.png", { type: "image/png" })],
+      },
+    } as never);
+    expect(api.mediaPreview.value).toBe(null);
+
+    // No files selected
+    api.mediaPreview.value = {
+      kind: "image",
+      url: "https://example.com/image.jpg",
+      label: "Image",
+      productionId: mockProduction.id,
+      imageId: 123,
+    } as never;
+    await state.onMediaPreviewImageSelected({
+      target: {
+        files: [],
+      },
+    } as never);
+    expect(api.mediaPreview.value?.url).toBe("https://example.com/image.jpg");
+  });
+
+  it("covers remaining media preview modal transitions", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    // Open video placeholder
+    api.onCellClicked({
+      data: { ...api.rowData.value[0], media: "" },
+      colDef: { field: "media", headerName: "Media" },
+    });
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
+    expect(api.mediaPreview.value?.url).toBe("about:blank");
+
+    // Open image placeholder
+    api.onCellClicked({
+      data: { ...api.rowData.value[0], imageMedia: "" },
+      colDef: { field: "imageMedia", headerName: "Images" },
+    });
+    expect(api.mediaPreview.value?.kind).toBe("image");
+    expect(api.mediaPreview.value?.url).toContain("data:image/svg+xml");
+  });
+
+  it("covers create production form field updates with validation", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    api.openCreateModal();
+    expect(api.visibleCreateLangs.value).toContain("nl");
+    expect(api.visibleCreateLangs.value).not.toContain("en");
+
+    const createModal = wrapper.findComponent({ name: "CmsCreateProductionModal" });
+    createModal.vm.$emit("update-form-field", "description", "nl", "Description NL");
+    createModal.vm.$emit("update-form-field", "description_2", "nl", "Description 2 NL");
+
+    expect(api.createForm.value.description.nl).toBe("Description NL");
+    expect(api.createForm.value.description_2.nl).toBe("Description 2 NL");
+
+    await api.submitCreateProduction();
+    expect(api.createError.value).toBeTruthy();
+  });
+
+  it("updates media preview edit url via modal event", async () => {
+    const wrapper = await mountTab();
+    const state = (wrapper.vm as any).$.setupState as any;
+
+    state.openMediaPreview("https://example.com/video", "Media", {
+      productionId: mockProduction.id,
+      mediaField: "video_1",
+    });
+
+    const modal = wrapper.findComponent({ name: "CmsMediaPreviewModal" });
+    modal.vm.$emit("update:media-preview-edit-url", "https://new.example/video");
+    await nextTick();
+
+    expect(state.mediaPreviewEditUrl).toBe("https://new.example/video");
+  });
+
+  it("covers xml escaping and sparse gallery sync edge", async () => {
+    const wrapper = await mountTab();
+    const state = (wrapper.vm as any).$.setupState as any;
+
+    const escaped = state.escapeXml("&<>'\"");
+    expect(escaped).toBe("&amp;&lt;&gt;&apos;&quot;");
+
+    wrapper.unmount();
+
+    state.mediaPreview = {
+      kind: "gallery",
+      url: "https://example.com/1.jpg",
+      label: "Gallery",
+      images: [{ id: 1, url: "https://example.com/1.jpg" }, undefined] as any,
+      imageId: 1,
+      currentImageIndex: 0,
+    };
+
+    state.syncGalleryPreview(1);
+    expect(state.mediaPreview.imageId).toBe(1);
+  });
+
+  it("covers media preview mutation error branches", async () => {
+    const wrapper = await mountTab();
+    const state = (wrapper.vm as any).$.setupState as any;
+    const confirmSpy = vi.spyOn(window, "confirm");
+
+    class FailingFileReaderMock {
+      onload: null | (() => void) = null;
+      onerror: null | (() => void) = null;
+      result = null;
+
+      readAsDataURL() {
+        this.onerror?.();
+      }
+    }
+
+    const originalFileReader = (globalThis as typeof globalThis & { FileReader?: typeof FileReader }).FileReader;
+    (globalThis as typeof globalThis & { FileReader?: typeof FileReader }).FileReader = FailingFileReaderMock as never;
+
+    state.openMediaPreview("https://example.com/image.jpg", "Image", {
+      productionId: mockProduction.id,
+      imageId: 10,
+    });
+
+    await state.onMediaPreviewImageSelected({
+      target: {
+        files: [new File(["x"], "broken.png", { type: "image/png" })],
+        value: "broken.png",
+      },
+    } as never);
+
+    (globalThis as typeof globalThis & { FileReader?: typeof FileReader }).FileReader = originalFileReader;
+
+    state.openMediaPreview("https://example.com/video", "Video", {
+      productionId: mockProduction.id,
+      mediaField: "video_1",
+    });
+    state.mediaPreviewEditUrl = "https://new.example/video";
+    vi.spyOn(productionsService, "updateProduction").mockRejectedValueOnce(new Error("save failed"));
+    await state.saveMediaVideoUrl();
+
+    state.openMediaPreview("https://example.com/image.jpg", "Image", {
+      productionId: mockProduction.id,
+      imageId: 123,
+    });
+    confirmSpy.mockReturnValue(true);
+    vi.mocked(imagesService.deleteImage).mockRejectedValueOnce(new Error("delete failed"));
+    await state.removeMediaImage();
+
+    state.openMediaPreview("https://example.com/video", "Video", {
+      productionId: mockProduction.id,
+      mediaField: "video_2",
+    });
+    confirmSpy.mockReturnValue(false);
+    await state.removeMediaVideo();
+
+    confirmSpy.mockReturnValue(true);
+    vi.spyOn(productionsService, "updateProduction").mockRejectedValueOnce(new Error("delete failed"));
+    await state.removeMediaVideo();
+
+    confirmSpy.mockRestore();
+  });
+
+  it("removes media item by id from create form", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    api.addMedia("image");
+    api.addMedia("video");
+    const mediaIdToRemove = api.createForm.value.media[0]?.id;
+
+    api.removeMedia(mediaIdToRemove);
+    expect(api.createForm.value.media.some((m: { id: string }) => m.id === mediaIdToRemove)).toBe(false);
+  });
+
+  it("keeps image map unchanged when lazy image response is stale", async () => {
+    vi.stubEnv("MODE", "development");
+
+    let resolveImages: ((value: Array<{ id: number; crops: Array<{ type: string; url: string }> }>) => void) | undefined;
+    vi.mocked(imagesService.getImagesByProduction).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveImages = resolve as (value: Array<{ id: number; crops: Array<{ type: string; url: string }> }>) => void;
+        }) as never,
+    );
+
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    const currentToken = api.imageLoadRequestToken.value;
+    api.imageLoadRequestToken.value = currentToken + 1;
+
+    resolveImages?.([{ id: 11, crops: [{ type: "cms", url: "/stale.jpg" }] }]);
+    await flushPromises();
+
+    expect(api.imagesByProductionId.value.size).toBe(0);
+  });
+
+  it("renders secondary-tag preview content in both bulk mode modal variants", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    api.secondaryTagBulkModeOpen.value = true;
+    api.secondaryTagBulkModeTagsPreview.value = "Drama, Comedy";
+    api.secondaryTagBulkModeAddedPreview.value = "+ Theme A";
+    api.secondaryTagBulkModeRemovedPreview.value = "- Theme B";
+    await nextTick();
+
+    const html = wrapper.html();
+    expect(html).toContain("Drama, Comedy");
+    expect(html).toContain("+ Theme A");
+    expect(html).toContain("- Theme B");
+    // Two modal variants are currently rendered; both should contain preview sections.
+    expect(wrapper.findAll(".cms-modal-overlay").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("covers secondary-tag bulk diff with unknown tag ids and vimeo regular URL parsing", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const state = (wrapper.vm as any).$.setupState as any;
+
+    const row = api.rowData.value[0];
+    row.source.tags = [1 as never, 2 as never, 999 as never];
+    const otherRow = {
+      ...row,
+      id: row.id + 55,
+      source: {
+        ...row.source,
+        id: row.id + 55,
+        tags: [1 as never, 2 as never, 999 as never],
+      },
+    };
+
+    api.gridApi.value = {
+      getSelectedRows: () => [row, otherRow],
+      getState: vi.fn(() => ({})),
+      getColumnState: vi.fn(() => []),
+      setState: vi.fn(),
+      setGridOption: vi.fn(),
+      sizeColumnsToFit: vi.fn(),
+    };
+
+    api.openTagEditorPanel(row);
+    api.toggleTagEditorTag(1, true);
+    await api.saveTagEditorPanel();
+    await api.confirmBulkEdit();
+    await api.confirmSecondaryTagBulkDiff();
+
+    state.openMediaPreview("https://vimeo.com/123456789", "Vimeo", {
+      productionId: mockProduction.id,
+      mediaField: "video_1",
+    });
+    expect(api.mediaPreview.value?.url).toContain("https://player.vimeo.com/video/123456789");
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
+  });
+
+  it("parses vimeo player URL and bare vimeo URL without digits", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const state = (wrapper.vm as any).$.setupState as any;
+
+    state.openMediaPreview("https://player.vimeo.com/video/987654", "Vimeo", {
+      productionId: mockProduction.id,
+      mediaField: "video_1",
+    });
+    expect(api.mediaPreview.value?.url).toContain("https://player.vimeo.com/video/987654");
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
+
+    state.openMediaPreview("https://vimeo.com/no-digits", "Vimeo", {
+      productionId: mockProduction.id,
+      mediaField: "video_1",
+    });
+    expect(api.mediaPreview.value?.url).toBe("https://vimeo.com/no-digits");
+    expect(api.mediaPreview.value?.kind).toBe("iframe");
+  });
+
+  it("clears the primary genre tag when set to 0", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = api.rowData.value[0];
+
+    await api.onCellEditingStopped({
+      data: row,
+      value: 0,
+      oldValue: 1,
+      colDef: { field: "genres" },
+      node: { setDataValue: vi.fn() },
+    });
+
+    expect(productionsService.updateProduction).toHaveBeenCalled();
+    const lastCall = (productionsService.updateProduction as any).mock.calls.at(-1);
+    expect(lastCall?.[1]?.tags).toEqual(expect.not.arrayContaining([1]));
+  });
+
+  it("ignores no-op genre edits where value equals previous and non-finite values", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = api.rowData.value[0];
+    const setDataValue = vi.fn();
+
+    // no-op: same value
+    await api.onCellEditingStopped({
+      data: row,
+      colDef: { field: "genres" },
+      value: undefined,
+      oldValue: undefined,
+      node: { setDataValue },
+    });
+    expect(setDataValue).not.toHaveBeenCalled();
+
+    // non-finite: NaN reverts
+    await api.onCellEditingStopped({
+      data: row,
+      colDef: { field: "genres" },
+      value: Number.NaN,
+      oldValue: 1,
+      node: { setDataValue },
+    });
+    expect(setDataValue).toHaveBeenCalledWith("genres", 1);
+  });
+
+  it("resolves mediaField from video_2 when media cell value matches video_2", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = {
+      ...api.rowData.value[0],
+      media: "https://example.com/clip2.mp4",
+      source: {
+        ...api.rowData.value[0].source,
+        video_1: null,
+        video_2: { nl: "https://example.com/clip2.mp4" },
+      },
+    };
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "media", headerName: "Media" },
+    });
+
+    expect(api.mediaPreview.value?.mediaField).toBe("video_2");
+  });
+
+  it("falls back to video_2 as preferred field when only video_2 is set on empty media cell", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = {
+      ...api.rowData.value[0],
+      media: "",
+      source: {
+        ...api.rowData.value[0].source,
+        video_1: null,
+        video_2: { nl: "https://example.com/v2.mp4" },
+      },
+    };
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "media", headerName: "Media" },
+    });
+
+    expect(api.mediaPreview.value?.mediaField).toBe("video_2");
+  });
+
+  it("opens image gallery preview when imageMedia cell has images", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    api.imagesByProductionId.value = new Map([
+      [mockProduction.id, [
+        { id: 1, url: "/a.jpg" },
+        { id: 2, url: "/b.jpg" },
+      ]],
+    ]);
+    api.rebuildRows();
+
+    api.onCellClicked({
+      data: api.rowData.value[0],
+      colDef: { field: "imageMedia", headerName: "Images" },
+    });
+
+    expect(api.mediaPreview.value?.kind).toBe("gallery");
+    expect(api.mediaPreview.value?.images?.length).toBe(2);
+  });
+
+  it("onMediaFileChange is a no-op when mediaId does not match", async () => {
+    class FileReaderMock {
+      onload: null | (() => void) = null;
+      onerror: null | (() => void) = null;
+      result = "data:image/png;base64,xyz";
+      readAsDataURL() {
+        this.onload?.();
+      }
+    }
+    const originalFileReader = (globalThis as any).FileReader;
+    (globalThis as any).FileReader = FileReaderMock;
+
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+
+    api.addMedia("image");
+    const before = api.createForm.value.media[0]?.url;
+
+    await api.onMediaFileChange("media-does-not-exist", {
+      target: {
+        files: [new File(["x"], "x.png", { type: "image/png" })],
+        value: "x",
+      },
+    } as unknown as Event);
+
+    expect(api.createForm.value.media[0]?.url).toBe(before);
+
+    (globalThis as any).FileReader = originalFileReader;
+  });
+
+  it("surfaces generic error string when persistBulkProductionPatch rejects with non-Error", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const state = (wrapper.vm as any).$.setupState as any;
+    const row = api.rowData.value[0];
+
+    vi.spyOn(productionsService, "bulkUpdateProductions").mockRejectedValueOnce("boom");
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "descriptionOne", headerName: "Description" },
+    });
+
+    await expect(api.saveEditorPanel()).rejects.toBeDefined();
+    expect(state.saveError).toBeTruthy();
+  });
+
+  it("covers escapeXml default callback branch", async () => {
+    const wrapper = await mountTab();
+    const state = (wrapper.vm as any).$.setupState as any;
+
+    const fakeUnsafe = {
+      replace: (_regex: RegExp, cb: (character: string) => string) => cb("x"),
+    };
+
+    const result = state.escapeXml(fakeUnsafe as never);
+    expect(result).toBe("x");
   });
 });

@@ -20,12 +20,12 @@
 
 /* ===== NAV LEFT ===== */
 .nav-left { @apply flex items-center; }
-.nav-links { @apply hidden sm:flex items-center gap-6; }
+.nav-links { @apply hidden lg:flex items-center gap-6; }
 .logo { @apply h-6 w-auto; }
 
 /* ===== HAMBURGER ===== */
 .hamburger {
-  @apply flex sm:hidden flex-col gap-[5px] cursor-pointer p-1;
+  @apply flex lg:hidden flex-col gap-[5px] cursor-pointer p-1;
   background: none;
   border: none;
 }

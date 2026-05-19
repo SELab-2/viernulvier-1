@@ -1,6 +1,7 @@
 export default {
   general: {
     cancel: "Cancel",
+    delete: "Delete",
     saving: "Saving...",
   },
   nav: {
@@ -28,6 +29,7 @@ export default {
   },
   featuredBlog: {
     eyebrow: "Featured blog post",
+    loading: "Loading featured blog ...",
     dateline: "{date} · Editorial",
     readMore: "Read the full article",
     imageCaption:
@@ -75,13 +77,14 @@ export default {
     },
     columns: {
       id: "ID",
+      events: "Events",
       performer: "Artist",
       title: "Title",
       producer: "Supertitle",
       teaser: "Teaser",
-      genres: "Primary Tag",
+      genres: "Genre tag",
       tags: "Additional Tags",
-      imageMedia: "Image Media",
+      imageMedia: "Images",
       descriptionOne: "Description",
       descriptionTwo: "Description 2",
       media: "Media",
@@ -205,10 +208,19 @@ export default {
       },
       media: {
         title: "Media",
+        image: "Image",
+        video: "Video",
+        addImage: "Add image",
+        addVideo: "Add video",
+        confirmDelete: "Are you sure you want to delete this image?",
+        confirmDeleteVideo: "Are you sure you want to remove this video?",
+        editVideoUrlPlaceholder: "Edit video URL",
         language: "Upload language",
         uploadImage: "Upload image",
         youtubeLink: "YouTube link",
-        hint: "You can upload an image file, enter an image/media URL, or paste a YouTube link. At least one image is required.",
+        imageCountOne: "1 image",
+        imageCountOther: "{count} images",
+        hint: "You can add multiple images and videos. For images, different formats will be automatically generated.",
       },
       validation: {
         requiredOneLanguage: "Fill at least 1 language for: {field}",
@@ -237,6 +249,7 @@ export default {
       saveHint: "Changes are only applied after clicking Save Changes.",
       text: "Text",
       bulkNotice: "Change will be applied to {count} selected productions.",
+      noMedia: "No media",
     },
     errors: {
       loadFailed: "Could not load CMS data: {message}",
@@ -248,6 +261,10 @@ export default {
       saveSuccess: "Changes saved successfully",
       removeSuccess: "Production removed successfully",
       removeTagSuccess: "Tag removed successfully",
+      mediaRemoveSuccess: "Image removed successfully",
+      mediaRemoveVideoSuccess: "Video removed successfully",
+      mediaAddSuccess: "Image added successfully",
+      mediaUpdateSuccess: "Image updated successfully",
       removeTagTypeSuccess: "Tag type removed successfully",
     },
     admin: {

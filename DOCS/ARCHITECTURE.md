@@ -52,11 +52,11 @@ All three services (frontend, backend, database) are orchestrated with **Docker 
 
 ## 2. Repository Layout
 
-The monorepo contains three packages, each with its own `src/`, `test/`, `Dockerfile`, and configuration files:
+The monorepo contains three main packages with domain-specific source, tests, and configuration:
 
 - **`backend/`** — Fastify REST API. Source code is in `src/` (entry point, server setup, plugins, and domain-organized routes). SQL migrations live in `migrations/`, utility scripts in `scripts/`.
 - **`frontend/`** — Vue 3 SPA. Source code in `src/`, UI mockups in `mock/`.
-- **`shared/`** — Zod schemas and TypeScript types consumed by both backend and frontend. Contains no tests — validated indirectly through the other packages.
+- **`shared/`** — Zod schemas and TypeScript types consumed by both backend and frontend. Contains no tests and no Docker image — validated indirectly through the other packages.
 
 At the root level: Docker Compose files for production and development, pnpm workspace config, `.env.example`, CI/CD workflows in `.github/`, and helper shell scripts for starting dev containers and running migrations.
 
@@ -66,10 +66,12 @@ At the root level: Docker Compose files for production and development, pnpm wor
 
 | Tool | Purpose |
 |------|---------|
-| **pnpm** (workspaces) | Package manager with workspace support. The three packages (`backend`, `frontend`, `shared`) are linked automatically. |
-| **TypeScript 5.9** | Strict mode across all packages. The shared package's `tsconfig.json` extends the backend's to keep compiler options consistent. |
-| **ESLint 9** | Flat config with `@typescript-eslint`, `eslint-plugin-security` (backend), `eslint-plugin-vue` (frontend), and `eslint-plugin-tsdoc` (both). |
+| **pnpm 10 (workspaces)** | Package manager with workspace support. The three packages (`backend`, `frontend`, `shared`) are linked automatically. |
+| **TypeScript 6.x** | Strict mode across all packages. The shared package's `tsconfig.json` extends the backend's to keep compiler options consistent. |
+| **ESLint 10** | Flat config with `@typescript-eslint`, `eslint-plugin-security` (backend), `eslint-plugin-vue` (frontend), and `eslint-plugin-tsdoc` (both). |
 | **Vitest 4** | Test runner for both backend (Node environment) and frontend (jsdom environment). |
+
+See config files: [backend/package.json](../backend/package.json), [frontend/package.json](../frontend/package.json), [shared/package.json](../shared/package.json).
 
 ### Workspace dependency graph
 
@@ -80,16 +82,7 @@ frontend ─depends on──▶ @viernulvier/shared
 
 The shared package exposes **raw TypeScript source** (not compiled output) via its `exports` map. This means consumers (backend via `tsx`, frontend via Vite) transpile it on-the-fly. This avoids a separate build step during development.
 
-### Root scripts
-
-| Script | Description |
-|--------|-------------|
-| `pnpm dev` | Starts all Docker containers with hot-reload |
-| `pnpm check-all` | Installs, lints, tests, and builds all three packages |
-| `pnpm lint-all` / `lint:fix-all` | Runs ESLint across the monorepo |
-| `pnpm coverage-all` | Runs tests with code coverage for backend + frontend |
-| `pnpm build-all` | Full production build of all packages |
-| `pnpm generate-secret` | Generates a random JWT secret |
+See workspace config: [pnpm-workspace.yaml](../pnpm-workspace.yaml) and root [package.json](../package.json).
 
 ---
 
@@ -97,39 +90,41 @@ The shared package exposes **raw TypeScript source** (not compiled output) via i
 
 The shared package is the single source of truth for domain types and validation rules. It uses [Zod 4](https://zod.dev) to define schemas that serve as both **runtime validators** and **TypeScript type generators**.
 
+See the shared schema helpers: [shared/src/types/metadata.ts](../shared/src/types/metadata.ts) and schema exports in [shared/src/types/index.ts](../shared/src/types/index.ts).
+
 ### 4.1 Domain entities
 
 | Entity | Description |
 |--------|-------------|
-| **Admin** | CMS administrator account (username, profile picture) |
-| **Production** | A cultural work — theatre show, concert, film, etc. Contains multilingual text fields |
-| **Event** | A specific scheduled occurrence of a production at a hall |
-| **EventPrice** | Pricing information for an event (amount, availability, expiration) |
-| **Hall** | A physical venue where events take place |
-| **Tag** / **TagType** | Classification system. Tags belong to typed categories (genre, festival, etc.) |
-| **Image** / **Crop** | Media assets. An image belongs to a production; crops are derived variants with URLs |
-| **Blog** / **BlogPost** | Optional editorial content linked to productions |
-| **CustomProductionFieldDefinition** / **CustomProductionField** | EAV (entity-attribute-value) system for dynamic per-production fields |
+| **Admin** | CMS administrator account (`username`, `profile_picture`, `super`) |
+| **Production** | Core archive object with multilingual content, `finalized`, legacy `old_id`, and backwards refs |
+| **Event** / **EventPrice** | Scheduled occurrences and pricing records |
+| **Hall** | Venue data for events |
+| **Tag** / **TagType** | Classification system for productions |
+| **Image** / **Crop** | Media assets and derived crop variants |
+| **Blog** / **BlogPost** | Editorial content and production links |
+| **CustomProductionFieldDefinition** / **CustomProductionField** | Dynamic per-production custom fields |
 
 ### 4.2 The `createSchema` / `withMeta` pattern
 
-Every domain schema is created through `createSchema()` instead of `z.object()` directly. This factory attaches a non-enumerable `withMeta()` method to the schema:
+Every domain schema is created through `createSchema()` instead of `z.object()` directly. This factory attaches a non-enumerable `withMeta()` method that extends the schema with audit fields (`created_by`, `created_at`, `updated_by`, `updated_at`).
 
 ```typescript
 const AdminSchema = createSchema({
   id: primaryKey(),
   username: z.string().max(32),
   profile_picture: z.url().nullable(),
+  super: z.boolean(),
 });
 
 type Admin = z.infer<typeof AdminSchema>;
-// → { id: number; username: string; profile_picture: string | null }
+// → { id: number; username: string; profile_picture: string | null; super: boolean }
 
 type AdminWithMeta = z.infer<ReturnType<typeof AdminSchema.withMeta>>;
 // → Admin & { created_by: number; created_at: Date; updated_by: number; updated_at: Date }
 ```
 
-This pattern gives every entity two shapes: a **base** form (for creation/editing) and a **withMeta** form (for reading from the database, which includes audit fields).
+`MetadataShape` uses lazy admin registration (`_registerAdminSchema`) so metadata foreign keys can reference `AdminSchema` without circular import issues.
 
 The shared package also provides helpers for foreign key relationships (lazy-evaluated to avoid circular dependencies), multilingual field validation (`languageMap`), and string-to-number codecs for route parameter parsing.
 
@@ -139,20 +134,28 @@ The shared package also provides helpers for foreign key relationships (lazy-eva
 
 The backend is a **Fastify 5** REST API running on **Node.js 24**. It follows Fastify's plugin-based architecture.
 
+Server entry and plugin registration: [backend/src/server.ts](../backend/src/server.ts).
+
 ### 5.1 Architecture
 
-On startup the server registers three plugins in order — **postgres** (connection pool via `@fastify/postgres`), **jwt** (cookie-based JWT via `@fastify/jwt` + `@fastify/cookie`), and **authorize** (a `preHandler` hook for protected routes) — followed by the route modules.
+On startup the server registers plugins for **postgres** (connection pool via `@fastify/postgres`), **swagger docs**, **jwt/cookies** (`@fastify/jwt` + `@fastify/cookie`), **authorize** (a `preHandler` hook for protected routes), **S3/Garage integration**, and **multipart uploads**, followed by the route modules.
+
+Key backend helpers and plugins: [backend/src/routes/helpers.ts](../backend/src/routes/helpers.ts), [backend/src/plugins/authorize.ts](../backend/src/plugins/authorize.ts), [backend/src/plugins/jwt.ts](../backend/src/plugins/jwt.ts).
 
 Routes are organized by domain. Each domain has its own directory under `routes/` containing route definitions and a `handlers/` folder. The current modules are:
 
 | Module | Prefix | Public endpoints | Protected endpoints |
 |--------|--------|:----------------:|:-------------------:|
+| **Media** | `/api/v1/image`, `/api/v1/crop`, `/media/crops/*` | Fetch media + crop proxy | CRUD for images/crops |
 | **Production** | `/api/v1/production` | Fetch all/one | CRUD, bulk edit |
 | **Event** | `/api/v1/event` | Fetch all/one | CRUD, bulk edit |
+| **Event Prices** | `/api/v1/event/price` | Fetch all/one | CRUD |
 | **Auth** | `/api/v1/auth` | Login, logout | Admin CRUD |
 | **Tags** | `/api/v1/tag` | Fetch public tags | Full CRUD, fetch all |
 | **Tag Types** | `/api/v1/tag/type` | Fetch all/one | CRUD |
 | **Halls** | `/api/v1/hall` | Fetch all/one | CRUD |
+| **Blog** | `/api/v1/blog` | Fetch all/one | CRUD |
+| **Blog Posts** | `/api/v1/blogpost` | Fetch all/one | CRUD |
 
 Every domain follows a consistent REST pattern: public GET endpoints for reading, and authenticated POST/PUT/PATCH/DELETE for writing. Most entities also expose a `/meta` variant that includes audit fields.
 
@@ -163,21 +166,27 @@ The `routes/helpers.ts` module provides the core request-handling utilities:
 | Function | Purpose |
 |----------|---------|
 | `parseParams(request, schema)` | Validates URL parameters against a Zod object schema. Throws 400 on failure. |
+| `parseUser(request)` | Validates and extracts JWT user payload (`id`) from `request.user`. |
 | `parseSchema(server, schema, value, context)` | General-purpose Zod validation. Context determines error code (400 for request, 500 for database). |
-| `buildQuery(server, sql, [filterFields], resultSchema)` | Returns a reusable, type-safe query function. Validates input parameters, executes parameterized SQL, validates output rows. |
+| `buildQuery(server, queryConfig, [filterFields], resultSchema)` | Returns a reusable, type-safe query function. Validates input parameters, executes parameterized SQL, validates output rows. |
 | `replyHandler(server, handler)` | Wraps async handlers. Converts `HttpError` to proper HTTP responses, returns 404 for null results. |
-| `getMetadata(request)` | Extracts the authenticated admin's ID from the JWT payload. Used for audit trail fields. |
+| `getMetadata(request)` | Extracts authenticated admin ID and timestamp for audit fields. |
 | `HttpError` | Custom error class with an HTTP status code. Thrown inside handlers, caught by `replyHandler`. |
+| `NO_CONTENT` | Sentinel used by handlers that should reply with HTTP 204. |
 
-### 5.6 Password handling
+### 5.3 Password handling
 
 Passwords are hashed with **bcrypt** (12 salt rounds). The login handler uses a constant-time dummy comparison on failed lookups to prevent timing-based user enumeration.
+
+Password implementation: [backend/src/routes/auth/handlers/hash.ts](../backend/src/routes/auth/handlers/hash.ts).
 
 ---
 
 ## 6. Frontend
 
-The frontend is a **Vue 3** single-page application (Composition API, `<script setup>`) built with **Vite 7** and TypeScript. It communicates with the backend through a Vite dev proxy (`/api` → backend container), which also handles cookie forwarding for authentication.
+The frontend is a **Vue 3** single-page application (Composition API, `<script setup>`) built with **Vite** (v8 in the current repo) and TypeScript. It communicates with the backend through a Vite dev proxy (`/api` → backend container), which also handles cookie forwarding for authentication.
+
+Frontend config: [frontend/vite.config.ts](../frontend/vite.config.ts), [frontend/package.json](../frontend/package.json), and mock docs [frontend/mock/README.md](../frontend/mock/README.md).
 
 UI mockups and domain model documentation are in the `frontend/mock/` directory.
 
@@ -186,6 +195,8 @@ UI mockups and domain model documentation are in the `frontend/mock/` directory.
 ## 7. Database
 
 The database is **PostgreSQL 18**, managed through **Postgrator** migrations stored in `backend/migrations/`. Migrations follow the `NNN.do.<name>.sql` / `NNN.undo.<name>.sql` convention and are run via `pnpm migrate` in the backend container.
+
+See Compose and migrations: [docker-compose.yml](../docker-compose.yml) and [backend/migrations](../backend/migrations).
 
 Every domain table includes four audit columns (`created_at`, `updated_at`, `created_by`, `updated_by`), mirrored in the shared package's `MetadataShape` / `withMeta()` pattern. Multilingual text fields are stored as `JSONB`. Deduplication against the external VIERNULVIER API uses `vendor_id` fields.
 
@@ -203,12 +214,14 @@ See [DATABASE.md](./DATABASE.md) for the full schema and design rationale.
 │        │    { username, password }        │         │
 │        │                                 │  1. Query admin by username
 │        │                                 │  2. bcrypt.compare(password, hash)
-│        │    Set-Cookie: session=<JWT>     │  3. Sign JWT { id, username }
+│        │    Set-Cookie: session=<JWT>     │  3. Sign JWT { id, jti }
 │        │ ◀────────────────────────────── │         │
 └────────┘                                 └─────────┘
 ```
 
-The signed JWT (HS256, 24 h expiry) is stored in an `httpOnly` session cookie. Protected routes use the `server.authorize` preHandler hook which verifies the cookie and populates `request.user`.
+The signed JWT (HS256, 24 h expiry) is stored in an `httpOnly` session cookie. The payload currently contains the admin `id` and a unique `jti` claim (used for token denylist/revocation).
+
+Protected routes use the `server.authorize` preHandler hook which verifies the token and populates `request.user`. Routes that require elevated privileges use `server.authorize({ super: true })`, which returns HTTP 403 when a valid authenticated admin is not super.
 
 Passwords are hashed with **bcrypt** (12 salt rounds). Failed login attempts use a dummy bcrypt comparison to prevent timing-based user enumeration. The `JWT_SECRET` is generated via `crypto.randomBytes(32)` and must never be committed.
 
@@ -220,9 +233,11 @@ Passwords are hashed with **bcrypt** (12 salt rounds). Failed login attempts use
 
 | Service | Image | Port | Description |
 |---------|-------|------|-------------|
-| `db` | `postgres:18` | `DB_PORT` (5432) | Database with persistent named volume |
+| `db` | `postgres:18` | `DB_PORT` (5432) | PostgreSQL database (bind-mounted to `./database_data`) |
 | `backend` | Custom (Node.js 24) | `BACKEND_PORT` (3000) | REST API |
 | `frontend` | Custom (Nginx / Vite) | `FRONTEND_PORT` (5173) | SPA serving |
+| `garage` | `dxflrs/garage:v2.1.0` | 3900/3901/3903 | S3-compatible object storage |
+| `garage-init` | `docker:27-cli` | - | One-shot container that initializes Garage credentials and keys |
 
 All services communicate over the `viernulvier-network` bridge network.
 
@@ -244,6 +259,8 @@ Stage 2 (build):   Run vue-tsc + vite build, output static files
 Stage 3 (runtime): Nginx, serve static files on port 80
 ```
 
+Dockerfiles and dev overlay: [backend/Dockerfile](../backend/Dockerfile), [frontend/Dockerfile](../frontend/Dockerfile), [docker-compose.dev.yml](../docker-compose.dev.yml).
+
 ### 9.3 Development builds
 
 The `docker-compose.dev.yml` overlay:
@@ -259,11 +276,11 @@ The `docker-compose.dev.yml` overlay:
 
 ## 10. CI/CD Pipeline
 
-The project uses **GitHub Actions** with four workflow files.
+The project uses **GitHub Actions** workflows for PR validation, deployment, and docs sync.
 
-### 10.1 Feature branch validation (`pr-dev.yml`)
+### 10.1 Development validation (`pr-dev.yml`)
 
-Triggers on PRs to `feat/**`, `fix/**`, `enhancement/**`, and `test-feat/**` branches. Runs a **matrix build** across all three packages:
+Runs a matrix validation for frontend/backend/shared on pull requests targeting `feat/**`, `fix/**`, `enhancement/**`, and `test-feat/**` integration branches.
 
 ```
 For each package in [frontend, backend, shared]:
@@ -277,22 +294,25 @@ For each package in [frontend, backend, shared]:
 
 ### 10.2 Staging validation (`pr-staging.yml`)
 
-Same matrix build, triggered on PRs to `staging`.
+Runs the same matrix validation on pull requests targeting `staging`, including coverage and Codecov upload for backend/frontend.
 
 ### 10.3 Production validation (`pr-main.yml`)
 
-Same matrix build plus an **enforce-policy** job that verifies the PR source branch is `staging` (prevents direct merges to `main`).
+Runs matrix validation on pull requests targeting `main` and enforces merge policy (`main` only from `staging`; `test-main` only from `test-staging`).
 
-### 10.4 Build & deploy (`build-and-publish.yml`)
+### 10.4 Build & deploy (`build-and-publish-stag.yml`, `build-and-publish-main.yml`)
 
-Triggered on push to `staging` or `main`:
+On push to `staging` or `main`:
 
-1. **Build** frontend and backend Docker images on a self-hosted ARM64 runner.
-2. **Push** images to GitHub Container Registry (GHCR) tagged with branch name + commit SHA.
-3. **Deploy** via SSH to `viernulvier-archive.be`:
-   ```
-   docker compose pull && docker compose up -d --remove-orphans
-   ```
+1. **Build** frontend and backend Docker images and push them to GitHub Container Registry (GHCR). The CI build currently targets linux/amd64 platform images in the workflows.
+2. **Push** images to GHCR (`:staging` / `:main` tags).
+3. **Deploy** via SSH to the target host by running `docker compose pull` and `docker compose up -d --remove-orphans`.
+
+### 10.5 Wiki sync (`sync-wiki.yaml`)
+
+On push to `staging` with changes under `DOCS/**`, copies docs into the repository wiki.
+
+CI workflow files: [pr-main.yml](../.github/workflows/pr-main.yml), [pr-dev.yml](../.github/workflows/pr-dev.yml), [pr-staging.yml](../.github/workflows/pr-staging.yml), [build-and-publish-stag.yml](../.github/workflows/build-and-publish-stag.yml), [build-and-publish-main.yml](../.github/workflows/build-and-publish-main.yml), [sync-wiki.yaml](../.github/workflows/sync-wiki.yaml).
 
 ---
 
@@ -306,9 +326,11 @@ staging       ◄──── feature / fix branches
 feat/*        ──── New features
 fix/*         ──── Bug fixes
 enhancement/* ──── Improvements to existing features
+dependabot/*  ──── Automated dependency updates
 ```
 
 - **Feature branches** are merged into `staging` via pull request.
+- **Dependabot branches** are used for automated dependency updates and follow the same PR review/merge process.
 - **`staging`** is the pre-production integration branch; it is the only branch allowed to merge into `main`.
 - **`main`** represents the production deployment.
 - The `pr-main.yml` workflow enforces the staging-only merge policy automatically.
@@ -320,15 +342,16 @@ enhancement/* ──── Improvements to existing features
 ### 12.1 Backend
 
 - **Runner**: Vitest 4 (Node environment)
-- **Coverage threshold**: **97.5%** per file (statements, functions, branches, lines)
+- **Coverage policy**: File-specific thresholds are enforced in `backend/vitest.config.ts` (strict defaults for core code, with scoped exceptions for selected legacy/scraper paths).
 
-Route tests use `buildServer()` to create a server instance, mock the `pg` decorator, and assert against injected HTTP requests. A global setup file configures `JWT_SECRET` for test JWT signing.
+Coverage config: [backend/vitest.config.ts](../backend/vitest.config.ts).
 
 ### 12.2 Frontend
 
 - **Runner**: Vitest 4 (jsdom environment)
-- **Coverage threshold**: **80%** per file
-- **Utilities**: `@vue/test-utils` for component mounting and interaction
+- **Coverage policy**: Per-file threshold of 80% (statements, functions, branches, lines).
+
+Coverage/test config: [frontend/vite.config.ts](../frontend/vite.config.ts).
 
 ### 12.3 Shared
 
@@ -345,9 +368,14 @@ Defined in `.env` (copy from `.env.example`):
 | `DB_PORT` | `5432` | PostgreSQL port |
 | `BACKEND_PORT` | `3000` | Backend API port |
 | `FRONTEND_PORT` | `5173` | Frontend dev server port |
-| `DATABASE_URL` | `postgres://postgres@db:5432/postgres` | PostgreSQL connection string |
+| `DATABASE_URL` | `postgres://postgres@db:${DB_PORT}/postgres` | PostgreSQL connection string |
 | `DEBUG` | `True` | Enables Fastify debug logging when set to `"true"` |
-| `JWT_SECRET` | *(required)* | Secret for signing JWT tokens. Generate with `pnpm generate-secret`. |
+| `GARAGE_RPC_SECRET` | `rpc-secret` | Garage RPC secret |
+| `GARAGE_ADMIN_TOKEN` | `admin-token` | Garage admin API token |
+| `VIERNULVIER_API_TOKEN` | `<token>` | Token for upstream VIERNULVIER API integration |
+| `JWT_SECRET` | *(required for backend auth)* | Secret for signing JWT tokens |
+
+See environment example and scripts: [.env.example](../.env.example), [backend/package.json](../backend/package.json), and [backend/src/plugins/jwt.ts](../backend/src/plugins/jwt.ts).
 
 ---
 

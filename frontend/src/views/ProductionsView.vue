@@ -38,7 +38,9 @@
       </section>
 
       <section class="mx-auto max-w-[82rem] px-6 pb-20 pt-10 lg:px-10">
-        <div v-if="!loading" class="mb-4 space-y-3">
+        <ProductionsFilterSkeleton v-if="loading" />
+
+        <div v-else class="mb-4 space-y-3">
           <div
             class="flex flex-col gap-2 pb-0.5 sm:flex-row sm:items-stretch sm:gap-3"
           >
@@ -393,12 +395,22 @@
           {{ loadErrorDetail ?? t("productionsPage.error") }}
         </p>
 
-        <p
+        <div
           v-else-if="loading"
-          class="py-16 text-center text-sm text-ink-secondary"
+          role="status"
+          :aria-label="t('productionsPage.loading')"
+          aria-live="polite"
         >
-          {{ t("productionsPage.loading") }}
-        </p>
+          <div
+            v-if="layoutMode === 'grid'"
+            class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 md:mt-8 md:gap-8 lg:grid-cols-3"
+          >
+            <ProductionGridCardSkeleton v-for="n in PAGE_SIZE" :key="n" />
+          </div>
+          <template v-else>
+            <ProductionListCardSkeleton v-for="n in PAGE_SIZE" :key="n" />
+          </template>
+        </div>
 
         <div v-else>
           <p
@@ -412,108 +424,119 @@
             {{ filteredResultsCountLabel }}
           </p>
 
-          <p
-            v-if="totalCount === 0 && listLoading"
-            class="py-16 text-center text-sm text-ink-secondary"
+          <div
+            class="transition-opacity duration-200"
+            :class="{ 'opacity-50 pointer-events-none': listLoading }"
           >
-            {{ t("productionsPage.loading") }}
-          </p>
-          <p
-            v-else-if="totalCount === 0"
-            class="py-16 text-center text-sm text-ink-secondary"
-          >
-            {{ emptyStateMessage }}
-          </p>
+            <template v-if="listLoading && productions.length === 0">
+              <div
+                v-if="layoutMode === 'grid'"
+                class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 md:mt-8 md:gap-8 lg:grid-cols-3"
+              >
+                <ProductionGridCardSkeleton v-for="n in PAGE_SIZE" :key="n" />
+              </div>
+              <template v-else>
+                <ProductionListCardSkeleton v-for="n in PAGE_SIZE" :key="n" />
+              </template>
+            </template>
 
-          <div v-else>
-            <div
-              v-if="layoutMode === 'grid'"
-              class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3"
+            <p
+              v-else-if="!listLoading && totalCount === 0"
+              class="py-16 text-center text-sm text-ink-secondary"
             >
-              <ProductionGridCard
+              {{ emptyStateMessage }}
+            </p>
+
+            <div v-else>
+              <div
+                v-if="layoutMode === 'grid'"
+                class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 md:mt-8 md:gap-8 lg:grid-cols-3"
+              >
+                <ProductionGridCard
+                  v-for="(p, idx) in productions"
+                  :key="`${currentPage}-${idx}-${p.id}`"
+                  :row-index="idx"
+                  :production="p"
+                  :date-summary="dateSummaryFor(p.id)"
+                  :tag-chips="tagChipsFor(p)"
+                  :thumbnail-url="thumbnailFor(p.id)"
+                />
+              </div>
+              <ProductionListCard
                 v-for="(p, idx) in productions"
+                v-else
                 :key="`${currentPage}-${idx}-${p.id}`"
                 :row-index="idx"
                 :production="p"
                 :date-summary="dateSummaryFor(p.id)"
                 :tag-chips="tagChipsFor(p)"
+                :halls-text="hallsTextFor(p.id)"
                 :thumbnail-url="thumbnailFor(p.id)"
               />
-            </div>
-            <ProductionListCard
-              v-for="(p, idx) in productions"
-              v-else
-              :key="`${currentPage}-${idx}-${p.id}`"
-              :row-index="idx"
-              :production="p"
-              :date-summary="dateSummaryFor(p.id)"
-              :tag-chips="tagChipsFor(p)"
-              :halls-text="hallsTextFor(p.id)"
-              :thumbnail-url="thumbnailFor(p.id)"
-            />
 
-            <nav
-              v-if="totalPages > 1"
-              class="productions-view__pagination"
-              aria-label="Pagination"
-            >
-              <p
-                class="text-center text-sm text-ink-secondary tabular-nums sm:text-left"
+              <nav
+                v-if="totalPages > 1"
+                class="productions-view__pagination"
+                aria-label="Pagination"
               >
-                {{
-                  t("productionsPage.showingRange", {
-                    from: rangeFrom,
-                    to: rangeTo,
-                    total: totalCount,
-                  })
-                }}
-              </p>
-              <div
-                class="productions-view__pagination-toolbar"
-                role="group"
-                :aria-label="t('productionsPage.goToPage')"
-              >
-                <button
-                  type="button"
-                  class="productions-view__pager-btn"
-                  :disabled="currentPage <= 0 || listLoading"
-                  @click="goToPage(currentPage - 1)"
+                <p
+                  class="text-center text-sm text-ink-secondary tabular-nums sm:text-left"
                 >
-                  {{ t("productionsPage.prevPage") }}
-                </button>
+                  {{
+                    t("productionsPage.showingRange", {
+                      from: rangeFrom,
+                      to: rangeTo,
+                      total: totalCount,
+                    })
+                  }}
+                </p>
                 <div
-                  class="flex items-center gap-2 text-sm tabular-nums text-ink-secondary"
+                  class="productions-view__pagination-toolbar"
+                  role="group"
+                  :aria-label="t('productionsPage.goToPage')"
                 >
-                  <span class="whitespace-nowrap">{{
-                    t("productionsPage.pageWord")
-                  }}</span>
-                  <input
-                    :value="pageNumberInput"
-                    type="text"
-                    inputmode="numeric"
-                    autocomplete="off"
-                    maxlength="6"
-                    :disabled="listLoading"
-                    :aria-label="t('productionsPage.goToPage')"
-                    class="productions-view__page-input"
-                    @input="onPageNumberInput"
-                    @keydown.enter.prevent="commitPageNumberInput"
-                    @blur="commitPageNumberInput"
-                  />
-                  <span class="whitespace-nowrap">{{
-                    t("productionsPage.pageOfTotal", { total: totalPages })
-                  }}</span>
+                  <button
+                    type="button"
+                    class="productions-view__pager-btn"
+                    :disabled="currentPage <= 0 || listLoading"
+                    @click="goToPage(currentPage - 1)"
+                  >
+                    {{ t("productionsPage.prevPage") }}
+                  </button>
+                  <div
+                    class="flex items-center gap-2 text-sm tabular-nums text-ink-secondary"
+                  >
+                    <span class="whitespace-nowrap">{{
+                      t("productionsPage.pageWord")
+                    }}</span>
+                    <input
+                      :value="pageNumberInput"
+                      type="text"
+                      inputmode="numeric"
+                      autocomplete="off"
+                      maxlength="6"
+                      :disabled="listLoading"
+                      :aria-label="t('productionsPage.goToPage')"
+                      class="productions-view__page-input"
+                      @input="onPageNumberInput"
+                      @keydown.enter.prevent="commitPageNumberInput"
+                      @blur="commitPageNumberInput"
+                    />
+                    <span class="whitespace-nowrap">{{
+                      t("productionsPage.pageOfTotal", { total: totalPages })
+                    }}</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="productions-view__pager-btn"
+                    :disabled="currentPage >= totalPages - 1 || listLoading"
+                    @click="goToPage(currentPage + 1)"
+                  >
+                    {{ t("productionsPage.nextPage") }}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  class="productions-view__pager-btn"
-                  :disabled="currentPage >= totalPages - 1 || listLoading"
-                  @click="goToPage(currentPage + 1)"
-                >
-                  {{ t("productionsPage.nextPage") }}
-                </button>
-              </div>
-            </nav>
+              </nav>
+            </div>
           </div>
         </div>
       </section>
@@ -547,7 +570,10 @@ import {
 import AppFooter from "@/components/AppFooter.vue";
 import AppNavbar from "@/components/nav/AppNavbar.vue";
 import ProductionGridCard from "@/components/productions/ProductionGridCard.vue";
+import ProductionGridCardSkeleton from "@/components/productions/ProductionGridCardSkeleton.vue";
 import ProductionListCard from "@/components/productions/ProductionListCard.vue";
+import ProductionListCardSkeleton from "@/components/productions/ProductionListCardSkeleton.vue";
+import ProductionsFilterSkeleton from "@/components/productions/ProductionsFilterSkeleton.vue";
 import ProductionsLayoutToggle, {
   type ProductionsLayoutMode,
 } from "@/components/productions/ProductionsLayoutToggle.vue";
@@ -616,6 +642,9 @@ const FROM_QUERY_KEY = "from";
 const TO_QUERY_KEY = "to";
 const SORT_BY_QUERY_KEY = "sortBy";
 const SORT_DIR_QUERY_KEY = "sortDir";
+
+/** Present only when the grid layout is selected; list remains the canonical default (no param). */
+const VIEW_QUERY_KEY = "view";
 
 const route = useRoute();
 const router = useRouter();
@@ -773,6 +802,13 @@ function readSortDirFromRoute(): ProductionSortDir {
   return value === "asc" ? "asc" : "desc";
 }
 
+function readLayoutFromQuery(q: LocationQuery): ProductionsLayoutMode {
+  const raw = q[VIEW_QUERY_KEY];
+  const s = Array.isArray(raw) ? raw[0] : raw;
+  if (s === undefined || s === null || s === "") return "list";
+  return String(s).trim().toLowerCase() === "grid" ? "grid" : "list";
+}
+
 function queryForPage0WithBase(
   page0: number,
   baseQuery: LocationQuery,
@@ -816,6 +852,11 @@ function queryForPage0WithBase(
     q[SORT_BY_QUERY_KEY] = sortBy.value;
     q[SORT_DIR_QUERY_KEY] = sortDir.value;
   }
+  if (layoutMode.value === "grid") {
+    q[VIEW_QUERY_KEY] = "grid";
+  } else {
+    delete q[VIEW_QUERY_KEY];
+  }
   return q;
 }
 
@@ -834,6 +875,20 @@ function urlNeedsSyncForPage0(page0: number): boolean {
     return cur !== undefined && cur !== "";
   }
   return cur !== want;
+}
+
+/** True when `view` should be omitted (list) vs `view=grid`, or stray `view=…` should be stripped. */
+function urlNeedsSyncForView(): boolean {
+  const raw = route.query[VIEW_QUERY_KEY];
+  const cur =
+    raw === undefined || raw === null || raw === ""
+      ? undefined
+      : String(Array.isArray(raw) ? raw[0] : raw).trim().toLowerCase();
+  const wantGrid = layoutMode.value === "grid";
+  if (wantGrid) {
+    return cur !== "grid";
+  }
+  return cur !== undefined;
 }
 
 /**
@@ -868,7 +923,7 @@ const appliedSearchTerms = ref<string[]>([]);
 const searchDraft = ref("");
 const sortBy = ref<ProductionSortBy>("date");
 const sortDir = ref<ProductionSortDir>("desc");
-const layoutMode = ref<ProductionsLayoutMode>("list");
+const layoutMode = ref<ProductionsLayoutMode>(readLayoutFromQuery(route.query));
 /**
  * Total matching the current list query; updated on each successful fetch.
  * While search/filter list loads we keep the previous value so the results line
@@ -1206,6 +1261,7 @@ async function commitPageNumberInput() {
     return;
   }
 
+  scrollProductionsPageToTop();
   await goToPage(pageOneBased - 1);
   pageNumberInput.value = String(currentPage.value + 1);
 }
@@ -1474,7 +1530,11 @@ onMounted(async () => {
       }
     }
 
-    if (syncRouteAfterExclusiveTimeFilter || urlNeedsSyncForPage0(page0)) {
+    if (
+      syncRouteAfterExclusiveTimeFilter ||
+      urlNeedsSyncForPage0(page0) ||
+      urlNeedsSyncForView()
+    ) {
       await replaceRouteForPage0(page0);
     }
   } catch (err) {
@@ -1483,6 +1543,23 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+watch(layoutMode, async () => {
+  if (loading.value) return;
+  await replaceRouteForPage0(currentPage.value);
+});
+
+watch(
+  () => ({
+    layout: readLayoutFromQuery(route.query),
+    rawView: route.query[VIEW_QUERY_KEY],
+  }),
+  ({ layout }) => {
+    if (loading.value) return;
+    if (layout === layoutMode.value) return;
+    layoutMode.value = layout;
+  },
+);
 
 /** Refetch when `?page=` changes (browser back/forward or programmatic `router.replace`). */
 watch(
@@ -1539,12 +1616,12 @@ watch(
 
 async function goToPage(page: number) {
   if (page < 0 || page >= totalPages.value) return;
+  scrollProductionsPageToTop();
   listLoading.value = true;
   beginListAttempt();
   try {
     await fetchProductionsPageData(page);
     await replaceRouteForPage0(page);
-    await scrollAfterPageChange();
   } catch (err) {
     failListAttempt(err);
   } finally {

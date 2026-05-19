@@ -5,7 +5,7 @@
  */
 
 .cms-add-button {
-  @apply inline-flex w-fit items-center rounded-full border border-transparent bg-surface-inv px-5 py-2.5 text-sm font-semibold text-ink-on-inv transition hover:bg-surface-inv-raised;
+  @apply inline-flex w-fit items-center rounded-full border border-transparent bg-accent-dark px-5 py-2.5 text-sm font-semibold text-surface-0 transition hover:bg-accent-dark-hover;
 }
 
 .cms-remove-button {
@@ -65,7 +65,7 @@
 }
 
 .cms-side-save {
-  @apply inline-flex w-full items-center justify-center rounded-md bg-surface-inv px-4 py-3 text-sm font-semibold text-ink-on-inv shadow-sm transition hover:bg-surface-inv-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ink-primary disabled:cursor-not-allowed disabled:opacity-60;
+  @apply inline-flex w-full items-center justify-center rounded-md bg-accent-dark px-4 py-3 text-sm font-semibold text-surface-0 shadow-sm transition hover:bg-accent-dark-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ink-primary disabled:cursor-not-allowed disabled:opacity-60;
 }
 
 .cms-modal-overlay {
@@ -155,5 +155,5 @@ css used for adding/editing lists (of IDs)
 }
 
 .cms-list-add {
-  @apply rounded-md bg-surface-inv px-4 py-2 text-sm font-semibold text-ink-on-inv transition hover:bg-surface-inv-raised;
+  @apply rounded-md bg-accent-dark px-4 py-2 text-sm font-semibold text-surface-0 transition hover:bg-accent-dark-hover;
 }

@@ -19,7 +19,7 @@
     </RouterLink>
 
     <div class="nav-right">
-      <div class="hidden sm:flex items-center gap-2">
+      <div class="hidden lg:flex items-center gap-2">
         <NavControls :is-dark="isDark" @toggle-dark="$emit('toggle-dark')" />
         <div ref="profileWrapper" class="relative">
           <button class="profile-btn" @click="profileOpen = !profileOpen">

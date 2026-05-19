@@ -30,7 +30,7 @@ export interface CmsProductionGridRow {
   title: string;
   producer: string;
   teaser: string;
-  /** Primary tag id (genre). `0` means no primary tag. */
+  /** Genre id. `0` means no genre. */
   genres: number | string;
   tags: string;
   descriptionOne: string;
@@ -92,6 +92,7 @@ export interface CreateTagFormState {
   public: boolean;
 }
 
+export type LongField = "teaser" | "description" | "description_2";
 export interface CreateBlogPostFormState {
   title: Record<SupportedLang, string>;
   content: Record<SupportedLang, string>;
@@ -110,9 +111,21 @@ export type CreateFieldKey =
   | "teaser"
   | "supertitle"
   | "description"
-  | "description_2"
-  | "video_1"
-  | "video_2";
+  | "description_2";
+
+/** Individual media item in create-production form (image or video). */
+export interface CreateFormMediaItem {
+  /** Unique client-side ID for tracking. */
+  id: string;
+  /** "image" or "video" - determines how URL is interpreted. */
+  type: "image" | "video";
+  /** Data URL or external URL for the media. */
+  url: string;
+  /** If true, media has been uploaded to the server and image ID is set. */
+  isUploaded: boolean;
+  /** Server-side image ID (only set after upload). */
+  imageId?: number;
+}
 
 /** Create-production modal form state. */
 export interface CreateFormState {
@@ -124,8 +137,8 @@ export interface CreateFormState {
   supertitle: Record<SupportedLang, string>;
   description: Record<SupportedLang, string>;
   description_2: Record<SupportedLang, string>;
-  video_1: Record<SupportedLang, string>;
-  video_2: Record<SupportedLang, string>;
+  /** List of media items (images and videos). */
+  media: CreateFormMediaItem[];
 }
 
 export interface CreateAdminFormState {
