@@ -28,8 +28,8 @@ export default {
     browseAll: "Ou parcourir toutes les productions",
   },
   featuredBlog: {
+    loading: "Chargement de l’article…",
     eyebrow: "Article à la une",
-    loading: "Chargement de l'article à la une ...",
     dateline: "{date} · Rédaction",
     readMore: "Lire l'article complet",
     imageCaption:
@@ -310,8 +310,7 @@ export default {
     filterResultsSingle: "1 résultat",
     filterResultsPlural: "{count} résultats",
     noFilterResults: "Aucune production ne correspond à ces filtres.",
-    genreFiltersHeading: "Genre",
-    tagFiltersHeading: "Tags",
+    miscTagTypesHeading: "Autres tags",
     viewMoreTagFilters: "Voir plus",
     viewLessTagFilters: "Voir moins",
     expandFiltersPanelAria: "Développer les filtres",

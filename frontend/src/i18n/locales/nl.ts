@@ -28,8 +28,8 @@ export default {
     browseAll: "Of bekijk alle producties",
   },
   featuredBlog: {
+    loading: "Blogpost laden…",
     eyebrow: "Uitgelichte blogpost",
-    loading: "Uitgelichte blogpost laden ...",
     dateline: "{date} · Redactie",
     readMore: "Lees het volledige artikel",
     imageCaption:
@@ -309,8 +309,7 @@ export default {
     filterResultsSingle: "1 resultaat",
     filterResultsPlural: "{count} resultaten",
     noFilterResults: "Geen producties gevonden met deze filters.",
-    genreFiltersHeading: "Genre",
-    tagFiltersHeading: "Tags",
+    miscTagTypesHeading: "Overige tags",
     viewMoreTagFilters: "Meer tonen",
     viewLessTagFilters: "Minder tonen",
     expandFiltersPanelAria: "Filters uitklappen",

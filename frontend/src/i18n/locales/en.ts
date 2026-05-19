@@ -28,8 +28,8 @@ export default {
     browseAll: "Or browse all productions",
   },
   featuredBlog: {
+    loading: "Loading blog post…",
     eyebrow: "Featured blog post",
-    loading: "Loading featured blog ...",
     dateline: "{date} · Editorial",
     readMore: "Read the full article",
     imageCaption:
@@ -311,8 +311,7 @@ export default {
     filterResultsSingle: "1 result",
     filterResultsPlural: "{count} results",
     noFilterResults: "No productions match these filters.",
-    genreFiltersHeading: "Genre",
-    tagFiltersHeading: "Tags",
+    miscTagTypesHeading: "Other tags",
     viewMoreTagFilters: "Show more",
     viewLessTagFilters: "Show less",
     expandFiltersPanelAria: "Expand filters",

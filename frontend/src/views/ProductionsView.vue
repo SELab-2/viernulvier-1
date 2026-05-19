@@ -194,113 +194,37 @@
             id="productions-extended-filters"
             class="mt-4 space-y-4 rounded-md border border-surface-3 bg-surface-1 px-4 py-4 dark:bg-surface-1/60"
           >
-            <div
-              v-if="genreTagsForFilter.length > 0"
-              class="space-y-3"
-            >
-              <p
-                class="text-xs font-semibold uppercase tracking-[0.2em] text-ink-secondary"
-              >
-                {{ t("productionsPage.genreFiltersHeading") }}
-              </p>
-              <div :ref="setGenrePanelRowRef" class="flex items-start gap-3">
-                <div class="flex min-w-0 flex-1 flex-wrap gap-2">
-                  <button
-                    v-for="g in visibleGenreTagsForFilter"
-                    :key="g.id"
-                    :ref="(el) => setGenrePanelPillRef(g.id, el)"
-                    type="button"
-                    class="productions-view__tag-filter-panel-pill"
-                    :class="
-                      selectedTagIds.includes(g.id)
-                        ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
-                        : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
-                    "
-                    :disabled="listLoading || loadError"
-                    @click="toggleTag(g.id)"
-                  >
-                    {{ g.label }}
-                  </button>
-                </div>
-                <button
-                  v-if="showGenreTagFilterExpandToggle"
-                  :ref="setGenrePanelExpandButtonRef"
-                  type="button"
-                  class="productions-view__tag-filter-expand"
-                  :disabled="listLoading || loadError"
-                  :aria-expanded="genreTagFiltersExpanded"
-                  :aria-label="
-                    genreTagFiltersExpanded
-                      ? t('productionsPage.viewLessTagFilters')
-                      : t('productionsPage.viewMoreTagFilters')
-                  "
-                  @click="genreTagFiltersExpanded = !genreTagFiltersExpanded"
-                >
-                  {{
-                    genreTagFiltersExpanded
-                      ? t("productionsPage.viewLessTagFilters")
-                      : t("productionsPage.viewMoreTagFilters")
-                  }}
-                </button>
-              </div>
-            </div>
-
-            <div
-              v-if="nonGenreTagsForFilter.length > 0"
-              :class="
-                genreTagsForFilter.length > 0
-                  ? 'space-y-3 border-t border-surface-3 pt-4'
-                  : 'space-y-3'
+            <ProductionsFilterPanelTagSection
+              v-for="(sec, idx) in panelFilterSections"
+              :key="'filters-panel-tags-' + sec.tagTypeId"
+              v-model:expanded="expandedTagTypePanel[sec.tagTypeId]"
+              :heading="sec.heading"
+              :visible-tags="
+                expandedTagTypePanel[sec.tagTypeId]
+                  ? sec.candidates
+                  : panelCollapsedFitVisible(idx)
               "
-            >
-              <p
-                class="text-xs font-semibold uppercase tracking-[0.2em] text-ink-secondary"
-              >
-                {{ t("productionsPage.tagFiltersHeading") }}
-              </p>
-              <div :ref="setNonGenrePanelRowRef" class="flex items-start gap-3">
-                <div class="flex min-w-0 flex-1 flex-wrap gap-2">
-                  <button
-                    v-for="g in visibleNonGenreTagsForFilter"
-                    :key="g.id"
-                    :ref="(el) => setNonGenrePanelPillRef(g.id, el)"
-                    type="button"
-                    class="productions-view__tag-filter-panel-pill"
-                    :class="
-                      selectedTagIds.includes(g.id)
-                        ? 'border-accent-outline bg-surface-1 text-ink-primary'
-                        : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
-                    "
-                    :disabled="listLoading || loadError"
-                    @click="toggleTag(g.id)"
-                  >
-                    {{ g.label }}
-                  </button>
-                </div>
-                <button
-                  v-if="showNonGenreTagFilterExpandToggle"
-                  :ref="setNonGenrePanelExpandButtonRef"
-                  type="button"
-                  class="productions-view__tag-filter-expand"
-                  :disabled="listLoading || loadError"
-                  :aria-expanded="nonGenreTagFiltersExpanded"
-                  :aria-label="
-                    nonGenreTagFiltersExpanded
-                      ? t('productionsPage.viewLessTagFilters')
-                      : t('productionsPage.viewMoreTagFilters')
-                  "
-                  @click="
-                    nonGenreTagFiltersExpanded = !nonGenreTagFiltersExpanded
-                  "
-                >
-                  {{
-                    nonGenreTagFiltersExpanded
-                      ? t("productionsPage.viewLessTagFilters")
-                      : t("productionsPage.viewMoreTagFilters")
-                  }}
-                </button>
-              </div>
-            </div>
+              :selected-tag-ids="selectedTagIds"
+              :show-expand-toggle="
+                panelCollapsedFitVisible(idx).length < sec.candidates.length
+              "
+              :row-binder="
+                panelSectionFitApis[idx]?.setRowRef ??
+                  noopProductionsPanelBinder
+              "
+              :pill-binder="
+                panelSectionFitApis[idx]?.setPillRef ??
+                  noopProductionsPanelPillBinder
+              "
+              :trailing-binder="
+                panelSectionFitApis[idx]?.setTrailingControlRef ??
+                  noopProductionsTrailingBinder
+              "
+              :variant="sec.isGenreType ? 'genre' : 'accent'"
+              :disabled="listLoading || loadError"
+              :bordered-top="idx > 0"
+              @toggle="toggleTag($event)"
+            />
 
             <div
               class="flex justify-end border-t border-surface-3/80 pt-3"
@@ -548,12 +472,17 @@
 <script setup lang="ts">
 import {
   computed,
+  effectScope,
   nextTick,
   onMounted,
+  onUnmounted,
+  reactive,
   ref,
+  shallowRef,
   useTemplateRef,
   watch,
 } from "vue";
+import type { ComponentPublicInstance } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import type { LocationQuery, LocationQueryRaw } from "vue-router";
@@ -573,6 +502,7 @@ import ProductionGridCard from "@/components/productions/ProductionGridCard.vue"
 import ProductionGridCardSkeleton from "@/components/productions/ProductionGridCardSkeleton.vue";
 import ProductionListCard from "@/components/productions/ProductionListCard.vue";
 import ProductionListCardSkeleton from "@/components/productions/ProductionListCardSkeleton.vue";
+import ProductionsFilterPanelTagSection from "@/components/productions/ProductionsFilterPanelTagSection.vue";
 import ProductionsFilterSkeleton from "@/components/productions/ProductionsFilterSkeleton.vue";
 import ProductionsLayoutToggle, {
   type ProductionsLayoutMode,
@@ -617,8 +547,54 @@ const MAX_SEARCH_TERMS = 20;
  * Real browsers use measured row fit, not this cap.
  */
 const COMPACT_GENRE_FALLBACK_MAX = 10;
-const GENRE_PANEL_FALLBACK_MAX = 9;
-const NON_GENRE_PANEL_FALLBACK_MAX = 6;
+
+/** Panel tag rows: prior caps when widths are not measurable (JSDOM / first frame). */
+const PANEL_ROW_GENRE_FALLBACK_MAX = 9;
+const PANEL_ROW_NON_GENRE_FALLBACK_MAX = 6;
+
+/** Missing `tag_types` lookup: still filterable via `tags=`, surfaced in panel under misc heading. */
+const ORPHAN_TAG_TYPE_PANEL_ID = -1;
+
+/**
+ * Filter panel fitting runs `useFittingPills` inside a detached `EffectScope`: slots are often
+ * first created after tags load (`watch(panelFilterSections)`). Scopes own watcher teardown,
+ * ResizeObserver lifecycle, etc.
+ */
+type FilterPanelFitTag = { id: number; label: string };
+
+function createPanelFitSlot(fallbackCap: number) {
+  const scope = effectScope(true);
+  const slot = scope.run(() => {
+    const candidatesRef = ref<FilterPanelFitTag[]>([]);
+    const fitting = useFittingPills(candidatesRef, {
+      gapPx: 8,
+      fallbackVisibleCount: fallbackCap,
+      attachWindowResizeListener: false,
+    });
+    return { candidatesRef, ...fitting };
+  });
+  if (!slot) {
+    scope.stop();
+    throw new Error("createPanelFitSlot: scope.run returned undefined");
+  }
+  return { ...slot, _scope: scope };
+}
+
+type ProductionsPanelFitSlot = ReturnType<typeof createPanelFitSlot>;
+
+/** No-op ref binders when a binding is briefly unavailable (must not persist). */
+function noopProductionsPanelBinder(
+  _el: Element | ComponentPublicInstance | null,
+): void {}
+
+function noopProductionsPanelPillBinder(
+  _id: number,
+  _el: Element | ComponentPublicInstance | null,
+): void {}
+
+function noopProductionsTrailingBinder(
+  _el: Element | ComponentPublicInstance | null,
+): void {}
 
 function selectedFirstTagFilterList(
   all: { id: number; label: string }[],
@@ -654,8 +630,8 @@ const pageTopAnchor = useTemplateRef<HTMLElement>("pageTopAnchor");
 
 /** Tag IDs for list filtering — genres and non-genres share `tags=` / `tagIds` (IDs are unique). */
 const selectedTagIds = ref<number[]>([]);
-const genreTagFiltersExpanded = ref(false);
-const nonGenreTagFiltersExpanded = ref(false);
+/** Per CMS tag type (`ORPHAN_TAG_TYPE_PANEL_ID` for tags without a known type row). */
+const expandedTagTypePanel = reactive<Record<number, boolean>>({});
 /** Full genre + tag filter sections (beyond compact preview row). */
 const filtersPanelExpanded = ref(false);
 /** `null` = all years in the archive slider span; otherwise inclusive calendar-year range. */
@@ -1294,33 +1270,71 @@ const genreTagsForFilter = computed(() => {
   return items;
 });
 
-const nonGenreTagsForFilter = computed(() => {
+const panelFilterSections = computed(() => {
   const lang = locale.value;
-  const items: { id: number; label: string }[] = [];
   const byId = tagsById.value;
+  const typesMap = tagTypesById.value;
+
+  const buckets = new Map<number, Tag[]>();
   for (const tag of byId.values()) {
-    const tt = tagTypesById.value.get(tag.tag_type as number);
-    if (tagTypeIsGenre(tt)) continue;
-    const label = localizeOrEmpty(tag.name, lang);
-    if (!label) continue;
-    items.push({ id: tag.id, label });
+    const rawTypeId = tag.tag_type as number;
+    const bucketKey = typesMap.has(rawTypeId)
+      ? rawTypeId
+      : ORPHAN_TAG_TYPE_PANEL_ID;
+    const arr = buckets.get(bucketKey) ?? [];
+    arr.push(tag);
+    buckets.set(bucketKey, arr);
   }
-  items.sort((a, b) => {
-    const ca = byId.get(a.id)?.production_count ?? 0;
-    const cb = byId.get(b.id)?.production_count ?? 0;
-    if (cb !== ca) return cb - ca;
-    return a.label.localeCompare(b.label, lang);
+
+  type PanelSec = {
+    tagTypeId: number;
+    heading: string;
+    isGenreType: boolean;
+    candidates: { id: number; label: string }[];
+  };
+
+  const sections: PanelSec[] = [];
+
+  for (const [typeId, tagList] of buckets) {
+    const items: { id: number; label: string }[] = [];
+    for (const tag of tagList) {
+      const label = localizeOrEmpty(tag.name, lang);
+      if (!label) continue;
+      items.push({ id: tag.id, label });
+    }
+    if (items.length === 0) continue;
+
+    items.sort((a, b) => {
+      const ca = byId.get(a.id)?.production_count ?? 0;
+      const cb = byId.get(b.id)?.production_count ?? 0;
+      if (cb !== ca) return cb - ca;
+      return a.label.localeCompare(b.label, lang);
+    });
+
+    const candidates = selectedFirstTagFilterList(items, selectedTagIds.value);
+
+    let heading: string;
+    let isGenreType = false;
+    if (typeId === ORPHAN_TAG_TYPE_PANEL_ID) {
+      heading = t("productionsPage.miscTagTypesHeading");
+    } else {
+      const tt = typesMap.get(typeId)!;
+      isGenreType = tagTypeIsGenre(tt);
+      heading = localizeOrEmpty(tt.name, lang) || String(typeId);
+    }
+
+    sections.push({ tagTypeId: typeId, heading, isGenreType, candidates });
+  }
+
+  sections.sort((a, b) => {
+    if (a.isGenreType !== b.isGenreType) {
+      return Number(b.isGenreType) - Number(a.isGenreType);
+    }
+    return a.heading.localeCompare(b.heading, lang, { sensitivity: "base" });
   });
-  return items;
+
+  return sections;
 });
-
-const genrePanelTagCandidates = computed(() =>
-  selectedFirstTagFilterList(genreTagsForFilter.value, selectedTagIds.value),
-);
-
-const nonGenrePanelTagCandidates = computed(() =>
-  selectedFirstTagFilterList(nonGenreTagsForFilter.value, selectedTagIds.value),
-);
 
 const compactGenreTagCandidates = computed(() =>
   selectedFirstTagFilterList(genreTagsForFilter.value, selectedTagIds.value),
@@ -1331,58 +1345,137 @@ const {
   setTrailingControlRef: setCompactGenreExpandButtonRef,
   setPillRef: setCompactGenrePillRef,
   visibleItems: compactGenreTagsForRow,
+  recomputeVisibleCount: recomputeCompactGenreRowFit,
 } = useFittingPills(compactGenreTagCandidates, {
   gapPx: 8,
   trailingControlGapPx: 4,
   fallbackVisibleCount: COMPACT_GENRE_FALLBACK_MAX,
+  attachWindowResizeListener: false,
 });
 
-const {
-  setRowRef: setGenrePanelRowRef,
-  setTrailingControlRef: setGenrePanelExpandButtonRef,
-  setPillRef: setGenrePanelPillRef,
-  visibleItems: collapsedGenrePanelTags,
-} = useFittingPills(genrePanelTagCandidates, {
-  gapPx: 8,
-  fallbackVisibleCount: GENRE_PANEL_FALLBACK_MAX,
+const panelGenreFitSlots = new Map<number, ProductionsPanelFitSlot>();
+const panelAccentFitSlots = new Map<number, ProductionsPanelFitSlot>();
+
+const panelSectionFitApis = shallowRef<ProductionsPanelFitSlot[]>([]);
+
+function syncPanelTagSectionFitAssignments(): void {
+  const genreTypeIdsSeen = new Set<number>();
+  const accentTypeIdsSeen = new Set<number>();
+  const apis: ProductionsPanelFitSlot[] = [];
+
+  for (const sec of panelFilterSections.value) {
+    if (sec.isGenreType) {
+      genreTypeIdsSeen.add(sec.tagTypeId);
+      const slot =
+        panelGenreFitSlots.get(sec.tagTypeId) ??
+        createPanelFitSlot(PANEL_ROW_GENRE_FALLBACK_MAX);
+      panelGenreFitSlots.set(sec.tagTypeId, slot);
+      slot.candidatesRef.value = [...sec.candidates];
+      apis.push(slot);
+    } else {
+      accentTypeIdsSeen.add(sec.tagTypeId);
+      const slot =
+        panelAccentFitSlots.get(sec.tagTypeId) ??
+        createPanelFitSlot(PANEL_ROW_NON_GENRE_FALLBACK_MAX);
+      panelAccentFitSlots.set(sec.tagTypeId, slot);
+      slot.candidatesRef.value = [...sec.candidates];
+      apis.push(slot);
+    }
+  }
+
+  for (const [tagTypeId, slot] of panelGenreFitSlots) {
+    if (genreTypeIdsSeen.has(tagTypeId)) continue;
+    slot.candidatesRef.value = [];
+    slot._scope.stop();
+    panelGenreFitSlots.delete(tagTypeId);
+  }
+  for (const [tagTypeId, slot] of panelAccentFitSlots) {
+    if (accentTypeIdsSeen.has(tagTypeId)) continue;
+    slot.candidatesRef.value = [];
+    slot._scope.stop();
+    panelAccentFitSlots.delete(tagTypeId);
+  }
+
+  panelSectionFitApis.value = apis;
+}
+
+/** Explicit `.value` read: nested `ComputedRef`s in shallow slot objects do not unwrap in-template. */
+function panelCollapsedFitVisible(idx: number): FilterPanelFitTag[] {
+  const slot = panelSectionFitApis.value[idx];
+  if (!slot) return [];
+  return slot.visibleItems.value;
+}
+
+function productionsFitPillsOnWindowResize(): void {
+  recomputeCompactGenreRowFit();
+  for (const s of panelGenreFitSlots.values()) {
+    if (s.candidatesRef.value.length > 0) {
+      s.recomputeVisibleCount();
+    }
+  }
+  for (const s of panelAccentFitSlots.values()) {
+    if (s.candidatesRef.value.length > 0) {
+      s.recomputeVisibleCount();
+    }
+  }
+}
+
+watch(
+  panelFilterSections,
+  async (sections) => {
+    const seen = new Set<number>();
+    for (const s of sections) {
+      seen.add(s.tagTypeId);
+      if (!(s.tagTypeId in expandedTagTypePanel)) {
+        expandedTagTypePanel[s.tagTypeId] = false;
+      }
+    }
+    for (const key of Object.keys(expandedTagTypePanel)) {
+      const id = Number(key);
+      if (!seen.has(id)) Reflect.deleteProperty(expandedTagTypePanel, id);
+    }
+
+    syncPanelTagSectionFitAssignments();
+    await nextTick();
+    productionsFitPillsOnWindowResize();
+  },
+  { immediate: true },
+);
+
+watch(filtersPanelExpanded, async (opened) => {
+  if (!opened) return;
+  await nextTick();
+  await nextTick();
+  productionsFitPillsOnWindowResize();
 });
 
-const {
-  setRowRef: setNonGenrePanelRowRef,
-  setTrailingControlRef: setNonGenrePanelExpandButtonRef,
-  setPillRef: setNonGenrePanelPillRef,
-  visibleItems: collapsedNonGenrePanelTags,
-} = useFittingPills(nonGenrePanelTagCandidates, {
-  gapPx: 8,
-  fallbackVisibleCount: NON_GENRE_PANEL_FALLBACK_MAX,
+onMounted(() => {
+  if (typeof window === "undefined") return;
+  window.addEventListener("resize", productionsFitPillsOnWindowResize);
 });
 
-const visibleGenreTagsForFilter = computed(() =>
-  genreTagFiltersExpanded.value
-    ? genrePanelTagCandidates.value
-    : collapsedGenrePanelTags.value,
-);
+function disposeAllPanelFitScopes(): void {
+  for (const slot of panelGenreFitSlots.values()) {
+    slot._scope.stop();
+  }
+  for (const slot of panelAccentFitSlots.values()) {
+    slot._scope.stop();
+  }
+  panelGenreFitSlots.clear();
+  panelAccentFitSlots.clear();
+  panelSectionFitApis.value = [];
+}
 
-const visibleNonGenreTagsForFilter = computed(() =>
-  nonGenreTagFiltersExpanded.value
-    ? nonGenrePanelTagCandidates.value
-    : collapsedNonGenrePanelTags.value,
-);
-
-const showGenreTagFilterExpandToggle = computed(
-  () =>
-    collapsedGenrePanelTags.value.length < genrePanelTagCandidates.value.length,
-);
-
-const showNonGenreTagFilterExpandToggle = computed(
-  () =>
-    collapsedNonGenrePanelTags.value.length <
-    nonGenrePanelTagCandidates.value.length,
-);
+onUnmounted(() => {
+  if (typeof window !== "undefined") {
+    window.removeEventListener("resize", productionsFitPillsOnWindowResize);
+  }
+  disposeAllPanelFitScopes();
+});
 
 const showFiltersPanelExpandToggle = computed(
   () =>
-    nonGenreTagsForFilter.value.length > 0 ||
+    panelFilterSections.value.some((s) => !s.isGenreType) ||
     compactGenreTagsForRow.value.length < compactGenreTagCandidates.value.length,
 );
 
@@ -1423,18 +1516,18 @@ function tagLabel(id: number): string {
 }
 
 /**
- * True if any currently selected filter tag is not a genre (i.e. it belongs in
- * the expanded “Tags” section only).
+ * True when any selected tag is not surfaced in the compact genre strip
  *
- * Used after hydration from the URL (`?tags=…`): non-genre chips are not shown in
- * the collapsed genre row, so we auto-expand the filter panel when those selections
- * would otherwise be invisible.
+ * Used after hydration from the URL (`?tags=…`): we auto-expand the filter panel
+ * when those selections would otherwise be invisible in the collapsed row.
  */
 function selectedIncludesNonGenreTag(): boolean {
   for (const id of selectedTagIds.value) {
     const tag = tagsById.value.get(id);
     if (!tag) continue;
-    const tt = tagTypesById.value.get(tag.tag_type as number);
+    const rawTypeId = tag.tag_type as number;
+    const tt = tagTypesById.value.get(rawTypeId);
+    if (!tt) return true;
     if (!tagTypeIsGenre(tt)) return true;
   }
   return false;
@@ -1662,18 +1755,9 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
 <style scoped>
 @reference "@/style.css";
 
-.productions-view__tag-filter-expand {
-  @apply inline-flex shrink-0 cursor-pointer justify-end self-start whitespace-nowrap pt-0.5 text-right text-sm font-medium leading-snug text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100;
-  min-width: 6rem;
-}
-
 .productions-view__genre-collapsed-row-pill {  
   @apply cursor-pointer rounded-sm border px-3 py-1.5 text-[12px] font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-100;  
 }  
-
-.productions-view__tag-filter-panel-pill {  
-  @apply cursor-pointer rounded-sm border px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-100;  
-} 
 
 .productions-view__search-field {
   @apply box-border flex min-h-11 min-w-0 w-full flex-wrap items-center gap-1.5 rounded-md border border-surface-3 bg-surface-0 py-1.5 pl-2 pr-11 text-ink-primary transition focus-within:border-accent-outline dark:bg-surface-1;
