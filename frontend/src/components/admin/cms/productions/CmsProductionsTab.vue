@@ -1704,11 +1704,6 @@ function onCellClicked(event: CellClickedEvent<CmsProductionGridRow>): void {
     return;
   }
 
-  const gridField = event.colDef.field as "descriptionOne" | "descriptionTwo";
-  if (!(gridField in longGridFieldToApi)) {
-    return;
-  }
-
   const apiField = longGridFieldToApi[gridField];
   const currentMap = event.data.source[apiField] as LanguageMap | null | undefined;
 
