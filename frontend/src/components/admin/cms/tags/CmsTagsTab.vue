@@ -275,6 +275,7 @@ function onCellClicked(event: CellClickedEvent<CmsTagGridRow>): void {
 
   if (field !== "name") return;
 
+
   const source = tagsData.value.find((p) => p.id === event.data!.id);
   const currentMap = (source?.[field] ?? null) as LanguageMap | null;
 
