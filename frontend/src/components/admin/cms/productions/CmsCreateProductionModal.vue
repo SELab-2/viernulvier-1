@@ -360,6 +360,15 @@ function onTagToggle(tagId: number, selected: boolean): void {
   @apply rounded-md border border-surface-3 bg-surface-0 px-3 py-2 text-sm text-ink-primary;
 }
 
+.cms-side-textarea {
+  @apply rounded-md border border-surface-3 bg-surface-0 px-3 py-2 text-sm text-ink-primary font-sans;
+}
+
+.cms-text-input::placeholder,
+.cms-side-textarea::placeholder {
+  @apply text-ink-tertiary;
+}
+
 .cms-toggle-row {
   @apply flex items-center gap-2 text-sm text-ink-primary;
 }
