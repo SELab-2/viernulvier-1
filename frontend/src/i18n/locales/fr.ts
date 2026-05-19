@@ -30,7 +30,6 @@ export default {
   featuredBlog: {
     loading: "Chargement de l’article…",
     eyebrow: "Article à la une",
-    loading: "Chargement de l'article à la une ...",
     dateline: "{date} · Rédaction",
     readMore: "Lire l'article complet",
     imageCaption:
