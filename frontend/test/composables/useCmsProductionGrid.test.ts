@@ -76,6 +76,18 @@ describe("useCmsProductionGrid", () => {
       ).toContain("cms.create.media.imageCountOther");
     });
 
+    it("keeps production cells non-editable so clicks only use the side-panel flow", () => {
+      const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key, currentLang: ref('nl') });
+      const inlineFields = ["performer", "title", "producer", "teaser", "genres"];
+
+      for (const field of inlineFields) {
+        const column = grid.columnDefs.value.find((c) => c.field === field);
+        expect(column?.editable).toBe(false);
+      }
+
+      expect(grid.columnDefs.value.find((c) => c.field === "genres")?.singleClickEdit).toBeUndefined();
+    });
+
     it("uses primary tag labels as genre editor values with empty fallback", () => {
       const withLabels = useCmsProductionGrid({
         isDark: ref(false),
