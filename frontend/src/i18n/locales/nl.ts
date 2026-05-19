@@ -75,11 +75,12 @@ export default {
     },
     columns: {
       id: "ID",
+      events: "Evenementen",
       performer: "Artiest",
       title: "Titel",
       producer: "Supertitel",
       teaser: "Teaser",
-      genres: "Primaire tag",
+      genres: "Genre tag",
       tags: "Extra tags",
       imageMedia: "Beeldmedia",
       descriptionOne: "Beschrijving",

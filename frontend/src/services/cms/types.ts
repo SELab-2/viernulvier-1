@@ -30,7 +30,7 @@ export interface CmsProductionGridRow {
   title: string;
   producer: string;
   teaser: string;
-  /** Primary tag id (genre). `0` means no primary tag. */
+  /** Genre id. `0` means no genre. */
   genres: number | string;
   tags: string;
   descriptionOne: string;
