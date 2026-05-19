@@ -144,17 +144,6 @@ describe("Edit on blogpost route", () => {
     expect(mockClient.query).toHaveBeenCalledTimes(4);
   });
 
-  test("PATCH /api/v1/blog/post/:id — rejects empty productions array", async () => {
-    const response = await server.inject({
-      method: "PATCH",
-      url: `/api/v1/blog/post/${originalBlogPost["id"]}`,
-      cookies: { session: sessionCookie },
-      payload: { productions: [] },
-    });
-
-    expect(response.statusCode).toBe(HttpClientError.BadRequest);
-  });
-
   test("PATCH /api/v1/blog/post/:id — updates content", async () => {
     const mockClient = {
       query: vi.fn().mockImplementation((query: string) => {

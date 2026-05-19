@@ -21,9 +21,7 @@ import { z } from "zod";
 export const ReplaceBlogPostBodySchema = BlogPostSchema.omit({
   id: true,
 }).extend({
-  productions: z
-    .array(z.int())
-    .min(1, "Productions array must contain at least one production"),
+  productions: z.array(z.int()),
 });
 
 /**
