@@ -1,10 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
-import { mount } from "@vue/test-utils";
+import { mount, flushPromises } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { routes } from "@/router/routes";
 import { i18n } from "@/i18n";
 import { RouteNames } from "@/router/routeNames";
 import HeroSection from "@/components/home/HeroSection.vue";
+
+/** Lazy-loaded ProductionsView often exceeds Vitest waitFor default (1s) under parallel load. */
+const NAV_WAIT_MS = 10_000;
 
 async function mountHero() {
   const router = createRouter({ history: createMemoryHistory(), routes });
@@ -73,14 +76,18 @@ describe("HeroSection.vue", () => {
       const input = wrapper.find('input[type="search"]');
       await input.setValue("hamlet");
       await wrapper.find("form").trigger("submit");
+      await flushPromises();
       // The component fires router.push without awaiting it, and
       // ProductionsView is lazy-loaded — flushing microtasks once
       // isn't always enough. Retry until the route resolves.
-      await vi.waitFor(() => {
-        expect(router.currentRoute.value.name).toBe(
-          RouteNames.PRODUCTIONS,
-        );
-      });
+      await vi.waitFor(
+        () => {
+          expect(router.currentRoute.value.name).toBe(
+            RouteNames.PRODUCTIONS,
+          );
+        },
+        { timeout: NAV_WAIT_MS },
+      );
       expect(router.currentRoute.value.query.search).toBe("hamlet");
     },
   );
@@ -91,11 +98,15 @@ describe("HeroSection.vue", () => {
     async () => {
       const { wrapper, router } = await mountHero();
       await wrapper.find("form").trigger("submit");
-      await vi.waitFor(() => {
-        expect(router.currentRoute.value.name).toBe(
-          RouteNames.PRODUCTIONS,
-        );
-      });
+      await flushPromises();
+      await vi.waitFor(
+        () => {
+          expect(router.currentRoute.value.name).toBe(
+            RouteNames.PRODUCTIONS,
+          );
+        },
+        { timeout: NAV_WAIT_MS },
+      );
       expect(router.currentRoute.value.query.search).toBeUndefined();
     },
   );
@@ -105,9 +116,13 @@ describe("HeroSection.vue", () => {
     const input = wrapper.find('input[type="search"]');
     await input.setValue("   ");
     await wrapper.find("form").trigger("submit");
-    await vi.waitFor(() => {
-      expect(router.currentRoute.value.name).toBe(RouteNames.PRODUCTIONS);
-    });
+    await flushPromises();
+    await vi.waitFor(
+      () => {
+        expect(router.currentRoute.value.name).toBe(RouteNames.PRODUCTIONS);
+      },
+      { timeout: NAV_WAIT_MS },
+    );
     // Whitespace-only collapses to no search filter at all.
     expect(router.currentRoute.value.query.search).toBeUndefined();
   });

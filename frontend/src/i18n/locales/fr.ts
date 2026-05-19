@@ -27,6 +27,7 @@ export default {
     browseAll: "Ou parcourir toutes les productions",
   },
   featuredBlog: {
+    loading: "Chargement de l’article…",
     eyebrow: "Article à la une",
     dateline: "{date} · Rédaction",
     readMore: "Lire l'article complet",

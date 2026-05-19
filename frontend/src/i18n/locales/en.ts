@@ -27,6 +27,7 @@ export default {
     browseAll: "Or browse all productions",
   },
   featuredBlog: {
+    loading: "Loading blog post…",
     eyebrow: "Featured blog post",
     dateline: "{date} · Editorial",
     readMore: "Read the full article",

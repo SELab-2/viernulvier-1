@@ -1,8 +1,10 @@
 import {
   type ComponentPublicInstance,
   computed,
+  getCurrentInstance,
   nextTick,
   onMounted,
+  onScopeDispose,
   onUnmounted,
   ref,
   watch,
@@ -194,7 +196,20 @@ export function useFittingPills<T extends { id: PillId }>(
     recomputeVisibleCount();
   }
 
-  onMounted(async () => {
+  function teardown(): void {
+    trailingResizeObserver?.disconnect();
+    trailingResizeObserver = null;
+    rowResizeObserver?.disconnect();
+    rowResizeObserver = null;
+    if (
+      attachWindowResizeListener &&
+      typeof window !== "undefined"
+    ) {
+      window.removeEventListener("resize", onWindowResize);
+    }
+  }
+
+  async function mountObservers(): Promise<void> {
     await nextTick();
     recomputeVisibleCount();
 
@@ -207,20 +222,19 @@ export function useFittingPills<T extends { id: PillId }>(
     if (attachWindowResizeListener && typeof window !== "undefined") {
       window.addEventListener("resize", onWindowResize);
     }
-  });
+  }
 
-  onUnmounted(() => {
-    trailingResizeObserver?.disconnect();
-    trailingResizeObserver = null;
-    rowResizeObserver?.disconnect();
-    rowResizeObserver = null;
-    if (
-      attachWindowResizeListener &&
-      typeof window !== "undefined"
-    ) {
-      window.removeEventListener("resize", onWindowResize);
-    }
-  });
+  if (getCurrentInstance()) {
+    onMounted(() => {
+      void mountObservers();
+    });
+    onUnmounted(teardown);
+  } else {
+    // Productions filter panel fits `useFittingPills` inside a detached `effectScope`
+    // (no component setup). Use scope disposal instead of onMounted/onUnmounted.
+    void mountObservers();
+    onScopeDispose(teardown);
+  }
 
   return {
     setRowRef,

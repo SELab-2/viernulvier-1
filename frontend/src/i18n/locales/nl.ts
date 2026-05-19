@@ -27,6 +27,7 @@ export default {
     browseAll: "Of bekijk alle producties",
   },
   featuredBlog: {
+    loading: "Blogpost laden…",
     eyebrow: "Uitgelichte blogpost",
     dateline: "{date} · Redactie",
     readMore: "Lees het volledige artikel",
