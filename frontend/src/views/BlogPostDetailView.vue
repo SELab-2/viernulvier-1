@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-v-html -- bodyHtml is rendered from parseAndSanitizeMd, which sanitizes markdown HTML through DOMPurify. -->
 <template>
   <div class="flex min-h-screen flex-col bg-surface-0 transition-colors duration-300">
     <AppNavbar :is-dark="isDark" @toggle-dark="toggleDark" />

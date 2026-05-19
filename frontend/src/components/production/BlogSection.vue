@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-v-html -- previews are rendered from parseAndSanitizeMd, which sanitizes markdown HTML through DOMPurify. -->
 <template>
   <section v-if="loading || blogPosts.length > 0" class="border-y border-surface-3 bg-surface-1 py-24">
     <div class="mx-auto max-w-7xl px-6 md:px-12">

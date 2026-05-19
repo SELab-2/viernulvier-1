@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-v-html -- description is rendered from parseAndSanitizeContent, which sanitizes HTML through DOMPurify. -->
 <template>
   <RouterLink 
     :to="{ name: RouteNames.PRODUCTION_DETAIL, params: { id: production.id, lang: currentLang } }"
