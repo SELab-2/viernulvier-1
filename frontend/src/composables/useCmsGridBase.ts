@@ -21,7 +21,7 @@ export interface UseCmsGridBaseOptions {
    * Tag/Admin grids historically always fit; Production only fits when no state was restored.
    */
   fitOnReadyAfterRestore?: boolean;
-}
+} 
 
 /**
  * Shared CMS grid plumbing: state persistence, column visibility, theme vars,
