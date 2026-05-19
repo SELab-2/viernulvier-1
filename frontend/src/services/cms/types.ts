@@ -42,7 +42,7 @@ export interface CmsProductionGridRow {
 }
 
 /** Inline-editable short text columns in AG Grid. */
-export type InlineEditableField = "performer" | "title" | "producer" | "teaser";
+export type InlineEditableField = "teaser";
 
 /** Long-form fields edited via side panel. */
 export interface CmsAdminGridRow {
@@ -99,7 +99,7 @@ export interface CreateBlogPostFormState {
   productions: number[];
 }
 
-export type ProductionLongField = "teaser" | "description" | "description_2" | "video_1";
+export type ProductionLongField = "artist" | "title" | "supertitle" | "description" | "description_2" | "video_1";
 export type BlogPostLongField = "title" | "content";
 export type TagsLongField = "name";
 export type TagTypeLongField = "name";

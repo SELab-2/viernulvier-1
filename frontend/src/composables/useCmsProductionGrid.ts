@@ -297,25 +297,25 @@ export function useCmsProductionGrid(options: {
     {
       headerName: options.t("cms.columns.performer"),
       field: "performer",
-      editable: true,
+      editable: false,
       minWidth: 180,
     },
     {
       headerName: options.t("cms.columns.title"),
       field: "title",
-      editable: true,
+      editable: false,
       minWidth: 170,
     },
     {
       headerName: options.t("cms.columns.producer"),
       field: "producer",
-      editable: true,
+      editable: false,
       minWidth: 170,
     },
     {
       headerName: options.t("cms.columns.teaser"),
       field: "teaser",
-      editable: true,
+      editable: false,
       minWidth: 200,
       cellClass: "cms-truncate-cell cms-wrap-cell",
       wrapText: true,
@@ -325,8 +325,7 @@ export function useCmsProductionGrid(options: {
     {
       headerName: options.t("cms.columns.genres"),
       field: "genres",
-      editable: true,
-      singleClickEdit: true,
+      editable: false,
       cellEditor: "agSelectCellEditor",
       cellEditorParams: () => {
         // If labels-only provider exists, return labels array for backward

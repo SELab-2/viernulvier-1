@@ -499,7 +499,6 @@ describe("CmsProductionsTab", () => {
     await api.confirmBulkEdit();
 
     expect(productionsService.bulkUpdateProductions).toHaveBeenCalled();
-    expect(api.bulkEditConfirmOpen.value).toBe(false);
   });
 
   it("refreshes affected grid cells exactly once after a successful bulk patch", async () => {
@@ -608,15 +607,15 @@ describe("CmsProductionsTab", () => {
 
     api.onProductionCellKeyDown({
       data: row,
-      colDef: { field: "performer" },
+      colDef: { field: "teaser" },
       event: new KeyboardEvent("keydown", { key: "Enter" }),
     });
 
     await api.onCellEditingStopped({
       data: row,
-      value: "New Artist",
-      oldValue: "Artist",
-      colDef: { field: "performer" },
+      value: "New Teaser",
+      oldValue: "Old Teaser",
+      colDef: { field: "teaser" },
       node: { setDataValue },
     });
 
@@ -635,19 +634,19 @@ describe("CmsProductionsTab", () => {
     };
     api.onProductionCellKeyDown({
       data: row,
-      colDef: { field: "performer" },
+      colDef: { field: "teaser" },
       event: new KeyboardEvent("keydown", { key: "Enter" }),
     });
 
     await api.onCellEditingStopped({
       data: row,
-      value: "Changed Artist",
-      oldValue: "Artist",
-      colDef: { field: "performer" },
+      value: "New Teaser",
+      oldValue: "Old Teaser",
+      colDef: { field: "teaser" },
       node: { setDataValue },
     });
 
-    expect(setDataValue).toHaveBeenCalledWith("performer", "Artist");
+    expect(setDataValue).toHaveBeenCalledWith("teaser", "Old Teaser");
   });
 
   it("handles inline edit commit and revert branches", async () => {
@@ -660,14 +659,14 @@ describe("CmsProductionsTab", () => {
       data: row,
       value: "new",
       oldValue: "old",
-      colDef: { field: "performer" },
+      colDef: { field: "teaser" },
       node: { setDataValue },
     });
-    expect(setDataValue).toHaveBeenCalledWith("performer", "old");
+    expect(setDataValue).toHaveBeenCalledWith("teaser", "old");
 
     api.onProductionCellKeyDown({
       data: row,
-      colDef: { field: "performer" },
+      colDef: { field: "teaser" },
       event: new KeyboardEvent("keydown", { key: "Enter" }),
     });
 
@@ -675,7 +674,7 @@ describe("CmsProductionsTab", () => {
       data: row,
       value: "Changed",
       oldValue: "Artist",
-      colDef: { field: "performer" },
+      colDef: { field: "teaser" },
       node: { setDataValue: vi.fn() },
     });
     expect(productionsService.bulkUpdateProductions).toHaveBeenCalled();

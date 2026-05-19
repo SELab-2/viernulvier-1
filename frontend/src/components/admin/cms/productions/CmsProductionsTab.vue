@@ -611,16 +611,20 @@ const secondaryTagBulkModeAddedPreview = ref("");
 const secondaryTagBulkModeRemovedPreview = ref("");
 const pendingSecondaryTagBulkRows = ref<CmsProductionGridRow[]>([]);
 
-const inlineFieldToApi: Record<InlineEditableField, keyof ProductionWithBackwardsRefs> = {
-  performer: "artist",
-  title: "title",
-  producer: "supertitle",
+const inlineFieldToApi: Record<InlineEditableField, InlineEditableField> = {
   teaser: "teaser",
-};
+}
 
-const longGridFieldToApi: Record<"descriptionOne" | "descriptionTwo", ProductionLongField> = {
+type longGridFieldIds = "descriptionOne" | "descriptionTwo" | "media" | "performer" | "artist" | "title" | "producer";
+
+const longGridFieldToApi: Record<longGridFieldIds, ProductionLongField> = {
   descriptionOne: "description",
   descriptionTwo: "description_2",
+  media: "video_1",
+  performer: "artist",
+  title: "title",
+  artist: "artist",
+  producer: "supertitle",
 };
 
 const genreTagTypeIds = computed(
@@ -1463,6 +1467,7 @@ async function persistBulkProductionPatch(
     if (refreshedNodes.length > 0) {
       gridApi.value?.refreshCells?.({ rowNodes: refreshedNodes, force: true });
     }
+    gridApi.value?.applyTransactionAsync?.({ update: targetRows });
   } catch (error) {
     saveError.value =
       error instanceof Error
@@ -1670,6 +1675,11 @@ function onCellClicked(event: CellClickedEvent<CmsProductionGridRow>): void {
     openImageGalleryPreview([], event.colDef.headerName ?? t("cms.columns.imageMedia"), event.data.id);
     return;
   }
+  
+  const gridField = event.colDef.field as longGridFieldIds;
+  if (!(gridField in longGridFieldToApi)) {
+    return;
+  }
 
   if (event.colDef.field === "media") {
     const value = String(event.data.media ?? "").trim();
@@ -1691,11 +1701,6 @@ function onCellClicked(event: CellClickedEvent<CmsProductionGridRow>): void {
       productionId: event.data.id,
       mediaField: preferredField as "video_1" | "video_2",
     });
-    return;
-  }
-
-  const gridField = event.colDef.field as "descriptionOne" | "descriptionTwo";
-  if (!(gridField in longGridFieldToApi)) {
     return;
   }
 
