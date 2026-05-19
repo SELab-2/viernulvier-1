@@ -1398,7 +1398,7 @@ watch(
     await nextTick();
     productionsFitPillsOnWindowResize();
   },
-  { immediate: true, deep: true },
+  { immediate: true },
 );
 
 watch(filtersPanelExpanded, async (opened) => {
