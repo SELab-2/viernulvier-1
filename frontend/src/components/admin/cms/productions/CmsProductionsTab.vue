@@ -68,6 +68,7 @@
         :value-cache="true"
         :cache-quick-filter="true"
         :get-row-style="getProductionRowStyle"
+        :get-row-id="getRowId"
         @grid-ready="onGridReady"
         @selection-changed="onSelectionChanged"
         @cell-editing-started="onProductionCellEditingStarted"
@@ -457,6 +458,7 @@ const {
   exportGridCsv,
   fitGridColumns,
   getProductionRowStyle,
+  getRowId,
   gridColumnOptions,
   gridApi,
   onGridReady,
@@ -1434,22 +1436,32 @@ async function persistBulkProductionPatch(
   patch: Record<string, unknown>,
 ): Promise<void> {
   try {
-    await bulkUpdateProductions({
-      ids: targetRows.map((row) => row.id),
-      data: patch,
-    });
-    // Reload all data to ensure grid styling is fully refreshed
-    await loadCmsData();
     const updatedRows = await bulkUpdateProductions({
       ids: targetRows.map((row) => row.id),
       data: patch as never,
     });
 
+    // Sync the source-of-truth array so that rebuildRows() (triggered by a
+    // language switch) reproduces rows from the just-saved LanguageMaps, not
+    // from the pre-edit ones.
+    for (const updated of updatedRows) {
+      const idx = productionsData.value.findIndex((p) => p.id === updated.id);
+      if (idx !== -1) {
+        productionsData.value[idx] = updated;
+      }
+    }
+
+    const refreshedNodes = [];
     for (const row of targetRows) {
       const updated = updatedRows.find((item) => item.id === row.id);
-      if (updated) {
-        applyUpdatedProductionToRow(row, updated, localizeValue);
-      }
+      if (!updated) continue;
+      applyUpdatedProductionToRow(row, updated, localizeValue);
+      const node = gridApi.value?.getRowNode?.(String(row.id));
+      if (node) refreshedNodes.push(node);
+    }
+
+    if (refreshedNodes.length > 0) {
+      gridApi.value?.refreshCells?.({ rowNodes: refreshedNodes, force: true });
     }
   } catch (error) {
     saveError.value =
@@ -1993,6 +2005,7 @@ async function loadCmsData(): Promise<void> {
 defineExpose({
   __test: {
     rowData,
+    productionsData,
     tagsData,
     tagTypesData,
     hallsData,

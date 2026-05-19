@@ -399,10 +399,15 @@ export function useCmsProductionGrid(options: {
     return undefined;
   }
 
+  function getRowId(params: { data: CmsProductionGridRow }): string {
+    return String(params.data.id);
+  }
+
   return {
     ...base,
     columnDefs,
     defaultColDef,
+    getRowId,
     getProductionRowStyle,
     gridColumnOptions,
   };
