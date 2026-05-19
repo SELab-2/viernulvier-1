@@ -123,7 +123,7 @@ import { useCmsTagTypeGrid } from "@/composables/useCmsTagTypeGrid";
 import { useDarkMode } from "@/composables/useDarkMode";
 import { i18n, type SupportedLang } from "@/i18n";
 import { createTagType, deleteTagType, getAllTags, getTagTypes, updateTag, updateTagType } from "@/services/tags";
-import { localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
+import { localizeWithFallback, localizeOrEmpty, type LanguageMap } from "@/utils/language-utils";
 import {
   applyUpdatedTagTypeToRow,
   buildEmptyTagTypeForm,
@@ -307,7 +307,7 @@ const currentLang = computed(() => i18n.global.locale.value as SupportedLang);
 
 function localizeValue(map: LanguageMap | null | undefined): string {
   if (!map) return "";
-  return localizeOrEmpty(map, currentLang.value);
+  return localizeWithFallback(map, (map) => localizeOrEmpty(map, currentLang.value));
 }
 
 // ---------------------------------------------------------------------------

@@ -522,7 +522,7 @@ import {
   type ProductionSortDir,
 } from "@/services/productions";
 import { getTags, getTagTypes } from "@/services/tags";
-import { localizeOrEmpty } from "@/utils/language-utils";
+import { localizeWithFallback, localizeOrEmpty } from "@/utils/language-utils";
 import {
   sortProductionTagChipsGenresFirst,
   tagTypeIsGenre,
@@ -1257,7 +1257,7 @@ const genreTagsForFilter = computed(() => {
   for (const tag of byId.values()) {
     const tt = tagTypesById.value.get(tag.tag_type as number);
     if (!tagTypeIsGenre(tt)) continue;
-    const label = localizeOrEmpty(tag.name, lang);
+    const label = localizeWithFallback(tag.name, (map) => localizeOrEmpty(map, lang));
     if (!label) continue;
     items.push({ id: tag.id, label });
   }
@@ -1298,7 +1298,7 @@ const panelFilterSections = computed(() => {
   for (const [typeId, tagList] of buckets) {
     const items: { id: number; label: string }[] = [];
     for (const tag of tagList) {
-      const label = localizeOrEmpty(tag.name, lang);
+      const label = localizeWithFallback(tag.name, (map) => localizeOrEmpty(map, lang));
       if (!label) continue;
       items.push({ id: tag.id, label });
     }
@@ -1320,7 +1320,7 @@ const panelFilterSections = computed(() => {
     } else {
       const tt = typesMap.get(typeId)!;
       isGenreType = tagTypeIsGenre(tt);
-      heading = localizeOrEmpty(tt.name, lang) || String(typeId);
+      heading = localizeWithFallback(tt.name, (map) => localizeOrEmpty(map, lang)) || String(typeId);
     }
 
     sections.push({ tagTypeId: typeId, heading, isGenreType, candidates });
@@ -1512,7 +1512,7 @@ const yearRangeChipSummary = computed(() => {
 function tagLabel(id: number): string {
   const tag = tagsById.value.get(id);
   if (!tag) return String(id);
-  return localizeOrEmpty(tag.name, locale.value) || String(id);
+  return localizeWithFallback(tag.name, (map) => localizeOrEmpty(map, locale.value)) || String(id);
 }
 
 /**
@@ -1739,7 +1739,7 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
   for (const tid of production.tags as number[]) {
     const tag = tagsById.value.get(tid);
     if (!tag) continue;
-    const name = localizeOrEmpty(tag.name, lang);
+    const name = localizeWithFallback(tag.name, (map) => localizeOrEmpty(map, lang));
     if (!name) continue;
     const tagType = tagTypesById.value.get(tag.tag_type as number);
     chips.push({
