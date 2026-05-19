@@ -163,4 +163,41 @@ describe("LinkedProductionsCarousel.vue", () => {
     expect(call.behavior).toBe("smooth");
     wrapper.unmount();
   });
+
+  it("disables the prev button when at the start", async () => {
+    const wrapper = await mountCarousel({ productions: [makeProduction(1), makeProduction(2)] });
+    const prev = wrapper.findAll("button").find((b) => b.attributes("aria-label") === "Previous");
+    expect(prev!.classes()).toContain("opacity-0");
+    expect(prev!.classes()).toContain("pointer-events-none");
+    wrapper.unmount();
+  });
+
+  it("shows next button when scroll container overflows", async () => {
+    const wrapper = await mountCarousel({ productions: [makeProduction(1)] });
+    const container = wrapper.find(".hide-scrollbar").element as HTMLElement;
+
+    Object.defineProperty(container, "scrollWidth", { value: 900, configurable: true });
+    Object.defineProperty(container, "clientWidth", { value: 400, configurable: true });
+
+    await wrapper.find(".hide-scrollbar").trigger("scroll");
+
+    const next = wrapper.findAll("button").find((b) => b.attributes("aria-label") === "Next");
+    expect(next!.classes()).toContain("opacity-100");
+    wrapper.unmount();
+  });
+
+  it("shows prev button after scrolling right", async () => {
+    const wrapper = await mountCarousel({ productions: [makeProduction(1)] });
+    const container = wrapper.find(".hide-scrollbar").element as HTMLElement;
+
+    Object.defineProperty(container, "scrollLeft", { value: 50, configurable: true });
+    Object.defineProperty(container, "scrollWidth", { value: 900, configurable: true });
+    Object.defineProperty(container, "clientWidth", { value: 400, configurable: true });
+
+    await wrapper.find(".hide-scrollbar").trigger("scroll");
+
+    const prev = wrapper.findAll("button").find((b) => b.attributes("aria-label") === "Previous");
+    expect(prev!.classes()).toContain("opacity-100");
+    wrapper.unmount();
+  });
 });
