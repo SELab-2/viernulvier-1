@@ -19,7 +19,7 @@
       <img src="@/assets/images/logo.svg" alt="VierNulVier" width="102" height="32" class="logo" />
     </RouterLink>
 
-    <div class="hidden sm:block">
+    <div class="hidden lg:block">
       <NavControls :is-dark="isDark" @toggle-dark="$emit('toggle-dark')" />
     </div>
   </nav>
