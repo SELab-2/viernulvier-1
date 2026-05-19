@@ -403,7 +403,7 @@
         >
           <div
             v-if="layoutMode === 'grid'"
-            class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3"
+            class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 md:mt-8 md:gap-8 lg:grid-cols-3"
           >
             <ProductionGridCardSkeleton v-for="n in PAGE_SIZE" :key="n" />
           </div>
@@ -431,7 +431,7 @@
             <template v-if="listLoading && productions.length === 0">
               <div
                 v-if="layoutMode === 'grid'"
-                class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3"
+                class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 md:mt-8 md:gap-8 lg:grid-cols-3"
               >
                 <ProductionGridCardSkeleton v-for="n in PAGE_SIZE" :key="n" />
               </div>
@@ -450,7 +450,7 @@
             <div v-else>
               <div
                 v-if="layoutMode === 'grid'"
-                class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3"
+                class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 md:mt-8 md:gap-8 lg:grid-cols-3"
               >
                 <ProductionGridCard
                   v-for="(p, idx) in productions"
