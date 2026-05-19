@@ -73,15 +73,15 @@
                       {{ group.label }}
                     </span>
                     <div class="flex flex-wrap gap-2">
-                      <span
+                      <a
                         v-for="tag in group.tags"
                         :key="tag.tagId"
+                        :href="`/${currentLang}/productions?tags=${tag.tagId}`"
+                        style="text-decoration: none"
                         class="border border-ink-tertiary/60 bg-surface-1 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink-primary hover:border-ink-primary transition-colors cursor-default"
                       >
-                        <a class="contents" :href="`/${currentLang}/productions?tags=${tag.tagId}`">
-                          {{ tag.label }}
-                        </a>
-                      </span>
+                        {{ tag.label }}
+                      </a>
                     </div>
                   </div>
                 </template>
