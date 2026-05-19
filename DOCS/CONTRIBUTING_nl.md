@@ -33,21 +33,19 @@
 
 - Om de containers af te sluiten voer je gewoon `docker compose down` uit.
 
-### SQL-database migreren en nep-beheerder aanmaken
+### SQL-database migreren en wat gegevens invoegen
 
 - Om de SQL-database naar de Docker-container te migreren, voer je `docker exec -t viernulvier-backend pnpm run migrate` uit, of gebruik je `migrate-db.sh`.
 
-- Je kunt een nep-beheerder toevoegen door `docker exec -t viernulvier-backend pnpm run create-admin` uit te voeren. De beheerder heeft gebruikersnaam `admin` en wachtwoord `password`; je kunt hiermee inloggen en vervolgens autoriseren op de beveiligde endpoints.
+- Je kunt een eerste superadmin toevoegen door `docker exec -t viernulvier-backend pnpm run create-admin` of `./create-admin.sh` uit te voeren. Dit kan vervolgens worden gebruikt om in te loggen en in het CMS te beginnen werken.
+- De blogberichten hebben een standaardblog nodig. Maak deze aan door `docker exec -t viernulvier-backend pnpm run create-default-blog` of `create-default-blog.sh` uit te voeren. We waren van plan blogberichten per blog te categoriseren, maar hebben dit nog niet kunnen implementeren.
+- Je kunt producties en evenementen toevoegen met de [legacy importer](../data/imports/README.md) of [scraper](SCRAPER.md). De legacy importer wordt gebruikt om oude CSV-bestanden te importeren, de scraper voor het importeren vanuit de database.
 
 ## Endpoints Bekijken
 
 - De frontend is normaal beschikbaar op <http://localhost:5173>. Als je de omgevingsvariabele `FRONTEND_PORT` in het `.env`-bestand hebt gewijzigd, controleer dan daar de juiste poort.
 
-- Je kunt een eerste superadmin toevoegen door `docker exec -t viernulvier-backend pnpm run create-admin` of `./create-admin.sh` uit te voeren. Dit kan vervolgens worden gebruikt om in te loggen en in het CMS te beginnen werken.
-
-- De blogberichten hebben een standaardblog nodig. Maak deze aan door `docker exec -t viernulvier-backend pnpm run create-default-blog` of `create-default-blog.sh` uit te voeren. We waren van plan blogberichten per blog te categoriseren, maar hebben dit nog niet kunnen implementeren.
-
-- Je kunt producties en evenementen toevoegen met de [legacy importer](../data/imports/README.md) of [scraper](SCRAPER.md). De legacy importer wordt gebruikt om oude CSV-bestanden te importeren, de scraper voor het importeren vanuit de database.
+- De backend is bereikbaar via de frontend-URL met het voorvoegsel `/api/v1/`, of op de standaard-URL <http://localhost:3000>. Als je de omgevingsvariabele `BACKEND_PORT` in het `.env`-bestand hebt gewijzigd, controleer dan daar de juiste poort.
 
 ## Linting, Testen, enzovoort
 
