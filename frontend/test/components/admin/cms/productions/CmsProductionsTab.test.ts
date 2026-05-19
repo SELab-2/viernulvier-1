@@ -543,6 +543,53 @@ describe("CmsProductionsTab", () => {
     });
   });
 
+  it("syncs productionsData after a bulk patch so a language switch keeps the new values", async () => {
+    const wrapper = await mountTab();
+    const api = (wrapper.vm as any).$?.exposed.__test;
+    const row = api.rowData.value[0];
+    const secondRow = {
+      ...row,
+      id: row.id + 1,
+      source: { ...row.source, id: row.id + 1 },
+    };
+    api.productionsData.value = [
+      { ...mockProduction, id: row.id },
+      { ...mockProduction, id: secondRow.id },
+    ];
+
+    const updatedA = {
+      ...mockProduction,
+      id: row.id,
+      title: { nl: "Nieuwe NL", en: "New EN", fr: "Nouveau FR" },
+    };
+    const updatedB = {
+      ...mockProduction,
+      id: secondRow.id,
+      title: { nl: "Nieuwe NL 2", en: "New EN 2", fr: "Nouveau FR 2" },
+    };
+
+    api.gridApi.value = {
+      getSelectedRows: () => [row, secondRow],
+      getRowNode: vi.fn(() => null),
+      refreshCells: vi.fn(),
+    };
+    vi.spyOn(productionsService, "bulkUpdateProductions").mockResolvedValueOnce([
+      updatedA,
+      updatedB,
+    ]);
+
+    api.onCellClicked({
+      data: row,
+      colDef: { field: "descriptionOne", headerName: "Description" },
+    });
+    await api.saveEditorPanel();
+    await api.confirmBulkEdit();
+
+    const synced = api.productionsData.value;
+    expect(synced.find((p: any) => p.id === row.id).title).toEqual(updatedA.title);
+    expect(synced.find((p: any) => p.id === secondRow.id).title).toEqual(updatedB.title);
+  });
+
   it("covers inline bulk edit confirmation and revert on save failure", async () => {
     const wrapper = await mountTab();
     const api = (wrapper.vm as any).$?.exposed.__test;

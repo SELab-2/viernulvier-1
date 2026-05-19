@@ -1441,6 +1441,16 @@ async function persistBulkProductionPatch(
       data: patch as never,
     });
 
+    // Sync the source-of-truth array so that rebuildRows() (triggered by a
+    // language switch) reproduces rows from the just-saved LanguageMaps, not
+    // from the pre-edit ones.
+    for (const updated of updatedRows) {
+      const idx = productionsData.value.findIndex((p) => p.id === updated.id);
+      if (idx !== -1) {
+        productionsData.value[idx] = updated;
+      }
+    }
+
     const refreshedNodes = [];
     for (const row of targetRows) {
       const updated = updatedRows.find((item) => item.id === row.id);
@@ -1995,6 +2005,7 @@ async function loadCmsData(): Promise<void> {
 defineExpose({
   __test: {
     rowData,
+    productionsData,
     tagsData,
     tagTypesData,
     hallsData,
