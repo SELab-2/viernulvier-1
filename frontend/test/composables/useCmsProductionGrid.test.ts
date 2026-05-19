@@ -88,7 +88,7 @@ describe("useCmsProductionGrid", () => {
         isDark: ref(false),
         t: (key) => key,
         currentLang: ref('nl'),
-        getPrimaryTagLabels: () => ["Genre A", "Genre B"],
+        getGenreLabels: () => ["Genre A", "Genre B"],
       });
       const withParams = withLabels.columnDefs.value.find((c) => c.field === "genres")?.cellEditorParams as
         | (() => { values: string[] })
@@ -109,7 +109,7 @@ describe("useCmsProductionGrid", () => {
         isDark: ref(false),
         t: (key) => key,
         currentLang: ref("nl"),
-        getPrimaryTagLabels: () => undefined as unknown as string[],
+        getGenreLabels: () => undefined as unknown as string[],
       });
       const undefinedLabelsFormatter = withUndefinedLabels.columnDefs.value.find((c) => c.field === "genres")?.valueFormatter as
         | ((params: { value: unknown }) => string)
@@ -121,7 +121,7 @@ describe("useCmsProductionGrid", () => {
       const grid = useCmsProductionGrid({
         isDark: ref(false),
         t: (key) => key,
-        getPrimaryTagOptions: () => [{ id: 7, label: "Genre X" }],
+        getGenreOptions: () => [{ id: 7, label: "Genre X" }],
       });
 
       const genresCol = grid.columnDefs.value.find((c) => c.field === "genres");
@@ -149,7 +149,7 @@ describe("useCmsProductionGrid", () => {
         isDark: ref(false),
         t: (key) => key,
         currentLang: ref('nl'),
-        getPrimaryTagOptions: () => [
+        getGenreOptions: () => [
           { id: 7, label: "Genre Seven" },
           { id: 9, label: "Genre Nine" },
         ],
@@ -214,8 +214,8 @@ describe("useCmsProductionGrid", () => {
       const grid = useCmsProductionGrid({
         isDark: ref(false),
         t: (key) => key,
-        getPrimaryTagOptions: () => [{ id: 7, label: "Genre A" }],
         currentLang: ref('nl'),
+        getGenreOptions: () => [{ id: 7, label: "Genre A" }],
       });
       grid.gridApi.value = { exportDataAsCsv } as never;
 
@@ -359,7 +359,7 @@ describe("useCmsProductionGrid", () => {
       const grid = useCmsProductionGrid({
         isDark: ref(false),
         t: (key) => key,
-        getPrimaryTagOptions: () => [{ id: 7, label: "Genre A" }],
+        getGenreOptions: () => [{ id: 7, label: "Genre A" }],
         currentLang: ref('nl'),
       });
       grid.gridApi.value = { exportDataAsCsv } as never;
@@ -417,7 +417,7 @@ describe("useCmsProductionGrid", () => {
       const grid = useCmsProductionGrid({
         isDark: ref(false),
         t: (key) => key,
-        getPrimaryTagOptions: () => [{ id: 7, label: "Genre X" }],
+        getGenreOptions: () => [{ id: 7, label: "Genre X" }],
       });
 
       const genresCol = grid.columnDefs.value.find((c) => c.field === "genres");

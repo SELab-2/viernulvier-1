@@ -472,7 +472,7 @@ const {
 } = useCmsProductionGrid({
   isDark,
   t,
-  getPrimaryTagOptions: () =>
+  getGenreOptions: () =>
     createTagGroups.value
       .filter((group) => group.isGenre)
       .flatMap((group) => group.tags),

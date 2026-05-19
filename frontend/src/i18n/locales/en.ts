@@ -76,11 +76,12 @@ export default {
     },
     columns: {
       id: "ID",
+      events: "Events",
       performer: "Artist",
       title: "Title",
       producer: "Supertitle",
       teaser: "Teaser",
-      genres: "Primary Tag",
+      genres: "Genre tag",
       tags: "Additional Tags",
       imageMedia: "Images",
       descriptionOne: "Description",
