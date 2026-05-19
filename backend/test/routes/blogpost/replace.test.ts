@@ -123,23 +123,6 @@ describe("Replace on blogpost route", () => {
     expect(parsed.productions).toEqual([1]);
   });
 
-  test("PUT /api/v1/blog/post/:id — rejects empty productions array", async () => {
-    const response = await server.inject({
-      method: "PUT",
-      url: `/api/v1/blog/post/${replacedBlogPost["id"]}`,
-      cookies: { session: sessionCookie },
-      payload: {
-        blog: replacedBlogPost["blog"],
-        title: replacedBlogPost["title"],
-        content: replacedBlogPost["content"],
-        published_at: replacedBlogPost["published_at"],
-        productions: [],
-      },
-    });
-
-    expect(response.statusCode).toBe(HttpClientError.BadRequest);
-  });
-
   test("PUT /api/v1/blog/post/:id — replaces a blogpost with null published_at (draft)", async () => {
     const draft: BlogPost = { ...replacedBlogPost, published_at: null };
     const mockClient = {

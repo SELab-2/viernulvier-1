@@ -22,10 +22,7 @@ import { z } from "zod";
 export const EditBlogPostBodySchema = BlogPostSchema.omit({ id: true })
   .partial()
   .extend({
-    productions: z
-      .array(z.int())
-      .min(1, "Productions array must contain at least one production")
-      .optional(),
+    productions: z.array(z.int()).optional(),
   });
 
 /**
