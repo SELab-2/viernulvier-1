@@ -1,6 +1,6 @@
 <template>
-  <section v-if="productions.length || isLoading" class="relative left-[50%] right-[50%] ml-[-50vw] mr-[-50vw] w-screen border-y border-surface-3 bg-surface-0 py-20 mt-12 overflow-hidden group/carousel">
-    <div class="mx-auto max-w-7xl px-6 md:px-12 relative">
+  <section v-if="productions.length || isLoading" class="relative left-[50%] right-[50%] ml-[-50vw] mr-[-50vw] w-screen border-y border-surface-3 bg-surface-0 py-20 mt-12 overflow-hidden">
+    <div class="mx-auto max-w-7xl px-6 md:px-12">
       
       <div class="mb-10 flex items-center gap-4">
         <h2 class="text-[11px] font-black uppercase tracking-[0.3em] text-ink-primary shrink-0">
@@ -24,32 +24,23 @@
         </div>
       </div>
 
-      <template v-else>
-        <div class="hidden md:block">
-          <button 
-            class="absolute -left-4 top-[58%] z-30 -translate-y-1/2 p-4 text-ink-primary opacity-0 transition-all hover:scale-125 group-hover/carousel:opacity-100"
-            aria-label="Previous"
-            @click="scroll('left')"
-          >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-sm">
-              <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
-            </svg>
-          </button>
-          
-          <button 
-            class="absolute -right-4 top-[58%] z-30 -translate-y-1/2 p-4 text-ink-primary opacity-0 transition-all hover:scale-125 group-hover/carousel:opacity-100"
-            aria-label="Next"
-            @click="scroll('right')"
-          >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-sm">
-              <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
-            </svg>
-          </button>
-        </div>
+      <div v-else class="flex items-center gap-4">
+
+        <button
+          class="shrink-0 p-1 text-ink-primary transition-all hover:scale-125"
+          :class="canScrollLeft ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+          aria-label="Previous"
+          @click="scroll('left')"
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-sm">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+          </svg>
+        </button>
 
         <div 
           ref="scroll-container"
-          class="hide-scrollbar flex w-full snap-x snap-mandatory gap-8 overflow-x-auto pb-4 scroll-smooth"
+          class="hide-scrollbar flex flex-1 snap-x snap-mandatory gap-8 overflow-x-auto pb-4 scroll-smooth"
+          @scroll="updateScrollState"
         >
           <div 
             v-for="prod in productions" 
@@ -63,19 +54,30 @@
             />
           </div>
         </div>
-      </template>
 
+        <button
+          class="shrink-0 p-1 text-ink-primary transition-all hover:scale-125"
+          :class="canScrollRight ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+          aria-label="Next"
+          @click="scroll('right')"
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-sm">
+            <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+          </svg>
+        </button>
+
+      </div>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { useTemplateRef } from 'vue';
+import { useTemplateRef, ref, watch, nextTick } from 'vue';
 import type { ProductionWithBackwardsRefs } from "@viernulvier/shared";
 import LinkedProductionCard from "./LinkedProductionCard.vue";
 import { useI18n } from 'vue-i18n';
 
-defineProps<{
+const props = defineProps<{
   productions: ProductionWithBackwardsRefs[];
   thumbnails: Map<number, string | null>;
   dateRanges: Map<number, string>;
@@ -85,6 +87,25 @@ defineProps<{
 const { t } = useI18n();
 
 const scrollContainer = useTemplateRef<HTMLElement>('scroll-container');
+const canScrollLeft = ref(false);
+const canScrollRight = ref(false);
+
+const updateScrollState = () => {
+  const el = scrollContainer.value;
+  if (!el) return;
+  canScrollLeft.value = el.scrollLeft > 4;
+  canScrollRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+};
+
+watch(
+  () => [props.productions, props.isLoading] as const,
+  ([productions, isLoading]) => {
+    if (!isLoading && productions.length) {
+      void nextTick(updateScrollState);
+    }
+  },
+  { immediate: true },
+);
 
 const scroll = (direction: 'left' | 'right') => {
   const el = scrollContainer.value;
@@ -110,9 +131,5 @@ const scroll = (direction: 'left' | 'right') => {
 
 .drop-shadow-sm {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
-}
-
-button {
-  transition: opacity 0.3s ease, transform 0.2s ease;
 }
 </style>
