@@ -205,3 +205,21 @@ export function parseAndSanitizeMd(input: string | null | undefined): string {
 
   return sanitizeHtmlForDisplay(rawHtml);
 }
+
+/** Render markdown and return only the first paragraph as sanitized HTML. */
+export function parseFirstParagraphMd(input: string | null | undefined): string {
+  if (!input) return "";
+  const html = md.render(input);
+  const match = html.match(/<p>([\s\S]*?)<\/p>/);
+  return match ? sanitizeHtml(`<p>${match[1]}</p>`) : "";
+}
+
+/** Extract the src and alt of the first markdown image: ![alt](src) */
+export function extractFirstMdImage(
+  input: string | null | undefined,
+): { src: string; alt: string } | null {
+  if (!input) return null;
+  const match = input.match(/!\[([^\]]*)\]\(([^)]+)\)/);
+  if (!match) return null;
+  return { alt: match[1], src: match[2] };
+}

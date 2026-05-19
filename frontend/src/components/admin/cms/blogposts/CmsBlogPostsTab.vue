@@ -126,7 +126,7 @@ import CmsEditListPanel, { type EditListPanelState } from "@/components/admin/cm
 import { useCmsBlogPostGrid } from "@/composables/useCmsBlogPostGrid";
 import { useCmsRemove } from "@/composables/useCmsRemove";
 import { useDarkMode } from "@/composables/useDarkMode";
-import { i18n, type SupportedLang } from "@/i18n";
+import { detectLanguage, i18n, type SupportedLang } from "@/i18n";
 import { getBlogPosts, createBlogPost, updateBlogPost, deleteBlogPost } from "@/services/blogposts";
 import { localizeOrEmpty, type Language, type LanguageMap } from "@/utils/language-utils";
 import {
@@ -295,10 +295,13 @@ function openEditProductionsPanel(
     (p) => p.id === row.id,
   );
 
+  const lang = detectLanguage();
+
   editProductionsPanel.value = {
     rowId: row.id,
     label: t("cms.columns.blogpost.productions"),
     items: [...(source?.productions as number[] ?? [])],
+    urlBase: `/${lang}/productions`,
   };
 
   saveError.value = null;

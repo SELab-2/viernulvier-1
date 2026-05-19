@@ -56,7 +56,15 @@
               class="cms-list-flair"
               data-testid="edit-list-panel-tag"
             >
-              {{ id }}
+              <a
+                v-if="panel.urlBase"
+                :href="`${panel.urlBase}/${id}`"
+                class="cms-list-flair-link"
+                target="blank"
+              >
+                {{ id }}
+              </a>
+              <span v-else>{{ id }}</span>
 
               <button
                 type="button"
@@ -97,6 +105,7 @@ export type EditListPanelState = {
   rowId: number;
   label: string;
   items: number[];
+  urlBase?: string;
 };
 
 const props = defineProps<{

@@ -154,15 +154,27 @@ describe("BlogPostDetailView.vue", () => {
     wrapper.unmount();
   });
 
+  it("falls back to the next non-empty translation if active locale key is empty string", async () => {
+    i18n.global.locale.value = "nl";
+    vi.mocked(getBlogPost).mockResolvedValue(
+      makePost({ title: { nl: "", en: "English fallback title" } }),
+    );
+    const wrapper = await mountView();
+    await flushPromises();
+
+    expect(wrapper.find("h1").text()).toBe("English fallback title");
+    wrapper.unmount();
+  });
+
   // ── Error states ───────────────────────────────────────────────────────────
   it("shows the not-found error when the API returns 404", async () => {
     vi.mocked(getBlogPost).mockRejectedValue(new ApiError(404, "Not Found"));
     const wrapper = await mountView();
     await flushPromises();
 
-    const alert = wrapper.find('[role="alert"]');
-    expect(alert.exists()).toBe(true);
-    expect(alert.text()).toContain(i18n.global.t("blogpost.notFound"));
+    const notFoundComponent = wrapper.findComponent({ name: "NotFound" });
+    expect(notFoundComponent.exists()).toBe(true);
+    expect(notFoundComponent.props("title")).toBe(i18n.global.t("blogpost.notFound"));
     expect(wrapper.find("article").exists()).toBe(false);
     wrapper.unmount();
   });
@@ -172,10 +184,10 @@ describe("BlogPostDetailView.vue", () => {
     const wrapper = await mountView();
     await flushPromises();
 
-    const alert = wrapper.find('[role="alert"]');
-    expect(alert.exists()).toBe(true);
-    expect(alert.text()).toContain(i18n.global.t("blogpost.errorGeneric"));
-    expect(alert.text()).not.toContain(i18n.global.t("blogpost.notFound"));
+    const notFoundComponent = wrapper.findComponent({ name: "NotFound" });
+    expect(notFoundComponent.exists()).toBe(true);
+    expect(notFoundComponent.props("title")).toBe(i18n.global.t("blogpost.errorGenericTitle"));
+    expect(notFoundComponent.props("title")).not.toBe(i18n.global.t("blogpost.notFound"));
     wrapper.unmount();
   });
 
@@ -184,19 +196,20 @@ describe("BlogPostDetailView.vue", () => {
     const wrapper = await mountView();
     await flushPromises();
 
-    expect(wrapper.find('[role="alert"]').exists()).toBe(true);
-    expect(wrapper.find('[role="alert"]').text()).toContain(i18n.global.t("blogpost.errorGeneric"));
+    const notFoundComponent = wrapper.findComponent({ name: "NotFound" });
+    expect(notFoundComponent.exists()).toBe(true);
+    expect(notFoundComponent.props("title")).toBe(i18n.global.t("blogpost.errorGenericTitle"));
     wrapper.unmount();
   });
 
-  it("renders a back-to-home link in the error state", async () => {
+  it("renders a back-to-all-blogposts link in the error state", async () => {
     vi.mocked(getBlogPost).mockRejectedValue(new ApiError(404, "Not Found"));
     const wrapper = await mountView();
     await flushPromises();
 
-    const link = wrapper.find('[role="alert"] a');
-    expect(link.exists()).toBe(true);
-    expect(link.text()).toBe(i18n.global.t("blogpost.backToHome"));
+    const notFoundComponent = wrapper.findComponent({ name: "NotFound" });
+    expect(notFoundComponent.exists()).toBe(true);
+    expect(notFoundComponent.props("buttonLabel")).toBe(i18n.global.t("blogpost.backToBlog"));
     wrapper.unmount();
   });
 
@@ -204,9 +217,9 @@ describe("BlogPostDetailView.vue", () => {
     const wrapper = await mountView("abc");
     await flushPromises();
 
-    const alert = wrapper.find('[role="alert"]');
-    expect(alert.exists()).toBe(true);
-    expect(alert.text()).toContain(i18n.global.t("blogpost.notFound"));
+    const notFoundComponent = wrapper.findComponent({ name: "NotFound" });
+    expect(notFoundComponent.exists()).toBe(true);
+    expect(notFoundComponent.props("title")).toBe(i18n.global.t("blogpost.notFound"));
     expect(wrapper.find("article").exists()).toBe(false);
     expect(getBlogPost).not.toHaveBeenCalled();
     wrapper.unmount();
@@ -216,9 +229,9 @@ describe("BlogPostDetailView.vue", () => {
     const wrapper = await mountView("0");
     await flushPromises();
 
-    const alert = wrapper.find('[role="alert"]');
-    expect(alert.exists()).toBe(true);
-    expect(alert.text()).toContain(i18n.global.t("blogpost.notFound"));
+    const notFoundComponent = wrapper.findComponent({ name: "NotFound" });
+    expect(notFoundComponent.exists()).toBe(true);
+    expect(notFoundComponent.props("title")).toBe(i18n.global.t("blogpost.notFound"));
     expect(wrapper.find("article").exists()).toBe(false);
     expect(getBlogPost).not.toHaveBeenCalled();
     wrapper.unmount();

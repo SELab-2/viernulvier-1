@@ -70,12 +70,16 @@ vi.mock("vue-i18n", async (importOriginal) => {
 // ─── Mock service ─────────────────────────────────────────────────────────────
 const mockGetProduction = vi.fn();
 const mockGetImagesForProductionOrEmpty = vi.fn();
+const mockGetBlogPost = vi.fn();
 vi.mock("@/services/productions", () => ({
   getProduction: (...args: any[]) => mockGetProduction(...args),
 }));
 vi.mock("@/services/media", () => ({
   getImagesForProductionOrEmpty: (...args: any[]) =>
     mockGetImagesForProductionOrEmpty(...args),
+}));
+vi.mock("@/services/blogposts", () => ({
+  getBlogPost: (...args: any[]) => mockGetBlogPost(...args),
 }));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -189,6 +193,29 @@ describe("ProductionDetail", () => {
       await flushPromises();
 
       expect(mockGetProduction).toHaveBeenCalledWith(42);
+    });
+
+    it("loads blog posts when production data contains blogpost IDs", async () => {
+      mockGetProduction.mockResolvedValue(makeProduction({ blogposts: [101, 102] }));
+      mockGetBlogPost.mockResolvedValue({ id: 101, title: { nl: 'Blog' } });
+  
+      mountComponent();
+      await flushPromises();
+
+      expect(mockGetBlogPost).toHaveBeenCalledTimes(2);
+      expect(mockGetBlogPost).toHaveBeenCalledWith(101);
+    });
+
+    it("handles partial failure when loading blog posts", async () => {
+      mockGetProduction.mockResolvedValue(makeProduction({ blogposts: [101, 102] }));
+      mockGetBlogPost
+        .mockResolvedValueOnce({ id: 101, title: { nl: 'Success' } })
+        .mockRejectedValueOnce(new Error("Blog fail"));
+
+      const wrapper = mountComponent();
+      await flushPromises();
+
+      expect(wrapper.find('[data-testid="blog-section"]').exists()).toBe(true);
     });
   });
 
@@ -331,6 +358,22 @@ describe("ProductionDetail", () => {
       await flushPromises();
 
       expect(wrapper.find('[data-testid="hero-section"]').exists()).toBe(true);
+    });
+  });
+
+  describe("details visibility logic", () => {
+    it("shows details-section if teaser is present", async () => {
+      mockGetProduction.mockResolvedValue(makeProduction({ teaser: { nl: "Teaser text" } }));
+      const wrapper = mountComponent();
+      await flushPromises();
+      expect(wrapper.find('[data-testid="details-section"]').exists()).toBe(true);
+    });
+
+    it("ignores detail fields that only contain whitespace", async () => {
+      mockGetProduction.mockResolvedValue(makeProduction({ description: { nl: "   " } }));
+      const wrapper = mountComponent();
+      await flushPromises();
+      expect(wrapper.find('[data-testid="details-section"]').exists()).toBe(false);
     });
   });
 });

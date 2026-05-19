@@ -100,6 +100,7 @@ export interface CreateBlogPostFormState {
 
 export type ProductionLongField = "teaser" | "description" | "description_2" | "video_1";
 export type BlogPostLongField = "title" | "content";
+export type TagsLongField = "name";
 export type TagTypeLongField = "name";
 
 export type CreateFieldKey =
@@ -137,7 +138,7 @@ export interface CreateAdminFormState {
 
 export interface EditorPanelState {
   rowId: number;
-  apiField: ProductionLongField | BlogPostLongField | TagTypeLongField;
+  apiField: ProductionLongField | BlogPostLongField | TagsLongField | TagTypeLongField;
   label: string;
   values: Record<SupportedLang, string>;
 }
