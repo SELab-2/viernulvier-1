@@ -560,10 +560,6 @@ const ORPHAN_TAG_TYPE_PANEL_ID = -1;
  */
 type FilterPanelFitTag = { id: number; label: string };
 
-/** Pre-allocated fitting slots (worst-case section counts). Clamp if CMS ever exceeds. */
-const PANEL_FIT_GENRE_POOL = 6;
-const PANEL_FIT_ACCENT_POOL = 14;
-
 function createPanelFitSlot(fallbackCap: number) {
   const candidatesRef = ref<FilterPanelFitTag[]>([]);
   const fitting = useFittingPills(candidatesRef, {
@@ -1318,41 +1314,45 @@ const {
   attachWindowResizeListener: false,
 });
 
-const panelGenreFitSlots = Array.from({ length: PANEL_FIT_GENRE_POOL }, () =>
-  createPanelFitSlot(PANEL_ROW_GENRE_FALLBACK_MAX),
-);
-const panelAccentFitSlots = Array.from({ length: PANEL_FIT_ACCENT_POOL }, () =>
-  createPanelFitSlot(PANEL_ROW_NON_GENRE_FALLBACK_MAX),
-);
+const panelGenreFitSlots = new Map<number, ProductionsPanelFitSlot>();
+const panelAccentFitSlots = new Map<number, ProductionsPanelFitSlot>();
 
 const panelSectionFitApis = shallowRef<ProductionsPanelFitSlot[]>([]);
 
 function syncPanelTagSectionFitAssignments(): void {
-  for (const s of panelGenreFitSlots) {
-    s.candidatesRef.value = [];
-  }
-  for (const s of panelAccentFitSlots) {
-    s.candidatesRef.value = [];
-  }
-
-  let gi = 0;
-  let ai = 0;
+  const genreTypeIdsSeen = new Set<number>();
+  const accentTypeIdsSeen = new Set<number>();
   const apis: ProductionsPanelFitSlot[] = [];
 
   for (const sec of panelFilterSections.value) {
     if (sec.isGenreType) {
-      const idx = Math.min(gi, panelGenreFitSlots.length - 1);
-      gi += 1;
-      const slot = panelGenreFitSlots[idx]!;
+      genreTypeIdsSeen.add(sec.tagTypeId);
+      const slot =
+        panelGenreFitSlots.get(sec.tagTypeId) ??
+        createPanelFitSlot(PANEL_ROW_GENRE_FALLBACK_MAX);
+      panelGenreFitSlots.set(sec.tagTypeId, slot);
       slot.candidatesRef.value = [...sec.candidates];
       apis.push(slot);
     } else {
-      const idx = Math.min(ai, panelAccentFitSlots.length - 1);
-      ai += 1;
-      const slot = panelAccentFitSlots[idx]!;
+      accentTypeIdsSeen.add(sec.tagTypeId);
+      const slot =
+        panelAccentFitSlots.get(sec.tagTypeId) ??
+        createPanelFitSlot(PANEL_ROW_NON_GENRE_FALLBACK_MAX);
+      panelAccentFitSlots.set(sec.tagTypeId, slot);
       slot.candidatesRef.value = [...sec.candidates];
       apis.push(slot);
     }
+  }
+
+  for (const [tagTypeId, slot] of panelGenreFitSlots) {
+    if (genreTypeIdsSeen.has(tagTypeId)) continue;
+    slot.candidatesRef.value = [];
+    panelGenreFitSlots.delete(tagTypeId);
+  }
+  for (const [tagTypeId, slot] of panelAccentFitSlots) {
+    if (accentTypeIdsSeen.has(tagTypeId)) continue;
+    slot.candidatesRef.value = [];
+    panelAccentFitSlots.delete(tagTypeId);
   }
 
   panelSectionFitApis.value = apis;
@@ -1367,12 +1367,12 @@ function panelCollapsedFitVisible(idx: number): FilterPanelFitTag[] {
 
 function productionsFitPillsOnWindowResize(): void {
   recomputeCompactGenreRowFit();
-  for (const s of panelGenreFitSlots) {
+  for (const s of panelGenreFitSlots.values()) {
     if (s.candidatesRef.value.length > 0) {
       s.recomputeVisibleCount();
     }
   }
-  for (const s of panelAccentFitSlots) {
+  for (const s of panelAccentFitSlots.values()) {
     if (s.candidatesRef.value.length > 0) {
       s.recomputeVisibleCount();
     }
