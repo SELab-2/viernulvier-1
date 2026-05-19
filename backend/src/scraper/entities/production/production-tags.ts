@@ -16,6 +16,7 @@ import {
   viernulvierApiUrl,
   scraperVerbose,
   type ScrapeRunStats,
+  fetchScraperJwt,
 } from "@/scraper/core/index.js";
 
 /** Minimal production JSON shape for genre sync (matches {@link ProductionJSON} in `production.ts`). */
@@ -41,9 +42,13 @@ function normalizeUseAs(raw: unknown): "genre" | "tag" | null {
 function nameMapForGenre(g: ViernulvierGenreJSON): Record<string, string> | null {
   const fromName = coerceLanguageMap(g.name);
   if (fromName) {
-    const sanitized: Record<string, string> = {};
+    const sanitized = Object.create(null) as Record<string, string>;
     for (const lang of SCRAPER_LANGUAGE_KEYS) {
+      // lang is from a known set of keys, not user input
+      // eslint-disable-next-line security/detect-object-injection
       const t = plainTextFromHtmlish(fromName[lang] ?? "");
+      // lang is from a known set of keys, not user input
+      // eslint-disable-next-line security/detect-object-injection
       if (t !== "") sanitized[lang] = t;
     }
     if (Object.keys(sanitized).length > 0) return sanitized;
@@ -105,7 +110,8 @@ async function loadOrCreateTagTypes(
   for (const key of ["genre", "tag"] as const) {
     const found = types.find((t) => tagTypeMatchesCanonical(t, key));
     if (found) {
-      out[key] = found.id;
+      if (key === "genre") out.genre = found.id;
+      else out.tag = found.id;
       continue;
     }
     const body = {
@@ -124,7 +130,8 @@ async function loadOrCreateTagTypes(
       throw new Error(`POST /tag/type (${key}): ${created.status} ${text}`);
     }
     const row = (await created.json()) as TagType;
-    out[key] = row.id;
+    if (key === "genre") out.genre = row.id;
+    else out.tag = row.id;
     if (stats !== undefined) {
       stats.tags.tagTypesCreated++;
     }
@@ -132,15 +139,15 @@ async function loadOrCreateTagTypes(
   return out as Record<"genre" | "tag", number>;
 }
 
-const genreResourceByOldId: Record<number, ViernulvierGenreJSON> = {};
+const genreResourceByOldId = new Map<number, ViernulvierGenreJSON>();
 const tagLocalIdByTypeAndGenreOldId = new Map<string, number>();
 
 async function fetchViernulvierGenreJson(
   genreOldId: number,
   authToken: string,
 ): Promise<ViernulvierGenreJSON | null> {
-  const cached = genreResourceByOldId[genreOldId];
-  if (cached) return cached;
+  const cached = genreResourceByOldId.get(genreOldId);
+  if (cached !== undefined) return cached;
 
   const url = viernulvierApiUrl(`/api/v1/genres/${genreOldId}`);
   const res = await fetch(url, {
@@ -155,7 +162,7 @@ async function fetchViernulvierGenreJson(
     return null;
   }
   const json = (await res.json()) as ViernulvierGenreJSON;
-  genreResourceByOldId[genreOldId] = json;
+  genreResourceByOldId.set(genreOldId, json);
   return json;
 }
 
@@ -242,52 +249,48 @@ async function resolveLocalTagIdForGenre(
 
 async function linkProductionToTag(
   localProductionId: number,
-  tagId: number,
+  tagIds: number[],
   loginToken: string,
-  stats?: ScrapeRunStats,
 ): Promise<boolean> {
-  const res = await fetch(localApiUrl(`/api/v1/production/${localProductionId}/tags`), {
-    method: "POST",
+  const res = await fetch(localApiUrl(`/api/v1/production/${localProductionId}`), {
+    method: "PATCH",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${loginToken}`,
     },
-    body: JSON.stringify({ tag: tagId }),
+    body: JSON.stringify({ tags: tagIds }),
   });
   if (!res.ok) {
     const text = await res.text();
     console.warn(
-      `POST /production/${localProductionId}/tags tag=${tagId}: ${res.status} ${text}`,
+      `PATCH /production/${localProductionId}: ${res.status} ${text}`,
     );
     return false;
   }
-  const body = (await res.json()) as { linked: boolean };
-  if (stats !== undefined) {
-    if (body.linked) {
-      stats.tags.linksCreated++;
-    } else {
-      stats.tags.linksAlreadyPresent++;
-    }
-  }
-  return true;
+  const body = (await res.json()) as { tags: number[] };
+
+  const responseTagIds = new Set(body.tags ?? []);
+  const allLinked = tagIds.every(id => responseTagIds.has(id));
+
+  return allLinked;
 }
 
-const productionJsonByOldId: Record<number, ProductionDocumentForTags> = {};
+const productionJsonByOldId = new Map<number, ProductionDocumentForTags>();
 
 /** Lets {@link scrapeProductionById} warm the cache so a follow-up sync avoids a second GET. */
 export function rememberViernulvierProductionJson(
   productionOldId: number,
   json: ProductionDocumentForTags,
 ): void {
-  productionJsonByOldId[productionOldId] = json;
+  productionJsonByOldId.set(productionOldId, json);
 }
 
 async function getViernulvierProductionJson(
   productionOldId: number,
   authToken: string,
 ): Promise<ProductionDocumentForTags | null> {
-  const cached = productionJsonByOldId[productionOldId];
-  if (cached) return cached;
+  const cached = productionJsonByOldId.get(productionOldId);
+  if (cached !== undefined) return cached;
 
   const url = viernulvierApiUrl(`/api/v1/productions/${productionOldId}`);
   const res = await fetch(url, {
@@ -301,7 +304,7 @@ async function getViernulvierProductionJson(
     return null;
   }
   const json = (await res.json()) as ProductionDocumentForTags;
-  productionJsonByOldId[productionOldId] = json;
+  productionJsonByOldId.set(productionOldId, json);
   return json;
 }
 
@@ -319,7 +322,7 @@ export async function syncProductionGenreTagsWithPayload(
   const productionOldId =
     oldSeg !== undefined ? Number.parseInt(oldSeg, 10) : Number.NaN;
   if (Number.isFinite(productionOldId)) {
-    productionJsonByOldId[productionOldId] = production;
+    productionJsonByOldId.set(productionOldId, production);
   }
   await syncProductionGenreTagsInner(
     localProductionId,
@@ -367,6 +370,7 @@ async function syncProductionGenreTagsInner(
   const tagTypes = await ensureScraperTagTypeIds(loginToken, stats);
   const refs = normalizeGenresField(production.genres);
 
+  const newTags: number[] = [];
   for (const ref of refs) {
     const iri = hydraIriString(ref);
     if (iri === null) {
@@ -391,7 +395,7 @@ async function syncProductionGenreTagsInner(
       continue;
     }
 
-    const tagTypeId = tagTypes[useAs];
+    const tagTypeId = useAs === "genre" ? tagTypes.genre : tagTypes.tag;
     const nameMap = nameMapForGenre(genreJson);
     if (nameMap === null) {
       if (scraperVerbose()) {
@@ -415,14 +419,80 @@ async function syncProductionGenreTagsInner(
       continue;
     }
 
-    const linked = await linkProductionToTag(
-      localProductionId,
-      tagId,
-      loginToken,
+    newTags.push(tagId);
+
+  }
+  const linked = await linkProductionToTag(
+    localProductionId,
+    newTags,
+    loginToken,
+  );
+  if (!linked) {
+    bumpGenresSkipped(stats);
+  }
+}
+
+export async function scrapeTagsByIds(
+  localProductionId: number,
+  genres: unknown,
+  authToken: string,
+  loginToken?: string,
+  stats?: ScrapeRunStats,
+): Promise<number[]> {
+  if (genres == null) return [];
+  const jwt = loginToken ?? await fetchScraperJwt();
+  const tagTypes = await ensureScraperTagTypeIds(jwt, stats);
+  const refs = normalizeGenresField(genres);
+  const out: number[] = [];
+
+  for (const ref of refs) {
+    const iri = hydraIriString(ref);
+    if (iri === null) {
+      bumpGenresSkipped(stats);
+      continue;
+    }
+    const genreOldId = genreLegacyIdFromIri(resolveViernulvierResourceUrl(iri));
+    if (genreOldId === null) {
+      bumpGenresSkipped(stats);
+      continue;
+    }
+
+    const genreJson = await fetchViernulvierGenreJson(genreOldId, authToken);
+    if (genreJson === null) {
+      bumpGenresSkipped(stats);
+      continue;
+    }
+
+    const useAs = normalizeUseAs(genreJson.use_as);
+    if (useAs === null) {
+      bumpGenresSkipped(stats);
+      continue;
+    }
+
+    const tagTypeId = useAs === "genre" ? tagTypes.genre : tagTypes.tag;
+    const nameMap = nameMapForGenre(genreJson);
+    if (nameMap === null) {
+      if (scraperVerbose()) {
+        console.log(
+          `Skip genre old_id=${genreOldId} (no name/vendor_id) production local id=${localProductionId}`,
+        );
+      }
+      bumpGenresSkipped(stats);
+      continue;
+    }
+
+    const tagId = await resolveLocalTagIdForGenre(
+      genreOldId,
+      tagTypeId,
+      nameMap,
+      jwt,
       stats,
     );
-    if (!linked) {
+    if (tagId === null) {
       bumpGenresSkipped(stats);
+      continue;
     }
+    out.push(tagId);
   }
+  return out;
 }
