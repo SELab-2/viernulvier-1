@@ -97,7 +97,7 @@ describe("HeroSection.vue", () => {
       expect(img.attributes("class") || "").not.toMatch(/grayscale/);
     });
 
-    it("renders no hero image when bannerUrl is null (dark background only)", async () => {
+    it("renders no hero image when bannerUrl is null (compact spacer, surface background)", async () => {
       const wrapper = await mountHero({ bannerUrl: null });
       expect(wrapper.find("img").exists()).toBe(false);
     });

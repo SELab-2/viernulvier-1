@@ -1,12 +1,12 @@
 <template>
   <!-- Editorial header for a production page. -->
   <article class="relative bg-surface-1">
-    <!-- Banner photograph -->
+    <!-- Full-bleed photograph, or minimal top spacer when no hero crop exists -->
     <div
+      v-if="bannerUrl"
       class="relative w-full overflow-hidden bg-surface-inv h-[45vh] md:h-[55vh]"
     >
       <img
-        v-if="bannerUrl"
         :src="bannerUrl"
         :alt="heroImageAlt"
         class="h-full w-full object-cover object-center"
@@ -15,9 +15,19 @@
         referrerPolicy="no-referrer"
       />
     </div>
+    <div
+      v-else
+      class="bg-surface-1 pt-20 md:pt-25"
+      aria-hidden="true"
+    />
 
-    <!-- Letterpress card sitting over the bottom of the photograph -->
-    <header class="relative z-10 mx-auto -mt-40 max-w-2xl px-6 md:-mt-56 md:max-w-3xl md:px-0">
+    <!-- Letterpress card: overlaps the photograph, or stacks under the spacer when image-less -->
+    <header
+      :class="[
+        'relative z-10 mx-auto max-w-2xl px-6 md:max-w-3xl md:px-0',
+        bannerUrl ? '-mt-40 md:-mt-56' : '',
+      ]"
+    >
       <div
         class="border border-ink-primary bg-surface-0 px-6 py-8 text-center opacity-0 animate-fade-up md:px-12 md:py-10"
       >
@@ -97,7 +107,7 @@ interface Props {
     durationMinutes: number | null;
     hasMultipleDays: boolean;
   } | null;
-  /** First gallery image (`FE3_home_featuredWide` crop); when null, solid dark hero. */
+  /** First gallery image (`FE3_home_featuredWide` crop); when null, compact surface spacer (no faux banner). */
   bannerUrl?: string | null;
 }
 
