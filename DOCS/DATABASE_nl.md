@@ -1,6 +1,6 @@
 ## Database Schema (EER)
 
-##### (Deze documentatie is gegenereerd op basis van het live PostgreSQL-schema. Er kunnen kleine inconsistenties bestaan tussen EER en de externe VIERNULVIER API — de API is de bron van waarheid voor vendor-data.)
+##### (Disclaimer: er zijn een aantal kleine inconsistenties tussen EER en API — de API is finaal)
 
 Bekijk het schema visueel op https://dbdiagram.io/d/viernulvier-699b2e45bd82f5fce26f02d4 of download de svg: ![Database Schema](./database-schema.svg)
 De DBML-code vind je hieronder terug.
