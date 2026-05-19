@@ -68,13 +68,13 @@
             v-model="query"
             type="search"
             :placeholder="t('hero.searchPlaceholder')"
-            class="flex-1 bg-transparent px-5 py-4 font-serif text-base text-ink-primary placeholder:font-serif placeholder:italic placeholder:text-ink-tertiary focus:outline-none md:text-lg"
+            class="min-w-0 flex-1 bg-transparent px-5 py-4 font-serif text-base text-ink-primary placeholder:font-serif placeholder:italic placeholder:text-ink-tertiary focus:outline-none md:text-lg"
             autocomplete="off"
             spellcheck="false"
           />
           <button
             type="submit"
-            class="flex items-center gap-2 border-l-2 border-surface-3 bg-accent-dark px-6 py-4 text-sm font-bold uppercase tracking-[0.18em] text-surface-0 transition hover:bg-accent-dark-hover"
+            class="flex items-center gap-2 border-l-2 border-surface-3 bg-accent-dark px-4 py-4 text-sm font-bold uppercase tracking-[0.12em] text-surface-0 transition hover:bg-accent-dark-hover sm:px-6 sm:tracking-[0.18em]"
           >
             <span>{{ t("hero.searchSubmit") }}</span>
             <svg
