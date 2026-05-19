@@ -1,53 +1,55 @@
 <template>
-  <aside v-if="panel" class="cms-side-panel">
-    <div class="cms-side-header">
-      <h2 class="text-lg font-semibold text-ink-primary">
-        {{ panel.label }}
-      </h2>
-      <button
-        type="button"
-        class="cms-side-close"
-        @click="emit('close')"
-      >
-        {{ t("cms.panel.close") }}
-      </button>
-    </div>
+  <div v-if="panel" class="cms-side-overlay" @click.self="emit('close')">
+    <aside class="cms-side-panel">
+      <div class="cms-side-header">
+        <h2 class="text-lg font-semibold text-ink-primary">
+          {{ panel.label }}
+        </h2>
+        <button
+          type="button"
+          class="cms-side-close"
+          @click="emit('close')"
+        >
+          {{ t("cms.panel.close") }}
+        </button>
+      </div>
 
-    <div class="cms-side-body">
-      <p v-if="bulkCount > 1" class="text-xs text-ink-secondary">
-        {{ t("cms.panel.bulkNotice", { count: bulkCount }) }}
-      </p>
+      <div class="cms-side-body">
+        <p v-if="bulkCount > 1" class="text-xs text-ink-secondary">
+          {{ t("cms.panel.bulkNotice", { count: bulkCount }) }}
+        </p>
 
-      <label
-        v-for="lang in languages"
-        :key="lang"
-        class="cms-side-field"
-      >
-        <span class="text-xs font-semibold uppercase tracking-wide text-ink-secondary">
-          {{ lang.toUpperCase() }}
-        </span>
+        <label
+          v-for="lang in languages"
+          :key="lang"
+          class="cms-side-field"
+        >
+          <span class="text-xs font-semibold uppercase tracking-wide text-ink-secondary">
+            {{ lang.toUpperCase() }}
+          </span>
 
-        <MarkdownEditor
-          v-model="localValues[lang]"
-        />
-      </label>
+          <MarkdownEditor
+            v-model="localValues[lang]"
+          />
+        </label>
 
-      <p v-if="saveError" class="text-sm text-red-700">
-        {{ saveError }}
-      </p>
-    </div>
+        <p v-if="saveError" class="text-sm text-red-700">
+          {{ saveError }}
+        </p>
+      </div>
 
-    <div class="cms-side-footer">
-      <button
-        type="button"
-        class="cms-side-save"
-        :disabled="isSaving"
-        @click="emit('save')"
-      >
-        {{ isSaving ? t("general.saving") : t("cms.panel.save") }}
-      </button>
-    </div>
-  </aside>
+      <div class="cms-side-footer">
+        <button
+          type="button"
+          class="cms-side-save"
+          :disabled="isSaving"
+          @click="emit('save')"
+        >
+          {{ isSaving ? t("general.saving") : t("cms.panel.save") }}
+        </button>
+      </div>
+    </aside>
+  </div>
 </template>
 
 <script setup lang="ts">
