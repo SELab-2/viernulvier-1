@@ -22,7 +22,7 @@
       </div>
 
       <p v-if="eventsPanelLoading" class="text-sm text-ink-secondary">
-        {{ t("general.saving") }}
+        {{ t("general.loading") }}
       </p>
       <p v-else-if="eventsPanelError" class="text-sm text-red-700">
         {{ eventsPanelError }}

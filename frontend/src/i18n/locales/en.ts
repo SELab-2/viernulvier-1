@@ -3,6 +3,7 @@ export default {
     cancel: "Cancel",
     delete: "Delete",
     saving: "Saving...",
+    loading: "Loading...",
   },
   nav: {
     home: "Home",
