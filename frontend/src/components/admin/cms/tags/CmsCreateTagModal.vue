@@ -199,7 +199,7 @@ function parseTagTypeValue(raw: string): number | null {
 }
 
 .cms-language-pill.active {
-  @apply border-transparent bg-surface-inv text-ink-on-inv;
+  @apply border-transparent bg-accent-dark text-surface-0;
 }
 
 .cms-lang-label {
@@ -219,6 +219,6 @@ function parseTagTypeValue(raw: string): number | null {
 }
 
 .cms-side-save {
-  @apply rounded-md bg-surface-inv px-4 py-2 text-sm font-semibold text-ink-on-inv transition hover:bg-surface-inv-raised disabled:cursor-not-allowed disabled:opacity-60;
+  @apply rounded-md bg-accent-dark px-4 py-2 text-sm font-semibold text-surface-0 transition hover:bg-accent-dark-hover disabled:cursor-not-allowed disabled:opacity-60;
 }
 </style>

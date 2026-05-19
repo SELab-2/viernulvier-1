@@ -184,7 +184,7 @@
 
           <footer class="cms-modal-footer">
             <button type="button" class="cms-side-close" :disabled="bulkEditConfirmLoading" @click="closeBulkEditConfirm">
-              {{ t("cms.panel.close") }}
+              {{ t("general.cancel") }}
             </button>
             <button type="button" class="cms-side-save" :disabled="bulkEditConfirmLoading" @click="confirmBulkEdit">
               {{ bulkEditConfirmLoading ? t("cms.panel.saving") : t("cms.actions.confirmBulkEditSubmit") }}
