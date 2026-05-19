@@ -14,7 +14,7 @@
         <input
           ref="mediaPreviewImageInput"
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/gif"
           class="hidden"
           @change="$emit('image-selected', $event)"
         />
@@ -58,6 +58,9 @@
 
       <footer class="cms-modal-footer">
         <div class="cms-modal-footer-right cms-media-footer-actions">
+          <p v-if="saveError" class="cms-media-error" role="alert">
+            {{ saveError }}
+          </p>
           <input
             v-if="mediaPreview.kind !== 'image' && mediaPreview.mediaField"
             :value="mediaPreviewEditUrl"
@@ -115,6 +118,7 @@ defineProps<{
   mediaPreview: CmsMediaPreview | null;
   mediaPreviewEditUrl: string;
   isSaving: boolean;
+  saveError?: string | null;
 }>();
 
 const mediaPreviewImageInput = useTemplateRef<HTMLInputElement>("mediaPreviewImageInput");
@@ -134,8 +138,7 @@ const { t } = useI18n();
 
 <style scoped>
 .cms-media-preview-body {
-  min-width: 600px;
-  min-height: 500px;
+  min-width: min(600px, 100%);
   max-width: 90vw;
   max-height: 80vh;
   display: flex;
@@ -216,6 +219,11 @@ const { t } = useI18n();
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.5rem;
+}
+
+.cms-media-error {
+  font-size: 0.875rem;
+  color: #b91c1c;
 }
 
 img.cms-media-preview-large {

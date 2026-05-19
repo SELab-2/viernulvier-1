@@ -107,14 +107,35 @@ export class ApiError extends Error {
  * `RequestInit` extended with a typed `body` that is automatically serialised
  * to JSON. The native `body: BodyInit` is replaced so callers can pass any
  * value without manual `JSON.stringify`.
+ *
+ * Native `BodyInit` values (`FormData`, `Blob`, `URLSearchParams`,
+ * `ArrayBuffer`, `ArrayBufferView`, `ReadableStream`) are forwarded to
+ * `fetch` as-is — the browser sets `Content-Type` with the correct
+ * multipart boundary, and we do not call `JSON.stringify` on them.
  */
 type ApiFetchOptions = Omit<RequestInit, "body"> & {
   /**
-   * Request payload — serialised with `JSON.stringify` before sending.
-   * Omit this field entirely for requests without a body (GET, DELETE, …).
+   * Request payload — serialised with `JSON.stringify` before sending,
+   * unless it is a native `BodyInit` value, in which case it is forwarded
+   * unchanged. Omit this field entirely for requests without a body.
    */
   body?: unknown;
 };
+
+/**
+ * Returns `true` for body values that `fetch` accepts directly and that
+ * must NOT be passed through `JSON.stringify`.
+ */
+function isNativeBodyInit(body: unknown): body is BodyInit {
+  return (
+    body instanceof FormData ||
+    body instanceof Blob ||
+    body instanceof URLSearchParams ||
+    body instanceof ArrayBuffer ||
+    ArrayBuffer.isView(body) ||
+    (typeof ReadableStream !== "undefined" && body instanceof ReadableStream)
+  );
+}
 
 /**
  * Fetch wrapper for all `/api/v1/*` calls.
@@ -149,13 +170,20 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const { body, headers, ...rest } = options;
 
+  const native = body !== undefined && isNativeBodyInit(body);
+  const requestBody: BodyInit | undefined =
+    body === undefined ? undefined : native ? (body as BodyInit) : JSON.stringify(body);
+
   const response = await fetch(`${API_BASE}${path}`, {
     credentials: "include",
     headers: {
-      ...(body !== undefined ? { "Content-Type": "application/json" } : {}), // no content header if there's no body
+      // Only set JSON content-type for JSON-serialised bodies. For native
+      // BodyInit (FormData, Blob, …) let the browser set the correct header
+      // including any multipart boundary.
+      ...(body !== undefined && !native ? { "Content-Type": "application/json" } : {}),
       ...(headers as Record<string, string>),
     },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: requestBody,
     ...rest,
   });
 

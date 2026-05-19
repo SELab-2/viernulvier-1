@@ -89,7 +89,7 @@ describe("CmsCreateProductionModal.vue", () => {
       }),
     });
 
-    await wrapper.get('input[type="file"][accept="image/*"]').trigger("change");
+    await wrapper.get('input[type="file"]').trigger("change");
     await wrapper.get(".cms-modal-overlay").trigger("click.self");
     await wrapper.get(".cms-side-save").trigger("click");
 

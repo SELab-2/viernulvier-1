@@ -254,6 +254,7 @@ export default {
       loadGeneric: "Kon CMS-gegevens niet laden.",
       saveFailed: "Opslaan mislukt: {message}",
       saveGeneric: "Opslaan mislukt.",
+      unsupportedImageType: "Niet-ondersteund afbeeldingstype ({type}). Gebruik JPG, PNG, WebP of GIF.",
     },
     feedback: {
       saveSuccess: "Wijzigingen opgeslagen",

@@ -255,6 +255,7 @@ export default {
       loadGeneric: "Impossible de charger les donnees CMS.",
       saveFailed: "Echec de l'enregistrement: {message}",
       saveGeneric: "Echec de l'enregistrement.",
+      unsupportedImageType: "Type d'image non pris en charge ({type}). Utilisez JPG, PNG, WebP ou GIF.",
     },
     feedback: {
       saveSuccess: "Modifications enregistrees",

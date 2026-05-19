@@ -257,6 +257,7 @@ export default {
       loadGeneric: "Could not load CMS data.",
       saveFailed: "Save failed: {message}",
       saveGeneric: "Save failed.",
+      unsupportedImageType: "Unsupported image type ({type}). Use JPG, PNG, WebP or GIF.",
     },
     feedback: {
       saveSuccess: "Changes saved successfully",

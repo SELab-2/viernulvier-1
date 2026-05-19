@@ -133,7 +133,7 @@
                 <input
                   v-if="mediaItem.type === 'image'"
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
                   class="cms-text-input"
                   @change="emit('media-file-change', mediaItem.id, $event)"
                 />
