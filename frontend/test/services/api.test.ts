@@ -155,6 +155,67 @@ describe("apiFetch", () => {
     expect(call[1].body).toBeUndefined();
   });
 
+  // ── Native BodyInit (FormData, Blob, …) ─────────────────────────────────────
+  // These must NOT be JSON-stringified and must NOT get an explicit
+  // Content-Type header (the browser sets it with the multipart boundary).
+
+  it("forwards FormData bodies without serialising or setting Content-Type", async () => {
+    const formData = new FormData();
+    formData.append("image", new Blob(["x"], { type: "image/jpeg" }), "image.jpg");
+
+    await apiFetch("/production/1/image", { method: "POST", body: formData });
+
+    const call = (fetch as ReturnType<typeof vi.fn>).mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
+    expect(call[1].body).toBe(formData);
+    expect(call[1].headers).not.toHaveProperty("Content-Type");
+  });
+
+  it("forwards Blob bodies without serialising", async () => {
+    const blob = new Blob(["binary"], { type: "application/octet-stream" });
+
+    await apiFetch("/upload", { method: "POST", body: blob });
+
+    const call = (fetch as ReturnType<typeof vi.fn>).mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
+    expect(call[1].body).toBe(blob);
+    expect(call[1].headers).not.toHaveProperty("Content-Type");
+  });
+
+  it("forwards URLSearchParams bodies without serialising", async () => {
+    const params = new URLSearchParams({ key: "value" });
+
+    await apiFetch("/form", { method: "POST", body: params });
+
+    const call = (fetch as ReturnType<typeof vi.fn>).mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
+    expect(call[1].body).toBe(params);
+    expect(call[1].headers).not.toHaveProperty("Content-Type");
+  });
+
+  it("allows callers to set their own Content-Type on FormData requests", async () => {
+    const formData = new FormData();
+
+    await apiFetch("/x", {
+      method: "POST",
+      body: formData,
+      headers: { "X-Custom": "value" },
+    });
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: expect.objectContaining({ "X-Custom": "value" }),
+      }),
+    );
+  });
+
   it("merges extra headers with defaults when body is provided", async () => {
     await apiFetch("/production", {
       method: "POST",
