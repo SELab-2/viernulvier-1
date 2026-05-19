@@ -209,7 +209,7 @@
                 panelCollapsedFitVisible(idx).length < sec.candidates.length
               "
               :row-binder="
-                panelSectionFitApis[idx]?.setRowRef ?? 
+                panelSectionFitApis[idx]?.setRowRef ??
                   noopProductionsPanelBinder
               "
               :pill-binder="
