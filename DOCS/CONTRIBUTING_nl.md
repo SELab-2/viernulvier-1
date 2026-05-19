@@ -63,3 +63,4 @@
 
 - Als je na het starten van Docker een foutmelding krijgt over geweigerde toegang, voer dan `sudo usermod -aG docker $USER` uit om ervoor te zorgen dat je gebruiker toegang heeft tot de Docker-groep.
 - Als je Docker probeert te gebruiken op WSL, is het belangrijk dat je Docker Engine uitvoert via Docker Desktop op je Windows. In de instellingen kun je naar `Resources → WSL Integration` gaan om de engine ook toegang te geven tot je WSL-distributies.
+
