@@ -7,6 +7,9 @@ import DOMPurify from "dompurify";
  */
 const MAX_PLAIN_LINE_BREAK_RUN = 2;
 
+/** Absolute origin for root-relative `/cms_files/…` image URLs on `<img>`. */
+const VIERNULLVIER_CMS_ORIGIN = "https://www.viernulvier.gent";
+
 function normalize(input: string): string {
   return input
     .replace(/\\r\\n/g, "\n")
@@ -128,7 +131,7 @@ function stripTrailingBrBeforeParagraphClose(html: string): string {
 
 /**
  * Remove whitespace-only gaps between tags when they contain a line break. This
- * keeps HTML compact  and avoids extra bands if any parent still uses `white-space:
+ * keeps HTML compact and avoids extra bands if any parent still uses `white-space:
  * pre-line`. Spaces only (`</a> <a>`) are kept.
  */
 function stripIntertagLinebreakWhitespace(html: string): string {
@@ -137,11 +140,32 @@ function stripIntertagLinebreakWhitespace(html: string): string {
   );
 }
 
+/** After DOMPurify: root-relative `/cms_files/…` on `<img>` becomes absolute (template parse handles messy CMS markup). */
+function rewriteCmsFileImgSrc(html: string): string {
+  if (!html.includes("cms_files") || typeof document === "undefined") {
+    return html;
+  }
+  try {
+    const tpl = document.createElement("template");
+    tpl.innerHTML = html;
+    tpl.content.querySelectorAll("img[src]").forEach((img) => {
+      const src = img.getAttribute("src")?.trim();
+      if (src?.startsWith("/cms_files/")) {
+        img.setAttribute("src", `${VIERNULLVIER_CMS_ORIGIN}${src}`);
+      }
+    });
+    return tpl.innerHTML;
+  } catch {
+    return html;
+  }
+}
+
 function sanitizeHtmlForDisplay(input: string): string {
   const sanitized = sanitizeHtml(input);
   const collapsed = collapseHtmlBreakRuns(sanitized);
   const noTrailingBrP = stripTrailingBrBeforeParagraphClose(collapsed);
-  return stripIntertagLinebreakWhitespace(noTrailingBrP);
+  const strippedTags = stripIntertagLinebreakWhitespace(noTrailingBrP);
+  return rewriteCmsFileImgSrc(strippedTags);
 }
 
 export function parseAndSanitizeContent(

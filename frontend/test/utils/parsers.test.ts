@@ -85,6 +85,41 @@ describe("parseAndSanitizeContent", () => {
     expect(result).toContain("Hello\nWorld");
   });
 
+  it("rewrites root-relative /cms_files/ img src to viernulvier.gent origin", () => {
+    const input =
+      '<p><img alt="abo" src="/cms_files/Image/buttons/button_bestelABO.jpg"></p>';
+
+    const result = parseAndSanitizeContent(input);
+
+    expect(result).toContain(
+      'src="https://www.viernulvier.gent/cms_files/Image/buttons/button_bestelABO.jpg"',
+    );
+  });
+
+  it("does not change img src already absolute on viernulvier CMS", () => {
+    const input =
+      '<p><img src="https://www.viernulvier.gent/cms_files/Image/foo.jpg"/></p>';
+
+    const result = parseAndSanitizeContent(input);
+
+    expect(result).toContain(
+      "https://www.viernulvier.gent/cms_files/Image/foo.jpg",
+    );
+    expect(result).not.toContain(
+      "https://www.viernulvier.genthttps:",
+    );
+  });
+
+  it("rewrites img with multiline tag or src=/cms_files/… (DOM-parse path)", () => {
+    const input = `<p>
+<img alt="logo"
+src="/cms_files/Image/x.jpg"></p>`;
+
+    const result = parseAndSanitizeContent(input);
+
+    expect(result).toContain("https://www.viernulvier.gent/cms_files/Image/x.jpg");
+  });
+
   it("collapses long runs of literal newlines in plain text to at most one empty line between paragraphs", () => {
     const input = "One\n\n\n\nTwo";
 
