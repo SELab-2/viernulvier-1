@@ -615,7 +615,7 @@ const inlineFieldToApi: Record<InlineEditableField, InlineEditableField> = {
   teaser: "teaser",
 }
 
-type longGridFieldIds = "descriptionOne" | "descriptionTwo" | "media" | "performer" | "artist" | "title" | "producer";
+type longGridFieldIds = "descriptionOne" | "descriptionTwo" | "media" | "performer" | "artist" | "title" | "producer" | "teaser";
 
 const longGridFieldToApi: Record<longGridFieldIds, ProductionLongField> = {
   descriptionOne: "description",
@@ -625,6 +625,7 @@ const longGridFieldToApi: Record<longGridFieldIds, ProductionLongField> = {
   title: "title",
   artist: "artist",
   producer: "supertitle",
+  teaser: "teaser",
 };
 
 const genreTagTypeIds = computed(

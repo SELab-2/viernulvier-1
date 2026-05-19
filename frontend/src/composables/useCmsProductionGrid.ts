@@ -325,7 +325,8 @@ export function useCmsProductionGrid(options: {
     {
       headerName: options.t("cms.columns.genres"),
       field: "genres",
-      editable: false,
+      editable: true,
+      singleClickEdit: true,
       cellEditor: "agSelectCellEditor",
       cellEditorParams: () => {
         // If labels-only provider exists, return labels array for backward
