@@ -194,113 +194,36 @@
             id="productions-extended-filters"
             class="mt-4 space-y-4 rounded-md border border-surface-3 bg-surface-1 px-4 py-4 dark:bg-surface-1/60"
           >
-            <div
+            <ProductionsFilterPanelTagSection
               v-if="genreTagsForFilter.length > 0"
-              class="space-y-3"
-            >
-              <p
-                class="text-xs font-semibold uppercase tracking-[0.2em] text-ink-secondary"
-              >
-                {{ t("productionsPage.genreFiltersHeading") }}
-              </p>
-              <div :ref="setGenrePanelRowRef" class="flex items-start gap-3">
-                <div class="flex min-w-0 flex-1 flex-wrap gap-2">
-                  <button
-                    v-for="g in visibleGenreTagsForFilter"
-                    :key="g.id"
-                    :ref="(el) => setGenrePanelPillRef(g.id, el)"
-                    type="button"
-                    class="productions-view__tag-filter-panel-pill"
-                    :class="
-                      selectedTagIds.includes(g.id)
-                        ? 'border-tag-genre-bg bg-tag-genre-bg text-tag-genre-text'
-                        : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
-                    "
-                    :disabled="listLoading || loadError"
-                    @click="toggleTag(g.id)"
-                  >
-                    {{ g.label }}
-                  </button>
-                </div>
-                <button
-                  v-if="showGenreTagFilterExpandToggle"
-                  :ref="setGenrePanelExpandButtonRef"
-                  type="button"
-                  class="productions-view__tag-filter-expand"
-                  :disabled="listLoading || loadError"
-                  :aria-expanded="genreTagFiltersExpanded"
-                  :aria-label="
-                    genreTagFiltersExpanded
-                      ? t('productionsPage.viewLessTagFilters')
-                      : t('productionsPage.viewMoreTagFilters')
-                  "
-                  @click="genreTagFiltersExpanded = !genreTagFiltersExpanded"
-                >
-                  {{
-                    genreTagFiltersExpanded
-                      ? t("productionsPage.viewLessTagFilters")
-                      : t("productionsPage.viewMoreTagFilters")
-                  }}
-                </button>
-              </div>
-            </div>
+              v-model:expanded="genreTagFiltersExpanded"
+              :heading="t('productionsPage.genreFiltersHeading')"
+              :visible-tags="visibleGenreTagsForFilter"
+              :show-expand-toggle="showGenreTagFilterExpandToggle"
+              :row-binder="setGenrePanelRowRef"
+              :pill-binder="setGenrePanelPillRef"
+              :trailing-binder="setGenrePanelExpandButtonRef"
+              :selected-tag-ids="selectedTagIds"
+              variant="genre"
+              :disabled="listLoading || loadError"
+              @toggle="toggleTag($event)"
+            />
 
-            <div
+            <ProductionsFilterPanelTagSection
               v-if="nonGenreTagsForFilter.length > 0"
-              :class="
-                genreTagsForFilter.length > 0
-                  ? 'space-y-3 border-t border-surface-3 pt-4'
-                  : 'space-y-3'
-              "
-            >
-              <p
-                class="text-xs font-semibold uppercase tracking-[0.2em] text-ink-secondary"
-              >
-                {{ t("productionsPage.tagFiltersHeading") }}
-              </p>
-              <div :ref="setNonGenrePanelRowRef" class="flex items-start gap-3">
-                <div class="flex min-w-0 flex-1 flex-wrap gap-2">
-                  <button
-                    v-for="g in visibleNonGenreTagsForFilter"
-                    :key="g.id"
-                    :ref="(el) => setNonGenrePanelPillRef(g.id, el)"
-                    type="button"
-                    class="productions-view__tag-filter-panel-pill"
-                    :class="
-                      selectedTagIds.includes(g.id)
-                        ? 'border-accent-outline bg-surface-1 text-ink-primary'
-                        : 'border-surface-3 bg-surface-1 text-ink-primary hover:bg-surface-2'
-                    "
-                    :disabled="listLoading || loadError"
-                    @click="toggleTag(g.id)"
-                  >
-                    {{ g.label }}
-                  </button>
-                </div>
-                <button
-                  v-if="showNonGenreTagFilterExpandToggle"
-                  :ref="setNonGenrePanelExpandButtonRef"
-                  type="button"
-                  class="productions-view__tag-filter-expand"
-                  :disabled="listLoading || loadError"
-                  :aria-expanded="nonGenreTagFiltersExpanded"
-                  :aria-label="
-                    nonGenreTagFiltersExpanded
-                      ? t('productionsPage.viewLessTagFilters')
-                      : t('productionsPage.viewMoreTagFilters')
-                  "
-                  @click="
-                    nonGenreTagFiltersExpanded = !nonGenreTagFiltersExpanded
-                  "
-                >
-                  {{
-                    nonGenreTagFiltersExpanded
-                      ? t("productionsPage.viewLessTagFilters")
-                      : t("productionsPage.viewMoreTagFilters")
-                  }}
-                </button>
-              </div>
-            </div>
+              v-model:expanded="nonGenreTagFiltersExpanded"
+              :heading="t('productionsPage.tagFiltersHeading')"
+              :visible-tags="visibleNonGenreTagsForFilter"
+              :show-expand-toggle="showNonGenreTagFilterExpandToggle"
+              :row-binder="setNonGenrePanelRowRef"
+              :pill-binder="setNonGenrePanelPillRef"
+              :trailing-binder="setNonGenrePanelExpandButtonRef"
+              :selected-tag-ids="selectedTagIds"
+              variant="accent"
+              :disabled="listLoading || loadError"
+              :bordered-top="genreTagsForFilter.length > 0"
+              @toggle="toggleTag($event)"
+            />
 
             <div
               class="flex justify-end border-t border-surface-3/80 pt-3"
@@ -573,6 +496,7 @@ import ProductionGridCard from "@/components/productions/ProductionGridCard.vue"
 import ProductionGridCardSkeleton from "@/components/productions/ProductionGridCardSkeleton.vue";
 import ProductionListCard from "@/components/productions/ProductionListCard.vue";
 import ProductionListCardSkeleton from "@/components/productions/ProductionListCardSkeleton.vue";
+import ProductionsFilterPanelTagSection from "@/components/productions/ProductionsFilterPanelTagSection.vue";
 import ProductionsFilterSkeleton from "@/components/productions/ProductionsFilterSkeleton.vue";
 import ProductionsLayoutToggle, {
   type ProductionsLayoutMode,
@@ -1612,18 +1536,9 @@ function tagChipsFor(production: ProductionWithBackwardsRefs): ProductionTagChip
 <style scoped>
 @reference "@/style.css";
 
-.productions-view__tag-filter-expand {
-  @apply inline-flex shrink-0 cursor-pointer justify-end self-start whitespace-nowrap pt-0.5 text-right text-sm font-medium leading-snug text-accent-outline underline decoration-from-font underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-100;
-  min-width: 6rem;
-}
-
 .productions-view__genre-collapsed-row-pill {  
   @apply cursor-pointer rounded-sm border px-3 py-1.5 text-[12px] font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-100;  
 }  
-
-.productions-view__tag-filter-panel-pill {  
-  @apply cursor-pointer rounded-sm border px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-100;  
-} 
 
 .productions-view__search-field {
   @apply box-border flex min-h-11 min-w-0 w-full flex-wrap items-center gap-1.5 rounded-md border border-surface-3 bg-surface-0 py-1.5 pl-2 pr-11 text-ink-primary transition focus-within:border-accent-outline dark:bg-surface-1;
