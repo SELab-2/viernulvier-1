@@ -361,6 +361,7 @@
         :media-preview="mediaPreview"
         :media-preview-edit-url="mediaPreviewEditUrl"
         :is-saving="isSaving"
+        :save-error="saveError"
         @close="closeMediaPreview"
         @image-selected="onMediaPreviewImageSelected"
         @remove-image="removeMediaImage"
@@ -1205,11 +1206,22 @@ function closeMediaPreview(): void {
   mediaPreviewEditUrl.value = "";
 }
 
+const ALLOWED_IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
 async function onMediaPreviewImageSelected(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
   const productionId = mediaPreview.value?.productionId;
+  const label = mediaPreview.value?.label ?? t("cms.columns.imageMedia");
   if (!file || productionId === undefined) {
+    return;
+  }
+
+  if (!ALLOWED_IMAGE_MIME_TYPES.includes(file.type)) {
+    saveError.value = t("cms.errors.unsupportedImageType", {
+      type: file.type || file.name.split(".").pop() || "?",
+    });
+    input.value = "";
     return;
   }
 
@@ -1219,13 +1231,22 @@ async function onMediaPreviewImageSelected(event: Event): Promise<void> {
     const dataUrl = await fileToDataUrl(file);
     const uploadedImage = await uploadImageWithCrops(productionId, dataUrl);
     await loadCmsData();
-    const previewUrl =
-      resolvePreferredCropUrl(uploadedImage.crops, window.location.origin) ?? mediaPreview.value?.url;
-    if (previewUrl) {
-      openMediaPreview(previewUrl, mediaPreview.value?.label ?? t("cms.columns.imageMedia"), {
-        imageId: uploadedImage.id,
-        productionId,
-      });
+
+    // The lazy image fetch inside loadCmsData has not completed yet, so
+    // re-fetch images for this production directly to rebuild the gallery
+    // with the existing images plus the new one.
+    const refreshedImages = await getImagesByProduction(productionId);
+    const galleryImages = refreshedImages
+      .map((img) => {
+        const url = resolvePreferredCropUrl(img.crops, window.location.origin);
+        return url ? { id: img.id, url } : null;
+      })
+      .filter((img): img is { id: number; url: string } => img !== null);
+
+    openImageGalleryPreview(galleryImages, label, productionId);
+    const focusIndex = galleryImages.findIndex((img) => img.id === uploadedImage.id);
+    if (focusIndex > 0) {
+      syncGalleryPreview(focusIndex);
     }
     showSaveSuccess(t("cms.feedback.mediaAddSuccess"));
   } catch (error) {

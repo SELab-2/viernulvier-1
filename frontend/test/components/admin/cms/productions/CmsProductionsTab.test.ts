@@ -1054,7 +1054,10 @@ describe("CmsProductionsTab", () => {
         value: "upload.png",
       },
     } as never);
-    expect(api.mediaPreview.value?.url).toBe("");
+    // After upload the preview is rebuilt as a gallery; with no images mocked
+    // it falls back to the placeholder image.
+    expect(api.mediaPreview.value?.kind).toBe("image");
+    expect(api.mediaPreview.value?.url).toMatch(/^data:image\/svg\+xml/);
 
     api.mediaPreview.value = {
       kind: "iframe",
