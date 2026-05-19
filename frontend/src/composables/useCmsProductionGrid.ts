@@ -277,7 +277,7 @@ export function useCmsProductionGrid(options: {
       maxWidth: 120,
       cellClass: "cms-production-id-cell",
       cellRenderer: (params: { value: number }) => {
-        const lang = options.currentLang?.value ?? "";
+        const lang = escapeHtml(options.currentLang?.value ?? "");
         const prefix = lang ? `/${lang}` : "";
         return `<a href="${prefix}/productions/${params.value}" class="text-ink-primary underline hover:text-ink-secondary transition-colors">${params.value}</a>`;
       },

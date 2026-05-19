@@ -1,6 +1,7 @@
 export default {
   general: {
     cancel: "Annuler",
+    delete: "Supprimer",
     saving: "Enregistrement...",
   },
   nav: {
@@ -82,7 +83,7 @@ export default {
       teaser: "Teaser",
       genres: "Tag genre",
       tags: "Tags additionnels",
-      imageMedia: "Média image",
+      imageMedia: "Images",
       descriptionOne: "Description",
       descriptionTwo: "Description 2",
       media: "Media",
@@ -124,6 +125,7 @@ export default {
       confirmBulkEditDialogTitle: "Modifier plusieurs productions ?",
       confirmBulkEditBody: "Vous êtes sur le point de mettre à jour {count} productions avec les mêmes données.",
       confirmBulkEditSubmit: "Oui, mettre à jour",
+
       confirmBulkEditCancelInfo: "Si vous fermez, la modification groupée est annulée. Sélectionnez une seule production si vous voulez n’en modifier qu’une.",
       bulkEditTagsModeTitle: "Modification groupée des tags",
       bulkEditTagsModeBody: "Comment appliquer les modifications de tags à {count} productions ?",
@@ -205,10 +207,19 @@ export default {
       },
       media: {
         title: "Media",
+        image: "Image",
+        video: "Vidéo",
+        addImage: "Ajouter une image",
+        addVideo: "Ajouter une vidéo",
+        confirmDelete: "Êtes-vous sûr de vouloir supprimer cette image ?",
+        confirmDeleteVideo: "Êtes-vous sûr de vouloir supprimer cette vidéo ?",
+        editVideoUrlPlaceholder: "Modifier l'URL de la vidéo",
         language: "Langue de l'upload",
         uploadImage: "Uploader une image",
         youtubeLink: "Lien YouTube",
-        hint: "Vous pouvez uploader une image, saisir une URL d'image/média, ou coller un lien YouTube. Au moins une image est requise.",
+        imageCountOne: "1 image",
+        imageCountOther: "{count} images",
+        hint: "Vous pouvez ajouter plusieurs images et vidéos. Pour les images, différents formats seront générés automatiquement.",
       },
       validation: {
         requiredOneLanguage: "Remplissez au moins 1 langue pour: {field}",
@@ -236,8 +247,7 @@ export default {
       saveAction: "Enregistrer les modifications",
       saveHint: "Les changements ne sont appliques qu'apres avoir clique sur Enregistrer les modifications.",
       text: "Texte",
-      bulkNotice: "La modification sera appliquee a {count} productions selectionnees.",
-    },
+      bulkNotice: "La modification sera appliquee a {count} productions selectionnees.",      noMedia: "Pas de média"    },
     errors: {
       loadFailed: "Impossible de charger les donnees CMS: {message}",
       loadGeneric: "Impossible de charger les donnees CMS.",
@@ -248,6 +258,10 @@ export default {
       saveSuccess: "Modifications enregistrees",
       removeSuccess: "Production supprimee",
       removeTagSuccess: "Tag supprimé",
+      mediaRemoveSuccess: "Image supprimée",
+      mediaRemoveVideoSuccess: "Vidéo supprimée",
+      mediaAddSuccess: "Image ajoutée",
+      mediaUpdateSuccess: "Image mise à jour",
       removeTagTypeSuccess: "Type de tag supprimé",
     },
     admin: {

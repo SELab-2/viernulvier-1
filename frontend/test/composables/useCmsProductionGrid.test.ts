@@ -9,6 +9,13 @@ describe("useCmsProductionGrid", () => {
   });
 
   describe("column definitions", () => {
+    it("declares twelve production columns including the events action", () => {
+      const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key });
+
+      expect(grid.columnDefs.value).toHaveLength(12);
+      expect(grid.gridColumnOptions.value).toHaveLength(12);
+    });
+
     it("declares twelve production columns including id and events action", () => {
       const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key, currentLang: ref('nl') });
 
@@ -97,6 +104,17 @@ describe("useCmsProductionGrid", () => {
         | (() => { values: string[] })
         | undefined;
       expect(withoutParams?.().values).toEqual([0]);
+
+      const withUndefinedLabels = useCmsProductionGrid({
+        isDark: ref(false),
+        t: (key) => key,
+        currentLang: ref("nl"),
+        getPrimaryTagLabels: () => undefined as unknown as string[],
+      });
+      const undefinedLabelsFormatter = withUndefinedLabels.columnDefs.value.find((c) => c.field === "genres")?.valueFormatter as
+        | ((params: { value: unknown }) => string)
+        | undefined;
+      expect(undefinedLabelsFormatter?.({ value: 1 })).toBe("#1");
     });
 
     it("formats primary tag ids with label and fallback values", () => {
@@ -253,6 +271,181 @@ describe("useCmsProductionGrid", () => {
 
       expect(api.setState).toHaveBeenCalled();
       expect(api.sizeColumnsToFit).not.toHaveBeenCalled();
+    });
+
+    it("does fit columns when no persisted state exists", () => {
+      localStorage.clear();
+      const api = {
+        getState: vi.fn(),
+        setState: vi.fn(),
+        getColumnState: vi.fn(() => []),
+        setGridOption: vi.fn(),
+        sizeColumnsToFit: vi.fn(),
+      };
+      const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key, currentLang: ref('nl') });
+
+      grid.onGridReady({ api } as never);
+
+      expect(api.sizeColumnsToFit).toHaveBeenCalled();
+    });
+  });
+
+  describe("edge cases and error handling", () => {
+    it("handles undefined and null values in cellStyle", () => {
+      const grid = useCmsProductionGrid({ isDark: ref(false), t: (key) => key, currentLang: ref('nl') });
+
+      const cellStyle = grid.defaultColDef.cellStyle as
+        | ((params: { value: unknown }) => Record<string, string> | null)
+        | undefined;
+
+      expect(cellStyle?.({ value: undefined })).toEqual({
+        backgroundColor: "rgba(249, 115, 22, 0.05)",
+        color: "rgba(120, 113, 108, 0.6)",
+        fontStyle: "italic",
+      });
+      expect(cellStyle?.({ value: null })).toEqual({
+        backgroundColor: "rgba(249, 115, 22, 0.05)",
+        color: "rgba(120, 113, 108, 0.6)",
+        fontStyle: "italic",
+      });
+    });
+
+    it("renders ID column with links respecting language parameter", () => {
+      const grid = useCmsProductionGrid({
+        isDark: ref(false),
+        t: (key) => key,
+        currentLang: ref('fr'),
+      });
+
+      const idRenderer = grid.columnDefs.value[0]?.cellRenderer as
+        | ((params: { value: number }) => string)
+        | undefined;
+
+      expect(idRenderer?.({ value: 123 })).toContain('/fr/productions/123');
+    });
+
+    it("handles missing currentLang in ID renderer", () => {
+      const grid = useCmsProductionGrid({
+        isDark: ref(false),
+        t: (key) => key,
+      });
+
+      const idRenderer = grid.columnDefs.value[0]?.cellRenderer as
+        | ((params: { value: number }) => string)
+        | undefined;
+
+      expect(idRenderer?.({ value: 456 })).toContain('/productions/456');
+    });
+
+    it("formats empty strings and whitespace in teaser and descriptions", () => {
+      const grid = useCmsProductionGrid({
+        isDark: ref(false),
+        t: (key) => key,
+        currentLang: ref('nl'),
+      });
+
+      const teaser = grid.columnDefs.value.find((d) => d.field === "teaser")?.valueFormatter as
+        | ((params: { value: unknown }) => string)
+        | undefined;
+
+      expect(teaser?.({ value: "" })).toBe("");
+      expect(teaser?.({ value: "   " })).toBe("   ");
+      expect(teaser?.({ value: undefined })).toBe("");
+      expect(teaser?.({ value: 123 })).toBe("123");
+    });
+
+    it("CSV processor handles all column types and edge cases", () => {
+      const exportDataAsCsv = vi.fn();
+      const grid = useCmsProductionGrid({
+        isDark: ref(false),
+        t: (key) => key,
+        getGenreOptions: () => [{ id: 7, label: "Genre A" }],
+        currentLang: ref('nl'),
+      });
+      grid.gridApi.value = { exportDataAsCsv } as never;
+
+      grid.exportGridCsv();
+
+      const arg = exportDataAsCsv.mock.calls[0]?.[0];
+
+      // Tags with empty source
+      expect(arg.processCellCallback({
+        column: { getColId: () => "tags" },
+        node: { data: { source: {} } },
+        value: "ignored",
+      })).toBe("[]");
+
+      // Null node
+      expect(arg.processCellCallback({
+        column: { getColId: () => "unknown" },
+        node: null,
+        value: "test",
+      })).toBe("test");
+
+      // Empty string value
+      expect(arg.processCellCallback({
+        column: { getColId: () => "title" },
+        node: { data: { source: {} } },
+        value: "",
+      })).toBe("");
+    });
+
+    it("handles imageMediaUrls with large counts", () => {
+      const grid = useCmsProductionGrid({
+        isDark: ref(false),
+        t: (key: string, options?: { count?: number }) => {
+          if (key === "cms.create.media.imageCountOne") return "1 image";
+          if (key === "cms.create.media.imageCountOther") {
+            return (options?.count ?? 2) + " images";
+          }
+          return key;
+        },
+        currentLang: ref('nl'),
+      });
+
+      const imageRenderer = grid.columnDefs.value.find((c) => c.field === "imageMedia")?.cellRenderer as
+        | ((params: { data?: { imageMediaUrls?: string[] } }) => string)
+        | undefined;
+
+      const manyUrls = Array(50).fill("https://example.com/image.jpg");
+      const result = imageRenderer?.({ data: { imageMediaUrls: manyUrls } });
+      // Result is HTML, so we check if it's rendered as span element
+      expect(result).toContain("50 images");
+    });
+
+    it("handles genre formatting with missing tag type references", () => {
+      const grid = useCmsProductionGrid({
+        isDark: ref(false),
+        t: (key) => key,
+        getGenreOptions: () => [{ id: 7, label: "Genre X" }],
+      });
+
+      const genresCol = grid.columnDefs.value.find((c) => c.field === "genres");
+      const filterGetter = genresCol?.filterValueGetter as
+        | ((params: { data?: { genres?: unknown } }) => string)
+        | undefined;
+
+      expect(filterGetter?.({ data: undefined })).toBe("-");
+      expect(filterGetter?.({ data: { genres: undefined } })).toBe("-");
+    });
+
+    it("truncateValue handles exact boundary conditions", () => {
+      // Test at maxLength boundary
+      const exactLength = "x".repeat(48);
+      const result = (grid: any) => {
+        const teaser = grid.columnDefs.value.find((d: any) => d.field === "teaser")?.valueFormatter as
+          | ((params: { value: unknown }) => string)
+          | undefined;
+        return teaser?.({ value: exactLength });
+      };
+
+      const grid = useCmsProductionGrid({
+        isDark: ref(false),
+        t: (key) => key,
+        currentLang: ref('nl'),
+      });
+
+      expect(result(grid)).toBe(exactLength);
     });
   });
 });
