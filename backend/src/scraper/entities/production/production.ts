@@ -16,6 +16,7 @@ import {
   rememberViernulvierProductionJson,
   syncProductionGenreTagsWithPayload,
   processProductionMediaGallery,
+  scrapeTagsByIds,
 } from "@/scraper/entities/index.js";
 
 interface ProductionListMeta {
@@ -138,9 +139,10 @@ async function fetchProductionsListMeta(
 /**
  * Maps Viernulvier JSON-LD into our `CreateProduction` payload (legacy id from `@id` path segment).
  */
-function scraperProductionToCreateBody(
+export function scraperProductionToCreateBody(
   production: ProductionJSON,
   legacyId: number,
+  tags?: number[],
 ): z.infer<typeof CreateProductionBodySchema> {
   const title = resolveProductionTitleForCreate(production);
   if (title === null) {
@@ -163,6 +165,7 @@ function scraperProductionToCreateBody(
     quote_source: coerceLanguageMap(production.quote_source),
     programme: coerceLanguageMap(production.programme),
     info: coerceLanguageMap(production.info),
+    tags,
   };
 }
 
@@ -193,7 +196,9 @@ async function fetchLocalProductionIdByOldId(oldId: number): Promise<number | nu
 
 async function createLocalProductionFromViernulvierJson(
   production: ProductionJSON,
+  authToken: string,
   loginToken: string,
+  stats?: ScrapeRunStats,
 ): Promise<number | null> {
   const idSegment = production["@id"].split("/").pop();
   const id = idSegment !== undefined ? parseInt(idSegment, 10) : Number.NaN;
@@ -202,7 +207,12 @@ async function createLocalProductionFromViernulvierJson(
     return null;
   }
 
-  const payload = scraperProductionToCreateBody(production, id);
+  const tags = await scrapeTagsByIds(id, production.genres, authToken, loginToken, stats);
+  if (tags.length === 0) {
+    console.warn(`Production old_id=${id} has no genres/tags; will create without tags.`);
+  }
+
+  const payload = scraperProductionToCreateBody(production, id, tags);
 
   const response = await fetch(localApiUrl("/api/v1/production"), {
     method: "POST",
@@ -309,7 +319,7 @@ async function ensureProductionImported(
     );
     return null;
   }
-  const created = await createLocalProductionFromViernulvierJson(production, loginToken);
+  const created = await createLocalProductionFromViernulvierJson(production, authToken, loginToken, stats);
   if (created !== null) {
     await syncProductionGenreTagsWithPayload(
       created,
@@ -394,7 +404,7 @@ export async function scrapeProductionById(
     return null;
   }
   const jwt = loginToken ?? await fetchScraperJwt();
-  const created = await createLocalProductionFromViernulvierJson(production, jwt);
+  const created = await createLocalProductionFromViernulvierJson(production, authToken, jwt, stats);
   if (created !== null) {
     if (stats !== undefined){
       stats.productions.created++;

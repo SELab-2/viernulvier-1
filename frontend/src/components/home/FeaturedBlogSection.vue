@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-v-html -- excerpt is rendered from parseFirstParagraphMd, which sanitizes markdown HTML through DOMPurify. -->
 <template>
   <section class="bg-surface-1 px-6 py-20 lg:px-10 lg:py-24">
     <div class="mx-auto max-w-3xl">

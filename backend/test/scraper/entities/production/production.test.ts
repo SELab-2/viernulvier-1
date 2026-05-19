@@ -14,6 +14,7 @@ import {
   hasImportableProductionTitle,
   scrapeProductionById,
   scrapeAllProductions,
+  scraperProductionToCreateBody,
 } from "@/scraper/entities/production/production.js";
 
 // ---------------------------------------------------------------------------
@@ -163,6 +164,7 @@ const handleCreateFail: UrlHandler = (url, method) =>
 
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.resetModules();
 });
 
 afterEach(() => {
@@ -216,6 +218,47 @@ describe("hasImportableProductionTitle", () => {
         artist: {},
       }),
     ).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// scraperProductionToCreateBody
+// ---------------------------------------------------------------------------
+
+describe("scraperProductionToCreateBody", () => {
+  it("throws when production has no title, meta_title, or artist", () => {
+    const production: ProductionJSON = {
+      "@id": "/api/v1/productions/123",
+      // No title, meta_title, or artist
+    };
+
+    expect(() => scraperProductionToCreateBody(production, 123)).toThrow(
+      "scraperProductionToCreateBody called without resolvable title",
+    );
+  });
+
+  it("throws when all three title fields are empty objects", () => {
+    const production: ProductionJSON = {
+      "@id": "/api/v1/productions/123",
+      title: {},
+      meta_title: {},
+      artist: {},
+    };
+
+    expect(() => scraperProductionToCreateBody(production, 123)).toThrow(
+      "scraperProductionToCreateBody called without resolvable title",
+    );
+  });
+
+  it("creates body successfully with title field", () => {
+    const production: ProductionJSON = {
+      "@id": "/api/v1/productions/123",
+      title: { nl: "Show", en: "Show" },
+    };
+
+    const result = scraperProductionToCreateBody(production, 123);
+    expect(result.old_id).toBe(123);
+    expect(result.title).toEqual({ nl: "Show", en: "Show" });
   });
 });
 
@@ -282,6 +325,26 @@ describe("scrapeProductionById", () => {
     expect(await scrapeProductionById(123, "auth", "jwt")).toBeNull();
   });
 
+  it("returns null when remote production @id cannot be parsed", async () => {
+    // @id without numeric segment at the end
+    mockFetch(
+      handleNotFoundLocally,
+      handleRemoteProduction({ "@id": "/api/v1/productions/", title: { nl: "Show" } }),
+    );
+
+    expect(await scrapeProductionById(123, "auth", "jwt")).toBeNull();
+  });
+
+  it("returns null when remote production @id has no numeric id", async () => {
+    // @id with non-numeric id
+    mockFetch(
+      handleNotFoundLocally,
+      handleRemoteProduction({ "@id": "/api/v1/productions/abc", title: { nl: "Show" } }),
+    );
+
+    expect(await scrapeProductionById(123, "auth", "jwt")).toBeNull();
+  });
+
   it("creates a production successfully and returns its new id", async () => {
     mockFetch(handleNotFoundLocally, handleRemoteProduction(), handleCreateOk(555));
 
@@ -335,6 +398,39 @@ describe("scrapeProductionById", () => {
       handleCreateOk(555),
     );
 
+    expect(await scrapeProductionById(123, "auth", "jwt")).toBe(555);
+  });
+
+  it("successfully creates production when scrapeTagsByIds returns no tags", async () => {
+    // Production with no genres field — scrapeTagsByIds returns empty array
+    mockFetch(
+      handleNotFoundLocally,
+      handleRemoteProduction({
+        "@id": "/api/v1/productions/123",
+        title: { nl: "Show" },
+        // No genres field
+      }),
+      handleCreateOk(555),
+    );
+
+    const stats = {
+      productions: { reusedExisting: 0, created: 0 },
+      tags: {},
+    } as ScrapeRunStats;
+
+    expect(await scrapeProductionById(123, "auth", "jwt", stats)).toBe(555);
+    expect(stats.productions.created).toBe(1);
+  });
+
+  it("processes galleries without stats object", async () => {
+    // Ensure processProductionGalleries is called even when stats is undefined
+    mockFetch(
+      handleNotFoundLocally,
+      handleRemoteProduction(PRODUCTION_WITH_GALLERIES),
+      handleCreateOk(555),
+    );
+
+    // Call WITHOUT stats parameter
     expect(await scrapeProductionById(123, "auth", "jwt")).toBe(555);
   });
 });
@@ -479,5 +575,29 @@ describe("scrapeAllProductions", () => {
     await expect(scrapeAllProductions("auth")).rejects.toThrow(
       "API returned status 500",
     );
+  });
+
+  it("skips production with empty title/meta_title/artist during create", async () => {
+    // This exercises the title === null check in scraperProductionToCreateBody
+    mockFetch(
+      handleJwt,
+      handleTagTypes,
+      (url) =>
+        url.includes("/api/v1/productions?page=1")
+          ? jsonOk({
+            totalItems: 1,
+            member: [{
+              "@id": "/api/v1/productions/999",
+              title: {},
+              meta_title: {},
+              artist: {},
+            }],
+            view: { last: "/api/v1/productions?page=1" },
+          })
+          : null,
+      handleNotFoundLocally,
+    );
+
+    await expect(scrapeAllProductions("auth")).resolves.toBeUndefined();
   });
 });

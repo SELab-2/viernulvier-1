@@ -97,10 +97,11 @@ import {
   formatDurationMinutesI18n,
   formatNumericDate,
 } from "@/utils/date";
+import type { ProductionTagChip } from "@/utils/tagDisplay";
 
 interface Props {
   production: ProductionWithBackwardsRefs;
-  tagGroups: { label: string; tags: string[] }[];
+  tagGroups: { label: string; tags: ProductionTagChip[] }[];
   eventStats: {
     firstDate: Date;
     lastDate: Date;
@@ -142,7 +143,7 @@ const primaryGenre = computed(() => {
   const genreGroup = props.tagGroups.find((g) =>
     g.label.toLowerCase().includes("genre"),
   );
-  return genreGroup?.tags[0] ?? "";
+  return genreGroup?.tags[0].label ?? "";
 });
 
 /** Year of the first event, used as the dateline in the kicker. */

@@ -13,7 +13,7 @@
   .canvas {
     position: relative;
     width: 1520px;
-    height: 840px;
+    height: 900px;
     margin: 30px auto;
   }
   /* Relationship lines SVG */
@@ -129,7 +129,7 @@
 <div class="canvas">
 
 <!-- ═══════════════════════════════════════ SVG RELATIONSHIP LINES ═══════════════════════════════════════ -->
-<svg class="lines" viewBox="0 0 1520 840">
+<svg class="lines" viewBox="0 0 1520 900">
   <!-- production → event (1:N) -->
   <path d="M 790,310 L 870,310"/>
   <text class="cardinality" x="798" y="305">1</text>
@@ -164,9 +164,9 @@
   <text class="cardinality" x="648" y="494">N</text>
 
   <!-- image → crop (1:N) -->
-  <path d="M 640,620 L 640,670"/>
-  <text class="cardinality" x="648" y="638">1</text>
-  <text class="cardinality" x="648" y="665">N</text>
+  <path d="M 640,640 L 640,690"/>
+  <text class="cardinality" x="648" y="658">1</text>
+  <text class="cardinality" x="648" y="685">N</text>
 
   <!-- production → prod_custom_field -->
   <path d="M 530,370 L 290,440"/>
@@ -174,14 +174,22 @@
   <text class="cardinality" x="282" y="432">N</text>
 
   <!-- custom_field_def → prod_custom_field -->
-  <path d="M 160,670 L 160,640"/>
-  <text class="cardinality" x="168" y="665">1</text>
+  <path d="M 160,690 L 160,640"/>
+  <text class="cardinality" x="168" y="685">1</text>
   <text class="cardinality" x="168" y="636">N</text>
 
   <!-- blog → blogpost (1:N) -->
-  <path d="M 1340,590 L 1340,650"/>
-  <text class="cardinality" x="1348" y="608">1</text>
-  <text class="cardinality" x="1348" y="646">N</text>
+  <path d="M 1340,610 L 1340,670"/>
+  <text class="cardinality" x="1348" y="628">1</text>
+  <text class="cardinality" x="1348" y="666">N</text>
+
+  <!-- production ← production_blogpost (junction) -->
+  <path d="M 790,330 L 1140,830 L 1240,830"/>
+  <text class="cardinality" x="1148" y="825">N</text>
+
+  <!-- blogpost ← production_blogpost (junction) -->
+  <path d="M 1340,800 L 1340,820"/>
+  <text class="cardinality" x="1348" y="816">N</text>
 
   <!-- admin metadata reference (dashed) -->
   <path d="M 750,160 L 750,210" stroke-dasharray="5,4" stroke="#CBD5E1"/>
@@ -191,13 +199,14 @@
 <!-- ═══════════════════════════════════════ TABLES ═══════════════════════════════════════ -->
 
 <!-- ADMIN -->
-<div class="tbl" style="left:640px; top:10px; width:220px;">
+<div class="tbl" style="left:640px; top:10px; width:240px;">
   <div class="tbl-header">admin</div>
   <div class="tbl-body">
     <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="col-name">id</span></div><span class="col-type">int</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="col-name">username</span></div><span class="col-type">varchar(32)</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="col-name">password</span></div><span class="col-type">varchar(64)</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="col-name">profile_picture</span></div><span class="col-type">varchar</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">username</span></div><span class="col-type">varchar(32) UNIQUE</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">password</span></div><span class="col-type">varchar(72)</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">profile_picture_url</span></div><span class="col-type">varchar(2048)</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">super</span></div><span class="col-type">bool</span></div>
   </div>
 </div>
 
@@ -206,18 +215,19 @@
   <div class="tbl-header">tag_type</div>
   <div class="tbl-body">
     <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="col-name">id</span></div><span class="col-type">int</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="col-name">name</span></div><span class="col-type">varchar(32)</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="col-name">visible</span></div><span class="col-type">bool</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">name</span></div><span class="col-type">json UNIQUE</span></div>
   </div>
 </div>
 
 <!-- TAG -->
-<div class="tbl" style="left:250px; top:240px; width:190px;">
+<div class="tbl" style="left:250px; top:240px; width:200px;">
   <div class="tbl-header">tag</div>
   <div class="tbl-body">
     <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="col-name">id</span></div><span class="col-type">int</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="col-name">name</span></div><span class="col-type">varchar(32)</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="badge badge-fk">FK</span><span class="col-name">type</span></div><span class="col-type">int</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">name</span></div><span class="col-type">json</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">public</span></div><span class="col-type">bool</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="badge badge-fk">FK</span><span class="col-name">tag_type</span></div><span class="col-type">int</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">old_id</span></div><span class="col-type">int UNIQUE</span></div>
   </div>
 </div>
 
@@ -230,7 +240,9 @@
     <div class="tbl-row"><div class="col-left"><span class="col-name">title</span></div><span class="col-type">json</span></div>
     <div class="tbl-row"><div class="col-left"><span class="col-name">artist</span></div><span class="col-type">json</span></div>
     <div class="tbl-row"><div class="col-left"><span class="col-name">description</span></div><span class="col-type">json</span></div>
-    <div class="ellipsis-row">+ 17 more fields</div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">finalized</span></div><span class="col-type">bool</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">old_id</span></div><span class="col-type">int UNIQUE</span></div>
+    <div class="ellipsis-row">+ 18 more json fields</div>
   </div>
 </div>
 
@@ -239,12 +251,14 @@
   <div class="tbl-header">event</div>
   <div class="tbl-body">
     <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="col-name">id</span></div><span class="col-type">int</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="badge badge-fk">FK</span><span class="col-name">production_id</span></div><span class="col-type">int</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="badge badge-fk">FK</span><span class="col-name">hall_id</span></div><span class="col-type">int</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="col-name">starts_at</span></div><span class="col-type">timestamp</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="col-name">ends_at</span></div><span class="col-type">timestamp</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="badge badge-fk">FK</span><span class="col-name">production</span></div><span class="col-type">int</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="badge badge-fk">FK</span><span class="col-name">hall</span></div><span class="col-type">int NOT NULL</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">starts_at</span></div><span class="col-type">timestamptz</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">ends_at</span></div><span class="col-type">timestamptz</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">doors_at</span></div><span class="col-type">timestamptz</span></div>
     <div class="tbl-row"><div class="col-left"><span class="col-name">vendor_id</span></div><span class="col-type">int</span></div>
-    <div class="ellipsis-row">+ 8 more fields</div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">old_id</span></div><span class="col-type">int UNIQUE</span></div>
+    <div class="ellipsis-row">+ 9 more fields</div>
   </div>
 </div>
 
@@ -253,9 +267,9 @@
   <div class="tbl-header">hall</div>
   <div class="tbl-body">
     <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="col-name">id</span></div><span class="col-type">int</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="col-name">name</span></div><span class="col-type">varchar(64)</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">name</span></div><span class="col-type">json</span></div>
     <div class="tbl-row"><div class="col-left"><span class="col-name">address</span></div><span class="col-type">varchar(256)</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="col-name">vendor_id</span></div><span class="col-type">int</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">old_id</span></div><span class="col-type">int UNIQUE</span></div>
   </div>
 </div>
 
@@ -263,8 +277,8 @@
 <div class="tbl" style="left:280px; top:480px; width:220px;">
   <div class="tbl-header junction">production_tag</div>
   <div class="tbl-body">
-    <div class="tbl-row"><div class="col-left"><span class="badge badge-fk">FK</span><span class="col-name">tag_id</span></div><span class="col-type">int</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="badge badge-fk">FK</span><span class="col-name">production_id</span></div><span class="col-type">int</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="badge badge-fk">FK</span><span class="col-name">production</span></div><span class="col-type">int</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="badge badge-fk">FK</span><span class="col-name">tag</span></div><span class="col-type">int</span></div>
   </div>
 </div>
 
@@ -273,8 +287,9 @@
   <div class="tbl-header">image</div>
   <div class="tbl-body">
     <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="col-name">id</span></div><span class="col-type">int</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="badge badge-fk">FK</span><span class="col-name">production_id</span></div><span class="col-type">int</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="badge badge-fk">FK</span><span class="col-name">production</span></div><span class="col-type">int NOT NULL</span></div>
     <div class="tbl-row"><div class="col-left"><span class="col-name">res</span></div><span class="col-type">varchar(16)</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">old_id</span></div><span class="col-type">int UNIQUE</span></div>
   </div>
 </div>
 
@@ -282,21 +297,25 @@
 <div class="tbl" style="left:880px; top:490px; width:240px;">
   <div class="tbl-header">event_price</div>
   <div class="tbl-body">
-    <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="badge badge-fk">FK</span><span class="col-name">event_id</span></div><span class="col-type">int</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="col-name">id</span></div><span class="col-type">int</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="badge badge-fk">FK</span><span class="col-name">event</span></div><span class="col-type">int</span></div>
     <div class="tbl-row"><div class="col-left"><span class="col-name">amount</span></div><span class="col-type">varchar(32)</span></div>
     <div class="tbl-row"><div class="col-left"><span class="col-name">available</span></div><span class="col-type">int</span></div>
     <div class="tbl-row"><div class="col-left"><span class="col-name">price</span></div><span class="col-type">json</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="col-name">expires_at</span></div><span class="col-type">timestamp</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">expires_at</span></div><span class="col-type">timestamptz</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">old_id</span></div><span class="col-type">int UNIQUE</span></div>
   </div>
 </div>
 
 <!-- CROP -->
-<div class="tbl" style="left:540px; top:670px; width:210px;">
+<div class="tbl" style="left:540px; top:690px; width:210px;">
   <div class="tbl-header">crop</div>
   <div class="tbl-body">
     <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="col-name">id</span></div><span class="col-type">int</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="badge badge-fk">FK</span><span class="col-name">image_id</span></div><span class="col-type">int</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="col-name">url</span></div><span class="col-type">varchar(128)</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="badge badge-fk">FK</span><span class="col-name">image</span></div><span class="col-type">int NOT NULL</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">url</span></div><span class="col-type">varchar(2048)</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">type</span></div><span class="col-type">varchar(32)</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">old_id</span></div><span class="col-type">int UNIQUE</span></div>
   </div>
 </div>
 
@@ -304,51 +323,65 @@
 <div class="tbl" style="left:20px; top:440px; width:250px;">
   <div class="tbl-header">production_custom_field</div>
   <div class="tbl-body">
-    <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="badge badge-fk">FK</span><span class="col-name">field_def_id</span></div><span class="col-type">int</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="badge badge-fk">FK</span><span class="col-name">production_id</span></div><span class="col-type">int</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="badge badge-fk">FK</span><span class="col-name">field_definition_id</span></div><span class="col-type">int</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="badge badge-fk">FK</span><span class="col-name">production</span></div><span class="col-type">int</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">type</span></div><span class="col-type">field_types</span></div>
     <div class="tbl-row"><div class="col-left"><span class="col-name">value_bool</span></div><span class="col-type">bool</span></div>
     <div class="tbl-row"><div class="col-left"><span class="col-name">value_number</span></div><span class="col-type">numeric</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="col-name">value_string</span></div><span class="col-type">varchar(32)</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">value_string</span></div><span class="col-type">text</span></div>
     <div class="tbl-row"><div class="col-left"><span class="col-name">value_json</span></div><span class="col-type">json</span></div>
   </div>
 </div>
 
 <!-- CUSTOM_PRODUCTION_FIELD_DEFINITION -->
-<div class="tbl" style="left:20px; top:670px; width:280px;">
+<div class="tbl" style="left:20px; top:690px; width:280px;">
   <div class="tbl-header">custom_production_field_definition</div>
   <div class="tbl-body">
     <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="col-name">id</span></div><span class="col-type">int</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="col-name">name</span></div><span class="col-type">varchar(32)</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="col-name">field_type</span></div><span class="col-type">enum</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">name</span></div><span class="col-type">varchar(64)</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">type</span></div><span class="col-type">field_types</span></div>
   </div>
 </div>
 
 <!-- BLOG -->
-<div class="tbl" style="left:1240px; top:490px; width:200px;">
+<div class="tbl" style="left:1240px; top:490px; width:220px;">
   <div class="tbl-header">blog</div>
   <div class="tbl-body">
     <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="col-name">id</span></div><span class="col-type">int</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="col-name">name</span></div><span class="col-type">varchar(32)</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">name</span></div><span class="col-type">json</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">description</span></div><span class="col-type">json</span></div>
   </div>
 </div>
 
 <!-- BLOGPOST -->
-<div class="tbl" style="left:1240px; top:650px; width:210px;">
+<div class="tbl" style="left:1240px; top:670px; width:220px;">
   <div class="tbl-header">blogpost</div>
   <div class="tbl-body">
     <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="col-name">id</span></div><span class="col-type">int</span></div>
-    <div class="tbl-row"><div class="col-left"><span class="badge badge-fk">FK</span><span class="col-name">blog_id</span></div><span class="col-type">int</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="badge badge-fk">FK</span><span class="col-name">blog</span></div><span class="col-type">int NOT NULL</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">title</span></div><span class="col-type">json</span></div>
     <div class="tbl-row"><div class="col-left"><span class="col-name">content</span></div><span class="col-type">json</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="col-name">published_at</span></div><span class="col-type">timestamptz</span></div>
+  </div>
+</div>
+
+<!-- PRODUCTION_BLOGPOST (junction) -->
+<div class="tbl" style="left:1240px; top:820px; width:220px;">
+  <div class="tbl-header junction">production_blogpost</div>
+  <div class="tbl-body">
+    <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="badge badge-fk">FK</span><span class="col-name">production</span></div><span class="col-type">int</span></div>
+    <div class="tbl-row"><div class="col-left"><span class="badge badge-pk">PK</span><span class="badge badge-fk">FK</span><span class="col-name">blogpost</span></div><span class="col-type">int</span></div>
   </div>
 </div>
 
 <!-- LEGEND -->
-<div class="legend" style="left:830px; top:730px; width:380px;">
+<div class="legend" style="left:780px; top:730px; width:430px;">
   <strong>Legend</strong><br>
   <span class="dot dot-pk"></span> <span class="badge badge-pk" style="font-size:10px">PK</span> Primary Key &nbsp;&nbsp;
   <span class="dot dot-fk"></span> <span class="badge badge-fk" style="font-size:10px">FK</span> Foreign Key &nbsp;&nbsp;
   <span class="dot dot-junc"></span> Junction table<br>
-  All tables include metadata: <code style="font-size:10px; background:#F1F5F9; padding:1px 4px; border-radius:3px;">created_by</code>,
+  All tables (except <code style="font-size:10px; background:#F1F5F9; padding:1px 4px; border-radius:3px;">crop</code>) inherit metadata:
+  <code style="font-size:10px; background:#F1F5F9; padding:1px 4px; border-radius:3px;">created_by</code>,
   <code style="font-size:10px; background:#F1F5F9; padding:1px 4px; border-radius:3px;">created_at</code>,
   <code style="font-size:10px; background:#F1F5F9; padding:1px 4px; border-radius:3px;">updated_by</code>,
   <code style="font-size:10px; background:#F1F5F9; padding:1px 4px; border-radius:3px;">updated_at</code><br>

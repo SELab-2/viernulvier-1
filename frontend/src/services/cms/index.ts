@@ -6,3 +6,5 @@ export * from "./tags";
 export * from "./grid";
 export * from "./files";
 export * from "./bulk-edit";
+export * from "./crop-generator";
+export * from "./media-upload";

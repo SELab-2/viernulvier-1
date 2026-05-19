@@ -64,6 +64,7 @@ export function buildProductionGridRow(
   tagById: Map<number, Tag>,
   genreTagTypeIds: Set<number>,
   localize: (map: LanguageMap | null | undefined) => string,
+  imagesByProductionId?: Map<number, Array<{ id: number; url: string }>>,
 ): CmsProductionGridRow {
   const eventIds = extractEventIds(production.events as unknown[]);
 
@@ -71,6 +72,10 @@ export function buildProductionGridRow(
   const primaryGenreTagId =
     productionTags.find((tag) => genreTagTypeIds.has(Number(tag.tag_type)))?.id ?? 0;
   const additionalLabels = filterProductionTagLabels(productionTags, genreTagTypeIds, false, localize);
+
+  const productionImages = imagesByProductionId?.get(production.id) ?? [];
+  const imageMediaUrl = productionImages.length > 0 ? productionImages[0].url : "";
+  const imageMediaUrls = productionImages.map((image) => image.url);
 
   return {
     id: production.id,
@@ -83,8 +88,8 @@ export function buildProductionGridRow(
     tags: additionalLabels.join(", ") || "-",
     descriptionOne: localize(production.description) || "",
     descriptionTwo: localize(production.description_2) || "",
-    imageMedia: "",
-    imageMediaUrls: [],
+    imageMedia: imageMediaUrl,
+    imageMediaUrls,
     media: localize(production.video_1) || localize(production.video_2) || "",
     events: eventIds,
   };
@@ -98,6 +103,7 @@ export function buildProductionGridRows(
   tags: Tag[],
   tagTypes: TagType[],
   localize: (map: LanguageMap | null | undefined) => string,
+  imagesByProductionId?: Map<number, Array<{ id: number; url: string }>>,
 ): CmsProductionGridRow[] {
   const tagById = new Map(tags.map((tag) => [tag.id, tag]));
   const genreTagTypeIds = new Set(
@@ -106,7 +112,9 @@ export function buildProductionGridRows(
       .map((tagType) => tagType.id),
   );
 
-  return productions.map((production) => buildProductionGridRow(production, tagById, genreTagTypeIds, localize));
+  return productions.map((production) =>
+    buildProductionGridRow(production, tagById, genreTagTypeIds, localize, imagesByProductionId),
+  );
 }
 
 /**
@@ -126,8 +134,6 @@ export function applyUpdatedProductionToRow(
   row.teaser = localize(updated.teaser) || "";
   row.descriptionOne = localize(updated.description) || "";
   row.descriptionTwo = localize(updated.description_2) || "";
-  row.imageMedia = "";
-  row.imageMediaUrls = [];
   row.media = localize(updated.video_1) || localize(updated.video_2) || "";
 }
 

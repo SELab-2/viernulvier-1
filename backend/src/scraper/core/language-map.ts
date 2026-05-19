@@ -37,8 +37,12 @@ export function coerceLanguageMap(
   if (value == null || typeof value !== "object") return null;
   const out: Record<string, string> = {};
   for (const lang of SCRAPER_LANGUAGE_KEYS) {
+    // lang is from a known set of keys, not user input
+    // eslint-disable-next-line security/detect-object-injection
     const raw = value[lang];
     if (typeof raw === "string" && raw.trim() !== "") {
+      // lang is from a known set of keys, not user input
+      // eslint-disable-next-line security/detect-object-injection
       out[lang] = raw.trim();
     }
   }

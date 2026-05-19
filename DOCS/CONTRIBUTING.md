@@ -3,13 +3,11 @@
 - First make sure you have node version 24 by running `nvm install --lts`. If your system doesn't have nvm, figure out how to update node yourself.
 - Node comes with npm by default but we use pnpm so do this as well: `npm i -g pnpm`
 - Once that's done you can download all dependencies by running `pnpm i` in the root repo.
-- To run a script you first change to either the `backend`, `frontend` or `shared` dir and run `pnpm run <NAME>` or run them for all at the same time by using `pnpm run <NAME>-all` in the root.
+- To run a script you first change to either the `backend`, `frontend` or `shared` dir and run `pnpm run <NAME>` or run them for all at the same time by using `pnpm run <NAME>-all` in the root (not all scripts are supported this way).
 
 ### Setting up .env
 
-- Because we'll be working with secret keys in the future, the `.env` file is ignored by git. I did create a `.env.example` file with some default ports. Later this will also contain placeholders for secret data, with instructions to generate them.
-
-- Before you can start the docker container you first need to run `cp .env.example .env` and follow the instructions to generate the secret data.
+- Before you can start the docker container you first need to run `cp .env.example .env` and follow the instructions in `.env` to generate the secret data.
 
 ## Starting Docker Containers
 
@@ -35,13 +33,15 @@
 
 - To shut down the containers just run `docker compose down`.
 
-### Migrating the SQL database and inserting mock-up admin
+### Migrating the SQL database and inserting some data
 
-- In order to migrate the SQL database to the docker container for the database, run `docker exec -t viernulvier-backend pnpm run migrate` or `migrate-db.sh`.
+- In order to migrate the SQL database to the docker container for the database, run `docker exec -t viernulvier-backend pnpm run migrate` or `./migrate-db.sh`.
 
-- You can add a mock-up admin by running `docker exec -t viernulvier-backend pnpm run create-admin`. The admin has username `admin` and password `password`, you can use it to login and then authorize on the protected endpoints.
+- You can add a first superadmin by running `docker exec -t viernulvier-backend pnpm run create-admin` or `./create-admin.sh`. This can then be used to login and start working in the CMS.
 
-(Note: we are planning to add more mock-up data and integrate the scripts into the docker containers)
+- The blogposts need a default blog, create this by running `docker exec -t viernulvier-backend pnpm run create-default-blog` or `create-default-blog.sh`. We were planning on categorizing blogposts by blogs, but haven't been able to implement this.
+
+- You can add productions and events with the [legacy importer](../data/imports/README.md) or [scraper](SCRAPER.md). The legacy importer is used to import old CSV files, the scraper for importing from the database.
 
 ## Viewing the Endpoints
 
@@ -55,7 +55,7 @@
 
 - If you only want to check whether the linter passes in a given package (frontend/backend/shared), you can run `pnpm run lint` in that directory.
 
-- If you only want to check whether the tests pass in a given package (frontend/backend), you can run `pnpm run test` in that directory.
+- If you only want to check whether the tests pass and coverage threshold is reached in a given package (frontend/backend), you can run `pnpm run coverage` in that directory.
 
 ### VSCode users only
 
@@ -65,4 +65,3 @@
 
 - If after running the docker startup you get a permission denied error, run `sudo usermod -aG docker $USER` to ensure your user has access to the docker group.
 - If you're trying to use docker on WSL, it's important that you run docker engine via Docker Desktop running on your Windows. In the settings you can go to `Resources → WSL Integration` to also give the engine access to your WSL distros.
-- If you try to migrate the SQL database and you get the error `MD5 checksum failed for migration`, remove the docker containers using `docker compose down -v` and start them back up.

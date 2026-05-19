@@ -327,7 +327,7 @@
         >
           <div
             v-if="layoutMode === 'grid'"
-            class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3"
+            class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 md:mt-8 md:gap-8 lg:grid-cols-3"
           >
             <ProductionGridCardSkeleton v-for="n in PAGE_SIZE" :key="n" />
           </div>
@@ -355,7 +355,7 @@
             <template v-if="listLoading && productions.length === 0">
               <div
                 v-if="layoutMode === 'grid'"
-                class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3"
+                class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 md:mt-8 md:gap-8 lg:grid-cols-3"
               >
                 <ProductionGridCardSkeleton v-for="n in PAGE_SIZE" :key="n" />
               </div>
@@ -374,7 +374,7 @@
             <div v-else>
               <div
                 v-if="layoutMode === 'grid'"
-                class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3"
+                class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 md:mt-8 md:gap-8 lg:grid-cols-3"
               >
                 <ProductionGridCard
                   v-for="(p, idx) in productions"
@@ -619,6 +619,9 @@ const TO_QUERY_KEY = "to";
 const SORT_BY_QUERY_KEY = "sortBy";
 const SORT_DIR_QUERY_KEY = "sortDir";
 
+/** Present only when the grid layout is selected; list remains the canonical default (no param). */
+const VIEW_QUERY_KEY = "view";
+
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
@@ -775,6 +778,13 @@ function readSortDirFromRoute(): ProductionSortDir {
   return value === "asc" ? "asc" : "desc";
 }
 
+function readLayoutFromQuery(q: LocationQuery): ProductionsLayoutMode {
+  const raw = q[VIEW_QUERY_KEY];
+  const s = Array.isArray(raw) ? raw[0] : raw;
+  if (s === undefined || s === null || s === "") return "list";
+  return String(s).trim().toLowerCase() === "grid" ? "grid" : "list";
+}
+
 function queryForPage0WithBase(
   page0: number,
   baseQuery: LocationQuery,
@@ -818,6 +828,11 @@ function queryForPage0WithBase(
     q[SORT_BY_QUERY_KEY] = sortBy.value;
     q[SORT_DIR_QUERY_KEY] = sortDir.value;
   }
+  if (layoutMode.value === "grid") {
+    q[VIEW_QUERY_KEY] = "grid";
+  } else {
+    delete q[VIEW_QUERY_KEY];
+  }
   return q;
 }
 
@@ -836,6 +851,20 @@ function urlNeedsSyncForPage0(page0: number): boolean {
     return cur !== undefined && cur !== "";
   }
   return cur !== want;
+}
+
+/** True when `view` should be omitted (list) vs `view=grid`, or stray `view=…` should be stripped. */
+function urlNeedsSyncForView(): boolean {
+  const raw = route.query[VIEW_QUERY_KEY];
+  const cur =
+    raw === undefined || raw === null || raw === ""
+      ? undefined
+      : String(Array.isArray(raw) ? raw[0] : raw).trim().toLowerCase();
+  const wantGrid = layoutMode.value === "grid";
+  if (wantGrid) {
+    return cur !== "grid";
+  }
+  return cur !== undefined;
 }
 
 /**
@@ -870,7 +899,7 @@ const appliedSearchTerms = ref<string[]>([]);
 const searchDraft = ref("");
 const sortBy = ref<ProductionSortBy>("date");
 const sortDir = ref<ProductionSortDir>("desc");
-const layoutMode = ref<ProductionsLayoutMode>("list");
+const layoutMode = ref<ProductionsLayoutMode>(readLayoutFromQuery(route.query));
 /**
  * Total matching the current list query; updated on each successful fetch.
  * While search/filter list loads we keep the previous value so the results line
@@ -1594,7 +1623,11 @@ onMounted(async () => {
       }
     }
 
-    if (syncRouteAfterExclusiveTimeFilter || urlNeedsSyncForPage0(page0)) {
+    if (
+      syncRouteAfterExclusiveTimeFilter ||
+      urlNeedsSyncForPage0(page0) ||
+      urlNeedsSyncForView()
+    ) {
       await replaceRouteForPage0(page0);
     }
   } catch (err) {
@@ -1603,6 +1636,23 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+watch(layoutMode, async () => {
+  if (loading.value) return;
+  await replaceRouteForPage0(currentPage.value);
+});
+
+watch(
+  () => ({
+    layout: readLayoutFromQuery(route.query),
+    rawView: route.query[VIEW_QUERY_KEY],
+  }),
+  ({ layout }) => {
+    if (loading.value) return;
+    if (layout === layoutMode.value) return;
+    layoutMode.value = layout;
+  },
+);
 
 /** Refetch when `?page=` changes (browser back/forward or programmatic `router.replace`). */
 watch(
