@@ -1,6 +1,6 @@
 ## Database Schema (EER)
 
-##### (This documentation is generated from the live PostgreSQL schema. Minor inconsistencies between EER and the external VIERNULVIER API may exist — the API is the source of truth for vendor data.)
+##### (Disclaimer: there are a few minor inconsistencies between the EER and API — the API is final)
 
 View the schema visually at https://dbdiagram.io/d/viernulvier-699b2e45bd82f5fce26f02d4 or download the svg: ![Database Schema](./database-schema.svg)
 The DBML code can be found below.
@@ -19,8 +19,8 @@ Every content table inherits from a shared `metadata` parent table (PostgreSQL `
 #### Tagging and series
 Tags categorize productions and bundle them into series. Each `tag` belongs to a `tag_type` (e.g. "genre", "festival", "series") so the frontend can distinguish between different kinds of tags. Visibility is set per tag via the `public` boolean (`false` = CMS-only, `true` = visible on the public front-end). The relation between productions and tags is many-to-many via the junction table `production_tag`: one production can have multiple tags, and one tag can belong to multiple productions. A tag name is unique within its `tag_type` (`unique_tag_per_type`).
 
-#### Deduplication via vendor_id and old_id
-`production`, `event` and `event_price` carry a `vendor_id` — the unique ID from the VIERNULVIER ticketing API — which is used during automatic synchronization to avoid creating duplicates. In addition, `production`, `event`, `event_price`, `hall`, `image`, `crop` and `tag` carry an `old_id` (UNIQUE). `old_id` references the primary key of the same record in the legacy archive system, so that the historical CSV import (2006–2018) can be re-run or reconciled without producing duplicates.
+#### Deduplication via old_id
+`production`, `event`, `event_price`, `hall`, `image`, `crop` and `tag` carry an `old_id` (UNIQUE). `old_id` references the primary key of the same record in its source system — either the legacy archive (for the historical CSV import, 2006–2018) or the external VIERNULVIER ticketing API (for the scraper). Both the legacy importer and the scraper use `old_id` as the dedup key: before inserting a record they look it up by `old_id` and skip if it already exists, so a re-run never produces duplicates. `production`, `event` and `event_price` also carry a `vendor_id` — the ID from the VIERNULVIER API — but this is stored as a reference only and is **not** used as a dedup key; deduplication is exclusively on `old_id`.
 
 #### Event_price
 Pricing information is stored per event in a separate table, with fields such as amount, availability, price (multilingual jsonb) and expiry date. One event can have multiple price rows (e.g. standard / reduced / under-26).
