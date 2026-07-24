@@ -18,7 +18,7 @@
     "@viernulvier/shared": "workspace:*",
     "ag-grid-community": "^35.2.1",
     "ag-grid-vue3": "^35.2.1",
-    "dompurify": "^3.4.1",
+    "dompurify": "^3.4.12",
     "easymde": "^2.21.0",
     "focus-trap": "^8.1.0",
     "markdown-it": "^14.1.1",
