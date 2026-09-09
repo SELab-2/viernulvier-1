@@ -12,7 +12,7 @@
     "@fastify/swagger-ui": "5.2.6",
     "@viernulvier/shared": "workspace:*",
     "bcrypt": "^6.0.0",
-    "csv-parse": "^6.2.1",
+    "csv-parse": "^7.0.2",
     "dotenv": "^17.4.2",
     "fastify": "^5.8.5",
     "fastify-plugin": "^5.1.0",
